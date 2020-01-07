@@ -59,7 +59,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case Type::i64:
         return 64 - const_->value.countLeadingZeroes().geti64();
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
   } else if (auto* binary = curr->dynCast<Binary>()) {
     switch (binary->op) {
@@ -186,7 +186,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     case Type::unreachable:
       return 64; // not interesting, but don't crash
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
 }
 
@@ -751,19 +751,19 @@ struct OptimizeInstructions
           // condition, do that
           auto needCondition =
             EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
-          auto typeIsIdentical = iff->ifTrue->type == iff->type;
-          if (typeIsIdentical && !needCondition) {
+          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
+          if (isSubType && !needCondition) {
             return iff->ifTrue;
           } else {
             Builder builder(*getModule());
-            if (typeIsIdentical) {
+            if (isSubType) {
               return builder.makeSequence(builder.makeDrop(iff->condition),
                                           iff->ifTrue);
             } else {
               // the types diff. as the condition is reachable, that means the
               // if must be concrete while the arm is not
-              assert(isConcreteType(iff->type) &&
-                     iff->ifTrue->type == Type::unreachable);
+              assert(iff->type.isConcrete() &&
+                     iff->ifTrue->type == unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
               if (needCondition) {
@@ -1298,7 +1298,7 @@ private:
   Expression* optimizeWithConstantOnRight(Binary* binary) {
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
-    if (isIntegerType(type)) {
+    if (type.isInteger()) {
       // operations on zero
       if (right->value == Literal::makeFromInt32(0, type)) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
@@ -1351,7 +1351,7 @@ private:
         }
       }
     }
-    if (isIntegerType(type) || isFloatType(type)) {
+    if (type.isInteger() || type.isFloat()) {
       // note that this is correct even on floats with a NaN on the left,
       // as a NaN would skip the computation and just return the NaN,
       // and that is precisely what we do here. but, the same with -1
@@ -1375,7 +1375,7 @@ private:
   Expression* optimizeWithConstantOnLeft(Binary* binary) {
     auto type = binary->left->type;
     auto* left = binary->left->cast<Const>();
-    if (isIntegerType(type)) {
+    if (type.isInteger()) {
       // operations on zero
       if (left->value == Literal::makeFromInt32(0, type)) {
         if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
@@ -1397,7 +1397,7 @@ private:
     // x + 5 == 7
     //   =>
     //     x == 2
-    if (isIntegerType(binary->left->type)) {
+    if (binary->left->type.isInteger()) {
       if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
           binary->op == Abstract::getBinary(type, Abstract::Ne)) {
         if (auto* left = binary->left->dynCast<Binary>()) {

@@ -30,7 +30,6 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include <pass.h>
 #include <wasm-builder.h>
@@ -63,9 +62,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     import->name = LOGGER;
     import->module = ENV;
     import->base = LOGGER;
-    auto* functionType = ensureFunctionType("vi", curr);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
+    import->sig = Signature(Type::i32, Type::none);
     curr->addFunction(import);
   }
 

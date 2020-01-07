@@ -131,7 +131,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
           high->init =
             builder->makeGlobalGet(makeHighName(get->name), Type::i32);
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected expression type");
         }
         curr->init->type = Type::i32;
       }
@@ -148,22 +148,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
   }
 
-  void visitFunctionType(FunctionType* curr) {
-    std::vector<Type> params;
-    for (auto t : curr->params) {
-      if (t == Type::i64) {
-        params.push_back(Type::i32);
-        params.push_back(Type::i32);
-      } else {
-        params.push_back(t);
-      }
-    }
-    std::swap(params, curr->params);
-    if (curr->result == Type::i64) {
-      curr->result = Type::i32;
-    }
-  }
-
   void doWalkFunction(Function* func) {
     Flat::verifyFlatness(func);
     // create builder here if this is first entry to module for this object
@@ -175,7 +159,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     freeTemps.clear();
     Module temp;
     auto* oldFunc = ModuleUtils::copyFunction(func, temp);
-    func->params.clear();
+    func->sig.params = Type::none;
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
@@ -190,7 +174,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         (i < oldFunc->getVarIndexBase())
           ? Builder::addParam
           : static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
-      if (paramType == Type::i64) {
+      if (paramType == i64) {
         builderFunc(func, lowName, Type::i32);
         builderFunc(func, highName, Type::i32);
         indexMap[i] = newIdx;
@@ -208,8 +192,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (func->imported()) {
       return;
     }
-    if (func->result == Type::i64) {
-      func->result = Type::i32;
+    if (func->sig.results == Type::i64) {
+      func->sig.results = Type::i32;
       // body may not have out param if it ends with control flow
       if (hasOutParam(func->body)) {
         TempVar highBits = fetchOutParam(func->body);
@@ -264,13 +248,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn &&
-        getModule()->getFunction(curr->target)->result == Type::i64) {
+        getModule()->getFunction(curr->target)->sig.results == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
     auto* fixedCall = visitGenericCall<Call>(
-      curr, [&](std::vector<Expression*>& args, Type ty) {
-        return builder->makeCall(curr->target, args, ty, curr->isReturn);
+      curr, [&](std::vector<Expression*>& args, Type results) {
+        return builder->makeCall(curr->target, args, results, curr->isReturn);
       });
     // If this was to an import, we need to call the legal version. This assumes
     // that legalize-js-interface has been run before.
@@ -281,15 +265,23 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (curr->isReturn &&
-        getModule()->getFunctionType(curr->fullType)->result == Type::i64) {
+    if (curr->isReturn && curr->sig.results == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
     visitGenericCall<CallIndirect>(
-      curr, [&](std::vector<Expression*>& args, Type ty) {
+      curr, [&](std::vector<Expression*>& args, Type results) {
+        std::vector<Type> params;
+        for (auto param : curr->sig.params.expand()) {
+          if (param == Type::i64) {
+            params.push_back(Type::i32);
+            params.push_back(Type::i32);
+          } else {
+            params.push_back(param);
+          }
+        }
         return builder->makeCallIndirect(
-          curr->fullType, curr->target, args, ty, curr->isReturn);
+          curr->target, args, Signature(Type(params), results), curr->isReturn);
       });
   }
 
@@ -755,8 +747,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lower(result, ClzInt32, std::move(highBits), std::move(lowBits));
         break;
       case CtzInt64:
-        std::cerr << "i64.ctz should be removed already" << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("i64.ctz should be removed already");
         break;
       default:
         abort();
@@ -833,8 +824,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lowerConvertIntToFloat(curr);
         break;
       case PopcntInt64:
-        std::cerr << "i64.popcnt should already be removed" << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("i64.popcnt should already be removed");
       default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
@@ -1337,9 +1327,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case RemUInt64:
       case RotLInt64:
       case RotRInt64:
-        std::cerr << "should have been removed by now " << curr->op
-                  << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("should have been removed by now");
 
       case AndInt64:
       case OrInt64:
@@ -1513,7 +1501,7 @@ private:
     std::vector<Expression*> children;
     bool hasUnreachable = false;
     for (auto* child : ChildIterator(curr)) {
-      if (isConcreteType(child->type)) {
+      if (child->type.isConcrete()) {
         child = builder->makeDrop(child);
       } else if (child->type == Type::unreachable) {
         hasUnreachable = true;

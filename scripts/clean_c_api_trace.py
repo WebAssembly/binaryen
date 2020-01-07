@@ -22,8 +22,9 @@ import sys
 trace = open(sys.argv[1]).read()
 
 start = trace.find('// beginning a Binaryen API trace')
+end = trace.rfind('// ending a Binaryen API trace')
 if start >= 0:
-    trace = trace[start:]
+    trace = trace[start:end]
 
     while 1:
         start = trace.find('\n(')

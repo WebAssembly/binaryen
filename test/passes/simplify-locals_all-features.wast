@@ -1655,3 +1655,19 @@
   )
  )
 )
+(module
+ (func $subtype-test (result funcref)
+  (local $0 nullref)
+  (local $1 funcref)
+  (local $2 funcref)
+  (block
+   (local.set $1
+    (local.get $0)
+   )
+  )
+  (local.set $2
+   (local.get $1)
+  )
+  (local.get $1)
+ )
+)

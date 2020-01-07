@@ -77,18 +77,19 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::anyref: // there's no unary instructions for anyref
-    case Type::exnref: // there's no unary instructions for exnref
-    case Type::none:
-    case Type::unreachable: {
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
+    case unreachable: {
       return InvalidUnary;
     }
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 inline BinaryOp getBinary(Type type, Op op) {
@@ -209,18 +210,19 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::anyref: // there's no binary instructions for anyref
-    case Type::exnref: // there's no binary instructions for exnref
-    case Type::none:
-    case Type::unreachable: {
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
+    case unreachable: {
       return InvalidBinary;
     }
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 } // namespace Abstract

@@ -216,11 +216,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       auto* child = list[z];
       // The last element may be used.
       bool used =
-        z == size - 1 && isConcreteType(curr->type) &&
+        z == size - 1 && curr->type.isConcrete() &&
         ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
       auto* optimized = optimize(child, used, true);
       if (!optimized) {
-        if (isConcreteType(child->type)) {
+        if (child->type.isConcrete()) {
           // We can't just skip a final concrete element, even if it isn't used.
           // Instead, replace it with something that's easy to optimize out (for
           // example, code-folding can merge out identical zeros at the end of
@@ -346,7 +346,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // a drop of a tee is a set
     if (auto* set = curr->value->dynCast<LocalSet>()) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       replaceCurrent(set);
       return;
     }
@@ -357,14 +357,13 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // note that the last element may be concrete but not the block, if the
       // block has an unreachable element in the middle, making the block
       // unreachable despite later elements and in particular the last
-      if (isConcreteType(last->type) && block->type == last->type) {
+      if (last->type.isConcrete() && block->type == last->type) {
         last = optimize(last, false, false);
         if (!last) {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
           if (block->name.is()) {
             BranchUtils::BranchSeeker seeker(block->name);
-            seeker.named = true;
             Expression* temp = block;
             seeker.walk(temp);
             if (seeker.found && seeker.valueType != Type::none) {
@@ -393,16 +392,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // unreachable, as it if is a branch, this can make that branch optimizable
     // and more vaccuming possible
     auto* iff = curr->value->dynCast<If>();
-    if (iff && iff->ifFalse && isConcreteType(iff->type)) {
+    if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == Type::unreachable &&
-          isConcreteType(iff->ifFalse->type)) {
+      if (iff->ifTrue->type == unreachable && iff->ifFalse->type.isConcrete()) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
         iff->type = Type::none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == Type::unreachable &&
-                 isConcreteType(iff->ifTrue->type)) {
+      } else if (iff->ifFalse->type == unreachable &&
+                 iff->ifTrue->type.isConcrete()) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
         iff->type = Type::none;
@@ -412,13 +410,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitFunction(Function* curr) {
-    auto* optimized = optimize(curr->body, curr->result != Type::none, true);
+    auto* optimized =
+      optimize(curr->body, curr->sig.results != Type::none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->result == Type::none &&
+    if (curr->sig.results == Type::none &&
         !EffectAnalyzer(getPassOptions(), curr->body).hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }

@@ -24,6 +24,7 @@
 #include "abi/js.h"
 #include "ir/trapping.h"
 #include "support/colors.h"
+#include "support/debug.h"
 #include "support/file.h"
 #include "tool-options.h"
 #include "wasm-binary.h"
@@ -31,6 +32,8 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
+
+#define DEBUG_TYPE "emscripten"
 
 using namespace cashew;
 using namespace wasm;
@@ -46,6 +49,7 @@ int main(int argc, const char* argv[]) {
   std::string dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
+  bool DWARF = false;
   bool isSideModule = false;
   bool legalizeJavaScriptFFI = true;
   bool checkStackOverflow = false;
@@ -68,6 +72,11 @@ int main(int argc, const char* argv[]) {
          "Emit names section in wasm binary (or full debuginfo in wast)",
          Options::Arguments::Zero,
          [&debugInfo](Options*, const std::string&) { debugInfo = true; })
+    .add("--dwarf",
+         "",
+         "Update DWARF debug info",
+         Options::Arguments::Zero,
+         [&DWARF](Options*, const std::string&) { DWARF = true; })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
@@ -161,6 +170,7 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
   ModuleReader reader;
+  reader.setDWARF(DWARF);
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {
@@ -175,10 +185,9 @@ int main(int argc, const char* argv[]) {
 
   options.applyFeatures(wasm);
 
-  if (options.debug) {
-    std::cerr << "Module before:\n";
-    WasmPrinter::printModule(&wasm, std::cerr);
-  }
+  BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
+  BYN_DEBUG_WITH_TYPE("emscripten-dump",
+                      WasmPrinter::printModule(&wasm, std::cerr));
 
   uint32_t dataSize = 0;
 
@@ -205,6 +214,8 @@ int main(int argc, const char* argv[]) {
   }
 
   EmscriptenGlueGenerator generator(wasm);
+  generator.setStandalone(standaloneWasm);
+
   generator.fixInvokeFunctionNames();
 
   std::vector<Name> initializerFunctions;
@@ -226,9 +237,11 @@ int main(int argc, const char* argv[]) {
   }
 
   if (isSideModule) {
+    BYN_TRACE("finalizing as side module\n");
     generator.replaceStackPointerGlobal();
     generator.generatePostInstantiateFunction();
   } else {
+    BYN_TRACE("finalizing as regular module\n");
     generator.generateRuntimeFunctions();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
@@ -260,6 +273,7 @@ int main(int argc, const char* argv[]) {
 
   // Legalize the wasm.
   {
+    BYN_TRACE("legalizing types\n");
     PassRunner passRunner(&wasm);
     passRunner.setOptions(options.passOptions);
     passRunner.setDebug(options.debug);
@@ -270,6 +284,7 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
+  BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
     generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
@@ -277,17 +292,16 @@ int main(int argc, const char* argv[]) {
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
   if (!dataSegmentFile.empty()) {
-    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
+    Output memInitFile(dataSegmentFile, Flags::Binary);
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
     generator.separateDataSegments(&memInitFile, globalBase);
   }
 
-  if (options.debug) {
-    std::cerr << "Module after:\n";
-    WasmPrinter::printModule(&wasm, std::cerr);
-  }
+  BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
+  BYN_DEBUG_WITH_TYPE("emscripten-dump",
+                      WasmPrinter::printModule(&wasm, std::cerr));
 
   // Strip target features section (its information is in the metadata)
   {
@@ -296,10 +310,16 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
-  auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
-  Output output(outfile, outputBinaryFlag, Flags::Release);
+  // If DWARF is unused, strip it out. This avoids us keeping it alive
+  // until wasm-opt strips it later.
+  if (!DWARF) {
+    PassRunner passRunner(&wasm);
+    passRunner.add("strip-dwarf");
+    passRunner.run();
+  }
+
+  Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
   ModuleWriter writer;
-  writer.setDebug(options.debug);
   writer.setDebugInfo(debugInfo);
   // writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);

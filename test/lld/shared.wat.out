@@ -1,0 +1,105 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "memory" (memory $0 0))
+ (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
+ (import "env" "table" (table $0 0 funcref))
+ (import "env" "__memory_base" (global $gimport$2 i32))
+ (import "env" "__table_base" (global $gimport$3 i32))
+ (import "env" "puts" (func $puts (param i32) (result i32)))
+ (import "env" "g$external_var" (func $g$external_var (result i32)))
+ (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
+ (import "env" "fp$_Z13print_messagev$i" (func $fp$_Z13print_messagev$i (result i32)))
+ (global $gimport$5 (mut i32) (i32.const 0))
+ (global $gimport$6 (mut i32) (i32.const 0))
+ (global $gimport$7 (mut i32) (i32.const 0))
+ (global $global$0 i32 (i32.const 16))
+ (global $global$1 i32 (i32.const 20))
+ (export "_Z13print_messagev" (func $print_message\28\29))
+ (export "ptr_puts" (global $global$0))
+ (export "ptr_local_func" (global $global$1))
+ (export "__post_instantiate" (func $__post_instantiate))
+ (func $__wasm_call_ctors (; 4 ;)
+  (call $__wasm_apply_relocs)
+ )
+ (func $__wasm_apply_relocs (; 5 ;)
+  (i32.store
+   (i32.add
+    (global.get $gimport$2)
+    (i32.const 16)
+   )
+   (global.get $gimport$6)
+  )
+  (i32.store
+   (i32.add
+    (global.get $gimport$2)
+    (i32.const 20)
+   )
+   (global.get $gimport$7)
+  )
+ )
+ (func $print_message\28\29 (; 6 ;) (result i32)
+  (drop
+   (call $puts
+    (i32.add
+     (global.get $gimport$2)
+     (i32.const 0)
+    )
+   )
+  )
+  (i32.load
+   (global.get $gimport$5)
+  )
+ )
+ (func $__post_instantiate (; 7 ;)
+  (call $__assign_got_enties)
+  (call $__wasm_call_ctors)
+ )
+ (func $__assign_got_enties (; 8 ;)
+  (global.set $gimport$5
+   (call $g$external_var)
+  )
+  (global.set $gimport$6
+   (call $fp$puts$ii)
+  )
+  (global.set $gimport$7
+   (call $fp$_Z13print_messagev$i)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 0,
+  "tableSize": 0,
+  "declares": [
+    "puts",
+    "g$external_var",
+    "fp$puts$ii",
+    "fp$_Z13print_messagev$i"
+  ],
+  "externs": [
+    "___memory_base",
+    "___table_base"
+  ],
+  "implementedFunctions": [
+    "__Z13print_messagev",
+    "___post_instantiate"
+  ],
+  "exports": [
+    "_Z13print_messagev",
+    "__post_instantiate"
+  ],
+  "namedGlobals": {
+    "ptr_puts" : "16",
+    "ptr_local_func" : "20"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 0
+}
+-- END METADATA --
+;)

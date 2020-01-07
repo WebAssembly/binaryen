@@ -1,9 +1,10 @@
-from scripts.test.shared import WASM_OPT, run_process
-from .utils import BinaryenTestCase
 import os
 
+from scripts.test import shared
+from . import utils
 
-class TailCallTypeTest(BinaryenTestCase):
+
+class TailCallTypeTest(utils.BinaryenTestCase):
     def test_return_call(self):
         module = '''
     (module
@@ -15,8 +16,9 @@ class TailCallTypeTest(BinaryenTestCase):
      )
     )
 '''
-        p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
-                        input=module, check=False, capture_output=True)
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--enable-tail-call', '-o', os.devnull],
+                               input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(
             'return_call callee return type must match caller return type',
@@ -34,8 +36,9 @@ class TailCallTypeTest(BinaryenTestCase):
      )
     )
 '''
-        p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
-                        input=module, check=False, capture_output=True)
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--enable-tail-call', '-o', os.devnull],
+                               input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(
             'return_call_indirect callee return type must match caller return type',

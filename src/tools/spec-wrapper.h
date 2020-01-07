@@ -30,7 +30,7 @@ static std::string generateSpecWrapper(Module& wasm) {
     }
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
            exp->name.str + "\" ";
-    for (Type param : func->params) {
+    for (Type param : func->sig.params.expand()) {
       // zeros in arguments TODO more?
       switch (param) {
         case Type::i32:
@@ -48,11 +48,15 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::v128:
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
-        case Type::anyref: // there's no anyref.const
-        case Type::exnref: // there's no exnref.const
-        case Type::none:
-        case Type::unreachable:
-          WASM_UNREACHABLE();
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+          ret += "(ref.null)";
+          break;
+        case none:
+        case unreachable:
+          WASM_UNREACHABLE("unexpected type");
       }
       ret += " ";
     }

@@ -188,7 +188,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case WidenHighUVecI16x8ToVecI32x4:
         return 1;
       case InvalidUnary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid unary op");
     }
     return ret + visit(curr->value);
   }
@@ -594,6 +594,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case MaxUVecI8x16:
         ret = 1;
         break;
+      case AvgrUVecI8x16:
+        ret = 1;
+        break;
       case AddVecI16x8:
         ret = 1;
         break;
@@ -625,6 +628,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 1;
         break;
       case MaxUVecI16x8:
+        ret = 1;
+        break;
+      case AvgrUVecI16x8:
         ret = 1;
         break;
       case AddVecI32x4:
@@ -709,7 +715,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 1;
         break;
       case InvalidBinary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid binary op");
     }
     return ret + visit(curr->left) + visit(curr->right);
   }

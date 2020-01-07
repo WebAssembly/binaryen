@@ -1,11 +1,11 @@
 (module
- (type $0 (func (param anyref) (result anyref)))
+ (type $anyref_=>_anyref (func (param anyref) (result anyref)))
  (import "env" "test2" (global $gimport$1 anyref))
  (import "env" "test1" (func $fimport$0 (param anyref) (result anyref)))
  (memory $0 1 1)
  (export "test1" (func $fimport$0))
  (export "test2" (global $gimport$1))
- (func $0 (; 1 ;) (type $0) (param $0 anyref) (result anyref)
+ (func $0 (; 1 ;) (param $0 anyref) (result anyref)
   (local $1 anyref)
   (local.set $1
    (call $fimport$0

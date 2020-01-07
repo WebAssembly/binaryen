@@ -38,7 +38,7 @@ Type asmToWasmType(AsmType asmType) {
     case ASM_INT32X4:
       return Type::v128;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 AsmType wasmToAsmType(Type type) {
@@ -53,16 +53,17 @@ AsmType wasmToAsmType(Type type) {
       return ASM_INT64;
     case Type::v128:
       assert(false && "v128 not implemented yet");
-    case Type::anyref:
-      assert(false && "anyref is not supported by asm2wasm");
-    case Type::exnref:
-      assert(false && "exnref is not supported by asm2wasm");
-    case Type::none:
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+      assert(false && "reference types are not supported by asm2wasm");
+    case none:
       return ASM_NONE;
-    case Type::unreachable:
-      WASM_UNREACHABLE();
+    case unreachable:
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 char getSig(Type type) {
@@ -77,74 +78,34 @@ char getSig(Type type) {
       return 'd';
     case Type::v128:
       return 'V';
-    case Type::anyref:
-      return 'a';
-    case Type::exnref:
-      return 'e';
-    case Type::none:
+    case funcref:
+      return 'F';
+    case anyref:
+      return 'A';
+    case nullref:
+      return 'N';
+    case exnref:
+      return 'E';
+    case none:
       return 'v';
-    case Type::unreachable:
-      WASM_UNREACHABLE();
+    case unreachable:
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
-}
-
-std::string getSig(const FunctionType* type) {
-  return getSig(type->params, type->result);
+  WASM_UNREACHABLE("invalid type");
 }
 
 std::string getSig(Function* func) {
-  return getSig(func->params, func->result);
+  return getSig(func->sig.results, func->sig.params);
 }
 
-Type sigToType(char sig) {
-  switch (sig) {
-    case 'i':
-      return Type::i32;
-    case 'j':
-      return Type::i64;
-    case 'f':
-      return Type::f32;
-    case 'd':
-      return Type::f64;
-    case 'V':
-      return Type::v128;
-    case 'a':
-      return Type::anyref;
-    case 'e':
-      return Type::exnref;
-    case 'v':
-      return Type::none;
-    default:
-      abort();
+std::string getSig(Type results, Type params) {
+  assert(!results.isMulti());
+  std::string sig;
+  sig += getSig(results);
+  for (Type t : params.expand()) {
+    sig += getSig(t);
   }
-}
-
-FunctionType sigToFunctionType(const std::string& sig) {
-  FunctionType ret;
-  ret.result = sigToType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    ret.params.push_back(sigToType(sig[i]));
-  }
-  return ret;
-}
-
-FunctionType*
-ensureFunctionType(const std::string& sig, Module* wasm, Name name) {
-  if (!name.is()) {
-    name = "FUNCSIG$" + sig;
-  }
-  if (wasm->getFunctionTypeOrNull(name)) {
-    return wasm->getFunctionType(name);
-  }
-  // add new type
-  auto type = make_unique<FunctionType>();
-  type->name = name;
-  type->result = sigToType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    type->params.push_back(sigToType(sig[i]));
-  }
-  return wasm->addFunctionType(std::move(type));
+  return sig;
 }
 
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {

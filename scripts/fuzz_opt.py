@@ -22,7 +22,7 @@ import shutil
 import sys
 import time
 
-from test.shared import options, NODEJS, V8_OPTS, V8
+from test import shared
 
 
 # parameters
@@ -47,11 +47,11 @@ LOG_LIMIT = 125
 
 
 def in_binaryen(*args):
-    return os.path.join(options.binaryen_root, *args)
+    return os.path.join(shared.options.binaryen_root, *args)
 
 
 def in_bin(tool):
-    return os.path.join(options.binaryen_root, 'bin', tool)
+    return os.path.join(shared.options.binaryen_root, 'bin', tool)
 
 
 def random_size():
@@ -166,7 +166,7 @@ def run_bynterp(wasm, args):
 
 
 def run_d8(wasm):
-    return run_vm([V8] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
+    return run_vm([shared.V8] + shared.V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
 # There are two types of test case handlers:
@@ -200,10 +200,10 @@ class CompareVMs(TestCaseHandler):
     def run_vms(self, js, wasm):
         results = []
         results.append(fix_output(run_bynterp(wasm, ['--fuzz-exec-before'])))
-        results.append(fix_output(run_vm([V8, js] + V8_OPTS + ['--', wasm])))
+        results.append(fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm])))
 
         # append to add results from VMs
-        # results += [fix_output(run_vm([V8, js] + V8_OPTS + ['--', wasm]))]
+        # results += [fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]))]
         # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
         # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
         # run(['../spec/interpreter/wasm', wasm])
@@ -228,7 +228,7 @@ class CompareVMs(TestCaseHandler):
                 break
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
@@ -281,20 +281,20 @@ class Wasm2JS(TestCaseHandler):
         if random.random() < 0.5:
             cmd += ['-O']
         main = run(cmd + FEATURE_OPTS)
-        with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
+        with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
             glue = f.read()
         with open('js.js', 'w') as f:
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        out = fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
+        out = fix_output(run_vm([shared.NODEJS, 'js.js', 'a.wasm']))
         if 'exception' in out:
             # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
             out = IGNORE
         return out
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
 
 
 class Asyncify(TestCaseHandler):
@@ -339,7 +339,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types']])
 
 
 # The global list of all test case handlers
@@ -496,6 +496,7 @@ opt_choices = [
     ["--reorder-functions"],
     ["--reorder-locals"],
     ["--flatten", "--rereloop"],
+    ["--roundtrip"],
     ["--rse"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
@@ -536,7 +537,7 @@ if not NANS:
 # possible feature options that are sometimes passed to the tools. this
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
-POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wast'), '-all']).replace('--enable', '--disable').strip().split('\n')
+POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wat'), '-all']).replace('--enable', '--disable').strip().split('\n')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':

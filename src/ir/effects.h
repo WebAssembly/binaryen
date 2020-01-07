@@ -387,6 +387,9 @@ struct EffectAnalyzer
     // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
   }
+  void visitRefNull(RefNull* curr) {}
+  void visitRefIsNull(RefIsNull* curr) {}
+  void visitRefFunc(RefFunc* curr) {}
   void visitTry(Try* curr) {}
   // We safely model throws as branches
   void visitThrow(Throw* curr) { branches = true; }

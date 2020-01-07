@@ -82,7 +82,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   const char* str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
-  if (isFloatType(type)) {
+  if (type.isFloat()) {
     if (s == _INFINITY) {
       switch (type) {
         case Type::f32:
@@ -262,12 +262,14 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       ret->value = Literal(strtod(str, &end));
       break;
     }
-    case Type::v128:
-    case Type::anyref: // there's no anyref.const
-    case Type::exnref: // there's no exnref.const
-      WASM_UNREACHABLE();
-    case Type::none:
-    case Type::unreachable: {
+    case v128:
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+      WASM_UNREACHABLE("unexpected const type");
+    case none:
+    case unreachable: {
       return nullptr;
     }
   }

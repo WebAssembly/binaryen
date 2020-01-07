@@ -21,6 +21,7 @@
 #include <string>
 
 #include "compiler-support.h"
+#include "support/utilities.h"
 
 struct FeatureSet {
   enum Feature : uint32_t {
@@ -58,30 +59,31 @@ struct FeatureSet {
       case ReferenceTypes:
         return "reference-types";
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected feature");
     }
   }
 
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
+  constexpr operator uint32_t() const { return features; }
 
   bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return bool(features & Atomics); }
-  bool hasMutableGlobals() const { return bool(features & MutableGlobals); }
-  bool hasTruncSat() const { return bool(features & TruncSat); }
-  bool hasSIMD() const { return bool(features & SIMD); }
-  bool hasBulkMemory() const { return bool(features & BulkMemory); }
-  bool hasSignExt() const { return bool(features & SignExt); }
+  bool has(FeatureSet f) { return (features & f) == f; }
+  bool hasAtomics() const { return (features & Atomics) != 0; }
+  bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
+  bool hasTruncSat() const { return (features & TruncSat) != 0; }
+  bool hasSIMD() const { return (features & SIMD) != 0; }
+  bool hasBulkMemory() const { return (features & BulkMemory) != 0; }
+  bool hasSignExt() const { return (features & SignExt) != 0; }
   bool hasExceptionHandling() const {
-    return bool(features & ExceptionHandling);
+    return (features & ExceptionHandling) != 0;
   }
-  bool hasTailCall() const { return bool(features & TailCall); }
-  bool hasReferenceTypes() const { return bool(features & ReferenceTypes); }
-  bool hasAll() const { return bool(features & All); }
+  bool hasTailCall() const { return (features & TailCall) != 0; }
+  bool hasReferenceTypes() const { return (features & ReferenceTypes) != 0; }
+  bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) {
+  void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
   }
   void setAtomics(bool v = true) { set(Atomics, v); }

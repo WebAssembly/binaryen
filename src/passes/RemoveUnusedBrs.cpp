@@ -288,14 +288,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Expression* z;
         replaceCurrent(
           z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition),
-            builder.makeIf(
-              builder.makeBinary(
-                EqInt32,
-                builder.makeLocalGet(temp, Type::i32),
-                builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))),
-              builder.makeBreak(curr->targets.back()),
-              builder.makeBreak(curr->default_)),
+            builder.makeLocalTee(temp, curr->condition, i32),
+            builder.makeIf(builder.makeBinary(EqInt32,
+                                              builder.makeLocalGet(temp, i32),
+                                              builder.makeConst(Literal(int32_t(
+                                                curr->targets.size() - 1)))),
+                           builder.makeBreak(curr->targets.back()),
+                           builder.makeBreak(curr->default_)),
             builder.makeBreak(curr->targets.front())));
       }
     }
@@ -437,7 +436,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // append to the other, if there is no returned value to concern us
 
           // can't be, since in the middle of a block
-          assert(!isConcreteType(iff->type));
+          assert(!iff->type.isConcrete());
 
           // ensures the first node is a block, if it isn't already, and merges
           // in the second, either as a single element or, if a block, by
@@ -456,7 +455,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             if (!block || block->name.is()) {
               block = builder.makeBlock(any);
             } else {
-              assert(!isConcreteType(block->type));
+              assert(!block->type.isConcrete());
             }
             auto* other = append->dynCast<Block>();
             if (!other) {
@@ -506,8 +505,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //  (b) this br_if is the only branch to that block (so the block
             //      will vanish)
             if (brIf->name == block->name &&
-                BranchUtils::BranchSeeker::countNamed(block, block->name) ==
-                  1) {
+                BranchUtils::BranchSeeker::count(block, block->name) == 1) {
               // note that we could drop the last element here, it is a br we
               // know for sure is removable, but telling stealSlice to steal all
               // to the end is more efficient, it can just truncate.
@@ -568,16 +566,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             worked = true;
           } else if (auto* iff = curr->list[0]->dynCast<If>()) {
             // The label can't be used in the condition.
-            if (BranchUtils::BranchSeeker::countNamed(iff->condition,
-                                                      curr->name) == 0) {
+            if (BranchUtils::BranchSeeker::count(iff->condition, curr->name) ==
+                0) {
               // We can move the block into either arm, if there are no uses in
               // the other.
               Expression** target = nullptr;
-              if (!iff->ifFalse || BranchUtils::BranchSeeker::countNamed(
+              if (!iff->ifFalse || BranchUtils::BranchSeeker::count(
                                      iff->ifFalse, curr->name) == 0) {
                 target = &iff->ifTrue;
-              } else if (BranchUtils::BranchSeeker::countNamed(
-                           iff->ifTrue, curr->name) == 0) {
+              } else if (BranchUtils::BranchSeeker::count(iff->ifTrue,
+                                                          curr->name) == 0) {
                 target = &iff->ifFalse;
               }
               if (target) {
@@ -875,8 +873,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // type is unreachable that means it is not actually reached, which we
           // can ignore.
           if (br && br->condition && br->name == curr->name &&
-              br->type != Type::unreachable) {
-            if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
+              br->type != unreachable) {
+            if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
@@ -912,8 +910,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse || !isConcreteType(iff->ifTrue->type) ||
-            !isConcreteType(iff->ifFalse->type)) {
+        if (!iff->ifFalse || !iff->ifTrue->type.isConcrete() ||
+            !iff->ifFalse->type.isConcrete()) {
           return nullptr;
         }
         // This is always helpful for code size, but can be a tradeoff with
@@ -974,8 +972,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool optimizeSetIfWithBrArm(Expression** currp) {
         auto* set = (*currp)->cast<LocalSet>();
         auto* iff = set->value->dynCast<If>();
-        if (!iff || !isConcreteType(iff->type) ||
-            !isConcreteType(iff->condition->type)) {
+        if (!iff || !iff->type.isConcrete() ||
+            !iff->condition->type.isConcrete()) {
           return false;
         }
         auto tryToOptimize =
@@ -1050,8 +1048,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool optimizeSetIfWithCopyArm(Expression** currp) {
         auto* set = (*currp)->cast<LocalSet>();
         auto* iff = set->value->dynCast<If>();
-        if (!iff || !isConcreteType(iff->type) ||
-            !isConcreteType(iff->condition->type)) {
+        if (!iff || !iff->type.isConcrete() ||
+            !iff->condition->type.isConcrete()) {
           return false;
         }
         Builder builder(*getModule());
@@ -1078,7 +1076,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         iff->finalize();
         Expression* replacement = iff;
         if (tee) {
-          set->setTee(false);
+          set->makeSet();
           // We need a block too.
           replacement = builder.makeSequence(iff,
                                              get // reuse the get

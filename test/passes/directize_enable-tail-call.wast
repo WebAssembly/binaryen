@@ -181,6 +181,7 @@
 )
 ;; change types
 (module
+ (type (func))
  (table $0 8 8 funcref)
  (func $0
   (block ;; the type of this block will change

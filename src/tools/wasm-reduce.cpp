@@ -466,7 +466,7 @@ struct Reducer
       if (tryToReduceCurrentToNop()) {
         return;
       }
-    } else if (isConcreteType(curr->type)) {
+    } else if (curr->type.isConcrete()) {
       if (tryToReduceCurrentToConst()) {
         return;
       }
@@ -517,7 +517,7 @@ struct Reducer
       // replace a singleton
       auto& list = block->list;
       if (list.size() == 1 &&
-          !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+          !BranchUtils::BranchSeeker::has(block, block->name)) {
         if (tryToReplaceCurrent(block->list[0])) {
           return;
         }
@@ -549,14 +549,14 @@ struct Reducer
       return; // nothing more to do
     } else if (auto* loop = curr->dynCast<Loop>()) {
       if (shouldTryToReduce() &&
-          !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+          !BranchUtils::BranchSeeker::has(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (isConcreteType(child->type) && curr->type == Type::none) {
+      if (child->type.isConcrete() && curr->type == none) {
         if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
         }
@@ -567,22 +567,22 @@ struct Reducer
       }
     }
     // If that didn't work, try to replace with a child + a unary conversion
-    if (isConcreteType(curr->type) &&
+    if (curr->type.isConcrete() &&
         !curr->is<Unary>()) { // but not if it's already unary
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!isConcreteType(child->type)) {
+        if (!child->type.isConcrete()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
         switch (curr->type) {
           case Type::i32: {
             switch (child->type) {
-              case Type::i32:
-                WASM_UNREACHABLE();
-              case Type::i64:
+              case i32:
+                WASM_UNREACHABLE("invalid type");
+              case i64:
                 fixed = builder->makeUnary(WrapInt64, child);
                 break;
               case Type::f32:
@@ -591,13 +591,15 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
-              case Type::v128:
-              case Type::anyref:
-              case Type::exnref:
+              case v128:
+              case funcref:
+              case anyref:
+              case nullref:
+              case exnref:
                 continue; // not implemented yet
-              case Type::none:
-              case Type::unreachable:
-                WASM_UNREACHABLE();
+              case none:
+              case unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -606,21 +608,23 @@ struct Reducer
               case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
-              case Type::i64:
-                WASM_UNREACHABLE();
-              case Type::f32:
+              case i64:
+                WASM_UNREACHABLE("invalid type");
+              case f32:
                 fixed = builder->makeUnary(TruncSFloat32ToInt64, child);
                 break;
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
-              case Type::v128:
-              case Type::anyref:
-              case Type::exnref:
+              case v128:
+              case funcref:
+              case anyref:
+              case nullref:
+              case exnref:
                 continue; // not implemented yet
-              case Type::none:
-              case Type::unreachable:
-                WASM_UNREACHABLE();
+              case none:
+              case unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -632,18 +636,20 @@ struct Reducer
               case Type::i64:
                 fixed = builder->makeUnary(ConvertSInt64ToFloat32, child);
                 break;
-              case Type::f32:
-                WASM_UNREACHABLE();
-              case Type::f64:
+              case f32:
+                WASM_UNREACHABLE("unexpected type");
+              case f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
-              case Type::v128:
-              case Type::anyref:
-              case Type::exnref:
+              case v128:
+              case funcref:
+              case anyref:
+              case nullref:
+              case exnref:
                 continue; // not implemented yet
-              case Type::none:
-              case Type::unreachable:
-                WASM_UNREACHABLE();
+              case none:
+              case unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -658,25 +664,29 @@ struct Reducer
               case Type::f32:
                 fixed = builder->makeUnary(PromoteFloat32, child);
                 break;
-              case Type::f64:
-                WASM_UNREACHABLE();
-              case Type::v128:
-              case Type::anyref:
-              case Type::exnref:
+              case f64:
+                WASM_UNREACHABLE("unexpected type");
+              case v128:
+              case funcref:
+              case anyref:
+              case nullref:
+              case exnref:
                 continue; // not implemented yet
-              case Type::none:
-              case Type::unreachable:
-                WASM_UNREACHABLE();
+              case none:
+              case unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case Type::v128:
-          case Type::anyref:
-          case Type::exnref:
+          case v128:
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
             continue; // not implemented yet
-          case Type::none:
-          case Type::unreachable:
-            WASM_UNREACHABLE();
+          case none:
+          case unreachable:
+            WASM_UNREACHABLE("unexpected type");
         }
         assert(fixed->type == curr->type);
         if (tryToReplaceCurrent(fixed)) {
@@ -866,17 +876,15 @@ struct Reducer
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcType = func->type;
-        auto funcResult = func->result;
+        auto funcSig = func->sig;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
-          if (!(isConcreteType(child->type) || child->type == Type::none)) {
+          if (!(child->type.isConcrete() || child->type == none)) {
             continue; // not something a function can return
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->type = Name();
-          func->result = child->type;
+          func->sig.results = child->type;
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -885,8 +893,7 @@ struct Reducer
             break;
           }
           // Undo.
-          func->type = funcType;
-          func->result = funcResult;
+          func->sig = funcSig;
           func->body = funcBody;
         }
       }
@@ -1002,6 +1009,10 @@ struct Reducer
       return false;
     }
     // try to replace with a trivial value
+    if (curr->type.isRef()) {
+      RefNull* n = builder->makeRefNull();
+      return tryToReplaceCurrent(n);
+    }
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) {
       return true;

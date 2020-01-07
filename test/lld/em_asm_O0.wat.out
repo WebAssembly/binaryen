@@ -1,0 +1,128 @@
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (import "env" "emscripten_asm_const_i" (func $emscripten_asm_const_i (param i32) (result i32)))
+ (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
+ (import "env" "emscripten_asm_const_ii" (func $emscripten_asm_const_ii (param i32 i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (i32.const 66192))
+ (global $global$1 i32 (i32.const 66192))
+ (global $global$2 i32 (i32.const 652))
+ (export "memory" (memory $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (export "__heap_base" (global $global$1))
+ (export "__data_end" (global $global$2))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $main (; 3 ;) (result i32)
+  (local $t1 i32)
+  (local $t2 i32)
+  (drop
+   (call $emscripten_asm_const_i
+    (i32.const 568)
+   )
+  )
+  (local.set $t1
+   (i32.const 621)
+  )
+  (local.set $t2
+   (i32.const 601)
+  )
+  (drop
+   (call $emscripten_asm_const_ii
+    (local.get $t1)
+    (call $emscripten_asm_const_iii
+     (local.get $t2)
+     (i32.const 13)
+     (i32.const 27)
+    )
+   )
+  )
+  (i32.const 0)
+ )
+ (func $__wasm_call_ctors (; 4 ;)
+  (nop)
+ )
+ (func $stackSave (; 5 ;) (result i32)
+  (global.get $global$0)
+ )
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (global.set $global$0
+   (local.tee $1
+    (i32.and
+     (i32.sub
+      (global.get $global$0)
+      (local.get $0)
+     )
+     (i32.const -16)
+    )
+   )
+  )
+  (local.get $1)
+ )
+ (func $stackRestore (; 7 ;) (param $0 i32)
+  (global.set $global$0
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "asmConsts": {
+    "568": ["{ Module.print(\"Hello world\"); }", ["i"], [""]],
+    "601": ["{ return $0 + $1; }", ["iii"], [""]],
+    "621": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]]
+  },
+  "staticBump": 84,
+  "tableSize": 1,
+  "initializers": [
+    "__wasm_call_ctors"
+  ],
+  "declares": [
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "___wasm_call_ctors",
+    "_main",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory"
+  ],
+  "exports": [
+    "__wasm_call_ctors",
+    "main",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory"
+  ],
+  "namedGlobals": {
+    "__heap_base" : "66192",
+    "__data_end" : "652"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 1
+}
+-- END METADATA --
+;)

@@ -151,6 +151,9 @@ struct IString {
   bool startsWith(const char* prefix) const {
     return stripPrefix(prefix) != nullptr;
   }
+  bool startsWith(const IString& prefix) const {
+    return startsWith(prefix.str);
+  }
 
   size_t size() const { return str ? strlen(str) : 0; }
 };

@@ -141,15 +141,15 @@ public:
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
-        (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
+        (curr->type.isConcrete() || ret.value.type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (ret.value.type != curr->type) {
-        std::cerr << "expected " << printType(curr->type) << ", seeing "
-                  << printType(ret.value.type) << " from\n"
+      if (!Type::isSubType(ret.value.type, curr->type)) {
+        std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
+                  << " from\n"
                   << curr << '\n';
       }
 #endif
-      assert(ret.value.type == curr->type);
+      assert(Type::isSubType(ret.value.type, curr->type));
     }
     depth--;
     return ret;
@@ -465,9 +465,9 @@ public:
       case WidenHighUVecI16x8ToVecI32x4:
         return value.widenHighUToVecI32x4();
       case InvalidUnary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid unary op");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitBinary(Binary* curr) {
     NOTE_ENTER("Binary");
@@ -482,10 +482,10 @@ public:
     }
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
-    assert(isConcreteType(curr->left->type) ? left.type == curr->left->type
-                                            : true);
-    assert(isConcreteType(curr->right->type) ? right.type == curr->right->type
-                                             : true);
+    assert(curr->left->type.isConcrete() ? left.type == curr->left->type
+                                         : true);
+    assert(curr->right->type.isConcrete() ? right.type == curr->right->type
+                                          : true);
     switch (curr->op) {
       case AddInt32:
       case AddInt64:
@@ -765,6 +765,8 @@ public:
         return left.maxSI8x16(right);
       case MaxUVecI8x16:
         return left.maxUI8x16(right);
+      case AvgrUVecI8x16:
+        return left.avgrUI8x16(right);
       case AddVecI16x8:
         return left.addI16x8(right);
       case AddSatSVecI16x8:
@@ -787,6 +789,8 @@ public:
         return left.maxSI16x8(right);
       case MaxUVecI16x8:
         return left.maxUI16x8(right);
+      case AvgrUVecI16x8:
+        return left.avgrUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
@@ -846,9 +850,9 @@ public:
         return left.swizzleVec8x16(right);
 
       case InvalidBinary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid binary op");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDExtract(SIMDExtract* curr) {
     NOTE_ENTER("SIMDExtract");
@@ -875,7 +879,7 @@ public:
       case ExtractLaneVecF64x2:
         return vec.extractLaneF64x2(curr->index);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDReplace(SIMDReplace* curr) {
     NOTE_ENTER("SIMDReplace");
@@ -903,7 +907,7 @@ public:
       case ReplaceLaneVecF64x2:
         return vec.replaceLaneF64x2(value, curr->index);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     NOTE_ENTER("SIMDShuffle");
@@ -941,7 +945,7 @@ public:
         return c.bitselectV128(a, b);
       default:
         // TODO: implement qfma/qfms
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("not implemented");
     }
   }
   Flow visitSIMDShift(SIMDShift* curr) {
@@ -982,7 +986,7 @@ public:
       case ShrUVecI64x2:
         return vec.shrUI64x2(shift);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
@@ -1029,7 +1033,7 @@ public:
   Flow visitUnreachable(Unreachable* curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unreachable");
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {
@@ -1091,40 +1095,60 @@ public:
       return Literal(uint64_t(val));
     }
   }
-  Flow visitAtomicFence(AtomicFence*) {
+  Flow visitAtomicFence(AtomicFence* curr) {
     // Wasm currently supports only sequentially consistent atomics, in which
     // case atomic_fence can be lowered to nothing.
     NOTE_ENTER("AtomicFence");
     return Flow();
   }
 
-  Flow visitCall(Call*) { WASM_UNREACHABLE(); }
-  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
-  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE(); }
-  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE(); }
-  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE(); }
-  Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
-  Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE(); }
-  Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE(); }
-  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitPush(Push*) { WASM_UNREACHABLE(); }
-  Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
-  Flow visitTry(Try*) { WASM_UNREACHABLE(); }
-  Flow visitThrow(Throw*) { WASM_UNREACHABLE(); }
-  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE(); }
-  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE(); }
+  Flow visitCall(Call*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLoad(Load* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStore(Store* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitHost(Host* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPush(Push*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPop(Pop*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitRefNull(RefNull* curr) {
+    NOTE_ENTER("RefNull");
+    return Literal::makeNullref();
+  }
+  Flow visitRefIsNull(RefIsNull* curr) {
+    NOTE_ENTER("RefIsNull");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Literal value = flow.value;
+    NOTE_EVAL1(value);
+    return Literal(value.type == nullref);
+  }
+  Flow visitRefFunc(RefFunc* curr) {
+    NOTE_ENTER("RefFunc");
+    NOTE_NAME(curr->func);
+    return Literal::makeFuncref(curr->func);
+  }
+  // TODO Implement EH instructions
+  Flow visitTry(Try*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrow(Throw*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void trap(const char* why) { WASM_UNREACHABLE(); }
+  virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 };
 
 // Execute an constant expression in a global init or memory offset.
@@ -1185,7 +1209,7 @@ public:
             case 4:
               return Literal((int32_t)load32s(addr));
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid size");
           }
           break;
         }
@@ -1203,7 +1227,7 @@ public:
             case 8:
               return Literal((int64_t)load64s(addr));
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid size");
           }
           break;
         }
@@ -1213,13 +1237,15 @@ public:
           return Literal(load64u(addr)).castToF64();
         case Type::v128:
           return Literal(load128(addr).data());
-        case Type::anyref: // anyref cannot be loaded from memory
-        case Type::exnref: // exnref cannot be loaded from memory
-        case Type::none:
-        case Type::unreachable:
-          WASM_UNREACHABLE();
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+        case none:
+        case unreachable:
+          WASM_UNREACHABLE("unexpected type");
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
       switch (store->valueType) {
@@ -1235,7 +1261,7 @@ public:
               store32(addr, value.geti32());
               break;
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid store size");
           }
           break;
         }
@@ -1254,7 +1280,7 @@ public:
               store64(addr, value.geti64());
               break;
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid store size");
           }
           break;
         }
@@ -1268,35 +1294,47 @@ public:
         case Type::v128:
           store128(addr, value.getv128());
           break;
-        case Type::anyref: // anyref cannot be stored from memory
-        case Type::exnref: // exnref cannot be stored in memory
-        case Type::none:
-        case Type::unreachable:
-          WASM_UNREACHABLE();
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+        case none:
+        case unreachable:
+          WASM_UNREACHABLE("unexpected type");
       }
     }
 
-    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE("unimp"); }
     virtual std::array<uint8_t, 16> load128(Address addr) {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
 
-    virtual void store8(Address addr, int8_t value) { WASM_UNREACHABLE(); }
-    virtual void store16(Address addr, int16_t value) { WASM_UNREACHABLE(); }
-    virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
-    virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
+    virtual void store8(Address addr, int8_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store16(Address addr, int16_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store32(Address addr, int32_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store64(Address addr, int64_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
     virtual void store128(Address addr, const std::array<uint8_t, 16>&) {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Address addr, Name entry) { WASM_UNREACHABLE(); }
+    virtual void tableStore(Address addr, Name entry) {
+      WASM_UNREACHABLE("unimp");
+    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -1439,27 +1477,27 @@ private:
 
     FunctionScope(Function* function, const LiteralList& arguments)
       : function(function) {
-      if (function->params.size() != arguments.size()) {
+      if (function->sig.params.size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
-                  << function->params.size() << " parameters, got "
+                  << function->sig.params.size() << " parameters, got "
                   << arguments.size() << " arguments." << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
+      const std::vector<Type>& params = function->sig.params.expand();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          assert(function->isParam(i));
-          if (function->params[i] != arguments[i].type) {
+          assert(i < params.size());
+          if (!Type::isSubType(arguments[i].type, params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << printType(function->params[i]) << " for parameter "
-                      << i << ", got " << printType(arguments[i].type) << "."
-                      << std::endl;
-            WASM_UNREACHABLE();
+                      << params[i] << " for parameter " << i << ", got "
+                      << arguments[i].type << "." << std::endl;
+            WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = arguments[i];
         } else {
           assert(function->isVar(i));
-          locals[i].type = function->getLocalType(i);
+          locals[i] = Literal::makeZero(function->getLocalType(i));
         }
       }
     }
@@ -1535,7 +1573,7 @@ private:
         return target;
       }
       Index index = target.value.geti32();
-      Type type = curr->isReturn ? scope.function->result : curr->type;
+      Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
         index, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
@@ -1566,7 +1604,8 @@ private:
       }
       NOTE_EVAL1(index);
       NOTE_EVAL1(flow.value);
-      assert(curr->isTee() ? flow.value.type == curr->type : true);
+      assert(curr->isTee() ? Type::isSubType(flow.value.type, curr->type)
+                           : true);
       scope.locals[index] = flow.value;
       return curr->isTee() ? flow : Flow();
     }
@@ -1705,7 +1744,7 @@ private:
       if (timeout.breaking()) {
         return timeout;
       }
-      auto bytes = getTypeSize(curr->expectedType);
+      auto bytes = curr->expectedType.getByteSize();
       auto addr = instance.getFinalAddress(ptr.value, bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
@@ -1747,7 +1786,7 @@ private:
         case LoadExtUVec32x2ToVecI64x2:
           return visitSIMDLoadExtend(curr);
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitSIMDLoadSplat(SIMDLoad* curr) {
       Load load;
@@ -1774,7 +1813,7 @@ private:
           splat = &Literal::splatI64x2;
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       load.finalize();
       Flow flow = this->visit(&load);
@@ -1805,9 +1844,9 @@ private:
           case LoadExtUVec32x2ToVecI64x2:
             return Literal(int64_t(instance.externalInterface->load32u(addr)));
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid op");
       };
       auto fillLanes = [&](auto lanes, size_t laneBytes) {
         for (auto& lane : lanes) {
@@ -1834,9 +1873,9 @@ private:
           return fillLanes(lanes, 4);
         }
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected op");
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
@@ -1868,7 +1907,7 @@ private:
           return Literal(int32_t(ret));
         }
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
@@ -1891,18 +1930,22 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("memory.init of dropped segment");
-      }
-
       Address destVal(uint32_t(dest.value.geti32()));
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if (offsetVal + sizeVal > 0 &&
+          instance.droppedSegments.count(curr->segment)) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.init");
+      }
       for (size_t i = 0; i < sizeVal; ++i) {
-        if (offsetVal + i >= segment.data.size()) {
-          trap("out of bounds segment access in memory.init");
-        }
         Literal addr(uint32_t(destVal + i));
         instance.externalInterface->store8(instance.getFinalAddress(addr, 1),
                                            segment.data[offsetVal + i]);
@@ -1911,9 +1954,6 @@ private:
     }
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("data.drop of dropped segment");
-      }
       instance.droppedSegments.insert(curr->segment);
       return {};
     }
@@ -1938,6 +1978,13 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)sourceVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize ||
+          (uint64_t)destVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds segment access in memory.copy");
+      }
+
       int64_t start = 0;
       int64_t end = sizeVal;
       int step = 1;
@@ -1948,9 +1995,6 @@ private:
         step = -1;
       }
       for (int64_t i = start; i != end; i += step) {
-        if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
-          trap("Out of bounds memory access");
-        }
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(
@@ -1978,6 +2022,10 @@ private:
       Address destVal(uint32_t(dest.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.fill");
+      }
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
@@ -2044,10 +2092,11 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
-    if (function->result != ret.type) {
+    if (!Type::isSubType(ret.type, function->sig.results)) {
       std::cerr << "calling " << function->name << " resulted in " << ret
-                << " but the function type is " << function->result << '\n';
-      WASM_UNREACHABLE();
+                << " but the function type is " << function->sig.results
+                << '\n';
+      WASM_UNREACHABLE("unexpect result type");
     }
     // may decrease more than one, if we jumped up the stack
     callDepth = previousCallDepth;

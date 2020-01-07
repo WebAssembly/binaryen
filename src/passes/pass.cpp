@@ -107,6 +107,9 @@ void PassRegistry::registerPasses() {
     "directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass(
     "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
+  registerPass("dwarfdump",
+               "dump DWARF debug info sections from the read binary",
+               createDWARFDumpPass);
   registerPass("duplicate-import-elimination",
                "removes duplicate imports",
                createDuplicateImportEliminationPass);
@@ -129,6 +132,8 @@ void PassRegistry::registerPasses() {
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
+  registerPass(
+    "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
                createInliningPass);
@@ -207,6 +212,12 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
+  registerPass("post-assemblyscript",
+               "eliminates redundant ARC patterns in AssemblyScript output",
+               createPostAssemblyScriptPass);
+  registerPass("post-assemblyscript-finalize",
+               "eliminates collapsed ARC patterns after other optimizations",
+               createPostAssemblyScriptFinalizePass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -268,6 +279,9 @@ void PassRegistry::registerPasses() {
                createReReloopPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
+  registerPass("roundtrip",
+               "write the module to binary, then read it",
+               createRoundTripPass);
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
@@ -314,6 +328,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
+  registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
@@ -445,7 +460,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 }
 
 static void dumpWast(Name name, Module* wasm) {
-  // write out the wast
+  // write out the wat
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {
@@ -456,11 +471,11 @@ static void dumpWast(Name name, Module* wasm) {
   // TODO: use _getpid() on windows, elsewhere?
   fullName += std::to_string(getpid()) + '-';
 #endif
-  fullName += numstr + "-" + name.str + ".wasm";
+  fullName += numstr + "-" + name.str;
   Colors::setEnabled(false);
   ModuleWriter writer;
-  writer.setBinary(false); // TODO: add an option for binary
-  writer.write(*wasm, fullName);
+  writer.writeText(*wasm, fullName + ".wast");
+  writer.writeBinary(*wasm, fullName + ".wasm");
 }
 
 void PassRunner::run() {

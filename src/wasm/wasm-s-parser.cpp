@@ -23,7 +23,6 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/branch-utils.h"
-#include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
 
@@ -342,7 +341,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
         stringToBinary(str, size, data);
       }
     }
-    WasmBinaryBuilder binaryBuilder(wasm, data, false);
+    WasmBinaryBuilder binaryBuilder(wasm, data);
     binaryBuilder.read();
     return;
   }
@@ -446,22 +445,29 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
     // index
     size_t offset = atoi(s.str().c_str());
     if (offset >= functionNames.size()) {
-      throw ParseException("unknown function in getFunctionName");
+      throw ParseException(
+        "unknown function in getFunctionName", s.line, s.col);
     }
     return functionNames[offset];
   }
 }
 
-Name SExpressionWasmBuilder::getFunctionTypeName(Element& s) {
+Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
   if (s.dollared()) {
-    return s.str();
+    auto it = signatureIndices.find(s.str().str);
+    if (it == signatureIndices.end()) {
+      throw ParseException(
+        "unknown function type in getFunctionSignature", s.line, s.col);
+    }
+    return signatures[it->second];
   } else {
     // index
     size_t offset = atoi(s.str().c_str());
-    if (offset >= wasm.functionTypes.size()) {
-      throw ParseException("unknown function type in getFunctionTypeName");
+    if (offset >= signatures.size()) {
+      throw ParseException(
+        "unknown function type in getFunctionSignature", s.line, s.col);
     }
-    return wasm.functionTypes[offset]->name;
+    return signatures[offset];
   }
 }
 
@@ -472,7 +478,7 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
     // index
     size_t offset = atoi(s.str().c_str());
     if (offset >= globalNames.size()) {
-      throw ParseException("unknown global in getGlobalName");
+      throw ParseException("unknown global in getGlobalName", s.line, s.col);
     }
     return globalNames[offset];
   }
@@ -485,7 +491,7 @@ Name SExpressionWasmBuilder::getEventName(Element& s) {
     // index
     size_t offset = atoi(s.str().c_str());
     if (offset >= eventNames.size()) {
-      throw ParseException("unknown event in getEventName");
+      throw ParseException("unknown event in getEventName", s.line, s.col);
     }
     return eventNames[offset];
   }
@@ -539,7 +545,7 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
 }
 
 // Parses (result type) element. (e.g. (result i32))
-Type SExpressionWasmBuilder::parseResult(Element& s) {
+Type SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
   if (s.size() != 2) {
     throw ParseException("invalid result arity", s.line, s.col);
@@ -550,131 +556,95 @@ Type SExpressionWasmBuilder::parseResult(Element& s) {
 // Parses an element that references an entry in the type section. The element
 // should be in the form of (type name) or (type index).
 // (e.g. (type $a), (type 0))
-FunctionType* SExpressionWasmBuilder::parseTypeRef(Element& s) {
+Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
   assert(elementStartsWith(s, TYPE));
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
-  IString name = getFunctionTypeName(*s[1]);
-  FunctionType* functionType = wasm.getFunctionTypeOrNull(name);
-  if (!functionType) {
-    throw ParseException("bad function type for import", s[1]->line, s[1]->col);
-  }
-  return functionType;
+  return getFunctionSignature(*s[1]);
 }
 
 // Prases typeuse, a reference to a type definition. It is in the form of either
 // (type index) or (type name), possibly augmented by inlined (param) and
-// (result) nodes. (type) node can be omitted as well, in which case we get an
-// existing type if there's one with the same structure or create one.
-// Outputs are returned by parameter references.
+// (result) nodes. (type) node can be omitted as well. Outputs are returned by
+// parameter references.
 // typeuse ::= (type index|name)+ |
 //             (type index|name)+ (param ..)* (result ..)* |
 //             (param ..)* (result ..)*
-// TODO Remove FunctionType* parameter and the related logic to create
-// FunctionType once we remove FunctionType class.
-size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
-                                            size_t startPos,
-                                            FunctionType*& functionType,
-                                            std::vector<NameType>& namedParams,
-                                            Type& result) {
+size_t
+SExpressionWasmBuilder::parseTypeUse(Element& s,
+                                     size_t startPos,
+                                     Signature& functionSignature,
+                                     std::vector<NameType>& namedParams) {
+  std::vector<Type> params, results;
   size_t i = startPos;
-  bool typeExists = false, paramOrResultExists = false;
+
+  bool typeExists = false, paramsOrResultsExist = false;
   if (i < s.size() && elementStartsWith(*s[i], TYPE)) {
     typeExists = true;
-    functionType = parseTypeRef(*s[i++]);
+    functionSignature = parseTypeRef(*s[i++]);
   }
-  size_t paramPos = i;
 
+  size_t paramPos = i;
   size_t localIndex = 0;
+
   while (i < s.size() && elementStartsWith(*s[i], PARAM)) {
-    paramOrResultExists = true;
+    paramsOrResultsExist = true;
     auto newParams = parseParamOrLocal(*s[i++], localIndex);
     namedParams.insert(namedParams.end(), newParams.begin(), newParams.end());
-  }
-  result = Type::none;
-  if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
-    paramOrResultExists = true;
-    result = parseResult(*s[i++]);
-  }
-  // If none of type/param/result exists, this is equivalent to a type that does
-  // not have parameters and returns nothing.
-  if (!typeExists && !paramOrResultExists) {
-    paramOrResultExists = true;
-  }
-
-  // verify if (type) and (params)/(result) match, if both are specified
-  if (typeExists && paramOrResultExists) {
-    size_t line = s[paramPos]->line, col = s[paramPos]->col;
-    const char* msg = "type and param/result don't match";
-    if (functionType->result != result) {
-      throw ParseException(msg, line, col);
-    }
-    if (functionType->params.size() != namedParams.size()) {
-      throw ParseException(msg, line, col);
-    }
-    for (size_t i = 0, n = namedParams.size(); i < n; i++) {
-      if (functionType->params[i] != namedParams[i].type) {
-        throw ParseException(msg, line, col);
-      }
-    }
-  }
-
-  // If only (param)/(result) is specified, check if there's a matching type,
-  // and if there isn't, create one.
-  if (!typeExists) {
-    bool need = true;
-    std::vector<Type> params;
-    for (auto& p : namedParams) {
+    for (auto p : newParams) {
       params.push_back(p.type);
     }
-    for (auto& existing : wasm.functionTypes) {
-      if (existing->structuralComparison(params, result)) {
-        functionType = existing.get();
-        need = false;
-        break;
-      }
-    }
-    if (need) {
-      functionType = ensureFunctionType(params, result, &wasm);
+  }
+
+  while (i < s.size() && elementStartsWith(*s[i], RESULT)) {
+    paramsOrResultsExist = true;
+    // TODO: make parseResults return a vector
+    results.push_back(parseResults(*s[i++]));
+  }
+
+  auto inlineSig = Signature(Type(params), Type(results));
+
+  // If none of type/param/result exists, this is equivalent to a type that does
+  // not have parameters and returns nothing.
+  if (!typeExists && !paramsOrResultsExist) {
+    paramsOrResultsExist = true;
+  }
+
+  if (!typeExists) {
+    functionSignature = inlineSig;
+  } else if (paramsOrResultsExist) {
+    // verify that (type) and (params)/(result) match
+    if (inlineSig != functionSignature) {
+      throw ParseException("type and param/result don't match",
+                           s[paramPos]->line,
+                           s[paramPos]->col);
     }
   }
 
-  // If only (type) is specified, populate params and result.
-  if (!paramOrResultExists) {
-    assert(functionType);
-    result = functionType->result;
-    for (size_t index = 0, e = functionType->params.size(); index < e;
-         index++) {
-      Type type = functionType->params[index];
-      namedParams.emplace_back(Name::fromInt(index), type);
+  // Add implicitly defined type to global list so it has an index
+  if (std::find(signatures.begin(), signatures.end(), functionSignature) ==
+      signatures.end()) {
+    signatures.push_back(functionSignature);
+  }
+
+  // If only (type) is specified, populate `namedParams`
+  if (!paramsOrResultsExist) {
+    const std::vector<Type>& funcParams = functionSignature.params.expand();
+    for (size_t index = 0, e = funcParams.size(); index < e; index++) {
+      namedParams.emplace_back(Name::fromInt(index), funcParams[index]);
     }
   }
 
   return i;
 }
 
-// Parses a typeuse. Ignores all parameter names.
-size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
-                                            size_t startPos,
-                                            FunctionType*& functionType,
-                                            std::vector<Type>& params,
-                                            Type& result) {
-  std::vector<NameType> namedParams;
-  size_t nextPos = parseTypeUse(s, startPos, functionType, namedParams, result);
-  for (auto& p : namedParams) {
-    params.push_back(p.type);
-  }
-  return nextPos;
-}
-
 // Parses a typeuse. Use this when only FunctionType* is needed.
 size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
                                             size_t startPos,
-                                            FunctionType*& functionType) {
-  std::vector<Type> params;
-  Type result;
-  return parseTypeUse(s, startPos, functionType, params, result);
+                                            Signature& functionSignature) {
+  std::vector<NameType> params;
+  return parseTypeUse(s, startPos, functionSignature, params);
 }
 
 void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
@@ -694,11 +664,9 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   }
   functionNames.push_back(name);
   functionCounter++;
-  FunctionType* type = nullptr;
-  std::vector<Type> params;
-  parseTypeUse(s, i, type);
-  assert(type && "type should've been set by parseTypeUse");
-  functionTypes[name] = type->result;
+  Signature sig;
+  parseTypeUse(s, i, sig);
+  functionTypes[name] = sig.results;
 }
 
 size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
@@ -771,44 +739,40 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   }
 
   // parse typeuse: type/param/result
-  FunctionType* functionType = nullptr;
+  Signature sig;
   std::vector<NameType> params;
-  Type result = Type::none;
-  i = parseTypeUse(s, i, functionType, params, result);
-  assert(functionType && "functionType should've been set by parseTypeUse");
+  i = parseTypeUse(s, i, sig, params);
 
   // when (import) is inside a (func) element, this is not a function definition
   // but an import.
   if (importModule.is()) {
     if (!importBase.size()) {
-      throw ParseException("module but no base for import");
+      throw ParseException("module but no base for import", s.line, s.col);
     }
     if (!preParseImport) {
-      throw ParseException("!preParseImport in func");
+      throw ParseException("!preParseImport in func", s.line, s.col);
     }
     auto im = make_unique<Function>();
     im->name = name;
     im->module = importModule;
     im->base = importBase;
-    im->type = functionType->name;
-    FunctionTypeUtils::fillFunction(im.get(), functionType);
-    functionTypes[name] = im->result;
+    im->sig = sig;
+    functionTypes[name] = sig.results;
     if (wasm.getFunctionOrNull(im->name)) {
       throw ParseException("duplicate import", s.line, s.col);
     }
     wasm.addFunction(im.release());
     if (currFunction) {
-      throw ParseException("import module inside function dec");
+      throw ParseException("import module inside function dec", s.line, s.col);
     }
     nameMapper.clear();
     return;
   }
   // at this point this not an import but a real function definition.
   if (preParseImport) {
-    throw ParseException("preParseImport in func");
+    throw ParseException("preParseImport in func", s.line, s.col);
   }
 
-  result = functionType->result;
   size_t localIndex = params.size(); // local index for params and locals
 
   // parse locals
@@ -820,8 +784,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
 
   // make a new function
   currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
-    name, std::move(params), result, std::move(vars)));
-  currFunction->type = functionType->name;
+    name, std::move(params), sig.results, std::move(vars)));
 
   // parse body
   Block* autoBlock = nullptr; // may need to add a block for the very top level
@@ -847,13 +810,10 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     autoBlock->name = FAKE_RETURN;
   }
   if (autoBlock) {
-    autoBlock->finalize(result);
+    autoBlock->finalize(sig.results);
   }
   if (!currFunction->body) {
     currFunction->body = allocator.alloc<Nop>();
-  }
-  if (currFunction->result != result) {
-    throw ParseException("bad func declaration", s.line, s.col);
   }
   if (s.startLoc) {
     currFunction->prologLocation.insert(getDebugLocation(*s.startLoc));
@@ -893,8 +853,14 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
       return Type::v128;
     }
   }
+  if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
+    return funcref;
+  }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::anyref;
+  }
+  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
+    return nullref;
   }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
@@ -902,7 +868,7 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (allowError) {
     return Type::none;
   }
-  throw ParseException("invalid wasm type");
+  throw ParseException(std::string("invalid wasm type: ") + str);
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
@@ -979,10 +945,16 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op) {
 
 Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   auto ret = allocator.alloc<Select>();
-  ret->ifTrue = parseExpression(s[1]);
-  ret->ifFalse = parseExpression(s[2]);
-  ret->condition = parseExpression(s[3]);
-  ret->finalize();
+  Index i = 1;
+  Type type = parseOptionalResultType(s, i);
+  ret->ifTrue = parseExpression(s[i++]);
+  ret->ifFalse = parseExpression(s[i++]);
+  ret->condition = parseExpression(s[i]);
+  if (type.isConcrete()) {
+    ret->finalize(type);
+  } else {
+    ret->finalize();
+  }
   return ret;
 }
 
@@ -999,11 +971,11 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   parseCallOperands(s, 1, s.size(), ret);
   if (ret->op == HostOp::MemoryGrow) {
     if (ret->operands.size() != 1) {
-      throw ParseException("memory.grow needs one operand");
+      throw ParseException("memory.grow needs one operand", s.line, s.col);
     }
   } else {
     if (ret->operands.size() != 0) {
-      throw ParseException("host needs zero operands");
+      throw ParseException("host needs zero operands", s.line, s.col);
     }
   }
   ret->finalize();
@@ -1040,7 +1012,7 @@ Expression* SExpressionWasmBuilder::makeLocalTee(Element& s) {
   auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
-  ret->setTee(true);
+  ret->makeTee(currFunction->getLocalType(ret->index));
   ret->finalize();
   return ret;
 }
@@ -1049,7 +1021,7 @@ Expression* SExpressionWasmBuilder::makeLocalSet(Element& s) {
   auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
-  ret->setTee(false);
+  ret->makeSet();
   ret->finalize();
   return ret;
 }
@@ -1079,7 +1051,8 @@ Expression* SExpressionWasmBuilder::makeGlobalSet(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   if (!currFunction) {
-    throw ParseException("block is unallowed outside of functions");
+    throw ParseException(
+      "block is unallowed outside of functions", s.line, s.col);
   }
   // special-case Block, because Block nesting (in their first element) can be
   // incredibly deep
@@ -1171,7 +1144,8 @@ static Literal makeLanes(Element& s, MixedArena& allocator, Type lane_t) {
     if (lane) {
       lanes[i] = lane->cast<Const>()->value;
     } else {
-      throw ParseException("Could not parse v128 lane");
+      throw ParseException(
+        "Could not parse v128 lane", s[i + 2]->line, s[i + 2]->col);
     }
   }
   return Literal(lanes);
@@ -1181,7 +1155,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   if (type != Type::v128) {
     auto ret = parseConst(s[1]->str(), type, allocator);
     if (!ret) {
-      throw ParseException("bad const");
+      throw ParseException("bad const", s[1]->line, s[1]->col);
     }
     return ret;
   }
@@ -1191,35 +1165,40 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   size_t lanes = s.size() - 2;
   switch (lanes) {
     case 2: {
-      if (lane_t != Type::i64 && lane_t != Type::f64) {
-        throw ParseException("Unexpected v128 literal lane type");
+      if (lane_t != i64 && lane_t != f64) {
+        throw ParseException(
+          "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
       ret->value = makeLanes<2>(s, allocator, lane_t);
       break;
     }
     case 4: {
-      if (lane_t != Type::i32 && lane_t != Type::f32) {
-        throw ParseException("Unexpected v128 literal lane type");
+      if (lane_t != i32 && lane_t != f32) {
+        throw ParseException(
+          "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
       ret->value = makeLanes<4>(s, allocator, lane_t);
       break;
     }
     case 8: {
-      if (lane_t != Type::i32) {
-        throw ParseException("Unexpected v128 literal lane type");
+      if (lane_t != i32) {
+        throw ParseException(
+          "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
       ret->value = makeLanes<8>(s, allocator, lane_t);
       break;
     }
     case 16: {
-      if (lane_t != Type::i32) {
-        throw ParseException("Unexpected v128 literal lane type");
+      if (lane_t != i32) {
+        throw ParseException(
+          "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
       ret->value = makeLanes<16>(s, allocator, lane_t);
       break;
     }
     default:
-      throw ParseException("Unexpected number of lanes in v128 literal");
+      throw ParseException(
+        "Unexpected number of lanes in v128 literal", s[1]->line, s[1]->col);
   }
   ret->finalize();
   return ret;
@@ -1232,13 +1211,13 @@ static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
     s++;
   } else if (s[0] == '1') {
     if (s[1] != '6') {
-      throw ParseException("expected 16 for memop size");
+      throw ParseException(std::string("expected 16 for memop size: ") + s);
     }
     ret = 2;
     s += 2;
   } else if (s[0] == '3') {
     if (s[1] != '2') {
-      throw ParseException("expected 32 for memop size");
+      throw ParseException(std::string("expected 32 for memop size: ") + s);
     };
     ret = 4;
     s += 2;
@@ -1249,39 +1228,42 @@ static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
 }
 
 static size_t parseMemAttributes(Element& s,
-                                 Address* offset,
-                                 Address* align,
+                                 Address& offset,
+                                 Address& align,
                                  Address fallbackAlign) {
   size_t i = 1;
-  *offset = 0;
-  *align = fallbackAlign;
+  offset = 0;
+  align = fallbackAlign;
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
     const char* eq = strchr(str, '=');
     if (!eq) {
-      throw ParseException("missing = in memory attribute");
+      throw ParseException(
+        "missing = in memory attribute", s[i]->line, s[i]->col);
     }
     eq++;
     if (*eq == 0) {
-      throw ParseException("missing value in memory attribute", s.line, s.col);
+      throw ParseException(
+        "missing value in memory attribute", s[i]->line, s[i]->col);
     }
     char* endptr;
     uint64_t value = strtoll(eq, &endptr, 10);
     if (*endptr != 0) {
-      throw ParseException("bad memory attribute immediate", s.line, s.col);
+      throw ParseException(
+        "bad memory attribute immediate", s[i]->line, s[i]->col);
     }
     if (str[0] == 'a') {
       if (value > std::numeric_limits<uint32_t>::max()) {
-        throw ParseException("bad align", s.line, s.col);
+        throw ParseException("bad align", s[i]->line, s[i]->col);
       }
-      *align = value;
+      align = value;
     } else if (str[0] == 'o') {
       if (value > std::numeric_limits<uint32_t>::max()) {
-        throw ParseException("bad offset", s.line, s.col);
+        throw ParseException("bad offset", s[i]->line, s[i]->col);
       }
-      *offset = value;
+      offset = value;
     } else {
-      throw ParseException("bad memory attribute");
+      throw ParseException("bad memory attribute", s[i]->line, s[i]->col);
     }
     i++;
   }
@@ -1311,9 +1293,9 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
   ret->signed_ = extra[0] && extra[1] == 's';
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -1325,8 +1307,8 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
   ret->finalize();
@@ -1337,10 +1319,10 @@ Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s,
                                                            Type type) {
   const char* extra = findMemExtra(
     *s[0], 11 /* after "type.atomic.rmw" */, /* isAtomic = */ false);
-  auto bytes = parseMemBytes(extra, getTypeSize(type));
+  auto bytes = parseMemBytes(extra, type.getByteSize());
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) {
-    throw ParseException("malformed atomic rmw instruction");
+    throw ParseException("malformed atomic rmw instruction", s.line, s.col);
   }
   extra++; // after the '.'
   if (!strncmp(extra, "cmpxchg", 7)) {
@@ -1369,12 +1351,12 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   } else if (!strncmp(extra, "xchg", 4)) {
     ret->op = Xchg;
   } else {
-    throw ParseException("bad atomic rmw operator");
+    throw ParseException("bad atomic rmw operator", s.line, s.col);
   }
   Address align;
-  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
-    throw ParseException("Align of Atomic RMW must match size");
+    throw ParseException("Align of Atomic RMW must match size", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
@@ -1390,9 +1372,10 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   ret->type = type;
   ret->bytes = bytes;
   Address align;
-  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
-    throw ParseException("Align of Atomic Cmpxchg must match size");
+    throw ParseException(
+      "Align of Atomic Cmpxchg must match size", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i + 1]);
@@ -1405,9 +1388,22 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
   ret->type = Type::i32;
   ret->expectedType = type;
-  ret->ptr = parseExpression(s[1]);
-  ret->expected = parseExpression(s[2]);
-  ret->timeout = parseExpression(s[3]);
+  Address align;
+  Address expectedAlign;
+  if (type == Type::i32) {
+    expectedAlign = 4;
+  } else if (type == Type::i64) {
+    expectedAlign = 8;
+  } else {
+    WASM_UNREACHABLE("Invalid prefix for atomic.wait");
+  }
+  size_t i = parseMemAttributes(s, ret->offset, align, expectedAlign);
+  if (align != expectedAlign) {
+    throw ParseException("Align of atomic.wait must match size", s.line, s.col);
+  }
+  ret->ptr = parseExpression(s[i]);
+  ret->expected = parseExpression(s[i + 1]);
+  ret->timeout = parseExpression(s[i + 2]);
   ret->finalize();
   return ret;
 }
@@ -1415,8 +1411,13 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
   ret->type = Type::i32;
-  ret->ptr = parseExpression(s[1]);
-  ret->notifyCount = parseExpression(s[2]);
+  Address align;
+  size_t i = parseMemAttributes(s, ret->offset, align, 4);
+  if (align != 4) {
+    throw ParseException("Align of atomic.notify must be 4", s.line, s.col);
+  }
+  ret->ptr = parseExpression(s[i]);
+  ret->notifyCount = parseExpression(s[i + 1]);
   ret->finalize();
   return ret;
 }
@@ -1430,11 +1431,11 @@ static uint8_t parseLaneIndex(const Element* s, size_t lanes) {
   char* end;
   auto n = static_cast<unsigned long long>(strtoll(str, &end, 10));
   if (end == str || *end != '\0') {
-    throw ParseException("Expected lane index");
+    throw ParseException("Expected lane index", s->line, s->col);
   }
   if (n > lanes) {
-    throw ParseException("lane index must be less than " +
-                         std::to_string(lanes));
+    throw ParseException(
+      "lane index must be less than " + std::to_string(lanes), s->line, s->col);
   }
   return uint8_t(n);
 }
@@ -1517,7 +1518,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 8;
       break;
   }
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, defaultAlign);
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, defaultAlign);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -1593,7 +1594,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
-  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
+  if (BranchUtils::BranchSeeker::has(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
@@ -1675,15 +1676,11 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s, bool isReturn) {
 Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
                                                      bool isReturn) {
   if (!wasm.table.exists) {
-    throw ParseException("no table");
+    throw ParseException("no table", s.line, s.col);
   }
-  auto ret = allocator.alloc<CallIndirect>();
   Index i = 1;
-  FunctionType* functionType = nullptr;
-  i = parseTypeUse(s, i, functionType);
-  assert(functionType && "functionType should've been set by parseTypeUse");
-  ret->fullType = functionType->name;
-  ret->type = functionType->result;
+  auto ret = allocator.alloc<CallIndirect>();
+  i = parseTypeUse(s, i, ret->sig);
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
@@ -1700,9 +1697,9 @@ Name SExpressionWasmBuilder::getLabel(Element& s) {
     try {
       offset = std::stoll(s.c_str(), nullptr, 0);
     } catch (std::invalid_argument&) {
-      throw ParseException("invalid break offset");
+      throw ParseException("invalid break offset", s.line, s.col);
     } catch (std::out_of_range&) {
-      throw ParseException("out of range break offset");
+      throw ParseException("out of range break offset", s.line, s.col);
     }
     if (offset > nameMapper.labelStack.size()) {
       throw ParseException("invalid label", s.line, s.col);
@@ -1745,7 +1742,7 @@ Expression* SExpressionWasmBuilder::makeBreakTable(Element& s) {
     ret->targets.push_back(getLabel(*s[i++]));
   }
   if (ret->targets.size() == 0) {
-    throw ParseException("switch with no targets");
+    throw ParseException("switch with no targets", s.line, s.col);
   }
   ret->default_ = ret->targets.back();
   ret->targets.pop_back();
@@ -1762,6 +1759,27 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
   if (s.size() >= 2) {
     ret->value = parseExpression(s[1]);
   }
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  auto ret = allocator.alloc<RefNull>();
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
+  auto ret = allocator.alloc<RefIsNull>();
+  ret->value = parseExpression(s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
+  auto func = getFunctionName(*s[1]);
+  auto ret = allocator.alloc<RefFunc>();
+  ret->func = func;
+  ret->finalize();
   return ret;
 }
 
@@ -1798,7 +1816,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
-  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
+  if (BranchUtils::BranchSeeker::has(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
@@ -1859,7 +1877,7 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   assert(event && "br_on_exn's event must exist");
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  ret->eventParams = event->params;
+  ret->sent = event->sig.params;
   ret->finalize();
   return ret;
 }
@@ -1919,17 +1937,17 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
     wasm.memory.max = Memory::kUnlimitedSize;
     return i;
   }
-  uint64_t max = atoll(s[i++]->c_str());
+  uint64_t max = atoll(s[i]->c_str());
   if (max > Memory::kMaxSize) {
-    throw ParseException("total memory must be <= 4GB");
+    throw ParseException("total memory must be <= 4GB", s[i]->line, s[i]->col);
   }
   wasm.memory.max = max;
-  return i;
+  return ++i;
 }
 
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) {
-    throw ParseException("too many memories");
+    throw ParseException("too many memories", s.line, s.col);
   }
   wasm.memory.exists = true;
   wasm.memory.shared = false;
@@ -1946,7 +1964,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       ex->value = wasm.memory.name;
       ex->kind = ExternalKind::Memory;
       if (wasm.getExportOrNull(ex->name)) {
-        throw ParseException("duplicate export", s.line, s.col);
+        throw ParseException("duplicate export", inner.line, inner.col);
       }
       wasm.addExport(ex.release());
       i++;
@@ -1960,7 +1978,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       i++;
     } else {
       if (!(inner.size() > 0 ? inner[0]->str() != IMPORT : true)) {
-        throw ParseException("bad import ending");
+        throw ParseException("bad import ending", inner.line, inner.col);
       }
       // (memory (data ..)) format
       auto offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
@@ -2000,7 +2018,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
 
 void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) {
-    throw ParseException("data but no memory");
+    throw ParseException("data but no memory", s.line, s.col);
   }
   bool isPassive = false;
   Expression* offset = nullptr;
@@ -2016,7 +2034,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     offset = parseExpression(s[i]);
   }
   if (s.size() != 3 && s.size() != 4) {
-    throw ParseException("Unexpected data items");
+    throw ParseException("Unexpected data items", s.line, s.col);
   }
   parseInnerData(s, s.size() - 1, offset, isPassive);
 }
@@ -2053,7 +2071,7 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     } else if (inner[0]->str() == EVENT) {
       ex->kind = ExternalKind::Event;
     } else {
-      throw ParseException("invalid export");
+      throw ParseException("invalid export", inner.line, inner.col);
     }
   } else {
     // function
@@ -2077,13 +2095,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     } else if (elementStartsWith(*s[3], MEMORY)) {
       kind = ExternalKind::Memory;
       if (wasm.memory.exists) {
-        throw ParseException("more than one memory");
+        throw ParseException("more than one memory", s[3]->line, s[3]->col);
       }
       wasm.memory.exists = true;
     } else if (elementStartsWith(*s[3], TABLE)) {
       kind = ExternalKind::Table;
       if (wasm.table.exists) {
-        throw ParseException("more than one table");
+        throw ParseException("more than one table", s[3]->line, s[3]->col);
       }
       wasm.table.exists = true;
     } else if (elementStartsWith(*s[3], GLOBAL)) {
@@ -2117,7 +2135,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("import$event" + std::to_string(eventCounter++));
       eventNames.push_back(name);
     } else {
-      throw ParseException("invalid import");
+      throw ParseException("invalid import", s[3]->line, s[3]->col);
     }
   }
   if (!newStyle) {
@@ -2125,24 +2143,25 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   }
   auto module = s[i++]->str();
   if (!s[i]->isStr()) {
-    throw ParseException("no name for import");
+    throw ParseException("no name for import", s[i]->line, s[i]->col);
   }
-  auto base = s[i++]->str();
+  auto base = s[i]->str();
   if (!module.size() || !base.size()) {
-    throw ParseException("imports must have module and base");
+    throw ParseException(
+      "imports must have module and base", s[i]->line, s[i]->col);
   }
+  i++;
   // parse internals
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
   if (kind == ExternalKind::Function) {
-    FunctionType* functionType = nullptr;
     auto func = make_unique<Function>();
-    j = parseTypeUse(inner, j, functionType, func->params, func->result);
+
+    j = parseTypeUse(inner, j, func->sig);
     func->name = name;
     func->module = module;
     func->base = base;
-    func->type = functionType->name;
-    functionTypes[name] = func->result;
+    functionTypes[name] = func->sig.results;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;
@@ -2152,7 +2171,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     } else {
       auto& inner2 = *inner[j++];
       if (inner2[0]->str() != MUT) {
-        throw ParseException("expected mut");
+        throw ParseException("expected mut", inner2.line, inner2.col);
       }
       type = stringToType(inner2[1]->str());
       mutable_ = true;
@@ -2185,7 +2204,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
       if (!elementStartsWith(limits, SHARED)) {
-        throw ParseException("bad memory limit declaration");
+        throw ParseException(
+          "bad memory limit declaration", inner[j]->line, inner[j]->col);
       }
       wasm.memory.shared = true;
       j = parseMemoryLimits(limits, 1);
@@ -2193,7 +2213,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       j = parseMemoryLimits(inner, j);
     }
   } else if (kind == ExternalKind::Event) {
-    FunctionType* functionType = nullptr;
     auto event = make_unique<Event>();
     if (j >= inner.size()) {
       throw ParseException("event does not have an attribute", s.line, s.col);
@@ -2203,12 +2222,10 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       throw ParseException("invalid attribute", attrElem.line, attrElem.col);
     }
     event->attribute = atoi(attrElem[1]->c_str());
-    Type fakeResult; // just to call parseTypeUse
-    j = parseTypeUse(inner, j, functionType, event->params, fakeResult);
+    j = parseTypeUse(inner, j, event->sig);
     event->name = name;
     event->module = module;
     event->base = base;
-    event->type = functionType->name;
     wasm.addEvent(event.release());
   }
   // If there are more elements, they are invalid
@@ -2265,10 +2282,10 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   if (importModule.is()) {
     // this is an import, actually
     if (!importBase.size()) {
-      throw ParseException("module but no base for import");
+      throw ParseException("module but no base for import", s.line, s.col);
     }
     if (!preParseImport) {
-      throw ParseException("!preParseImport in global");
+      throw ParseException("!preParseImport in global", s.line, s.col);
     }
     auto im = make_unique<Global>();
     im->name = global->name;
@@ -2283,7 +2300,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
     return;
   }
   if (preParseImport) {
-    throw ParseException("preParseImport in global");
+    throw ParseException("preParseImport in global", s.line, s.col);
   }
   global->type = type;
   if (i < s.size()) {
@@ -2293,7 +2310,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   }
   global->mutable_ = mutable_;
   if (i != s.size()) {
-    throw ParseException("extra import elements");
+    throw ParseException("extra import elements", s.line, s.col);
   }
   if (wasm.getGlobalOrNull(global->name)) {
     throw ParseException("duplicate import", s.line, s.col);
@@ -2303,7 +2320,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   if (wasm.table.exists) {
-    throw ParseException("more than one table");
+    throw ParseException("more than one table", s.line, s.col);
   }
   wasm.table.exists = true;
   Index i = 1;
@@ -2325,19 +2342,19 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       ex->value = wasm.table.name;
       ex->kind = ExternalKind::Table;
       if (wasm.getExportOrNull(ex->name)) {
-        throw ParseException("duplicate export", s.line, s.col);
+        throw ParseException("duplicate export", inner.line, inner.col);
       }
       wasm.addExport(ex.release());
       i++;
     } else if (elementStartsWith(inner, IMPORT)) {
       if (!preParseImport) {
-        throw ParseException("!preParseImport in table");
+        throw ParseException("!preParseImport in table", inner.line, inner.col);
       }
       wasm.table.module = inner[1]->str();
       wasm.table.base = inner[2]->str();
       i++;
     } else {
-      throw ParseException("invalid table");
+      throw ParseException("invalid table", inner.line, inner.col);
     }
   }
   if (i == s.size()) {
@@ -2405,10 +2422,15 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
 }
 
 void SExpressionWasmBuilder::parseType(Element& s) {
-  std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
+  std::vector<Type> params;
+  std::vector<Type> results;
   size_t i = 1;
   if (s[i]->isStr()) {
-    type->name = s[i]->str();
+    std::string name = s[i]->str().str;
+    if (signatureIndices.find(name) != signatureIndices.end()) {
+      throw ParseException("duplicate function type", s.line, s.col);
+    }
+    signatureIndices[name] = signatures.size();
     i++;
   }
   Element& func = *s[i];
@@ -2416,25 +2438,13 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     Element& curr = *func[k];
     if (elementStartsWith(curr, PARAM)) {
       auto newParams = parseParamOrLocal(curr);
-      type->params.insert(
-        type->params.end(), newParams.begin(), newParams.end());
+      params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
-      type->result = parseResult(curr);
+      // TODO: Parse multiple results at once
+      results.push_back(parseResults(curr));
     }
   }
-  while (type->name.is() && wasm.getFunctionTypeOrNull(type->name)) {
-    throw ParseException("duplicate function type", s.line, s.col);
-  }
-  // We allow duplicate types in the type section, i.e., we can have
-  // (func (param i32) (result i32)) many times. For unnamed types, find a name
-  // that does not clash with existing ones.
-  if (!type->name.is()) {
-    type->name = "FUNCSIG$" + getSig(type.get());
-  }
-  while (wasm.getFunctionTypeOrNull(type->name)) {
-    type->name = Name(std::string(type->name.c_str()) + "_");
-  }
-  wasm.addFunctionType(std::move(type));
+  signatures.emplace_back(Type(params), Type(results));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
@@ -2514,11 +2524,7 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
   event->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
-  FunctionType* functionType = nullptr;
-  Type fakeResult; // just co call parseTypeUse
-  i = parseTypeUse(s, i, functionType, event->params, fakeResult);
-  assert(functionType && "functionType should've been set by parseTypeUse");
-  event->type = functionType->name;
+  i = parseTypeUse(s, i, event->sig);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {

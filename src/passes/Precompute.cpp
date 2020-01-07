@@ -100,7 +100,7 @@ public:
     // If we don't need to replace the whole expression, see if there
     // is a value flowing through a tee.
     if (!replaceExpression) {
-      if (isConcreteType(curr->type)) {
+      if (curr->type.isConcrete()) {
         assert(curr->isTee());
         return visit(curr->value);
       }
@@ -177,18 +177,18 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (curr->is<Const>() || curr->is<Nop>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations
     // that can break large v128.const instructions into smaller consts and
     // splats, do not try to precompute v128 expressions.
-    if (isVectorType(curr->type)) {
+    if (curr->type.isVector()) {
       return;
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (isVectorType(flow.value.type)) {
+    if (flow.value.type.isVector()) {
       return;
     }
     if (flow.breaking()) {
@@ -208,15 +208,16 @@ struct Precompute
                 return;
               }
             }
-            ret->value = Builder(*getModule()).makeConst(flow.value);
+            ret->value = Builder(*getModule()).makeConstExpression(flow.value);
           } else {
             ret->value = nullptr;
           }
         } else {
           Builder builder(*getModule());
-          replaceCurrent(builder.makeReturn(flow.value.type != Type::none
-                                              ? builder.makeConst(flow.value)
-                                              : nullptr));
+          replaceCurrent(
+            builder.makeReturn(flow.value.type != Type::none
+                                 ? builder.makeConstExpression(flow.value)
+                                 : nullptr));
         }
         return;
       }
@@ -235,23 +236,23 @@ struct Precompute
               return;
             }
           }
-          br->value = Builder(*getModule()).makeConst(flow.value);
+          br->value = Builder(*getModule()).makeConstExpression(flow.value);
         } else {
           br->value = nullptr;
         }
         br->finalize();
       } else {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(flow.breakTo,
-                                         flow.value.type != Type::none
-                                           ? builder.makeConst(flow.value)
-                                           : nullptr));
+        replaceCurrent(builder.makeBreak(
+          flow.breakTo,
+          flow.value.type != none ? builder.makeConstExpression(flow.value)
+                                  : nullptr));
       }
       return;
     }
     // this was precomputed
-    if (isConcreteType(flow.value.type)) {
-      replaceCurrent(Builder(*getModule()).makeConst(flow.value));
+    if (flow.value.type.isConcrete()) {
+      replaceCurrent(Builder(*getModule()).makeConstExpression(flow.value));
       worked = true;
     } else {
       ExpressionManipulator::nop(curr);
@@ -352,7 +353,7 @@ private:
           } else {
             curr = setValues[set];
           }
-          if (curr.isNull()) {
+          if (curr.isNone()) {
             // not a constant, give up
             value = Literal();
             break;

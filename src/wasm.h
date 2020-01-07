@@ -365,6 +365,7 @@ enum BinaryOp {
   MinUVecI8x16,
   MaxSVecI8x16,
   MaxUVecI8x16,
+  AvgrUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -376,6 +377,7 @@ enum BinaryOp {
   MinUVecI16x8,
   MaxSVecI16x8,
   MaxUVecI16x8,
+  AvgrUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -529,6 +531,9 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    RefNullId,
+    RefIsNullId,
+    RefFuncId,
     TryId,
     ThrowId,
     RethrowId,
@@ -566,6 +571,8 @@ public:
 };
 
 const char* getExpressionName(Expression* curr);
+
+Literal getLiteralFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -682,27 +689,11 @@ public:
   void finalize();
 };
 
-class FunctionType {
-public:
-  Name name;
-  Type result = Type::none;
-  std::vector<Type> params;
-
-  FunctionType() = default;
-
-  bool structuralComparison(FunctionType& b);
-  bool structuralComparison(const std::vector<Type>& params, Type result);
-
-  bool operator==(FunctionType& b);
-  bool operator!=(FunctionType& b);
-};
-
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
+  Signature sig;
   ExpressionList operands;
-  Name fullType;
   Expression* target;
   bool isReturn = false;
 
@@ -727,8 +718,9 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee();
-  void setTee(bool is);
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
@@ -1023,6 +1015,7 @@ public:
   Expression* condition;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -1085,6 +1078,32 @@ public:
   Pop(MixedArena& allocator) {}
 };
 
+class RefNull : public SpecificExpression<Expression::RefNullId> {
+public:
+  RefNull() = default;
+  RefNull(MixedArena& allocator) {}
+
+  void finalize();
+};
+
+class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+public:
+  RefIsNull(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class RefFunc : public SpecificExpression<Expression::RefFuncId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Name func;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) {}
@@ -1125,10 +1144,9 @@ public:
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
-  std::vector<Type> eventParams;
+  Type sent;
 
   void finalize();
-  Type getSingleSentType();
 };
 
 // Globals
@@ -1145,15 +1163,16 @@ struct Importable {
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
 // IR). See wasm-stack.h.
 class StackInst;
-typedef std::vector<StackInst*> StackIR;
+
+using StackIR = std::vector<StackInst*>;
+
+using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
 
 class Function : public Importable {
 public:
   Name name;
-  Type result = Type::none;
-  std::vector<Type> params; // function locals are
+  Signature sig;
   std::vector<Type> vars;   // params plus vars
-  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;
@@ -1172,6 +1191,7 @@ public:
   std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
+  // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
     uint32_t fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
@@ -1192,6 +1212,10 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
+
+  // General debugging info: map every instruction to its original position in
+  // the binary, relative to the beginning of the code section.
+  BinaryLocationsMap binaryLocations;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1261,6 +1285,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1304,6 +1335,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {
@@ -1322,14 +1361,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  // Type string in the format of function type. Return type is considered as a
-  // void type. So if you have an event whose type is (i32, i32), the type
-  // string will be "vii".
-  Name type;
-  // This is duplicate info of 'Name type', but we store this anyway because
-  // we plan to remove FunctionType in future.
-  // TODO remove either this or FunctionType
-  std::vector<Type> params;
+  Signature sig;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
@@ -1344,7 +1376,6 @@ class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
   // maybe for iterating; use add*() and the get() functions)
-  std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
@@ -1355,6 +1386,8 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
 
   // `features` are the features allowed to be used in this module and should be
@@ -1369,7 +1402,6 @@ public:
 private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
-  std::map<Name, FunctionType*> functionTypesMap;
   // exports map is by the *exported* name, which is unique
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
@@ -1379,32 +1411,37 @@ private:
 public:
   Module() = default;
 
-  FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
-  FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
 
-  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
-  Function* addFunction(std::unique_ptr<Function> curr);
   Global* addGlobal(Global* curr);
   Event* addEvent(Event* curr);
 
+  Export* addExport(std::unique_ptr<Export> curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(std::unique_ptr<Global> curr);
+  Event* addEvent(std::unique_ptr<Event> curr);
+
   void addStart(const Name& s);
 
-  void removeFunctionType(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
+
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeEvents(std::function<bool(Event*)> pred);
 
   void updateMaps();
 

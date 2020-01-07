@@ -120,7 +120,6 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // check if we have too many dynamic data segments, which we can do nothing
   // about
-  auto num = numConstant + numDynamic;
   if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
     return false;
   }
@@ -128,7 +127,8 @@ inline bool ensureLimitedSegments(Module& module) {
   // we'll merge constant segments if we must
   if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
     numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
-    num = numConstant + numDynamic;
+    auto num = numConstant + numDynamic;
+    WASM_UNUSED(num);
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 

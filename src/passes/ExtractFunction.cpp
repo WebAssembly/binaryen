@@ -49,12 +49,14 @@ struct ExtractFunction : public Pass {
     module->memory.segments.clear();
     module->table.segments.clear();
     // leave just an export for the thing we want
-    module->exports.clear();
-    auto* export_ = new Export;
-    export_->name = name;
-    export_->value = name;
-    export_->kind = ExternalKind::Function;
-    module->addExport(export_);
+    if (!module->getExportOrNull(name)) {
+      module->exports.clear();
+      auto* export_ = new Export;
+      export_->name = name;
+      export_->value = name;
+      export_->kind = ExternalKind::Function;
+      module->addExport(export_);
+    }
   }
 };
 

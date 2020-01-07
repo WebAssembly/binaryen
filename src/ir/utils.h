@@ -146,6 +146,9 @@ struct ReFinalize
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -157,7 +160,6 @@ struct ReFinalize
 
   void visitFunction(Function* curr);
 
-  void visitFunctionType(FunctionType* curr);
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
@@ -211,6 +213,9 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
   void visitHost(Host* curr) { curr->finalize(); }
+  void visitRefNull(RefNull* curr) { curr->finalize(); }
+  void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
+  void visitRefFunc(RefFunc* curr) { curr->finalize(); }
   void visitTry(Try* curr) { curr->finalize(); }
   void visitThrow(Throw* curr) { curr->finalize(); }
   void visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -220,13 +225,12 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitPush(Push* curr) { curr->finalize(); }
   void visitPop(Pop* curr) { curr->finalize(); }
 
-  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-  void visitExport(Export* curr) { WASM_UNREACHABLE(); }
-  void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-  void visitTable(Table* curr) { WASM_UNREACHABLE(); }
-  void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-  void visitEvent(Event* curr) { WASM_UNREACHABLE(); }
-  void visitModule(Module* curr) { WASM_UNREACHABLE(); }
+  void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
   // given a stack of nested expressions, update them all from child to parent
   static void updateStack(ExpressionStack& expressionStack) {
@@ -251,7 +255,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   bool maybeDrop(Expression*& child) {
     bool acted = false;
-    if (isConcreteType(child->type)) {
+    if (child->type.isConcrete()) {
       expressionStack.push_back(child);
       if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) &&
           !ExpressionAnalyzer::isResultDropped(expressionStack)) {
@@ -271,7 +275,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
-      if (isConcreteType(child->type)) {
+      if (child->type.isConcrete()) {
         curr->list[i] = Builder(*getModule()).makeDrop(child);
       }
     }
@@ -300,7 +304,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == Type::none && isConcreteType(curr->body->type)) {
+    if (curr->sig.results == Type::none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

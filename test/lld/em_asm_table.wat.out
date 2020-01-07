@@ -1,0 +1,103 @@
+(module
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ (import "env" "memory" (memory $0 8192))
+ (import "env" "emscripten_log" (func $fimport$0 (param i32 i32)))
+ (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
+ (table $0 159609 funcref)
+ (elem (i32.const 1) $fimport$0 $emscripten_asm_const_iii)
+ (global $global$0 (mut i32) (i32.const 1024))
+ (global $global$1 i32 (i32.const 1048))
+ (export "__data_end" (global $global$1))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (export "dynCall_vii" (func $dynCall_vii))
+ (export "dynCall_iiii" (func $dynCall_iiii))
+ (func $stackSave (; 2 ;) (result i32)
+  (global.get $global$0)
+ )
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (global.set $global$0
+   (local.tee $1
+    (i32.and
+     (i32.sub
+      (global.get $global$0)
+      (local.get $0)
+     )
+     (i32.const -16)
+    )
+   )
+  )
+  (local.get $1)
+ )
+ (func $stackRestore (; 4 ;) (param $0 i32)
+  (global.set $global$0
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (; 5 ;) (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+ (func $dynCall_vii (; 6 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
+  (call_indirect (type $i32_i32_=>_none)
+   (local.get $0)
+   (local.get $1)
+   (local.get $fptr)
+  )
+ )
+ (func $dynCall_iiii (; 7 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (call_indirect (type $i32_i32_i32_=>_i32)
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+   (local.get $fptr)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 480,
+  "tableSize": 159609,
+  "declares": [
+    "emscripten_log"
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory",
+    "_dynCall_vii",
+    "_dynCall_iiii"
+  ],
+  "exports": [
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory",
+    "dynCall_vii",
+    "dynCall_iiii"
+  ],
+  "namedGlobals": {
+    "__data_end" : "1048"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 0
+}
+-- END METADATA --
+;)

@@ -1,7 +1,7 @@
 (module
- (type $0 (func (param i32 i32) (result i32)))
- (type $1 (func (param i32) (result i32)))
- (type $2 (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $1 256 256))
  (data (global.get $gimport$0) "debugInfo.asm.js")
  (import "env" "__memory_base" (global $gimport$0 i32))
@@ -12,14 +12,14 @@
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
  (export "inlineInto" (func $inlineInto))
- (func $add (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
    (local.get $1)
    (local.get $1)
   )
  )
- (func $ret (; 1 ;) (type $1) (param $0 i32) (result i32)
+ (func $ret (; 1 ;) (param $0 i32) (result i32)
   ;;@ return.cpp:50:0
   (local.set $0
    (i32.shl
@@ -33,7 +33,7 @@
    (i32.const 1)
   )
  )
- (func $opts (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $opts (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   ;;@ even-opted.cpp:3:0
   (i32.add
@@ -64,7 +64,7 @@
    (local.get $0)
   )
  )
- (func $fib (; 3 ;) (type $1) (param $0 i32) (result i32)
+ (func $fib (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -123,7 +123,7 @@
   ;;@ fib.c:8:0
   (local.get $4)
  )
- (func $switch_reach (; 4 ;) (type $1) (param $0 i32) (result i32)
+ (func $switch_reach (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local.set $1
    (block $label$1 (result i32)
@@ -172,11 +172,11 @@
   ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
   (local.get $1)
  )
- (func $nofile (; 5 ;) (type $2)
+ (func $nofile (; 5 ;)
   ;;@ (unknown):1337:0
   (call $nofile)
  )
- (func $inlineInto (; 6 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $inlineInto (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ inline_me.c:120:0
   (i32.add
    (local.tee $0

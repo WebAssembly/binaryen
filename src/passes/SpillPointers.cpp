@@ -65,6 +65,9 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
+    if (!canRun(func)) {
+      return;
+    }
     super::doWalkFunction(func);
     spillPointers();
   }
@@ -78,7 +81,7 @@ struct SpillPointers
     PointerMap pointerMap;
     for (Index i = 0; i < func->getNumLocals(); i++) {
       if (func->getLocalType(i) == ABI::PointerType) {
-        auto offset = pointerMap.size() * getTypeSize(ABI::PointerType);
+        auto offset = pointerMap.size() * ABI::PointerType.getByteSize();
         pointerMap[i] = offset;
       }
     }
@@ -132,7 +135,7 @@ struct SpillPointers
               pointer, toSpill, spillLocal, pointerMap, func, getModule());
           }
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected action");
         }
       }
     }
@@ -140,7 +143,7 @@ struct SpillPointers
       // get the stack space, and set the local to it
       ABI::getStackSpace(spillLocal,
                          func,
-                         getTypeSize(ABI::PointerType) * pointerMap.size(),
+                         ABI::PointerType.getByteSize() * pointerMap.size(),
                          *getModule());
     }
   }
@@ -179,14 +182,14 @@ struct SpillPointers
       }
       handleOperand(call->cast<CallIndirect>()->target);
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected expr");
     }
     // add the spills
     for (auto index : toSpill) {
       block->list.push_back(
-        builder.makeStore(getTypeSize(ABI::PointerType),
+        builder.makeStore(ABI::PointerType.getByteSize(),
                           pointerMap[index],
-                          getTypeSize(ABI::PointerType),
+                          ABI::PointerType.getByteSize(),
                           builder.makeLocalGet(spillLocal, ABI::PointerType),
                           builder.makeLocalGet(index, ABI::PointerType),
                           ABI::PointerType));

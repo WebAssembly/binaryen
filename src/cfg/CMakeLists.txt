@@ -1,4 +1,4 @@
-SET(cfg_SOURCES
+set(cfg_SOURCES
   Relooper.cpp
 )
-ADD_LIBRARY(cfg STATIC ${cfg_SOURCES})
+add_library(cfg OBJECT ${cfg_SOURCES})

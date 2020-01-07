@@ -1,10 +1,10 @@
 === default ===
 debugInfo=false
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;)
   (nop)
  )
 )
@@ -12,10 +12,10 @@ debugInfo=false
 === with debug info ===
 debugInfo=true
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $test))
- (func $test (; 0 ;) (type $0)
+ (func $test (; 0 ;)
   (nop)
  )
 )
@@ -23,10 +23,10 @@ debugInfo=true
 === without debug info ===
 debugInfo=false
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;)
   (nop)
  )
 )

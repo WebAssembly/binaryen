@@ -88,7 +88,7 @@ struct MergeLocals
     if (auto* get = curr->value->dynCast<LocalGet>()) {
       if (get->index != curr->index) {
         Builder builder(*getModule());
-        auto* trivial = builder.makeLocalTee(get->index, get);
+        auto* trivial = builder.makeLocalTee(get->index, get, get->type);
         curr->value = trivial;
         copies.push_back(curr);
       }
@@ -100,7 +100,8 @@ struct MergeLocals
       return;
     }
     // compute all dependencies
-    LocalGraph preGraph(getFunction());
+    auto* func = getFunction();
+    LocalGraph preGraph(func);
     preGraph.computeInfluences();
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
@@ -119,6 +120,11 @@ struct MergeLocals
           if (preGraph.getSetses[influencedGet].size() == 1) {
             // this is ok
             assert(*preGraph.getSetses[influencedGet].begin() == trivial);
+            // If local types are different (when one is a subtype of the
+            // other), don't optimize
+            if (func->getLocalType(copy->index) != influencedGet->type) {
+              canOptimizeToCopy = false;
+            }
           } else {
             canOptimizeToCopy = false;
             break;
@@ -152,6 +158,11 @@ struct MergeLocals
               if (preGraph.getSetses[influencedGet].size() == 1) {
                 // this is ok
                 assert(*preGraph.getSetses[influencedGet].begin() == copy);
+                // If local types are different (when one is a subtype of the
+                // other), don't optimize
+                if (func->getLocalType(trivial->index) != influencedGet->type) {
+                  canOptimizeToTrivial = false;
+                }
               } else {
                 canOptimizeToTrivial = false;
                 break;
@@ -176,7 +187,7 @@ struct MergeLocals
       // if one does not work, we need to undo all its siblings (don't extend
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
-      LocalGraph postGraph(getFunction());
+      LocalGraph postGraph(func);
       postGraph.computeInfluences();
       for (auto& pair : optimizedToCopy) {
         auto* copy = pair.first;

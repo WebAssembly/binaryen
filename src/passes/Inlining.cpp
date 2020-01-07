@@ -46,13 +46,13 @@ namespace wasm {
 
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
-  std::atomic<Index> calls;
+  std::atomic<Index> refs;
   Index size;
   std::atomic<bool> lightweight;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
-    calls = 0;
+    refs = 0;
     size = 0;
     lightweight = true;
     usedGlobally = false;
@@ -75,7 +75,7 @@ struct FunctionInfo {
     // FIXME: move this check to be first in this function, since we should
     // return true if oneCallerInlineMaxSize is bigger than
     // flexibleInlineMaxSize (which it typically should be).
-    if (calls == 1 && !usedGlobally &&
+    if (refs == 1 && !usedGlobally &&
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
@@ -108,9 +108,14 @@ struct FunctionInfoScanner
   void visitCall(Call* curr) {
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
-    (*infos)[curr->target].calls++;
+    (*infos)[curr->target].refs++;
     // having a call is not lightweight
     (*infos)[getFunction()->name].lightweight = false;
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    assert(infos->count(curr->func) > 0);
+    (*infos)[curr->func].refs++;
   }
 
   void visitFunction(Function* curr) {
@@ -190,7 +195,7 @@ struct Updater : public PostWalker<Updater> {
   template<typename T> void handleReturnCall(T* curr, Type targetType) {
     curr->isReturn = false;
     curr->type = targetType;
-    if (isConcreteType(targetType)) {
+    if (targetType.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
@@ -198,12 +203,12 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->result);
+      handleReturnCall(curr, module->getFunction(curr->target)->sig.results);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunctionType(curr->fullType)->result);
+      handleReturnCall(curr, curr->sig.results);
     }
   }
   void visitLocalGet(LocalGet* curr) {
@@ -217,16 +222,16 @@ struct Updater : public PostWalker<Updater> {
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
 static Expression*
-doInlining(Module* module, Function* into, InliningAction& action) {
+doInlining(Module* module, Function* into, const InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
-  Type retType = module->getFunction(call->target)->result;
+  Type retType = module->getFunction(call->target)->sig.results;
   Builder builder(*module);
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
   if (call->isReturn) {
-    if (isConcreteType(retType)) {
+    if (retType.isConcrete()) {
       *action.callSite = builder.makeReturn(block);
     } else {
       *action.callSite = builder.makeSequence(block, builder.makeReturn());
@@ -244,7 +249,7 @@ doInlining(Module* module, Function* into, InliningAction& action) {
     updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
   // Assign the operands into the params
-  for (Index i = 0; i < from->params.size(); i++) {
+  for (Index i = 0; i < from->sig.params.size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }
@@ -374,7 +379,7 @@ struct Inlining : public Pass {
         doInlining(module, func.get(), action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
-        assert(inlinedUses[inlinedName] <= infos[inlinedName].calls);
+        assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
     }
     // anything we inlined into may now have non-unique label names, fix it up
@@ -385,23 +390,12 @@ struct Inlining : public Pass {
       OptUtils::optimizeAfterInlining(inlinedInto, module, runner);
     }
     // remove functions that we no longer need after inlining
-    auto& funcs = module->functions;
-    funcs.erase(std::remove_if(funcs.begin(),
-                               funcs.end(),
-                               [&](const std::unique_ptr<Function>& curr) {
-                                 auto name = curr->name;
-                                 auto& info = infos[name];
-                                 bool canRemove =
-                                   inlinedUses.count(name) &&
-                                   inlinedUses[name] == info.calls &&
-                                   !info.usedGlobally;
-#ifdef INLINING_DEBUG
-                                 if (canRemove)
-                                   std::cout << "removing " << name << '\n';
-#endif
-                                 return canRemove;
-                               }),
-                funcs.end());
+    module->removeFunctions([&](Function* func) {
+      auto name = func->name;
+      auto& info = infos[name];
+      return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
+             !info.usedGlobally;
+    });
     // return whether we did any work
     return inlinedUses.size() > 0;
   }
@@ -414,5 +408,41 @@ Pass* createInliningOptimizingPass() {
   ret->optimize = true;
   return ret;
 }
+
+static const char* MAIN = "main";
+static const char* ORIGINAL_MAIN = "__original_main";
+
+// Inline __original_main into main, if they exist. This works around the odd
+// thing that clang/llvm currently do, where __original_main contains the user's
+// actual main (this is done as a workaround for main having two different
+// possible signatures).
+struct InlineMainPass : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    auto* main = module->getFunctionOrNull(MAIN);
+    auto* originalMain = module->getFunctionOrNull(ORIGINAL_MAIN);
+    if (!main || main->imported() || !originalMain ||
+        originalMain->imported()) {
+      return;
+    }
+    FindAllPointers<Call> calls(main->body);
+    Expression** callSite = nullptr;
+    for (auto* call : calls.list) {
+      if ((*call)->cast<Call>()->target == ORIGINAL_MAIN) {
+        if (callSite) {
+          // More than one call site.
+          return;
+        }
+        callSite = call;
+      }
+    }
+    if (!callSite) {
+      // No call at all.
+      return;
+    }
+    doInlining(module, main, InliningAction(callSite, originalMain));
+  }
+};
+
+Pass* createInlineMainPass() { return new InlineMainPass(); }
 
 } // namespace wasm

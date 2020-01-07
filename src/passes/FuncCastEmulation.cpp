@@ -62,17 +62,14 @@ static Expression* toABI(Expression* value, Module* module) {
       value = builder.makeUnary(ReinterpretFloat64, value);
       break;
     }
-    case Type::v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::anyref: {
-      assert(false && "anyref cannot be converted to i64");
-      WASM_UNREACHABLE();
-    }
-    case Type::exnref: {
-      assert(false && "exnref cannot be converted to i64");
-      WASM_UNREACHABLE();
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
     case Type::none: {
       // the value is none, but we need a value here
@@ -109,17 +106,14 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
       value = builder.makeUnary(ReinterpretInt64, value);
       break;
     }
-    case Type::v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::anyref: {
-      assert(false && "anyref cannot be converted from i64");
-      WASM_UNREACHABLE();
-    }
-    case Type::exnref: {
-      assert(false && "exnref cannot be converted from i64");
-      WASM_UNREACHABLE();
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
     case Type::none: {
       value = builder.makeDrop(value);
@@ -138,7 +132,7 @@ struct ParallelFuncCastEmulation
 
   Pass* create() override { return new ParallelFuncCastEmulation(ABIType); }
 
-  ParallelFuncCastEmulation(Name ABIType) : ABIType(ABIType) {}
+  ParallelFuncCastEmulation(Signature ABIType) : ABIType(ABIType) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->operands.size() > NUM_PARAMS) {
@@ -153,7 +147,7 @@ struct ParallelFuncCastEmulation
       curr->operands.push_back(LiteralUtils::makeZero(Type::i64, *getModule()));
     }
     // Set the new types
-    curr->fullType = ABIType;
+    curr->sig = ABIType;
     auto oldType = curr->type;
     curr->type = Type::i64;
     curr->finalize(); // may be unreachable
@@ -162,18 +156,15 @@ struct ParallelFuncCastEmulation
   }
 
 private:
-  // the name of a type for a call with the right params and return
-  Name ABIType;
+  // The signature of a call with the right params and return
+  Signature ABIType;
 };
 
 struct FuncCastEmulation : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // we just need the one ABI function type for all indirect calls
-    std::string sig = "j";
-    for (Index i = 0; i < NUM_PARAMS; i++) {
-      sig += 'j';
-    }
-    ABIType = ensureFunctionType(sig, module)->name;
+    Signature ABIType(Type(std::vector<Type>(NUM_PARAMS, Type::i64)),
+                      Type::i64);
     // Add a way for JS to call into the table (as our i64 ABI means an i64
     // is returned when there is a return value, which JS engines will fail on),
     // using dynCalls
@@ -198,9 +189,6 @@ struct FuncCastEmulation : public Pass {
   }
 
 private:
-  // the name of a type for a call with the right params and return
-  Name ABIType;
-
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name, Module* module) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
@@ -210,8 +198,8 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    std::vector<Type>& params = func->params;
-    Type type = func->result;
+    const std::vector<Type>& params = func->sig.params.expand();
+    Type type = func->sig.results;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
@@ -223,12 +211,11 @@ private:
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(Type::i64);
     }
-    auto* thunkFunc = builder.makeFunction(thunk,
-                                           std::move(thunkParams),
-                                           Type::i64,
-                                           {}, // no vars
-                                           toABI(call, module));
-    thunkFunc->type = ABIType;
+    auto* thunkFunc =
+      builder.makeFunction(thunk,
+                           Signature(Type(thunkParams), Type::i64),
+                           {}, // no vars
+                           toABI(call, module));
     module->addFunction(thunkFunc);
     return thunk;
   }

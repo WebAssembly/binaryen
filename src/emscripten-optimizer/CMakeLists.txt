@@ -1,6 +1,6 @@
-SET(emscripten-optimizer_SOURCES
+set(emscripten-optimizer_SOURCES
   optimizer-shared.cpp
   parser.cpp
   simple_ast.cpp
 )
-ADD_LIBRARY(emscripten-optimizer STATIC ${emscripten-optimizer_SOURCES})
+add_library(emscripten-optimizer OBJECT ${emscripten-optimizer_SOURCES})

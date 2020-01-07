@@ -54,7 +54,6 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include <pass.h>
 #include <wasm-builder.h>
@@ -141,29 +140,29 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module* curr) {
-    addImport(curr, load_ptr, "iiiii");
-    addImport(curr, load_val_i32, "iii");
-    addImport(curr, load_val_i64, "jij");
-    addImport(curr, load_val_f32, "fif");
-    addImport(curr, load_val_f64, "did");
-    addImport(curr, store_ptr, "iiiii");
-    addImport(curr, store_val_i32, "iii");
-    addImport(curr, store_val_i64, "jij");
-    addImport(curr, store_val_f32, "fif");
-    addImport(curr, store_val_f64, "did");
+    addImport(
+      curr, load_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+    addImport(curr, load_val_i32, {Type::i32, Type::i32}, Type::i32);
+    addImport(curr, load_val_i64, {Type::i32, Type::i64}, Type::i64);
+    addImport(curr, load_val_f32, {Type::i32, Type::f32}, Type::f32);
+    addImport(curr, load_val_f64, {Type::i32, Type::f64}, Type::f64);
+    addImport(
+      curr, store_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+    addImport(curr, store_val_i32, {Type::i32, Type::i32}, Type::i32);
+    addImport(curr, store_val_i64, {Type::i32, Type::i64}, Type::i64);
+    addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);
+    addImport(curr, store_val_f64, {Type::i32, Type::f64}, Type::f64);
   }
 
 private:
   Index id;
 
-  void addImport(Module* curr, Name name, std::string sig) {
+  void addImport(Module* curr, Name name, Type params, Type results) {
     auto import = new Function;
     import->name = name;
     import->module = ENV;
     import->base = name;
-    auto* functionType = ensureFunctionType(sig, curr);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
+    import->sig = Signature(params, results);
     curr->addFunction(import);
   }
 };

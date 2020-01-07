@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -61,12 +62,19 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
+    // Nothing to do for constants, nop, and unreachable
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
+        curr->is<Unreachable>()) {
+      return;
+    }
+
     if (Flat::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
       // no one should have given us preludes, they are on the children
       assert(preludes.find(curr) == preludes.end());
+
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -84,7 +92,7 @@ struct Flatten
         block->list.swap(newList);
         // remove a block return value
         auto type = block->type;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           // if there is a temp index for breaking to the block, use that
           Index temp;
           auto iter = breakTemps.find(block->name);
@@ -94,7 +102,7 @@ struct Flatten
             temp = builder.addVar(getFunction(), type);
           }
           auto*& last = block->list.back();
-          if (isConcreteType(last->type)) {
+          if (last->type.isConcrete()) {
             last = builder.makeLocalSet(temp, last);
           }
           block->finalize(Type::none);
@@ -105,7 +113,8 @@ struct Flatten
           ourPreludes.push_back(block);
         }
         // the block now has no return value, and may have become unreachable
-        block->finalize(Type::none);
+        block->finalize(none);
+
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
         auto* rep = getPreludesWithExpression(iff->condition, iff);
@@ -114,12 +123,12 @@ struct Flatten
         auto* originalIfFalse = iff->ifFalse;
         auto type = iff->type;
         Expression* prelude = nullptr;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
-          if (isConcreteType(iff->ifTrue->type)) {
+          if (iff->ifTrue->type.isConcrete()) {
             iff->ifTrue = builder.makeLocalSet(temp, iff->ifTrue);
           }
-          if (iff->ifFalse && isConcreteType(iff->ifFalse->type)) {
+          if (iff->ifFalse && iff->ifFalse->type.isConcrete()) {
             iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
@@ -138,12 +147,13 @@ struct Flatten
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
+
       } else if (auto* loop = curr->dynCast<Loop>()) {
         // remove a loop value
         Expression* rep = loop;
         auto* originalBody = loop->body;
         auto type = loop->type;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
           loop->body = builder.makeLocalSet(temp, loop->body);
           // and we leave just a get of the value
@@ -155,15 +165,18 @@ struct Flatten
         loop->body = getPreludesWithExpression(originalBody, loop->body);
         loop->finalize();
         replaceCurrent(rep);
+
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expr type");
       }
+
     } else {
       // for anything else, there may be existing preludes
       auto iter = preludes.find(curr);
       if (iter != preludes.end()) {
         ourPreludes.swap(iter->second);
       }
+
       // special handling
       if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
@@ -172,22 +185,53 @@ struct Flatten
             replaceCurrent(set->value); // trivial, no set happens
           } else {
             // use a set in a prelude + a get
-            set->setTee(false);
+            set->makeSet();
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
+            Type localType = getFunction()->getLocalType(set->index);
+            replaceCurrent(builder.makeLocalGet(set->index, localType));
           }
         }
+
       } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
-          if (isConcreteType(type)) {
+          if (type.isConcrete()) {
             // we are sending a value. use a local instead
-            Index temp = getTempForBreakTarget(br->name, type);
+            Type blockType = findBreakTarget(br->name)->type;
+            Index temp = getTempForBreakTarget(br->name, blockType);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
+
+            // br_if leaves a value on the stack if not taken, which later can
+            // be the last element of the enclosing innermost block and flow
+            // out. The local we created using 'getTempForBreakTarget' returns
+            // the return type of the block this branch is targetting, which may
+            // not be the same with the innermost block's return type. For
+            // example,
+            // (block $any (result anyref)
+            //   (block (result nullref)
+            //     (local.tee $0
+            //       (br_if $any
+            //         (ref.null)
+            //         (i32.const 0)
+            //       )
+            //     )
+            //   )
+            // )
+            // In this case we need two locals to store (ref.null); one with
+            // anyref type that's for the target block ($label0) and one more
+            // with nullref type in case for flowing out. Here we create the
+            // second 'flowing out' local in case two block's types are
+            // different.
+            if (type != blockType) {
+              temp = builder.addVar(getFunction(), type);
+              ourPreludes.push_back(builder.makeLocalSet(
+                temp, ExpressionManipulator::copy(br->value, *getModule())));
+            }
+
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
-              if (isConcreteType(br->type)) {
+              if (br->type.isConcrete()) {
                 replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
                 assert(br->type == Type::unreachable);
@@ -202,10 +246,11 @@ struct Flatten
             replaceCurrent(br->value);
           }
         }
+
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
-          if (isConcreteType(type)) {
+          if (type.isConcrete()) {
             // we are sending a value. use a local instead
             Index temp = builder.addVar(getFunction(), type);
             ourPreludes.push_back(builder.makeLocalSet(temp, sw->value));
@@ -226,28 +271,23 @@ struct Flatten
         }
       }
     }
+    // TODO Handle br_on_exn
+
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    // move everything to the prelude, if we need to: anything but constants
-    if (!curr->is<Const>()) {
-      if (curr->type == Type::unreachable) {
-        ourPreludes.push_back(curr);
-        replaceCurrent(builder.makeUnreachable());
-      } else if (curr->type == Type::none) {
-        if (!curr->is<Nop>()) {
-          ourPreludes.push_back(curr);
-          replaceCurrent(builder.makeNop());
-        }
-      } else {
-        // use a local
-        auto type = curr->type;
-        Index temp = builder.addVar(getFunction(), type);
-        ourPreludes.push_back(builder.makeLocalSet(temp, curr));
-        replaceCurrent(builder.makeLocalGet(temp, type));
-      }
+    if (curr->type == unreachable) {
+      ourPreludes.push_back(curr);
+      replaceCurrent(builder.makeUnreachable());
+    } else if (curr->type.isConcrete()) {
+      // use a local
+      auto type = curr->type;
+      Index temp = builder.addVar(getFunction(), type);
+      ourPreludes.push_back(builder.makeLocalSet(temp, curr));
+      replaceCurrent(builder.makeLocalGet(temp, type));
     }
+
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
@@ -266,7 +306,7 @@ struct Flatten
   void visitFunction(Function* curr) {
     auto* originalBody = curr->body;
     // if the body is a block with a result, turn that into a return
-    if (isConcreteType(curr->body->type)) {
+    if (curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeReturn(curr->body);
     }
     // the body may have preludes

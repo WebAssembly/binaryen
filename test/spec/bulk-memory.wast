@@ -36,8 +36,8 @@
 ;; Succeed when writing 0 bytes at the end of the region.
 (invoke "fill" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 
-;; OK to write 0 bytes outside of memory.
-(invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0))
+;; Writing 0 bytes outside of memory limit is NOT allowed.
+(assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
 
 ;; memory.copy
 (module
@@ -101,9 +101,9 @@
 (invoke "copy" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "copy" (i32.const 0) (i32.const 0x10000) (i32.const 0))
 
-;; OK copying 0 bytes outside of memory.
-(invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-(invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0))
+;; Copying 0 bytes outside of memory limit is NOT allowed.
+(assert_trap (invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
+(assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0)))
 
 ;; memory.init
 (module
@@ -128,19 +128,22 @@
 ;; Init ending at memory limit and segment limit is ok.
 (invoke "init" (i32.const 0xfffc) (i32.const 0) (i32.const 4))
 
-;; Out-of-bounds writes trap, but all previous writes succeed.
+;; Out-of-bounds writes trap, and no partial writes has been made.
 (assert_trap (invoke "init" (i32.const 0xfffe) (i32.const 0) (i32.const 3))
     "out of bounds memory access")
-(assert_return (invoke "load8_u" (i32.const 0xfffe)) (i32.const 0xaa))
-(assert_return (invoke "load8_u" (i32.const 0xffff)) (i32.const 0xbb))
+(assert_return (invoke "load8_u" (i32.const 0xfffe)) (i32.const 0xcc))
+(assert_return (invoke "load8_u" (i32.const 0xffff)) (i32.const 0xdd))
 
 ;; Succeed when writing 0 bytes at the end of either region.
 (invoke "init" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "init" (i32.const 0) (i32.const 4) (i32.const 0))
 
-;; OK writing 0 bytes outside of memory or segment.
-(invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-(invoke "init" (i32.const 0) (i32.const 5) (i32.const 0))
+;; Writing 0 bytes outside of memory / segment limit is NOT allowed.
+(assert_trap (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
+(assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0)))
+
+;; OK to access 0 bytes at offset 0 in a dropped segment.
+(invoke "init" (i32.const 0) (i32.const 0) (i32.const 0))
 
 ;; data.drop
 (module
@@ -157,9 +160,8 @@
     (memory.init 1 (i32.const 0) (i32.const 0) (i32.const 0)))
 )
 
+;; OK to drop the same segment multiple times or drop an active segment.
 (invoke "init_passive")
 (invoke "drop_passive")
-(assert_trap (invoke "drop_passive") "data segment dropped")
-(assert_trap (invoke "init_passive") "data segment dropped")
-(assert_trap (invoke "drop_active") "data segment dropped")
-(assert_trap (invoke "init_active") "data segment dropped")
+(invoke "drop_passive")
+(invoke "drop_active")

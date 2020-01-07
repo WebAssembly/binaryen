@@ -199,7 +199,7 @@ struct DeadCodeElimination
       reachableBreaks.erase(curr->name);
     }
     if (isUnreachable(curr->body) &&
-        !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
+        !BranchUtils::BranchSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -351,6 +351,12 @@ struct DeadCodeElimination
           DELEGATE(Push);
         case Expression::Id::PopId:
           DELEGATE(Pop);
+        case Expression::Id::RefNullId:
+          DELEGATE(RefNull);
+        case Expression::Id::RefIsNullId:
+          DELEGATE(RefIsNull);
+        case Expression::Id::RefFuncId:
+          DELEGATE(RefFunc);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:
@@ -360,9 +366,9 @@ struct DeadCodeElimination
         case Expression::Id::BrOnExnId:
           DELEGATE(BrOnExn);
         case Expression::Id::InvalidId:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
       }
 #undef DELEGATE
       return;

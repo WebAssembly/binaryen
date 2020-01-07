@@ -261,7 +261,6 @@
 #include "pass.h"
 #include "support/file.h"
 #include "support/string.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -405,7 +404,8 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info {
+  struct Info
+    : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -419,8 +419,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    std::set<Function*> callsTo;
-    std::set<Function*> calledBy;
+    bool inBlacklist = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -443,7 +442,7 @@ public:
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name.
-    ModuleUtils::ParallelFunctionMap<Info> scanner(
+    ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
@@ -482,9 +481,7 @@ public:
                 Fatal() << "call to unidenfied asyncify import: "
                         << target->base;
               }
-              return;
             }
-            info->callsTo.insert(target);
           }
           void visitCallIndirect(CallIndirect* curr) {
             if (curr->isReturn) {
@@ -515,51 +512,46 @@ public:
         }
       });
 
-    map.swap(scanner.map);
-
     // Functions in the blacklist are assumed to not change the state.
-    for (auto& name : blacklist.names) {
-      if (auto* func = module.getFunctionOrNull(name)) {
-        map[func].canChangeState = false;
-      }
-    }
-
-    // Remove the asyncify imports, if any.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      if (func->imported() && func->module == ASYNCIFY) {
-        module.removeFunction(func->name);
-      }
-    }
-
-    // Find what is called by what.
-    for (auto& pair : map) {
+    for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
-      for (auto* target : info.callsTo) {
-        map[target].calledBy.insert(func);
+      if (blacklist.match(func->name)) {
+        info.inBlacklist = true;
+        info.canChangeState = false;
       }
     }
 
-    // Close over, finding all functions that can reach something that can
-    // change the state.
-    // The work queue contains an item we just learned can change the state.
-    UniqueDeferredQueue<Function*> work;
-    for (auto& func : module.functions) {
-      if (map[func.get()].canChangeState) {
-        work.push(func.get());
+    // Remove the asyncify imports, if any, and any calls to them.
+    std::vector<Name> funcsToDelete;
+    for (auto& pair : scanner.map) {
+      auto* func = pair.first;
+      auto& callsTo = pair.second.callsTo;
+      if (func->imported() && func->module == ASYNCIFY) {
+        funcsToDelete.push_back(func->name);
       }
-    }
-    while (!work.empty()) {
-      auto* func = work.pop();
-      for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime &&
-            !blacklist.match(caller->name)) {
-          map[caller].canChangeState = true;
-          work.push(caller);
+      std::vector<Function*> callersToDelete;
+      for (auto* target : callsTo) {
+        if (target->imported() && target->module == ASYNCIFY) {
+          callersToDelete.push_back(target);
         }
       }
+      for (auto* target : callersToDelete) {
+        callsTo.erase(target);
+      }
     }
+    for (auto name : funcsToDelete) {
+      module.removeFunction(name);
+    }
+
+    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
+                          [](const Info& info) {
+                            return !info.isBottomMostRuntime &&
+                                   !info.inBlacklist;
+                          },
+                          [](Info& info) { info.canChangeState = true; });
+
+    map.swap(scanner.map);
 
     if (!whitelistInput.empty()) {
       // Only the functions in the whitelist can change the state.
@@ -714,7 +706,7 @@ struct AsyncifyFlow : public Pass {
                          State::Rewinding), // TODO: such checks can be !normal
                        makeCallIndexPop()),
        process(func->body)});
-    if (func->result != Type::none) {
+    if (func->sig.results != Type::none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
@@ -849,7 +841,7 @@ private:
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
     // std::cout << *curr << '\n';
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expression type");
   }
 
   // Possibly skip some code, if rewinding.
@@ -957,7 +949,7 @@ private:
                               builder->makeLocalGet(oldState, Type::i32)),
           builder->makeUnreachable());
         Expression* rep;
-        if (isConcreteType(call->type)) {
+        if (call->type.isConcrete()) {
           auto temp = builder->addVar(func, call->type);
           rep = builder->makeBlock({
             builder->makeLocalSet(temp, call),
@@ -1055,7 +1047,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
-    if (func->result == Type::none) {
+    if (func->sig.results == Type::none) {
       // The function may have ended without a return; ensure one.
       barrier = builder->makeReturn();
     } else {
@@ -1073,12 +1065,12 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
-    if (func->result != Type::none) {
+    if (func->sig.results != Type::none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
       newBody->list.push_back(
-        LiteralUtils::makeZero(func->result, *getModule()));
-      newBody->finalize(func->result);
+        LiteralUtils::makeZero(func->sig.results, *getModule()));
+      newBody->finalize(func->sig.results);
     }
     func->body = newBody;
     // Making things like returns conditional may alter types.
@@ -1100,7 +1092,7 @@ private:
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       total += size;
     }
     auto* block = builder->makeBlock();
@@ -1111,7 +1103,7 @@ private:
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
       block->list.push_back(builder->makeLocalSet(
@@ -1140,7 +1132,7 @@ private:
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
       block->list.push_back(
@@ -1334,7 +1326,7 @@ private:
                        builder.makeUnreachable()));
       body->finalize();
       auto* func = builder.makeFunction(
-        name, std::move(params), Type::none, std::vector<Type>{}, body);
+        name, Signature(Type(params), Type::none), {}, body);
       module->addFunction(func);
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };

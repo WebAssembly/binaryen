@@ -86,20 +86,22 @@ private:
         size = getWrittenSize(S64LEB(value.geti64()));
         break;
       }
-      case Type::f32:
-      case Type::f64: {
-        size = getTypeSize(value.type);
+      case f32:
+      case f64: {
+        size = value.type.getByteSize();
         break;
       }
-      case Type::v128:     // v128 not implemented yet
-      case Type::anyref:   // anyref cannot have literals
-      case Type::exnref: { // exnref cannot have literals
+      // not implemented yet
+      case v128:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref: {
         return false;
       }
-      case Type::none:
-      case Type::unreachable: {
-        WASM_UNREACHABLE();
-      }
+      case none:
+      case unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use
