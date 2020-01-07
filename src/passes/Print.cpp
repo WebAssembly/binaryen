@@ -90,7 +90,7 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
 static Type forceConcrete(Type type) {
-  return type.isConcrete() ? type : Type::i32;
+  return type.isConcrete() ? type : Type(Type::i32);
 }
 
 // Prints the internal contents of an expression: everything but

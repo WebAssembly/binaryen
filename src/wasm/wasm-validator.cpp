@@ -574,7 +574,7 @@ void FunctionValidator::noteBreak(Name name,
     shouldBeUnequal(
       value->type, Type(Type::none), curr, "breaks must have a valid value");
   }
-  noteBreak(name, value ? value->type : Type::none, curr);
+  noteBreak(name, value ? value->type : Type(Type::none), curr);
 }
 
 void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
@@ -1762,7 +1762,7 @@ void FunctionValidator::visitDrop(Drop* curr) {
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
-  returnTypes.insert(curr->value ? curr->value->type : Type::none);
+  returnTypes.insert(curr->value ? curr->value->type : Type(Type::none));
 }
 
 void FunctionValidator::visitHost(Host* curr) {

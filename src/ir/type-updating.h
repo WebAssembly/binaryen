@@ -172,7 +172,7 @@ struct TypeUpdater
 
   // note the addition of a node
   void noteBreakChange(Name name, int change, Expression* value) {
-    noteBreakChange(name, change, value ? value->type : Type::none);
+    noteBreakChange(name, change, value ? value->type : Type(Type::none));
   }
 
   void noteBreakChange(Name name, int change, Type type) {

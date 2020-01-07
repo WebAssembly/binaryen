@@ -160,7 +160,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Expression* value) {
-    noteFound(value ? value->type : Type::none);
+    noteFound(value ? value->type : Type(Type::none));
   }
 
   void noteFound(Type type) {

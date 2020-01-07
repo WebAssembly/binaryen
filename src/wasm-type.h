@@ -40,9 +40,13 @@ public:
     anyref,
     nullref,
     exnref,
-    _last_value_type,
   };
 
+private:
+  // This is not an enum member because we don't want to switch on it
+  static constexpr uint32_t last_value_type = exnref;
+
+public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
@@ -60,8 +64,8 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  bool isSingle() const { return id >= i32 && id < _last_value_type; }
-  bool isMulti() const { return id >= _last_value_type; }
+  bool isSingle() const { return id >= i32 && id <= last_value_type; }
+  bool isMulti() const { return id > last_value_type; }
   bool isConcrete() const { return id >= i32; }
   bool isInteger() const { return id == i32 || id == i64; }
   bool isFloat() const { return id == f32 || id == f64; }
@@ -81,7 +85,10 @@ public:
   bool operator<(const Type& other) const;
 
   // Allows for using Types in switch statements
-  constexpr operator uint32_t() const { return id; }
+  constexpr operator ValueType() const {
+    assert(isSingle() && "Unexpected multivalue type in switch");
+    return static_cast<ValueType>(id);
+  }
 
   // Returns the type size in bytes. Only single types are supported.
   unsigned getByteSize() const;

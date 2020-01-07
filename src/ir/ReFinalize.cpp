@@ -21,7 +21,7 @@
 namespace wasm {
 
 static Type getValueType(Expression* value) {
-  return value ? value->type : Type::none;
+  return value ? value->type : Type(Type::none);
 }
 
 namespace {

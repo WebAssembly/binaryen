@@ -2733,7 +2733,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         builder.makeCall(target[1]->getIString(), {}, Type::i32));
       return ret;
     } else if (what == RETURN) {
-      Type type = !!ast[1] ? detectWasmType(ast[1], &asmData) : Type::none;
+      Type type =
+        !!ast[1] ? detectWasmType(ast[1], &asmData) : Type(Type::none);
       if (seenReturn) {
         assert(function->sig.results == type);
       } else {

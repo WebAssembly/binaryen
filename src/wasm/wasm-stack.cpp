@@ -21,7 +21,8 @@ namespace wasm {
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Block);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                  : Type(Type::none));
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -30,7 +31,8 @@ void BinaryInstWriter::visitIf(If* curr) {
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::If);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                  : Type(Type::none));
 }
 
 void BinaryInstWriter::emitIfElse() {
@@ -43,7 +45,8 @@ void BinaryInstWriter::emitIfElse() {
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Loop);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                  : Type(Type::none));
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
@@ -1551,7 +1554,7 @@ void BinaryInstWriter::visitSelect(Select* curr) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
       o << binaryType(curr->type != Type::unreachable ? curr->type
-                                                      : Type::none);
+                                                      : Type(Type::none));
     }
   } else {
     o << int8_t(BinaryConsts::Select);
@@ -1592,7 +1595,8 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                  : Type(Type::none));
 }
 
 void BinaryInstWriter::emitCatch() {

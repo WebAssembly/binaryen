@@ -220,18 +220,18 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBreak(Break* curr) {
     if (curr->name == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
+      types.push_back(curr->value ? curr->value->type : Type(Type::none));
     }
   }
 
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
       if (name == targetName) {
-        types.push_back(curr->value ? curr->value->type : Type::none);
+        types.push_back(curr->value ? curr->value->type : Type(Type::none));
       }
     }
     if (curr->default_ == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
+      types.push_back(curr->value ? curr->value->type : Type(Type::none));
     }
   }
 
@@ -362,7 +362,7 @@ void If::finalize(Type type_) {
 
 void If::finalize() {
   type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
-                 : Type::none;
+                 : Type(Type::none);
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
