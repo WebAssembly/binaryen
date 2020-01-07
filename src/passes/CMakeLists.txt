@@ -1,9 +1,9 @@
 add_custom_command(
   OUTPUT WasmIntrinsics.cpp
-  COMMAND python ${PROJECT_SOURCE_DIR}/scripts/embedwast.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
-  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwast.py wasm-intrinsics.wast)
+  COMMAND python ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
-SET(passes_SOURCES
+set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
@@ -18,6 +18,7 @@ SET(passes_SOURCES
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
+  DWARF.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -40,18 +41,19 @@ SET(passes_SOURCES
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
+  PostAssemblyScript.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
+  RoundTrip.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
-  ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -60,6 +62,7 @@ SET(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  ReReloop.cpp
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
@@ -71,4 +74,4 @@ SET(passes_SOURCES
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
-ADD_LIBRARY(passes STATIC ${passes_SOURCES})
+add_library(passes OBJECT ${passes_SOURCES})

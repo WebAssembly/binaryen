@@ -1,26 +1,4 @@
 
-
-  var scratchBuffer = new ArrayBuffer(8);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
-  function wasm2js_scratch_store_i32(index, value) {
-    i32ScratchView[index] = value;
-  }
-      
-  function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
-  }
-      
-  function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
-  }
-      
-  function wasm2js_scratch_load_i32(index) {
-    return i32ScratchView[index];
-  }
-      
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
@@ -103,22 +81,6 @@ function asmFunc(global, env, buffer) {
   return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
  }
  
- function $11(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_abs(x)));
- }
- 
- function $12(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(-x));
- }
- 
- function $13(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
- }
- 
  function __wasm_nearest_f32(var$0) {
   var$0 = Math_fround(var$0);
   var var$1 = Math_fround(0), var$2 = Math_fround(0);
@@ -154,10 +116,7 @@ function asmFunc(global, env, buffer) {
   "ceil": $7, 
   "floor": $8, 
   "trunc": $9, 
-  "nearest": $10, 
-  "abs": $11, 
-  "neg": $12, 
-  "copysign": $13
+  "nearest": $10
  };
 }
 
@@ -174,6 +133,3 @@ export var ceil = retasmFunc.ceil;
 export var floor = retasmFunc.floor;
 export var trunc = retasmFunc.trunc;
 export var nearest = retasmFunc.nearest;
-export var abs = retasmFunc.abs;
-export var neg = retasmFunc.neg;
-export var copysign = retasmFunc.copysign;

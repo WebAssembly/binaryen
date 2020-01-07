@@ -1,10 +1,8 @@
 GetFunction is equal: true
-getFunctionTypeInfo={"params":[],"result":1}
-getFunctionInfo={"module":"","base":"","params":[],"result":1,"vars":[]}
+getFunctionInfo={"module":"","base":"","params":0,"results":2,"vars":[]}
 getExpressionInfo(body)={"id":14,"value":3}
 (i32.const 3)
 
 (module
- (type $i (func (result i32)))
 )
 

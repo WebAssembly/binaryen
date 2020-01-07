@@ -42,7 +42,7 @@ struct DuplicateImportElimination : public Pass {
         auto previousFunc = module->getFunction(previousName);
         // It is ok to import the same thing with multiple types; we can only
         // merge if the types match, of course.
-        if (getSig(previousFunc) == getSig(func)) {
+        if (previousFunc->sig == func->sig) {
           replacements[func->name] = previousName;
           toRemove.push_back(func->name);
           continue;

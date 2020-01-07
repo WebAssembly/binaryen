@@ -23,6 +23,8 @@
 #include <ir/import-utils.h>
 #include <ir/localize.h>
 #include <ir/memory-utils.h>
+#include <ir/module-utils.h>
+#include <ir/table-utils.h>
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
@@ -31,6 +33,8 @@
 namespace wasm {
 
 namespace {
+
+static bool isInvoke(Name name) { return name.startsWith("invoke_"); }
 
 struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
   bool isFunctionParallel() override { return true; }
@@ -106,6 +110,83 @@ struct PostEmscripten : public Pass {
 
     // Optimize calls
     OptimizeCalls().run(runner, module);
+
+    // Optimize exceptions
+    optimizeExceptions(runner, module);
+  }
+
+  // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.
+  // An invoke is a call to JS with a function pointer; JS does a try-catch
+  // and calls the pointer, catching and reporting any error. If we know no
+  // exception will be thrown, we can simply skip the invoke.
+  void optimizeExceptions(PassRunner* runner, Module* module) {
+    // First, check if this code even uses invokes.
+    bool hasInvokes = false;
+    for (auto& imp : module->functions) {
+      if (imp->imported() && imp->module == ENV && isInvoke(imp->base)) {
+        hasInvokes = true;
+      }
+    }
+    if (!hasInvokes) {
+      return;
+    }
+    // Next, see if the Table is flat, which we need in order to see where
+    // invokes go statically. (In dynamic linking, the table is not flat,
+    // and we can't do this.)
+    FlatTable flatTable(module->table);
+    if (!flatTable.valid) {
+      return;
+    }
+    // This code has exceptions. Find functions that definitely cannot throw,
+    // and remove invokes to them.
+    struct Info
+      : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+      bool canThrow = false;
+    };
+    ModuleUtils::CallGraphPropertyAnalysis<Info> analyzer(
+      *module, [&](Function* func, Info& info) {
+        if (func->imported()) {
+          // Assume any import can throw. We may want to reduce this to just
+          // longjmp/cxa_throw/etc.
+          info.canThrow = true;
+        }
+      });
+
+    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+                           [](const Info& info) { return true; },
+                           [](Info& info) { info.canThrow = true; });
+
+    // Apply the information.
+    struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
+      bool isFunctionParallel() override { return true; }
+
+      Pass* create() override { return new OptimizeInvokes(map, flatTable); }
+
+      std::map<Function*, Info>& map;
+      FlatTable& flatTable;
+
+      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable)
+        : map(map), flatTable(flatTable) {}
+
+      void visitCall(Call* curr) {
+        if (isInvoke(curr->target)) {
+          // The first operand is the function pointer index, which must be
+          // constant if we are to optimize it statically.
+          if (auto* index = curr->operands[0]->dynCast<Const>()) {
+            auto actualTarget = flatTable.names.at(index->value.geti32());
+            if (!map[getModule()->getFunction(actualTarget)].canThrow) {
+              // This invoke cannot throw! Make it a direct call.
+              curr->target = actualTarget;
+              for (Index i = 0; i < curr->operands.size() - 1; i++) {
+                curr->operands[i] = curr->operands[i + 1];
+              }
+              curr->operands.resize(curr->operands.size() - 1);
+            }
+          }
+        }
+      }
+    };
+    OptimizeInvokes(analyzer.map, flatTable).run(runner, module);
   }
 };
 

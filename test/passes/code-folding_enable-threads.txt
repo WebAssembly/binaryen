@@ -1,16 +1,16 @@
 (module
- (type $13 (func (param f32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$f (func (result f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_f32 (func (result f32)))
+ (type $f32_=>_none (func (param f32)))
  (memory $0 1 1)
  (table $0 282 282 funcref)
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;)
   (block $label$1
    (if
     (i32.const 1)
     (block
      (block $label$3
-      (call_indirect (type $13)
+      (call_indirect (type $f32_=>_none)
        (block $label$4
         (br $label$3)
        )
@@ -22,7 +22,7 @@
    )
   )
  )
- (func $negative-zero (; 1 ;) (type $FUNCSIG$f) (result f32)
+ (func $negative-zero (; 1 ;) (result f32)
   (if (result f32)
    (i32.const 0)
    (block $label$0 (result f32)
@@ -33,7 +33,7 @@
    )
   )
  )
- (func $negative-zero-b (; 2 ;) (type $FUNCSIG$f) (result f32)
+ (func $negative-zero-b (; 2 ;) (result f32)
   (drop
    (i32.const 0)
   )
@@ -41,7 +41,7 @@
    (f32.const -0)
   )
  )
- (func $negative-zero-c (; 3 ;) (type $FUNCSIG$f) (result f32)
+ (func $negative-zero-c (; 3 ;) (result f32)
   (drop
    (i32.const 0)
   )
@@ -49,7 +49,7 @@
    (f32.const 0)
   )
  )
- (func $break-target-outside-of-return-merged-code (; 4 ;) (type $FUNCSIG$v)
+ (func $break-target-outside-of-return-merged-code (; 4 ;)
   (block $label$A
    (if
     (unreachable)
@@ -80,7 +80,7 @@
    )
   )
  )
- (func $break-target-inside-all-good (; 5 ;) (type $FUNCSIG$v)
+ (func $break-target-inside-all-good (; 5 ;)
   (block $folding-inner0
    (block $label$A
     (if
@@ -106,7 +106,7 @@
   )
   (return)
  )
- (func $leave-inner-block-type (; 6 ;) (type $FUNCSIG$v)
+ (func $leave-inner-block-type (; 6 ;)
   (block $label$1
    (drop
     (block $label$2
@@ -124,10 +124,10 @@
  )
 )
 (module
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 1 1))
  (export "func_2224" (func $0))
- (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
+ (func $0 (; 0 ;) (result i32)
   (local $var$0 i32)
   (if (result i32)
    (i32.const 0)
@@ -141,10 +141,10 @@
  )
 )
 (module
- (type $0 (func))
- (type $FUNCSIG$vi (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (global $global$0 (mut i32) (i32.const 10))
- (func $determinism (; 0 ;) (type $0)
+ (func $determinism (; 0 ;)
   (block $folding-inner0
    (block
     (block $label$1
@@ -182,7 +182,7 @@
   )
   (unreachable)
  )
- (func $careful-of-the-switch (; 1 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $careful-of-the-switch (; 1 ;) (param $0 i32)
   (block $label$1
    (block $label$3
     (block $label$5

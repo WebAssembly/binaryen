@@ -93,7 +93,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
                                builder.makeLocalGet(local, PointerType),
                                builder.makeConst(Literal(int32_t(size))));
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unhandled PointerType");
   }
   block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
   auto makeStackRestore = [&]() {
@@ -128,10 +128,10 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     // no need to restore the old stack value, we're gone anyhow
   } else {
     // save the return value
-    auto temp = builder.addVar(func, func->result);
+    auto temp = builder.addVar(func, func->sig.results);
     block->list.push_back(builder.makeLocalSet(temp, func->body));
     block->list.push_back(makeStackRestore());
-    block->list.push_back(builder.makeLocalGet(temp, func->result));
+    block->list.push_back(builder.makeLocalGet(temp, func->sig.results));
   }
   block->finalize();
   func->body = block;

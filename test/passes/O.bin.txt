@@ -1,15 +1,14 @@
 (module
- (type $0 (func (param i64) (result i64)))
+ (type $i64_=>_i64 (func (param i64) (result i64)))
  (export "fac-rec" (func $0))
  (export "fac-rec-named" (func $1))
  (export "fac-iter" (func $2))
  (export "fac-iter-named" (func $3))
  (export "fac-opt" (func $4))
- (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
+ (func $0 (; 0 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (if (result i64)
-   (i64.eq
+   (i64.eqz
     (local.get $0)
-    (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
@@ -23,11 +22,10 @@
    )
   )
  )
- (func $1 (; 1 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
+ (func $1 (; 1 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (if (result i64)
-   (i64.eq
+   (i64.eqz
     (local.get $0)
-    (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
@@ -41,19 +39,20 @@
    )
   )
  )
- (func $2 (; 2 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
+ (func $2 (; 2 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (unreachable)
  )
- (func $3 (; 3 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
+ (func $3 (; 3 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (local $1 i64)
   (local.set $1
    (i64.const 1)
   )
   (loop $label$3
    (if
-    (i64.ne
-     (local.get $0)
-     (i64.const 0)
+    (i32.eqz
+     (i64.eqz
+      (local.get $0)
+     )
     )
     (block
      (local.set $1
@@ -74,7 +73,7 @@
   )
   (local.get $1)
  )
- (func $4 (; 4 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
+ (func $4 (; 4 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (local $1 i64)
   (local.set $1
    (i64.const 1)

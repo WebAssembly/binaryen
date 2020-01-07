@@ -187,6 +187,10 @@ inline Expression* getFallthrough(Expression* curr) {
   return curr;
 }
 
+inline bool isConstantExpression(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
+}
+
 } // namespace Properties
 
 } // namespace wasm

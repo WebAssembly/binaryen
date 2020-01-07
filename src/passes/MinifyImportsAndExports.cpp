@@ -41,8 +41,6 @@
 
 namespace wasm {
 
-static Name WASI_UNSTABLE("wasi_unstable");
-
 struct MinifyImportsAndExports : public Pass {
   bool minifyExports;
 
@@ -162,7 +160,7 @@ private:
       }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV || curr->module == WASI_UNSTABLE) {
+      if (curr->module == ENV || curr->module.startsWith("wasi_")) {
         process(curr->base);
       }
     };

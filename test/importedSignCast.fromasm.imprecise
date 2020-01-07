@@ -1,5 +1,6 @@
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "table" (table $table 1 1 funcref))
  (elem (global.get $__table_base) $gm)
  (import "env" "__table_base" (global $__table_base i32))

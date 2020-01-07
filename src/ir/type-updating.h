@@ -154,7 +154,7 @@ struct TypeUpdater
     } else if (auto* sw = curr->dynCast<Switch>()) {
       applySwitchChanges(sw, change);
     } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      noteBreakChange(br->name, change, br->getSingleSentType());
+      noteBreakChange(br->name, change, br->sent);
     }
   }
 
@@ -234,7 +234,7 @@ struct TypeUpdater
       // but exceptions exist
       if (auto* block = curr->dynCast<Block>()) {
         // if the block has a fallthrough, it can keep its type
-        if (isConcreteType(block->list.back()->type)) {
+        if (block->list.back()->type.isConcrete()) {
           return; // did not turn
         }
         // if the block has breaks, it can keep its type
@@ -249,6 +249,11 @@ struct TypeUpdater
         if (curr->type != unreachable) {
           return; // did not turn
         }
+      } else if (auto* tryy = curr->dynCast<Try>()) {
+        tryy->finalize();
+        if (curr->type != unreachable) {
+          return; // did not turn
+        }
       } else {
         curr->type = unreachable;
       }
@@ -260,7 +265,7 @@ struct TypeUpdater
   // unreachable, and it does this efficiently, without scanning the full
   // contents
   void maybeUpdateTypeToUnreachable(Block* curr) {
-    if (!isConcreteType(curr->type)) {
+    if (!curr->type.isConcrete()) {
       return; // nothing concrete to change to unreachable
     }
     if (curr->name.is() && blockInfos[curr->name].numBreaks > 0) {
@@ -274,7 +279,7 @@ struct TypeUpdater
     if (curr->type == unreachable) {
       return; // no change possible
     }
-    if (!curr->list.empty() && isConcreteType(curr->list.back()->type)) {
+    if (!curr->list.empty() && curr->list.back()->type.isConcrete()) {
       // should keep type due to fallthrough, even if has an unreachable child
       return;
     }
@@ -291,7 +296,17 @@ struct TypeUpdater
   // can remove a concrete type and turn the if unreachable when it is
   // unreachable
   void maybeUpdateTypeToUnreachable(If* curr) {
-    if (!isConcreteType(curr->type)) {
+    if (!curr->type.isConcrete()) {
+      return; // nothing concrete to change to unreachable
+    }
+    curr->finalize();
+    if (curr->type == unreachable) {
+      propagateTypesUp(curr);
+    }
+  }
+
+  void maybeUpdateTypeToUnreachable(Try* curr) {
+    if (!curr->type.isConcrete()) {
       return; // nothing concrete to change to unreachable
     }
     curr->finalize();

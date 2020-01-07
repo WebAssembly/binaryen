@@ -1,17 +1,17 @@
 (module
- (type $0 (func))
- (type $1 (func (param i32)))
- (type $2 (func (result f32)))
- (type $3 (func (result i32)))
- (type $4 (func (param i32 f64 i32 i32)))
- (type $FUNCSIG$d (func (result f64)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $i32_f64_i32_i32_=>_none (func (param i32 f64 i32 i32)))
+ (type $none_=>_f64 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
  (memory $0 256 256)
  (global $Int i32 (i32.const 0))
- (func $b (; 1 ;) (type $0)
+ (func $b (; 1 ;)
   (nop)
  )
- (func $l (; 2 ;) (type $0)
+ (func $l (; 2 ;)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -24,15 +24,15 @@
    (local.get $y)
   )
  )
- (func $loopy (; 3 ;) (type $1) (param $0 i32)
+ (func $loopy (; 3 ;) (param $0 i32)
   (nop)
  )
- (func $unary (; 4 ;) (type $2) (result f32)
+ (func $unary (; 4 ;) (result f32)
   (f32.abs
    (unreachable)
   )
  )
- (func $binary (; 5 ;) (type $2) (result f32)
+ (func $binary (; 5 ;) (result f32)
   (drop
    (f32.add
     (unreachable)
@@ -40,7 +40,7 @@
    )
   )
  )
- (func $select (; 6 ;) (type $3) (result i32)
+ (func $select (; 6 ;) (result i32)
   (drop
    (select
     (unreachable)
@@ -49,16 +49,16 @@
    )
   )
  )
- (func $block-to-one (; 7 ;) (type $0)
+ (func $block-to-one (; 7 ;)
   (unreachable)
  )
- (func $recurse (; 8 ;) (type $0)
+ (func $recurse (; 8 ;)
   (nop)
  )
- (func $func-block (; 9 ;) (type $0)
+ (func $func-block (; 9 ;)
   (nop)
  )
- (func $Gu (; 10 ;) (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
+ (func $Gu (; 10 ;) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
   (if
    (if (result i32)
     (local.get $d)
@@ -80,7 +80,7 @@
    (unreachable)
   )
  )
- (func $if-drop (; 11 ;) (type $3) (result i32)
+ (func $if-drop (; 11 ;) (result i32)
   (block $out
    (if
     (call $if-drop)
@@ -99,7 +99,7 @@
   )
   (i32.const 1)
  )
- (func $drop-silly (; 12 ;) (type $0)
+ (func $drop-silly (; 12 ;)
   (drop
    (call $int)
   )
@@ -116,21 +116,21 @@
    )
   )
  )
- (func $drop-get-global (; 13 ;) (type $0)
+ (func $drop-get-global (; 13 ;)
   (call $drop-get-global)
  )
- (func $relooperJumpThreading1 (; 14 ;) (type $0)
+ (func $relooperJumpThreading1 (; 14 ;)
   (local $$vararg_ptr5 i32)
   (local $$11 i32)
   (nop)
  )
- (func $relooperJumpThreading2 (; 15 ;) (type $0)
+ (func $relooperJumpThreading2 (; 15 ;)
   (nop)
  )
- (func $relooperJumpThreading3 (; 16 ;) (type $0)
+ (func $relooperJumpThreading3 (; 16 ;)
   (nop)
  )
- (func $if2drops (; 17 ;) (type $3) (result i32)
+ (func $if2drops (; 17 ;) (result i32)
   (drop
    (if (result i32)
     (call $if2drops)
@@ -140,7 +140,7 @@
   )
   (i32.const 2)
  )
- (func $if2drops-different (; 18 ;) (type $3) (result i32)
+ (func $if2drops-different (; 18 ;) (result i32)
   (if
    (call $if2drops)
    (drop
@@ -152,7 +152,7 @@
   )
   (i32.const 2)
  )
- (func $if-const (; 19 ;) (type $1) (param $x i32)
+ (func $if-const (; 19 ;) (param $x i32)
   (call $if-const
    (i32.const 3)
   )
@@ -163,7 +163,7 @@
    (i32.const 7)
   )
  )
- (func $drop-if-both-unreachable (; 20 ;) (type $1) (param $0 i32)
+ (func $drop-if-both-unreachable (; 20 ;) (param $0 i32)
   (block $out
    (drop
     (if (result i32)
@@ -181,7 +181,7 @@
    )
   )
  )
- (func $if-1-block (; 21 ;) (type $1) (param $x i32)
+ (func $if-1-block (; 21 ;) (param $x i32)
   (block $out
    (if
     (local.get $x)
@@ -194,7 +194,7 @@
    )
   )
  )
- (func $block-resize-br-gone (; 22 ;) (type $0)
+ (func $block-resize-br-gone (; 22 ;)
   (block $out
    (block $in
     (call $block-resize-br-gone)
@@ -203,11 +203,11 @@
    (return)
   )
  )
- (func $block-unreachable-but-last-element-concrete (; 23 ;) (type $0)
+ (func $block-unreachable-but-last-element-concrete (; 23 ;)
   (local $2 i32)
   (nop)
  )
- (func $a (; 24 ;) (type $0)
+ (func $a (; 24 ;)
   (block $block
    (i32.store
     (i32.const 1)
@@ -221,7 +221,7 @@
    )
   )
  )
- (func $leave-block-even-if-br-not-taken (; 25 ;) (type $FUNCSIG$d) (result f64)
+ (func $leave-block-even-if-br-not-taken (; 25 ;) (result f64)
   (block $label$0 (result f64)
    (f64.store align=1
     (i32.const 879179022)
@@ -234,19 +234,19 @@
    )
   )
  )
- (func $executed-if-in-block (; 26 ;) (type $0)
+ (func $executed-if-in-block (; 26 ;)
   (unreachable)
  )
- (func $executed-if-in-block2 (; 27 ;) (type $0)
+ (func $executed-if-in-block2 (; 27 ;)
   (unreachable)
  )
- (func $executed-if-in-block3 (; 28 ;) (type $0)
+ (func $executed-if-in-block3 (; 28 ;)
   (block $label$0
    (br $label$0)
   )
   (unreachable)
  )
- (func $load-may-have-side-effects (; 29 ;) (type $3) (result i32)
+ (func $load-may-have-side-effects (; 29 ;) (result i32)
   (i64.ge_s
    (block $block (result i64)
     (drop
@@ -259,7 +259,7 @@
    (i64.const 0)
   )
  )
- (func $unary-binary-may-trap (; 30 ;) (type $0)
+ (func $unary-binary-may-trap (; 30 ;)
   (drop
    (i64.div_s
     (i64.const -1)
@@ -272,7 +272,7 @@
    )
   )
  )
- (func $unreachable-if-with-nop-arm-that-leaves-a-concrete-value-if-nop-is-removed (; 31 ;) (type $0)
+ (func $unreachable-if-with-nop-arm-that-leaves-a-concrete-value-if-nop-is-removed (; 31 ;)
   (block $label$0
    (loop $label$1
     (drop
@@ -285,32 +285,32 @@
    )
   )
  )
- (func $if-arm-vanishes (; 32 ;) (type $3) (result i32)
+ (func $if-arm-vanishes (; 32 ;) (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (i32.const 1)
    )
   )
  )
- (func $if-arm-vanishes-2 (; 33 ;) (type $3) (result i32)
+ (func $if-arm-vanishes-2 (; 33 ;) (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (i32.const 1)
    )
   )
  )
- (func $nop-if-type-changes (; 34 ;) (type $0)
+ (func $nop-if-type-changes (; 34 ;)
   (local $0 i32)
   (nop)
  )
 )
 (module
- (type $0 (func (param i64)))
- (type $1 (func (param f32 i32) (result i32)))
- (func $0 (; 0 ;) (type $0) (param $0 i64)
+ (type $i64_=>_none (func (param i64)))
+ (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
+ (func $0 (; 0 ;) (param $0 i64)
   (nop)
  )
- (func $1 (; 1 ;) (type $1) (param $0 f32) (param $1 i32) (result i32)
+ (func $1 (; 1 ;) (param $0 f32) (param $1 i32) (result i32)
   (drop
    (block $label$2 (result i64)
     (call $0
@@ -326,27 +326,27 @@
  )
 )
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$viii (func (param i32 i32 i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (memory $0 1 1)
  (global $global$1 (mut i32) (i32.const 0))
  (export "compress" (func $3))
- (func $_deflate (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $_deflate (; 0 ;) (param $0 i32) (result i32)
   (call $_deflate
    (local.get $0)
   )
  )
- (func $_deflateInit2_ (; 1 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $_deflateInit2_ (; 1 ;) (param $0 i32) (result i32)
   (call $_deflateInit2_
    (local.get $0)
   )
  )
- (func $_deflateEnd (; 2 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $_deflateEnd (; 2 ;) (param $0 i32) (result i32)
   (call $_deflateEnd
    (local.get $0)
   )
  )
- (func $3 (; 3 ;) (type $FUNCSIG$viii) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $3 (; 3 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (global.get $global$1)

@@ -102,7 +102,7 @@ struct ReReloop final : public Pass {
   struct Task {
     ReReloop& parent;
     Task(ReReloop& parent) : parent(parent) {}
-    virtual void run() { WASM_UNREACHABLE(); }
+    virtual void run() { WASM_UNREACHABLE("unimpl"); }
   };
 
   typedef std::shared_ptr<Task> TaskPtr;
@@ -200,7 +200,7 @@ struct ReReloop final : public Pass {
         parent.addBranch(ifTrueEnd, after);
         parent.addBranch(ifFalseEnd, after);
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid phase");
       }
     }
   };
@@ -321,7 +321,7 @@ struct ReReloop final : public Pass {
     for (auto* cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
-        block->list.push_back(function->result == none
+        block->list.push_back(function->sig.results == Type::none
                                 ? (Expression*)builder->makeReturn()
                                 : (Expression*)builder->makeUnreachable());
         block->finalize();
@@ -354,7 +354,8 @@ struct ReReloop final : public Pass {
       // because of the relooper's boilerplate switch-handling
       // code, for example, which could be optimized out later
       // but isn't yet), then make sure it has a proper type
-      if (function->result != none && function->body->type == none) {
+      if (function->sig.results != Type::none &&
+          function->body->type == Type::none) {
         function->body =
           builder.makeSequence(function->body, builder.makeUnreachable());
       }

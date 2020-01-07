@@ -109,6 +109,18 @@ function asmFunc(global, env, buffer) {
  }
  
  function $6() {
+  var $2_1 = 0;
+  loop_in : while (1) {
+   if (0) {
+    continue loop_in
+   }
+   $2_1 = 3;
+   break loop_in;
+  };
+  return $2_1 | 0;
+ }
+ 
+ function $7() {
   var i = 0;
   i = 0;
   block_1 : {
@@ -136,7 +148,7 @@ function asmFunc(global, env, buffer) {
   return i | 0;
  }
  
- function $7() {
+ function $8() {
   var i = 0;
   i = 0;
   block_1 : {
@@ -164,7 +176,7 @@ function asmFunc(global, env, buffer) {
   return i | 0;
  }
  
- function $8($0_1) {
+ function $9($0_1) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0;
   ret : {
@@ -190,7 +202,7 @@ function asmFunc(global, env, buffer) {
   return $3_1 | 0;
  }
  
- function $9($0_1) {
+ function $10($0_1) {
   $0_1 = $0_1 | 0;
   $1_1 : {
    switch ($0_1 | 0) {
@@ -203,7 +215,7 @@ function asmFunc(global, env, buffer) {
   return 2 | 0;
  }
  
- function $10() {
+ function $11() {
   var i = 0, $10_1 = 0;
   i = 0;
   outer : {
@@ -234,7 +246,7 @@ function asmFunc(global, env, buffer) {
   return $10_1 | 0;
  }
  
- function $11() {
+ function $12() {
   var $2_1 = 0, $0_1 = 0;
   l0 : {
    l1 : {
@@ -245,12 +257,12 @@ function asmFunc(global, env, buffer) {
    if (1) {
     break l0
    }
-   $2_1 = 1;
+   $2_1 = 0;
   }
   return $2_1 | 0;
  }
  
- function $12() {
+ function $13() {
   var $2_1 = 0, $0_1 = 0;
   l0 : {
    l1 : {
@@ -258,12 +270,15 @@ function asmFunc(global, env, buffer) {
     break l1;
    }
    $2_1 = $0_1;
-   break l0;
+   if (1) {
+    break l0
+   }
+   $2_1 = 0;
   }
   return $2_1 | 0;
  }
  
- function $13() {
+ function $14() {
   var i1 = 0, $7_1 = 0, $3_1 = 0;
   l0 : {
    i1 = 1;
@@ -278,7 +293,7 @@ function asmFunc(global, env, buffer) {
   return i1 | 0;
  }
  
- function $14() {
+ function $15() {
   var $2_1 = 0, $0_1 = 0, $3_1 = 0;
   l0 : {
    l1 : {
@@ -291,7 +306,7 @@ function asmFunc(global, env, buffer) {
   return $2_1 | 0;
  }
  
- function $15() {
+ function $16() {
   var $0_1 = 0;
   l1 : {
    $0_1 = 1;
@@ -300,7 +315,7 @@ function asmFunc(global, env, buffer) {
   return $0_1 | 0;
  }
  
- function $16() {
+ function $17() {
   var $1_2 = 0, $2_1 = 0;
   l1 : {
    $1_2 = 2;
@@ -320,17 +335,18 @@ function asmFunc(global, env, buffer) {
   "loop3": $3, 
   "loop4": $4, 
   "loop5": $5, 
-  "if_": $6, 
-  "if2": $7, 
-  "switch_": $8, 
-  "return_": $9, 
-  "br_if0": $10, 
-  "br_if1": $11, 
-  "br_if2": $12, 
-  "br_if3": $13, 
-  "br": $14, 
-  "shadowing": $15, 
-  "redefinition": $16
+  "loop6": $6, 
+  "if_": $7, 
+  "if2": $8, 
+  "switch_": $9, 
+  "return_": $10, 
+  "br_if0": $11, 
+  "br_if1": $12, 
+  "br_if2": $13, 
+  "br_if3": $14, 
+  "br": $15, 
+  "shadowing": $16, 
+  "redefinition": $17
  };
 }
 
@@ -342,6 +358,7 @@ export var loop2 = retasmFunc.loop2;
 export var loop3 = retasmFunc.loop3;
 export var loop4 = retasmFunc.loop4;
 export var loop5 = retasmFunc.loop5;
+export var loop6 = retasmFunc.loop6;
 export var if_ = retasmFunc.if_;
 export var if2 = retasmFunc.if2;
 export var switch_ = retasmFunc.switch_;

@@ -83,8 +83,16 @@ class BinaryInstWriter : public OverriddenVisitor<BinaryInstWriter> {
 public:
   BinaryInstWriter(WasmBinaryWriter& parent,
                    BufferWithRandomAccess& o,
-                   Function* func)
-    : parent(parent), o(o), func(func) {}
+                   Function* func,
+                   bool sourceMap)
+    : parent(parent), o(o), func(func), sourceMap(sourceMap) {}
+
+  void visit(Expression* curr) {
+    if (func && !sourceMap) {
+      parent.writeDebugLocation(curr, func);
+    }
+    OverriddenVisitor<BinaryInstWriter>::visit(curr);
+  }
 
   void visitBlock(Block* curr);
   void visitIf(If* curr);
@@ -120,6 +128,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -144,6 +155,8 @@ private:
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
   Function* func = nullptr;
+  bool sourceMap;
+
   std::vector<Name> breakStack;
 
   // type => number of locals of that type in the compact form
@@ -197,6 +210,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -237,7 +253,7 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+  if (!block || BranchUtils::BranchSeeker::has(block, block->name)) {
     visit(curr);
     return;
   }
@@ -688,6 +704,30 @@ void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
   emit(curr);
 }
 
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefNull(RefNull* curr) {
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefIsNull(RefIsNull* curr) {
+  visit(curr->value);
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefFunc(RefFunc* curr) {
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
@@ -739,14 +779,12 @@ void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
-  // Turns into nothing in the binary format: leave the child on the stack for
-  // others to use.
   visit(curr->value);
+  emit(curr);
 }
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
-  // Turns into nothing in the binary format: just get a value that is already
-  // on the stack.
+  emit(curr);
 }
 
 // Binaryen IR to binary writer
@@ -758,7 +796,7 @@ public:
                            Function* func = nullptr,
                            bool sourceMap = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func), sourceMap(sourceMap) {}
+      writer(parent, o, func, sourceMap), sourceMap(sourceMap) {}
 
   void visit(Expression* curr) {
     BinaryenIRWriter<BinaryenIRToBinaryWriter>::visit(curr);
@@ -833,7 +871,7 @@ public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
                         Function* func)
-    : writer(parent, o, func), func(func) {}
+    : writer(parent, o, func, false /* sourceMap */), func(func) {}
 
   void write();
 

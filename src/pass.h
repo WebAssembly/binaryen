@@ -153,6 +153,7 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  void setOptions(PassOptions newOptions) { options = newOptions; }
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging
@@ -253,13 +254,15 @@ public:
   virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) { WASM_UNREACHABLE(); }
+  virtual void run(PassRunner* runner, Module* module) {
+    WASM_UNREACHABLE("unimplemented");
+  }
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
   virtual void
   runOnFunction(PassRunner* runner, Module* module, Function* function) {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unimplemented");
   }
 
   // Function parallelism. By default, passes are not run in parallel, but you
@@ -267,7 +270,7 @@ public:
   // should always be safe *unless* you do something in the pass that makes it
   // not thread-safe; in other words, the Module and Function objects and
   // so forth are set up so that Functions can be processed in parallel, so
-  // if you do not ad global state that could be raced on, your pass could be
+  // if you do not add global state that could be raced on, your pass could be
   // function-parallel.
   //
   // Function-parallel passes create an instance of the Walker class per
@@ -284,7 +287,7 @@ public:
   // This method is used to create instances per function for a
   // function-parallel pass. You may need to override this if you subclass a
   // Walker, as otherwise this will create the parent class.
-  virtual Pass* create() { WASM_UNREACHABLE(); }
+  virtual Pass* create() { WASM_UNREACHABLE("unimplenented"); }
 
   // Whether this pass modifies the Binaryen IR in the module. This is true for
   // most passes, except for passes that have no side effects, or passes that

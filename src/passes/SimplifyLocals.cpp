@@ -256,7 +256,7 @@ struct SimplifyLocals
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
-        set->setTee(true);
+        set->makeTee(this->getFunction()->getLocalType(set->index));
       }
       // reuse the local.get that is dying
       *found->second.item = curr;
@@ -271,7 +271,7 @@ struct SimplifyLocals
     auto* set = curr->value->dynCast<LocalSet>();
     if (set) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       this->replaceCurrent(set);
     }
   }
@@ -546,7 +546,6 @@ struct SimplifyLocals
     auto* blockLocalSetPointer = sinkables.at(sharedIndex).item;
     auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
-    block->type = value->type;
     ExpressionManipulator::nop(*blockLocalSetPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
@@ -559,7 +558,7 @@ struct SimplifyLocals
       auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
-        set->setTee(true);
+        set->makeTee(this->getFunction()->getLocalType(set->index));
         *breakLocalSetPointer =
           this->getModule()->allocator.template alloc<Nop>();
         // in addition, as this is a conditional br that now has a value, it now
@@ -577,6 +576,7 @@ struct SimplifyLocals
     this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
+    block->finalize();
   }
 
   // optimize local.sets from both sides of an if into a return value
@@ -728,7 +728,8 @@ struct SimplifyLocals
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(set->index, set->value->type);
+    iff->ifFalse = builder.makeLocalGet(
+      set->index, this->getFunction()->getLocalType(set->index));
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
@@ -911,6 +912,7 @@ struct SimplifyLocals
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
+        Function* func = this->getFunction();
         while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
@@ -925,7 +927,8 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
-          } else {
+          } else if (func->getLocalType(curr->index) ==
+                     func->getLocalType(get->index)) {
             // There is a new equivalence now.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);

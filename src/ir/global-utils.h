@@ -52,6 +52,12 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
   });
   return ret;
 }
+
+inline bool canInitializeGlobal(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
+         curr->is<GlobalGet>();
+}
+
 } // namespace GlobalUtils
 
 } // namespace wasm

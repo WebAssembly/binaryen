@@ -1,9 +1,9 @@
 (module
- (type $0 (func (param f32 f32) (result f32)))
- (type $1 (func (param f64 f64) (result f64)))
+ (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (export "f32.compute_radix" (func $0))
  (export "f64.compute_radix" (func $1))
- (func $0 (; 0 ;) (type $0) (param $0 f32) (param $1 f32) (result f32)
+ (func $0 (; 0 ;) (param $0 f32) (param $1 f32) (result f32)
   (block $label$1
    (loop $label$2
     (br_if $label$2
@@ -46,7 +46,7 @@
    )
   )
  )
- (func $1 (; 1 ;) (type $1) (param $0 f64) (param $1 f64) (result f64)
+ (func $1 (; 1 ;) (param $0 f64) (param $1 f64) (result f64)
   (block $label$1 (result f64)
    (loop $label$2
     (br_if $label$2

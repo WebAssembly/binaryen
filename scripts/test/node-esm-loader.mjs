@@ -23,13 +23,13 @@ export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
     const resolved = new URL('./scripts/test/' + specifier + '.js', baseURL);
     return {
       url: resolved.href,
-      format: 'esm'
+      format: 'module'
     };
   }
 
   const resolved = new URL(specifier, parentModuleURL);
   return {
     url: resolved.href,
-    format: 'esm'
+    format: 'module'
   };
 }

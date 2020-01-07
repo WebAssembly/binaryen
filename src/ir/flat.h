@@ -56,6 +56,7 @@
 #define wasm_ir_flat_h
 
 #include "ir/iteration.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -64,7 +65,8 @@ namespace wasm {
 namespace Flat {
 
 inline bool isControlFlowStructure(Expression* curr) {
-  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
+  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
+         curr->is<Try>();
 }
 
 inline void verifyFlatness(Function* func) {
@@ -73,16 +75,16 @@ inline void verifyFlatness(Function* func) {
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
       if (isControlFlowStructure(curr)) {
-        verify(!isConcreteType(curr->type),
+        verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (curr->is<LocalSet>()) {
-        verify(!isConcreteType(curr->type), "tees are not allowed, only sets");
+        verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<LocalGet>() ||
-                   child->is<Unreachable>(),
-                 "instructions must only have const, local.get, or unreachable "
-                 "as children");
+          verify(Properties::isConstantExpression(child) ||
+                   child->is<LocalGet>() || child->is<Unreachable>(),
+                 "instructions must only have constant expressions, local.get, "
+                 "or unreachable as children");
         }
       }
     }
@@ -98,7 +100,7 @@ inline void verifyFlatness(Function* func) {
   VerifyFlatness verifier;
   verifier.walkFunction(func);
   verifier.setFunction(func);
-  verifier.verify(!isConcreteType(func->body->type),
+  verifier.verify(!func->body->type.isConcrete(),
                   "function bodies must not flow values");
 }
 

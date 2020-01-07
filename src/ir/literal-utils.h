@@ -39,6 +39,10 @@ inline Expression* makeZero(Type type, Module& wasm) {
     return builder.makeUnary(SplatVecI32x4,
                              builder.makeConst(Literal(int32_t(0))));
   }
+  if (type.isRef()) {
+    Builder builder(wasm);
+    return builder.makeRefNull();
+  }
   return makeFromInt32(0, type, wasm);
 }
 

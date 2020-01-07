@@ -9,6 +9,19 @@
   (func (export "type-f32") (drop (f32.neg (return))))
   (func (export "type-f64") (drop (f64.neg (return))))
 
+  (func (export "type-i32-value") (result i32)
+    (block (result i32) (i32.ctz (return (i32.const 1))))
+  )
+  (func (export "type-i64-value") (result i64)
+    (block (result i64) (i64.ctz (return (i64.const 2))))
+  )
+  (func (export "type-f32-value") (result f32)
+    (block (result f32) (f32.neg (return (f32.const 3))))
+  )
+  (func (export "type-f64-value") (result f64)
+    (block (result f64) (f64.neg (return (f64.const 4))))
+  )
+
   (func (export "nullary") (return))
   (func (export "unary") (result f64) (return (f64.const 3)))
 
@@ -35,43 +48,47 @@
     (block (nop) (call $dummy) (return))
   )
   (func (export "as-block-value") (result i32)
-    (block i32 (nop) (call $dummy) (return (i32.const 2)))
+    (block (result i32) (nop) (call $dummy) (return (i32.const 2)))
   )
 
   (func (export "as-loop-first") (result i32)
-    (loop i32 (return (i32.const 3)) (i32.const 2))
+    (loop (result i32) (return (i32.const 3)) (i32.const 2))
   )
   (func (export "as-loop-mid") (result i32)
-    (loop i32 (call $dummy) (return (i32.const 4)) (i32.const 2))
+    (loop (result i32) (call $dummy) (return (i32.const 4)) (i32.const 2))
   )
   (func (export "as-loop-last") (result i32)
-    (loop i32 (nop) (call $dummy) (return (i32.const 5)))
+    (loop (result i32) (nop) (call $dummy) (return (i32.const 5)))
   )
 
   (func (export "as-br-value") (result i32)
-    (block i32 (br 0 (return (i32.const 9))))
+    (block (result i32) (br 0 (return (i32.const 9))))
   )
 
   (func (export "as-br_if-cond")
     (block (br_if 0 (return)))
   )
   (func (export "as-br_if-value") (result i32)
-    (block i32 (br_if 0 (return (i32.const 8)) (i32.const 1)) (i32.const 7))
+    (block (result i32)
+      (drop (br_if 0 (return (i32.const 8)) (i32.const 1))) (i32.const 7)
+    )
   )
   (func (export "as-br_if-value-cond") (result i32)
-    (block i32 (drop (br_if 0 (i32.const 6) (return (i32.const 9)))) (i32.const 7))
+    (block (result i32)
+      (drop (br_if 0 (i32.const 6) (return (i32.const 9)))) (i32.const 7)
+    )
   )
 
   (func (export "as-br_table-index") (result i64)
     (block (br_table 0 0 0 (return (i64.const 9)))) (i64.const -1)
   )
   (func (export "as-br_table-value") (result i32)
-    (block i32
+    (block (result i32)
       (br_table 0 0 0 (return (i32.const 10)) (i32.const 1)) (i32.const 7)
     )
   )
   (func (export "as-br_table-value-index") (result i32)
-    (block i32
+    (block (result i32)
       (br_table 0 0 (i32.const 6) (return (i32.const 11))) (i32.const 7)
     )
   )
@@ -81,13 +98,19 @@
   )
 
   (func (export "as-if-cond") (result i32)
-    (if i32 (return (i32.const 2)) (i32.const 0) (i32.const 1))
+    (if (result i32)
+      (return (i32.const 2)) (then (i32.const 0)) (else (i32.const 1))
+    )
   )
   (func (export "as-if-then") (param i32 i32) (result i32)
-    (if i32 (local.get 0) (return (i32.const 3)) (local.get 1))
+    (if (result i32)
+      (local.get 0) (then (return (i32.const 3))) (else (local.get 1))
+    )
   )
   (func (export "as-if-else") (param i32 i32) (result i32)
-    (if i32 (local.get 0) (local.get 1) (return (i32.const 4)))
+    (if (result i32)
+      (local.get 0) (then (local.get 1)) (else (return (i32.const 4)))
+    )
   )
 
   (func (export "as-select-first") (param i32 i32) (result i32)
@@ -114,20 +137,35 @@
   (type $sig (func (param i32 i32 i32) (result i32)))
   (table funcref (elem $f))
   (func (export "as-call_indirect-func") (result i32)
-    (call_indirect (type $sig) (return (i32.const 20)) (i32.const 1) (i32.const 2) (i32.const 3))
+    (call_indirect (type $sig)
+      (return (i32.const 20)) (i32.const 1) (i32.const 2) (i32.const 3)
+    )
   )
   (func (export "as-call_indirect-first") (result i32)
-    (call_indirect (type $sig) (i32.const 0) (return (i32.const 21)) (i32.const 2) (i32.const 3))
+    (call_indirect (type $sig)
+      (i32.const 0) (return (i32.const 21)) (i32.const 2) (i32.const 3)
+    )
   )
   (func (export "as-call_indirect-mid") (result i32)
-    (call_indirect (type $sig) (i32.const 0) (i32.const 1) (return (i32.const 22)) (i32.const 3))
+    (call_indirect (type $sig)
+      (i32.const 0) (i32.const 1) (return (i32.const 22)) (i32.const 3)
+    )
   )
   (func (export "as-call_indirect-last") (result i32)
-    (call_indirect (type $sig) (i32.const 0) (i32.const 1) (i32.const 2) (return (i32.const 23)))
+    (call_indirect (type $sig)
+      (i32.const 0) (i32.const 1) (i32.const 2) (return (i32.const 23))
+    )
   )
 
   (func (export "as-local.set-value") (result i32) (local f32)
     (local.set 0 (return (i32.const 17))) (i32.const -1)
+  )
+  (func (export "as-local.tee-value") (result i32) (local i32)
+    (local.tee 0 (return (i32.const 1)))
+  )
+  (global $a (mut i32) (i32.const 0))
+  (func (export "as-global.set-value") (result i32)
+    (global.set $a (return (i32.const 1)))
   )
 
   (memory 1)
@@ -188,6 +226,11 @@
 (assert_return (invoke "type-f32"))
 (assert_return (invoke "type-f64"))
 
+(assert_return (invoke "type-i32-value") (i32.const 1))
+(assert_return (invoke "type-i64-value") (i64.const 2))
+(assert_return (invoke "type-f32-value") (f32.const 3))
+(assert_return (invoke "type-f64-value") (f64.const 4))
+
 (assert_return (invoke "nullary"))
 (assert_return (invoke "unary") (f64.const 3))
 
@@ -239,6 +282,8 @@
 (assert_return (invoke "as-call_indirect-last") (i32.const 23))
 
 (assert_return (invoke "as-local.set-value") (i32.const 17))
+(assert_return (invoke "as-local.tee-value") (i32.const 1))
+(assert_return (invoke "as-global.set-value") (i32.const 1))
 
 (assert_return (invoke "as-load-address") (f32.const 1.7))
 (assert_return (invoke "as-loadN-address") (i64.const 30))
@@ -263,7 +308,164 @@
 (assert_return (invoke "as-memory.grow-size") (i32.const 40))
 
 (assert_invalid
-  (module (func $type-value-empty-vs-num (result f64) (return)))
+  (module (func $type-value-empty-vs-num (result i32) (return)))
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-block (result i32)
+      (i32.const 0)
+      (block (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-loop (result i32)
+      (i32.const 0)
+      (loop (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-then (result i32)
+      (i32.const 0) (i32.const 0)
+      (if (then (return)))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-else (result i32)
+      (i32.const 0) (i32.const 0)
+      (if (result i32) (then (i32.const 0)) (else (return))) (drop)
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-br (result i32)
+      (i32.const 0)
+      (block (br 0 (return)))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-br_if (result i32)
+      (i32.const 0)
+      (block (br_if 0 (return) (i32.const 1)))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-br_table (result i32)
+      (i32.const 0)
+      (block (br_table 0 (return)))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-return (result i32)
+      (return (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-select (result i32)
+      (select (return) (i32.const 1) (i32.const 2))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-call (result i32)
+      (call 1 (return))
+    )
+    (func (param i32) (result i32) (local.get 0))
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $f (param i32) (result i32) (local.get 0))
+    (type $sig (func (param i32) (result i32)))
+    (table funcref (elem $f))
+    (func $type-value-empty-vs-num-in-call_indirect (result i32)
+      (block (result i32)
+        (call_indirect (type $sig)
+          (return) (i32.const 0)
+        )
+      )
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-local.set (result i32)
+      (local i32)
+      (local.set 0 (return)) (local.get 0)
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (func $type-value-empty-vs-num-in-local.tee (result i32)
+      (local i32)
+      (local.tee 0 (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (global $x (mut i32) (i32.const 0))
+    (func $type-value-empty-vs-num-in-global.set (result i32)
+      (global.set $x (return)) (global.get $x)
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (memory 0)
+    (func $type-value-empty-vs-num-in-memory.grow (result i32)
+      (memory.grow (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (memory 0)
+    (func $type-value-empty-vs-num-in-load (result i32)
+      (i32.load (return))
+    )
+  )
+  "type mismatch"
+)
+(assert_invalid
+  (module
+    (memory 1)
+    (func $type-value-empty-vs-num-in-store (result i32)
+      (i32.store (return) (i32.const 1))
+    )
+  )
   "type mismatch"
 )
 (assert_invalid

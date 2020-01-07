@@ -172,9 +172,12 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void handle(Expression* curr) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       // Calculate equivalences
+      auto* func = getFunction();
       equivalences.reset(set->index);
       if (auto* get = set->value->dynCast<LocalGet>()) {
-        equivalences.add(set->index, get->index);
+        if (func->getLocalType(set->index) == func->getLocalType(get->index)) {
+          equivalences.add(set->index, get->index);
+        }
       }
       // consider the value
       auto* value = set->value;
@@ -184,8 +187,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
+          Type localType = func->getLocalType(info.index);
           set->value =
-            Builder(*getModule()).makeLocalGet(info.index, value->type);
+            Builder(*getModule()).makeLocalGet(info.index, localType);
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later
@@ -208,7 +212,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (value->is<LocalGet>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteType(value->type)) {
+    if (!value->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
     if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {

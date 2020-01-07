@@ -1,0 +1,545 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $f32_i64_=>_none (func (param f32 i64)))
+ (type $f32_i64_=>_i32 (func (param f32 i64) (result i32)))
+ (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+ (memory $0 10)
+ (table $0 1 1 funcref)
+ (elem (i32.const 0) $call-me)
+ (global $x (mut i32) (i32.const 0))
+ (func $call-me (; 0 ;) (param $0 i32) (param $1 i32)
+  (nop)
+ )
+ (func $code-to-kill (; 1 ;)
+  (local $x i32)
+  (block $out
+   (br $out)
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (return)
+  )
+  (block $out4
+   (br_table $out4 $out4 $out4 $out4
+    (i32.const 4)
+   )
+  )
+  (block $out5
+   (br_if $out5
+    (i32.const 3)
+   )
+   (drop
+    (i32.const 0)
+   )
+  )
+  (if
+   (i32.const 0)
+   (if
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (block $out16
+   (block $in
+    (br_if $out16
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block $out18
+    (block $in19
+     (br_if $in19
+      (i32.const 1)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (block $out20
+   (block $in21
+    (br_table $out20 $in21
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (block $out22
+   (block $in23
+    (br_table $in23 $out22
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block $out25
+    (block $in26
+     (br_table $in26 $in26
+      (i32.const 1)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (block $block15
+    (drop
+     (i32.const 10)
+    )
+    (drop
+     (i32.const 42)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (block $out29
+   (block
+    (br_if $out29
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (loop $in32
+    (br_if $in32
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 1)
+   (block
+    (drop
+     (i32.const 123)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 2)
+   (unreachable)
+  )
+  (if
+   (i32.const 3)
+   (unreachable)
+  )
+  (if
+   (i32.const -1)
+   (block
+    (drop
+     (i32.const 123)
+    )
+    (drop
+     (i32.const 456)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const -2)
+   (block
+    (drop
+     (i32.const 139)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const -3)
+   (block
+    (drop
+     (i32.const 246)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const -4)
+   (unreachable)
+  )
+  (if
+   (i32.const 11)
+   (unreachable)
+  )
+  (if
+   (i32.const 22)
+   (unreachable)
+  )
+  (if
+   (i32.const 33)
+   (block
+    (drop
+     (i32.const 0)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 44)
+   (unreachable)
+  )
+  (if
+   (i32.const 55)
+   (unreachable)
+  )
+  (if
+   (i32.const 66)
+   (unreachable)
+  )
+  (if
+   (i32.const 77)
+   (unreachable)
+  )
+  (if
+   (i32.const 88)
+   (block
+    (drop
+     (i32.const 0)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 99)
+   (unreachable)
+  )
+  (if
+   (i32.const 100)
+   (block
+    (drop
+     (i32.const 123)
+    )
+    (drop
+     (i32.const 456)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 101)
+   (block
+    (drop
+     (i32.const 123)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 102)
+   (unreachable)
+  )
+  (drop
+   (i32.const 1337)
+  )
+ )
+ (func $killer (; 2 ;)
+  (unreachable)
+ )
+ (func $target (; 3 ;)
+  (drop
+   (i32.const 2000)
+  )
+ )
+ (func $typed-block-none-then-unreachable (; 4 ;) (result i32)
+  (return
+   (i32.const 0)
+  )
+ )
+ (func $typed-block-remove-br-changes-type (; 5 ;) (param $$$0 i32) (result i32)
+  (block $switch$7
+   (block $switch-default$10
+    (block $switch-case$9
+     (block $switch-case$8
+      (br_table $switch-case$9 $switch-case$8 $switch-default$10
+       (i32.const -1)
+      )
+     )
+    )
+    (return
+     (local.get $$$0)
+    )
+   )
+   (return
+    (local.get $$$0)
+   )
+  )
+ )
+ (func $global (; 6 ;)
+  (unreachable)
+ )
+ (func $ret (; 7 ;) (result i32)
+  (return
+   (i32.const 0)
+  )
+ )
+ (func $unreachable-br (; 8 ;) (result i32)
+  (block $out (result i32)
+   (br $out
+    (i32.const 0)
+   )
+  )
+ )
+ (func $unreachable-br-loop (; 9 ;) (result i32)
+  (loop $out
+   (br $out)
+  )
+ )
+ (func $unreachable-block-ends-switch (; 10 ;) (result i32)
+  (block $label$3
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $unreachable-block-ends-br_if (; 11 ;) (result i32)
+  (block $label$2
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $unreachable-brs-3 (; 12 ;) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (i32.const 18)
+   )
+  )
+ )
+ (func $unreachable-brs-4 (; 13 ;) (param $var$0 i32) (result i32)
+  (drop
+   (i32.const 1)
+  )
+  (block
+   (drop
+    (i32.const 4104)
+   )
+   (unreachable)
+  )
+ )
+ (func $call-unreach (; 14 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $2 i64)
+  (if (result i64)
+   (i64.eqz
+    (local.get $var$0)
+   )
+   (block $label$0 (result i64)
+    (local.get $var$1)
+   )
+   (block
+    (drop
+     (i64.sub
+      (local.get $var$0)
+      (i64.const 1)
+     )
+    )
+    (block
+     (drop
+      (block $block (result i64)
+       (local.set $2
+        (local.get $var$0)
+       )
+       (nop)
+       (local.get $2)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (param $var$0 i32) (result i32)
+  (block $block
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (block $block
+    (drop
+     (br_if $label$0
+      (i32.const 8)
+      (local.get $var$0)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $replace-br-value-of-i32-with-unreachable (; 17 ;) (result i32)
+  (block $label$1
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $shorten-block-requires-sync-refinalize (; 18 ;) (param $var$0 i32) (param $var$1 i32)
+  (unreachable)
+ )
+ (func $block-with-type-but-is-unreachable (; 19 ;) (param $var$0 i32) (result i32)
+  (block $block
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $if-with-type-but-is-unreachable (; 20 ;) (param $var$0 i32) (result i32)
+  (if
+   (local.get $var$0)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $unreachable-loop (; 21 ;)
+  (unreachable)
+ )
+ (func $br-block-from-unary (; 22 ;) (result i32)
+  (block $label$6 (result i32)
+   (br $label$6
+    (i32.const 8)
+   )
+  )
+ )
+ (func $replace-unary-with-br-child (; 23 ;)
+  (drop
+   (block $label$6 (result i32)
+    (br $label$6
+     (i32.const 8)
+    )
+   )
+  )
+ )
+ (func $br_if-unreach-then-br_if-normal (; 24 ;)
+  (block $out
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $replace-with-unreachable-affects-parent (; 25 ;) (param $var$0 f32) (param $var$1 i64)
+  (drop
+   (i64.const 0)
+  )
+  (if
+   (block $block (result i32)
+    (call $replace-with-unreachable-affects-parent
+     (f32.const 1)
+     (i64.const -15917430362925035)
+    )
+    (i32.const 1)
+   )
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $replace-block-changes-later-when-if-goes (; 26 ;)
+  (block $top
+   (global.set $x
+    (i32.const 0)
+   )
+   (block $inner
+    (drop
+     (call $helper
+      (f32.const 1)
+      (i64.const -15917430362925035)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $helper (; 27 ;) (param $var$0 f32) (param $var$1 i64) (result i32)
+  (i32.const 0)
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (global $global (mut f64) (f64.const 0))
+ (func $0 (; 0 ;)
+  (if
+   (i32.const 0)
+   (unreachable)
+   (unreachable)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
+  (local $local f64)
+  (if
+   (i32.const 0)
+   (unreachable)
+   (unreachable)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $foo (; 0 ;)
+  (nop)
+ )
+ (func $try_unreachable (; 1 ;)
+  (try
+   (unreachable)
+   (catch
+   )
+  )
+  (call $foo)
+ )
+ (func $catch_unreachable (; 2 ;)
+  (try
+   (nop)
+   (catch
+    (unreachable)
+   )
+  )
+  (call $foo)
+ )
+ (func $both_unreachable (; 3 ;)
+  (try
+   (unreachable)
+   (catch
+    (unreachable)
+   )
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $foo (; 0 ;)
+  (nop)
+ )
+ (func $push_unreachable (; 1 ;)
+  (push
+   (unreachable)
+  )
+ )
+)

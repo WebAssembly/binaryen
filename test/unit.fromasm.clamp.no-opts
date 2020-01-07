@@ -1,12 +1,27 @@
 (module
- (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
- (type $FUNCSIG$vf (func (param f32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$idi (func (param f64 i32) (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$dd (func (param f64) (result f64)))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $f32_=>_none (func (param f32)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $i32_=>_f32 (func (param i32) (result f32)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
+ (type $i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32)))
+ (type $i32_f32_=>_none (func (param i32 f32)))
+ (type $i32_f64_f32_=>_none (func (param i32 f64 f32)))
+ (type $f32_f64_=>_none (func (param f32 f64)))
+ (type $f32_=>_i32 (func (param f32) (result i32)))
+ (type $f64_i32_=>_i32 (func (param f64 i32) (result i32)))
+ (type $f64_f64_f64_=>_i32 (func (param f64 f64 f64) (result i32)))
+ (type $i32_f32_f64_=>_f32 (func (param i32 f32 f64) (result f32)))
  (import "env" "memory" (memory $memory 256 256))
  (import "env" "table" (table $table 25 25 funcref))
  (elem (global.get $__table_base) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
@@ -616,7 +631,7 @@
     (local.get $x)
    )
   )
-  (call_indirect (type $FUNCSIG$vf)
+  (call_indirect (type $f32_=>_none)
    (local.get $x)
    (i32.add
     (i32.and
@@ -628,7 +643,7 @@
   )
  )
  (func $cneg (; 29 ;) (param $x f32)
-  (call_indirect (type $FUNCSIG$vf)
+  (call_indirect (type $f32_=>_none)
    (local.get $x)
    (i32.add
     (i32.and
@@ -678,7 +693,7 @@
   )
  )
  (func $cneg_nosemicolon (; 32 ;)
-  (call_indirect (type $FUNCSIG$vi)
+  (call_indirect (type $i32_=>_none)
    (i32.const 1)
    (i32.add
     (i32.and
@@ -2000,14 +2015,14 @@
   )
  )
  (func $relocatableAndModules (; 71 ;) (result i32)
-  (call_indirect (type $FUNCSIG$v)
+  (call_indirect (type $none_=>_none)
    (i32.const 10)
   )
-  (call_indirect (type $FUNCSIG$v)
+  (call_indirect (type $none_=>_none)
    (i32.const 20)
   )
   (return
-   (call_indirect (type $FUNCSIG$idi)
+   (call_indirect (type $f64_i32_=>_i32)
     (f64.const 1.5)
     (i32.const 200)
     (i32.const 30)
@@ -2113,7 +2128,7 @@
   (local $i1 i32)
   (local.set $i1
    (block (result i32)
-    (call_indirect (type $FUNCSIG$vi)
+    (call_indirect (type $i32_=>_none)
      (i32.const 0)
      (i32.add
       (i32.and
@@ -2129,7 +2144,7 @@
  )
  (func $emterpretify_assertions_safeHeap (; 79 ;)
   (local $i1 i32)
-  (call_indirect (type $FUNCSIG$vi)
+  (call_indirect (type $i32_=>_none)
    (local.get $i1)
    (i32.add
     (i32.and

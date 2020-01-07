@@ -1,5 +1,7 @@
 (module
- (type $FUNCSIG$vi (func (param i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
  (import "env" "memory" (memory $memory (shared 256 256)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (export "test64" (func $legalstub$test64))

@@ -1,8 +1,8 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
  (import "env" "import2" (func $import2 (result i32)))
  (import "env" "import3" (func $import3 (param i32)))
@@ -13,7 +13,7 @@
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
- (func $calls-import (; 3 ;) (type $FUNCSIG$v)
+ (func $calls-import (; 3 ;)
   (local $0 i32)
   (local.set $0
    (block $__asyncify_unwind (result i32)
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $calls-import2 (; 4 ;) (type $FUNCSIG$i) (result i32)
+ (func $calls-import2 (; 4 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (if
@@ -199,7 +199,7 @@
   )
   (i32.const 0)
  )
- (func $calls-import2-drop (; 5 ;) (type $FUNCSIG$v)
+ (func $calls-import2-drop (; 5 ;)
   (local $0 i32)
   (local.set $0
    (block $__asyncify_unwind (result i32)
@@ -267,10 +267,10 @@
    )
   )
  )
- (func $calls-nothing (; 6 ;) (type $FUNCSIG$v)
+ (func $calls-nothing (; 6 ;)
   (nop)
  )
- (func $many-locals (; 7 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $many-locals (; 7 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (if
@@ -418,7 +418,7 @@
   )
   (i32.const 0)
  )
- (func $calls-import2-if (; 8 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $calls-import2-if (; 8 ;) (param $0 i32)
   (local $1 i32)
   (if
    (i32.eq
@@ -534,7 +534,7 @@
    )
   )
  )
- (func $calls-import2-if-else (; 9 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $calls-import2-if-else (; 9 ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (if
@@ -707,7 +707,7 @@
    )
   )
  )
- (func $calls-import2-if-else-oneside (; 10 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $calls-import2-if-else-oneside (; 10 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (if
@@ -873,7 +873,7 @@
   )
   (i32.const 0)
  )
- (func $calls-import2-if-else-oneside2 (; 11 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $calls-import2-if-else-oneside2 (; 11 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (if
@@ -1039,7 +1039,7 @@
   )
   (i32.const 0)
  )
- (func $calls-loop (; 12 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $calls-loop (; 12 ;) (param $0 i32)
   (local $1 i32)
   (if
    (i32.eq
@@ -1163,7 +1163,7 @@
    )
   )
  )
- (func $calls-loop2 (; 13 ;) (type $FUNCSIG$v)
+ (func $calls-loop2 (; 13 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -1288,7 +1288,7 @@
    )
   )
  )
- (func $calls-mix (; 14 ;) (type $FUNCSIG$v)
+ (func $calls-mix (; 14 ;)
   (local $0 i32)
   (local.set $0
    (block $__asyncify_unwind (result i32)
@@ -1390,10 +1390,10 @@
    )
   )
  )
- (func $boring (; 15 ;) (type $FUNCSIG$v)
+ (func $boring (; 15 ;)
   (nop)
  )
- (func $calls-mix-deep (; 16 ;) (type $FUNCSIG$v)
+ (func $calls-mix-deep (; 16 ;)
   (local $0 i32)
   (local.set $0
    (block $__asyncify_unwind (result i32)
@@ -1495,10 +1495,10 @@
    )
   )
  )
- (func $boring-deep (; 17 ;) (type $FUNCSIG$v)
+ (func $boring-deep (; 17 ;)
   (call $boring)
  )
- (func $import-deep (; 18 ;) (type $FUNCSIG$v)
+ (func $import-deep (; 18 ;)
   (local $0 i32)
   (local.set $0
    (block $__asyncify_unwind (result i32)

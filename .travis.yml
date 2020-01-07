@@ -28,7 +28,7 @@ DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
 jobs:
   include:
     # OSX Binary
-    - env: JOB=dist-osx MACOSX_DEPLOYMENT_TARGET=10.9 ARCH=x86_64-apple-darwin
+    - env: JOB=dist-osx ARCH=x86_64-apple-darwin
       os: osx
       stage: build
       script:
@@ -47,10 +47,10 @@ jobs:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'g++-5', 'python3-pip']
       before_install:
-        - export ASAN_OPTIONS="symbolize=1"
+        - export ASAN_OPTIONS="$ASAN_OPTIONS symbolize=1"
       install:
-        - nvm install 10
-        - nvm use 10
+        - nvm install 12
+        - nvm use 12
         - pip3 install --user flake8==3.7.8
         # get jsvu in order to get more js engines
         - npm install jsvu -g
@@ -80,9 +80,10 @@ jobs:
         COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
     # FIXME we currently must disable LSAN entirely, see #1351
-    #- <<: *test-ubuntu
-    #  env: |
-    #    COMPILER_FLAGS="-fsanitize=address"
+    - <<: *test-ubuntu
+      env: |
+        COMPILER_FLAGS="-fsanitize=address"
+        ASAN_OPTIONS="detect_leaks=0"
 
     - <<: *test-ubuntu
       env: |
@@ -121,7 +122,7 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:13-alpine
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update

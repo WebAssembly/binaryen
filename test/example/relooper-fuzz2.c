@@ -1,5 +1,3 @@
-
-
 #include <assert.h>
 #include <stdio.h>
 
@@ -67,10 +65,13 @@ int main() {
     NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
     BinaryenTypeInt32()
   );
-  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i",
-                                                      BinaryenTypeInt32(),
-                                                      NULL, 0);
-  BinaryenAddFunction(module, "check", i, NULL, 0, checkBody);
+  BinaryenAddFunction(module,
+                      "check",
+                      BinaryenTypeNone(),
+                      BinaryenTypeInt32(),
+                      NULL,
+                      0,
+                      checkBody);
 
   // contents of main() begin here
 
@@ -240,215 +241,357 @@ int main() {
 
   }
 
-  RelooperAddBranch(b0, b1, NULL, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranch(
+    b0,
+    b1,
+    NULL,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b1, b1, NULL, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranch(
+    b1,
+    b1,
+    NULL,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+      BinaryenTypeInt32()));
 
   {
     BinaryenIndex values[] = { 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86 };
-    RelooperAddBranchForSwitch(b2, b7, values,
-                               sizeof(values) / sizeof(BinaryenIndex), 
-    BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 6))
-      ),
-      BinaryenTypeInt32()
-    ));
+    RelooperAddBranchForSwitch(
+      b2,
+      b7,
+      values,
+      sizeof(values) / sizeof(BinaryenIndex),
+      BinaryenStore(
+        module,
+        4,
+        0,
+        0,
+        BinaryenConst(module, BinaryenLiteralInt32(4)),
+        BinaryenBinary(
+          module,
+          BinaryenAddInt32(),
+          BinaryenLoad(module,
+                       4,
+                       0,
+                       0,
+                       0,
+                       BinaryenTypeInt32(),
+                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+          BinaryenConst(module, BinaryenLiteralInt32(4 * 6))),
+        BinaryenTypeInt32()));
   }
 
-  RelooperAddBranchForSwitch(b2, b4, NULL, 0, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranchForSwitch(
+    b2,
+    b4,
+    NULL,
+    0,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranchForSwitch(b3, b6, NULL, 0, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranchForSwitch(
+    b3,
+    b6,
+    NULL,
+    0,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b4, b7, BinaryenBinary(module,
-    BinaryenEqInt32(),
-    BinaryenBinary(module,
-      BinaryenRemUInt32(),
-      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
-      BinaryenConst(module, BinaryenLiteralInt32(2))
-    ),
-    BinaryenConst(module, BinaryenLiteralInt32(0))
-  ), 
-    BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
+  RelooperAddBranch(
+    b4,
+    b7,
+    BinaryenBinary(
+      module,
+      BinaryenEqInt32(),
       BinaryenBinary(module,
+                     BinaryenRemUInt32(),
+                     BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                     BinaryenConst(module, BinaryenLiteralInt32(2))),
+      BinaryenConst(module, BinaryenLiteralInt32(0))),
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
+      BinaryenConst(module, BinaryenLiteralInt32(4)),
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b4, b3, NULL, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranch(
+    b4,
+    b3,
+    NULL,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranchForSwitch(b5, b1, NULL, 0, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranchForSwitch(
+    b5,
+    b1,
+    NULL,
+    0,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+      BinaryenTypeInt32()));
 
   {
     BinaryenIndex values[] = { 0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108 };
-    RelooperAddBranchForSwitch(b6, b1, values,
-                               sizeof(values) / sizeof(BinaryenIndex), 
-    BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 2))
-      ),
-      BinaryenTypeInt32()
-    ));
+    RelooperAddBranchForSwitch(
+      b6,
+      b1,
+      values,
+      sizeof(values) / sizeof(BinaryenIndex),
+      BinaryenStore(
+        module,
+        4,
+        0,
+        0,
+        BinaryenConst(module, BinaryenLiteralInt32(4)),
+        BinaryenBinary(
+          module,
+          BinaryenAddInt32(),
+          BinaryenLoad(module,
+                       4,
+                       0,
+                       0,
+                       0,
+                       BinaryenTypeInt32(),
+                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+          BinaryenConst(module, BinaryenLiteralInt32(4 * 2))),
+        BinaryenTypeInt32()));
   }
 
   {
     BinaryenIndex values[] = { 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58,61,64,67,70,73,76,79,82,85,88,91,94,97,100,103,106,109,112,115,118,121,124,127,130,133,136,139,142,145,148,151,154,157,160 };
-    RelooperAddBranchForSwitch(b6, b7, values,
-                               sizeof(values) / sizeof(BinaryenIndex), 
-    BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))
-      ),
-      BinaryenTypeInt32()
-    ));
+    RelooperAddBranchForSwitch(
+      b6,
+      b7,
+      values,
+      sizeof(values) / sizeof(BinaryenIndex),
+      BinaryenStore(
+        module,
+        4,
+        0,
+        0,
+        BinaryenConst(module, BinaryenLiteralInt32(4)),
+        BinaryenBinary(
+          module,
+          BinaryenAddInt32(),
+          BinaryenLoad(module,
+                       4,
+                       0,
+                       0,
+                       0,
+                       BinaryenTypeInt32(),
+                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+          BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
+        BinaryenTypeInt32()));
   }
 
-  RelooperAddBranchForSwitch(b6, b2, NULL, 0, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranchForSwitch(
+    b6,
+    b2,
+    NULL,
+    0,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b7, b5, BinaryenBinary(module,
-    BinaryenEqInt32(),
-    BinaryenBinary(module,
-      BinaryenRemUInt32(),
-      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
-      BinaryenConst(module, BinaryenLiteralInt32(2))
-    ),
-    BinaryenConst(module, BinaryenLiteralInt32(0))
-  ), 
-    BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
+  RelooperAddBranch(
+    b7,
+    b5,
+    BinaryenBinary(
+      module,
+      BinaryenEqInt32(),
       BinaryenBinary(module,
+                     BinaryenRemUInt32(),
+                     BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                     BinaryenConst(module, BinaryenLiteralInt32(2))),
+      BinaryenConst(module, BinaryenLiteralInt32(0))),
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
+      BinaryenConst(module, BinaryenLiteralInt32(4)),
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 1))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 1))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b7, b1, NULL, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranch(
+    b7,
+    b1,
+    NULL,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+      BinaryenTypeInt32()));
 
-  RelooperAddBranch(b8, b8, NULL, 
-    BinaryenStore(module,
-      4, 0, 0,
+  RelooperAddBranch(
+    b8,
+    b8,
+    NULL,
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
       BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(module,
+      BinaryenBinary(
+        module,
         BinaryenAddInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module,
+                     4,
+                     0,
+                     0,
+                     0,
+                     BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 2))
-      ),
-      BinaryenTypeInt32()
-    ));
+        BinaryenConst(module, BinaryenLiteralInt32(4 * 2))),
+      BinaryenTypeInt32()));
 
   BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
 
@@ -474,22 +617,19 @@ int main() {
                                             numDecisions + 1,
                                             BinaryenTypeNone());
 
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v",
-                                                      BinaryenTypeNone(),
-                                                      NULL, 0);
   // locals: state, free-for-label
   BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
-  BinaryenFunctionRef theMain = BinaryenAddFunction(module, "main", v,
-                                                    localTypes, 2, all);
+  BinaryenFunctionRef theMain = BinaryenAddFunction(
+    module, "main", BinaryenTypeNone(), BinaryenTypeNone(), localTypes, 2, all);
   BinaryenSetStart(module, theMain);
 
   // import
-
-  BinaryenType iparams[] = { BinaryenTypeInt32() };
-  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi",
-                                                       BinaryenTypeNone(),
-                                                       iparams, 1);
-  BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
+  BinaryenAddFunctionImport(module,
+                            "print",
+                            "spectest",
+                            "print",
+                            BinaryenTypeInt32(),
+                            BinaryenTypeNone());
 
   // memory
   BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0);

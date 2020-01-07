@@ -1,18 +1,18 @@
 (module
- (type $0 (func (param f32) (result f32)))
- (type $1 (func (param i32 i32) (result f32)))
- (type $2 (func (param i32) (result i32)))
- (type $3 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
+ (type $f32_=>_f32 (func (param f32) (result f32)))
  (memory $0 256 256)
  (export "floats" (func $0))
- (func $0 (; 0 ;) (type $0) (param $0 f32) (result f32)
+ (func $0 (; 0 ;) (param $0 f32) (result f32)
   (local $1 f32)
   (f32.add
    (local.get $1)
    (local.get $0)
   )
  )
- (func $1 (; 1 ;) (type $1) (param $0 i32) (param $1 i32) (result f32)
+ (func $1 (; 1 ;) (param $0 i32) (param $1 i32) (result f32)
   (local $2 f32)
   (local.tee $2
    (f32.neg
@@ -28,7 +28,7 @@
    )
   )
  )
- (func $2 (; 2 ;) (type $2) (param $0 i32) (result i32)
+ (func $2 (; 2 ;) (param $0 i32) (result i32)
   (block $label$1 (result i32)
    (block $label$2
     (block $label$3
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $3 (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $3 (; 3 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local.get $2)
  )
 )

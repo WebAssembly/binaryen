@@ -68,7 +68,7 @@ void BinaryInstWriter::visitCall(Call* curr) {
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
+  o << op << U32LEB(parent.getTypeIndex(curr->sig))
     << U32LEB(0); // Reserved flags field
 }
 
@@ -147,10 +147,12 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      case anyref: // anyref cannot be loaded from memory
-      case exnref: // exnref cannot be loaded from memory
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -167,7 +169,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
             o << int8_t(BinaryConsts::I32AtomicLoad);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid load size");
         }
         break;
       }
@@ -186,14 +188,14 @@ void BinaryInstWriter::visitLoad(Load* curr) {
             o << int8_t(BinaryConsts::I64AtomicLoad);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid load size");
         }
         break;
       }
       case unreachable:
         return;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
@@ -247,11 +249,13 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      case anyref: // anyref cannot be stored from memory
-      case exnref: // exnref cannot be stored in memory
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -268,7 +272,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
             o << int8_t(BinaryConsts::I32AtomicStore);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid store size");
         }
         break;
       }
@@ -287,12 +291,12 @@ void BinaryInstWriter::visitStore(Store* curr) {
             o << int8_t(BinaryConsts::I64AtomicStore);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid store size");
         }
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
@@ -316,7 +320,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
             o << int8_t(BinaryConsts::I32AtomicRMW##Op);                       \
             break;                                                             \
           default:                                                             \
-            WASM_UNREACHABLE();                                                \
+            WASM_UNREACHABLE("invalid rmw size");                              \
         }                                                                      \
         break;                                                                 \
       case i64:                                                                \
@@ -334,11 +338,11 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
             o << int8_t(BinaryConsts::I64AtomicRMW##Op);                       \
             break;                                                             \
           default:                                                             \
-            WASM_UNREACHABLE();                                                \
+            WASM_UNREACHABLE("invalid rmw size");                              \
         }                                                                      \
         break;                                                                 \
       default:                                                                 \
-        WASM_UNREACHABLE();                                                    \
+        WASM_UNREACHABLE("unexpected type");                                   \
     }                                                                          \
     break
 
@@ -350,7 +354,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
     CASE_FOR_OP(Xor);
     CASE_FOR_OP(Xchg);
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
 #undef CASE_FOR_OP
 
@@ -372,7 +376,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
           o << int8_t(BinaryConsts::I32AtomicCmpxchg);
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid size");
       }
       break;
     case i64:
@@ -390,11 +394,11 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
           o << int8_t(BinaryConsts::I64AtomicCmpxchg);
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid size");
       }
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
@@ -404,22 +408,22 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType) {
     case i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(4, 4, 0);
+      emitMemoryAccess(4, 4, curr->offset);
       break;
     }
     case i64: {
       o << int8_t(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(8, 8, 0);
+      emitMemoryAccess(8, 8, curr->offset);
       break;
     }
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(4, 4, 0);
+  emitMemoryAccess(4, 4, curr->offset);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
@@ -642,11 +646,13 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    case anyref: // there's no anyref.const
-    case exnref: // there's no exnref.const
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
     case none:
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -988,7 +994,7 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
         << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
       break;
     case InvalidUnary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid unary op");
   }
 }
 
@@ -1389,6 +1395,21 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MulVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Mul);
       break;
+    case MinSVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MinS);
+      break;
+    case MinUVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MinU);
+      break;
+    case MaxSVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MaxS);
+      break;
+    case MaxUVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MaxU);
+      break;
+    case AvgrUVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AvgrU);
+      break;
     case AddVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Add);
       break;
@@ -1414,6 +1435,21 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MulVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Mul);
       break;
+    case MinSVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MinS);
+      break;
+    case MinUVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MinU);
+      break;
+    case MaxSVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MaxS);
+      break;
+    case MaxUVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MaxU);
+      break;
+    case AvgrUVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AvgrU);
+      break;
     case AddVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Add);
       break;
@@ -1422,6 +1458,22 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case MulVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Mul);
+      break;
+    case MinSVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MinS);
+      break;
+    case MinUVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MinU);
+      break;
+    case MaxSVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MaxS);
+      break;
+    case MaxUVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MaxU);
+      break;
+    case DotSVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4DotSVecI16x8);
       break;
     case AddVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Add);
@@ -1490,12 +1542,20 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
 
     case InvalidBinary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid binary op");
   }
 }
 
 void BinaryInstWriter::visitSelect(Select* curr) {
-  o << int8_t(BinaryConsts::Select);
+  if (curr->type.isRef()) {
+    o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
+    for (size_t i = 0; i < curr->type.size(); i++) {
+      o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                      : Type::none);
+    }
+  } else {
+    o << int8_t(BinaryConsts::Select);
+  }
 }
 
 void BinaryInstWriter::visitReturn(Return* curr) {
@@ -1514,6 +1574,19 @@ void BinaryInstWriter::visitHost(Host* curr) {
     }
   }
   o << U32LEB(0); // Reserved flags field
+}
+
+void BinaryInstWriter::visitRefNull(RefNull* curr) {
+  o << int8_t(BinaryConsts::RefNull);
+}
+
+void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
+  o << int8_t(BinaryConsts::RefIsNull);
+}
+
+void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
+  o << int8_t(BinaryConsts::RefFunc)
+    << U32LEB(parent.getFunctionIndex(curr->func));
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
@@ -1613,23 +1686,34 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       continue;
     }
     index += numLocalsByType[v128];
+    if (type == funcref) {
+      mappedLocals[i] = index + currLocalsByType[funcref] - 1;
+      continue;
+    }
+    index += numLocalsByType[funcref];
     if (type == anyref) {
       mappedLocals[i] = index + currLocalsByType[anyref] - 1;
       continue;
     }
     index += numLocalsByType[anyref];
+    if (type == nullref) {
+      mappedLocals[i] = index + currLocalsByType[nullref] - 1;
+      continue;
+    }
+    index += numLocalsByType[nullref];
     if (type == exnref) {
       mappedLocals[i] = index + currLocalsByType[exnref] - 1;
       continue;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
   // Emit them.
-  o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
-              (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
-              (numLocalsByType[v128] ? 1 : 0) +
-              (numLocalsByType[anyref] ? 1 : 0) +
-              (numLocalsByType[exnref] ? 1 : 0));
+  o << U32LEB(
+    (numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
+    (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
+    (numLocalsByType[v128] ? 1 : 0) + (numLocalsByType[funcref] ? 1 : 0) +
+    (numLocalsByType[anyref] ? 1 : 0) + (numLocalsByType[nullref] ? 1 : 0) +
+    (numLocalsByType[exnref] ? 1 : 0));
   if (numLocalsByType[i32]) {
     o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
   }
@@ -1645,8 +1729,14 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   if (numLocalsByType[v128]) {
     o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
   }
+  if (numLocalsByType[funcref]) {
+    o << U32LEB(numLocalsByType[funcref]) << binaryType(funcref);
+  }
   if (numLocalsByType[anyref]) {
     o << U32LEB(numLocalsByType[anyref]) << binaryType(anyref);
+  }
+  if (numLocalsByType[nullref]) {
+    o << U32LEB(numLocalsByType[nullref]) << binaryType(nullref);
   }
   if (numLocalsByType[exnref]) {
     o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);
@@ -1666,7 +1756,7 @@ int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("break index not found");
 }
 
 void StackIRGenerator::emit(Expression* curr) {
@@ -1696,7 +1786,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryEnd, curr);
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
   stackIR.push_back(stackInst);
 }
@@ -1707,14 +1797,15 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
-  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>()) {
+  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
+      origin->is<Try>()) {
     if (stackType == unreachable) {
       // There are no unreachable blocks, loops, or ifs. we emit extra
       // unreachables to fix that up, so that they are valid as having none
       // type.
       stackType = none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
-               op != StackInst::LoopEnd) {
+               op != StackInst::LoopEnd && op != StackInst::TryEnd) {
       // If a concrete type is returned, we mark the end of the construct has
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).
@@ -1735,13 +1826,15 @@ void StackIRToBinaryWriter::write() {
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         writer.visit(inst->origin);
         break;
       }
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         writer.emitScopeEnd();
         break;
       }
@@ -1754,7 +1847,7 @@ void StackIRToBinaryWriter::write() {
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected op");
     }
   }
   writer.emitFunctionEnd();

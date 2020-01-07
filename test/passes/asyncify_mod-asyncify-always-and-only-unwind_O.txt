@@ -1,0 +1,89 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (import "env" "import" (func $import))
+ (memory $0 1 2)
+ (global $__asyncify_state (mut i32) (i32.const 0))
+ (global $__asyncify_data (mut i32) (i32.const 0))
+ (export "calls-import" (func $calls-import))
+ (export "calls-import2" (func $calls-import))
+ (export "calls-import2-drop" (func $calls-import))
+ (export "calls-nothing" (func $calls-import))
+ (export "asyncify_start_unwind" (func $asyncify_start_unwind))
+ (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
+ (export "asyncify_start_rewind" (func $asyncify_start_rewind))
+ (export "asyncify_stop_rewind" (func $asyncify_stop_unwind))
+ (func $calls-import (; 1 ;) (; has Stack IR ;)
+  (local $0 i32)
+  (call $import)
+  (i32.store
+   (i32.load
+    (global.get $__asyncify_data)
+   )
+   (local.get $0)
+  )
+  (i32.store
+   (global.get $__asyncify_data)
+   (i32.add
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.const 4)
+   )
+  )
+ )
+ (func $asyncify_start_unwind (; 2 ;) (; has Stack IR ;) (param $0 i32)
+  (global.set $__asyncify_state
+   (i32.const 1)
+  )
+  (global.set $__asyncify_data
+   (local.get $0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $asyncify_stop_unwind (; 3 ;) (; has Stack IR ;)
+  (global.set $__asyncify_state
+   (i32.const 0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $asyncify_start_rewind (; 4 ;) (; has Stack IR ;) (param $0 i32)
+  (global.set $__asyncify_state
+   (i32.const 2)
+  )
+  (global.set $__asyncify_data
+   (local.get $0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+)

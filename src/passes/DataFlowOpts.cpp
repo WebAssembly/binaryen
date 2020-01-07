@@ -103,7 +103,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       assert(!node->isConst());
       // If this is a concrete value (not e.g. an eqz of unreachable),
       // it can definitely be precomputed into a constant.
-      if (isConcreteType(node->expr->type)) {
+      if (node->expr->type.isConcrete()) {
         // This can be precomputed.
         // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
         optimizeExprToConstant(node);
@@ -138,7 +138,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // XXX we should copy expr here, in principle, and definitely will need to
     //     when we do arbitrarily regenerated expressions
     auto* func = Builder(temp).makeFunction(
-      "temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
+      "temp", Signature(Type::none, Type::none), {}, expr);
     PassRunner runner(&temp);
     runner.setIsNested(true);
     runner.add("precompute");
@@ -215,7 +215,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           break;
         }
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected dataflow node type");
       }
     }
     // No one is a user of this node after we replaced all the uses.
@@ -234,9 +234,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         return &binary->left;
       } else if (index == 1) {
         return &binary->right;
-      } else {
-        WASM_UNREACHABLE();
       }
+      WASM_UNREACHABLE("unexpected index");
     } else if (auto* select = expr->dynCast<Select>()) {
       if (index == 0) {
         return &select->condition;
@@ -244,12 +243,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         return &select->ifTrue;
       } else if (index == 2) {
         return &select->ifFalse;
-      } else {
-        WASM_UNREACHABLE();
       }
-    } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected index");
     }
+    WASM_UNREACHABLE("unexpected expression type");
   }
 };
 

@@ -59,7 +59,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->result != none;
+  return func->sig.results != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -137,7 +137,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->isReturn);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      visitor.visitNonScopeName(curr->fullType);
+      visitor.visitInt(curr->sig.params);
+      visitor.visitInt(curr->sig.results);
       visitor.visitInt(curr->isReturn);
     }
     void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }
@@ -150,7 +151,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+      if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);
@@ -217,6 +218,9 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
     }
+    void visitRefNull(RefNull* curr) {}
+    void visitRefIsNull(RefIsNull* curr) {}
+    void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
     void visitRethrow(Rethrow* curr) {}

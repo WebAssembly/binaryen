@@ -1,0 +1,267 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $none_=>_v128 (func (result v128)))
+ (memory $0 10 10)
+ (func $basic (; 0 ;) (param $p i32)
+  (local $x i32)
+  (local.set $x
+   (i32.const 10)
+  )
+  (call $basic
+   (i32.const 20)
+  )
+ )
+ (func $split (; 1 ;) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.const 10)
+   )
+  )
+  (call $basic
+   (i32.add
+    (local.get $x)
+    (local.get $x)
+   )
+  )
+ )
+ (func $split-but-join (; 2 ;) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.const 10)
+   )
+   (local.set $x
+    (i32.const 10)
+   )
+  )
+  (call $basic
+   (i32.const 20)
+  )
+ )
+ (func $split-but-join-different (; 3 ;) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.const 10)
+   )
+   (local.set $x
+    (i32.const 20)
+   )
+  )
+  (call $basic
+   (i32.add
+    (local.get $x)
+    (local.get $x)
+   )
+  )
+ )
+ (func $split-but-join-different-b (; 4 ;) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.const 10)
+   )
+   (local.set $x
+    (local.get $p)
+   )
+  )
+  (call $basic
+   (i32.add
+    (local.get $x)
+    (local.get $x)
+   )
+  )
+ )
+ (func $split-but-join-init0 (; 5 ;) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.const 0)
+   )
+  )
+  (call $basic
+   (i32.const 0)
+  )
+ )
+ (func $later (; 6 ;) (param $p i32)
+  (local $x i32)
+  (local.set $x
+   (i32.const 10)
+  )
+  (call $basic
+   (i32.const 20)
+  )
+  (local.set $x
+   (i32.const 22)
+  )
+  (call $basic
+   (i32.const 44)
+  )
+  (local.set $x
+   (i32.const 39)
+  )
+ )
+ (func $later2 (; 7 ;) (param $p i32) (result i32)
+  (local $x i32)
+  (local.set $x
+   (i32.const 10)
+  )
+  (local.set $x
+   (i32.const 20)
+  )
+  (i32.const 20)
+ )
+ (func $two-ways-but-identical (; 8 ;) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (local.set $x
+   (i32.const 10)
+  )
+  (if
+   (i32.const 1)
+   (local.set $y
+    (i32.const 11)
+   )
+   (local.set $y
+    (i32.const 11)
+   )
+  )
+  (local.set $y
+   (i32.const 21)
+  )
+  (i32.const 21)
+ )
+ (func $two-ways-but-almost-identical (; 9 ;) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (local.set $x
+   (i32.const 10)
+  )
+  (if
+   (i32.const 1)
+   (local.set $y
+    (i32.const 12)
+   )
+   (local.set $y
+    (i32.const 11)
+   )
+  )
+  (local.set $y
+   (i32.add
+    (i32.const 10)
+    (local.get $y)
+   )
+  )
+  (local.get $y)
+ )
+ (func $deadloop (; 10 ;) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (local.set $x
+    (i32.const 0)
+   )
+   (local.set $y
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $deadloop2 (; 11 ;) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (local.set $x
+    (i32.const 0)
+   )
+   (local.set $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $deadloop3 (; 12 ;) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (local.set $x
+    (i32.const 0)
+   )
+   (local.set $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $through-tee (; 13 ;) (param $x i32) (param $y i32) (result i32)
+  (local.set $x
+   (local.tee $y
+    (i32.const 7)
+   )
+  )
+  (return
+   (i32.const 14)
+  )
+ )
+ (func $through-tee-more (; 14 ;) (param $x i32) (param $y i32) (result i32)
+  (local.set $x
+   (i32.eqz
+    (local.tee $y
+     (i32.const 7)
+    )
+   )
+  )
+  (return
+   (i32.const 7)
+  )
+ )
+ (func $multipass (; 15 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (local $3 i32)
+  (nop)
+  (nop)
+  (local.get $2)
+ )
+ (func $through-fallthrough (; 16 ;) (param $x i32) (param $y i32) (result i32)
+  (local.set $x
+   (block $block (result i32)
+    (nop)
+    (local.tee $y
+     (i32.const 7)
+    )
+   )
+  )
+  (return
+   (i32.const 14)
+  )
+ )
+ (func $simd-load (; 17 ;) (result v128)
+  (local $x v128)
+  (local.set $x
+   (v8x16.load_splat
+    (i32.const 0)
+   )
+  )
+  (local.get $x)
+ )
+)

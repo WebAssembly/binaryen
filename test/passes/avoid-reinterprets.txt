@@ -1,8 +1,8 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$f (func (result f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_f32 (func (result f32)))
  (memory $0 1)
- (func $simple (; 0 ;) (type $FUNCSIG$v)
+ (func $simple (; 0 ;)
   (drop
    (f32.load
     (i32.const 1024)
@@ -24,7 +24,7 @@
    )
   )
  )
- (func $one (; 1 ;) (type $FUNCSIG$v)
+ (func $one (; 1 ;)
   (local $x i32)
   (local $1 i32)
   (local $2 f32)
@@ -47,7 +47,7 @@
    (local.get $2)
   )
  )
- (func $one-b (; 2 ;) (type $FUNCSIG$v)
+ (func $one-b (; 2 ;)
   (local $x f32)
   (local $1 i32)
   (local $2 i32)
@@ -70,7 +70,7 @@
    (local.get $2)
   )
  )
- (func $both (; 3 ;) (type $FUNCSIG$v)
+ (func $both (; 3 ;)
   (local $x i32)
   (local $1 i32)
   (local $2 f32)
@@ -96,7 +96,7 @@
    (local.get $2)
   )
  )
- (func $half (; 4 ;) (type $FUNCSIG$v)
+ (func $half (; 4 ;)
   (local $x i32)
   (local $1 i32)
   (local $2 f32)
@@ -122,7 +122,7 @@
    (local.get $2)
   )
  )
- (func $copy (; 5 ;) (type $FUNCSIG$v)
+ (func $copy (; 5 ;)
   (local $x i32)
   (local $y i32)
   (local $2 i32)
@@ -149,14 +149,14 @@
    (local.get $3)
   )
  )
- (func $partial1 (; 6 ;) (type $FUNCSIG$f) (result f32)
+ (func $partial1 (; 6 ;) (result f32)
   (f32.reinterpret_i32
    (i32.load16_u
     (i32.const 3)
    )
   )
  )
- (func $partial2 (; 7 ;) (type $FUNCSIG$f) (result f32)
+ (func $partial2 (; 7 ;) (result f32)
   (f32.reinterpret_i32
    (i32.load8_u
     (i32.const 3)
