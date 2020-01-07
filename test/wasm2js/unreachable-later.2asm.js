@@ -20,34 +20,58 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function bar() {
-  
- }
- 
- function foo($0) {
-  $0 = $0 | 0;
-  label$5 : {
-   bar();
-   block : {
-    switch (123 | 0) {
-    case 0:
-     bar();
-     break;
-    default:
-     break label$5;
-    };
-   }
-   return;
+ var global$0 = 10;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
+  var $15 = Math_fround(0), $21 = 0, $29 = 0, $26 = 0;
+  if (global$0) {
+   return $0_1 | 0
   }
-  abort();
+  if (global$0) {
+   return $0_1 | 0
+  }
+  global$0 = 0;
+  label$3 : while (1) {
+   label$4 : {
+    if (global$0) {
+     return $0_1 | 0
+    }
+    if (global$0) {
+     return $0_1 | 0
+    }
+    if (global$0) {
+     return $0_1 | 0
+    }
+    $15 = Math_fround(0.0);
+    if (global$0) {
+     return $0_1 | 0
+    }
+   }
+   $21 = 32;
+   if (!$21) {
+    continue label$3
+   }
+   $26 = 1;
+   break label$3;
+  };
+  if (!$26) {
+   $29 = 0
+  } else {
+   $29 = 1
+  }
+  if (!$29) {
+   return -255 | 0
+  } else {
+   abort()
+  }
  }
  
  var FUNCTION_TABLE = [];
  return {
-  "foo": foo
+  "func_50": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var foo = retasmFunc.foo;
+export var func_50 = retasmFunc.func_50;
