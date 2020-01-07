@@ -169,52 +169,7 @@ createUniqueEntity(const Twine &Model, int &ResultFD,
                    SmallVectorImpl<char> &ResultPath, bool MakeAbsolute,
                    unsigned Mode, FSEntity Type,
                    sys::fs::OpenFlags Flags = sys::fs::OF_None) {
-
-  // Limit the number of attempts we make, so that we don't infinite loop. E.g.
-  // "permission denied" could be for a specific file (so we retry with a
-  // different name) or for the whole directory (retry would always fail).
-  // Checking which is racy, so we try a number of times, then give up.
-  std::error_code EC;
-  for (int Retries = 128; Retries > 0; --Retries) {
-    sys::fs::createUniquePath(Model, ResultPath, MakeAbsolute);
-    // Try to open + create the file.
-    switch (Type) {
-    case FS_File: {
-      EC = sys::fs::openFileForReadWrite(Twine(ResultPath.begin()), ResultFD,
-                                         sys::fs::CD_CreateNew, Flags, Mode);
-      if (EC) {
-        // errc::permission_denied happens on Windows when we try to open a file
-        // that has been marked for deletion.
-        if (EC == errc::file_exists || EC == errc::permission_denied)
-          continue;
-        return EC;
-      }
-
-      return std::error_code();
-    }
-
-    case FS_Name: {
-      EC = sys::fs::access(ResultPath.begin(), sys::fs::AccessMode::Exist);
-      if (EC == errc::no_such_file_or_directory)
-        return std::error_code();
-      if (EC)
-        return EC;
-      continue;
-    }
-
-    case FS_Dir: {
-      EC = sys::fs::create_directory(ResultPath.begin(), false);
-      if (EC) {
-        if (EC == errc::file_exists)
-          continue;
-        return EC;
-      }
-      return std::error_code();
-    }
-    }
-    llvm_unreachable("Invalid Type");
-  }
-  return EC;
+  llvm_unreachable("createUniqueEntity"); // XXX BINARYEN
 }
 
 namespace llvm {
