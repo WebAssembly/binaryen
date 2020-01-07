@@ -1135,7 +1135,7 @@ public:
     }
     Literal value = flow.value;
     NOTE_EVAL1(value);
-    return Literal(value.type == nullref);
+    return Literal(value.type == Type::nullref);
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
@@ -1237,12 +1237,12 @@ public:
           return Literal(load64u(addr)).castToF64();
         case Type::v128:
           return Literal(load128(addr).data());
-        case funcref:
-        case anyref:
-        case nullref:
-        case exnref:
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
       WASM_UNREACHABLE("invalid type");
@@ -1294,12 +1294,12 @@ public:
         case Type::v128:
           store128(addr, value.getv128());
           break;
-        case funcref:
-        case anyref:
-        case nullref:
-        case exnref:
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
     }

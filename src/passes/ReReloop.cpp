@@ -320,7 +320,7 @@ struct ReReloop final : public Pass {
     // anywhere. add a return as needed
     for (auto* cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
-      if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
+      if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
         block->list.push_back(function->sig.results == Type::none
                                 ? (Expression*)builder->makeReturn()
                                 : (Expression*)builder->makeUnreachable());

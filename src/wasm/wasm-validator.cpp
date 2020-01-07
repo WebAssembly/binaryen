@@ -411,7 +411,8 @@ void FunctionValidator::visitBlock(Block* curr) {
           curr,
           "block+breaks must have right type if breaks return a value");
       }
-      if (curr->type.isConcrete() && info.arity && info.type != unreachable) {
+      if (curr->type.isConcrete() && info.arity &&
+          info.type != Type::unreachable) {
         shouldBeSubType(
           info.type,
           curr->type,
@@ -422,7 +423,7 @@ void FunctionValidator::visitBlock(Block* curr) {
         info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
       if (curr->list.size() > 0) {
         auto last = curr->list.back()->type;
-        if (last == none) {
+        if (last == Type::none) {
           shouldBeTrue(info.arity == Index(0),
                        curr,
                        "if block ends with a none, breaks cannot send a value "
@@ -487,7 +488,7 @@ void FunctionValidator::visitLoop(Loop* curr) {
     }
     breakInfos.erase(iter);
   }
-  if (curr->type == none) {
+  if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
                   curr,
                   "bad body for a loop that has no value");
@@ -528,7 +529,7 @@ void FunctionValidator::visitIf(If* curr) {
                     "if without else and reachable condition must be none");
     }
   } else {
-    if (curr->type != unreachable) {
+    if (curr->type != Type::unreachable) {
       shouldBeSubTypeOrFirstIsUnreachable(
         curr->ifTrue->type,
         curr->type,
@@ -685,8 +686,10 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     return;
   }
   const std::vector<Type>& params = curr->sig.params.expand();
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->target->type, i32, curr, "indirect call target must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->target->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "indirect call target must be an i32");
   if (!shouldBeTrue(curr->operands.size() == params.size(),
                     curr,
                     "call param number must match")) {
@@ -756,8 +759,8 @@ void FunctionValidator::visitLocalSet(LocalSet* curr) {
   if (shouldBeTrue(curr->index < getFunction()->getNumLocals(),
                    curr,
                    "local.set index must be small enough")) {
-    if (curr->value->type != unreachable) {
-      if (curr->type != none) { // tee is ok anyhow
+    if (curr->value->type != Type::unreachable) {
+      if (curr->type != Type::none) { // tee is ok anyhow
         shouldBeEqual(getFunction()->getLocalType(curr->index),
                       curr->type,
                       curr,
@@ -1247,13 +1250,13 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       shouldBeEqual(
         bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes");
       break;
-    case unreachable:
+    case Type::unreachable:
       break;
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref:
-    case none:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
       WASM_UNREACHABLE("unexpected type");
   }
 }
@@ -1734,13 +1737,14 @@ void FunctionValidator::visitUnary(Unary* curr) {
 
 void FunctionValidator::visitSelect(Select* curr) {
   shouldBeUnequal(
-    curr->ifFalse->type, none, curr, "select right must be valid");
-  shouldBeUnequal(curr->type, none, curr, "select type must be valid");
-  shouldBeTrue(curr->condition->type == unreachable ||
-                 curr->condition->type == i32,
+    curr->ifFalse->type, Type(Type::none), curr, "select right must be valid");
+  shouldBeUnequal(
+    curr->type, Type(Type::none), curr, "select type must be valid");
+  shouldBeTrue(curr->condition->type == Type::unreachable ||
+                 curr->condition->type == Type::i32,
                curr,
                "select condition must be valid");
-  if (curr->type != unreachable) {
+  if (curr->type != Type::unreachable) {
     shouldBeTrue(Type::isSubType(curr->ifTrue->type, curr->type),
                  curr,
                  "select's left expression must be subtype of select's type");
@@ -1752,7 +1756,7 @@ void FunctionValidator::visitSelect(Select* curr) {
 
 void FunctionValidator::visitDrop(Drop* curr) {
   shouldBeTrue(curr->value->type.isConcrete() ||
-                 curr->value->type == unreachable,
+                 curr->value->type == Type::unreachable,
                curr,
                "can only drop a valid value");
 }
@@ -1794,7 +1798,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 }
 
 void FunctionValidator::visitTry(Try* curr) {
-  if (curr->type != unreachable) {
+  if (curr->type != Type::unreachable) {
     shouldBeSubTypeOrFirstIsUnreachable(
       curr->body->type,
       curr->type,
@@ -1807,11 +1811,11 @@ void FunctionValidator::visitTry(Try* curr) {
       "try's type does not match catch's body type");
   } else {
     shouldBeEqual(curr->body->type,
-                  unreachable,
+                  Type(Type::unreachable),
                   curr,
                   "unreachable try-catch must have unreachable try body");
     shouldBeEqual(curr->catchBody->type,
-                  unreachable,
+                  Type(Type::unreachable),
                   curr,
                   "unreachable try-catch must have unreachable catch body");
   }
@@ -1847,8 +1851,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
 }
 
 void FunctionValidator::visitRethrow(Rethrow* curr) {
-  shouldBeEqual(
-    curr->type, unreachable, curr, "rethrow's type must be unreachable");
+  shouldBeEqual(curr->type,
+                Type(Type::unreachable),
+                curr,
+                "rethrow's type must be unreachable");
   shouldBeSubTypeOrFirstIsUnreachable(
     curr->exnref->type,
     Type::exnref,
@@ -1868,8 +1874,8 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
     Type::exnref,
     curr,
     "br_on_exn's argument must be unreachable or exnref type or its subtype");
-  if (curr->exnref->type == unreachable) {
-    shouldBeTrue(curr->type == unreachable,
+  if (curr->exnref->type == Type::unreachable) {
+    shouldBeTrue(curr->type == Type::unreachable,
                  curr,
                  "If exnref argument's type is unreachable, br_on_exn should "
                  "be unreachable too");
@@ -1983,11 +1989,11 @@ void FunctionValidator::validateAlignment(
     case Type::v128:
     case Type::unreachable:
       break;
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref:
-    case none:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -2056,7 +2062,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
       for (Type result : curr->sig.results.expand()) {
         info.shouldBeUnequal(result,
-                             i64,
+                             Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 results");
       }
@@ -2084,7 +2090,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
         }
         for (auto result : f->sig.results.expand()) {
           info.shouldBeUnequal(result,
-                               i64,
+                               Type(Type::i64),
                                f->name,
                                "Exported function must not have i64 results");
         }

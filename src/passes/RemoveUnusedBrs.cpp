@@ -288,13 +288,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Expression* z;
         replaceCurrent(
           z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition, i32),
-            builder.makeIf(builder.makeBinary(EqInt32,
-                                              builder.makeLocalGet(temp, i32),
-                                              builder.makeConst(Literal(int32_t(
-                                                curr->targets.size() - 1)))),
-                           builder.makeBreak(curr->targets.back()),
-                           builder.makeBreak(curr->default_)),
+            builder.makeLocalTee(temp, curr->condition, Type::i32),
+            builder.makeIf(
+              builder.makeBinary(
+                EqInt32,
+                builder.makeLocalGet(temp, Type::i32),
+                builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))),
+              builder.makeBreak(curr->targets.back()),
+              builder.makeBreak(curr->default_)),
             builder.makeBreak(curr->targets.front())));
       }
     }
@@ -873,7 +874,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // type is unreachable that means it is not actually reached, which we
           // can ignore.
           if (br && br->condition && br->name == curr->name &&
-              br->type != unreachable) {
+              br->type != Type::unreachable) {
             if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {

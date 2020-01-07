@@ -113,7 +113,7 @@ struct Flatten
           ourPreludes.push_back(block);
         }
         // the block now has no return value, and may have become unreachable
-        block->finalize(none);
+        block->finalize(Type::none);
 
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
@@ -277,7 +277,7 @@ struct Flatten
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       ourPreludes.push_back(curr);
       replaceCurrent(builder.makeUnreachable());
     } else if (curr->type.isConcrete()) {

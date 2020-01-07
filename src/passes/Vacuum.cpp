@@ -394,12 +394,13 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable && iff->ifFalse->type.isConcrete()) {
+      if (iff->ifTrue->type == Type::unreachable &&
+          iff->ifFalse->type.isConcrete()) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
         iff->type = Type::none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable &&
+      } else if (iff->ifFalse->type == Type::unreachable &&
                  iff->ifTrue->type.isConcrete()) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;

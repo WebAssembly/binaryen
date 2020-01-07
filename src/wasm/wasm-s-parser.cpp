@@ -854,13 +854,13 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     }
   }
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
-    return funcref;
+    return Type::funcref;
   }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::anyref;
   }
   if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
-    return nullref;
+    return Type::nullref;
   }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
@@ -1165,7 +1165,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   size_t lanes = s.size() - 2;
   switch (lanes) {
     case 2: {
-      if (lane_t != i64 && lane_t != f64) {
+      if (lane_t != Type::i64 && lane_t != Type::f64) {
         throw ParseException(
           "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
@@ -1173,7 +1173,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
       break;
     }
     case 4: {
-      if (lane_t != i32 && lane_t != f32) {
+      if (lane_t != Type::i32 && lane_t != Type::f32) {
         throw ParseException(
           "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
@@ -1181,7 +1181,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
       break;
     }
     case 8: {
-      if (lane_t != i32) {
+      if (lane_t != Type::i32) {
         throw ParseException(
           "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }
@@ -1189,7 +1189,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
       break;
     }
     case 16: {
-      if (lane_t != i32) {
+      if (lane_t != Type::i32) {
         throw ParseException(
           "Unexpected v128 literal lane type", s[1]->line, s[1]->col);
       }

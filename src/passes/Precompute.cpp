@@ -243,10 +243,11 @@ struct Precompute
         br->finalize();
       } else {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(
-          flow.breakTo,
-          flow.value.type != none ? builder.makeConstExpression(flow.value)
-                                  : nullptr));
+        replaceCurrent(
+          builder.makeBreak(flow.breakTo,
+                            flow.value.type != Type::none
+                              ? builder.makeConstExpression(flow.value)
+                              : nullptr));
       }
       return;
     }

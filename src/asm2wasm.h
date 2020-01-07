@@ -534,7 +534,7 @@ private:
             //   mergedParams[i] = params[i]; // use a more concrete type
             // } else
             if (mergedParams[i] != params[i]) {
-              mergedParams[i] = f64; // overloaded type, make it a double
+              mergedParams[i] = Type::f64; // overloaded type, make it a double
             }
           } else {
             mergedParams.push_back(params[i]); // add a new param
@@ -806,15 +806,15 @@ private:
       if (base == ABS) {
         assert(operands && operands->size() == 1);
         Type type = (*operands)[0]->type;
-        if (type == i32) {
+        if (type == Type::i32) {
           sig = Signature(Type::i32, Type::i32);
           return true;
         }
-        if (type == f32) {
+        if (type == Type::f32) {
           sig = Signature(Type::f32, Type::f32);
           return true;
         }
-        if (type == f64) {
+        if (type == Type::f64) {
           sig = Signature(Type::f64, Type::f64);
           return true;
         }

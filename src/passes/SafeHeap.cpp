@@ -169,15 +169,16 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
-    for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
+    for (Type type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
       if (type == Type::v128 && !features.hasSIMD()) {
         continue;
       }
       load.type = type;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
-        if (bytes > type.getByteSize() || (type == f32 && bytes != 4) ||
-            (type == f64 && bytes != 8) || (type == v128 && bytes != 16)) {
+        if (bytes > type.getByteSize() || (type == Type::f32 && bytes != 4) ||
+            (type == Type::f64 && bytes != 8) ||
+            (type == Type::v128 && bytes != 16)) {
           continue;
         }
         for (auto signed_ : {true, false}) {
@@ -204,7 +205,7 @@ struct SafeHeap : public Pass {
     }
     // store funcs
     Store store;
-    for (auto valueType :
+    for (Type valueType :
          {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
       if (valueType == Type::v128 && !features.hasSIMD()) {
         continue;
@@ -214,9 +215,9 @@ struct SafeHeap : public Pass {
       for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
         if (bytes > valueType.getByteSize() ||
-            (valueType == f32 && bytes != 4) ||
-            (valueType == f64 && bytes != 8) ||
-            (valueType == v128 && bytes != 16)) {
+            (valueType == Type::f32 && bytes != 4) ||
+            (valueType == Type::f64 && bytes != 8) ||
+            (valueType == Type::v128 && bytes != 16)) {
           continue;
         }
         for (Index align : {1, 2, 4, 8, 16}) {
@@ -247,7 +248,7 @@ struct SafeHeap : public Pass {
     func->name = name;
     // pointer, offset
     func->sig = Signature({Type::i32, Type::i32}, style.type);
-    func->vars.push_back(i32);   // pointer + offset
+    func->vars.push_back(Type::i32); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -287,7 +288,7 @@ struct SafeHeap : public Pass {
     func->name = name;
     // pointer, offset, value
     func->sig = Signature({Type::i32, Type::i32, style.valueType}, Type::none);
-    func->vars.push_back(i32);               // pointer + offset
+    func->vars.push_back(Type::i32); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(

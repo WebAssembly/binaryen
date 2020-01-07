@@ -556,7 +556,7 @@ struct Reducer
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (child->type.isConcrete() && curr->type == none) {
+      if (child->type.isConcrete() && curr->type == Type::none) {
         if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
         }
@@ -580,9 +580,9 @@ struct Reducer
         switch (curr->type) {
           case Type::i32: {
             switch (child->type) {
-              case i32:
+              case Type::i32:
                 WASM_UNREACHABLE("invalid type");
-              case i64:
+              case Type::i64:
                 fixed = builder->makeUnary(WrapInt64, child);
                 break;
               case Type::f32:
@@ -591,14 +591,14 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
-              case v128:
-              case funcref:
-              case anyref:
-              case nullref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
+              case Type::none:
+              case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
@@ -608,22 +608,22 @@ struct Reducer
               case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
-              case i64:
+              case Type::i64:
                 WASM_UNREACHABLE("invalid type");
-              case f32:
+              case Type::f32:
                 fixed = builder->makeUnary(TruncSFloat32ToInt64, child);
                 break;
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
-              case v128:
-              case funcref:
-              case anyref:
-              case nullref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
+              case Type::none:
+              case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
@@ -636,19 +636,19 @@ struct Reducer
               case Type::i64:
                 fixed = builder->makeUnary(ConvertSInt64ToFloat32, child);
                 break;
-              case f32:
+              case Type::f32:
                 WASM_UNREACHABLE("unexpected type");
-              case f64:
+              case Type::f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
-              case v128:
-              case funcref:
-              case anyref:
-              case nullref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
+              case Type::none:
+              case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
@@ -664,28 +664,28 @@ struct Reducer
               case Type::f32:
                 fixed = builder->makeUnary(PromoteFloat32, child);
                 break;
-              case f64:
+              case Type::f64:
                 WASM_UNREACHABLE("unexpected type");
-              case v128:
-              case funcref:
-              case anyref:
-              case nullref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
+              case Type::none:
+              case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case v128:
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
             continue; // not implemented yet
-          case none:
-          case unreachable:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         assert(fixed->type == curr->type);
@@ -879,7 +879,7 @@ struct Reducer
         auto funcSig = func->sig;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
-          if (!(child->type.isConcrete() || child->type == none)) {
+          if (!(child->type.isConcrete() || child->type == Type::none)) {
             continue; // not something a function can return
           }
           // Try to replace the body with the child, fixing up the function

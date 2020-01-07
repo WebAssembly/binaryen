@@ -111,7 +111,7 @@ inline Expression* stackBoundsCheck(Builder& builder,
   // Otherwise, just trap.
   Expression* handler;
   if (handlerName.is()) {
-    handler = builder.makeCall(handlerName, {}, none);
+    handler = builder.makeCall(handlerName, {}, Type::none);
   } else {
     handler = builder.makeUnreachable();
   }
@@ -169,9 +169,9 @@ void EmscriptenGlueGenerator::generateStackSaveFunction() {
 
 void EmscriptenGlueGenerator::generateStackAllocFunction() {
   BYN_TRACE("generateStackAllocFunction\n");
-  std::vector<NameType> params{{"0", i32}};
-  Function* function =
-    builder.makeFunction(STACK_ALLOC, std::move(params), i32, {{"1", i32}});
+  std::vector<NameType> params{{"0", Type::i32}};
+  Function* function = builder.makeFunction(
+    STACK_ALLOC, std::move(params), Type::i32, {{"1", Type::i32}});
   Expression* loadStack = generateLoadStackPointer();
   LocalGet* getSizeArg = builder.makeLocalGet(0, Type::i32);
   Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
@@ -179,7 +179,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, i32);
+  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, Type::i32);
   Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
 
   Block* block = builder.makeBlock();
@@ -194,7 +194,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
 
 void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   BYN_TRACE("generateStackRestoreFunction\n");
-  std::vector<NameType> params{{"0", i32}};
+  std::vector<NameType> params{{"0", Type::i32}};
   Function* function =
     builder.makeFunction(STACK_RESTORE, std::move(params), Type::none, {});
   LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
@@ -272,7 +272,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   for (Global* g : gotMemEntries) {
     Name getter(std::string("g$") + g->base.c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, i32);
+    Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
@@ -298,7 +298,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, i32);
+    Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
@@ -391,7 +391,7 @@ void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
     params.emplace_back(std::to_string(p++), ty);
   }
   Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
-  Expression* fptr = builder.makeLocalGet(0, i32);
+  Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
   for (unsigned i = 0; i < paramTypes.size(); ++i) {
     args.push_back(builder.makeLocalGet(i + 1, paramTypes[i]));
@@ -549,7 +549,7 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
 void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
   Function* function =
     builder.makeFunction(SET_STACK_LIMIT, Signature(Type::i32, Type::none), {});
-  LocalGet* getArg = builder.makeLocalGet(0, i32);
+  LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
   Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
   function->body = store;
   addExportedFunction(wasm, function);
@@ -1314,10 +1314,11 @@ void EmscriptenGlueGenerator::exportWasiStart() {
   }
   BYN_TRACE("exportWasiStart\n");
   Builder builder(wasm);
-  auto* body = builder.makeDrop(builder.makeCall(
-    main,
-    {LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm)},
-    i32));
+  auto* body =
+    builder.makeDrop(builder.makeCall(main,
+                                      {LiteralUtils::makeZero(Type::i32, wasm),
+                                       LiteralUtils::makeZero(Type::i32, wasm)},
+                                      Type::i32));
   auto* func =
     builder.makeFunction(_start, Signature(Type::none, Type::none), {}, body);
   wasm.addFunction(func);

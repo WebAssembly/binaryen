@@ -174,7 +174,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         (i < oldFunc->getVarIndexBase())
           ? Builder::addParam
           : static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
-      if (paramType == i64) {
+      if (paramType == Type::i64) {
         builderFunc(func, lowName, Type::i32);
         builderFunc(func, highName, Type::i32);
         indexMap[i] = newIdx;

@@ -89,7 +89,9 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
-static Type forceConcrete(Type type) { return type.isConcrete() ? type : i32; }
+static Type forceConcrete(Type type) {
+  return type.isConcrete() ? type : Type::i32;
+}
 
 // Prints the internal contents of an expression: everything but
 // the children.
@@ -186,7 +188,8 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".load";
-    if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -233,7 +236,7 @@ struct PrintExpressionContents
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << forceConcrete(type) << ".atomic.rmw";
-    if (type != unreachable && bytes != type.getByteSize()) {
+    if (type != Type::unreachable && bytes != type.getByteSize()) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -269,7 +272,8 @@ struct PrintExpressionContents
         o << "xchg";
         break;
     }
-    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -281,7 +285,8 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
-    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);

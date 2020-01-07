@@ -147,11 +147,11 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
@@ -249,12 +249,12 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
@@ -646,12 +646,12 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref:
-    case none:
-    case unreachable:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
 }
@@ -1685,37 +1685,40 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       mappedLocals[i] = index + currLocalsByType[Type::v128] - 1;
       continue;
     }
-    index += numLocalsByType[v128];
-    if (type == funcref) {
-      mappedLocals[i] = index + currLocalsByType[funcref] - 1;
+    index += numLocalsByType[Type::v128];
+    if (type == Type::funcref) {
+      mappedLocals[i] = index + currLocalsByType[Type::funcref] - 1;
       continue;
     }
-    index += numLocalsByType[funcref];
-    if (type == anyref) {
-      mappedLocals[i] = index + currLocalsByType[anyref] - 1;
+    index += numLocalsByType[Type::funcref];
+    if (type == Type::anyref) {
+      mappedLocals[i] = index + currLocalsByType[Type::anyref] - 1;
       continue;
     }
-    index += numLocalsByType[anyref];
-    if (type == nullref) {
-      mappedLocals[i] = index + currLocalsByType[nullref] - 1;
+    index += numLocalsByType[Type::anyref];
+    if (type == Type::nullref) {
+      mappedLocals[i] = index + currLocalsByType[Type::nullref] - 1;
       continue;
     }
-    index += numLocalsByType[nullref];
-    if (type == exnref) {
-      mappedLocals[i] = index + currLocalsByType[exnref] - 1;
+    index += numLocalsByType[Type::nullref];
+    if (type == Type::exnref) {
+      mappedLocals[i] = index + currLocalsByType[Type::exnref] - 1;
       continue;
     }
     WASM_UNREACHABLE("unexpected type");
   }
   // Emit them.
-  o << U32LEB(
-    (numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
-    (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
-    (numLocalsByType[v128] ? 1 : 0) + (numLocalsByType[funcref] ? 1 : 0) +
-    (numLocalsByType[anyref] ? 1 : 0) + (numLocalsByType[nullref] ? 1 : 0) +
-    (numLocalsByType[exnref] ? 1 : 0));
-  if (numLocalsByType[i32]) {
-    o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
+  o << U32LEB((numLocalsByType[Type::i32] ? 1 : 0) +
+              (numLocalsByType[Type::i64] ? 1 : 0) +
+              (numLocalsByType[Type::f32] ? 1 : 0) +
+              (numLocalsByType[Type::f64] ? 1 : 0) +
+              (numLocalsByType[Type::v128] ? 1 : 0) +
+              (numLocalsByType[Type::funcref] ? 1 : 0) +
+              (numLocalsByType[Type::anyref] ? 1 : 0) +
+              (numLocalsByType[Type::nullref] ? 1 : 0) +
+              (numLocalsByType[Type::exnref] ? 1 : 0));
+  if (numLocalsByType[Type::i32]) {
+    o << U32LEB(numLocalsByType[Type::i32]) << binaryType(Type::i32);
   }
   if (numLocalsByType[Type::i64]) {
     o << U32LEB(numLocalsByType[Type::i64]) << binaryType(Type::i64);
@@ -1729,17 +1732,17 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   if (numLocalsByType[Type::v128]) {
     o << U32LEB(numLocalsByType[Type::v128]) << binaryType(Type::v128);
   }
-  if (numLocalsByType[funcref]) {
-    o << U32LEB(numLocalsByType[funcref]) << binaryType(funcref);
+  if (numLocalsByType[Type::funcref]) {
+    o << U32LEB(numLocalsByType[Type::funcref]) << binaryType(Type::funcref);
   }
-  if (numLocalsByType[anyref]) {
-    o << U32LEB(numLocalsByType[anyref]) << binaryType(anyref);
+  if (numLocalsByType[Type::anyref]) {
+    o << U32LEB(numLocalsByType[Type::anyref]) << binaryType(Type::anyref);
   }
-  if (numLocalsByType[nullref]) {
-    o << U32LEB(numLocalsByType[nullref]) << binaryType(nullref);
+  if (numLocalsByType[Type::nullref]) {
+    o << U32LEB(numLocalsByType[Type::nullref]) << binaryType(Type::nullref);
   }
-  if (numLocalsByType[exnref]) {
-    o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);
+  if (numLocalsByType[Type::exnref]) {
+    o << U32LEB(numLocalsByType[Type::exnref]) << binaryType(Type::exnref);
   }
 }
 
@@ -1799,7 +1802,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   auto stackType = origin->type;
   if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
       origin->is<Try>()) {
-    if (stackType == unreachable) {
+    if (stackType == Type::unreachable) {
       // There are no unreachable blocks, loops, or ifs. we emit extra
       // unreachables to fix that up, so that they are valid as having none
       // type.

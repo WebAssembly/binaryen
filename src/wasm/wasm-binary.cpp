@@ -1058,15 +1058,15 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::f64:
       return Type::f64;
     case BinaryConsts::EncodedType::v128:
-      return v128;
+      return Type::v128;
     case BinaryConsts::EncodedType::funcref:
-      return funcref;
+      return Type::funcref;
     case BinaryConsts::EncodedType::anyref:
-      return anyref;
+      return Type::anyref;
     case BinaryConsts::EncodedType::nullref:
-      return nullref;
+      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
-      return exnref;
+      return Type::exnref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
@@ -2988,7 +2988,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
     default:
       WASM_UNREACHABLE("unexpected opcode");
   }
-  curr->type = i32;
+  curr->type = Type::i32;
   BYN_TRACE("zz node: AtomicWait\n");
   curr->timeout = popNonVoidExpression();
   curr->expected = popNonVoidExpression();

@@ -763,7 +763,7 @@ struct OptimizeInstructions
               // the types diff. as the condition is reachable, that means the
               // if must be concrete while the arm is not
               assert(iff->type.isConcrete() &&
-                     iff->ifTrue->type == unreachable);
+                     iff->ifTrue->type == Type::unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
               if (needCondition) {

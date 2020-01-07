@@ -62,13 +62,13 @@ static Expression* toABI(Expression* value, Module* module) {
       value = builder.makeUnary(ReinterpretFloat64, value);
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref: {
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
     case Type::none: {
@@ -106,13 +106,13 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
       value = builder.makeUnary(ReinterpretInt64, value);
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref: {
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
     case Type::none: {

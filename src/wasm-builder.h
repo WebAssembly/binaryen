@@ -792,14 +792,14 @@ public:
         value = Literal(bytes.data());
         break;
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
         return ExpressionManipulator::refNull(curr);
-      case none:
+      case Type::none:
         return ExpressionManipulator::nop(curr);
-      case unreachable:
+      case Type::unreachable:
         return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);

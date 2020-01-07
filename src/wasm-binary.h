@@ -923,19 +923,19 @@ inline S32LEB binaryType(Type type) {
     case Type::v128:
       ret = BinaryConsts::EncodedType::v128;
       break;
-    case funcref:
+    case Type::funcref:
       ret = BinaryConsts::EncodedType::funcref;
       break;
-    case anyref:
+    case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
-    case nullref:
+    case Type::nullref:
       ret = BinaryConsts::EncodedType::nullref;
       break;
-    case exnref:
+    case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
       break;
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);

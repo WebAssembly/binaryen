@@ -281,8 +281,8 @@ private:
       if (imParams[i] == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
-        params.push_back(i32);
-        params.push_back(i32);
+        params.push_back(Type::i32);
+        params.push_back(Type::i32);
       } else {
         call->operands.push_back(builder.makeLocalGet(i, imParams[i]));
         params.push_back(imParams[i]);

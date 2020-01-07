@@ -428,7 +428,7 @@ void CallIndirect::finalize() {
   }
 }
 
-bool LocalSet::isTee() const { return type != none; }
+bool LocalSet::isTee() const { return type != Type::none; }
 
 // Changes to local.tee. The type of the local should be given.
 void LocalSet::makeTee(Type type_) {
@@ -438,13 +438,13 @@ void LocalSet::makeTee(Type type_) {
 
 // Changes to local.set.
 void LocalSet::makeSet() {
-  type = none;
+  type = Type::none;
   finalize(); // type may need to be unreachable
 }
 
 void LocalSet::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 

@@ -86,21 +86,21 @@ private:
         size = getWrittenSize(S64LEB(value.geti64()));
         break;
       }
-      case f32:
-      case f64: {
+      case Type::f32:
+      case Type::f64: {
         size = value.type.getByteSize();
         break;
       }
-      // not implemented yet
-      case v128:
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref: {
+        // not implemented yet
+      case Type::v128:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref: {
         return false;
       }
-      case none:
-      case unreachable:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     // compute the benefit, of replacing the uses with

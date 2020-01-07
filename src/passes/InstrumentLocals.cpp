@@ -88,20 +88,20 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case Type::v128:
         assert(false && "v128 not implemented yet");
-      case funcref:
+      case Type::funcref:
         import = get_funcref;
         break;
-      case anyref:
+      case Type::anyref:
         import = get_anyref;
         break;
-      case nullref:
+      case Type::nullref:
         import = get_nullref;
         break;
-      case exnref:
+      case Type::exnref:
         import = get_exnref;
         break;
-      case none:
-      case unreachable:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     replaceCurrent(
@@ -136,21 +136,21 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case Type::v128:
         assert(false && "v128 not implemented yet");
-      case funcref:
+      case Type::funcref:
         import = set_funcref;
         break;
-      case anyref:
+      case Type::anyref:
         import = set_anyref;
         break;
-      case nullref:
+      case Type::nullref:
         import = set_nullref;
         break;
-      case exnref:
+      case Type::exnref:
         import = set_exnref;
         break;
       case Type::unreachable:
         return; // nothing to do here
-      case none:
+      case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
     curr->value =

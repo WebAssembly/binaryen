@@ -391,7 +391,7 @@ private:
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction(
-      "hashMemory", Signature(Type::none, Type::i32), {i32}, body));
+      "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
@@ -861,15 +861,15 @@ private:
     nesting++;
     Expression* ret = nullptr;
     switch (type) {
-      case i32:
-      case i64:
-      case f32:
-      case f64:
-      case v128:
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
+      case Type::i32:
+      case Type::i64:
+      case Type::f32:
+      case Type::f64:
+      case Type::v128:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
         ret = _makeConcrete(type);
         break;
       case Type::none:
@@ -1061,7 +1061,7 @@ private:
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
     if (!finishedInput && type.isConcrete() && oneIn(2)) {
-      ret->list.push_back(makeBreak(unreachable));
+      ret->list.push_back(makeBreak(Type::unreachable));
     } else {
       ret->list.push_back(make(type));
     }
@@ -1258,7 +1258,7 @@ private:
     while (1) {
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
-      isReturn = type == unreachable && wasm.features.hasTailCall() &&
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
                  func->sig.results == targetFn->sig.results;
       if (targetFn->sig.results == type || isReturn) {
         break;
@@ -1391,12 +1391,12 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -1448,7 +1448,7 @@ private:
     }
     // the type is none or unreachable. we also need to pick the value
     // type.
-    if (type == none) {
+    if (type == Type::none) {
       type = getStorableType();
     }
     auto offset = logify(get());
@@ -1495,12 +1495,12 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -1591,13 +1591,13 @@ private:
             return Literal(getFloat());
           case Type::f64:
             return Literal(getDouble());
-          case v128:
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
         }
         break;
@@ -1636,13 +1636,13 @@ private:
             return Literal(float(small));
           case Type::f64:
             return Literal(double(small));
-          case v128:
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         break;
@@ -1704,13 +1704,13 @@ private:
                                          std::numeric_limits<uint32_t>::max(),
                                          std::numeric_limits<uint64_t>::max()));
             break;
-          case v128:
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         // tweak around special values
@@ -1738,13 +1738,13 @@ private:
           case Type::f64:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
-          case v128:
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         // maybe negative
@@ -1852,13 +1852,13 @@ private:
                                     AllTrueVecI64x2),
                                make(Type::v128)});
           }
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
             return makeTrivial(type);
-          case none:
-          case unreachable:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         WASM_UNREACHABLE("invalid type");
@@ -1997,12 +1997,12 @@ private:
         }
         WASM_UNREACHABLE("invalid value");
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -2232,12 +2232,12 @@ private:
                             make(Type::v128),
                             make(Type::v128)});
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -2251,7 +2251,7 @@ private:
     Type subType1 = pick(getSubTypes(type));
     Type subType2 = pick(getSubTypes(type));
     return makeDeNanOp(
-      buildSelect({make(i32), make(subType1), make(subType2)}, type));
+      buildSelect({make(Type::i32), make(subType1), make(subType2)}, type));
   }
 
   Expression* makeSwitch(Type type) {
@@ -2282,7 +2282,7 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    auto temp1 = make(i32),
+    auto temp1 = make(Type::i32),
          temp2 = valueType.isConcrete() ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
@@ -2398,7 +2398,7 @@ private:
     if (type.isRef()) {
       return makeTrivial(type);
     }
-    if (type != v128) {
+    if (type != Type::v128) {
       return makeSIMDExtract(type);
     }
     switch (upTo(7)) {
@@ -2439,13 +2439,13 @@ private:
       case Type::f64:
         op = ExtractLaneVecF64x2;
         break;
-      case v128:
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::v128:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     Expression* vec = make(Type::v128);
@@ -2669,7 +2669,7 @@ private:
   Expression* makeLogging() {
     auto type = getLoggableType();
     return builder.makeCall(
-      std::string("log-") + type.toString(), {make(type)}, none);
+      std::string("log-") + type.toString(), {make(type)}, Type::none);
   }
 
   Expression* makeMemoryHashLogging() {
