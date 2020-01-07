@@ -529,10 +529,6 @@ private:
         // ok since in JS, double can contain everything i32 and f32 can).
         for (size_t i = 0; i < params.size(); i++) {
           if (mergedParams.size() > i) {
-            // TODO: Is this dead?
-            // if (mergedParams[i] == Type::none) {
-            //   mergedParams[i] = params[i]; // use a more concrete type
-            // } else
             if (mergedParams[i] != params[i]) {
               mergedParams[i] = Type::f64; // overloaded type, make it a double
             }
