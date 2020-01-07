@@ -320,7 +320,7 @@ struct ReReloop final : public Pass {
     // anywhere. add a return as needed
     for (auto* cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
-      if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
+      if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
         block->list.push_back(function->sig.results == Type::none
                                 ? (Expression*)builder->makeReturn()
                                 : (Expression*)builder->makeUnreachable());
@@ -345,7 +345,7 @@ struct ReReloop final : public Pass {
     relooper->Calculate(entry);
     // render
     {
-      auto temp = builder->addVar(function, i32);
+      auto temp = builder->addVar(function, Type::i32);
       CFG::RelooperBuilder builder(*module, temp);
       function->body = relooper->Render(builder);
       // if the function has a result, and the relooper emitted

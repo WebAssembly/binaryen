@@ -421,7 +421,7 @@ struct SimplifyLocals
   void optimizeLoopReturn(Loop* loop) {
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
-    if (loop->type != none) {
+    if (loop->type != Type::none) {
       return;
     }
     if (sinkables.empty()) {
@@ -442,7 +442,7 @@ struct SimplifyLocals
     block->list[block->list.size() - 1] = set->value;
     *item = builder.makeNop();
     block->finalize();
-    assert(block->type != none);
+    assert(block->type != Type::none);
     loop->finalize();
     set->value = loop;
     set->finalize();
@@ -584,7 +584,7 @@ struct SimplifyLocals
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
-    if (iff->type != none) {
+    if (iff->type != Type::none) {
       return;
     }
     // We now have the sinkables from both sides of the if, and can look
@@ -606,14 +606,16 @@ struct SimplifyLocals
     Sinkables& ifFalse = sinkables;
     Index goodIndex = -1;
     bool found = false;
-    if (iff->ifTrue->type == unreachable) {
-      assert(iff->ifFalse->type != unreachable); // since the if type is none
+    if (iff->ifTrue->type == Type::unreachable) {
+      // since the if type is none
+      assert(iff->ifFalse->type != Type::unreachable);
       if (!ifFalse.empty()) {
         goodIndex = ifFalse.begin()->first;
         found = true;
       }
-    } else if (iff->ifFalse->type == unreachable) {
-      assert(iff->ifTrue->type != unreachable); // since the if type is none
+    } else if (iff->ifFalse->type == Type::unreachable) {
+      // since the if type is none
+      assert(iff->ifTrue->type != Type::unreachable);
       if (!ifTrue.empty()) {
         goodIndex = ifTrue.begin()->first;
         found = true;
@@ -636,7 +638,7 @@ struct SimplifyLocals
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
-    if (iff->ifTrue->type != unreachable) {
+    if (iff->ifTrue->type != Type::unreachable) {
       if (!ifTrueBlock || ifTrueBlock->name.is() ||
           ifTrueBlock->list.size() == 0 ||
           !ifTrueBlock->list.back()->is<Nop>()) {
@@ -645,7 +647,7 @@ struct SimplifyLocals
       }
     }
     auto* ifFalseBlock = iff->ifFalse->dynCast<Block>();
-    if (iff->ifFalse->type != unreachable) {
+    if (iff->ifFalse->type != Type::unreachable) {
       if (!ifFalseBlock || ifFalseBlock->name.is() ||
           ifFalseBlock->list.size() == 0 ||
           !ifFalseBlock->list.back()->is<Nop>()) {
@@ -654,24 +656,24 @@ struct SimplifyLocals
       }
     }
     // all set, go
-    if (iff->ifTrue->type != unreachable) {
+    if (iff->ifTrue->type != Type::unreachable) {
       auto* ifTrueItem = ifTrue.at(goodIndex).item;
       ifTrueBlock->list[ifTrueBlock->list.size() - 1] =
         (*ifTrueItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifTrueItem);
       ifTrueBlock->finalize();
-      assert(ifTrueBlock->type != none);
+      assert(ifTrueBlock->type != Type::none);
     }
-    if (iff->ifFalse->type != unreachable) {
+    if (iff->ifFalse->type != Type::unreachable) {
       auto* ifFalseItem = ifFalse.at(goodIndex).item;
       ifFalseBlock->list[ifFalseBlock->list.size() - 1] =
         (*ifFalseItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifFalseItem);
       ifFalseBlock->finalize();
-      assert(ifFalseBlock->type != none);
+      assert(ifFalseBlock->type != Type::none);
     }
     iff->finalize(); // update type
-    assert(iff->type != none);
+    assert(iff->type != Type::none);
     // finally, create a local.set on the iff itself
     auto* newLocalSet =
       Builder(*this->getModule()).makeLocalSet(goodIndex, iff);
@@ -703,7 +705,7 @@ struct SimplifyLocals
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
     // If this if is unreachable code, we have nothing to do.
-    if (iff->type != none || iff->ifTrue->type != none) {
+    if (iff->type != Type::none || iff->ifTrue->type != Type::none) {
       return;
     }
     // Anything sinkable is good for us.
@@ -726,14 +728,14 @@ struct SimplifyLocals
     ifTrueBlock->list[ifTrueBlock->list.size() - 1] = set->value;
     *item = builder.makeNop();
     ifTrueBlock->finalize();
-    assert(ifTrueBlock->type != none);
+    assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
     iff->ifFalse = builder.makeLocalGet(
       set->index, this->getFunction()->getLocalType(set->index));
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
-    assert(iff->type != none);
+    assert(iff->type != Type::none);
     // Finally, reuse the local.set on the iff itself.
     set->value = iff;
     set->finalize();

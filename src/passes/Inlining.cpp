@@ -154,12 +154,12 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     bool isUnreachable;
     if (curr->isReturn) {
       // Tail calls are only actually unreachable if an argument is
-      isUnreachable =
-        std::any_of(curr->operands.begin(),
-                    curr->operands.end(),
-                    [](Expression* op) { return op->type == unreachable; });
+      isUnreachable = std::any_of(
+        curr->operands.begin(), curr->operands.end(), [](Expression* op) {
+          return op->type == Type::unreachable;
+        });
     } else {
-      isUnreachable = curr->type == unreachable;
+      isUnreachable = curr->type == Type::unreachable;
     }
     if (state->worthInlining.count(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
@@ -273,7 +273,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   // contained void, that is fine too. a bad case is a void function in which
   // we have unreachable code, so we would be replacing a void call with an
   // unreachable.
-  if (contents->type == unreachable && block->type == none) {
+  if (contents->type == Type::unreachable && block->type == Type::none) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }

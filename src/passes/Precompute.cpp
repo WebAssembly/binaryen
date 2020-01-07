@@ -199,7 +199,7 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          if (flow.value.type != none) {
+          if (flow.value.type != Type::none) {
             // reuse a const value if there is one
             if (ret->value) {
               if (auto* value = ret->value->dynCast<Const>()) {
@@ -226,7 +226,7 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        if (flow.value.type != none) {
+        if (flow.value.type != Type::none) {
           // reuse a const value if there is one
           if (br->value) {
             if (auto* value = br->value->dynCast<Const>()) {
@@ -243,10 +243,11 @@ struct Precompute
         br->finalize();
       } else {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(
-          flow.breakTo,
-          flow.value.type != none ? builder.makeConstExpression(flow.value)
-                                  : nullptr));
+        replaceCurrent(
+          builder.makeBreak(flow.breakTo,
+                            flow.value.type != Type::none
+                              ? builder.makeConstExpression(flow.value)
+                              : nullptr));
       }
       return;
     }

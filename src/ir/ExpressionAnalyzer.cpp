@@ -151,7 +151,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
+      if (curr->type != Type::unreachable &&
+          curr->bytes < curr->type.getByteSize()) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);

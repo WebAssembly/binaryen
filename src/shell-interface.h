@@ -100,28 +100,28 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
         switch (import->type) {
-          case i32:
+          case Type::i32:
             globals[import->name] = Literal(int32_t(666));
             break;
-          case i64:
+          case Type::i64:
             globals[import->name] = Literal(int64_t(666));
             break;
-          case f32:
+          case Type::f32:
             globals[import->name] = Literal(float(666.6));
             break;
-          case f64:
+          case Type::f64:
             globals[import->name] = Literal(double(666.6));
             break;
-          case v128:
+          case Type::v128:
             assert(false && "v128 not implemented yet");
-          case funcref:
-          case anyref:
-          case nullref:
-          case exnref:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
             globals[import->name] = Literal::makeNullref();
             break;
-          case none:
-          case unreachable:
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
       }
