@@ -64,14 +64,14 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  bool isSingle() const { return id >= i32 && id <= last_value_type; }
-  bool isMulti() const { return id > last_value_type; }
-  bool isConcrete() const { return id >= i32; }
-  bool isInteger() const { return id == i32 || id == i64; }
-  bool isFloat() const { return id == f32 || id == f64; }
-  bool isVector() const { return id == v128; };
-  bool isNumber() const { return id >= i32 && id <= v128; }
-  bool isRef() const { return id >= funcref && id <= exnref; }
+  constexpr bool isSingle() const { return id >= i32 && id <= last_value_type; }
+  constexpr bool isMulti() const { return id > last_value_type; }
+  constexpr bool isConcrete() const { return id >= i32; }
+  constexpr bool isInteger() const { return id == i32 || id == i64; }
+  constexpr bool isFloat() const { return id == f32 || id == f64; }
+  constexpr bool isVector() const { return id == v128; };
+  constexpr bool isNumber() const { return id >= i32 && id <= v128; }
+  constexpr bool isRef() const { return id >= funcref && id <= exnref; }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
