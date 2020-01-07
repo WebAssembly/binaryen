@@ -232,7 +232,7 @@ struct SimplifyLocals
           assert(expressionStack.size() >= 2);
           assert(expressionStack[expressionStack.size() - 1] == curr);
           auto* parent = expressionStack[expressionStack.size() - 2];
-          bool parentIsSet = parent->is<LocalSet>();
+          bool parentIsSet = parent->template is<LocalSet>();
           // if the parent of this get is a set, we can sink into the set's
           // value, it would not be nested.
           if (!parentIsSet) {
@@ -835,7 +835,8 @@ struct SimplifyLocals
         auto ifTrue =
           Builder(*this->getModule()).blockifyWithName(iff->ifTrue, Name());
         iff->ifTrue = ifTrue;
-        if (ifTrue->list.size() == 0 || !ifTrue->list.back()->is<Nop>()) {
+        if (ifTrue->list.size() == 0 ||
+            !ifTrue->list.back()->template is<Nop>()) {
           ifTrue->list.push_back(
             this->getModule()->allocator.template alloc<Nop>());
         }
@@ -843,7 +844,8 @@ struct SimplifyLocals
           auto ifFalse =
             Builder(*this->getModule()).blockifyWithName(iff->ifFalse, Name());
           iff->ifFalse = ifFalse;
-          if (ifFalse->list.size() == 0 || !ifFalse->list.back()->is<Nop>()) {
+          if (ifFalse->list.size() == 0 ||
+              !ifFalse->list.back()->template is<Nop>()) {
             ifFalse->list.push_back(
               this->getModule()->allocator.template alloc<Nop>());
           }
@@ -858,7 +860,8 @@ struct SimplifyLocals
         auto block =
           Builder(*this->getModule()).blockifyWithName(loop->body, Name());
         loop->body = block;
-        if (block->list.size() == 0 || !block->list.back()->is<Nop>()) {
+        if (block->list.size() == 0 ||
+            !block->list.back()->template is<Nop>()) {
           block->list.push_back(
             this->getModule()->allocator.template alloc<Nop>());
         }
