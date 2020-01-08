@@ -50,8 +50,8 @@ static_assert(sizeof(BinaryenLiteral) == sizeof(Literal),
 
 BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
-  ret.type = x.type;
-  switch (x.type) {
+  ret.type = x.type.getID();
+  switch (x.type.getVT()) {
     case Type::i32:
       ret.i32 = x.geti32();
       break;
@@ -305,11 +305,11 @@ BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
     }
     std::cout << "};\n";
     std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
-              << "); // " << uint32_t(result) << "\n";
+              << "); // " << result.getID() << "\n";
     std::cout << "  }\n";
   }
 
-  return uint32_t(result);
+  return result.getID();
 }
 
 uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
@@ -317,7 +317,7 @@ uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
 void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
   const std::vector<Type>& types = Type(t).expand();
   for (size_t i = 0; i < types.size(); ++i) {
-    buf[i] = types[i];
+    buf[i] = types[i].getVT();
   }
 }
 
@@ -1833,7 +1833,7 @@ BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
               << "]);\n";
   }
 
-  return ((Expression*)expr)->type;
+  return ((Expression*)expr)->type.getID();
 }
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2643,7 +2643,7 @@ BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicWait>());
-  return static_cast<AtomicWait*>(expression)->expectedType;
+  return static_cast<AtomicWait*>(expression)->expectedType.getID();
 }
 // AtomicNotify
 BinaryenExpressionRef BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr) {
@@ -4112,7 +4112,7 @@ BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
               << "]);\n";
   }
 
-  return ((Function*)func)->sig.params;
+  return ((Function*)func)->sig.params.getID();
 }
 BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
   if (tracing) {
@@ -4120,7 +4120,7 @@ BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
               << "]);\n";
   }
 
-  return ((Function*)func)->sig.results;
+  return ((Function*)func)->sig.results.getID();
 }
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   if (tracing) {
@@ -4139,7 +4139,7 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
 
   auto* fn = (Function*)func;
   assert(index < fn->vars.size());
-  return fn->vars[index];
+  return fn->vars[index].getID();
 }
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   if (tracing) {
@@ -4230,7 +4230,7 @@ BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
               << "]);\n";
   }
 
-  return ((Global*)global)->type;
+  return ((Global*)global)->type.getID();
 }
 int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
   if (tracing) {
@@ -4273,7 +4273,7 @@ BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
     std::cout << "  BinaryenEventGetParams(events[" << events[event] << "]);\n";
   }
 
-  return ((Event*)event)->sig.params;
+  return ((Event*)event)->sig.params.getID();
 }
 
 BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
@@ -4282,7 +4282,7 @@ BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
               << "]);\n";
   }
 
-  return ((Event*)event)->sig.results;
+  return ((Event*)event)->sig.results.getID();
 }
 
 //

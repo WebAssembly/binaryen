@@ -65,7 +65,7 @@ public:
   bool isNone() { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
-    switch (type) {
+    switch (type.getVT()) {
       case Type::i32:
         return Literal(int32_t(x));
         break;
@@ -454,7 +454,7 @@ template<> struct hash<wasm::Literal> {
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
-    return wasm::rehash(wasm::rehash(uint64_t(hash<size_t>()(size_t(a.type))),
+    return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
                                      uint64_t(hash<int64_t>()(chunks[0]))),
                         uint64_t(hash<int64_t>()(chunks[1])));
   }
@@ -464,10 +464,10 @@ template<> struct less<wasm::Literal> {
     if (a.type < b.type) {
       return true;
     }
-    if (a.type > b.type) {
+    if (b.type < a.type) {
       return false;
     }
-    switch (a.type) {
+    switch (a.type.getVT()) {
       case wasm::Type::i32:
         return a.geti32() < b.geti32();
       case wasm::Type::f32:
