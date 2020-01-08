@@ -1,5 +1,5 @@
-project(binaryen C CXX)
 cmake_minimum_required(VERSION 3.1.3)
+project(binaryen LANGUAGES C CXX VERSION 90)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -11,20 +11,24 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
-find_package(Git QUIET REQUIRED)
-execute_process(COMMAND
-             "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
-         RESULT_VARIABLE
-             GIT_HASH_RESULT
-         OUTPUT_VARIABLE
-             GIT_HASH
-         OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(${GIT_HASH_RESULT})
-  message(WARNING "Error running git describe to determine version")
-  set(BINARYEN_VERSION_INFO "(unable to determine version)")
-else()
-  set(BINARYEN_VERSION_INFO "${GIT_HASH}")
+# For git users, attempt to generate a more useful version string
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+  find_package(Git QUIET REQUIRED)
+  execute_process(COMMAND
+               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
+           RESULT_VARIABLE
+               GIT_HASH_RESULT
+           OUTPUT_VARIABLE
+               GIT_HASH
+           OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(${GIT_HASH_RESULT})
+    message(WARNING "Error running git describe to determine version")
+    set(CMAKE_PROJECT_VERSION "(unable to determine version)")
+  else()
+    set(CMAKE_PROJECT_VERSION "${GIT_HASH}")
+  endif()
 endif()
+
 configure_file(config.h.in config.h)
 
 # Support functionality.
