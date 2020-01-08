@@ -58,7 +58,7 @@ Options::Options(const std::string& command, const std::string& description)
       "Output version information and exit",
       Arguments::Zero,
       [command](Options*, const std::string&) {
-        std::cout << command << " " << BINARYEN_VERSION_INFO << "\n";
+        std::cout << command << " " << CMAKE_PROJECT_VERSION << "\n";
         exit(0);
       });
   add("--help",
