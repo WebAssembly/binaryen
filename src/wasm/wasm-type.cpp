@@ -141,13 +141,13 @@ bool Type::operator<(const Type& other) const {
     these.end(),
     others.begin(),
     others.end(),
-    [](const Type& a, const Type& b) { return a.getVT() < b.getVT(); });
+    [](const Type& a, const Type& b) { return a.getSingle() < b.getSingle(); });
 }
 
 unsigned Type::getByteSize() const {
   assert(isSingle() && "getByteSize does not works with single types");
   Type singleType = *expand().begin();
-  switch (singleType.getVT()) {
+  switch (singleType.getSingle()) {
     case Type::i32:
       return 4;
     case Type::i64:
@@ -172,7 +172,7 @@ unsigned Type::getByteSize() const {
 Type Type::reinterpret() const {
   assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
-  switch (singleType.getVT()) {
+  switch (singleType.getSingle()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -196,7 +196,7 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   FeatureSet feats = FeatureSet::MVP;
   for (Type t : expand()) {
-    switch (t.getVT()) {
+    switch (t.getSingle()) {
       case Type::v128:
         feats |= FeatureSet::SIMD;
         break;
@@ -310,7 +310,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
     }
     os << ')';
   } else {
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::none:
         os << "none";
         break;

@@ -65,7 +65,7 @@ public:
   bool isNone() { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32:
         return Literal(int32_t(x));
         break;
@@ -467,7 +467,7 @@ template<> struct less<wasm::Literal> {
     if (b.type < a.type) {
       return false;
     }
-    switch (a.type.getVT()) {
+    switch (a.type.getSingle()) {
       case wasm::Type::i32:
         return a.geti32() < b.geti32();
       case wasm::Type::f32:

@@ -312,7 +312,7 @@ private:
   SmallVector<Type, 2> getSubTypes(Type type) {
     SmallVector<Type, 2> ret;
     ret.push_back(type); // includes itself
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::anyref:
         ret.push_back(Type::funcref);
         ret.push_back(Type::exnref);
@@ -860,7 +860,7 @@ private:
     }
     nesting++;
     Expression* ret = nullptr;
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32:
       case Type::i64:
       case Type::f32:
@@ -1348,7 +1348,7 @@ private:
   Expression* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32: {
         bool signed_ = get() & 1;
         switch (upTo(3)) {
@@ -1454,7 +1454,7 @@ private:
     auto offset = logify(get());
     auto ptr = makePointer();
     auto value = make(type);
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -1582,7 +1582,7 @@ private:
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
-        switch (type.getVT()) {
+        switch (type.getSingle()) {
           case Type::i32:
             return Literal(get32());
           case Type::i64:
@@ -1627,7 +1627,7 @@ private:
           default:
             WASM_UNREACHABLE("invalid value");
         }
-        switch (type.getVT()) {
+        switch (type.getSingle()) {
           case Type::i32:
             return Literal(int32_t(small));
           case Type::i64:
@@ -1650,7 +1650,7 @@ private:
       case 2: {
         // special values
         Literal value;
-        switch (type.getVT()) {
+        switch (type.getSingle()) {
           case Type::i32:
             value =
               Literal(pick<int32_t>(0,
@@ -1725,7 +1725,7 @@ private:
       case 3: {
         // powers of 2
         Literal value;
-        switch (type.getVT()) {
+        switch (type.getSingle()) {
           case Type::i32:
             value = Literal(int32_t(1) << upTo(32));
             break;
@@ -1807,9 +1807,9 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32: {
-        switch (getConcreteType().getVT()) {
+        switch (getConcreteType().getSingle()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -2026,7 +2026,7 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32: {
         switch (upTo(4)) {
           case 0:
@@ -2331,7 +2331,7 @@ private:
       }
     }
     Index bytes;
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -2422,7 +2422,7 @@ private:
 
   Expression* makeSIMDExtract(Type type) {
     auto op = static_cast<SIMDExtractOp>(0);
-    switch (type.getVT()) {
+    switch (type.getSingle()) {
       case Type::i32:
         op = pick(ExtractLaneSVecI8x16,
                   ExtractLaneUVecI8x16,

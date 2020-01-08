@@ -612,7 +612,7 @@ public:
   }
 
   Expression* makeConstExpression(Literal value) {
-    switch (value.type.getVT()) {
+    switch (value.type.getSingle()) {
       case Type::nullref:
         return makeRefNull();
       case Type::funcref:
@@ -773,7 +773,7 @@ public:
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type.getVT()) {
+    switch (curr->type.getSingle()) {
       case Type::i32:
         value = Literal(int32_t(0));
         break;

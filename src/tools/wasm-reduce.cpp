@@ -577,9 +577,9 @@ struct Reducer
           continue; // no conversion
         }
         Expression* fixed = nullptr;
-        switch (curr->type.getVT()) {
+        switch (curr->type.getSingle()) {
           case Type::i32: {
-            switch (child->type.getVT()) {
+            switch (child->type.getSingle()) {
               case Type::i32:
                 WASM_UNREACHABLE("invalid type");
               case Type::i64:
@@ -604,7 +604,7 @@ struct Reducer
             break;
           }
           case Type::i64: {
-            switch (child->type.getVT()) {
+            switch (child->type.getSingle()) {
               case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
@@ -629,7 +629,7 @@ struct Reducer
             break;
           }
           case Type::f32: {
-            switch (child->type.getVT()) {
+            switch (child->type.getSingle()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat32, child);
                 break;
@@ -654,7 +654,7 @@ struct Reducer
             break;
           }
           case Type::f64: {
-            switch (child->type.getVT()) {
+            switch (child->type.getSingle()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat64, child);
                 break;

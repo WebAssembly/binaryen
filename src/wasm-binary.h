@@ -903,7 +903,7 @@ enum FeaturePrefix {
 
 inline S32LEB binaryType(Type type) {
   int ret = 0;
-  switch (type.getVT()) {
+  switch (type.getSingle()) {
     // None only used for block signatures. TODO: Separate out?
     case Type::none:
       ret = BinaryConsts::EncodedType::Empty;

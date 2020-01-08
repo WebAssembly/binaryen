@@ -84,7 +84,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   ret->type = type;
   if (type.isFloat()) {
     if (s == _INFINITY) {
-      switch (type.getVT()) {
+      switch (type.getSingle()) {
         case Type::f32:
           ret->value = Literal(std::numeric_limits<float>::infinity());
           break;
@@ -98,7 +98,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == NEG_INFINITY) {
-      switch (type.getVT()) {
+      switch (type.getSingle()) {
         case Type::f32:
           ret->value = Literal(-std::numeric_limits<float>::infinity());
           break;
@@ -112,7 +112,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == _NAN) {
-      switch (type.getVT()) {
+      switch (type.getSingle()) {
         case Type::f32:
           ret->value = Literal(float(std::nan("")));
           break;
@@ -137,7 +137,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       if (!(modifier ? positive[4] == '0' && positive[5] == 'x' : 1)) {
         throw ParseException("bad nan input");
       }
-      switch (type.getVT()) {
+      switch (type.getSingle()) {
         case Type::f32: {
           uint32_t pattern;
           if (modifier) {
@@ -187,7 +187,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == NEG_NAN) {
-      switch (type.getVT()) {
+      switch (type.getSingle()) {
         case Type::f32:
           ret->value = Literal(float(-std::nan("")));
           break;
@@ -201,7 +201,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
   }
-  switch (type.getVT()) {
+  switch (type.getSingle()) {
     case Type::i32: {
       if ((str[0] == '0' && str[1] == 'x') ||
           (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {

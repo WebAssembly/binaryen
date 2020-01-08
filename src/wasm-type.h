@@ -73,7 +73,7 @@ public:
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   constexpr bool isRef() const { return id >= funcref && id <= exnref; }
   constexpr uint32_t getID() const { return id; }
-  constexpr ValueType getVT() const {
+  constexpr ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");
     return static_cast<ValueType>(id);
   }

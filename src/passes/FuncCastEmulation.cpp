@@ -44,7 +44,7 @@ static const int NUM_PARAMS = 16;
 // Converts a value to the ABI type of i64.
 static Expression* toABI(Expression* value, Module* module) {
   Builder builder(*module);
-  switch (value->type.getVT()) {
+  switch (value->type.getSingle()) {
     case Type::i32: {
       value = builder.makeUnary(ExtendUInt32, value);
       break;
@@ -88,7 +88,7 @@ static Expression* toABI(Expression* value, Module* module) {
 // Converts a value from the ABI type of i64 to the expected type
 static Expression* fromABI(Expression* value, Type type, Module* module) {
   Builder builder(*module);
-  switch (type.getVT()) {
+  switch (type.getSingle()) {
     case Type::i32: {
       value = builder.makeUnary(WrapInt64, value);
       break;

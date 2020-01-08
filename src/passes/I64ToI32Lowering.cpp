@@ -84,7 +84,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   private:
     void freeIdx() {
-      auto& freeList = pass.freeTemps[ty.getVT()];
+      auto& freeList = pass.freeTemps[ty.getSingle()];
       assert(std::find(freeList.begin(), freeList.end(), idx) ==
              freeList.end());
       freeList.push_back(idx);
@@ -1459,7 +1459,7 @@ private:
 
   TempVar getTemp(Type ty = Type::i32) {
     Index ret;
-    auto& freeList = freeTemps[ty.getVT()];
+    auto& freeList = freeTemps[ty.getSingle()];
     if (freeList.size() > 0) {
       ret = freeList.back();
       freeList.pop_back();

@@ -85,7 +85,7 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     ret = rehash(ret, (HashType)func->sig.params.getID());
     ret = rehash(ret, (HashType)func->sig.results.getID());
     for (auto type : func->vars) {
-      ret = rehash(ret, (HashType)type.getVT());
+      ret = rehash(ret, (HashType)type.getSingle());
     }
     ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
     return ret;

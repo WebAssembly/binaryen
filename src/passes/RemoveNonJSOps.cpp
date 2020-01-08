@@ -157,7 +157,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned loads of floats to unaligned loads of integers (which we
     // can actually implement) and then use reinterpretation to get the float
     // back out.
-    switch (curr->type.getVT()) {
+    switch (curr->type.getSingle()) {
       case Type::f32:
         curr->type = Type::i32;
         replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
@@ -179,7 +179,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned stores of floats to unaligned stores of integers (which
     // we can actually implement) and then use reinterpretation to store the
     // right value.
-    switch (curr->valueType.getVT()) {
+    switch (curr->valueType.getSingle()) {
       case Type::f32:
         curr->valueType = Type::i32;
         curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);

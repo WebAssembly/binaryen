@@ -477,7 +477,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
     void visitInt(int32_t curr) { hash(curr); }
     void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
-    void visitType(Type curr) { hash(int32_t(curr.getVT())); }
+    void visitType(Type curr) { hash(int32_t(curr.getSingle())); }
     void visitIndex(Index curr) {
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");

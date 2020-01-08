@@ -575,7 +575,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType.getVT()) {
+    switch (resType.getSingle()) {
       case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
