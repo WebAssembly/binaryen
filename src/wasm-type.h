@@ -64,8 +64,8 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  bool isSingle() const { return id >= i32 && id < last_value_type; }
-  bool isMulti() const { return id >= last_value_type; }
+  bool isSingle() const { return id >= i32 && id <= last_value_type; }
+  bool isMulti() const { return id > last_value_type; }
   bool isConcrete() const { return id >= i32; }
   bool isInteger() const { return id == i32 || id == i64; }
   bool isFloat() const { return id == f32 || id == f64; }
