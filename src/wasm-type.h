@@ -39,10 +39,14 @@ public:
     funcref,
     anyref,
     nullref,
-    exnref,
-    _last_value_type,
+    exnref
   };
 
+private:
+  // Not in the enum because we don't want to have to have a case for it
+  static constexpr uint32_t last_value_type = exnref;
+
+public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
@@ -60,14 +64,16 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  bool isSingle() const { return id >= i32 && id < _last_value_type; }
-  bool isMulti() const { return id >= _last_value_type; }
+  bool isSingle() const { return id >= i32 && id < last_value_type; }
+  bool isMulti() const { return id >= last_value_type; }
   bool isConcrete() const { return id >= i32; }
   bool isInteger() const { return id == i32 || id == i64; }
   bool isFloat() const { return id == f32 || id == f64; }
   bool isVector() const { return id == v128; };
   bool isNumber() const { return id >= i32 && id <= v128; }
   bool isRef() const { return id >= funcref && id <= exnref; }
+
+  constexpr uint32_t getID() const { return id; }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
@@ -154,5 +160,9 @@ template<> class std::hash<wasm::Signature> {
 public:
   size_t operator()(const wasm::Signature& sig) const;
 };
+
+// Recommended alternative to the plain switch-case for switching on types
+// Usage: Use 'TYPE_SWITCH(type)' in place of 'switch (type)'.
+#define TYPE_SWITCH(TYPE) switch (static_cast<Type::ValueType>(TYPE.getID()))
 
 #endif // wasm_wasm_type_h
