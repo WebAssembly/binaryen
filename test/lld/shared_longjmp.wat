@@ -15,41 +15,41 @@
  (import "GOT.mem" "__THREW__" (global $gimport$13 (mut i32)))
  (import "GOT.func" "emscripten_longjmp_jmpbuf" (global $gimport$14 (mut i32)))
  (import "GOT.mem" "__threwValue" (global $gimport$15 (mut i32)))
- (import "env" "malloc" (func $fimport$4 (param i32) (result i32)))
- (import "env" "saveSetjmp" (func $fimport$5 (param i32 i32 i32 i32) (result i32)))
- (import "env" "getTempRet0" (func $fimport$6 (result i32)))
- (import "env" "emscripten_longjmp_jmpbuf" (func $fimport$7 (param i32 i32)))
- (import "env" "__invoke_void_i32_i32" (func $fimport$8 (param i32 i32 i32)))
- (import "env" "testSetjmp" (func $fimport$9 (param i32 i32 i32) (result i32)))
- (import "env" "setTempRet0" (func $fimport$10 (param i32)))
- (import "env" "free" (func $fimport$11 (param i32)))
- (import "env" "emscripten_longjmp" (func $fimport$12 (param i32 i32)))
+ (import "env" "malloc" (func $malloc (param i32) (result i32)))
+ (import "env" "saveSetjmp" (func $saveSetjmp (param i32 i32 i32 i32) (result i32)))
+ (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
+ (import "env" "emscripten_longjmp_jmpbuf" (func $emscripten_longjmp_jmpbuf (param i32 i32)))
+ (import "env" "__invoke_void_i32_i32" (func $__invoke_void_i32_i32 (param i32 i32 i32)))
+ (import "env" "testSetjmp" (func $testSetjmp (param i32 i32 i32) (result i32)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "free" (func $free (param i32)))
+ (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
- (export "__wasm_call_ctors" (func $0))
- (export "_start" (func $2))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "_start" (func $_start))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
- (func $0 (; 9 ;) (type $7)
-  (call $1)
+ (func $__wasm_call_ctors (; 9 ;) (type $7)
+  (call $__wasm_apply_relocs)
  )
- (func $1 (; 10 ;) (type $7)
+ (func $__wasm_apply_relocs (; 10 ;) (type $7)
  )
- (func $2 (; 11 ;) (type $7)
+ (func $_start (; 11 ;) (type $7)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (i32.store
    (local.tee $0
-    (call $fimport$4
+    (call $malloc
      (i32.const 40)
     )
    )
    (i32.const 0)
   )
   (local.set $1
-   (call $fimport$5
+   (call $saveSetjmp
     (local.get $0)
     (i32.const 1)
     (local.get $0)
@@ -57,7 +57,7 @@
    )
   )
   (local.set $2
-   (call $fimport$6)
+   (call $getTempRet0)
   )
   (local.set $0
    (i32.const 0)
@@ -74,7 +74,7 @@
       )
       (i32.const 0)
      )
-     (call $fimport$8
+     (call $__invoke_void_i32_i32
       (global.get $gimport$14)
       (local.get $0)
       (i32.const 1)
@@ -108,7 +108,7 @@
       )
       (br_if $label$1
        (i32.eqz
-        (call $fimport$9
+        (call $testSetjmp
          (i32.load
           (local.get $3)
          )
@@ -117,22 +117,22 @@
         )
        )
       )
-      (call $fimport$10
+      (call $setTempRet0
        (local.get $0)
       )
      )
      (local.set $0
-      (call $fimport$6)
+      (call $getTempRet0)
      )
      (br $label$3)
     )
    )
-   (call $fimport$11
+   (call $free
     (local.get $1)
    )
    (return)
   )
-  (call $fimport$12
+  (call $emscripten_longjmp
    (local.get $3)
    (local.get $0)
   )
