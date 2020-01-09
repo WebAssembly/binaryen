@@ -182,8 +182,7 @@ static void optimizeJS(Ref ast) {
   auto isSignedBitwise = [](Ref node) {
     if (node->isArray() && !node->empty() && node[0] == BINARY) {
       auto op = node[1];
-      return op == OR || op == AND || op == XOR || op == RSHIFT ||
-             op == LSHIFT;
+      return op == OR || op == AND || op == XOR || op == RSHIFT || op == LSHIFT;
     }
     return false;
   };
@@ -409,8 +408,7 @@ static void optimizeJS(Ref ast) {
           }
         }
       }
-    }
-    else if (isWhile(node) || isDo(node) || isIf(node)) {
+    } else if (isWhile(node) || isDo(node) || isIf(node)) {
       node[1] = optimizeBoolean(node[1]);
     }
   });
