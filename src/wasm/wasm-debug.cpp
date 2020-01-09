@@ -61,7 +61,8 @@ struct BinaryenDWARFInfo {
     }
     // Parse debug sections.
     uint8_t addrSize = 4;
-    context = llvm::DWARFContext::create(sections, addrSize);
+    bool isLittleEndian = true;
+    context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
   }
 };
 
@@ -76,6 +77,8 @@ void dumpDWARF(const Module& wasm) {
     }
   }
   llvm::DIDumpOptions options;
+  options.DumpType = llvm::DIDT_All;
+  options.ShowChildren = true;
   options.Verbose = true;
   info.context->dump(llvm::outs(), options);
 }
@@ -111,8 +114,8 @@ struct LineState {
   uint32_t line = 1;
   uint32_t col = 0;
   uint32_t file = 1;
-  // TODO uint32_t isa = 0;
-  // TODO Discriminator = 0;
+  uint32_t isa = 0;
+  uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
   // XXX these two should be just prologue, epilogue?
@@ -139,9 +142,17 @@ struct LineState {
           case llvm::dwarf::DW_LNE_end_sequence: {
             return true;
           }
+          case llvm::dwarf::DW_LNE_set_discriminator: {
+            discriminator = opcode.Data;
+            break;
+          }
+          case llvm::dwarf::DW_LNE_define_file: {
+            Fatal() << "TODO: DW_LNE_define_file";
+          }
           default: {
-            Fatal() << "unknown debug line sub-opcode: " << std::hex
-                    << opcode.SubOpcode;
+            // An unknown opcode, ignore.
+            std::cerr << "warning: unknown subopcopde " << opcode.SubOpcode
+                      << '\n';
           }
         }
         break;
@@ -174,11 +185,23 @@ struct LineState {
         isStmt = !isStmt;
         break;
       }
+      case llvm::dwarf::DW_LNS_set_basic_block: {
+        basicBlock = true;
+        break;
+      }
       case llvm::dwarf::DW_LNS_const_add_pc: {
         uint8_t AdjustOpcode = 255 - table.OpcodeBase;
         uint64_t AddrOffset =
           (AdjustOpcode / table.LineRange) * table.MinInstLength;
         addr += AddrOffset;
+        break;
+      }
+      case llvm::dwarf::DW_LNS_fixed_advance_pc: {
+        addr += opcode.Data;
+        break;
+      }
+      case llvm::dwarf::DW_LNS_set_isa: {
+        isa = opcode.Data;
         break;
       }
       default: {
@@ -239,11 +262,23 @@ struct LineState {
       item.Data = file;
       newOpcodes.push_back(item);
     }
+    if (isa != old.isa) {
+      auto item = makeItem(llvm::dwarf::DW_LNS_set_isa);
+      item.Data = isa;
+      newOpcodes.push_back(item);
+    }
+    if (discriminator != old.discriminator) {
+      // len = 1 (subopcode) + 4 (wasm32 address)
+      auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator, 5);
+      item.Data = discriminator;
+      newOpcodes.push_back(item);
+    }
     if (isStmt != old.isStmt) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_negate_stmt));
     }
     if (basicBlock != old.basicBlock) {
-      Fatal() << "bb";
+      assert(basicBlock);
+      newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
     if (prologueEnd != old.prologueEnd) {
       assert(prologueEnd);
@@ -382,21 +417,6 @@ static void updateDebugLines(const Module& wasm,
   }
 }
 
-static void fixEmittedSection(const std::string& name,
-                              std::vector<char>& data) {
-  if (name == ".debug_line") {
-    // The YAML code does not update the line section size. However, it is
-    // trivial to do so after the fact, as the wasm section's additional size is
-    // easy to compute: it is the emitted size - the 4 bytes of the size itself.
-    uint32_t size = data.size() - 4;
-    BufferWithRandomAccess buf;
-    buf << size;
-    for (int i = 0; i < 4; i++) {
-      data[i] = buf[i];
-    }
-  }
-}
-
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -411,7 +431,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(data, true);
+  auto newSections =
+    EmitDebugSections(data, false /* EmitFixups for debug_info */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
@@ -422,7 +443,6 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
         auto llvmData = newSections[llvmName]->getBuffer();
         section.data.resize(llvmData.size());
         std::copy(llvmData.begin(), llvmData.end(), section.data.data());
-        fixEmittedSection(section.name, section.data);
       }
     }
   }

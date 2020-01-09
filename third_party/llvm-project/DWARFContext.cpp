@@ -1507,7 +1507,9 @@ class DWARFObjInMemory final : public DWARFObject {
 public:
   DWARFObjInMemory(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
                    uint8_t AddrSize, bool IsLittleEndian)
-      : IsLittleEndian(IsLittleEndian) {
+      : IsLittleEndian(IsLittleEndian),
+        AddressSize(4) // XXX BINARYEN
+  {
     for (const auto &SecIt : Sections) {
       if (StringRef *SectionData = mapSectionToMember(SecIt.first()))
         *SectionData = SecIt.second->getBuffer();
