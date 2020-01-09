@@ -72,7 +72,7 @@ private:
     Builder builder(*getModule());
     return builder.makeSequence(
       builder.makeCall(
-        LOGGER, {builder.makeConst(Literal(int32_t(id++)))}, none),
+        LOGGER, {builder.makeConst(Literal(int32_t(id++)))}, Type::none),
       curr);
   }
 };

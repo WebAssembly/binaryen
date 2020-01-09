@@ -21,7 +21,7 @@
 namespace wasm {
 
 static Type getValueType(Expression* value) {
-  return value ? value->type : none;
+  return value ? value->type : Type::none;
 }
 
 namespace {
@@ -41,7 +41,7 @@ void handleBranchForVisitBlock(T* curr, Name name, Module* module) {
 
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
-    curr->type = none;
+    curr->type = Type::none;
     return;
   }
   // Get the least upper bound type of the last element and all branch return
@@ -54,14 +54,14 @@ void ReFinalize::visitBlock(Block* curr) {
       return;
     }
   }
-  if (curr->type == unreachable) {
+  if (curr->type == Type::unreachable) {
     return;
   }
   // type is none, but we might be unreachable
-  if (curr->type == none) {
+  if (curr->type == Type::none) {
     for (auto* child : curr->list) {
-      if (child->type == unreachable) {
-        curr->type = unreachable;
+      if (child->type == Type::unreachable) {
+        curr->type = Type::unreachable;
         break;
       }
     }
@@ -72,7 +72,7 @@ void ReFinalize::visitLoop(Loop* curr) { curr->finalize(); }
 void ReFinalize::visitBreak(Break* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == unreachable) {
+  if (valueType == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     updateBreakValueType(curr->name, valueType);
@@ -81,7 +81,7 @@ void ReFinalize::visitBreak(Break* curr) {
 void ReFinalize::visitSwitch(Switch* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == unreachable) {
+  if (valueType == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     for (auto target : curr->targets) {
@@ -164,7 +164,7 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
 // Replace an untaken branch/switch with an unreachable value.
 // A condition may also exist and may or may not be unreachable.
 void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
-  assert(value->type == unreachable);
+  assert(value->type == Type::unreachable);
   auto* replacement = value;
   if (condition) {
     Builder builder(*getModule());
@@ -181,7 +181,7 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
       condition = builder.makeDrop(condition);
     }
     replacement = builder.makeSequence(value, condition);
-    assert(replacement->type);
+    assert(replacement->type.getSingle());
   }
   replaceCurrent(replacement);
 }

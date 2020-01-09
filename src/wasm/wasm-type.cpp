@@ -28,8 +28,8 @@ template<> class std::hash<std::vector<wasm::Type>> {
 public:
   size_t operator()(const std::vector<wasm::Type>& types) const {
     uint32_t res = wasm::rehash(0, uint32_t(types.size()));
-    for (auto vt : types) {
-      res = wasm::rehash(res, uint32_t(vt));
+    for (auto t : types) {
+      res = wasm::rehash(res, t.getID());
     }
     return res;
   }
@@ -37,8 +37,8 @@ public:
 
 size_t std::hash<wasm::Signature>::
 operator()(const wasm::Signature& sig) const {
-  return std::hash<uint64_t>{}(uint64_t(sig.params) << 32 |
-                               uint64_t(sig.results));
+  return std::hash<uint64_t>{}(uint64_t(sig.params.getID()) << 32 |
+                               uint64_t(sig.results.getID()));
 }
 
 namespace wasm {
@@ -141,13 +141,13 @@ bool Type::operator<(const Type& other) const {
     these.end(),
     others.begin(),
     others.end(),
-    [](const Type& a, const Type& b) { return uint32_t(a) < uint32_t(b); });
+    [](const Type& a, const Type& b) { return a.getSingle() < b.getSingle(); });
 }
 
 unsigned Type::getByteSize() const {
   assert(isSingle() && "getByteSize does not works with single types");
   Type singleType = *expand().begin();
-  switch (singleType) {
+  switch (singleType.getSingle()) {
     case Type::i32:
       return 4;
     case Type::i64:
@@ -172,7 +172,7 @@ unsigned Type::getByteSize() const {
 Type Type::reinterpret() const {
   assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
-  switch (singleType) {
+  switch (singleType.getSingle()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -196,7 +196,7 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   FeatureSet feats = FeatureSet::MVP;
   for (Type t : expand()) {
-    switch (t) {
+    switch (t.getSingle()) {
       case Type::v128:
         feats |= FeatureSet::SIMD;
         break;
@@ -299,50 +299,51 @@ bool Signature::operator<(const Signature& other) const {
 }
 
 std::ostream& operator<<(std::ostream& os, Type type) {
-  switch (type) {
-    case Type::none:
-      os << "none";
-      break;
-    case Type::unreachable:
-      os << "unreachable";
-      break;
-    case Type::i32:
-      os << "i32";
-      break;
-    case Type::i64:
-      os << "i64";
-      break;
-    case Type::f32:
-      os << "f32";
-      break;
-    case Type::f64:
-      os << "f64";
-      break;
-    case Type::v128:
-      os << "v128";
-      break;
-    case Type::funcref:
-      os << "funcref";
-      break;
-    case Type::anyref:
-      os << "anyref";
-      break;
-    case Type::nullref:
-      os << "nullref";
-      break;
-    case Type::exnref:
-      os << "exnref";
-      break;
-    default: {
-      os << '(';
-      const std::vector<Type>& types = type.expand();
-      for (size_t i = 0; i < types.size(); ++i) {
-        os << types[i];
-        if (i < types.size() - 1) {
-          os << ", ";
-        }
+  if (type.isMulti()) {
+    os << '(';
+    const std::vector<Type>& types = type.expand();
+    for (size_t i = 0; i < types.size(); ++i) {
+      os << types[i];
+      if (i < types.size() - 1) {
+        os << ", ";
       }
-      os << ')';
+    }
+    os << ')';
+  } else {
+    switch (type.getSingle()) {
+      case Type::none:
+        os << "none";
+        break;
+      case Type::unreachable:
+        os << "unreachable";
+        break;
+      case Type::i32:
+        os << "i32";
+        break;
+      case Type::i64:
+        os << "i64";
+        break;
+      case Type::f32:
+        os << "f32";
+        break;
+      case Type::f64:
+        os << "f64";
+        break;
+      case Type::v128:
+        os << "v128";
+        break;
+      case Type::funcref:
+        os << "funcref";
+        break;
+      case Type::anyref:
+        os << "anyref";
+        break;
+      case Type::nullref:
+        os << "nullref";
+        break;
+      case Type::exnref:
+        os << "exnref";
+        break;
     }
   }
   return os;

@@ -174,7 +174,7 @@ inline bool ensureLimitedSegments(Module& module) {
     // create the segment and add in all the data
     auto* c = module.allocator.alloc<Const>();
     c->value = Literal(int32_t(start));
-    c->type = i32;
+    c->type = Type::i32;
 
     Memory::Segment combined(c);
     for (Index j = i; j < memory.segments.size(); j++) {

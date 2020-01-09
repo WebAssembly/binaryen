@@ -82,10 +82,14 @@ struct DeadCodeElimination
   }
 
   // if a child exists and is unreachable, we can replace ourselves with it
-  bool isDead(Expression* child) { return child && child->type == unreachable; }
+  bool isDead(Expression* child) {
+    return child && child->type == Type::unreachable;
+  }
 
   // a similar check, assumes the child exists
-  bool isUnreachable(Expression* child) { return child->type == unreachable; }
+  bool isUnreachable(Expression* child) {
+    return child->type == Type::unreachable;
+  }
 
   // things that stop control flow
 
@@ -170,7 +174,7 @@ struct DeadCodeElimination
     if (!reachable && list.size() > 1) {
       // to do here: nothing to remove after it)
       for (Index i = 0; i < list.size() - 1; i++) {
-        if (list[i]->type == unreachable) {
+        if (list[i]->type == Type::unreachable) {
           list.resize(i + 1);
           break;
         }
@@ -393,7 +397,7 @@ struct DeadCodeElimination
 
   // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->type == unreachable) {
+    if (toDrop->type == Type::unreachable) {
       return toDrop;
     }
     return Builder(*getModule()).makeDrop(toDrop);

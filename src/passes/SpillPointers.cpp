@@ -65,6 +65,9 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
+    if (!canRun(func)) {
+      return;
+    }
     super::doWalkFunction(func);
     spillPointers();
   }
@@ -152,7 +155,7 @@ struct SpillPointers
                                Function* func,
                                Module* module) {
     auto* call = *origin;
-    if (call->type == unreachable) {
+    if (call->type == Type::unreachable) {
       return; // the call is never reached anyhow, ignore
     }
     Builder builder(*module);

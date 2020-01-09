@@ -105,7 +105,7 @@ struct Flatten
           if (last->type.isConcrete()) {
             last = builder.makeLocalSet(temp, last);
           }
-          block->finalize(none);
+          block->finalize(Type::none);
           // and we leave just a get of the value
           auto* rep = builder.makeLocalGet(temp, type);
           replaceCurrent(rep);
@@ -113,7 +113,7 @@ struct Flatten
           ourPreludes.push_back(block);
         }
         // the block now has no return value, and may have become unreachable
-        block->finalize(none);
+        block->finalize(Type::none);
 
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
@@ -160,7 +160,7 @@ struct Flatten
           rep = builder.makeLocalGet(temp, type);
           // the whole if is now a prelude
           ourPreludes.push_back(loop);
-          loop->type = none;
+          loop->type = Type::none;
         }
         loop->body = getPreludesWithExpression(originalBody, loop->body);
         loop->finalize();
@@ -181,7 +181,7 @@ struct Flatten
       if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
           // we disallow local.tee
-          if (set->value->type == unreachable) {
+          if (set->value->type == Type::unreachable) {
             replaceCurrent(set->value); // trivial, no set happens
           } else {
             // use a set in a prelude + a get
@@ -234,14 +234,14 @@ struct Flatten
               if (br->type.isConcrete()) {
                 replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
-                assert(br->type == unreachable);
+                assert(br->type == Type::unreachable);
                 replaceCurrent(builder.makeUnreachable());
               }
             }
             br->value = nullptr;
             br->finalize();
           } else {
-            assert(type == unreachable);
+            assert(type == Type::unreachable);
             // we don't need the br at all
             replaceCurrent(br->value);
           }
@@ -264,7 +264,7 @@ struct Flatten
             sw->value = nullptr;
             sw->finalize();
           } else {
-            assert(type == unreachable);
+            assert(type == Type::unreachable);
             // we don't need the br at all
             replaceCurrent(sw->value);
           }
@@ -277,7 +277,7 @@ struct Flatten
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       ourPreludes.push_back(curr);
       replaceCurrent(builder.makeUnreachable());
     } else if (curr->type.isConcrete()) {

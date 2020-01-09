@@ -107,7 +107,7 @@ static std::string generateJSWrapper(Module& wasm) {
         ret += ", ";
       }
       ret += "0";
-      if (param == i64) {
+      if (param == Type::i64) {
         ret += ", 0";
       }
     }

@@ -27,7 +27,7 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
-  NameType() : name(nullptr), type(none) {}
+  NameType() : name(nullptr), type(Type::none) {}
   NameType(Name name, Type type) : name(name), type(type) {}
 };
 
@@ -612,7 +612,7 @@ public:
   }
 
   Expression* makeConstExpression(Literal value) {
-    switch (value.type) {
+    switch (value.type.getSingle()) {
       case Type::nullref:
         return makeRefNull();
       case Type::funcref:
@@ -773,33 +773,33 @@ public:
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type) {
-      case i32:
+    switch (curr->type.getSingle()) {
+      case Type::i32:
         value = Literal(int32_t(0));
         break;
-      case i64:
+      case Type::i64:
         value = Literal(int64_t(0));
         break;
-      case f32:
+      case Type::f32:
         value = Literal(float(0));
         break;
-      case f64:
+      case Type::f64:
         value = Literal(double(0));
         break;
-      case v128: {
+      case Type::v128: {
         std::array<uint8_t, 16> bytes;
         bytes.fill(0);
         value = Literal(bytes.data());
         break;
       }
-      case funcref:
-      case anyref:
-      case nullref:
-      case exnref:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
         return ExpressionManipulator::refNull(curr);
-      case none:
+      case Type::none:
         return ExpressionManipulator::nop(curr);
-      case unreachable:
+      case Type::unreachable:
         return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);

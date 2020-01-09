@@ -148,7 +148,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
     if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
       auto* value = curr->value;
-      if (value->type == unreachable) {
+      if (value->type == Type::unreachable) {
         // the break isn't even reached
         replaceCurrent(value);
         return;
@@ -172,7 +172,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
 
 static bool hasUnreachableChild(Block* block) {
   for (auto* test : block->list) {
-    if (test->type == unreachable) {
+    if (test->type == Type::unreachable) {
       return true;
     }
   }
@@ -184,7 +184,7 @@ static bool hasDeadCode(Block* block) {
   auto& list = block->list;
   auto size = list.size();
   for (size_t i = 1; i < size; i++) {
-    if (list[i - 1]->type == unreachable) {
+    if (list[i - 1]->type == Type::unreachable) {
       return true;
     }
   }
@@ -437,13 +437,13 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       if (!block->name.is() && block->list.size() >= 2) {
         // if we move around unreachable code, type changes could occur. avoid
         // that, as anyhow it means we should have run dce before getting here
-        if (curr->type == none && hasUnreachableChild(block)) {
+        if (curr->type == Type::none && hasUnreachableChild(block)) {
           // moving the block to the outside would replace a none with an
           // unreachable
           return outer;
         }
         auto* back = block->list.back();
-        if (back->type == unreachable) {
+        if (back->type == Type::unreachable) {
           // curr is not reachable, dce could remove it; don't try anything
           // fancy here
           return outer;

@@ -1041,8 +1041,8 @@ public:
     if (std::isnan(val)) {
       trap("truncSFloat of nan");
     }
-    if (curr->type == i32) {
-      if (value.type == f32) {
+    if (curr->type == Type::i32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI32TruncS(value.reinterpreti32())) {
           trap("i32.truncSFloat overflow");
         }
@@ -1053,7 +1053,7 @@ public:
       }
       return Literal(int32_t(val));
     } else {
-      if (value.type == f32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI64TruncS(value.reinterpreti32())) {
           trap("i64.truncSFloat overflow");
         }
@@ -1071,8 +1071,8 @@ public:
     if (std::isnan(val)) {
       trap("truncUFloat of nan");
     }
-    if (curr->type == i32) {
-      if (value.type == f32) {
+    if (curr->type == Type::i32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI32TruncU(value.reinterpreti32())) {
           trap("i32.truncUFloat overflow");
         }
@@ -1083,7 +1083,7 @@ public:
       }
       return Literal(uint32_t(val));
     } else {
-      if (value.type == f32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI64TruncU(value.reinterpreti32())) {
           trap("i64.truncUFloat overflow");
         }
@@ -1135,7 +1135,7 @@ public:
     }
     Literal value = flow.value;
     NOTE_EVAL1(value);
-    return Literal(value.type == nullref);
+    return Literal(value.type == Type::nullref);
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
@@ -1197,8 +1197,8 @@ public:
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
     virtual Literal load(Load* load, Address addr) {
-      switch (load->type) {
-        case i32: {
+      switch (load->type.getSingle()) {
+        case Type::i32: {
           switch (load->bytes) {
             case 1:
               return load->signed_ ? Literal((int32_t)load8s(addr))
@@ -1213,7 +1213,7 @@ public:
           }
           break;
         }
-        case i64: {
+        case Type::i64: {
           switch (load->bytes) {
             case 1:
               return load->signed_ ? Literal((int64_t)load8s(addr))
@@ -1231,25 +1231,25 @@ public:
           }
           break;
         }
-        case f32:
+        case Type::f32:
           return Literal(load32u(addr)).castToF32();
-        case f64:
+        case Type::f64:
           return Literal(load64u(addr)).castToF64();
-        case v128:
+        case Type::v128:
           return Literal(load128(addr).data());
-        case funcref:
-        case anyref:
-        case nullref:
-        case exnref:
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
       WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
-      switch (store->valueType) {
-        case i32: {
+      switch (store->valueType.getSingle()) {
+        case Type::i32: {
           switch (store->bytes) {
             case 1:
               store8(addr, value.geti32());
@@ -1265,7 +1265,7 @@ public:
           }
           break;
         }
-        case i64: {
+        case Type::i64: {
           switch (store->bytes) {
             case 1:
               store8(addr, value.geti64());
@@ -1285,21 +1285,21 @@ public:
           break;
         }
         // write floats carefully, ensuring all bits reach memory
-        case f32:
+        case Type::f32:
           store32(addr, value.reinterpreti32());
           break;
-        case f64:
+        case Type::f64:
           store64(addr, value.reinterpreti64());
           break;
-        case v128:
+        case Type::v128:
           store128(addr, value.getv128());
           break;
-        case funcref:
-        case anyref:
-        case nullref:
-        case exnref:
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
     }
@@ -1790,7 +1790,7 @@ private:
     }
     Flow visitSIMDLoadSplat(SIMDLoad* curr) {
       Load load;
-      load.type = i32;
+      load.type = Type::i32;
       load.bytes = curr->getMemBytes();
       load.signed_ = false;
       load.offset = curr->offset;
@@ -1809,7 +1809,7 @@ private:
           splat = &Literal::splatI32x4;
           break;
         case LoadSplatVec64x2:
-          load.type = i64;
+          load.type = Type::i64;
           splat = &Literal::splatI64x2;
           break;
         default:
@@ -2125,7 +2125,7 @@ protected:
 
   template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
@@ -2136,7 +2136,7 @@ protected:
 
   Address getFinalAddress(Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
     return addr;
   }
@@ -2150,7 +2150,7 @@ protected:
     checkLoadAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
-    ptr.type = i32;
+    ptr.type = Type::i32;
     Load load;
     load.bytes = bytes;
     load.signed_ = true;
@@ -2164,7 +2164,7 @@ protected:
   void doAtomicStore(Address addr, Index bytes, Literal toStore) {
     Const ptr;
     ptr.value = Literal(int32_t(addr));
-    ptr.type = i32;
+    ptr.type = Type::i32;
     Const value;
     value.value = toStore;
     value.type = toStore.type;
