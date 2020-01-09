@@ -1265,7 +1265,7 @@ void test_for_each() {
     }
 
     const char* segments[] = { "hello, world", "segment data 2" };
-    const uint32_t expected_offsets[] = { 48, 125 };
+    const uint32_t expected_offsets[] = { 10, 125 };
     int8_t segmentPassive[] = { 0, 0 };
     BinaryenIndex segmentSizes[] = { 12, 14 };
 
@@ -1293,12 +1293,15 @@ void test_for_each() {
     BinaryenExpressionRef constExprRef = BinaryenConst(module, BinaryenLiteralInt32(0));
     BinaryenSetFunctionTable(module, 1, 1, funcNames, 3, constExprRef);
     assert(0 == BinaryenIsFunctionTableImported(module));
-    assert(1 == BinaryenGetFunctionTableNumSegments(module));
+    assert(1 == BinaryenGetNumFunctionTableSegments(module));
     assert(constExprRef == BinaryenGetFunctionTableSegmentOffset(module, 0));
-    assert(3 == BinaryenGetFunctionTableSegmentDataLength(module, 0));
-    for ( i = 0 ; i != BinaryenGetFunctionTableSegmentDataLength(module, 0) ; ++i )
+    assert(3 == BinaryenGetFunctionTableSegmentLength(module, 0));
+    for (i = 0 ; i != BinaryenGetFunctionTableSegmentLength(module, 0) ; ++i)
     {
-      assert(0 == strcmp(funcNames[i], *(BinaryenGetFunctionTableSegmentData(module, 0)+i)));
+      char out[15] = {};
+      assert(BinaryenGetFunctionTableSegmentDataByteLength(module, 0, i) == strlen(funcNames[i])+1);
+      BinaryenCopyFunctionTableSegmentData(module, 0, i, out);
+      assert(0 == strcmp(funcNames[i], out));
     }
   }
   BinaryenModulePrint(module);

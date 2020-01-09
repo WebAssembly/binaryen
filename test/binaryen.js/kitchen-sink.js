@@ -944,7 +944,7 @@ function test_for_each() {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var expected_offsets = [48, 125];
+  var expected_offsets = [10, 125];
   var expected_data = ["hello, world", "segment data 2"];
 
   var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(expected_offsets[1]))
@@ -972,12 +972,12 @@ function test_for_each() {
   module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
 
   var ftable = module.getFunctionTable();
-  assert(false === ftable["imported"]);
-  assert(1 === ftable["segments"].length);
-  assert(constExprRef === ftable["segments"][0]["offset"]);
-  assert(3 === ftable["segments"][0]["names"].length);
-  for (i = 0 ; i < ftable["segments"][0]["names"].length ; i++) {
-    assert(funcNames[i] === ftable["segments"][0]["names"][i]);
+  assert(false === ftable.imported);
+  assert(1 === ftable.segments.length);
+  assert(constExprRef === ftable.segments[0].offset);
+  assert(3 === ftable.segments[0].names.length);
+  for (i = 0 ; i < ftable.segments[0].names.length ; i++) {
+    assert(funcNames[i] === ftable.segments[0].names[i]);
   }
 
   console.log(module.emitText());

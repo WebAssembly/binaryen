@@ -10315,7 +10315,7 @@ sizeof Literal: 24
 (module
  (type $none_=>_none (func))
  (memory $0 1 256)
- (data (i32.const 48) "hello, world")
+ (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
  (table $0 1 funcref)
  (elem (i32.const 0) $fn0 $fn1 $fn2)

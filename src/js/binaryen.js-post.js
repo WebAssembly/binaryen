@@ -2163,15 +2163,18 @@ function wrapModule(module, self) {
       'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
       'segments': (function() {
         var arr = [];
-        for ( var i = 0, j = Module['_BinaryenGetFunctionTableNumSegments'](module) ; i !== j ; ++i )
+        for (var i = 0, j = Module['_BinaryenGetNumFunctionTableSegments'](module) ; i !== j ; ++i)
         {
-          var obj = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
-          for ( var k = 0, l = Module['_BinaryenGetFunctionTableSegmentDataLength'](module, i) ; k !== l ; ++k )
+          var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
+          for (var k = 0, l = Module['_BinaryenGetFunctionTableSegmentLength'](module, i) ; k !== l ; ++k)
           {
-            var ptr = HEAPU32[(Module['_BinaryenGetFunctionTableSegmentData'](module, i)+k*4)>>>2];
-            obj['names'][obj['names'].length] = UTF8ToString(ptr);
+            var size = Module['_BinaryenGetFunctionTableSegmentDataByteLength'](module, i, k);
+            var ptr = _malloc(size);
+            Module['_BinaryenCopyFunctionTableSegmentData'](module, i, k, ptr);
+            seg['names'].push(UTF8ToString(ptr));
+            _free(ptr);
           }
-          arr[arr.length] = obj;
+          arr.push(seg);
         }
         return arr;
       })()

@@ -3569,9 +3569,9 @@ int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->table.imported();
 }
-BinaryenIndex BinaryenGetFunctionTableNumSegments(BinaryenModuleRef module) {
+BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
   if (tracing) {
-    std::cout << "  BinaryenGetFunctionTableNumSegments(the_module);\n";
+    std::cout << "  BinaryenGetNumFunctionTableSegments(the_module);\n";
   }
 
   auto* wasm = (Module*)module;
@@ -3591,12 +3591,11 @@ BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
   }
   return wasm->table.segments[id].offset;
 }
-BinaryenIndex
-BinaryenGetFunctionTableSegmentDataLength(BinaryenModuleRef module,
-                                          BinaryenIndex id) {
+BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
+                                                    BinaryenIndex id) {
   if (tracing) {
-    std::cout << "  BinaryenGetFunctionTableSegmentDataLength(the_module, "
-              << id << ");\n";
+    std::cout << "  BinaryenGetFunctionTableSegmentLength(the_module, " << id
+              << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -3605,18 +3604,45 @@ BinaryenGetFunctionTableSegmentDataLength(BinaryenModuleRef module,
   }
   return wasm->table.segments[id].data.size();
 }
-const char** BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
-                                                 BinaryenIndex id) {
+size_t BinaryenGetFunctionTableSegmentDataByteLength(BinaryenModuleRef module,
+                                                     BinaryenIndex segmentId,
+                                                     BinaryenIndex dataId) {
   if (tracing) {
-    std::cout << "  BinaryenGetFunctionTableSegmentData(the_module, " << id
-              << ");\n";
+    std::cout << "  BinaryenGetFunctionTableSegmentDataByteLength(the_module, "
+              << segmentId << ", " << dataId << ");\n";
   }
 
   auto* wasm = (Module*)module;
-  if (wasm->table.segments.size() <= id) {
+  if (wasm->table.segments.size() <= segmentId) {
     Fatal() << "invalid function table segment id.";
   }
-  return reinterpret_cast<const char**>(wasm->table.segments[id].data.data());
+  if (wasm->table.segments[segmentId].data.size() <= dataId) {
+    Fatal() << "invalid function table data id.";
+  }
+  const Name& name = wasm->table.segments[segmentId].data[dataId];
+  return (name.c_str() ? name.size() + 1 : 0);
+}
+void BinaryenCopyFunctionTableSegmentData(BinaryenModuleRef module,
+                                          BinaryenIndex segmentId,
+                                          BinaryenIndex dataId,
+                                          char* buffer) {
+  if (tracing) {
+    std::cout << "  BinaryenCopyFunctionTableSegmentData(the_module, "
+              << segmentId << ", " << dataId << ", "
+              << static_cast<void*>(buffer) << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId) {
+    Fatal() << "invalid function table segment id.";
+  }
+  if (wasm->table.segments[segmentId].data.size() <= dataId) {
+    Fatal() << "invalid function table data id.";
+  }
+  const Name& name = wasm->table.segments[segmentId].data[dataId];
+  if (name.c_str()) {
+    std::copy(name.c_str(), name.c_str() + name.size() + 1, buffer);
+  }
 }
 
 // Memory. One per module

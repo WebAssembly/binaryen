@@ -1191,6 +1191,7 @@ BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
 
 // Function table. One per module
 
+// TODO: Add support for multiple segments in BinaryenSetFunctionTable.
 BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenIndex initial,
                                            BinaryenIndex maximum,
@@ -1199,13 +1200,17 @@ BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenExpressionRef offset);
 BINARYEN_API int BinaryenIsFunctionTableImported(BinaryenModuleRef module);
 BINARYEN_API BinaryenIndex
-BinaryenGetFunctionTableNumSegments(BinaryenModuleRef module);
+BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef BinaryenGetFunctionTableSegmentOffset(
   BinaryenModuleRef module, BinaryenIndex id);
-BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentDataLength(
+BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
   BinaryenModuleRef module, BinaryenIndex id);
-BINARYEN_API const char**
-BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API size_t BinaryenGetFunctionTableSegmentDataByteLength(
+  BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
+BINARYEN_API void BinaryenCopyFunctionTableSegmentData(BinaryenModuleRef module,
+                                                       BinaryenIndex segmentId,
+                                                       BinaryenIndex dataId,
+                                                       char* buffer);
 
 // Memory. One per module
 
