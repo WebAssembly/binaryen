@@ -15,17 +15,17 @@ option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
   execute_process(COMMAND
-               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
+               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags --match version_*
            RESULT_VARIABLE
-               GIT_HASH_RESULT
+               GIT_VERSION_RESULT
            OUTPUT_VARIABLE
-               GIT_HASH
+               GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(${GIT_HASH_RESULT})
+  if(${GIT_VERSION_RESULT})
     message(WARNING "Error running git describe to determine version")
-    set(CMAKE_PROJECT_VERSION "(unable to determine version)")
+    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (unable to determine version)")
   else()
-    set(CMAKE_PROJECT_VERSION "${GIT_HASH}")
+    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 

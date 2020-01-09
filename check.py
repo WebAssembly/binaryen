@@ -35,6 +35,16 @@ if shared.options.interpreter:
     assert os.path.exists(shared.options.interpreter), 'interpreter not found'
 
 
+def get_changelog_version():
+    with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
+        lines = f.readlines()
+    lines = [l for l in lines if len(l.split()) == 1]
+    lines = [l for l in lines if l.startswith('v')]
+    version = lines[0][1:]
+    print("Parsed CHANGELOG.md version: %s" % version)
+    return int(version)
+
+
 def run_help_tests():
     print('[ checking --help is useful... ]\n')
 
@@ -56,6 +66,7 @@ def run_help_tests():
         assert len(out.split('\n')) > 8, 'Expected some help, got:\n%s' % out
 
     print('[ checking --version ... ]\n')
+    changelog_version = get_changelog_version()
     for e in executables:
         print('.. %s --version' % e)
         out, err = subprocess.Popen([e, '--version'],
@@ -66,6 +77,10 @@ def run_help_tests():
         assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
         assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out
         assert len(out.strip().splitlines()) == 1, 'Expected only version info, got:\n%s' % out
+        parts = out.split()
+        assert parts[1] == 'version'
+        version = int(parts[2])
+        assert version == changelog_version
 
 
 def run_wasm_opt_tests():
