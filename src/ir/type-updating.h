@@ -172,7 +172,7 @@ struct TypeUpdater
 
   // note the addition of a node
   void noteBreakChange(Name name, int change, Expression* value) {
-    noteBreakChange(name, change, value ? value->type : none);
+    noteBreakChange(name, change, value ? value->type : Type::none);
   }
 
   void noteBreakChange(Name name, int change, Type type) {
@@ -191,7 +191,7 @@ struct TypeUpdater
         makeBlockUnreachableIfNoFallThrough(block);
       } else if (change == 1 && info.numBreaks == 1) {
         // bumped to 1! the block may now be reachable
-        if (block->type != unreachable) {
+        if (block->type != Type::unreachable) {
           return; // was already reachable, had a fallthrough
         }
         changeTypeTo(block, type);
@@ -217,7 +217,7 @@ struct TypeUpdater
   // the one thing we need to do here is propagate unreachability,
   // no other change is possible
   void propagateTypesUp(Expression* curr) {
-    if (curr->type != unreachable) {
+    if (curr->type != Type::unreachable) {
       return;
     }
     while (1) {
@@ -227,7 +227,7 @@ struct TypeUpdater
         return;
       }
       // get ready to apply unreachability to this node
-      if (curr->type == unreachable) {
+      if (curr->type == Type::unreachable) {
         return; // already unreachable, stop here
       }
       // most nodes become unreachable if a child is unreachable,
@@ -239,23 +239,23 @@ struct TypeUpdater
         }
         // if the block has breaks, it can keep its type
         if (!block->name.is() || blockInfos[block->name].numBreaks == 0) {
-          curr->type = unreachable;
+          curr->type = Type::unreachable;
         } else {
           return; // did not turn
         }
       } else if (auto* iff = curr->dynCast<If>()) {
         // may not be unreachable if just one side is
         iff->finalize();
-        if (curr->type != unreachable) {
+        if (curr->type != Type::unreachable) {
           return; // did not turn
         }
       } else if (auto* tryy = curr->dynCast<Try>()) {
         tryy->finalize();
-        if (curr->type != unreachable) {
+        if (curr->type != Type::unreachable) {
           return; // did not turn
         }
       } else {
-        curr->type = unreachable;
+        curr->type = Type::unreachable;
       }
     }
   }
@@ -276,7 +276,7 @@ struct TypeUpdater
   }
 
   void makeBlockUnreachableIfNoFallThrough(Block* curr) {
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       return; // no change possible
     }
     if (!curr->list.empty() && curr->list.back()->type.isConcrete()) {
@@ -284,9 +284,9 @@ struct TypeUpdater
       return;
     }
     for (auto* child : curr->list) {
-      if (child->type == unreachable) {
+      if (child->type == Type::unreachable) {
         // no fallthrough, and an unreachable, => this block is now unreachable
-        changeTypeTo(curr, unreachable);
+        changeTypeTo(curr, Type::unreachable);
         return;
       }
     }
@@ -300,7 +300,7 @@ struct TypeUpdater
       return; // nothing concrete to change to unreachable
     }
     curr->finalize();
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       propagateTypesUp(curr);
     }
   }
@@ -310,7 +310,7 @@ struct TypeUpdater
       return; // nothing concrete to change to unreachable
     }
     curr->finalize();
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       propagateTypesUp(curr);
     }
   }

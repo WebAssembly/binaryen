@@ -1,0 +1,35 @@
+total
+ [events]       : 0       
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [total]        : 4       
+ [vars]         : 65536   
+ block          : 1       
+ const          : 1       
+ local.get      : 1       
+ local.set      : 1       
+total
+ [events]       : 0       
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [total]        : 4       
+ [vars]         : 65536   
+ block          : 1       
+ const          : 1       
+ local.get      : 1       
+ local.set      : 1       
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (export "foo" (func $0))
+ (func $0 (; 0 ;) (result i32)
+  (local $0 i32)
+  (local.set $0
+   (i32.const 0)
+  )
+  (local.get $0)
+ )
+)

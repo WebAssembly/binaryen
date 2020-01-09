@@ -89,7 +89,9 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
-static Type forceConcrete(Type type) { return type.isConcrete() ? type : i32; }
+static Type forceConcrete(Type type) {
+  return type.isConcrete() ? type : Type::i32;
+}
 
 // Prints the internal contents of an expression: everything but
 // the children.
@@ -186,7 +188,8 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".load";
-    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -212,7 +215,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
+    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -233,7 +236,7 @@ struct PrintExpressionContents
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << forceConcrete(type) << ".atomic.rmw";
-    if (type != unreachable && bytes != getTypeSize(type)) {
+    if (type != Type::unreachable && bytes != type.getByteSize()) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -269,7 +272,8 @@ struct PrintExpressionContents
         o << "xchg";
         break;
     }
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -281,7 +285,8 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -1333,7 +1338,12 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
-  void visitSelect(Select* curr) { prepareColor(o) << "select"; }
+  void visitSelect(Select* curr) {
+    prepareColor(o) << "select";
+    if (curr->type.isRef()) {
+      o << " (result " << curr->type << ')';
+    }
+  }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitHost(Host* curr) {
@@ -1345,6 +1355,12 @@ struct PrintExpressionContents
         printMedium(o, "memory.grow");
         break;
     }
+  }
+  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
+  void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
+  void visitRefFunc(RefFunc* curr) {
+    printMedium(o, "ref.func ");
+    printName(curr->func, o);
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
@@ -1851,6 +1867,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ')';
       }
     }
+  }
+  void visitRefNull(RefNull* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitRefIsNull(RefIsNull* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitRefFunc(RefFunc* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   // try-catch-end is written in the folded wat format as
   // (try
@@ -2434,18 +2467,24 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     }
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
-    case StackInst::LoopBegin: {
+    case StackInst::LoopBegin:
+    case StackInst::TryBegin: {
       o << getExpressionName(inst->origin);
       break;
     }
     case StackInst::BlockEnd:
     case StackInst::IfEnd:
-    case StackInst::LoopEnd: {
+    case StackInst::LoopEnd:
+    case StackInst::TryEnd: {
       o << "end (" << inst->type << ')';
       break;
     }
     case StackInst::IfElse: {
       o << "else";
+      break;
+    }
+    case StackInst::Catch: {
+      o << "catch";
       break;
     }
     default:
@@ -2470,6 +2509,11 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
     switch (inst->op) {
       case StackInst::Basic: {
         doIndent();
+        // push and pop are pseudo instructions and should not be printed in the
+        // stack IR format to make it valid wat form.
+        if (inst->origin->is<Push>() || inst->origin->is<Pop>()) {
+          break;
+        }
         PrintExpressionContents(func, o).visit(inst->origin);
         break;
       }

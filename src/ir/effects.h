@@ -209,7 +209,7 @@ struct EffectAnalyzer
     //      loop top, but no way to get out, then it is an infinite loop, and we
     //      consider that a branching side effect (note how the same logic does
     //      not apply to blocks).
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       branches = true;
     }
   }
@@ -387,6 +387,9 @@ struct EffectAnalyzer
     // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
   }
+  void visitRefNull(RefNull* curr) {}
+  void visitRefIsNull(RefIsNull* curr) {}
+  void visitRefFunc(RefFunc* curr) {}
   void visitTry(Try* curr) {}
   // We safely model throws as branches
   void visitThrow(Throw* curr) { branches = true; }

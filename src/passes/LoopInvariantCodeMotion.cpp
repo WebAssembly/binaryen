@@ -189,7 +189,7 @@ struct LoopInvariantCodeMotion
   bool interestingToMove(Expression* curr) {
     // In theory we could consider blocks, but then heavy nesting of
     // switch patterns would be heavy, and almost always pointless.
-    if (curr->type != none || curr->is<Nop>() || curr->is<Block>() ||
+    if (curr->type != Type::none || curr->is<Nop>() || curr->is<Block>() ||
         curr->is<Loop>()) {
       return false;
     }

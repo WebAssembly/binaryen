@@ -565,7 +565,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
-    if (actual->type == none) {
+    if (actual->type == Type::none) {
       body = wasmBuilder.blockify(actual,
                                   wasmBuilder.makeConst(Literal(uint32_t(1))));
     } else {
@@ -575,26 +575,26 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType) {
-      case i32:
+    switch (resType.getSingle()) {
+      case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
 
-      case i64:
+      case Type::i64:
         body = wasmBuilder.makeCall(
           "i64Equal",
           {actual,
-           wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32),
+           wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, Type::i32),
            expected},
-          i32);
+          Type::i32);
         break;
 
-      case f32: {
-        body = wasmBuilder.makeCall("f32Equal", {actual, expected}, i32);
+      case Type::f32: {
+        body = wasmBuilder.makeCall("f32Equal", {actual, expected}, Type::i32);
         break;
       }
-      case f64: {
-        body = wasmBuilder.makeCall("f64Equal", {actual, expected}, i32);
+      case Type::f64: {
+        body = wasmBuilder.makeCall("f64Equal", {actual, expected}, Type::i32);
         break;
       }
 
@@ -623,7 +623,7 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
                                               Name testFuncName,
                                               Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
-  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
+  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, Type::i32);
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},

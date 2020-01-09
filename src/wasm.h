@@ -531,6 +531,9 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    RefNullId,
+    RefIsNullId,
+    RefFuncId,
     TryId,
     ThrowId,
     RethrowId,
@@ -540,7 +543,7 @@ public:
   Id _id;
 
   // the type of the expression: its *output*, not necessarily its input(s)
-  Type type = none;
+  Type type = Type::none;
 
   Expression(Id id) : _id(id) {}
 
@@ -568,6 +571,8 @@ public:
 };
 
 const char* getExpressionName(Expression* curr);
+
+Literal getLiteralFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -650,7 +655,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() { type = unreachable; }
+  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
 
   Name name;
   Expression* value;
@@ -661,7 +666,9 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) { type = unreachable; }
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
+  }
 
   ArenaVector<Name> targets;
   Name default_;
@@ -1008,6 +1015,7 @@ public:
   Expression* condition;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -1022,7 +1030,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() { type = unreachable; }
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
@@ -1041,7 +1049,7 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() { type = unreachable; }
+  Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
@@ -1068,6 +1076,32 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
+};
+
+class RefNull : public SpecificExpression<Expression::RefNullId> {
+public:
+  RefNull() = default;
+  RefNull(MixedArena& allocator) {}
+
+  void finalize();
+};
+
+class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+public:
+  RefIsNull(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class RefFunc : public SpecificExpression<Expression::RefFuncId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Name func;
+
+  void finalize();
 };
 
 class Try : public SpecificExpression<Expression::TryId> {
@@ -1102,7 +1136,7 @@ public:
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
-  BrOnExn() { type = unreachable; }
+  BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
   Name name;

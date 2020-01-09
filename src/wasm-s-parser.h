@@ -161,7 +161,9 @@ private:
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
   Type stringToLaneType(const char* str);
-  bool isType(cashew::IString str) { return stringToType(str, true) != none; }
+  bool isType(cashew::IString str) {
+    return stringToType(str, true) != Type::none;
+  }
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
@@ -225,6 +227,9 @@ private:
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
+  Expression* makeRefNull(Element& s);
+  Expression* makeRefIsNull(Element& s);
+  Expression* makeRefFunc(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeCatch(Element& s, Type type);
   Expression* makeThrow(Element& s);

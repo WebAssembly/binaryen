@@ -38,7 +38,9 @@ function initializeConstants() {
     ['f32', 'Float32'],
     ['f64', 'Float64'],
     ['v128', 'Vec128'],
+    ['funcref', 'Funcref'],
     ['anyref', 'Anyref'],
+    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
@@ -86,6 +88,9 @@ function initializeConstants() {
     'DataDrop',
     'MemoryCopy',
     'MemoryFill',
+    'RefNull',
+    'RefIsNull',
+    'RefFunc',
     'Try',
     'Throw',
     'Rethrow',
@@ -1952,9 +1957,21 @@ function wrapModule(module, self) {
     },
   };
 
+  self['funcref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['funcref']);
+    }
+  };
+
   self['anyref'] = {
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['nullref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['nullref']);
     }
   };
 
@@ -1964,8 +1981,23 @@ function wrapModule(module, self) {
     }
   };
 
-  self['select'] = function(condition, ifTrue, ifFalse) {
-    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
+  self['ref'] = {
+    'null': function() {
+      return Module['_BinaryenRefNull'](module);
+    },
+    'is_null': function(value) {
+      return Module['_BinaryenRefIsNull'](module, value);
+    },
+    'func': function(func) {
+      return preserveStack(function() {
+        return Module['_BinaryenRefFunc'](module, strToStack(func));
+      });
+    }
+  };
+
+  self['select'] = function(condition, ifTrue, ifFalse, type) {
+    return Module['_BinaryenSelect'](
+      module, condition, ifTrue, ifFalse, typeof type !== 'undefined' ? type : Module['auto']);
   };
   self['drop'] = function(value) {
     return Module['_BinaryenDrop'](module, value);
@@ -2669,6 +2701,23 @@ Module['getExpressionInfo'] = function(expr) {
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+    case Module['RefNullId']:
+      return {
+        'id': id,
+        'type': type
+      };
+    case Module['RefIsNullId']:
+      return {
+        'id': id,
+        'type': type,
+        'value': Module['_BinaryenRefIsNullGetValue'](expr)
+      };
+    case Module['RefFuncId']:
+      return {
+        'id': id,
+        'type': type,
+        'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
       };
     case Module['TryId']:
       return {
