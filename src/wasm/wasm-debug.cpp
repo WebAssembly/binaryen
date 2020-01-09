@@ -151,7 +151,7 @@ struct LineState {
           }
           default: {
             // An unknown opcode, ignore.
-            std::cout << "warning: unknown subopcopde " << opcode.SubOpcode
+            std::cerr << "warning: unknown subopcopde " << opcode.SubOpcode
                       << '\n';
           }
         }
