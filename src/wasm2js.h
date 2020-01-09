@@ -150,11 +150,11 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    if (frees[type].size() > 0) {
-      ret = frees[type].back();
-      frees[type].pop_back();
+    if (frees[type.getSingle()].size() > 0) {
+      ret = frees[type.getSingle()].back();
+      frees[type.getSingle()].pop_back();
     } else {
-      size_t index = temps[type]++;
+      size_t index = temps[type.getSingle()]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
@@ -167,7 +167,9 @@ public:
   }
 
   // Free a temp var.
-  void freeTemp(Type type, IString temp) { frees[type].push_back(temp); }
+  void freeTemp(Type type, IString temp) {
+    frees[type.getSingle()].push_back(temp);
+  }
 
   // Generates a mangled name from `name` within the specified scope.
   //
@@ -619,7 +621,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
-    switch (const_->type) {
+    switch (const_->type.getSingle()) {
       case Type::i32: {
         theValue = ValueBuilder::makeInt(const_->value.geti32());
         break;
@@ -1210,7 +1212,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // normal load
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
-      switch (curr->type) {
+      switch (curr->type.getSingle()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1306,7 +1308,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->valueType) {
+      switch (curr->valueType.getSingle()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1346,7 +1348,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitDrop(Drop* curr) { return visit(curr->value, NO_RESULT); }
 
     Ref visitConst(Const* curr) {
-      switch (curr->type) {
+      switch (curr->type.getSingle()) {
         case Type::i32:
           return ValueBuilder::makeInt(curr->value.geti32());
         // An i64 argument translates to two actual arguments to asm.js
@@ -1386,7 +1388,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitUnary(Unary* curr) {
       // normal unary
-      switch (curr->type) {
+      switch (curr->type.getSingle()) {
         case Type::i32: {
           switch (curr->op) {
             case ClzInt32: {
@@ -1545,7 +1547,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type) {
+      switch (curr->type.getSingle()) {
         case Type::i32: {
           switch (curr->op) {
             case AddInt32:

@@ -77,7 +77,7 @@ private:
     }
     // measure the size of the constant
     Index size = 0;
-    switch (value.type) {
+    switch (value.type.getSingle()) {
       case Type::i32: {
         size = getWrittenSize(S32LEB(value.geti32()));
         break;

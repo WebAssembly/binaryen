@@ -93,7 +93,7 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 
 void BinaryInstWriter::visitLoad(Load* curr) {
   if (!curr->isAtomic) {
-    switch (curr->type) {
+    switch (curr->type.getSingle()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -156,7 +156,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->type) {
+    switch (curr->type.getSingle()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -203,7 +203,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic) {
-    switch (curr->valueType) {
+    switch (curr->valueType.getSingle()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -259,7 +259,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->valueType) {
+    switch (curr->valueType.getSingle()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -307,7 +307,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 #define CASE_FOR_OP(Op)                                                        \
   case Op:                                                                     \
-    switch (curr->type) {                                                      \
+    switch (curr->type.getSingle()) {                                          \
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
@@ -363,7 +363,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->type) {
+  switch (curr->type.getSingle()) {
     case Type::i32:
       switch (curr->bytes) {
         case 1:
@@ -405,7 +405,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->expectedType) {
+  switch (curr->expectedType.getSingle()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
       emitMemoryAccess(4, 4, curr->offset);
@@ -621,7 +621,7 @@ void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
-  switch (curr->type) {
+  switch (curr->type.getSingle()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
       break;

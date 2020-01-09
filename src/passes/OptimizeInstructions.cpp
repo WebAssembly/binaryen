@@ -53,7 +53,7 @@ Name ANY_EXPR = "any.expr";
 template<typename LocalInfoProvider>
 Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   if (auto* const_ = curr->dynCast<Const>()) {
-    switch (curr->type) {
+    switch (curr->type.getSingle()) {
       case Type::i32:
         return 32 - const_->value.countLeadingZeroes().geti32();
       case Type::i64:
@@ -178,7 +178,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       return 8 * load->bytes;
     }
   }
-  switch (curr->type) {
+  switch (curr->type.getSingle()) {
     case Type::i32:
       return 32;
     case Type::i64:
@@ -260,7 +260,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
-    switch (type) {
+    switch (type.getSingle()) {
       case Type::i32:
         return 32;
       case Type::i64:

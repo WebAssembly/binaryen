@@ -172,7 +172,7 @@ struct ValidationInfo {
                                 Expression* curr,
                                 const char* text,
                                 Function* func = nullptr) {
-    switch (ty) {
+    switch (ty.getSingle()) {
       case Type::i32:
       case Type::i64:
       case Type::unreachable: {
@@ -1227,7 +1227,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
 void FunctionValidator::validateMemBytes(uint8_t bytes,
                                          Type type,
                                          Expression* curr) {
-  switch (type) {
+  switch (type.getSingle()) {
     case Type::i32:
       shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4,
                    curr,
@@ -1975,7 +1975,7 @@ void FunctionValidator::validateAlignment(
     }
   }
   shouldBeTrue(align <= bytes, curr, "alignment must not exceed natural");
-  switch (type) {
+  switch (type.getSingle()) {
     case Type::i32:
     case Type::f32: {
       shouldBeTrue(align <= 4, curr, "alignment must not exceed natural");

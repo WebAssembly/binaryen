@@ -86,7 +86,7 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
                         curr->ptr},
                        Type::i32);
     Name target;
-    switch (curr->type) {
+    switch (curr->type.getSingle()) {
       case Type::i32:
         target = load_val_i32;
         break;
@@ -117,7 +117,7 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
                         curr->ptr},
                        Type::i32);
     Name target;
-    switch (curr->value->type) {
+    switch (curr->value->type.getSingle()) {
       case Type::i32:
         target = store_val_i32;
         break;
