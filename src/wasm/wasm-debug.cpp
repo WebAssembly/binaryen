@@ -339,7 +339,7 @@ struct AddrExprMap {
     }
   }
 
-  Expression* get(uint32_t addr) {
+  Expression* get(uint32_t addr) const {
     auto iter = map.find(addr);
     if (iter != map.end()) {
       return iter->second;
@@ -347,7 +347,7 @@ struct AddrExprMap {
     return nullptr;
   }
 
-  void dump() {
+  void dump() const {
     std::cout << "  (size: " << map.size() << ")\n";
     for (auto pair : map) {
       std::cout << "  " << pair.first << " => " << pair.second << '\n';
@@ -355,9 +355,13 @@ struct AddrExprMap {
   }
 };
 
-static void updateDebugLines(const Module& wasm,
-                             llvm::DWARFYAML::Data& data,
-                             const BinaryLocationsMap& newLocations) {
+struct LocationUpdater {
+  Module& wasm;
+  const BinaryLocationsMap& newLocations;
+
+  AddrExprMap oldAddrMap;
+  AddrExprMap newAddrMap;
+
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -365,9 +369,13 @@ static void updateDebugLines(const Module& wasm,
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  AddrExprMap oldAddrMap(wasm);
-  AddrExprMap newAddrMap(newLocations);
+  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations) :
+    wasm(wasm), newLocations(newLocations), oldAddrMap(wasm), newAddrMap(newLocations) {
+  }
+};
 
+static void updateDebugLines(llvm::DWARFYAML::Data& data,
+                             const LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
     LineState state(table);
@@ -379,9 +387,9 @@ static void updateDebugLines(const Module& wasm,
       if (state.update(opcode, table)) {
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto* expr = oldAddrMap.get(state.addr)) {
-          auto iter = newLocations.find(expr);
-          if (iter != newLocations.end()) {
+        if (auto* expr = locationUpdater.oldAddrMap.get(state.addr)) {
+          auto iter = locationUpdater.newLocations.find(expr);
+          if (iter != locationUpdater.newLocations.end()) {
             uint32_t newAddr = iter->second;
             newAddrs.push_back(newAddr);
             newAddrInfo.emplace(newAddr, state);
@@ -426,7 +434,11 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
-  updateDebugLines(wasm, data, newLocations);
+  LocationUpdater locationUpdater(wasm, newLocations);
+
+  updateDebugLines(data, locationUpdater);
+
+  //updateCompileUnits(wasm, data, newLocations);
 
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
