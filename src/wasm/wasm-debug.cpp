@@ -448,7 +448,7 @@ std::cout << "  (die has abbrevs)\n";
           assert(yamlAttr != yamlEntry->Values.end());
 std::cout << "    attrB " << llvm::dwarf::AttributeString(attrSpec.Attr).str() << "\n";
           if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-std::cout << "    MODD\n";
+std::cout << "    MODD " << yamlAttr->Value << "\n";
           }
           yamlAttr++;
         }
