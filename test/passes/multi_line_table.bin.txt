@@ -211,7 +211,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (130 bytes)
-Contains section .debug_abbrev (98 bytes)
+Contains section .debug_abbrev (99 bytes)
 Contains section .debug_line (113 bytes)
 Contains section .debug_str (407 bytes)
 
@@ -424,7 +424,7 @@ file_names[  1]:
  )
  ;; custom section "dylink", size 5
  ;; custom section ".debug_info", size 130
- ;; custom section ".debug_abbrev", size 98
+ ;; custom section ".debug_abbrev", size 99
  ;; custom section ".debug_line", size 113
  ;; custom section ".debug_str", size 407
  ;; custom section "producers", size 180

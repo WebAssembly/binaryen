@@ -2177,7 +2177,7 @@ DWARF debug info
 Contains section .debug_info (812 bytes)
 Contains section .debug_loc (345 bytes)
 Contains section .debug_ranges (88 bytes)
-Contains section .debug_abbrev (352 bytes)
+Contains section .debug_abbrev (353 bytes)
 Contains section .debug_line (1439 bytes)
 Contains section .debug_str (475 bytes)
 
@@ -5696,7 +5696,7 @@ file_names[  4]:
  ;; custom section ".debug_info", size 812
  ;; custom section ".debug_loc", size 345
  ;; custom section ".debug_ranges", size 88
- ;; custom section ".debug_abbrev", size 352
+ ;; custom section ".debug_abbrev", size 353
  ;; custom section ".debug_line", size 1439
  ;; custom section ".debug_str", size 475
  ;; custom section "producers", size 180
