@@ -425,6 +425,19 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
   }
 }
 
+
+static void updateCompileUnits(llvm::DWARFYAML::Data& data,
+                               const LocationUpdater& locationUpdater) {
+  for (auto& unit : data.CompileUnits) {
+    for (auto& entry : unit.Entries) {
+      std::cout << "entry with abbrev " << entry.AbbrCode << " and " << entry.Values.size() << " values\n";
+      for (auto& value : entry.Values) {
+        std::cout << "  value " << value.Value << '\n';
+      }
+    }
+  }
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -438,7 +451,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  //updateCompileUnits(wasm, data, newLocations);
+  updateCompileUnits(data, locationUpdater);
 
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
