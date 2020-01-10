@@ -426,16 +426,51 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
 }
 
 
-static void updateCompileUnits(llvm::DWARFYAML::Data& data,
+static void updateCompileUnits(const BinaryenDWARFInfo& info,
+                               llvm::DWARFYAML::Data& yaml,
                                const LocationUpdater& locationUpdater) {
-  for (auto& unit : data.CompileUnits) {
+  // Iter both over the DwarfContext info and the YAML representation. The
+  // context has the high-level information we need, and the YAML is where
+  // we write changes.
+  auto yamlUnit = yaml.CompileUnits.begin();
+  for (const auto &CU : info.context->compile_units()) {
+std::cout << "CU\n";
+    assert(yamlUnit != yaml.CompileUnits.end());
+    auto yamlEntry = yamlUnit->Entries.begin();
+    for (auto DIE : CU->dies()) {
+      assert(yamlEntry != yamlUnit->Entries.end());
+std::cout << "  DIE\n";
+      auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
+      if (abbrevDecl) {
+std::cout << "  (die has abbrevs)\n";
+        auto yamlAttr = yamlEntry->Values.begin();
+        for (const auto &attrSpec : abbrevDecl->attributes()) {
+          assert(yamlAttr != yamlEntry->Values.end());
+std::cout << "    attrB " << llvm::dwarf::AttributeString(attrSpec.Attr).str() << "\n";
+          if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+std::cout << "    MODD\n";
+          }
+          yamlAttr++;
+        }
+        assert(yamlAttr == yamlEntry->Values.end());
+      }
+      yamlEntry++;
+    }
+    assert(yamlEntry == yamlUnit->Entries.end());
+    yamlUnit++;
+  }
+#if 0
+  assert(yamlUnit == yaml.CompileUnits.end());
+  for (auto& unit : yaml.CompileUnits) {
     for (auto& entry : unit.Entries) {
       std::cout << "entry with abbrev " << entry.AbbrCode << " and " << entry.Values.size() << " values\n";
+      std::cout << "--abbr code
       for (auto& value : entry.Values) {
         std::cout << "  value " << value.Value << '\n';
       }
     }
   }
+#endif
 }
 
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
@@ -451,7 +486,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  updateCompileUnits(data, locationUpdater);
+  updateCompileUnits(info, data, locationUpdater);
 
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
