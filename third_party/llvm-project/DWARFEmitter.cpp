@@ -90,7 +90,8 @@ void DWARFYAML::EmitDebugAbbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
     encodeULEB128(0, OS);
   }
   // XXX BINARYEN: end the list with a zero. LLVM works with or without this,
-  //               but other decoders may error.
+  //               but other decoders may error. See
+  //               https://bugs.llvm.org/show_bug.cgi?id=44511
   writeInteger((uint8_t)0, OS, true /* isLittleEndian */);
 }
 
