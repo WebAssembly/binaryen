@@ -179,6 +179,14 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
+  auto isSignedBitwise = [](Ref node) {
+    if (node->isArray() && !node->empty() && node[0] == BINARY) {
+      auto op = node[1];
+      return op == OR || op == AND || op == XOR || op == RSHIFT || op == LSHIFT;
+    }
+    return false;
+  };
+
   auto isUnary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX &&
            node[1] == op;
@@ -275,9 +283,9 @@ static void optimizeJS(Ref ast) {
       // x | 0 going into a bitwise op => skip the | 0
       node[2] = removeOrZero(node[2]);
       node[3] = removeOrZero(node[3]);
-      // x | 0 | 0  =>  x | 0
+      // (x | 0 or similar) | 0  =>  (x | 0 or similar)
       if (isOrZero(node)) {
-        if (isBitwise(node[2])) {
+        if (isSignedBitwise(node[2])) {
           replaceInPlace(node, node[2]);
         }
       }

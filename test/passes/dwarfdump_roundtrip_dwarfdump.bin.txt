@@ -103,7 +103,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (58 bytes)
-Contains section .debug_abbrev (38 bytes)
+Contains section .debug_abbrev (39 bytes)
 Contains section .debug_line (39 bytes)
 Contains section .debug_str (212 bytes)
 
@@ -219,7 +219,7 @@ file_names[  1]:
  ;; custom section "sourceMappingURL", size 15
  ;; custom section "sourceMappingURL", size 15
  ;; custom section ".debug_info", size 58
- ;; custom section ".debug_abbrev", size 38
+ ;; custom section ".debug_abbrev", size 39
  ;; custom section ".debug_line", size 39
  ;; custom section ".debug_str", size 212
 )
