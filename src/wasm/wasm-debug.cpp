@@ -372,6 +372,20 @@ struct LocationUpdater {
   LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations) :
     wasm(wasm), newLocations(newLocations), oldAddrMap(wasm), newAddrMap(newLocations) {
   }
+
+  // Updates an address. If there was never an instruction at that address,
+  // or if there was but if that instruction no longer exists, return 0.
+  // Otherwise, return the new updated location.
+  uint32_t getNewAddr(uint32_t oldAddr) const {
+    if (auto* expr = oldAddrMap.get(oldAddr)) {
+      auto iter = newLocations.find(expr);
+      if (iter != newLocations.end()) {
+        uint32_t newAddr = iter->second;
+        return newAddr;
+      }
+    }
+    return 0;
+  }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -385,18 +399,12 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     for (auto& opcode : table.Opcodes) {
       // Update the state, and check if we have a new row to emit.
       if (state.update(opcode, table)) {
-        // An expression may not exist for this line table item, if we optimized
-        // it away.
-        if (auto* expr = locationUpdater.oldAddrMap.get(state.addr)) {
-          auto iter = locationUpdater.newLocations.find(expr);
-          if (iter != locationUpdater.newLocations.end()) {
-            uint32_t newAddr = iter->second;
-            newAddrs.push_back(newAddr);
-            newAddrInfo.emplace(newAddr, state);
-            auto& updatedState = newAddrInfo.at(newAddr);
-            // The only difference is the address TODO other stuff?
-            updatedState.addr = newAddr;
-          }
+        if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
+          newAddrs.push_back(newAddr);
+          newAddrInfo.emplace(newAddr, state);
+          auto& updatedState = newAddrInfo.at(newAddr);
+          // The only difference is the address TODO other stuff?
+          updatedState.addr = newAddr;
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
@@ -434,21 +442,20 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
   // we write changes.
   auto yamlUnit = yaml.CompileUnits.begin();
   for (const auto &CU : info.context->compile_units()) {
-std::cout << "CU\n";
     assert(yamlUnit != yaml.CompileUnits.end());
     auto yamlEntry = yamlUnit->Entries.begin();
     for (auto DIE : CU->dies()) {
       assert(yamlEntry != yamlUnit->Entries.end());
-std::cout << "  DIE\n";
       auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
       if (abbrevDecl) {
-std::cout << "  (die has abbrevs)\n";
         auto yamlAttr = yamlEntry->Values.begin();
         for (const auto &attrSpec : abbrevDecl->attributes()) {
           assert(yamlAttr != yamlEntry->Values.end());
-std::cout << "    attrB " << llvm::dwarf::AttributeString(attrSpec.Attr).str() << "\n";
           if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-std::cout << "    MODD " << yamlAttr->Value << "\n";
+            // Note that the new value may be 0, which is the correct way to
+            // indicate that this is no longer a valid wasm value, the same
+            // as wasm-ld would do.
+            yamlAttr->Value = locationUpdater.getNewAddr(yamlAttr->Value);
           }
           yamlAttr++;
         }
@@ -459,18 +466,6 @@ std::cout << "    MODD " << yamlAttr->Value << "\n";
     assert(yamlEntry == yamlUnit->Entries.end());
     yamlUnit++;
   }
-#if 0
-  assert(yamlUnit == yaml.CompileUnits.end());
-  for (auto& unit : yaml.CompileUnits) {
-    for (auto& entry : unit.Entries) {
-      std::cout << "entry with abbrev " << entry.AbbrCode << " and " << entry.Values.size() << " values\n";
-      std::cout << "--abbr code
-      for (auto& value : entry.Values) {
-        std::cout << "  value " << value.Value << '\n';
-      }
-    }
-  }
-#endif
 }
 
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
