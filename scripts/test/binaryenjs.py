@@ -48,16 +48,7 @@ def do_test_binaryen_js_with(which):
         f.write(binaryen_js)
         test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
         test_src = open(test_path).read()
-        # wrap test code with common boilerplate
-        f.write('''
-            binaryen.ready.then(function() {
-                function assert(x) { if (!x) throw Error('Test assertion failed'); }
-                // Test code goes here
-        ''')
-        f.write(test_src)
-        f.write('''
-            });
-        ''')
+        f.write(shared.js_test_wrap().replace('%TEST%', test_src))
         f.close()
 
         def test(engine):

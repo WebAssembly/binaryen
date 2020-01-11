@@ -553,3 +553,14 @@ def with_pass_debug(check):
         else:
             if 'BINARYEN_PASS_DEBUG' in os.environ:
                 del os.environ['BINARYEN_PASS_DEBUG']
+
+
+def js_test_wrap():
+    # common wrapper code for JS tests, waiting for binaryen.js to become ready
+    # and providing common utility used by all tests:
+    return '''
+        binaryen.ready.then(function() {
+            function assert(x) { if (!x) throw Error('Test assertion failed'); }
+            %TEST%
+        });
+    '''

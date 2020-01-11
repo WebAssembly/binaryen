@@ -87,53 +87,53 @@ function test_types() {
 }
 
 function test_features() {
-  console.log("Binaryen.Features.MVP: " + binaryen.Features.MVP);
-  console.log("Binaryen.Features.Atomics: " + binaryen.Features.Atomics);
-  console.log("Binaryen.Features.BulkMemory: " + binaryen.Features.BulkMemory);
-  console.log("Binaryen.Features.MutableGlobals: " + binaryen.Features.MutableGlobals);
-  console.log("Binaryen.Features.NontrappingFPToInt: " + binaryen.Features.NontrappingFPToInt);
-  console.log("Binaryen.Features.SignExt: " + binaryen.Features.SignExt);
-  console.log("Binaryen.Features.SIMD128: " + binaryen.Features.SIMD128);
-  console.log("Binaryen.Features.ExceptionHandling: " + binaryen.Features.ExceptionHandling);
-  console.log("Binaryen.Features.TailCall: " + binaryen.Features.TailCall);
-  console.log("Binaryen.Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
-  console.log("Binaryen.Features.All: " + binaryen.Features.All);
+  console.log("Features.MVP: " + binaryen.Features.MVP);
+  console.log("Features.Atomics: " + binaryen.Features.Atomics);
+  console.log("Features.BulkMemory: " + binaryen.Features.BulkMemory);
+  console.log("Features.MutableGlobals: " + binaryen.Features.MutableGlobals);
+  console.log("Features.NontrappingFPToInt: " + binaryen.Features.NontrappingFPToInt);
+  console.log("Features.SignExt: " + binaryen.Features.SignExt);
+  console.log("Features.SIMD128: " + binaryen.Features.SIMD128);
+  console.log("Features.ExceptionHandling: " + binaryen.Features.ExceptionHandling);
+  console.log("Features.TailCall: " + binaryen.Features.TailCall);
+  console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
+  console.log("Features.All: " + binaryen.Features.All);
 }
 
 function test_ids() {
-  console.log("BinaryenInvalidId: " + binaryen.InvalidId);
-  console.log("BinaryenBlockId: " + binaryen.BlockId);
-  console.log("BinaryenIfId: " + binaryen.IfId);
-  console.log("BinaryenLoopId: " + binaryen.LoopId);
-  console.log("BinaryenBreakId: " + binaryen.BreakId);
-  console.log("BinaryenSwitchId: " + binaryen.SwitchId);
-  console.log("BinaryenCallId: " + binaryen.CallId);
-  console.log("BinaryenCallIndirectId: " + binaryen.CallIndirectId);
-  console.log("BinaryenLocalGetId: " + binaryen.LocalGetId);
-  console.log("BinaryenLocalSetId: " + binaryen.LocalSetId);
-  console.log("BinaryenGlobalGetId: " + binaryen.GlobalGetId);
-  console.log("BinaryenGlobalSetId: " + binaryen.GlobalSetId);
-  console.log("BinaryenLoadId: " + binaryen.LoadId);
-  console.log("BinaryenStoreId: " + binaryen.StoreId);
-  console.log("BinaryenConstId: " + binaryen.ConstId);
-  console.log("BinaryenUnaryId: " + binaryen.UnaryId);
-  console.log("BinaryenBinaryId: " + binaryen.BinaryId);
-  console.log("BinaryenSelectId: " + binaryen.SelectId);
-  console.log("BinaryenDropId: " + binaryen.DropId);
-  console.log("BinaryenReturnId: " + binaryen.ReturnId);
-  console.log("BinaryenHostId: " + binaryen.HostId);
-  console.log("BinaryenNopId: " + binaryen.NopId);
-  console.log("BinaryenUnreachableId: " + binaryen.UnreachableId);
-  console.log("BinaryenAtomicCmpxchgId: " + binaryen.AtomicCmpxchgId);
-  console.log("BinaryenAtomicRMWId: " + binaryen.AtomicRMWId);
-  console.log("BinaryenAtomicWaitId: " + binaryen.AtomicWaitId);
-  console.log("BinaryenAtomicNotifyId: " + binaryen.AtomicNotifyId);
-  console.log("BinaryenSIMDExtractId: " + binaryen.SIMDExtractId);
-  console.log("BinaryenSIMDReplaceId: " + binaryen.SIMDReplaceId);
-  console.log("BinaryenSIMDShuffleId: " + binaryen.SIMDShuffleId);
-  console.log("BinaryenSIMDTernaryId: " + binaryen.SIMDTernaryId);
-  console.log("BinaryenSIMDShiftId: " + binaryen.SIMDShiftId);
-  console.log("BinaryenSIMDLoadId: " + binaryen.SIMDLoadId);
+  console.log("InvalidId: " + binaryen.InvalidId);
+  console.log("BlockId: " + binaryen.BlockId);
+  console.log("IfId: " + binaryen.IfId);
+  console.log("LoopId: " + binaryen.LoopId);
+  console.log("BreakId: " + binaryen.BreakId);
+  console.log("SwitchId: " + binaryen.SwitchId);
+  console.log("CallId: " + binaryen.CallId);
+  console.log("CallIndirectId: " + binaryen.CallIndirectId);
+  console.log("LocalGetId: " + binaryen.LocalGetId);
+  console.log("LocalSetId: " + binaryen.LocalSetId);
+  console.log("GlobalGetId: " + binaryen.GlobalGetId);
+  console.log("GlobalSetId: " + binaryen.GlobalSetId);
+  console.log("LoadId: " + binaryen.LoadId);
+  console.log("StoreId: " + binaryen.StoreId);
+  console.log("ConstId: " + binaryen.ConstId);
+  console.log("UnaryId: " + binaryen.UnaryId);
+  console.log("BinaryId: " + binaryen.BinaryId);
+  console.log("SelectId: " + binaryen.SelectId);
+  console.log("DropId: " + binaryen.DropId);
+  console.log("ReturnId: " + binaryen.ReturnId);
+  console.log("HostId: " + binaryen.HostId);
+  console.log("NopId: " + binaryen.NopId);
+  console.log("UnreachableId: " + binaryen.UnreachableId);
+  console.log("AtomicCmpxchgId: " + binaryen.AtomicCmpxchgId);
+  console.log("AtomicRMWId: " + binaryen.AtomicRMWId);
+  console.log("AtomicWaitId: " + binaryen.AtomicWaitId);
+  console.log("AtomicNotifyId: " + binaryen.AtomicNotifyId);
+  console.log("SIMDExtractId: " + binaryen.SIMDExtractId);
+  console.log("SIMDReplaceId: " + binaryen.SIMDReplaceId);
+  console.log("SIMDShuffleId: " + binaryen.SIMDShuffleId);
+  console.log("SIMDTernaryId: " + binaryen.SIMDTernaryId);
+  console.log("SIMDShiftId: " + binaryen.SIMDShiftId);
+  console.log("SIMDLoadId: " + binaryen.SIMDLoadId);
   console.log("MemoryInitId: " + binaryen.MemoryInitId);
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
@@ -483,7 +483,7 @@ function test_core() {
     // Reference types
     module.ref.is_null(module.ref.null()),
     module.ref.is_null(module.ref.func("kitchen()sinker")),
-    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), Binaryen.funcref),
+    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), binaryen.funcref),
 
     // Exception handling
     module.try(
