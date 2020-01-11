@@ -389,14 +389,15 @@ static void updateDebugLines(const Module& wasm,
     bool ignoringRange = false;
     for (auto& opcode : table.Opcodes) {
       // Update the state, and check if we have a new row to emit.
+      if (state.startsNewRange(opcode)) {
+        ignoringRange = false;
+      }
       if (state.update(opcode, table)) {
-        if (state.startsNewRange(opcode)) {
-          ignoringRange = false;
-        }
         if (state.addr == 0) {
           ignoringRange = true;
         }
         if (ignoringRange) {
+          state = LineState(table);
           continue;
         }
         // An expression may not exist for this line table item, if we optimized
