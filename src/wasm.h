@@ -365,6 +365,7 @@ enum BinaryOp {
   MinUVecI8x16,
   MaxSVecI8x16,
   MaxUVecI8x16,
+  AvgrUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -376,6 +377,7 @@ enum BinaryOp {
   MinUVecI16x8,
   MaxSVecI16x8,
   MaxUVecI16x8,
+  AvgrUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -529,6 +531,9 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    RefNullId,
+    RefIsNullId,
+    RefFuncId,
     TryId,
     ThrowId,
     RethrowId,
@@ -538,7 +543,7 @@ public:
   Id _id;
 
   // the type of the expression: its *output*, not necessarily its input(s)
-  Type type = none;
+  Type type = Type::none;
 
   Expression(Id id) : _id(id) {}
 
@@ -566,6 +571,8 @@ public:
 };
 
 const char* getExpressionName(Expression* curr);
+
+Literal getLiteralFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -648,7 +655,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() { type = unreachable; }
+  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
 
   Name name;
   Expression* value;
@@ -659,7 +666,9 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) { type = unreachable; }
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
+  }
 
   ArenaVector<Name> targets;
   Name default_;
@@ -1006,6 +1015,7 @@ public:
   Expression* condition;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -1020,7 +1030,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() { type = unreachable; }
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
@@ -1039,7 +1049,7 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() { type = unreachable; }
+  Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
@@ -1066,6 +1076,32 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
+};
+
+class RefNull : public SpecificExpression<Expression::RefNullId> {
+public:
+  RefNull() = default;
+  RefNull(MixedArena& allocator) {}
+
+  void finalize();
+};
+
+class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+public:
+  RefIsNull(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class RefFunc : public SpecificExpression<Expression::RefFuncId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Name func;
+
+  void finalize();
 };
 
 class Try : public SpecificExpression<Expression::TryId> {
@@ -1100,7 +1136,7 @@ public:
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
-  BrOnExn() { type = unreachable; }
+  BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
   Name name;
@@ -1127,7 +1163,10 @@ struct Importable {
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
 // IR). See wasm-stack.h.
 class StackInst;
-typedef std::vector<StackInst*> StackIR;
+
+using StackIR = std::vector<StackInst*>;
+
+using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
 
 class Function : public Importable {
 public:
@@ -1152,6 +1191,7 @@ public:
   std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
+  // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
     uint32_t fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
@@ -1172,6 +1212,10 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
+
+  // General debugging info: map every instruction to its original position in
+  // the binary, relative to the beginning of the code section.
+  BinaryLocationsMap binaryLocations;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1241,6 +1285,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1284,6 +1335,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {
@@ -1327,6 +1386,8 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
 
   // `features` are the features allowed to be used in this module and should be
@@ -1362,9 +1423,13 @@ public:
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
-  Function* addFunction(std::unique_ptr<Function> curr);
   Global* addGlobal(Global* curr);
   Event* addEvent(Event* curr);
+
+  Export* addExport(std::unique_ptr<Export> curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(std::unique_ptr<Global> curr);
+  Event* addEvent(std::unique_ptr<Event> curr);
 
   void addStart(const Name& s);
 

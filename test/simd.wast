@@ -523,6 +523,12 @@
    (local.get $1)
   )
  )
+ (func $i8x16.avgr_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.avgr_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i16x8.neg (param $0 v128) (result v128)
   (i16x8.neg
    (local.get $0)
@@ -618,6 +624,12 @@
  )
  (func $i16x8.max_u (param $0 v128) (param $1 v128) (result v128)
   (i16x8.max_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.avgr_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.avgr_u
    (local.get $0)
    (local.get $1)
   )

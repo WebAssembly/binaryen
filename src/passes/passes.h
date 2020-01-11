@@ -35,6 +35,7 @@ Pass* createDAEOptimizingPass();
 Pass* createDataFlowOptsPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDirectizePass();
+Pass* createDWARFDumpPass();
 Pass* createDuplicateImportEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createEmitTargetFeaturesPass();

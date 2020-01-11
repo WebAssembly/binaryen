@@ -26,22 +26,20 @@ function asmFunc(global, env, buffer) {
  
  function foo($0) {
   $0 = $0 | 0;
-  label$4 : while (1) {
-   label$5 : {
-    bar();
-    block : {
-     switch (123 | 0) {
-     case 0:
-      bar();
-      break;
-     default:
-      break label$5;
-     };
-    }
-    return;
+  label$5 : {
+   bar();
+   block : {
+    switch (123 | 0) {
+    case 0:
+     bar();
+     break;
+    default:
+     break label$5;
+    };
    }
-   abort();
-  };
+   return;
+  }
+  abort();
  }
  
  var FUNCTION_TABLE = [];

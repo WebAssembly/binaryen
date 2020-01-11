@@ -20,13 +20,18 @@ var wast = `
  )
 )
 `;
-console.log("=== input wast ===" + wast);
 
-var module = Binaryen.parseText(wast);
-assert(module.validate());
+function test() {
+  console.log("=== input wast ===" + wast);
 
-console.log("=== default ===");
-console.log(module.emitStackIR());
+  var module = Binaryen.parseText(wast);
+  assert(module.validate());
 
-console.log("=== optimize ==="); // should omit the second block
-console.log(module.emitStackIR(true));
+  console.log("=== default ===");
+  console.log(module.emitStackIR());
+
+  console.log("=== optimize ==="); // should omit the second block
+  console.log(module.emitStackIR(true));
+}
+
+Binaryen.ready.then(test);

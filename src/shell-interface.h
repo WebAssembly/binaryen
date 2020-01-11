@@ -99,27 +99,29 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
-        switch (import->type) {
-          case i32:
+        switch (import->type.getSingle()) {
+          case Type::i32:
             globals[import->name] = Literal(int32_t(666));
             break;
-          case i64:
+          case Type::i64:
             globals[import->name] = Literal(int64_t(666));
             break;
-          case f32:
+          case Type::f32:
             globals[import->name] = Literal(float(666.6));
             break;
-          case f64:
+          case Type::f64:
             globals[import->name] = Literal(double(666.6));
             break;
-          case v128:
+          case Type::v128:
             assert(false && "v128 not implemented yet");
-          case anyref:
-            assert(false && "anyref not implemented yet");
-          case exnref:
-            assert(false && "exnref not implemented yet");
-          case none:
-          case unreachable:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+            globals[import->name] = Literal::makeNullref();
+            break;
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
       }
@@ -163,7 +165,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       trap("callIndirect: bad # of arguments");
     }
     for (size_t i = 0; i < params.size(); i++) {
-      if (params[i] != arguments[i].type) {
+      if (!Type::isSubType(arguments[i].type, params[i])) {
         trap("callIndirect: bad argument type");
       }
     }

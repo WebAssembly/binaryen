@@ -236,12 +236,12 @@ function asmFunc(global, env, buffer) {
  
  function $41($0) {
   $0 = Math_fround($0);
-  return ~~$0 >>> 0;
+  return ~~$0 >>> 0 | 0;
  }
  
  function $42($0) {
   $0 = +$0;
-  return ~~$0 >>> 0;
+  return ~~$0 >>> 0 | 0;
  }
  
  function $47($0) {

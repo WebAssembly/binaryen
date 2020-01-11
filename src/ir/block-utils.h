@@ -43,14 +43,15 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       // no side effects, and singleton is not returning a value, so we can
       // throw away the block and its contents, basically
       return Builder(*parent->getModule()).replaceWithIdenticalType(block);
-    } else if (block->type == singleton->type || allowTypeChange) {
+    } else if (Type::isSubType(singleton->type, block->type) ||
+               allowTypeChange) {
       return singleton;
     } else {
       // (side effects +) type change, must be block with declared value but
       // inside is unreachable (if both concrete, must match, and since no name
       // on block, we can't be branched to, so if singleton is unreachable, so
       // is the block)
-      assert(block->type.isConcrete() && singleton->type == unreachable);
+      assert(block->type.isConcrete() && singleton->type == Type::unreachable);
       // we could replace with unreachable, but would need to update all
       // the parent's types
     }

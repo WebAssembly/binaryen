@@ -143,13 +143,13 @@ public:
     if (!ret.breaking() &&
         (curr->type.isConcrete() || ret.value.type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (ret.value.type != curr->type) {
+      if (!Type::isSubType(ret.value.type, curr->type)) {
         std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
                   << " from\n"
                   << curr << '\n';
       }
 #endif
-      assert(ret.value.type == curr->type);
+      assert(Type::isSubType(ret.value.type, curr->type));
     }
     depth--;
     return ret;
@@ -765,6 +765,8 @@ public:
         return left.maxSI8x16(right);
       case MaxUVecI8x16:
         return left.maxUI8x16(right);
+      case AvgrUVecI8x16:
+        return left.avgrUI8x16(right);
       case AddVecI16x8:
         return left.addI16x8(right);
       case AddSatSVecI16x8:
@@ -787,6 +789,8 @@ public:
         return left.maxSI16x8(right);
       case MaxUVecI16x8:
         return left.maxUI16x8(right);
+      case AvgrUVecI16x8:
+        return left.avgrUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
@@ -1037,8 +1041,8 @@ public:
     if (std::isnan(val)) {
       trap("truncSFloat of nan");
     }
-    if (curr->type == i32) {
-      if (value.type == f32) {
+    if (curr->type == Type::i32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI32TruncS(value.reinterpreti32())) {
           trap("i32.truncSFloat overflow");
         }
@@ -1049,7 +1053,7 @@ public:
       }
       return Literal(int32_t(val));
     } else {
-      if (value.type == f32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI64TruncS(value.reinterpreti32())) {
           trap("i64.truncSFloat overflow");
         }
@@ -1067,8 +1071,8 @@ public:
     if (std::isnan(val)) {
       trap("truncUFloat of nan");
     }
-    if (curr->type == i32) {
-      if (value.type == f32) {
+    if (curr->type == Type::i32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI32TruncU(value.reinterpreti32())) {
           trap("i32.truncUFloat overflow");
         }
@@ -1079,7 +1083,7 @@ public:
       }
       return Literal(uint32_t(val));
     } else {
-      if (value.type == f32) {
+      if (value.type == Type::f32) {
         if (!isInRangeI64TruncU(value.reinterpreti32())) {
           trap("i64.truncUFloat overflow");
         }
@@ -1091,7 +1095,7 @@ public:
       return Literal(uint64_t(val));
     }
   }
-  Flow visitAtomicFence(AtomicFence*) {
+  Flow visitAtomicFence(AtomicFence* curr) {
     // Wasm currently supports only sequentially consistent atomics, in which
     // case atomic_fence can be lowered to nothing.
     NOTE_ENTER("AtomicFence");
@@ -1119,6 +1123,26 @@ public:
   Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
   Flow visitPush(Push*) { WASM_UNREACHABLE("unimp"); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitRefNull(RefNull* curr) {
+    NOTE_ENTER("RefNull");
+    return Literal::makeNullref();
+  }
+  Flow visitRefIsNull(RefIsNull* curr) {
+    NOTE_ENTER("RefIsNull");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Literal value = flow.value;
+    NOTE_EVAL1(value);
+    return Literal(value.type == Type::nullref);
+  }
+  Flow visitRefFunc(RefFunc* curr) {
+    NOTE_ENTER("RefFunc");
+    NOTE_NAME(curr->func);
+    return Literal::makeFuncref(curr->func);
+  }
+  // TODO Implement EH instructions
   Flow visitTry(Try*) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw*) { WASM_UNREACHABLE("unimp"); }
   Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE("unimp"); }
@@ -1173,8 +1197,8 @@ public:
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
     virtual Literal load(Load* load, Address addr) {
-      switch (load->type) {
-        case i32: {
+      switch (load->type.getSingle()) {
+        case Type::i32: {
           switch (load->bytes) {
             case 1:
               return load->signed_ ? Literal((int32_t)load8s(addr))
@@ -1189,7 +1213,7 @@ public:
           }
           break;
         }
-        case i64: {
+        case Type::i64: {
           switch (load->bytes) {
             case 1:
               return load->signed_ ? Literal((int64_t)load8s(addr))
@@ -1207,23 +1231,25 @@ public:
           }
           break;
         }
-        case f32:
+        case Type::f32:
           return Literal(load32u(addr)).castToF32();
-        case f64:
+        case Type::f64:
           return Literal(load64u(addr)).castToF64();
-        case v128:
+        case Type::v128:
           return Literal(load128(addr).data());
-        case anyref: // anyref cannot be loaded from memory
-        case exnref: // exnref cannot be loaded from memory
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
       WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
-      switch (store->valueType) {
-        case i32: {
+      switch (store->valueType.getSingle()) {
+        case Type::i32: {
           switch (store->bytes) {
             case 1:
               store8(addr, value.geti32());
@@ -1239,7 +1265,7 @@ public:
           }
           break;
         }
-        case i64: {
+        case Type::i64: {
           switch (store->bytes) {
             case 1:
               store8(addr, value.geti64());
@@ -1259,19 +1285,21 @@ public:
           break;
         }
         // write floats carefully, ensuring all bits reach memory
-        case f32:
+        case Type::f32:
           store32(addr, value.reinterpreti32());
           break;
-        case f64:
+        case Type::f64:
           store64(addr, value.reinterpreti64());
           break;
-        case v128:
+        case Type::v128:
           store128(addr, value.getv128());
           break;
-        case anyref: // anyref cannot be stored from memory
-        case exnref: // exnref cannot be stored in memory
-        case none:
-        case unreachable:
+        case Type::funcref:
+        case Type::anyref:
+        case Type::nullref:
+        case Type::exnref:
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
     }
@@ -1460,7 +1488,7 @@ private:
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
           assert(i < params.size());
-          if (params[i] != arguments[i].type) {
+          if (!Type::isSubType(arguments[i].type, params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
                       << params[i] << " for parameter " << i << ", got "
                       << arguments[i].type << "." << std::endl;
@@ -1469,7 +1497,7 @@ private:
           locals[i] = arguments[i];
         } else {
           assert(function->isVar(i));
-          locals[i].type = function->getLocalType(i);
+          locals[i] = Literal::makeZero(function->getLocalType(i));
         }
       }
     }
@@ -1576,7 +1604,8 @@ private:
       }
       NOTE_EVAL1(index);
       NOTE_EVAL1(flow.value);
-      assert(curr->isTee() ? flow.value.type == curr->type : true);
+      assert(curr->isTee() ? Type::isSubType(flow.value.type, curr->type)
+                           : true);
       scope.locals[index] = flow.value;
       return curr->isTee() ? flow : Flow();
     }
@@ -1715,7 +1744,7 @@ private:
       if (timeout.breaking()) {
         return timeout;
       }
-      auto bytes = getTypeSize(curr->expectedType);
+      auto bytes = curr->expectedType.getByteSize();
       auto addr = instance.getFinalAddress(ptr.value, bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
@@ -1761,7 +1790,7 @@ private:
     }
     Flow visitSIMDLoadSplat(SIMDLoad* curr) {
       Load load;
-      load.type = i32;
+      load.type = Type::i32;
       load.bytes = curr->getMemBytes();
       load.signed_ = false;
       load.offset = curr->offset;
@@ -1780,7 +1809,7 @@ private:
           splat = &Literal::splatI32x4;
           break;
         case LoadSplatVec64x2:
-          load.type = i64;
+          load.type = Type::i64;
           splat = &Literal::splatI64x2;
           break;
         default:
@@ -1901,18 +1930,22 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("memory.init of dropped segment");
-      }
-
       Address destVal(uint32_t(dest.value.geti32()));
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if (offsetVal + sizeVal > 0 &&
+          instance.droppedSegments.count(curr->segment)) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.init");
+      }
       for (size_t i = 0; i < sizeVal; ++i) {
-        if (offsetVal + i >= segment.data.size()) {
-          trap("out of bounds segment access in memory.init");
-        }
         Literal addr(uint32_t(destVal + i));
         instance.externalInterface->store8(instance.getFinalAddress(addr, 1),
                                            segment.data[offsetVal + i]);
@@ -1921,9 +1954,6 @@ private:
     }
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("data.drop of dropped segment");
-      }
       instance.droppedSegments.insert(curr->segment);
       return {};
     }
@@ -1948,6 +1978,13 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)sourceVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize ||
+          (uint64_t)destVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds segment access in memory.copy");
+      }
+
       int64_t start = 0;
       int64_t end = sizeVal;
       int step = 1;
@@ -1958,9 +1995,6 @@ private:
         step = -1;
       }
       for (int64_t i = start; i != end; i += step) {
-        if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
-          trap("Out of bounds memory access");
-        }
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(
@@ -1988,6 +2022,10 @@ private:
       Address destVal(uint32_t(dest.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.fill");
+      }
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
@@ -2054,7 +2092,7 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
-    if (function->sig.results != ret.type) {
+    if (!Type::isSubType(ret.type, function->sig.results)) {
       std::cerr << "calling " << function->name << " resulted in " << ret
                 << " but the function type is " << function->sig.results
                 << '\n';
@@ -2087,7 +2125,7 @@ protected:
 
   template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
@@ -2098,7 +2136,7 @@ protected:
 
   Address getFinalAddress(Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
     return addr;
   }
@@ -2112,7 +2150,7 @@ protected:
     checkLoadAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
-    ptr.type = i32;
+    ptr.type = Type::i32;
     Load load;
     load.bytes = bytes;
     load.signed_ = true;
@@ -2126,7 +2164,7 @@ protected:
   void doAtomicStore(Address addr, Index bytes, Literal toStore) {
     Const ptr;
     ptr.value = Literal(int32_t(addr));
-    ptr.type = i32;
+    ptr.type = Type::i32;
     Const value;
     value.value = toStore;
     value.type = toStore.type;

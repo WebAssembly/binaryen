@@ -55,14 +55,12 @@ struct RoundTrip : public Pass {
     writer.setDebugInfo(runner->options.debugInfo);
     writer.write(*module, tempName);
     // Read
-    Module newModule;
+    ModuleUtils::clearModule(*module);
     ModuleReader reader;
-    reader.read(tempName, newModule);
+    reader.setDWARF(runner->options.debugInfo);
+    reader.read(tempName, *module);
     // Clean up
     std::remove(tempName.c_str());
-    // Swap in
-    ModuleUtils::clearModule(*module);
-    ModuleUtils::copyModule(newModule, *module);
   }
 };
 

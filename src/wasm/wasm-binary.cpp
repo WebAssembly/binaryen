@@ -21,6 +21,7 @@
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
+#include "wasm-debug.h"
 #include "wasm-stack.h"
 
 #define DEBUG_TYPE "binary"
@@ -71,6 +72,14 @@ void WasmBinaryWriter::write() {
     writeSourceMapEpilog();
   }
 
+#ifdef BUILD_LLVM_DWARF
+  // Update DWARF user sections after writing the data referred to by them
+  // (function bodies), and before writing the user sections themselves.
+  if (Debug::hasDWARFSections(*wasm)) {
+    Debug::writeDWARFSections(*wasm, binaryLocations);
+  }
+#endif
+
   writeLateUserSections();
   writeFeaturesSection();
 
@@ -108,6 +117,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
   if (sourceMap) {
     sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   }
+  binaryLocationsSizeAtSectionStart = binaryLocations.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -115,20 +125,42 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   // section size does not include the reserved bytes of the size field itself
   int32_t size = o.size() - start - MaxLEB32Bytes;
   auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  if (sizeFieldSize != MaxLEB32Bytes) {
+  // We can move things back if the actual LEB for the size doesn't use the
+  // maximum 5 bytes. In that case we need to adjust offsets after we move
+  // things backwards.
+  auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+  if (adjustmentForLEBShrinking) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes,
               &o[start] + MaxLEB32Bytes + size,
               &o[start] + sizeFieldSize);
-    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
-    o.resize(o.size() - adjustment);
+    o.resize(o.size() - adjustmentForLEBShrinking);
     if (sourceMap) {
       for (auto i = sourceMapLocationsSizeAtSectionStart;
            i < sourceMapLocations.size();
            ++i) {
-        sourceMapLocations[i].first -= adjustment;
+        sourceMapLocations[i].first -= adjustmentForLEBShrinking;
       }
+    }
+  }
+
+  if (binaryLocationsSizeAtSectionStart != binaryLocations.size()) {
+    // We added the binary locations, adjust them: they must be relative
+    // to the code section.
+    assert(binaryLocationsSizeAtSectionStart == 0);
+    // The section type byte is right before the LEB for the size; we want
+    // offsets that are relative to the body, which is after that section type
+    // byte and the the size LEB.
+    auto body = start + sizeFieldSize;
+    for (auto& pair : binaryLocations) {
+      // Offsets are relative to the body of the code section: after the
+      // section type byte and the size.
+      // Everything was moved by the adjustment, track that. After this,
+      // we are at the right absolute address.
+      pair.second -= adjustmentForLEBShrinking;
+      // We are relative to the section start.
+      pair.second -= body;
     }
   }
 }
@@ -230,7 +262,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one table\n");
     writeImportHeader(&wasm->table);
     o << U32LEB(int32_t(ExternalKind::Table));
-    o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+    o << S32LEB(BinaryConsts::EncodedType::funcref);
     writeResizableLimits(wasm->table.initial,
                          wasm->table.max,
                          wasm->table.hasMax(),
@@ -265,6 +297,7 @@ void WasmBinaryWriter::writeFunctions() {
   auto start = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    assert(binaryLocationTrackedExpressionsForFunc.empty());
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     BYN_TRACE("write one at" << o.size() << std::endl);
     size_t sizePos = writeU32LEBPlaceholder();
@@ -283,22 +316,31 @@ void WasmBinaryWriter::writeFunctions() {
     BYN_TRACE("body size: " << size << ", writing at " << sizePos
                             << ", next starts at " << o.size() << "\n");
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
-    if (sizeFieldSize != MaxLEB32Bytes) {
+    // We can move things back if the actual LEB for the size doesn't use the
+    // maximum 5 bytes. In that case we need to adjust offsets after we move
+    // things backwards.
+    auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustmentForLEBShrinking) {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
-      auto adjustment = MaxLEB32Bytes - sizeFieldSize;
-      o.resize(o.size() - adjustment);
+      o.resize(o.size() - adjustmentForLEBShrinking);
       if (sourceMap) {
         for (auto i = sourceMapLocationsSizeAtFunctionStart;
              i < sourceMapLocations.size();
              ++i) {
-          sourceMapLocations[i].first -= adjustment;
+          sourceMapLocations[i].first -= adjustmentForLEBShrinking;
         }
+      }
+      for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
+        // We added the binary locations, adjust them: they must be relative
+        // to the code section.
+        binaryLocations[curr] -= adjustmentForLEBShrinking;
       }
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
+    binaryLocationTrackedExpressionsForFunc.clear();
   });
   finishSection(start);
 }
@@ -421,7 +463,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   BYN_TRACE("== writeFunctionTableDeclaration\n");
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
-  o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+  o << S32LEB(BinaryConsts::EncodedType::funcref);
   writeResizableLimits(wasm->table.initial,
                        wasm->table.max,
                        wasm->table.hasMax(),
@@ -648,10 +690,19 @@ void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
 }
 
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
-  auto& debugLocations = func->debugLocations;
-  auto iter = debugLocations.find(curr);
-  if (iter != debugLocations.end()) {
-    writeDebugLocation(iter->second);
+  if (sourceMap) {
+    auto& debugLocations = func->debugLocations;
+    auto iter = debugLocations.find(curr);
+    if (iter != debugLocations.end()) {
+      writeDebugLocation(iter->second);
+    }
+  }
+  // TODO: remove source map debugging support and refactor this method
+  // to something that directly thinks about DWARF, instead of indirectly
+  // looking at func->binaryLocations as a proxy for that etc.
+  if (func && !func->binaryLocations.empty()) {
+    binaryLocations[curr] = o.size();
+    binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
 }
 
@@ -731,7 +782,42 @@ void WasmBinaryWriter::finishUp() {
 
 // reader
 
+bool WasmBinaryBuilder::hasDWARFSections() {
+  assert(pos == 0);
+  getInt32(); // magic
+  getInt32(); // version
+  bool has = false;
+  while (more()) {
+    uint32_t sectionCode = getU32LEB();
+    uint32_t payloadLen = getU32LEB();
+    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
+      throwError("Section extends beyond end of input");
+    }
+    auto oldPos = pos;
+    if (sectionCode == BinaryConsts::Section::User) {
+      auto sectionName = getInlineString();
+      if (Debug::isDWARFSection(sectionName)) {
+        has = true;
+        break;
+      }
+    }
+    pos = oldPos + payloadLen;
+  }
+  pos = 0;
+  return has;
+}
+
 void WasmBinaryBuilder::read() {
+  if (DWARF) {
+    // In order to update dwarf, we must store info about each IR node's
+    // binary position. This has noticeable memory overhead, so we don't do it
+    // by default: the user must request it by setting "DWARF", and even if so
+    // we scan ahead to see that there actually *are* DWARF sections, so that
+    // we don't do unnecessary work.
+    if (!hasDWARFSections()) {
+      DWARF = false;
+    }
+  }
 
   readHeader();
   readSourceMapHeader();
@@ -740,7 +826,7 @@ void WasmBinaryBuilder::read() {
   while (more()) {
     uint32_t sectionCode = getU32LEB();
     uint32_t payloadLen = getU32LEB();
-    if (pos + payloadLen > input.size()) {
+    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
     }
 
@@ -773,6 +859,9 @@ void WasmBinaryBuilder::read() {
         readFunctionSignatures();
         break;
       case BinaryConsts::Section::Code:
+        if (DWARF) {
+          codeSectionLocation = pos;
+        }
         readFunctions();
         break;
       case BinaryConsts::Section::Export:
@@ -959,21 +1048,25 @@ Type WasmBinaryBuilder::getType() {
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
-      return none;
+      return Type::none;
     case BinaryConsts::EncodedType::i32:
-      return i32;
+      return Type::i32;
     case BinaryConsts::EncodedType::i64:
-      return i64;
+      return Type::i64;
     case BinaryConsts::EncodedType::f32:
-      return f32;
+      return Type::f32;
     case BinaryConsts::EncodedType::f64:
-      return f64;
+      return Type::f64;
     case BinaryConsts::EncodedType::v128:
-      return v128;
+      return Type::v128;
+    case BinaryConsts::EncodedType::funcref:
+      return Type::funcref;
     case BinaryConsts::EncodedType::anyref:
-      return anyref;
+      return Type::anyref;
+    case BinaryConsts::EncodedType::nullref:
+      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
-      return exnref;
+      return Type::exnref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
@@ -1169,8 +1262,8 @@ void WasmBinaryBuilder::readImports() {
         wasm.table.name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::EncodedType::AnyFunc) {
-          throwError("Imported table type is not AnyFunc");
+        if (elementType != BinaryConsts::EncodedType::funcref) {
+          throwError("Imported table type is not funcref");
         }
         wasm.table.exists = true;
         bool is_shared;
@@ -1555,7 +1648,7 @@ void WasmBinaryBuilder::processExpressions() {
       return;
     }
     expressionStack.push_back(curr);
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       // once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
       // our AST. but we do need to skip it
@@ -1637,7 +1730,7 @@ Expression* WasmBinaryBuilder::popExpression() {
 
 Expression* WasmBinaryBuilder::popNonVoidExpression() {
   auto* ret = popExpression();
-  if (ret->type != none) {
+  if (ret->type != Type::none) {
     return ret;
   }
   // we found a void, so this is stacky code that we must handle carefully
@@ -1648,7 +1741,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   while (1) {
     auto* curr = popExpression();
     expressions.push_back(curr);
-    if (curr->type != none) {
+    if (curr->type != Type::none) {
       break;
     }
   }
@@ -1664,7 +1757,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     block->list[0] = builder.makeLocalSet(local, block->list[0]);
     block->list.push_back(builder.makeLocalGet(local, type));
   } else {
-    assert(type == unreachable);
+    assert(type == Type::unreachable);
     // nothing to do here - unreachable anyhow
   }
   block->finalize();
@@ -1713,11 +1806,17 @@ void WasmBinaryBuilder::processFunctions() {
     wasm.addExport(curr);
   }
 
-  for (auto& iter : functionCalls) {
+  for (auto& iter : functionRefs) {
     size_t index = iter.first;
-    auto& calls = iter.second;
-    for (auto* call : calls) {
-      call->target = getFunctionName(index);
+    auto& refs = iter.second;
+    for (auto* ref : refs) {
+      if (auto* call = ref->dynCast<Call>()) {
+        call->target = getFunctionName(index);
+      } else if (auto* refFunc = ref->dynCast<RefFunc>()) {
+        refFunc->func = getFunctionName(index);
+      } else {
+        WASM_UNREACHABLE("Invalid type in function references");
+      }
     }
   }
 
@@ -1780,8 +1879,8 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   }
   wasm.table.exists = true;
   auto elemType = getS32LEB();
-  if (elemType != BinaryConsts::EncodedType::AnyFunc) {
-    throwError("ElementType must be AnyFunc in MVP");
+  if (elemType != BinaryConsts::EncodedType::funcref) {
+    throwError("ElementType must be funcref in MVP");
   }
   bool is_shared;
   getResizableLimits(
@@ -1972,6 +2071,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (debugLocation.size()) {
     currDebugLocation.insert(*debugLocation.begin());
   }
+  size_t startPos = pos;
   uint8_t code = getInt8();
   BYN_TRACE("readExpression seeing " << (int)code << std::endl);
   switch (code) {
@@ -2027,7 +2127,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitGlobalSet((curr = allocator.alloc<GlobalSet>())->cast<GlobalSet>());
       break;
     case BinaryConsts::Select:
-      visitSelect((curr = allocator.alloc<Select>())->cast<Select>());
+    case BinaryConsts::SelectWithType:
+      visitSelect((curr = allocator.alloc<Select>())->cast<Select>(), code);
       break;
     case BinaryConsts::Return:
       visitReturn((curr = allocator.alloc<Return>())->cast<Return>());
@@ -2046,6 +2147,15 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Else:
     case BinaryConsts::Catch:
       curr = nullptr;
+      break;
+    case BinaryConsts::RefNull:
+      visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
+      break;
+    case BinaryConsts::RefIsNull:
+      visitRefIsNull((curr = allocator.alloc<RefIsNull>())->cast<RefIsNull>());
+      break;
+    case BinaryConsts::RefFunc:
+      visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
     case BinaryConsts::Try:
       visitTry((curr = allocator.alloc<Try>())->cast<Try>());
@@ -2165,8 +2275,13 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
   }
-  if (curr && currDebugLocation.size()) {
-    currFunction->debugLocations[curr] = *currDebugLocation.begin();
+  if (curr) {
+    if (currDebugLocation.size()) {
+      currFunction->debugLocations[curr] = *currDebugLocation.begin();
+    }
+    if (DWARF && currFunction) {
+      currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
+    }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
@@ -2203,7 +2318,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   }
   expressionStack.resize(start);
   // if we have a consumable item and need it, use it
-  if (consumable != NONE && curr->list.back()->type == none) {
+  if (consumable != NONE && curr->list.back()->type == Type::none) {
     requireFunctionContext(
       "need an extra var in a non-function context, invalid wasm");
     Builder builder(wasm);
@@ -2223,7 +2338,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   while (1) {
     curr->type = getType();
     curr->name = getNextLabel();
-    breakStack.push_back({curr->name, curr->type != none});
+    breakStack.push_back({curr->name, curr->type != Type::none});
     stack.push_back(curr);
     if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
@@ -2271,12 +2386,13 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
                                                    unsigned numPops) {
   Name label = getNextLabel();
-  breakStack.push_back({label, type != none && type != unreachable});
+  breakStack.push_back(
+    {label, type != Type::none && type != Type::unreachable});
   auto start = expressionStack.size();
 
   Builder builder(wasm);
   for (unsigned i = 0; i < numPops; i++) {
-    auto* pop = builder.makePop(exnref);
+    auto* pop = builder.makePop(Type::exnref);
     expressionStack.push_back(pop);
   }
 
@@ -2415,7 +2531,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  functionCalls[index].push_back(curr); // we don't know function names yet
+  functionRefs[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
 
@@ -2500,82 +2616,82 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
       case BinaryConsts::I32LoadMem8S:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem16S:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I64LoadMem8S:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem16S:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem32S:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem32U:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::F32LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = f32;
+        curr->type = Type::f32;
         break;
       case BinaryConsts::F64LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = f64;
+        curr->type = Type::f64;
         break;
       default:
         return false;
@@ -2586,37 +2702,37 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
       case BinaryConsts::I32AtomicLoad8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I64AtomicLoad8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad32U:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       default:
         return false;
@@ -2642,47 +2758,47 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out,
       case BinaryConsts::I32StoreMem8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32StoreMem16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I64StoreMem8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem32:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::F32StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = f32;
+        curr->valueType = Type::f32;
         break;
       case BinaryConsts::F64StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = f64;
+        curr->valueType = Type::f64;
         break;
       default:
         return false;
@@ -2692,37 +2808,37 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out,
       case BinaryConsts::I32AtomicStore8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32AtomicStore16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32AtomicStore:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I64AtomicStore8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore32:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       default:
         return false;
@@ -2755,25 +2871,25 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
   // Handle the cases for all the valid types for a particular opcode
 #define SET_FOR_OP(Op)                                                         \
   case BinaryConsts::I32AtomicRMW##Op:                                         \
-    SET(Op, i32, 4);                                                           \
+    SET(Op, Type::i32, 4);                                                     \
     break;                                                                     \
   case BinaryConsts::I32AtomicRMW##Op##8U:                                     \
-    SET(Op, i32, 1);                                                           \
+    SET(Op, Type::i32, 1);                                                     \
     break;                                                                     \
   case BinaryConsts::I32AtomicRMW##Op##16U:                                    \
-    SET(Op, i32, 2);                                                           \
+    SET(Op, Type::i32, 2);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op:                                         \
-    SET(Op, i64, 8);                                                           \
+    SET(Op, Type::i64, 8);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##8U:                                     \
-    SET(Op, i64, 1);                                                           \
+    SET(Op, Type::i64, 1);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##16U:                                    \
-    SET(Op, i64, 2);                                                           \
+    SET(Op, Type::i64, 2);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##32U:                                    \
-    SET(Op, i64, 4);                                                           \
+    SET(Op, Type::i64, 4);                                                     \
     break;
 
   switch (code) {
@@ -2817,25 +2933,25 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out,
 
   switch (code) {
     case BinaryConsts::I32AtomicCmpxchg:
-      SET(i32, 4);
+      SET(Type::i32, 4);
       break;
     case BinaryConsts::I64AtomicCmpxchg:
-      SET(i64, 8);
+      SET(Type::i64, 8);
       break;
     case BinaryConsts::I32AtomicCmpxchg8U:
-      SET(i32, 1);
+      SET(Type::i32, 1);
       break;
     case BinaryConsts::I32AtomicCmpxchg16U:
-      SET(i32, 2);
+      SET(Type::i32, 2);
       break;
     case BinaryConsts::I64AtomicCmpxchg8U:
-      SET(i64, 1);
+      SET(Type::i64, 1);
       break;
     case BinaryConsts::I64AtomicCmpxchg16U:
-      SET(i64, 2);
+      SET(Type::i64, 2);
       break;
     case BinaryConsts::I64AtomicCmpxchg32U:
-      SET(i64, 4);
+      SET(Type::i64, 4);
       break;
     default:
       WASM_UNREACHABLE("unexpected opcode");
@@ -2864,22 +2980,22 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
 
   switch (code) {
     case BinaryConsts::I32AtomicWait:
-      curr->expectedType = i32;
+      curr->expectedType = Type::i32;
       break;
     case BinaryConsts::I64AtomicWait:
-      curr->expectedType = i64;
+      curr->expectedType = Type::i64;
       break;
     default:
       WASM_UNREACHABLE("unexpected opcode");
   }
-  curr->type = i32;
+  curr->type = Type::i32;
   BYN_TRACE("zz node: AtomicWait\n");
   curr->timeout = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->expectedType)) {
+  if (readAlign != curr->expectedType.getByteSize()) {
     throwError("Align of AtomicWait must match size");
   }
   curr->finalize();
@@ -2894,12 +3010,12 @@ bool WasmBinaryBuilder::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
   auto* curr = allocator.alloc<AtomicNotify>();
   BYN_TRACE("zz node: AtomicNotify\n");
 
-  curr->type = i32;
+  curr->type = Type::i32;
   curr->notifyCount = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->type)) {
+  if (readAlign != curr->type.getByteSize()) {
     throwError("Align of AtomicNotify must match size");
   }
   curr->finalize();
@@ -3589,6 +3705,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MaxUVecI8x16;
       break;
+    case BinaryConsts::I8x16AvgrU:
+      curr = allocator.alloc<Binary>();
+      curr->op = AvgrUVecI8x16;
+      break;
     case BinaryConsts::I16x8Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI16x8;
@@ -3632,6 +3752,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I16x8MaxU:
       curr = allocator.alloc<Binary>();
       curr->op = MaxUVecI16x8;
+      break;
+    case BinaryConsts::I16x8AvgrU:
+      curr = allocator.alloc<Binary>();
+      curr->op = AvgrUVecI16x8;
       break;
     case BinaryConsts::I32x4Add:
       curr = allocator.alloc<Binary>();
@@ -3944,7 +4068,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<Store>();
   curr->bytes = 16;
-  curr->valueType = v128;
+  curr->valueType = Type::v128;
   readMemoryAccess(curr->align, curr->offset);
   curr->isAtomic = false;
   curr->value = popNonVoidExpression();
@@ -4162,7 +4286,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDShift(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::V128Load) {
     auto* curr = allocator.alloc<Load>();
-    curr->type = v128;
+    curr->type = Type::v128;
     curr->bytes = 16;
     readMemoryAccess(curr->align, curr->offset);
     curr->isAtomic = false;
@@ -4223,12 +4347,24 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   return true;
 }
 
-void WasmBinaryBuilder::visitSelect(Select* curr) {
-  BYN_TRACE("zz node: Select\n");
+void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
+  BYN_TRACE("zz node: Select, code " << int32_t(code) << std::endl);
+  if (code == BinaryConsts::SelectWithType) {
+    size_t numTypes = getU32LEB();
+    std::vector<Type> types;
+    for (size_t i = 0; i < numTypes; i++) {
+      types.push_back(getType());
+    }
+    curr->type = Type(types);
+  }
   curr->condition = popNonVoidExpression();
   curr->ifFalse = popNonVoidExpression();
   curr->ifTrue = popNonVoidExpression();
-  curr->finalize();
+  if (code == BinaryConsts::SelectWithType) {
+    curr->finalize(curr->type);
+  } else {
+    curr->finalize();
+  }
 }
 
 void WasmBinaryBuilder::visitReturn(Return* curr) {
@@ -4277,6 +4413,27 @@ void WasmBinaryBuilder::visitUnreachable(Unreachable* curr) {
 void WasmBinaryBuilder::visitDrop(Drop* curr) {
   BYN_TRACE("zz node: Drop\n");
   curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
+  BYN_TRACE("zz node: RefNull\n");
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
+  BYN_TRACE("zz node: RefIsNull\n");
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
+  BYN_TRACE("zz node: RefFunc\n");
+  Index index = getU32LEB();
+  if (index >= functionImports.size() + functionSignatures.size()) {
+    throwError("ref.func: invalid call index");
+  }
+  functionRefs[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
 

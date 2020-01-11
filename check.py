@@ -35,6 +35,16 @@ if shared.options.interpreter:
     assert os.path.exists(shared.options.interpreter), 'interpreter not found'
 
 
+def get_changelog_version():
+    with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
+        lines = f.readlines()
+    lines = [l for l in lines if len(l.split()) == 1]
+    lines = [l for l in lines if l.startswith('v')]
+    version = lines[0][1:]
+    print("Parsed CHANGELOG.md version: %s" % version)
+    return int(version)
+
+
 def run_help_tests():
     print('[ checking --help is useful... ]\n')
 
@@ -56,6 +66,7 @@ def run_help_tests():
         assert len(out.split('\n')) > 8, 'Expected some help, got:\n%s' % out
 
     print('[ checking --version ... ]\n')
+    changelog_version = get_changelog_version()
     for e in executables:
         print('.. %s --version' % e)
         out, err = subprocess.Popen([e, '--version'],
@@ -66,6 +77,10 @@ def run_help_tests():
         assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
         assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out
         assert len(out.strip().splitlines()) == 1, 'Expected only version info, got:\n%s' % out
+        parts = out.split()
+        assert parts[1] == 'version'
+        version = int(parts[2])
+        assert version == changelog_version
 
 
 def run_wasm_opt_tests():
@@ -96,9 +111,10 @@ def run_wasm_opt_tests():
         binary = '.wasm' in t
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
-        if passname.isdigit():
-            passname = open(os.path.join(shared.get_test_dir('passes'), passname + '.passes')).read().strip()
-        opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
+        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
+        if os.path.exists(passes_file):
+            passname = open(passes_file).read().strip()
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
@@ -152,8 +168,10 @@ def run_wasm_opt_tests():
 
         shared.fail_if_not_identical_to_file(actual, f)
 
-        shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
-        shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
+        # FIXME Remove this condition after nullref is implemented in V8
+        if 'reference-types.wast' not in t:
+            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
+            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
 
         shared.minify_check(t)
 
@@ -270,9 +288,9 @@ def run_wasm_reduce_tests():
         before = os.stat('a.wasm').st_size
         support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
-        # 0.65 is a custom threshold to check if we have shrunk the output
-        # sufficiently
-        assert after < 0.7 * before, [before, after]
+        # This number is a custom threshold to check if we have shrunk the
+        # output sufficiently
+        assert after < 0.75 * before, [before, after]
 
 
 def run_spec_tests():
@@ -322,7 +340,10 @@ def run_spec_tests():
         # some wast files cannot be split:
         #     * comments.wast: contains characters that are not valid utf-8,
         #       so our string splitting code fails there
-        if os.path.basename(wast) not in ['comments.wast']:
+
+        # FIXME Remove reference type tests from this list after nullref is
+        # implemented in V8
+        if os.path.basename(wast) not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
             for module, asserts in support.split_wast(wast):

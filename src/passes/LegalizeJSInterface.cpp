@@ -107,14 +107,43 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
+
     if (!illegalImportsToLegal.empty()) {
+      // Gather functions used in 'ref.func'. They should not be removed.
+      std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
+
+      struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
+        Module& wasm;
+        std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
+
+        bool isFunctionParallel() override { return true; }
+
+        Pass* create() override {
+          return new RefFuncScanner(wasm, usedInRefFunc);
+        }
+
+        RefFuncScanner(
+          Module& wasm,
+          std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
+          : wasm(wasm), usedInRefFunc(usedInRefFunc) {
+          // Fill in unordered_map, as we operate on it in parallel
+          for (auto& func : wasm.functions) {
+            usedInRefFunc[func->name];
+          }
+        }
+
+        void visitRefFunc(RefFunc* curr) { usedInRefFunc[curr->func] = true; }
+      };
+
+      RefFuncScanner(*module, usedInRefFunc).run(runner, module);
       for (auto& pair : illegalImportsToLegal) {
-        module->removeFunction(pair.first);
+        if (!usedInRefFunc[pair.first]) {
+          module->removeFunction(pair.first);
+        }
       }
 
       // fix up imports: call_import of an illegal must be turned to a call of a
       // legal
-
       struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
@@ -215,7 +244,7 @@ private:
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));
       block->list.push_back(builder.makeCall(
-        f->name, {I64Utilities::getI64High(builder, index)}, none));
+        f->name, {I64Utilities::getI64High(builder, index)}, Type::none));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -252,8 +281,8 @@ private:
       if (imParams[i] == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
-        params.push_back(i32);
-        params.push_back(i32);
+        params.push_back(Type::i32);
+        params.push_back(Type::i32);
       } else {
         call->operands.push_back(builder.makeLocalGet(i, imParams[i]));
         params.push_back(imParams[i]);

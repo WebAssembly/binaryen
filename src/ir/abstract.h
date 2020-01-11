@@ -52,14 +52,14 @@ enum Op {
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
 inline UnaryOp getUnary(Type type, Op op) {
-  switch (type) {
-    case i32: {
+  switch (type.getSingle()) {
+    case Type::i32: {
       return InvalidUnary;
     }
-    case i64: {
+    case Type::i64: {
       return InvalidUnary;
     }
-    case f32: {
+    case Type::f32: {
       switch (op) {
         case Neg:
           return NegFloat32;
@@ -68,7 +68,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    case f64: {
+    case Type::f64: {
       switch (op) {
         case Neg:
           return NegFloat64;
@@ -77,13 +77,15 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: // there's no unary instructions for anyref
-    case exnref: // there's no unary instructions for exnref
-    case none:
-    case unreachable: {
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable: {
       return InvalidUnary;
     }
   }
@@ -91,8 +93,8 @@ inline UnaryOp getUnary(Type type, Op op) {
 }
 
 inline BinaryOp getBinary(Type type, Op op) {
-  switch (type) {
-    case i32: {
+  switch (type.getSingle()) {
+    case Type::i32: {
       switch (op) {
         case Add:
           return AddInt32;
@@ -129,7 +131,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case i64: {
+    case Type::i64: {
       switch (op) {
         case Add:
           return AddInt64;
@@ -166,7 +168,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case f32: {
+    case Type::f32: {
       switch (op) {
         case Add:
           return AddFloat32;
@@ -187,7 +189,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case f64: {
+    case Type::f64: {
       switch (op) {
         case Add:
           return AddFloat64;
@@ -208,13 +210,15 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: // there's no binary instructions for anyref
-    case exnref: // there's no binary instructions for exnref
-    case none:
-    case unreachable: {
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable: {
       return InvalidBinary;
     }
   }
