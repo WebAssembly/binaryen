@@ -273,11 +273,11 @@ Abbrev table for offset: 0x00000000
               DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "fourth.cpp")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000a0] = "/tmp/emscripten_test_wasm0_xkAHBX")
-              DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
 
 0x00000026:   DW_TAG_subprogram [2]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
                 DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c2] = "sideg")
                 DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/fourth.cpp")

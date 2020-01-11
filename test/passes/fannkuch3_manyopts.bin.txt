@@ -2455,7 +2455,7 @@ Abbrev table for offset: 0x00000000
                 DW_AT_import [DW_FORM_ref4]	(cu + 0x009a => {0x0000009a})
 
 0x000000b2:   DW_TAG_subprogram [15] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000003)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000397)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x00000194] = "_Z15fannkuch_workerPv")
@@ -2574,28 +2574,28 @@ Abbrev table for offset: 0x00000000
 0x00000174:       NULL
 
 0x00000175:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000001c)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000014)
 
 0x0000017a:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000026)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000001a)
 
 0x0000017f:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000030)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000020)
 
 0x00000184:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000000de)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000000be)
 
 0x00000189:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000387)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x00000192:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000038f)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x0000019b:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000397)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x000001a4:     NULL
 
@@ -2685,7 +2685,7 @@ Abbrev table for offset: 0x00000000
 0x00000237:     NULL
 
 0x00000238:   DW_TAG_subprogram [25] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000039c)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000346)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001ba] = "main")
@@ -2714,7 +2714,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000026c:     DW_TAG_inlined_subroutine [26] *
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01a5 => {0x000001a5} "_ZL8fannkuchi")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003ea)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
                   DW_AT_high_pc [DW_FORM_data4]	(0x000002cc)
                   DW_AT_call_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/fannkuch.cpp")
                   DW_AT_call_line [DW_FORM_data1]	(159)
@@ -2769,7 +2769,7 @@ Abbrev table for offset: 0x00000000
 
 0x000002be:       DW_TAG_label [30]  
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0223 => {0x00000223} "cleanup")
-                    DW_AT_low_pc [DW_FORM_addr]	(0x000000000000065e)
+                    DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x000002c7:       DW_TAG_lexical_block [19] *
                     DW_AT_ranges [DW_FORM_sec_offset]	(0x00000028
@@ -2784,46 +2784,46 @@ Abbrev table for offset: 0x00000000
 0x000002d2:       NULL
 
 0x000002d3:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003cc)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000376)
 
 0x000002d8:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003e0)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000383)
 
 0x000002dd:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000040a)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003a7)
 
 0x000002e2:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000442)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003db)
 
 0x000002e7:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000044c)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003e1)
 
 0x000002ec:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000004bb)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000447)
 
 0x000002f1:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000004d1)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000459)
 
 0x000002f6:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000059e)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000518)
 
 0x000002fb:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000666)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x00000304:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000066e)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000005d7)
 
 0x0000030d:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000068f)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000005ed)
 
 0x00000312:     DW_TAG_GNU_call_site [21]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0026 => {0x00000026} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000006a0)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x0000031b:     DW_TAG_GNU_call_site [20]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000006d2)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000623)
 
 0x00000320:     NULL
 
