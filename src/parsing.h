@@ -84,11 +84,11 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   ret->type = type;
   if (type.isFloat()) {
     if (s == _INFINITY) {
-      switch (type) {
-        case f32:
+      switch (type.getSingle()) {
+        case Type::f32:
           ret->value = Literal(std::numeric_limits<float>::infinity());
           break;
-        case f64:
+        case Type::f64:
           ret->value = Literal(std::numeric_limits<double>::infinity());
           break;
         default:
@@ -98,11 +98,11 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == NEG_INFINITY) {
-      switch (type) {
-        case f32:
+      switch (type.getSingle()) {
+        case Type::f32:
           ret->value = Literal(-std::numeric_limits<float>::infinity());
           break;
-        case f64:
+        case Type::f64:
           ret->value = Literal(-std::numeric_limits<double>::infinity());
           break;
         default:
@@ -112,11 +112,11 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == _NAN) {
-      switch (type) {
-        case f32:
+      switch (type.getSingle()) {
+        case Type::f32:
           ret->value = Literal(float(std::nan("")));
           break;
-        case f64:
+        case Type::f64:
           ret->value = Literal(double(std::nan("")));
           break;
         default:
@@ -137,8 +137,8 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       if (!(modifier ? positive[4] == '0' && positive[5] == 'x' : 1)) {
         throw ParseException("bad nan input");
       }
-      switch (type) {
-        case f32: {
+      switch (type.getSingle()) {
+        case Type::f32: {
           uint32_t pattern;
           if (modifier) {
             std::istringstream istr(modifier);
@@ -159,7 +159,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
           ret->value = Literal(pattern).castToF32();
           break;
         }
-        case f64: {
+        case Type::f64: {
           uint64_t pattern;
           if (modifier) {
             std::istringstream istr(modifier);
@@ -187,11 +187,11 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
     if (s == NEG_NAN) {
-      switch (type) {
-        case f32:
+      switch (type.getSingle()) {
+        case Type::f32:
           ret->value = Literal(float(-std::nan("")));
           break;
-        case f64:
+        case Type::f64:
           ret->value = Literal(double(-std::nan("")));
           break;
         default:
@@ -201,8 +201,8 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       return ret;
     }
   }
-  switch (type) {
-    case i32: {
+  switch (type.getSingle()) {
+    case Type::i32: {
       if ((str[0] == '0' && str[1] == 'x') ||
           (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {
         bool negative = str[0] == '-';
@@ -227,7 +227,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       }
       break;
     }
-    case i64: {
+    case Type::i64: {
       if ((str[0] == '0' && str[1] == 'x') ||
           (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {
         bool negative = str[0] == '-';
@@ -252,22 +252,24 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       }
       break;
     }
-    case f32: {
+    case Type::f32: {
       char* end;
       ret->value = Literal(strtof(str, &end));
       break;
     }
-    case f64: {
+    case Type::f64: {
       char* end;
       ret->value = Literal(strtod(str, &end));
       break;
     }
-    case v128:
-    case anyref: // there's no anyref.const
-    case exnref: // there's no exnref.const
+    case Type::v128:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
       WASM_UNREACHABLE("unexpected const type");
-    case none:
-    case unreachable: {
+    case Type::none:
+    case Type::unreachable: {
       return nullptr;
     }
   }

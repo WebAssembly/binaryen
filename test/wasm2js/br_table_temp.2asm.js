@@ -12564,12 +12564,10 @@ function asmFunc(global, env, buffer) {
  function $20() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
-   loop_in : while (1) {
-    $1_1 = 3;
-    switch (0 | 0) {
-    default:
-     break fake_return_waka123;
-    };
+   $1_1 = 3;
+   switch (0 | 0) {
+   default:
+    break fake_return_waka123;
    };
   }
   return $1_1 | 0;
@@ -12578,13 +12576,11 @@ function asmFunc(global, env, buffer) {
  function $21() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
-   loop_in : while (1) {
-    dummy();
-    $1_1 = 4;
-    switch (-1 | 0) {
-    default:
-     break fake_return_waka123;
-    };
+   dummy();
+   $1_1 = 4;
+   switch (-1 | 0) {
+   default:
+    break fake_return_waka123;
    };
   }
   return $1_1 | 0;
@@ -12593,13 +12589,11 @@ function asmFunc(global, env, buffer) {
  function $22() {
   var $1_1 = 0;
   fake_return_waka123 : {
-   loop_in : while (1) {
-    dummy();
-    $1_1 = 5;
-    switch (1 | 0) {
-    default:
-     break fake_return_waka123;
-    };
+   dummy();
+   $1_1 = 5;
+   switch (1 | 0) {
+   default:
+    break fake_return_waka123;
    };
   }
   return $1_1 | 0;

@@ -56,7 +56,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
     auto type = curr->type;
     // An unreachable node must not be changed.
-    if (type == unreachable) {
+    if (type == Type::unreachable) {
       return curr;
     }
     // We iterate on possible replacements. If a replacement changes the type,
@@ -226,7 +226,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // example, code-folding can merge out identical zeros at the end of
           // if arms).
           optimized = LiteralUtils::makeZero(child->type, *getModule());
-        } else if (child->type == unreachable) {
+        } else if (child->type == Type::unreachable) {
           // Don't try to optimize out an unreachable child (dce can do that
           // properly).
           optimized = child;
@@ -245,7 +245,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           list[z] = nullptr;
         }
         // if this is unreachable, the rest is dead code
-        if (list[z - skip]->type == unreachable && z < size - 1) {
+        if (list[z - skip]->type == Type::unreachable && z < size - 1) {
           for (Index i = z - skip + 1; i < list.size(); i++) {
             auto* remove = list[i];
             if (remove) {
@@ -292,7 +292,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
     // if the condition is unreachable, just return it
-    if (curr->condition->type == unreachable) {
+    if (curr->condition->type == Type::unreachable) {
       typeUpdater.noteRecursiveRemoval(curr->ifTrue);
       if (curr->ifFalse) {
         typeUpdater.noteRecursiveRemoval(curr->ifFalse);
@@ -366,14 +366,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             BranchUtils::BranchSeeker seeker(block->name);
             Expression* temp = block;
             seeker.walk(temp);
-            if (seeker.found && seeker.valueType != none) {
+            if (seeker.found && seeker.valueType != Type::none) {
               canPop = false;
             }
           }
           if (canPop) {
             block->list.back() = last;
             block->list.pop_back();
-            block->type = none;
+            block->type = Type::none;
             // we don't need the drop anymore, let's see what we have left in
             // the block
             if (block->list.size() > 1) {
@@ -394,16 +394,17 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable && iff->ifFalse->type.isConcrete()) {
+      if (iff->ifTrue->type == Type::unreachable &&
+          iff->ifFalse->type.isConcrete()) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
-        iff->type = none;
+        iff->type = Type::none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable &&
+      } else if (iff->ifFalse->type == Type::unreachable &&
                  iff->ifTrue->type.isConcrete()) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
-        iff->type = none;
+        iff->type = Type::none;
         replaceCurrent(iff);
       }
     }

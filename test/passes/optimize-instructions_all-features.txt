@@ -3337,3 +3337,9 @@
   )
  )
 )
+(module
+ (type $none_=>_anyref (func (result anyref)))
+ (func $test (; 0 ;) (result anyref)
+  (ref.null)
+ )
+)

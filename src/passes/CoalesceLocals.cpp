@@ -92,6 +92,9 @@ struct CoalesceLocals
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
+  if (!canRun(func)) {
+    return;
+  }
   super::doWalkFunction(func);
   // prioritize back edges
   increaseBackEdgePriorities();

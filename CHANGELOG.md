@@ -15,6 +15,14 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Reference type support is added. Supported instructions are `ref.null`,
+  `ref.is_null`, `ref.func`, and typed `select`. Table instructions are not
+  supported yet. For typed `select`, C/JS API can take an additional 'type'
+  parameter.
+
+v90
+---
+
 - `local.tee`'s C/Binaryen.js API now takes an additional type parameter for its
   local type, like `local.get`. This is required to handle subtypes.
 - Added load_splat SIMD instructions

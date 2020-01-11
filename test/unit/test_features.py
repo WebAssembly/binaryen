@@ -12,29 +12,34 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.assertIn(error, p.stderr)
         self.assertIn('Fatal: error in validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
-        p = shared.run_process(shared.WASM_OPT +
-                               ['--mvp-features', flag, '--print', '-o',
-                                os.devnull],
-                               input=module, check=False, capture_output=True)
+        p = shared.run_process(
+            shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
+            flag,
+            input=module,
+            check=False,
+            capture_output=True)
         self.assertEqual(p.returncode, 0)
 
     def check_simd(self, module, error):
-        self.check_feature(module, error, '--enable-simd')
+        self.check_feature(module, error, ['--enable-simd'])
 
     def check_sign_ext(self, module, error):
-        self.check_feature(module, error, '--enable-sign-ext')
+        self.check_feature(module, error, ['--enable-sign-ext'])
 
     def check_bulk_mem(self, module, error):
-        self.check_feature(module, error, '--enable-bulk-memory')
+        self.check_feature(module, error, ['--enable-bulk-memory'])
 
     def check_exception_handling(self, module, error):
-        self.check_feature(module, error, '--enable-exception-handling')
+        # Exception handling implies reference types
+        self.check_feature(module, error,
+                           ['--enable-reference-types',
+                            '--enable-exception-handling'])
 
     def check_tail_call(self, module, error):
-        self.check_feature(module, error, '--enable-tail-call')
+        self.check_feature(module, error, ['--enable-tail-call'])
 
     def check_reference_types(self, module, error):
-        self.check_feature(module, error, '--enable-reference-types')
+        self.check_feature(module, error, ['--enable-reference-types'])
 
     def test_v128_signature(self):
         module = '''

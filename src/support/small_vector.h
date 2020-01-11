@@ -38,17 +38,15 @@ template<typename T, size_t N> class SmallVector {
   std::vector<T> flexible;
 
 public:
+  using value_type = T;
+
   SmallVector() {}
 
   T& operator[](size_t i) {
-    if (i < N) {
-      return fixed[i];
-    } else {
-      return flexible[i - N];
-    }
+    return const_cast<T&>(static_cast<const SmallVector<T, N>&>(*this)[i]);
   }
 
-  T operator[](size_t i) const {
+  const T& operator[](size_t i) const {
     if (i < N) {
       return fixed[i];
     } else {

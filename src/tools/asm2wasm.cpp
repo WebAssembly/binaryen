@@ -227,7 +227,7 @@ int main(int argc, const char* argv[]) {
     Expression* init;
     const auto& memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, i32);
+      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, Type::i32);
     } else {
       init = Builder(wasm).makeConst(
         Literal(int32_t(atoi(memBase->second.c_str()))));

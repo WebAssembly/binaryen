@@ -480,6 +480,11 @@ function test_core() {
     module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
     module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
+    // Reference types
+    module.ref.is_null(module.ref.null()),
+    module.ref.is_null(module.ref.func("kitchen()sinker")),
+    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), Binaryen.funcref),
+
     // Exception handling
     module.try(
       module.throw("a-event", [module.i32.const(0)]),
@@ -526,6 +531,8 @@ function test_core() {
     module.push(module.f64.pop()),
     module.push(module.v128.pop()),
     module.push(module.anyref.pop()),
+    module.push(module.funcref.pop()),
+    module.push(module.nullref.pop()),
     module.push(module.exnref.pop()),
     // TODO: Host
     module.nop(),
@@ -966,7 +973,7 @@ function test_expression_info() {
   console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(binaryen.getExpressionInfo(module.memory.grow(1))));
 
   // Issue #2396
-  console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(binaryen.getExpressionInfo(module.switch([ "label" ], "label", 0))));
+  console.log("getExpressionInfo(switch)=" + JSON.stringify(binaryen.getExpressionInfo(module.switch([ "label" ], "label", 0))));
 
   module.dispose();
 }
