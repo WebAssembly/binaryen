@@ -225,6 +225,17 @@ struct LineState {
     return false;
   }
 
+  // Checks if this starts a new range of addresses. Each range is a set of
+  // related addresses, where in particular, if the first has been zeroed out
+  // by the linker, we must ignore the entire range. (If we do not, then the
+  // initial range is 0 and the others are offsets relative to it, which will
+  // look like random addresses, perhaps into the middle of instructions, and
+  // perhaps that happen to collide with real ones.)
+  bool startsNewRange(llvm::DWARFYAML::LineTableOpcode& opcode) {
+    return opcode.Opcode == 0 &&
+           opcode.SubOpcode == llvm::dwarf::DW_LNE_set_address;
+  }
+
   bool needToEmit() {
     // If any value is 0, can ignore it
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
@@ -374,9 +385,20 @@ static void updateDebugLines(const Module& wasm,
     // All the addresses we need to write out.
     std::vector<uint32_t> newAddrs;
     std::unordered_map<uint32_t, LineState> newAddrInfo;
+    // If the address was zeroed out, we must ignore the entire range.
+    bool ignoringRange = false;
     for (auto& opcode : table.Opcodes) {
       // Update the state, and check if we have a new row to emit.
       if (state.update(opcode, table)) {
+        if (state.startsNewRange(opcode)) {
+          ignoringRange = false;
+        }
+        if (state.addr == 0) {
+          ignoringRange = true;
+        }
+        if (ignoringRange) {
+          continue;
+        }
         // An expression may not exist for this line table item, if we optimized
         // it away.
         if (auto* expr = oldAddrMap.get(state.addr)) {
