@@ -76,7 +76,7 @@ inline bool isControlFlowStructure(Expression* curr) {
 //   (some expression)
 //   ...
 // )
-// And we replaced (some expression) with a local.get whose prelude is (some
+// and we replace (some expression) with a local.get whose prelude is (some
 // expression), the final block will be in the form of
 // (block
 //   (some expression)
@@ -85,14 +85,14 @@ inline bool isControlFlowStructure(Expression* curr) {
 // )
 // So the block's children's preludes do not escape the boundary of the block.
 // 'if' does not satisfy this property, because the prelude of its condition
-// ends up preceding (= escaping) the if. For example, if the original 'if' is
+// ends up preceding (= escaping) the 'if'. For example, if the original 'if' is
 // in the form of
 // (if
 //   (some expression)
 //   ...
 // )
-// And (some expression) is replaced with a local.get whose prelude is (some
-// expression), the final 'if' will be something like
+// and (some expression) is replaced with a local.get whose prelude is (some
+// expression), the final 'if' will be in the form of
 // (some expression)
 // (if
 //   (local.get ...)
