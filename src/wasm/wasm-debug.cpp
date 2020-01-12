@@ -386,6 +386,10 @@ struct LocationUpdater {
     }
     return 0;
   }
+
+  bool hasOldAddr(uint32_t oldAddr) const {
+    return oldAddrMap.get(oldAddr);
+  }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -452,10 +456,14 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
         for (const auto &attrSpec : abbrevDecl->attributes()) {
           assert(yamlAttr != yamlEntry->Values.end());
           if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-            // Note that the new value may be 0, which is the correct way to
-            // indicate that this is no longer a valid wasm value, the same
-            // as wasm-ld would do.
-            yamlAttr->Value = locationUpdater.getNewAddr(yamlAttr->Value);
+            // If the old address did not refer to an instruction, then this
+            // is not something we understand and can update.
+            if (locationUpdater.hasOldAddr(yamlAttr->Value)) {
+              // Note that the new value may be 0, which is the correct way to
+              // indicate that this is no longer a valid wasm value, the same
+              // as wasm-ld would do.
+              yamlAttr->Value = locationUpdater.getNewAddr(yamlAttr->Value);
+            }
           }
           yamlAttr++;
         }

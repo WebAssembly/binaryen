@@ -283,11 +283,11 @@ Abbrev table for offset: 0x00000000
               DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "fib2.c")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009c] = "/usr/local/google/home/azakai/Dev/binaryen")
-              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
 
 0x00000026:   DW_TAG_subprogram [2] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "fib")
@@ -305,7 +305,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000044:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
-                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value)
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d1] = "a")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(3)
@@ -313,7 +313,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000053:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000015: 
-                     [0x00000007,  0x00000010): DW_OP_consts +1, DW_OP_stack_value)
+                     [0x00000009,  0x00000012): DW_OP_consts +1, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d3] = "b")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(3)
@@ -321,7 +321,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000062:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000002a: 
-                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value)
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d5] = "i")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(3)
