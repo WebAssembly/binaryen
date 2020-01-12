@@ -387,9 +387,7 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldAddr(uint32_t oldAddr) const {
-    return oldAddrMap.get(oldAddr);
-  }
+  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -436,7 +434,6 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     }
   }
 }
-
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
