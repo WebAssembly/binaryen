@@ -369,9 +369,9 @@ struct LocationUpdater {
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations) :
-    wasm(wasm), newLocations(newLocations), oldAddrMap(wasm), newAddrMap(newLocations) {
-  }
+  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations)
+    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
+      newAddrMap(newLocations) {}
 
   // Updates an address. If there was never an instruction at that address,
   // or if there was but if that instruction no longer exists, return 0.
@@ -445,7 +445,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
   // context has the high-level information we need, and the YAML is where
   // we write changes.
   auto yamlUnit = yaml.CompileUnits.begin();
-  for (const auto &CU : info.context->compile_units()) {
+  for (const auto& CU : info.context->compile_units()) {
     assert(yamlUnit != yaml.CompileUnits.end());
     auto yamlEntry = yamlUnit->Entries.begin();
     for (auto DIE : CU->dies()) {
@@ -453,7 +453,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
       auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
       if (abbrevDecl) {
         auto yamlAttr = yamlEntry->Values.begin();
-        for (const auto &attrSpec : abbrevDecl->attributes()) {
+        for (const auto& attrSpec : abbrevDecl->attributes()) {
           assert(yamlAttr != yamlEntry->Values.end());
           if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
             // If the old address did not refer to an instruction, then this
