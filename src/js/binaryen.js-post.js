@@ -2379,7 +2379,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'name': UTF8ToString(Module['_BinaryenBlockGetName'](expr)),
-        'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChild'])
+        'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
       };
     case Module['IfId']:
       return {
@@ -2408,7 +2408,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(function (p) {
+        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(function (p) {
           // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
           return UTF8ToString(p);
         }),
@@ -2421,14 +2421,14 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
-        'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
+        'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt'])
       };
     case Module['CallIndirectId']:
       return {
         'id': id,
         'type': type,
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
-        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
       };
     case Module['LocalGetId']:
       return {
@@ -2553,7 +2553,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'op': Module['_BinaryenHostGetOp'](expr),
         'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperandAt'])
       };
     case Module['AtomicRMWId']:
       return {
@@ -2808,49 +2808,46 @@ Module['getExportInfo'] = function(export_) {
 // Block operations
 Module['Block'] = function(expr) {
   return Object.defineProperties({
-    // Gets the child at the specified index
     'getChildAt': function(index) {
-      return Module['_BinaryenBlockGetChild'](expr, index);
+      return Module['_BinaryenBlockGetChildAt'](expr, index);
     },
-    // Appends a child returning its insertion index
+    'setChildAt': function(index, child) {
+      Module['_BinaryenBlockSetChildAt'](expr, index, child);
+    },
     'appendChild': function(child) {
       return Module['_BinaryenBlockAppendChild'](expr, child);
     },
-    // Replaces the child at the specified index
-    'replaceChildAt': function(index, child) {
-      Module['_BinaryenBlockReplaceChildAt'](expr, index, child);
-    },
-    // Inserts a child at the specified index, moving existing elements
-    // including the element previously at that index one index up
     'insertChildAt': function(index, child) {
       Module['_BinaryenBlockInsertChildAt'](expr, index, child);
     },
-    // Removes the child at the specified index
     'removeChildAt': function(index) {
       Module['_BinaryenBlockRemoveChildAt'](expr, index);
     },
-    // Gets the text format of this block
     'toText': function() {
       return Module['emitText'](expr);
     },
-    // Gets the primitive value this block represents
     'valueOf': function() {
       return expr;
     }
   }, {
     'id': {
-      // Gets the id representing blocks
       get: function() {
         return Module['_BinaryenExpressionGetId'](expr);
       }
     },
+    'type': {
+      get: function() {
+        return Module['_BinaryenExpressionGetType'](expr);
+      },
+      set: function(type) {
+        Module['_BinaryenExpressionSetType'](expr, type);
+      }
+    },
     'name': {
-      // Gets the block's name (label)
       get: function() {
         var name = Module['_BinaryenBlockGetName'](expr);
         return name ? UTF8ToString(name) : null;
       },
-      // Sets the block's name (label)
       set: function(name) {
         preserveStack(function() {
           Module['_BinaryenBlockSetName'](expr, strToStack(name));
@@ -2858,7 +2855,6 @@ Module['Block'] = function(expr) {
       }
     },
     'size': {
-      // Gets the number of children
       get: function() {
         return Module['_BinaryenBlockGetNumChildren'](expr);
       }

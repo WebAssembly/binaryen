@@ -19,6 +19,12 @@ Current Trunk
   `ref.is_null`, `ref.func`, and typed `select`. Table instructions are not
   supported yet. For typed `select`, C/JS API can take an additional 'type'
   parameter.
+- Renamed various ambiguous C-API functions for consistency:
+  - `BinaryenBlockGetChild` to `BinaryenBlockGetChildAt`
+  - `BinaryenSwitchGetName` to `BinaryenSwitchGetNameAt`
+  - `BinaryenCallGetOperand` to `BinaryenCallGetOperandAt`
+  - `BinaryenCallIndirectGetOperand` to `BinaryenCallIndirectGetOperandAt`
+  - `BinaryenHostGetOperand` to `BinaryenHostGetOperandAt`
 
 v90
 ---

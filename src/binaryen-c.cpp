@@ -1835,6 +1835,14 @@ BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
 
   return ((Expression*)expr)->type.getID();
 }
+void BinaryenExpressionSetType(BinaryenExpressionRef expr, BinaryenType type) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionSetType(expressions[" << expressions[expr]
+              << "], " << type << ");\n";
+  }
+
+  ((Expression*)expr)->type = Type(type);
+}
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrint(expressions[" << expressions[expr]
@@ -1880,10 +1888,10 @@ BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
   assert(expression->is<Block>());
   return static_cast<Block*>(expression)->list.size();
 }
-BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr,
-                                            BinaryenIndex index) {
+BinaryenExpressionRef BinaryenBlockGetChildAt(BinaryenExpressionRef expr,
+                                              BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenBlockGetChild(expressions[" << expressions[expr]
+    std::cout << "  BinaryenBlockGetChildAt(expressions[" << expressions[expr]
               << "], " << index << ");\n";
   }
 
@@ -1891,6 +1899,20 @@ BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr,
   assert(expression->is<Block>());
   assert(index < static_cast<Block*>(expression)->list.size());
   return static_cast<Block*>(expression)->list[index];
+}
+void BinaryenBlockSetChildAt(BinaryenExpressionRef expr,
+                             BinaryenIndex index,
+                             BinaryenExpressionRef child) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockSetChildAt(expressions[" << expressions[expr]
+              << "], " << index << ", " << expressions[child] << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  auto& list = static_cast<Block*>(expression)->list;
+  assert(index < list.size());
+  list[index] = child;
 }
 BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
                                        BinaryenExpressionRef child) {
@@ -1906,26 +1928,13 @@ BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
   list.push_back(child);
   return index;
 }
-void BinaryenBlockReplaceChildAt(BinaryenExpressionRef expr,
-  BinaryenIndex index,
-  BinaryenExpressionRef child) {
-  if (tracing) {
-    std::cout << "  BinaryenBlockReplaceChildAt(expressions[" << expressions[expr]
-      << "], " << index << ", " << expressions[child] << ");\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Block>());
-  auto& list = static_cast<Block*>(expression)->list;
-  assert(index < list.size());
-  list[index] = child;
-}
 void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
                                 BinaryenIndex index,
                                 BinaryenExpressionRef child) {
   if (tracing) {
-    std::cout << "  BinaryenBlockInsertChildAt(expressions[" << expressions[expr]
-              << "], " << index << ", " << expressions[child] << ");\n";
+    std::cout << "  BinaryenBlockInsertChildAt(expressions["
+              << expressions[expr] << "], " << index << ", "
+              << expressions[child] << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -1967,6 +1976,18 @@ BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<If>());
   return static_cast<If*>(expression)->condition;
 }
+void BinaryenIfSetCondition(BinaryenExpressionRef expr,
+                            BinaryenExpressionRef condExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenIfSetCondition(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[condExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<If>());
+  assert(condExpr);
+  static_cast<If*>(expression)->condition = (Expression*)condExpr;
+}
 BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenIfGetIfTrue(expressions[" << expressions[expr]
@@ -1977,6 +1998,18 @@ BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
   assert(expression->is<If>());
   return static_cast<If*>(expression)->ifTrue;
 }
+void BinaryenIfSetIfTrue(BinaryenExpressionRef expr,
+                         BinaryenExpressionRef ifTrueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenIfSetIfTrue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[ifTrueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<If>());
+  assert(ifTrueExpr);
+  static_cast<If*>(expression)->ifTrue = (Expression*)ifTrueExpr;
+}
 BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenIfGetIfFalse(expressions[" << expressions[expr]
@@ -1986,6 +2019,17 @@ BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<If>());
   return static_cast<If*>(expression)->ifFalse;
+}
+void BinaryenIfSetIfFalse(BinaryenExpressionRef expr,
+                          BinaryenExpressionRef ifFalseExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenIfSetIfFalse(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[ifFalseExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<If>());
+  static_cast<If*>(expression)->ifTrue = (Expression*)ifFalseExpr;
 }
 // Loop
 const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
@@ -1998,6 +2042,17 @@ const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Loop>());
   return static_cast<Loop*>(expression)->name.c_str();
 }
+void BinaryenLoopSetName(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenLoopSetName(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Loop>());
+  static_cast<Loop*>(expression)->name = name;
+}
 BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoopGetBody(expressions[" << expressions[expr]
@@ -2007,6 +2062,18 @@ BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Loop>());
   return static_cast<Loop*>(expression)->body;
+}
+void BinaryenLoopSetBody(BinaryenExpressionRef expr,
+                         BinaryenExpressionRef bodyExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoopSetBody(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[bodyExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Loop>());
+  assert(bodyExpr);
+  static_cast<Loop*>(expression)->body = (Expression*)bodyExpr;
 }
 // Break
 const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
@@ -2019,6 +2086,18 @@ const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Break>());
   return static_cast<Break*>(expression)->name.c_str();
 }
+void BinaryenBreakSetName(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakSetName(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  static_cast<Break*>(expression)->name = name;
+}
 BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBreakGetCondition(expressions[" << expressions[expr]
@@ -2029,6 +2108,17 @@ BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<Break>());
   return static_cast<Break*>(expression)->condition;
 }
+void BinaryenBreakSetCondition(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef condExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakSetCondition(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[condExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  static_cast<Break*>(expression)->condition = (Expression*)condExpr;
+}
 BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBreakGetValue(expressions[" << expressions[expr]
@@ -2038,6 +2128,17 @@ BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Break>());
   return static_cast<Break*>(expression)->value;
+}
+void BinaryenBreakSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakSetValue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[valueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  static_cast<Break*>(expression)->value = (Expression*)valueExpr;
 }
 // Switch
 BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
@@ -2050,10 +2151,10 @@ BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->targets.size();
 }
-const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
-                                  BinaryenIndex index) {
+const char* BinaryenSwitchGetNameAt(BinaryenExpressionRef expr,
+                                    BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenSwitchGetName(expressions[" << expressions[expr]
+    std::cout << "  BinaryenSwitchGetNameAt(expressions[" << expressions[expr]
               << "], " << index << ");\n";
   }
 
@@ -2061,6 +2162,22 @@ const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
   assert(expression->is<Switch>());
   assert(index < static_cast<Switch*>(expression)->targets.size());
   return static_cast<Switch*>(expression)->targets[index].c_str();
+}
+void BinaryenSwitchSetNameAt(BinaryenExpressionRef expr,
+                             BinaryenIndex index,
+                             const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchSetNameAt(expressions[" << expressions[expr]
+              << "], " << index << ", ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  assert(index < static_cast<Switch*>(expression)->targets.size());
+  assert(name);
+  static_cast<Switch*>(expression)->targets[index] = name;
 }
 const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2072,6 +2189,19 @@ const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->default_.c_str();
 }
+void BinaryenSwitchSetDefaultName(BinaryenExpressionRef expr,
+                                  const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchSetDefaultName(expressions["
+              << expressions[expr] << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  static_cast<Switch*>(expression)->default_ = name;
+}
 BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetCondition(expressions["
@@ -2082,6 +2212,19 @@ BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->condition;
 }
+void BinaryenSwitchSetCondition(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef condExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchSetCondition(expressions["
+              << expressions[expr] << "], expressions[" << expressions[condExpr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  assert(condExpr);
+  static_cast<Switch*>(expression)->condition = (Expression*)condExpr;
+}
 BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetValue(expressions[" << expressions[expr]
@@ -2091,6 +2234,17 @@ BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->value;
+}
+void BinaryenSwitchSetValue(BinaryenExpressionRef expr,
+                            BinaryenExpressionRef valueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchSetValue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[valueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  static_cast<Switch*>(expression)->value = (Expression*)valueExpr;
 }
 // Call
 const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
@@ -2103,6 +2257,19 @@ const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->target.c_str();
 }
+void BinaryenCallSetTarget(BinaryenExpressionRef expr, const char* target) {
+  if (tracing) {
+    std::cout << "  BinaryenCallSetTarget(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(target);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  assert(target);
+  static_cast<Call*>(expression)->target = target;
+}
 BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallGetNumOperands(expressions["
@@ -2113,10 +2280,10 @@ BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
-                                             BinaryenIndex index) {
+BinaryenExpressionRef BinaryenCallGetOperandAt(BinaryenExpressionRef expr,
+                                               BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenCallGetOperand(expressions[" << expressions[expr]
+    std::cout << "  BinaryenCallGetOperandAt(expressions[" << expressions[expr]
               << "], " << index << ");\n";
   }
 
@@ -2124,6 +2291,21 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
   assert(expression->is<Call>());
   assert(index < static_cast<Call*>(expression)->operands.size());
   return static_cast<Call*>(expression)->operands[index];
+}
+void BinaryenCallSetOperandAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallSetOperandAt(expressions[" << expressions[expr]
+              << "], " << index << ", expressions[" << expressions[operandExpr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  assert(index < static_cast<Call*>(expression)->operands.size());
+  assert(operandExpr);
+  static_cast<Call*>(expression)->operands[index] = (Expression*)operandExpr;
 }
 // CallIndirect
 BinaryenExpressionRef
@@ -2137,6 +2319,19 @@ BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->target;
 }
+void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef targetExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectSetTarget(expressions["
+              << expressions[expr] << "], expressions["
+              << expressions[targetExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  assert(targetExpr);
+  static_cast<CallIndirect*>(expression)->target = (Expression*)targetExpr;
+}
 BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallIndirectGetNumOperands(expressions["
@@ -2147,10 +2342,11 @@ BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
-                                                     BinaryenIndex index) {
+BinaryenExpressionRef
+BinaryenCallIndirectGetOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenCallIndirectGetOperand(expressions["
+    std::cout << "  BinaryenCallIndirectGetOperandAt(expressions["
               << expressions[expr] << "], " << index << ");\n";
   }
 
@@ -2158,6 +2354,22 @@ BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
   assert(expression->is<CallIndirect>());
   assert(index < static_cast<CallIndirect*>(expression)->operands.size());
   return static_cast<CallIndirect*>(expression)->operands[index];
+}
+void BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
+                                      BinaryenIndex index,
+                                      BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectSetOperandAt(expressions["
+              << expressions[expr] << "], " << index << ", expressions["
+              << expressions[operandExpr] << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  assert(index < static_cast<CallIndirect*>(expression)->operands.size());
+  assert(operandExpr);
+  static_cast<CallIndirect*>(expression)->operands[index] =
+    (Expression*)operandExpr;
 }
 // LocalGet
 BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
@@ -2169,6 +2381,16 @@ BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<LocalGet>());
   return static_cast<LocalGet*>(expression)->index;
+}
+void BinaryenLocalGetSetIndex(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenLocalGetSetIndex(expressions[" << expressions[expr]
+              << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<LocalGet>());
+  static_cast<LocalGet*>(expression)->index = index;
 }
 // LocalSet
 int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
@@ -2191,6 +2413,16 @@ BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->index;
 }
+void BinaryenLocalSetSetIndex(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenLocalSetSetIndex(expressions[" << expressions[expr]
+              << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<LocalSet>());
+  static_cast<LocalSet*>(expression)->index = index;
+}
 BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLocalSetGetValue(expressions[" << expressions[expr]
@@ -2200,6 +2432,18 @@ BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->value;
+}
+void BinaryenLocalSetSetValue(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef valueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenLocalSetSetValue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[valueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<LocalSet>());
+  assert(valueExpr);
+  static_cast<LocalSet*>(expression)->value = (Expression*)valueExpr;
 }
 // GlobalGet
 const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
@@ -2212,6 +2456,19 @@ const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
   assert(expression->is<GlobalGet>());
   return static_cast<GlobalGet*>(expression)->name.c_str();
 }
+void BinaryenGlobalGetSetName(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetSetName(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<GlobalGet>());
+  assert(name);
+  static_cast<GlobalGet*>(expression)->name = name;
+}
 // GlobalSet
 const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2223,6 +2480,19 @@ const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   assert(expression->is<GlobalSet>());
   return static_cast<GlobalSet*>(expression)->name.c_str();
 }
+void BinaryenGlobalSetSetName(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetSetName(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<GlobalSet>());
+  assert(name);
+  static_cast<GlobalSet*>(expression)->name = name;
+}
 BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGlobalSetGetValue(expressions[" << expressions[expr]
@@ -2232,6 +2502,18 @@ BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<GlobalSet>());
   return static_cast<GlobalSet*>(expression)->value;
+}
+void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetSetValue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[valueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<GlobalSet>());
+  assert(valueExpr);
+  static_cast<GlobalSet*>(expression)->value = (Expression*)valueExpr;
 }
 // Host
 BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
@@ -2244,6 +2526,16 @@ BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->op;
 }
+void BinaryenHostSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  if (tracing) {
+    std::cout << "  BinaryenHostSetOp(expressions[" << expressions[expr]
+              << "], " << op << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  static_cast<Host*>(expression)->op = (HostOp)op;
+}
 const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenHostGetNameOperand(expressions["
@@ -2253,6 +2545,18 @@ const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->nameOperand.c_str();
+}
+void BinaryenHostSetNameOperand(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenHostSetNameOperand(expressions["
+              << expressions[expr] << "], ";
+    traceNameOrNULL(name);
+    std::cout << "); \n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  static_cast<Host*>(expression)->nameOperand = name;
 }
 BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2264,10 +2568,10 @@ BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr,
-                                             BinaryenIndex index) {
+BinaryenExpressionRef BinaryenHostGetOperandAt(BinaryenExpressionRef expr,
+                                               BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenHostGetOperand(expressions[" << expressions[expr]
+    std::cout << "  BinaryenHostGetOperandAt(expressions[" << expressions[expr]
               << "], " << index << ");\n";
   }
 
@@ -2275,6 +2579,21 @@ BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr,
   assert(expression->is<Host>());
   assert(index < static_cast<Host*>(expression)->operands.size());
   return static_cast<Host*>(expression)->operands[index];
+}
+void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenHostGetOperand(expressions[" << expressions[expr]
+              << "], " << index << ", expression[" << expressions[operandExpr]
+              << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  assert(index < static_cast<Host*>(expression)->operands.size());
+  assert(operandExpr);
+  static_cast<Host*>(expression)->operands[index] = (Expression*)operandExpr;
 }
 // Load
 int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {

@@ -4,12 +4,17 @@ function assert(x) {
 
 function test() {
   var module = new Binaryen.Module();
+
+  // Block
   var blockRef = module.block(null, []);
   var block = Binaryen.Block(blockRef);
   assert(block.id === Binaryen.BlockId);
   assert(block.name === null);
   block.name ="theName";
   assert(block.name === "theName");
+  assert(block.type === Binaryen.none);
+  block.type = Binaryen.i32;
+  assert(block.type === Binaryen.i32);
   assert(block.size === 0);
   var child1 = module.i32.const(1);
   block.appendChild(child1);
@@ -27,7 +32,7 @@ function test() {
   assert(block.getChildAt(1) === child1);
   assert(block.getChildAt(2) === child2);
   var newChild1 = module.i32.const(11);
-  block.replaceChildAt(1, newChild1);
+  block.setChildAt(1, newChild1);
   assert(block.size === 3);
   assert(block.getChildAt(0) === child0);
   assert(block.getChildAt(1) === newChild1);
@@ -42,11 +47,11 @@ function test() {
   assert(
     block.toText()
     ==
-    "(block $theName\n (i32.const 0)\n)\n"
+    "(block $theName (result i32)\n (i32.const 0)\n)\n"
   );
   block.removeChildAt(0);
   assert(block.size === 0);
-  assert(block == blockRef); // via valueOf
+  assert(block == blockRef);
   assert(Binaryen.getExpressionId(block) == Binaryen.BlockId);
 }
 
