@@ -834,11 +834,32 @@ BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 
+// Given a block, gets its name (label)
 BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
+// Given a block, sets its name (label)
+BINARYEN_API void BinaryenBlockSetName(BinaryenExpressionRef expr,
+                                       const char* name);
+// Given a block, gets the number of its children
 BINARYEN_API BinaryenIndex
 BinaryenBlockGetNumChildren(BinaryenExpressionRef expr);
+// Given a block, gets the child at the specified index
 BINARYEN_API BinaryenExpressionRef
 BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index);
+// Given a block, appends a child returning its insertion index
+BINARYEN_API BinaryenIndex BinaryenBlockAppendChild(
+  BinaryenExpressionRef expr, BinaryenExpressionRef child);
+// Given a block, replaces the child at the specified index
+BINARYEN_API void BinaryenBlockReplaceChildAt(BinaryenExpressionRef expr,
+                                              BinaryenIndex index,
+                                              BinaryenExpressionRef child);
+// Given a block, inserts a child at the specified index, moving existing
+// elements including the element previously at that index one index up
+BINARYEN_API void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
+                                             BinaryenIndex index,
+                                             BinaryenExpressionRef child);
+// Given a block, removes the child at the specified index
+BINARYEN_API void BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
+                                             BinaryenIndex index);
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenIfGetCondition(BinaryenExpressionRef expr);

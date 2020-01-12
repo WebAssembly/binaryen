@@ -1858,6 +1858,18 @@ const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Block>());
   return static_cast<Block*>(expression)->name.c_str();
 }
+void BinaryenBlockSetName(BinaryenExpressionRef expr, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockSetName(expressions[" << expressions[expr]
+              << "], ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  static_cast<Block*>(expression)->name = name;
+}
 BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBlockGetNumChildren(expressions["
@@ -1879,6 +1891,70 @@ BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr,
   assert(expression->is<Block>());
   assert(index < static_cast<Block*>(expression)->list.size());
   return static_cast<Block*>(expression)->list[index];
+}
+BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef child) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockAppendChild(expressions[" << expressions[expr]
+              << "], " << expressions[child] << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  auto& list = static_cast<Block*>(expression)->list;
+  auto index = list.size();
+  list.push_back(child);
+  return index;
+}
+void BinaryenBlockReplaceChildAt(BinaryenExpressionRef expr,
+  BinaryenIndex index,
+  BinaryenExpressionRef child) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockReplaceChildAt(expressions[" << expressions[expr]
+      << "], " << index << ", " << expressions[child] << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  auto& list = static_cast<Block*>(expression)->list;
+  assert(index < list.size());
+  list[index] = child;
+}
+void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index,
+                                BinaryenExpressionRef child) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockInsertChildAt(expressions[" << expressions[expr]
+              << "], " << index << ", " << expressions[child] << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  auto& list = static_cast<Block*>(expression)->list;
+  auto size = list.size();
+  assert(index <= size); // appending is ok
+  list.resize(size + 1);
+  for (auto i = size; i > index; --i) {
+    list[i] = list[i - 1];
+  }
+  list[index] = child;
+}
+void BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenBlockRemoveChildAt(expressions["
+              << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Block>());
+  auto& list = static_cast<Block*>(expression)->list;
+  auto size = list.size();
+  assert(index < size);
+  for (auto i = index; i < size - 1; ++i) {
+    list[i] = list[i + 1];
+  }
+  list.resize(size - 1);
 }
 // If
 BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {

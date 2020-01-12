@@ -2805,6 +2805,67 @@ Module['getExportInfo'] = function(export_) {
   };
 };
 
+// Block operations
+Module['Block'] = function(expr) {
+  return Object.defineProperties({
+    // Gets the child at the specified index
+    'getChildAt': function(index) {
+      return Module['_BinaryenBlockGetChild'](expr, index);
+    },
+    // Appends a child returning its insertion index
+    'appendChild': function(child) {
+      return Module['_BinaryenBlockAppendChild'](expr, child);
+    },
+    // Replaces the child at the specified index
+    'replaceChildAt': function(index, child) {
+      Module['_BinaryenBlockReplaceChildAt'](expr, index, child);
+    },
+    // Inserts a child at the specified index, moving existing elements
+    // including the element previously at that index one index up
+    'insertChildAt': function(index, child) {
+      Module['_BinaryenBlockInsertChildAt'](expr, index, child);
+    },
+    // Removes the child at the specified index
+    'removeChildAt': function(index) {
+      Module['_BinaryenBlockRemoveChildAt'](expr, index);
+    },
+    // Gets the text format of this block
+    'toText': function() {
+      return Module['emitText'](expr);
+    },
+    // Gets the primitive value this block represents
+    'valueOf': function() {
+      return expr;
+    }
+  }, {
+    'id': {
+      // Gets the id representing blocks
+      get: function() {
+        return Module['_BinaryenExpressionGetId'](expr);
+      }
+    },
+    'name': {
+      // Gets the block's name (label)
+      get: function() {
+        var name = Module['_BinaryenBlockGetName'](expr);
+        return name ? UTF8ToString(name) : null;
+      },
+      // Sets the block's name (label)
+      set: function(name) {
+        preserveStack(function() {
+          Module['_BinaryenBlockSetName'](expr, strToStack(name));
+        });
+      }
+    },
+    'size': {
+      // Gets the number of children
+      get: function() {
+        return Module['_BinaryenBlockGetNumChildren'](expr);
+      }
+    }
+  });
+};
+
 // Emits text format of an expression or a module
 Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
