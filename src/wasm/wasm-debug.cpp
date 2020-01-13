@@ -435,42 +435,59 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
   }
 }
 
+// Iterate in parallel over a DwarfContext representation element and a
+// YAML element, which parallel each other.
+template<typename T, typename U, typename W>
+static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
+  auto yamlValue = yamlList.begin();
+  for (const auto& contextValue : contextList) {
+    assert(yamlValue != yamlList.end());
+    func(contextValue, *yamlValue);
+    yamlValue++;
+  }
+  assert(yamlValue == yamlList.end());
+}
+
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
                                const LocationUpdater& locationUpdater) {
-  // Iter both over the DwarfContext info and the YAML representation. The
-  // context has the high-level information we need, and the YAML is where
-  // we write changes.
-  auto yamlUnit = yaml.CompileUnits.begin();
-  for (const auto& CU : info.context->compile_units()) {
-    assert(yamlUnit != yaml.CompileUnits.end());
-    auto yamlEntry = yamlUnit->Entries.begin();
-    for (auto DIE : CU->dies()) {
-      assert(yamlEntry != yamlUnit->Entries.end());
-      auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
-      if (abbrevDecl) {
-        auto yamlAttr = yamlEntry->Values.begin();
-        for (const auto& attrSpec : abbrevDecl->attributes()) {
-          assert(yamlAttr != yamlEntry->Values.end());
-          if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-            // If the old address did not refer to an instruction, then this
-            // is not something we understand and can update.
-            if (locationUpdater.hasOldAddr(yamlAttr->Value)) {
-              // Note that the new value may be 0, which is the correct way to
-              // indicate that this is no longer a valid wasm value, the same
-              // as wasm-ld would do.
-              yamlAttr->Value = locationUpdater.getNewAddr(yamlAttr->Value);
-            }
+  // The context has the high-level information we need, and the YAML is where
+  // we write changes. First, iterate over the compile units.
+  iterContextAndYAML(
+    info.context->compile_units(),
+    yaml.CompileUnits,
+    [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
+        llvm::DWARFYAML::Unit& yamlUnit) {
+      // Process the DIEs in each compile unit.
+      iterContextAndYAML(
+        CU->dies(),
+        yamlUnit.Entries,
+        [&](const llvm::DWARFDebugInfoEntry& DIE,
+            llvm::DWARFYAML::Entry& yamlEntry) {
+          // Process the entries in each DIE, looking for attributes to change.
+          auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
+          if (abbrevDecl) {
+            iterContextAndYAML(
+              abbrevDecl->attributes(),
+              yamlEntry.Values,
+              [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
+                    attrSpec,
+                  llvm::DWARFYAML::FormValue& yamlValue) {
+                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                  // If the old address did not refer to an instruction, then
+                  // this is not something we understand and can update.
+                  if (locationUpdater.hasOldAddr(yamlValue.Value)) {
+                    // Note that the new value may be 0, which is the correct
+                    // way to indicate that this is no longer a valid wasm
+                    // value, the same as wasm-ld would do.
+                    yamlValue.Value =
+                      locationUpdater.getNewAddr(yamlValue.Value);
+                  }
+                }
+              });
           }
-          yamlAttr++;
-        }
-        assert(yamlAttr == yamlEntry->Values.end());
-      }
-      yamlEntry++;
-    }
-    assert(yamlEntry == yamlUnit->Entries.end());
-    yamlUnit++;
-  }
+        });
+    });
 }
 
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
