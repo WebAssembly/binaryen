@@ -1049,31 +1049,107 @@ BINARYEN_API void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
                                            BinaryenIndex index,
                                            BinaryenExpressionRef operandExpr);
 
+// Given a load expression, gets if it is atomic.
 BINARYEN_API int BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
+// Given a load expression, sets if it is atomic.
+BINARYEN_API void BinaryenLoadSetAtomic(BinaryenExpressionRef expr,
+                                        int isAtomic);
+// Given a load expression, gets if it is signed.
 BINARYEN_API int BinaryenLoadIsSigned(BinaryenExpressionRef expr);
+// Given a load expression, sets if it is signed.
+BINARYEN_API void BinaryenLoadSetSigned(BinaryenExpressionRef expr,
+                                        int isSigned);
+// Given a load expression, gets its constant offset.
 BINARYEN_API uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr);
+// Given a load expression, sets its constant offset.
+BINARYEN_API void BinaryenLoadSetOffset(BinaryenExpressionRef expr,
+                                        uint32_t offset);
+// Given a load expression, gets the number of bytes loaded.
 BINARYEN_API uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
+// Given a load expression, sets the number of bytes loaded.
+BINARYEN_API void BinaryenLoadSetBytes(BinaryenExpressionRef expr,
+                                       uint32_t bytes);
+// Given a load expression, gets the alignment in bytes, if any.
 BINARYEN_API uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
+// Given a load expression, sets the alignment in bytes, if any.
+BINARYEN_API void BinaryenLoadSetAlign(BinaryenExpressionRef expr,
+                                       uint32_t align);
+// Given a load expression, gets its pointer expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenLoadGetPtr(BinaryenExpressionRef expr);
+// Given a load expression, sets its pointer expression.
+BINARYEN_API void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef ptrExpr);
 
+// Given a store expression, gets if it is atomic.
 BINARYEN_API int BinaryenStoreIsAtomic(BinaryenExpressionRef expr);
+// Given a store expression, sets if it is atomic.
+BINARYEN_API void BinaryenStoreSetAtomic(BinaryenExpressionRef expr,
+                                         int isAtomic);
+// Given a store expression, gets the number of bytes stored.
 BINARYEN_API uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr);
+// Given a store expression, sets the number of bytes stored.
+BINARYEN_API void BinaryenStoreSetBytes(BinaryenExpressionRef expr,
+                                        uint32_t bytes);
+// Given a store expression, gets its constant offset.
 BINARYEN_API uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr);
+// Given a store expression, sets its constant offset.
+BINARYEN_API void BinaryenStoreSetOffset(BinaryenExpressionRef expr,
+                                         uint32_t offset);
+// Given a store expression, gets the alignment in bytes, if any.
 BINARYEN_API uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr);
+// Given a store expression, sets the alignment in bytes, if any.
+BINARYEN_API void BinaryenStoreSetAlign(BinaryenExpressionRef expr,
+                                        uint32_t align);
+// Given a store expression, gets its pointer expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenStoreGetPtr(BinaryenExpressionRef expr);
+// Given a store expression, sets its pointer expression.
+BINARYEN_API void BinaryenStoreSetPtr(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef ptrExpr);
+// Given a store expression, gets its value expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenStoreGetValue(BinaryenExpressionRef expr);
+// Given a store expression, sets its value expression.
+BINARYEN_API void BinaryenStoreSetValue(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef valueExpr);
 
+// Given a const expression, gets its 32-bit integer value.
 BINARYEN_API int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Given a const expression, sets its 32-bit integer value.
+BINARYEN_API void BinaryenConstSetValueI32(BinaryenExpressionRef expr,
+                                           int32_t value);
+// Given a const expression, gets its 64-bit integer value.
 BINARYEN_API int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Given a const expression, sets its 64-bit integer value.
+BINARYEN_API void BinaryenConstSetValueI64(BinaryenExpressionRef expr,
+                                           int64_t value);
+// Given a const expression, gets the low 32-bits of its 64-bit integer value.
 BINARYEN_API int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Given a const expression, sets the low 32-bits of its 64-bit integer value.
+BINARYEN_API void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr,
+                                              int32_t valueLow);
+// Given a const expression, gets the high 32-bits of its 64-bit integer value.
 BINARYEN_API int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Given a const expression, sets the high 32-bits of its 64-bit integer value.
+BINARYEN_API void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
+                                               int32_t valueHigh);
+// Given a const expression, gets its 32-bit float value.
 BINARYEN_API float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Given a const expression, sets its 32-bit float value.
+BINARYEN_API void BinaryenConstSetValueF32(BinaryenExpressionRef expr,
+                                           float value);
+// Given a const expression, gets its 64-bit float (double) value.
 BINARYEN_API double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
+// Given a const expression, sets its 64-bit float (double) value.
+BINARYEN_API void BinaryenConstSetValueF64(BinaryenExpressionRef expr,
+                                           double value);
+// Given a const expression, reads its 128-bit vector value.
 BINARYEN_API void BinaryenConstGetValueV128(BinaryenExpressionRef expr,
                                             uint8_t* out);
+// Given a const expression, sets its 128-bit vector value.
+BINARYEN_API void BinaryenConstSetValueV128(BinaryenExpressionRef expr,
+                                            const uint8_t value[16]);
 
 BINARYEN_API BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef

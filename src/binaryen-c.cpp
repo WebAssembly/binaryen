@@ -2606,6 +2606,16 @@ int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->isAtomic;
 }
+void BinaryenLoadSetAtomic(BinaryenExpressionRef expr, int isAtomic) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetAtomic(expressions[" << expressions[expr]
+              << "], " << isAtomic << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  static_cast<Load*>(expression)->isAtomic = isAtomic != 0;
+}
 int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadIsSigned(expressions[" << expressions[expr]
@@ -2615,6 +2625,16 @@ int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->signed_;
+}
+void BinaryenLoadSetSigned(BinaryenExpressionRef expr, int isSigned) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetSigned(expressions[" << expressions[expr]
+              << "], " << isSigned << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  static_cast<Load*>(expression)->signed_ = isSigned != 0;
 }
 uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2626,6 +2646,16 @@ uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->bytes;
 }
+void BinaryenLoadSetBytes(BinaryenExpressionRef expr, uint32_t bytes) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetBytes(expressions[" << expressions[expr]
+              << "], " << bytes << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  static_cast<Load*>(expression)->bytes = bytes;
+}
 uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetOffset(expressions[" << expressions[expr]
@@ -2635,6 +2665,16 @@ uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->offset;
+}
+void BinaryenLoadSetOffset(BinaryenExpressionRef expr, uint32_t offset) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetOffset(expressions[" << expressions[expr]
+              << "], " << offset << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  static_cast<Load*>(expression)->offset = offset;
 }
 uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2646,6 +2686,16 @@ uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->align;
 }
+void BinaryenLoadSetAlign(BinaryenExpressionRef expr, uint32_t align) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetAlign(expressions[" << expressions[expr]
+              << "], " << align << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  static_cast<Load*>(expression)->align = align;
+}
 BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetPtr(expressions[" << expressions[expr]
@@ -2655,6 +2705,18 @@ BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->ptr;
+}
+void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
+                        BinaryenExpressionRef ptrExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadSetPtr(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[ptrExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  assert(ptrExpr);
+  static_cast<Load*>(expression)->ptr = (Expression*)ptrExpr;
 }
 // Store
 int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
@@ -2667,6 +2729,16 @@ int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->isAtomic;
 }
+void BinaryenStoreSetAtomic(BinaryenExpressionRef expr, int isAtomic) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetAtomic(expressions[" << expressions[expr]
+              << "], " << isAtomic << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  static_cast<Store*>(expression)->isAtomic = isAtomic != 0;
+}
 uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetBytes(expressions[" << expressions[expr]
@@ -2676,6 +2748,16 @@ uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->bytes;
+}
+void BinaryenStoreSetBytes(BinaryenExpressionRef expr, uint32_t bytes) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetBytes(expressions[" << expressions[expr]
+              << "], " << bytes << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  static_cast<Store*>(expression)->bytes = bytes;
 }
 uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2687,6 +2769,16 @@ uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->offset;
 }
+void BinaryenStoreSetOffset(BinaryenExpressionRef expr, uint32_t offset) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetOffset(expressions[" << expressions[expr]
+              << "], " << offset << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  static_cast<Store*>(expression)->offset = offset;
+}
 uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetAlign(expressions[" << expressions[expr]
@@ -2696,6 +2788,16 @@ uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->align;
+}
+void BinaryenStoreSetAlign(BinaryenExpressionRef expr, uint32_t align) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetAlign(expressions[" << expressions[expr]
+              << "], " << align << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  static_cast<Store*>(expression)->align = align;
 }
 BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2707,6 +2809,18 @@ BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->ptr;
 }
+void BinaryenStoreSetPtr(BinaryenExpressionRef expr,
+                         BinaryenExpressionRef ptrExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetPtr(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[ptrExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  assert(ptrExpr);
+  static_cast<Store*>(expression)->ptr = (Expression*)ptrExpr;
+}
 BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetValue(expressions[" << expressions[expr]
@@ -2716,6 +2830,18 @@ BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->value;
+}
+void BinaryenStoreSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreSetValue(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[valueExpr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  assert(valueExpr);
+  static_cast<Store*>(expression)->value = (Expression*)valueExpr;
 }
 // Const
 int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
@@ -2728,6 +2854,16 @@ int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.geti32();
 }
+void BinaryenConstSetValueI32(BinaryenExpressionRef expr, int32_t value) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueI32(expressions[" << expressions[expr]
+              << "], " << value << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  static_cast<Const*>(expression)->value = Literal(value);
+}
 int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr]
@@ -2737,6 +2873,16 @@ int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.geti64();
+}
+void BinaryenConstSetValueI64(BinaryenExpressionRef expr, int64_t value) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueI64(expressions[" << expressions[expr]
+              << "], " << value << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  static_cast<Const*>(expression)->value = Literal(value);
 }
 int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2749,6 +2895,18 @@ int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
   return (int32_t)(static_cast<Const*>(expression)->value.geti64() &
                    0xffffffff);
 }
+void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr, int32_t valueLow) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueI64Low(expressions["
+              << expressions[expr] << "], " << valueLow << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  auto valueI64 = static_cast<Const*>(expression)->value.geti64();
+  static_cast<Const*>(expression)->value =
+    Literal((valueI64 & ~0xffffffff) | (int64_t(valueLow) & 0xffffffff));
+}
 int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI64High(expressions["
@@ -2758,6 +2916,19 @@ int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
   return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
+}
+void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
+                                  int32_t valueHigh) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueI64High(expressions["
+              << expressions[expr] << "], " << valueHigh << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  auto valueI64 = static_cast<Const*>(expression)->value.geti64();
+  static_cast<Const*>(expression)->value =
+    Literal((int64_t(valueHigh) << 32) | (valueI64 & 0xffffffff));
 }
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2769,6 +2940,16 @@ float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf32();
 }
+void BinaryenConstSetValueF32(BinaryenExpressionRef expr, float value) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueF32(expressions[" << expressions[expr]
+              << "], " << value << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  static_cast<Const*>(expression)->value = Literal(value);
+}
 double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr]
@@ -2779,6 +2960,16 @@ double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf64();
 }
+void BinaryenConstSetValueF64(BinaryenExpressionRef expr, double value) {
+  if (tracing) {
+    std::cout << "  BinaryenConstSetValueF64(expressions[" << expressions[expr]
+              << "], " << value << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  static_cast<Const*>(expression)->value = Literal(value);
+}
 void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueV128(expressions[" << expressions[expr]
@@ -2788,6 +2979,23 @@ void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
   memcpy(out, static_cast<Const*>(expression)->value.getv128().data(), 16);
+}
+void BinaryenConstSetValueV128(BinaryenExpressionRef expr,
+                               const uint8_t value[16]) {
+  if (tracing) {
+    std::cout << "  {\n    uint8_t value[] = {";
+    for (size_t i = 0; i < 16; ++i) {
+      std::cout << int(value[i]);
+      if (i < 15) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n    BinaryenConstSetValueV128(expressions["
+              << expressions[expr] << "], value);\n  }\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  static_cast<Const*>(expression)->value = Literal(value);
 }
 // Unary
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
