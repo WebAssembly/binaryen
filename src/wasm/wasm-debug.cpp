@@ -464,7 +464,13 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
         yamlUnit.Entries,
         [&](const llvm::DWARFDebugInfoEntry& DIE,
             llvm::DWARFYAML::Entry& yamlEntry) {
-          // Process the entries in each DIE, looking for attributes to change.
+          // Process the entries in each relevant DIE, looking for attributes to
+          // change.
+          if (DIE.getTag() == llvm::dwarf::DW_TAG_compile_unit) {
+            // Ignore a compile unit's address, which is some offset into the
+            // function declaration.
+            return;
+          }
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             iterContextAndYAML(
