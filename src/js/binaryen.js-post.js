@@ -2712,7 +2712,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
       };
     case Module['RethrowId']:
       return {

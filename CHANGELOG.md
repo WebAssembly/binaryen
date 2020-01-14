@@ -25,6 +25,7 @@ Current Trunk
   - `BinaryenCallGetOperand` to `BinaryenCallGetOperandAt`
   - `BinaryenCallIndirectGetOperand` to `BinaryenCallIndirectGetOperandAt`
   - `BinaryenHostGetOperand` to `BinaryenHostGetOperandAt`
+  - `BinaryenThrowGetOperand` to `BinaryenThrowGetOperandAt`
 
 v90
 ---
