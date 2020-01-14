@@ -343,14 +343,33 @@ struct LocationUpdater {
 
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
     : wasm(wasm), newLocations(newLocations) {
+    auto mapOldToNew = [&](uint32_t oldAddr, uint32_t newAddr) {
+      if (oldAddr != 0) {
+        assert(oldToNew.count(oldAddr) == 0);
+        oldToNew[oldAddr] = newAddr;
+      }
+    };
+    // Expressions.
     for (auto pair : wasm.binaryLocations.expressions) {
       auto* expr = pair.first;
-      auto addr = pair.second;
+      auto oldAddr = pair.second;
+      uint32_t newAddr = 0;
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        oldToNew[addr] = iter->second;
-      } else {
-        oldToNew[addr] = 0;
+        newAddr = iter->second;
+      }
+      mapOldToNew(oldAddr, newAddr);
+    }
+    // Functions.
+    for (auto& pair : wasm.binaryLocations.functions) {
+      auto* func = pair.first;
+      auto oldSpan = pair.second;
+      // The function may no longer exist, if it was optimized out.
+      auto iter = newLocations.functions.find(func);
+      if (iter != newLocations.functions.end()) {
+        auto newSpan = iter->second;
+        mapOldToNew(oldSpan.first, newSpan.first);
+        mapOldToNew(oldSpan.second, newSpan.second);
       }
     }
   }
@@ -470,13 +489,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-                  // If the old address did not refer to an instruction, then
-                  // this is not something we understand and can update.
                   if (locationUpdater.hasOldAddr(yamlValue.Value)) {
-                    // The addresses of compile units and functions are not
-                    // instructions.
-                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
-                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
                     // Note that the new value may be 0, which is the correct
                     // way to indicate that this is no longer a valid wasm
                     // value, the same as wasm-ld would do.

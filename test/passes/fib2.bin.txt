@@ -224,7 +224,7 @@ DWARF debug info
 Contains section .debug_info (133 bytes)
 Contains section .debug_loc (63 bytes)
 Contains section .debug_abbrev (96 bytes)
-Contains section .debug_line (71 bytes)
+Contains section .debug_line (86 bytes)
 Contains section .debug_str (217 bytes)
 
 .debug_abbrev contents:
@@ -355,7 +355,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x00000043
+    total_length: 0x00000052
          version: 4
  prologue_length: 0x0000001e
  min_inst_length: 1
@@ -395,6 +395,13 @@ file_names[  1]:
 0x00000043: 0a DW_LNS_set_prologue_end
 0x00000044: 00 DW_LNE_end_sequence
             0x0000000000000010      4      3      1   0             0  end_sequence
+
+0x00000047: 00 DW_LNE_set_address (0x0000000000000029)
+0x0000004e: 03 DW_LNS_advance_line (4)
+0x00000050: 05 DW_LNS_set_column (17)
+0x00000052: 0a DW_LNS_set_prologue_end
+0x00000053: 00 DW_LNE_end_sequence
+            0x0000000000000029      4     17      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
@@ -466,7 +473,7 @@ file_names[  1]:
  ;; custom section ".debug_info", size 133
  ;; custom section ".debug_loc", size 63
  ;; custom section ".debug_abbrev", size 96
- ;; custom section ".debug_line", size 71
+ ;; custom section ".debug_line", size 86
  ;; custom section ".debug_str", size 217
  ;; custom section "producers", size 172
 )

@@ -153,14 +153,18 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
     auto body = start + sizeFieldSize;
+    // Offsets are relative to the body of the code section: after the
+    // section type byte and the size.
+    // Everything was moved by the adjustment, track that. After this,
+    // we are at the right absolute address.
+    // We are relative to the section start.
+    auto totalAdjustment = adjustmentForLEBShrinking + body;
     for (auto& pair : binaryLocations.expressions) {
-      // Offsets are relative to the body of the code section: after the
-      // section type byte and the size.
-      // Everything was moved by the adjustment, track that. After this,
-      // we are at the right absolute address.
-      pair.second -= adjustmentForLEBShrinking;
-      // We are relative to the section start.
-      pair.second -= body;
+      pair.second -= totalAdjustment;
+    }
+    for (auto& pair : binaryLocations.functions) {
+      pair.second.first -= totalAdjustment;
+      pair.second.second -= totalAdjustment;
     }
   }
 }
@@ -1365,7 +1369,7 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      wasm.binaryLocations.functions[func] = BinaryLocations::Span(pos, pos + size);
+      wasm.binaryLocations.functions[func] = BinaryLocations::Span(pos - codeSectionLocation, pos - codeSectionLocation + size);
     }
 
     readNextDebugLocation();
