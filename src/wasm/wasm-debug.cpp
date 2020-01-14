@@ -466,11 +466,6 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
             llvm::DWARFYAML::Entry& yamlEntry) {
           // Process the entries in each relevant DIE, looking for attributes to
           // change.
-          if (DIE.getTag() == llvm::dwarf::DW_TAG_compile_unit) {
-            // Ignore a compile unit's address, which is some offset into the
-            // function declaration.
-            return;
-          }
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             iterContextAndYAML(
@@ -483,6 +478,10 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                   // If the old address did not refer to an instruction, then
                   // this is not something we understand and can update.
                   if (locationUpdater.hasOldAddr(yamlValue.Value)) {
+                    // A compile unit's address is not the address of an
+                    // instruction or a function.
+                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
+                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
                     // Note that the new value may be 0, which is the correct
                     // way to indicate that this is no longer a valid wasm
                     // value, the same as wasm-ld would do.
