@@ -27,7 +27,6 @@ from test import shared
 
 # parameters
 
-NANS = True
 
 # feature options that are always passed to the tools.
 # exceptions: https://github.com/WebAssembly/binaryen/issues/2195
@@ -36,11 +35,17 @@ NANS = True
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
-FUZZ_OPTS = []
+INPUT_SIZE_LIMIT = 11 * 1024
 
-INPUT_SIZE_LIMIT = 150 * 1024
+LOG_LIMIT = 125 * 1024
 
-LOG_LIMIT = 125
+
+# fuzz settings
+
+
+FUZZ_OPTS = None
+NANS = None
+LEGALIZE = None
 
 
 # utilities
@@ -90,6 +95,21 @@ def randomize_feature_opts():
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
     print('feature opts:', ' '.join(FEATURE_OPTS))
+
+
+def randomize_fuzz_settings():
+    global FUZZ_OPTS, NANS, LEGALIZE
+    FUZZ_OPTS = []
+    if random.random() < 0.5:
+        NANS = True
+    else:
+        NANS = False
+        FUZZ_OPTS += ['--no-fuzz-nans']
+    if random.random() < 0.5:
+        LEGALIZE = True
+        FUZZ_OPTS += ['--legalize-js-interface']
+    else:
+        LEGALIZE = False
 
 
 # Test outputs we want to ignore are marked this way.
@@ -212,8 +232,10 @@ class CompareVMs(TestCaseHandler):
         if len(results) == 0:
             results = [0]
 
-        # NaNs are a source of nondeterminism between VMs; don't compare them
-        if not NANS:
+        # NaNs are a source of nondeterminism between VMs; don't compare them.
+        # No legalization for JS means we can't compare JS to others, as any
+        # illegal export will fail immediately.
+        if not NANS and LEGALIZE:
             first = results[0]
             for i in range(len(results)):
                 compare(first, results[i], 'CompareVMs at ' + str(i))
@@ -305,6 +327,14 @@ class Asyncify(TestCaseHandler):
         before = fix_output(run_d8(before_wasm))
         after = fix_output(run_d8(after_wasm))
 
+        try:
+          compare(before, after, 'Asyncify (before/after)')
+        except:
+          # if we failed to just compare the builds before asyncify even runs,
+          # then it may use NaNs or be sensitive to legalization; ignore it
+          print('ignoring due to pre-asyncify difference')
+          return
+
         # TODO: also something that actually does async sleeps in the code, say
         # on the logging commands?
         # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
@@ -321,12 +351,12 @@ class Asyncify(TestCaseHandler):
             # emit some status logging from asyncify
             print(out.splitlines()[-1])
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
-            for ignore in ['[fuzz-exec] calling $asyncify_start_unwind\nexception!\n',
-                           '[fuzz-exec] calling $asyncify_start_unwind\n',
-                           '[fuzz-exec] calling $asyncify_start_rewind\nexception!\n',
-                           '[fuzz-exec] calling $asyncify_start_rewind\n',
-                           '[fuzz-exec] calling $asyncify_stop_rewind\n',
-                           '[fuzz-exec] calling $asyncify_stop_unwind\n']:
+            for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
+                           '[fuzz-exec] calling asyncify_start_unwind\n',
+                           '[fuzz-exec] calling asyncify_start_rewind\nexception!\n',
+                           '[fuzz-exec] calling asyncify_start_rewind\n',
+                           '[fuzz-exec] calling asyncify_stop_rewind\n',
+                           '[fuzz-exec] calling asyncify_stop_unwind\n']:
                 out = out.replace(ignore, '')
             out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
             return fix_output(out)
@@ -334,7 +364,6 @@ class Asyncify(TestCaseHandler):
         before_asyncify = do_asyncify(before_wasm)
         after_asyncify = do_asyncify(after_wasm)
 
-        compare(before, after, 'Asyncify (before/after)')
         compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
@@ -357,6 +386,7 @@ testcase_handlers = [
 def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
+    randomize_fuzz_settings()
 
     run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
     wasm_size = os.stat('a.wasm').st_size
@@ -473,6 +503,7 @@ opt_choices = [
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
+    ["--flatten"],
     # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
     ["--inlining"],
     ["--inlining-optimizing"],
@@ -530,9 +561,6 @@ def get_multiple_opt_choices():
 
 
 # main
-
-if not NANS:
-    FUZZ_OPTS += ['--no-fuzz-nans']
 
 # possible feature options that are sometimes passed to the tools. this
 # contains the list of all possible feature flags we can disable (after
