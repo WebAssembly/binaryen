@@ -39,6 +39,17 @@ Abbrev table for offset: 0x00000000
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
 
+0x00000026:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(3)
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:   NULL
+
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
@@ -92,7 +103,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (58 bytes)
-Contains section .debug_abbrev (38 bytes)
+Contains section .debug_abbrev (39 bytes)
 Contains section .debug_line (39 bytes)
 Contains section .debug_str (212 bytes)
 
@@ -128,6 +139,17 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/usr/local/google/home/azakai/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+
+0x00000026:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(3)
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:   NULL
 
 .debug_line contents:
 debug_line[0x00000000]
@@ -197,7 +219,7 @@ file_names[  1]:
  ;; custom section "sourceMappingURL", size 15
  ;; custom section "sourceMappingURL", size 15
  ;; custom section ".debug_info", size 58
- ;; custom section ".debug_abbrev", size 38
+ ;; custom section ".debug_abbrev", size 39
  ;; custom section ".debug_line", size 39
  ;; custom section ".debug_str", size 212
 )

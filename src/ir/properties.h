@@ -156,7 +156,7 @@ inline Index getZeroExtBits(Expression* curr) {
 inline Expression* getFallthrough(Expression* curr) {
   // If the current node is unreachable, there is no value
   // falling through.
-  if (curr->type == unreachable) {
+  if (curr->type == Type::unreachable) {
     return curr;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
@@ -173,9 +173,9 @@ inline Expression* getFallthrough(Expression* curr) {
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
-      if (iff->ifTrue->type == unreachable) {
+      if (iff->ifTrue->type == Type::unreachable) {
         return getFallthrough(iff->ifFalse);
-      } else if (iff->ifFalse->type == unreachable) {
+      } else if (iff->ifFalse->type == Type::unreachable) {
         return getFallthrough(iff->ifTrue);
       }
     }

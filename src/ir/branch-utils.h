@@ -28,17 +28,17 @@ namespace BranchUtils {
 // (unreachable)))
 
 inline bool isBranchReachable(Break* br) {
-  return !(br->value && br->value->type == unreachable) &&
-         !(br->condition && br->condition->type == unreachable);
+  return !(br->value && br->value->type == Type::unreachable) &&
+         !(br->condition && br->condition->type == Type::unreachable);
 }
 
 inline bool isBranchReachable(Switch* sw) {
-  return !(sw->value && sw->value->type == unreachable) &&
-         sw->condition->type != unreachable;
+  return !(sw->value && sw->value->type == Type::unreachable) &&
+         sw->condition->type != Type::unreachable;
 }
 
 inline bool isBranchReachable(BrOnExn* br) {
-  return br->exnref->type != unreachable;
+  return br->exnref->type != Type::unreachable;
 }
 
 inline bool isBranchReachable(Expression* expr) {
@@ -159,14 +159,16 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) { noteFound(value ? value->type : none); }
+  void noteFound(Expression* value) {
+    noteFound(value ? value->type : Type::none);
+  }
 
   void noteFound(Type type) {
     found++;
     if (found == 1) {
-      valueType = unreachable;
+      valueType = Type::unreachable;
     }
-    if (type != unreachable) {
+    if (type != Type::unreachable) {
       valueType = type;
     }
   }

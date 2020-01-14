@@ -137,8 +137,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->isReturn);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      visitor.visitInt(curr->sig.params);
-      visitor.visitInt(curr->sig.results);
+      visitor.visitInt(curr->sig.params.getID());
+      visitor.visitInt(curr->sig.results.getID());
       visitor.visitInt(curr->isReturn);
     }
     void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }
@@ -151,7 +151,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
+      if (curr->type != Type::unreachable &&
+          curr->bytes < curr->type.getByteSize()) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);
@@ -163,7 +164,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitAddress(curr->offset);
       visitor.visitAddress(curr->align);
       visitor.visitInt(curr->isAtomic);
-      visitor.visitInt(curr->valueType);
+      visitor.visitInt(curr->valueType.getID());
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       visitor.visitInt(curr->op);
@@ -437,7 +438,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         // if we hash between modules, then we need to take int account
         // call_imports type, etc. The simplest thing is just to hash the
         // type for all of them.
-        hash(curr->type);
+        hash(curr->type.getID());
         // Blocks and loops introduce scoping.
         if (auto* block = curr->dynCast<Block>()) {
           noteScopeName(block->name);
@@ -476,7 +477,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
     void visitInt(int32_t curr) { hash(curr); }
     void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
-    void visitType(Type curr) { hash(int32_t(curr)); }
+    void visitType(Type curr) { hash(int32_t(curr.getSingle())); }
     void visitIndex(Index curr) {
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");

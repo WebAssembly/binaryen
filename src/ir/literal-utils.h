@@ -34,7 +34,7 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 inline Expression* makeZero(Type type, Module& wasm) {
   // TODO: Switch to using v128.const once V8 supports it
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
-  if (type == v128) {
+  if (type == Type::v128) {
     Builder builder(wasm);
     return builder.makeUnary(SplatVecI32x4,
                              builder.makeConst(Literal(int32_t(0))));

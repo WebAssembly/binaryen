@@ -42,53 +42,53 @@ Type asmToWasmType(AsmType asmType) {
 }
 
 AsmType wasmToAsmType(Type type) {
-  switch (type) {
-    case i32:
+  switch (type.getSingle()) {
+    case Type::i32:
       return ASM_INT;
-    case f32:
+    case Type::f32:
       return ASM_FLOAT;
-    case f64:
+    case Type::f64:
       return ASM_DOUBLE;
-    case i64:
+    case Type::i64:
       return ASM_INT64;
-    case v128:
+    case Type::v128:
       assert(false && "v128 not implemented yet");
-    case funcref:
-    case anyref:
-    case nullref:
-    case exnref:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
       assert(false && "reference types are not supported by asm2wasm");
-    case none:
+    case Type::none:
       return ASM_NONE;
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 char getSig(Type type) {
-  switch (type) {
-    case i32:
+  switch (type.getSingle()) {
+    case Type::i32:
       return 'i';
-    case i64:
+    case Type::i64:
       return 'j';
-    case f32:
+    case Type::f32:
       return 'f';
-    case f64:
+    case Type::f64:
       return 'd';
-    case v128:
+    case Type::v128:
       return 'V';
-    case funcref:
+    case Type::funcref:
       return 'F';
-    case anyref:
+    case Type::anyref:
       return 'A';
-    case nullref:
+    case Type::nullref:
       return 'N';
-    case exnref:
+    case Type::exnref:
       return 'E';
-    case none:
+    case Type::none:
       return 'v';
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -109,14 +109,14 @@ std::string getSig(Type results, Type params) {
 }
 
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
-  if (expr->type == f32) {
+  if (expr->type == Type::f32) {
     auto conv = allocator.alloc<Unary>();
     conv->op = PromoteFloat32;
     conv->value = expr;
     conv->type = Type::f64;
     return conv;
   }
-  assert(expr->type == f64);
+  assert(expr->type == Type::f64);
   return expr;
 }
 
