@@ -2030,7 +2030,7 @@ void BinaryenIfSetIfFalse(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<If>());
-  static_cast<If*>(expression)->ifTrue = (Expression*)ifFalseExpr;
+  static_cast<If*>(expression)->ifFalse = (Expression*)ifFalseExpr;
 }
 // Loop
 const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {

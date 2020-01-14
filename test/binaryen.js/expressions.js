@@ -1,11 +1,12 @@
+var Binaryen = require("../../embuild/bin/binaryen");
+
 function assert(x) {
   if (!x) throw 'error!';
 }
 
-function test() {
+function testBlock() {
   var module = new Binaryen.Module();
 
-  // Block
   var blockRef = module.block(null, []);
   var block = Binaryen.Block(blockRef);
   assert(block.id === Binaryen.BlockId);
@@ -52,7 +53,71 @@ function test() {
   block.removeChildAt(0);
   assert(block.size === 0);
   assert(block == blockRef);
-  assert(Binaryen.getExpressionId(block) == Binaryen.BlockId);
+
+  module.dispose();
 }
 
-Binaryen.ready.then(test);
+function testIf() {
+  var module = new Binaryen.Module();
+
+  var conditionRef = module.i32.const(1);
+  var ifTrueRef = module.i32.const(2);
+  var ifFalseRef = module.i32.const(3);
+  var ifRef = module.if(
+    conditionRef,
+    ifTrueRef,
+    ifFalseRef
+  );
+  var if_ = Binaryen.If(ifRef);
+  assert(if_.id === Binaryen.IfId);
+  assert(if_.condition === conditionRef);
+  assert(if_.ifTrue === ifTrueRef);
+  assert(if_.ifFalse === ifFalseRef);
+  var newCondition = module.i32.const(4);
+  if_.condition = newCondition;
+  assert(if_.condition === newCondition);
+  var newIfTrue = module.i32.const(5);
+  if_.ifTrue = newIfTrue;
+  assert(if_.ifTrue === newIfTrue);
+  var newIfFalse = module.i32.const(6);
+  if_.ifFalse = newIfFalse;
+  assert(if_.ifFalse === newIfFalse);
+  assert(
+    if_.toText()
+    ==
+    "(if (result i32)\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
+  );
+  assert(if_ == ifRef);
+
+  module.dispose();
+}
+
+function testLoop() {
+  var module = new Binaryen.Module();
+
+  var bodyRef = module.i32.const(1);
+  var loopRef = module.loop(null, bodyRef);
+  var loop = Binaryen.Loop(loopRef);
+  assert(loop.id === Binaryen.LoopId);
+  assert(loop.name === null);
+  assert(loop.body === bodyRef);
+  loop.name = "theName";
+  assert(loop.name === "theName");
+  var newBodyRef = module.i32.const(2);
+  loop.body = newBodyRef;
+  assert(loop.body === newBodyRef);
+  assert(
+    loop.toText()
+    ==
+    "(loop $theName (result i32)\n (i32.const 2)\n)\n"
+  );
+  assert(loop == loopRef);
+
+  module.dispose();
+}
+
+Binaryen.ready.then(function() {
+  testBlock();
+  testIf();
+  testLoop();
+});

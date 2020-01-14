@@ -2805,63 +2805,6 @@ Module['getExportInfo'] = function(export_) {
   };
 };
 
-// Block operations
-Module['Block'] = function(expr) {
-  return Object.defineProperties({
-    'getChildAt': function(index) {
-      return Module['_BinaryenBlockGetChildAt'](expr, index);
-    },
-    'setChildAt': function(index, child) {
-      Module['_BinaryenBlockSetChildAt'](expr, index, child);
-    },
-    'appendChild': function(child) {
-      return Module['_BinaryenBlockAppendChild'](expr, child);
-    },
-    'insertChildAt': function(index, child) {
-      Module['_BinaryenBlockInsertChildAt'](expr, index, child);
-    },
-    'removeChildAt': function(index) {
-      Module['_BinaryenBlockRemoveChildAt'](expr, index);
-    },
-    'toText': function() {
-      return Module['emitText'](expr);
-    },
-    'valueOf': function() {
-      return expr;
-    }
-  }, {
-    'id': {
-      get: function() {
-        return Module['_BinaryenExpressionGetId'](expr);
-      }
-    },
-    'type': {
-      get: function() {
-        return Module['_BinaryenExpressionGetType'](expr);
-      },
-      set: function(type) {
-        Module['_BinaryenExpressionSetType'](expr, type);
-      }
-    },
-    'name': {
-      get: function() {
-        var name = Module['_BinaryenBlockGetName'](expr);
-        return name ? UTF8ToString(name) : null;
-      },
-      set: function(name) {
-        preserveStack(function() {
-          Module['_BinaryenBlockSetName'](expr, strToStack(name));
-        });
-      }
-    },
-    'size': {
-      get: function() {
-        return Module['_BinaryenBlockGetNumChildren'](expr);
-      }
-    }
-  });
-};
-
 // Emits text format of an expression or a module
 Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
@@ -2931,6 +2874,124 @@ Module['setDebugInfo'] = function(on) {
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
+};
+
+// Expression wrappers
+
+function makeExpressionWrapper(expr, properties, methods) {
+  if (!expr) return null;
+  // default properties
+  properties['id'] = {
+    get: function() {
+      return Module['_BinaryenExpressionGetId'](expr);
+    }
+  };
+  properties['type'] = {
+    get: function() {
+      return Module['_BinaryenExpressionGetType'](expr);
+    },
+    set: function(type) {
+      Module['_BinaryenExpressionSetType'](expr, type);
+    }
+  }
+  // default methods
+  methods['toText'] = function() {
+    return Module['emitText'](expr);
+  };
+  methods['valueOf'] = function() {
+    return expr;
+  };
+  return Object.defineProperties(methods, properties);
+}
+
+Module['Block'] = function(expr) {
+  return makeExpressionWrapper(expr, {
+    'name': {
+      get: function() {
+        var name = Module['_BinaryenBlockGetName'](expr);
+        return name ? UTF8ToString(name) : null;
+      },
+      set: function(name) {
+        preserveStack(function() {
+          Module['_BinaryenBlockSetName'](expr, strToStack(name));
+        });
+      }
+    },
+    'size': {
+      get: function() {
+        return Module['_BinaryenBlockGetNumChildren'](expr);
+      }
+    }
+  }, {
+    'getChildAt': function(index) {
+      return Module['_BinaryenBlockGetChildAt'](expr, index);
+    },
+    'setChildAt': function(index, child) {
+      Module['_BinaryenBlockSetChildAt'](expr, index, child);
+    },
+    'appendChild': function(child) {
+      return Module['_BinaryenBlockAppendChild'](expr, child);
+    },
+    'insertChildAt': function(index, child) {
+      Module['_BinaryenBlockInsertChildAt'](expr, index, child);
+    },
+    'removeChildAt': function(index) {
+      Module['_BinaryenBlockRemoveChildAt'](expr, index);
+    }
+  });
+};
+
+Module['If'] = function(expr) {
+  return makeExpressionWrapper(expr, {
+    'condition': {
+      get: function() {
+        return Module['_BinaryenIfGetCondition'](expr);
+      },
+      set: function(condExpr) {
+        Module['_BinaryenIfSetCondition'](expr, condExpr);
+      }
+    },
+    'ifTrue': {
+      get: function() {
+        return Module['_BinaryenIfGetIfTrue'](expr);
+      },
+      set: function(ifTrueExpr) {
+        Module['_BinaryenIfSetIfTrue'](expr, ifTrueExpr);
+      }
+    },
+    'ifFalse': {
+      get: function() {
+        return Module['_BinaryenIfGetIfFalse'](expr);
+      },
+      set: function(ifFalseExpr) {
+        Module['_BinaryenIfSetIfFalse'](expr, ifFalseExpr);
+      }
+    }
+  }, {});
+};
+
+Module['Loop'] = function(expr) {
+  return makeExpressionWrapper(expr, {
+    'name': {
+      get: function() {
+        var name = Module['_BinaryenLoopGetName'](expr);
+        return name ? UTF8ToString(name) : null;
+      },
+      set: function(name) {
+        preserveStack(function() {
+          Module['_BinaryenLoopSetName'](expr, strToStack(name));
+        });
+      }
+    },
+    'body': {
+      get: function() {
+        return Module['_BinaryenLoopGetBody'](expr);
+      },
+      set: function(bodyExpr) {
+        Module['_BinaryenLoopSetBody'](expr, bodyExpr);
+      }
+    }
+  }, {});
 };
 
 // Additional customizations
