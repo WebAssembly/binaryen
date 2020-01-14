@@ -122,6 +122,7 @@ static int tracing = 0;
 
 void traceNameOrNULL(const char* name, std::ostream& out = std::cout) {
   if (name) {
+    // TODO: sanitize?
     out << "\"" << name << "\"";
   } else {
     out << "NULL";
@@ -1051,7 +1052,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module,
       if (i > 0) {
         std::cout << ", ";
       }
-      std::cout << "\"" << names[i] << "\"";
+      traceNameOrNULL(names[i]);
     }
     if (numNames == 0) {
       // ensure the array is not empty, otherwise a compiler error on VS
@@ -1805,8 +1806,8 @@ BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
                                       const char* name,
                                       const char* eventName,
                                       BinaryenExpressionRef exnref) {
-  Module* wasm = (Module*)module;
-  Event* event = wasm->getEventOrNull(eventName);
+  auto* wasm = (Module*)module;
+  auto* event = wasm->getEventOrNull(eventName);
   assert(event && "br_on_exn's event must exist");
   auto* ret = Builder(*wasm).makeBrOnExn(name, event, (Expression*)exnref);
 
@@ -1905,7 +1906,7 @@ void BinaryenBlockSetChildAt(BinaryenExpressionRef expr,
                              BinaryenExpressionRef child) {
   if (tracing) {
     std::cout << "  BinaryenBlockSetChildAt(expressions[" << expressions[expr]
-              << "], " << index << ", " << expressions[child] << ");\n";
+              << "], " << index << ", " << expressions[child] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -1918,7 +1919,7 @@ BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
                                        BinaryenExpressionRef child) {
   if (tracing) {
     std::cout << "  BinaryenBlockAppendChild(expressions[" << expressions[expr]
-              << "], " << expressions[child] << ");\n";
+              << "], " << expressions[child] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -1934,7 +1935,7 @@ void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
   if (tracing) {
     std::cout << "  BinaryenBlockInsertChildAt(expressions["
               << expressions[expr] << "], " << index << ", "
-              << expressions[child] << ");\n";
+              << expressions[child] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2047,7 +2048,7 @@ void BinaryenLoopSetName(BinaryenExpressionRef expr, const char* name) {
     std::cout << "  BinaryenLoopSetName(expressions[" << expressions[expr]
               << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Loop>());
@@ -2091,7 +2092,7 @@ void BinaryenBreakSetName(BinaryenExpressionRef expr, const char* name) {
     std::cout << "  BinaryenBreakSetName(expressions[" << expressions[expr]
               << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2170,7 +2171,7 @@ void BinaryenSwitchSetNameAt(BinaryenExpressionRef expr,
     std::cout << "  BinaryenSwitchSetNameAt(expressions[" << expressions[expr]
               << "], " << index << ", ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2195,7 +2196,7 @@ void BinaryenSwitchSetDefaultName(BinaryenExpressionRef expr,
     std::cout << "  BinaryenSwitchSetDefaultName(expressions["
               << expressions[expr] << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2262,7 +2263,7 @@ void BinaryenCallSetTarget(BinaryenExpressionRef expr, const char* target) {
     std::cout << "  BinaryenCallSetTarget(expressions[" << expressions[expr]
               << "], ";
     traceNameOrNULL(target);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2361,7 +2362,7 @@ void BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
   if (tracing) {
     std::cout << "  BinaryenCallIndirectSetOperandAt(expressions["
               << expressions[expr] << "], " << index << ", expressions["
-              << expressions[operandExpr] << ");\n";
+              << expressions[operandExpr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2461,7 +2462,7 @@ void BinaryenGlobalGetSetName(BinaryenExpressionRef expr, const char* name) {
     std::cout << "  BinaryenGlobalGetSetName(expressions[" << expressions[expr]
               << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2485,7 +2486,7 @@ void BinaryenGlobalSetSetName(BinaryenExpressionRef expr, const char* name) {
     std::cout << "  BinaryenGlobalSetSetName(expressions[" << expressions[expr]
               << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2551,7 +2552,7 @@ void BinaryenHostSetNameOperand(BinaryenExpressionRef expr, const char* name) {
     std::cout << "  BinaryenHostSetNameOperand(expressions["
               << expressions[expr] << "], ";
     traceNameOrNULL(name);
-    std::cout << "); \n";
+    std::cout << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -2584,9 +2585,9 @@ void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
                               BinaryenIndex index,
                               BinaryenExpressionRef operandExpr) {
   if (tracing) {
-    std::cout << "  BinaryenHostGetOperand(expressions[" << expressions[expr]
+    std::cout << "  BinaryenHostGetOperandAt(expressions[" << expressions[expr]
               << "], " << index << ", expression[" << expressions[operandExpr]
-              << ");\n";
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -3142,7 +3143,7 @@ void BinaryenSelectSetIfFalse(BinaryenExpressionRef expr,
                               BinaryenExpressionRef ifFalseExpr) {
   if (tracing) {
     std::cout << "  BinaryenSelectSetIfFalse(expressions[" << expressions[expr]
-              << "], expression[" << expressions[ifFalseExpr] << ");\n";
+              << "], expression[" << expressions[ifFalseExpr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -3380,7 +3381,7 @@ void BinaryenAtomicCmpxchgSetPtr(BinaryenExpressionRef expr,
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetPtr(expressions["
               << expressions[expr] << "], expressions[" << expressions[ptrExpr]
-              << ");\n";
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -4579,7 +4580,6 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenType* varTypes,
                                         BinaryenIndex numVarTypes,
                                         BinaryenExpressionRef body) {
-  auto* wasm = (Module*)module;
   auto* ret = new Function;
 
   if (tracing) {
@@ -4599,12 +4599,15 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
     auto id = functions.size();
     functions[ret] = id;
     std::cout << "    functions[" << id
-              << "] = BinaryenAddFunction(the_module, \"" << name << "\", "
-              << params << ", " << results << ", varTypes, " << numVarTypes
-              << ", expressions[" << expressions[body] << "]);\n";
+              << "] = BinaryenAddFunction(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ", " << params << ", " << results << ", varTypes, "
+              << numVarTypes << ", expressions[" << expressions[body]
+              << "]);\n";
     std::cout << "  }\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->name = name;
   ret->sig = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
@@ -4624,7 +4627,9 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenGetFunction(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenGetFunction(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4632,7 +4637,9 @@ BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
 }
 void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveFunction(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenRemoveFunction(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4666,17 +4673,17 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     BinaryenType type,
                                     int8_t mutable_,
                                     BinaryenExpressionRef init) {
-  auto* wasm = (Module*)module;
   auto* ret = new Global();
-
   if (tracing) {
     auto id = globals.size();
     globals[ret] = id;
-    std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, \""
-              << name << "\", " << type << ", " << int(mutable_)
-              << ", expressions[" << expressions[init] << "]);\n";
+    std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ", " << type << ", " << int(mutable_) << ", expressions["
+              << expressions[init] << "]);\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->name = name;
   ret->type = Type(type);
   ret->mutable_ = !!mutable_;
@@ -4687,7 +4694,9 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
 BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
                                     const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenGetGlobal(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenGetGlobal(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4695,7 +4704,9 @@ BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
 }
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveGlobal(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenRemoveGlobal(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4710,8 +4721,10 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   BinaryenType params,
                                   BinaryenType results) {
   if (tracing) {
-    std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
-              << attribute << ", " << params << ", " << results << ");\n";
+    std::cout << "  BinaryenAddEvent(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ", " << attribute << ", " << params << ", " << results
+              << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4725,7 +4738,9 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
 
 BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenGetEvent(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenGetEvent(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4733,7 +4748,9 @@ BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
 }
 void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveEvent(the_module, \"" << name << "\");\n";
+    std::cout << "  BinaryenRemoveEvent(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4748,15 +4765,18 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                const char* externalBaseName,
                                BinaryenType params,
                                BinaryenType results) {
-  auto* wasm = (Module*)module;
-  auto* ret = new Function();
-
   if (tracing) {
-    std::cout << "  BinaryenAddFunctionImport(the_module, \"" << internalName
-              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << params << ", " << results << ");\n";
+    std::cout << "  BinaryenAddFunctionImport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ", " << params << ", " << results << ");\n";
   }
 
+  auto* wasm = (Module*)module;
+  auto* ret = new Function();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
@@ -4767,14 +4787,17 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,
                             const char* externalBaseName) {
-  auto* wasm = (Module*)module;
-
   if (tracing) {
-    std::cout << "  BinaryenAddTableImport(the_module, \"" << internalName
-              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\");\n";
+    std::cout << "  BinaryenAddTableImport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
 }
@@ -4783,14 +4806,17 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto* wasm = (Module*)module;
-
   if (tracing) {
-    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName
-              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << int(shared) << ");\n";
+    std::cout << "  BinaryenAddMemoryImport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ", " << int(shared) << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   wasm->memory.module = externalModuleName;
   wasm->memory.base = externalBaseName;
   wasm->memory.shared = shared;
@@ -4801,15 +4827,18 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* externalBaseName,
                              BinaryenType globalType,
                              int mutable_) {
-  auto* wasm = (Module*)module;
-  auto* ret = new Global();
-
   if (tracing) {
-    std::cout << "  BinaryenAddGlobalImport(the_module, \"" << internalName
-              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << globalType << ", " << mutable_ << ");\n";
+    std::cout << "  BinaryenAddGlobalImport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ", " << globalType << ", " << mutable_ << ");\n";
   }
 
+  auto* wasm = (Module*)module;
+  auto* ret = new Global();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
@@ -4824,16 +4853,19 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
                             uint32_t attribute,
                             BinaryenType params,
                             BinaryenType results) {
-  auto* wasm = (Module*)module;
-  auto* ret = new Event();
-
   if (tracing) {
-    std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
-              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << attribute << ", " << params << ", " << results
+    std::cout << "  BinaryenAddEventImport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ", " << attribute << ", " << params << ", " << results
               << ");\n";
   }
 
+  auto* wasm = (Module*)module;
+  auto* ret = new Event();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
@@ -4851,17 +4883,20 @@ WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module,
                                             const char* internalName,
                                             const char* externalName) {
-  auto* wasm = (Module*)module;
   auto* ret = new Export();
 
   if (tracing) {
     auto id = exports.size();
     exports[ret] = id;
     std::cout << "  exports[" << id
-              << "] = BinaryenAddFunctionExport(the_module, \"" << internalName
-              << "\", \"" << externalName << "\");\n";
+              << "] = BinaryenAddFunctionExport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Function;
@@ -4871,17 +4906,20 @@ BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
                                          const char* internalName,
                                          const char* externalName) {
-  auto* wasm = (Module*)module;
   auto* ret = new Export();
 
   if (tracing) {
     auto id = exports.size();
     exports[ret] = id;
     std::cout << "  exports[" << id
-              << "] = BinaryenAddTableExport(the_module, \"" << internalName
-              << "\", \"" << externalName << "\");\n";
+              << "] = BinaryenAddTableExport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Table;
@@ -4891,17 +4929,20 @@ BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
                                           const char* internalName,
                                           const char* externalName) {
-  auto* wasm = (Module*)module;
   auto* ret = new Export();
 
   if (tracing) {
     auto id = exports.size();
     exports[ret] = id;
     std::cout << "  exports[" << id
-              << "] = BinaryenAddMemoryExport(the_module, \"" << internalName
-              << "\", \"" << externalName << "\");\n";
+              << "] = BinaryenAddMemoryExport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Memory;
@@ -4911,17 +4952,20 @@ BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
                                           const char* internalName,
                                           const char* externalName) {
-  auto* wasm = (Module*)module;
   auto* ret = new Export();
 
   if (tracing) {
     auto id = exports.size();
     exports[ret] = id;
     std::cout << "  exports[" << id
-              << "] = BinaryenAddGlobalExport(the_module, \"" << internalName
-              << "\", \"" << externalName << "\");\n";
+              << "] = BinaryenAddGlobalExport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Global;
@@ -4931,17 +4975,20 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
                                          const char* internalName,
                                          const char* externalName) {
-  auto* wasm = (Module*)module;
   auto* ret = new Export();
 
   if (tracing) {
     auto id = exports.size();
     exports[ret] = id;
     std::cout << "  exports[" << id
-              << "] = BinaryenAddEventExport(the_module, \"" << internalName
-              << "\", \"" << externalName << "\");\n";
+              << "] = BinaryenAddEventExport(the_module, ";
+    traceNameOrNULL(internalName);
+    std::cout << ", ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
+  auto* wasm = (Module*)module;
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Event;
@@ -4950,8 +4997,9 @@ BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
 }
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveExport(the_module, \"" << externalName
-              << "\");\n";
+    std::cout << "  BinaryenRemoveExport(the_module, ";
+    traceNameOrNULL(externalName);
+    std::cout << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4973,7 +5021,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
       if (i > 0) {
         std::cout << ", ";
       }
-      std::cout << "\"" << funcNames[i] << "\"";
+      traceNameOrNULL(funcNames[i]);
     }
     std::cout << " };\n";
     std::cout << "    BinaryenSetFunctionTable(the_module, " << initial << ", "
@@ -5236,10 +5284,10 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
     std::cout << "  BinaryenModulePrintAsmjs(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   Wasm2JSBuilder::Flags flags;
   Wasm2JSBuilder wasm2js(flags, globalPassOptions);
-  Ref asmjs = wasm2js.processWasm(wasm);
+  auto asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
   Output out("", Flags::Text); // stdout
   Wasm2JSGlue glue(*wasm, out, flags, "asmFunc");
@@ -5254,7 +5302,7 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleValidate(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 
@@ -5263,7 +5311,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleOptimize(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
@@ -5328,7 +5376,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
       if (i > 0) {
         std::cout << ", ";
       }
-      std::cout << "\"" << passes[i] << "\"";
+      traceNameOrNULL(passes[i]);
     }
     std::cout << " };\n";
     std::cout << "    BinaryenModuleRunPasses(the_module, passes, " << numPasses
@@ -5336,7 +5384,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
     std::cout << "  }\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
@@ -5350,7 +5398,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleAutoDrop(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner runner(wasm, globalPassOptions);
   AutoDrop().run(&runner, wasm);
 }
@@ -5361,7 +5409,7 @@ static BinaryenBufferSizes writeModule(BinaryenModuleRef module,
                                        const char* sourceMapUrl,
                                        char* sourceMap,
                                        size_t sourceMapSize) {
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   BufferWithRandomAccess buffer;
   WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
@@ -5436,7 +5484,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
     std::cout << ");\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   BufferWithRandomAccess buffer;
   WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
@@ -5495,7 +5543,7 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleInterpret(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   ShellExternalInterface interface;
   ModuleInstance instance(*wasm, &interface);
 }
@@ -5503,12 +5551,13 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
                                                  const char* filename) {
   if (tracing) {
-    std::cout << "  BinaryenModuleAddDebugInfoFileName(the_module, \""
-              << filename << "\");\n";
+    std::cout << "  BinaryenModuleAddDebugInfoFileName(the_module, ";
+    traceNameOrNULL(filename);
+    std::cout << ");\n";
   }
 
-  Module* wasm = (Module*)module;
-  BinaryenIndex index = wasm->debugInfoFileNames.size();
+  auto* wasm = (Module*)module;
+  auto index = wasm->debugInfoFileNames.size();
   wasm->debugInfoFileNames.push_back(filename);
   return index;
 }
@@ -5516,11 +5565,11 @@ BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
 const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
                                                BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenModuleGetDebugInfoFileName(the_module, \"" << index
-              << "\");\n";
+    std::cout << "  BinaryenModuleGetDebugInfoFileName(the_module, " << index
+              << ");\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   return index < wasm->debugInfoFileNames.size()
            ? wasm->debugInfoFileNames.at(index).c_str()
            : nullptr;
@@ -5588,7 +5637,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func,
               << "], the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
@@ -5605,7 +5654,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
       if (i > 0) {
         std::cout << ", ";
       }
-      std::cout << "\"" << passes[i] << "\"";
+      traceNameOrNULL(passes[i]);
     }
     std::cout << " };\n";
     std::cout << "    BinaryenFunctionRunPasses(functions[" << functions[func]
@@ -5613,7 +5662,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
     std::cout << "  }\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
