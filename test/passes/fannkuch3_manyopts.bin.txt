@@ -3967,7 +3967,9 @@ file_names[  4]:
          (br_if $label$9
           ;; code offset: 0x139
           (local.tee $6
+           ;; code offset: 0x15a
            (block (result i32)
+            ;; code offset: 0x163
             (local.set $17
              ;; code offset: 0x128
              (i32.load
@@ -4309,6 +4311,7 @@ file_names[  4]:
          ;; code offset: 0x218
          (local.get $0)
         )
+        ;; code offset: 0x245
         (local.get $18)
        )
       )
@@ -4913,6 +4916,7 @@ file_names[  4]:
    )
    ;; code offset: 0x3e3
    (block $label$6
+    ;; code offset: 0x444
     (block $label$7
      (block $label$8
       ;; code offset: 0x3ee
@@ -5104,7 +5108,9 @@ file_names[  4]:
         )
         ;; code offset: 0x47e
         (br_if $label$14
+         ;; code offset: 0x4ec
          (block (result i32)
+          ;; code offset: 0x4f1
           (local.set $9
            ;; code offset: 0x479
            (i32.gt_s
@@ -5364,6 +5370,7 @@ file_names[  4]:
        )
        ;; code offset: 0x53d
        (br_if $label$22
+        ;; code offset: 0x5c0
         (block (result i32)
          (local.set $10
           ;; code offset: 0x538

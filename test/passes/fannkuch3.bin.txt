@@ -6073,6 +6073,7 @@ file_names[  4]:
   ;; code offset: 0x394
   (block $label$1
    (block $label$2
+    ;; code offset: 0x3b8
     (block $label$3
      ;; code offset: 0x39f
      (br_if $label$3
@@ -6244,6 +6245,7 @@ file_names[  4]:
    (block $label$6
     (block $label$7
      (block $label$8
+      ;; code offset: 0x458
       (block $label$9
        ;; code offset: 0x428
        (br_if $label$9
