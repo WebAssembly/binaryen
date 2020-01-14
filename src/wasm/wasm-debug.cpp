@@ -350,7 +350,7 @@ struct AddrExprMap {
     }
   }
 
-  Expression* get(uint32_t addr) {
+  Expression* get(uint32_t addr) const {
     auto iter = map.find(addr);
     if (iter != map.end()) {
       return iter->second;
@@ -358,7 +358,7 @@ struct AddrExprMap {
     return nullptr;
   }
 
-  void dump() {
+  void dump() const {
     std::cout << "  (size: " << map.size() << ")\n";
     for (auto pair : map) {
       std::cout << "  " << pair.first << " => " << pair.second << '\n';
@@ -366,9 +366,13 @@ struct AddrExprMap {
   }
 };
 
-static void updateDebugLines(const Module& wasm,
-                             llvm::DWARFYAML::Data& data,
-                             const BinaryLocationsMap& newLocations) {
+struct LocationUpdater {
+  Module& wasm;
+  const BinaryLocationsMap& newLocations;
+
+  AddrExprMap oldAddrMap;
+  AddrExprMap newAddrMap;
+
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -376,9 +380,29 @@ static void updateDebugLines(const Module& wasm,
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  AddrExprMap oldAddrMap(wasm);
-  AddrExprMap newAddrMap(newLocations);
+  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations)
+    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
+      newAddrMap(newLocations) {}
 
+  // Updates an address. If there was never an instruction at that address,
+  // or if there was but if that instruction no longer exists, return 0.
+  // Otherwise, return the new updated location.
+  uint32_t getNewAddr(uint32_t oldAddr) const {
+    if (auto* expr = oldAddrMap.get(oldAddr)) {
+      auto iter = newLocations.find(expr);
+      if (iter != newLocations.end()) {
+        uint32_t newAddr = iter->second;
+        return newAddr;
+      }
+    }
+    return 0;
+  }
+
+  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
+};
+
+static void updateDebugLines(llvm::DWARFYAML::Data& data,
+                             const LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
     LineState state(table);
@@ -404,16 +428,12 @@ static void updateDebugLines(const Module& wasm,
         }
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto* expr = oldAddrMap.get(state.addr)) {
-          auto iter = newLocations.find(expr);
-          if (iter != newLocations.end()) {
-            uint32_t newAddr = iter->second;
-            newAddrs.push_back(newAddr);
-            newAddrInfo.emplace(newAddr, state);
-            auto& updatedState = newAddrInfo.at(newAddr);
-            // The only difference is the address TODO other stuff?
-            updatedState.addr = newAddr;
-          }
+        if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
+          newAddrs.push_back(newAddr);
+          newAddrInfo.emplace(newAddr, state);
+          auto& updatedState = newAddrInfo.at(newAddr);
+          // The only difference is the address TODO other stuff?
+          updatedState.addr = newAddr;
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
@@ -442,6 +462,66 @@ static void updateDebugLines(const Module& wasm,
   }
 }
 
+// Iterate in parallel over a DwarfContext representation element and a
+// YAML element, which parallel each other.
+template<typename T, typename U, typename W>
+static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
+  auto yamlValue = yamlList.begin();
+  for (const auto& contextValue : contextList) {
+    assert(yamlValue != yamlList.end());
+    func(contextValue, *yamlValue);
+    yamlValue++;
+  }
+  assert(yamlValue == yamlList.end());
+}
+
+static void updateCompileUnits(const BinaryenDWARFInfo& info,
+                               llvm::DWARFYAML::Data& yaml,
+                               const LocationUpdater& locationUpdater) {
+  // The context has the high-level information we need, and the YAML is where
+  // we write changes. First, iterate over the compile units.
+  iterContextAndYAML(
+    info.context->compile_units(),
+    yaml.CompileUnits,
+    [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
+        llvm::DWARFYAML::Unit& yamlUnit) {
+      // Process the DIEs in each compile unit.
+      iterContextAndYAML(
+        CU->dies(),
+        yamlUnit.Entries,
+        [&](const llvm::DWARFDebugInfoEntry& DIE,
+            llvm::DWARFYAML::Entry& yamlEntry) {
+          // Process the entries in each relevant DIE, looking for attributes to
+          // change.
+          auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
+          if (abbrevDecl) {
+            iterContextAndYAML(
+              abbrevDecl->attributes(),
+              yamlEntry.Values,
+              [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
+                    attrSpec,
+                  llvm::DWARFYAML::FormValue& yamlValue) {
+                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                  // If the old address did not refer to an instruction, then
+                  // this is not something we understand and can update.
+                  if (locationUpdater.hasOldAddr(yamlValue.Value)) {
+                    // The addresses of compile units and functions are not
+                    // instructions.
+                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
+                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
+                    // Note that the new value may be 0, which is the correct
+                    // way to indicate that this is no longer a valid wasm
+                    // value, the same as wasm-ld would do.
+                    yamlValue.Value =
+                      locationUpdater.getNewAddr(yamlValue.Value);
+                  }
+                }
+              });
+          }
+        });
+    });
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -451,7 +531,11 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
-  updateDebugLines(wasm, data, newLocations);
+  LocationUpdater locationUpdater(wasm, newLocations);
+
+  updateDebugLines(data, locationUpdater);
+
+  updateCompileUnits(info, data, locationUpdater);
 
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
