@@ -225,6 +225,17 @@ struct LineState {
     return false;
   }
 
+  // Checks if this starts a new range of addresses. Each range is a set of
+  // related addresses, where in particular, if the first has been zeroed out
+  // by the linker, we must omit the entire range. (If we do not, then the
+  // initial range is 0 and the others are offsets relative to it, which will
+  // look like random addresses, perhaps into the middle of instructions, and
+  // perhaps that happen to collide with real ones.)
+  bool startsNewRange(llvm::DWARFYAML::LineTableOpcode& opcode) {
+    return opcode.Opcode == 0 &&
+           opcode.SubOpcode == llvm::dwarf::DW_LNE_set_address;
+  }
+
   bool needToEmit() {
     // If any value is 0, can ignore it
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
@@ -398,9 +409,25 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     // All the addresses we need to write out.
     std::vector<uint32_t> newAddrs;
     std::unordered_map<uint32_t, LineState> newAddrInfo;
+    // If the address was zeroed out, we must omit the entire range (we could
+    // also leave it unchanged, so that the debugger ignores it based on the
+    // initial zero; but it's easier and better to just not emit it at all).
+    bool omittingRange = false;
     for (auto& opcode : table.Opcodes) {
       // Update the state, and check if we have a new row to emit.
+      if (state.startsNewRange(opcode)) {
+        omittingRange = false;
+      }
       if (state.update(opcode, table)) {
+        if (state.addr == 0) {
+          omittingRange = true;
+        }
+        if (omittingRange) {
+          state = LineState(table);
+          continue;
+        }
+        // An expression may not exist for this line table item, if we optimized
+        // it away.
         if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
           newAddrs.push_back(newAddr);
           newAddrInfo.emplace(newAddr, state);
