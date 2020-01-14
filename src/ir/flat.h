@@ -45,11 +45,14 @@
 //  1. Aside from a local.set, the operands of an instruction must be a
 //     local.get, a const, or an unreachable. Anything else is written
 //     to a local earlier.
-//  2. Disallow block, loop, and if return values, and do not allow the
-//     function body to have a concrete type, i.e., do not use
+//  2. Disallow control flow (block, loop, and if) return values, and do not
+//     allow the function body to have a concrete type, i.e., do not use
 //     control flow to pass around values.
 //  3. Disallow local.tee, setting a local is always done in a local.set
 //     on a non-nested-expression location.
+//  4. local.set cannot have an operand that is control flow (control flow with
+//     values is prohibited already, but e.g. a block ending in unreachable,
+//     which can normally be nested, is also disallowed).
 //
 
 #ifndef wasm_ir_flat_h
@@ -77,8 +80,9 @@ inline void verifyFlatness(Function* func) {
       if (isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
-      } else if (curr->is<LocalSet>()) {
-        verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
+        verify(!set->type.isConcrete(), "tees are not allowed, only sets");
+        verify(!isControlFlowStructure(set->value), "set values cannot be control flow");
       } else {
         for (auto* child : ChildIterator(curr)) {
           verify(Properties::isConstantExpression(child) ||
