@@ -125,6 +125,11 @@
    (i32.const 0)
    (i32.const 45)
   )
+  (memory.init 1
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 45)
+  )
   (data.drop 1)
  )
  (func $few-zeroes-at-start (; 2 ;)
@@ -151,6 +156,11 @@
   (data.drop 3)
  )
  (func $zeroes-at-end-not-split (; 4 ;)
+  (memory.init 4
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 43)
+  )
   (memory.init 4
    (i32.const 0)
    (i32.const 0)

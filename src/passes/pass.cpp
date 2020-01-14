@@ -430,6 +430,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
+  add("memory-packing");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
@@ -440,7 +441,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     add("inlining-optimizing");
   }
   // optimizations show more functions as duplicate
-  add("memory-packing");
   add("duplicate-function-elimination");
   add("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {

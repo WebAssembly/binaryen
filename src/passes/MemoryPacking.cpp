@@ -46,21 +46,37 @@ struct Range {
   size_t end;
 };
 
-// A function that produces the transformed bulk memory op
+// A function that produces the transformed bulk memory op. We need to use a
+// function here instead of simple data because the replacement code sequence
+// may require allocating new locals, which in turn requires the enclosing
+// Function, which is only available in the parallelized instruction replacement
+// phase. However, we can't move the entire calculation of replacement code
+// sequences into the parallel phase because the lowering of data.drops depends
+// on the lowering of memory.inits to determine whether a drop state global is
+// necessary. The solution is that we calculate the shape of the replacement
+// code sequence up front and use a closure just to allocate and insert new
+// locals as necessary.
 using Replacement = std::function<Expression*(Function*)>;
 
 // Maps each bulk memory op to the replacement that must be applied to it.
 using Replacements = std::unordered_map<Expression*, Replacement>;
 
-// memory.fill: 2 byte opcode + ~2 immediate bytes + ~(3*2) byte operands
-const size_t MEMORY_FILL_SIZE = 10;
+// A collection of bulk memory operations referring to a particular segment
+using Referrers = std::vector<Expression*>;
+
+// memory.init: 2 byte opcode + 1 byte segment index + 1 byte memory index +
+//              3 x 2 byte operands
+const size_t MEMORY_INIT_SIZE = 10;
+
+// memory.fill: 2 byte opcode + 1 byte memory index + 3 x 2 byte operands
+const size_t MEMORY_FILL_SIZE = 9;
 
 // data.drop: 2 byte opcode + ~1 byte index immediate
 const size_t DATA_DROP_SIZE = 3;
 
 namespace {
 
-Expression* makeMemorySize(Builder& builder) {
+Expression* makeShiftedMemorySize(Builder& builder) {
   return builder.makeBinary(ShlInt32,
                             builder.makeHost(MemorySize, Name(), {}),
                             builder.makeConst(Literal(int32_t(16))));
@@ -73,14 +89,12 @@ struct MemoryPacking : public Pass {
 
   void run(PassRunner* runner, Module* module) override;
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
-  void getSegmentReferrers(Module* module,
-                           std::vector<std::vector<Expression*>>& referrers);
+  void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
-                          std::vector<std::vector<Expression*>>& referrers);
-  bool canSplit(const Memory::Segment& segment,
-                const std::vector<Expression*>& referrers);
+                          std::vector<Referrers>& referrers);
+  bool canSplit(const Memory::Segment& segment, const Referrers& referrers);
   void calculateRanges(const Memory::Segment& segment,
-                       const std::vector<Expression*>& referrers,
+                       const Referrers& referrers,
                        std::vector<Range>& ranges);
   void createSplitSegments(Builder& builder,
                            const Memory::Segment& segment,
@@ -89,7 +103,7 @@ struct MemoryPacking : public Pass {
                            size_t segmentsRemaining);
   void createReplacements(Module* module,
                           const std::vector<Range>& ranges,
-                          const std::vector<Expression*>& referrers,
+                          const Referrers& referrers,
                           Replacements& replacements,
                           const Index segmentIndex);
   void replaceBulkMemoryOps(PassRunner* runner,
@@ -105,12 +119,14 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
-  std::vector<std::vector<Expression*>> referrers(segments.size());
+  std::vector<Referrers> referrers(segments.size());
 
   if (module->features.hasBulkMemory()) {
-    // Remove any references to active segments from bulk memory
-    // operations. This means we only need to track replacements for passive
-    // segments.
+    // Optimize out memory.inits and data.drops that can be entirely replaced
+    // with other instruction sequences. This can increase the number of unused
+    // segments that can be dropped entirely and allows later replacement
+    // creation to make more assumptions about what these instructions will look
+    // like, such as memory.inits not having both zero offset and size.
     optimizeBulkMemoryOps(runner, module);
     getSegmentReferrers(module, referrers);
     dropUnusedSegments(segments, referrers);
@@ -129,7 +145,8 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     if (canSplit(segment, currReferrers)) {
       calculateRanges(segment, currReferrers, ranges);
     } else {
-      // A single range covers the entire segment
+      // A single range covers the entire segment. Set isZero to false so the
+      // original memory.init will be used even if segment is all zeroes.
       ranges.push_back({false, 0, segment.data.size()});
     }
 
@@ -148,7 +165,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 }
 
 bool MemoryPacking::canSplit(const Memory::Segment& segment,
-                             const std::vector<Expression*>& referrers) {
+                             const Referrers& referrers) {
   if (segment.isPassive) {
     for (auto* referrer : referrers) {
       if (auto* init = referrer->dynCast<MemoryInit>()) {
@@ -166,7 +183,7 @@ bool MemoryPacking::canSplit(const Memory::Segment& segment,
 }
 
 void MemoryPacking::calculateRanges(const Memory::Segment& segment,
-                                    const std::vector<Expression*>& referrers,
+                                    const Referrers& referrers,
                                     std::vector<Range>& ranges) {
   auto& data = segment.data;
   if (data.size() == 0) {
@@ -193,7 +210,10 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
     }
   }
 
-  // Number of adjacent interior zeroes for which splitting is beneficial
+  // Calculate the number of consecutive zeroes for which splitting is
+  // beneficial. This is an approximation that assumes all memory.inits cover an
+  // entire segment and that all its arguments are constants. These assumptions
+  // are true of all memory.inits generated by the tools.
   size_t threshold = 0;
   if (segment.isPassive) {
     // Passive segment metadata size
@@ -206,7 +226,7 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
     for (auto* referrer : referrers) {
       if (referrer->is<MemoryInit>()) {
         // Splitting adds a new memory.fill and a new memory.init
-        threshold += MEMORY_FILL_SIZE * 2;
+        threshold += MEMORY_FILL_SIZE + MEMORY_INIT_SIZE;
         edgeThreshold += MEMORY_FILL_SIZE;
       } else {
         threshold += DATA_DROP_SIZE;
@@ -231,7 +251,8 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
       }
     }
   } else {
-    // Ballpark overhead of active segment with offset
+    // Legacy ballpark overhead of active segment with offset
+    // TODO: Tune this
     threshold = 8;
   }
 
@@ -261,7 +282,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
     bool isFunctionParallel() override { return true; }
     Pass* create() override { return new Optimizer; }
 
-    bool needsRefinalizing = false;
+    bool needsRefinalizing;
 
     void visitMemoryInit(MemoryInit* curr) {
       Builder builder(*getModule());
@@ -290,7 +311,8 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       if (mustNop) {
         // Offset and size are 0, so just trap if dest > memory.size
         replaceCurrent(builder.makeIf(
-          builder.makeBinary(GtUInt32, curr->dest, makeMemorySize(builder)),
+          builder.makeBinary(
+            GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
           builder.makeUnreachable()));
       } else if (mustTrap) {
         // Drop dest, offset, and size then trap
@@ -304,7 +326,8 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
             OrInt32,
-            builder.makeBinary(GtUInt32, curr->dest, makeMemorySize(builder)),
+            builder.makeBinary(
+              GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
       }
@@ -325,16 +348,16 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
   optimizer.run(runner, module);
 }
 
-void MemoryPacking::getSegmentReferrers(
-  Module* module, std::vector<std::vector<Expression*>>& referrers) {
-  using Referrers = std::vector<std::vector<Expression*>>;
-  auto collectReferrers = [&](Function* func, Referrers& referrers) {
-    if (func->body == nullptr) {
+void MemoryPacking::getSegmentReferrers(Module* module,
+                                        std::vector<Referrers>& referrers) {
+  auto collectReferrers = [&](Function* func,
+                              std::vector<Referrers>& referrers) {
+    if (func->imported()) {
       return;
     }
     struct Collector : WalkerPass<PostWalker<Collector>> {
-      Referrers& referrers;
-      Collector(Referrers& referrers) : referrers(referrers) {}
+      std::vector<Referrers>& referrers;
+      Collector(std::vector<Referrers>& referrers) : referrers(referrers) {}
 
       void visitMemoryInit(MemoryInit* curr) {
         referrers[curr->segment].push_back(curr);
@@ -349,11 +372,11 @@ void MemoryPacking::getSegmentReferrers(
     } collector(referrers);
     collector.walkFunctionInModule(func, module);
   };
-  ModuleUtils::ParallelFunctionAnalysis<Referrers> analysis(*module,
-                                                            collectReferrers);
+  ModuleUtils::ParallelFunctionAnalysis<std::vector<Referrers>> analysis(
+    *module, collectReferrers);
   referrers.resize(module->memory.segments.size());
   for (auto& pair : analysis.map) {
-    Referrers& funcReferrers = pair.second;
+    std::vector<Referrers>& funcReferrers = pair.second;
     for (size_t i = 0; i < funcReferrers.size(); ++i) {
       referrers[i].insert(
         referrers[i].end(), funcReferrers[i].begin(), funcReferrers[i].end());
@@ -361,11 +384,10 @@ void MemoryPacking::getSegmentReferrers(
   }
 }
 
-void MemoryPacking::dropUnusedSegments(
-  std::vector<Memory::Segment>& segments,
-  std::vector<std::vector<Expression*>>& referrers) {
+void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
+                                       std::vector<Referrers>& referrers) {
   std::vector<Memory::Segment> usedSegments;
-  std::vector<std::vector<Expression*>> usedReferrers;
+  std::vector<Referrers> usedReferrers;
   // Remove segments that are never used
   // TODO: remove unused portions of partially used segments as well
   for (size_t i = 0; i < segments.size(); ++i) {
@@ -430,12 +452,11 @@ void MemoryPacking::createSplitSegments(Builder& builder,
   }
 }
 
-void MemoryPacking::createReplacements(
-  Module* module,
-  const std::vector<Range>& ranges,
-  const std::vector<Expression*>& referrers,
-  Replacements& replacements,
-  const Index segmentIndex) {
+void MemoryPacking::createReplacements(Module* module,
+                                       const std::vector<Range>& ranges,
+                                       const Referrers& referrers,
+                                       Replacements& replacements,
+                                       const Index segmentIndex) {
   // If there was no transformation, only update the indices
   if (ranges.size() == 1 && !ranges.front().isZero) {
     for (auto referrer : referrers) {
@@ -474,7 +495,6 @@ void MemoryPacking::createReplacements(
   };
 
   // Create replacements for memory.init instructions first
-  size_t initIndex = segmentIndex;
   for (auto referrer : referrers) {
     auto* init = referrer->dynCast<MemoryInit>();
     if (init == nullptr) {
@@ -492,7 +512,8 @@ void MemoryPacking::createReplacements(
       ++firstRangeIdx;
     }
 
-    // Handle zero-length memory.inits separately
+    // Handle zero-length memory.inits separately so we can later assume that
+    // start is in bounds and that some range will be intersected.
     if (start == end) {
       // Offset is nonzero because init would otherwise have previously been
       // optimized out, so trap if the dest is out of bounds or the segment is
@@ -500,7 +521,8 @@ void MemoryPacking::createReplacements(
       Expression* result = builder.makeIf(
         builder.makeBinary(
           OrInt32,
-          builder.makeBinary(GtUInt32, init->dest, makeMemorySize(builder)),
+          builder.makeBinary(
+            GtUInt32, init->dest, makeShiftedMemorySize(builder)),
           builder.makeGlobalGet(getDropStateGlobal(), Type::i32)),
         builder.makeUnreachable());
       replacements[init] = [result](Function*) { return result; };
@@ -527,6 +549,9 @@ void MemoryPacking::createReplacements(
       setVar = &set->index;
       appendResult(set);
     }
+
+    // We only need to explicitly check the drop state when we will emit
+    // memory.fill first, since memory.init will implicitly do the check for us.
     if (ranges[firstRangeIdx].isZero) {
       appendResult(
         builder.makeIf(builder.makeGlobalGet(getDropStateGlobal(), Type::i32),
@@ -535,6 +560,7 @@ void MemoryPacking::createReplacements(
 
     size_t bytesWritten = 0;
 
+    size_t initIndex = segmentIndex;
     for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
          ++i) {
       auto& range = ranges[i];
@@ -587,7 +613,6 @@ void MemoryPacking::createReplacements(
 
   // Create replacements for data.drop instructions now that we know whether we
   // need a drop state global
-  size_t dropIndex = segmentIndex;
   for (auto drop : referrers) {
     if (!drop->is<DataDrop>()) {
       continue;
@@ -603,6 +628,7 @@ void MemoryPacking::createReplacements(
       appendResult(builder.makeGlobalSet(
         dropStateGlobal, builder.makeConst(Literal(int32_t(1)))));
     }
+    size_t dropIndex = segmentIndex;
     for (auto range : ranges) {
       if (!range.isZero) {
         appendResult(builder.makeDataDrop(dropIndex++));

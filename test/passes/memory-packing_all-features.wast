@@ -68,9 +68,15 @@
     (data.drop 1)
   )
 
+  ;; the not-split tests have too many memory.init and data.drop instructions for splitting to be worth it
   (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start") ;; 2
 
   (func $zeroes-at-start-not-split
+    (memory.init 2
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 45)
+    )
     (memory.init 2
       (i32.const 0)
       (i32.const 0)
@@ -114,6 +120,11 @@
   (data passive "zeroes at end\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 5
 
   (func $zeroes-at-end-not-split
+    (memory.init 5
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 43)
+    )
     (memory.init 5
       (i32.const 0)
       (i32.const 0)
