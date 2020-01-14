@@ -1370,8 +1370,9 @@ public:
 // binary representation. This is used for general debugging info support.
 // Offsets are relative to the beginning of the code section, as in DWARF.
 struct BinaryLocations {
+  using Span = std::pair<uint32_t, uint32_t>;
   std::unordered_map<Expression*, uint32_t> expressions;
-  std::unordered_map<Function*, uint32_t> functions;
+  std::unordered_map<Function*, Span> functions;
 };
 
 class Module {

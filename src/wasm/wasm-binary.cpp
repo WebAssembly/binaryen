@@ -338,6 +338,9 @@ void WasmBinaryWriter::writeFunctions() {
         binaryLocations.expressions[curr] -= adjustmentForLEBShrinking;
       }
     }
+    if (!binaryLocationTrackedExpressionsForFunc.empty()) {
+      binaryLocations.functions[func] = BinaryLocations::Span(start - adjustmentForLEBShrinking, o.size());
+    }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
     binaryLocationTrackedExpressionsForFunc.clear();
@@ -1356,10 +1359,14 @@ void WasmBinaryBuilder::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    Function* func = new Function;
+    auto* func = new Function;
     func->name = Name::fromInt(i);
     func->sig = functionSignatures[i];
     currFunction = func;
+
+    if (DWARF) {
+      wasm.binaryLocations.functions[func] = BinaryLocations::Span(pos, pos + size);
+    }
 
     readNextDebugLocation();
 
