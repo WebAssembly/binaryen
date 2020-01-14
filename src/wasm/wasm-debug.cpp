@@ -334,17 +334,15 @@ struct AddrExprMap {
 
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
-    for (auto& func : wasm.functions) {
-      for (auto pair : func->binaryLocations) {
-        assert(map.count(pair.second) == 0);
-        map[pair.second] = pair.first;
-      }
+    for (auto pair : wasm.binaryLocations.expressions) {
+      assert(map.count(pair.second) == 0);
+      map[pair.second] = pair.first;
     }
   }
 
-  // Construct the map from new binaryLocations just written
-  AddrExprMap(const BinaryLocationsMap& newLocations) {
-    for (auto pair : newLocations) {
+  // Construct the map from new binaryLocations just written.
+  AddrExprMap(const BinaryLocations& newLocations) {
+    for (auto pair : newLocations.expressions) {
       assert(map.count(pair.second) == 0);
       map[pair.second] = pair.first;
     }
@@ -368,7 +366,7 @@ struct AddrExprMap {
 
 struct LocationUpdater {
   Module& wasm;
-  const BinaryLocationsMap& newLocations;
+  const BinaryLocations& newLocations;
 
   AddrExprMap oldAddrMap;
   AddrExprMap newAddrMap;
@@ -380,7 +378,7 @@ struct LocationUpdater {
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations)
+  LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
     : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
       newAddrMap(newLocations) {}
 
@@ -389,8 +387,8 @@ struct LocationUpdater {
   // Otherwise, return the new updated location.
   uint32_t getNewAddr(uint32_t oldAddr) const {
     if (auto* expr = oldAddrMap.get(oldAddr)) {
-      auto iter = newLocations.find(expr);
-      if (iter != newLocations.end()) {
+      auto iter = newLocations.expressions.find(expr);
+      if (iter != newLocations.expressions.end()) {
         uint32_t newAddr = iter->second;
         return newAddr;
       }
@@ -522,7 +520,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
     });
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
+void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.
@@ -563,7 +561,7 @@ void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
+void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 

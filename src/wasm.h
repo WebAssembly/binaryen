@@ -1166,8 +1166,6 @@ class StackInst;
 
 using StackIR = std::vector<StackInst*>;
 
-using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
-
 class Function : public Importable {
 public:
   Name name;
@@ -1212,10 +1210,6 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
-
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section.
-  BinaryLocationsMap binaryLocations;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1372,6 +1366,14 @@ public:
   std::vector<char> data;
 };
 
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  std::unordered_map<Expression*, uint32_t> expressions;
+  std::unordered_map<Function*, uint32_t> functions;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
@@ -1396,6 +1398,9 @@ public:
   // too.
   FeatureSet features = FeatureSet::MVP;
   bool hasFeaturesSection = false;
+
+  // General debugging info support.
+  BinaryLocations binaryLocations;
 
   MixedArena allocator;
 
