@@ -328,48 +328,11 @@ private:
   }
 };
 
-// Represents a mapping of addresses to expressions.
-struct AddrExprMap {
-  std::unordered_map<uint32_t, Expression*> map;
-
-  // Construct the map from the binaryLocations loaded from the wasm.
-  AddrExprMap(const Module& wasm) {
-    for (auto pair : wasm.binaryLocations.expressions) {
-      assert(map.count(pair.second) == 0);
-      map[pair.second] = pair.first;
-    }
-  }
-
-  // Construct the map from new binaryLocations just written.
-  AddrExprMap(const BinaryLocations& newLocations) {
-    for (auto pair : newLocations.expressions) {
-      assert(map.count(pair.second) == 0);
-      map[pair.second] = pair.first;
-    }
-  }
-
-  Expression* get(uint32_t addr) const {
-    auto iter = map.find(addr);
-    if (iter != map.end()) {
-      return iter->second;
-    }
-    return nullptr;
-  }
-
-  void dump() const {
-    std::cout << "  (size: " << map.size() << ")\n";
-    for (auto pair : map) {
-      std::cout << "  " << pair.first << " => " << pair.second << '\n';
-    }
-  }
-};
-
 struct LocationUpdater {
   Module& wasm;
   const BinaryLocations& newLocations;
 
-  AddrExprMap oldAddrMap;
-  AddrExprMap newAddrMap;
+  std::unordered_map<uint32_t, uint32_t> oldToNew;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -379,24 +342,31 @@ struct LocationUpdater {
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
-    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
-      newAddrMap(newLocations) {}
+    : wasm(wasm), newLocations(newLocations) {
+    for (auto pair : wasm.binaryLocations.expressions) {
+      auto* expr = pair.first;
+      auto addr = pair.second;
+      auto iter = newLocations.expressions.find(expr);
+      if (iter != newLocations.expressions.end()) {
+        oldToNew[addr] = iter->second;
+      } else {
+        oldToNew[addr] = 0;
+      }
+    }
+  }
 
   // Updates an address. If there was never an instruction at that address,
   // or if there was but if that instruction no longer exists, return 0.
   // Otherwise, return the new updated location.
   uint32_t getNewAddr(uint32_t oldAddr) const {
-    if (auto* expr = oldAddrMap.get(oldAddr)) {
-      auto iter = newLocations.expressions.find(expr);
-      if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second;
-        return newAddr;
-      }
+    auto iter = oldToNew.find(oldAddr);
+    if (iter != oldToNew.end()) {
+      return iter->second;
     }
     return 0;
   }
 
-  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
+  bool hasOldAddr(uint32_t oldAddr) const { return oldToNew.count(oldAddr); }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
