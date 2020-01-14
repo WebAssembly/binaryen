@@ -478,8 +478,8 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                   // If the old address did not refer to an instruction, then
                   // this is not something we understand and can update.
                   if (locationUpdater.hasOldAddr(yamlValue.Value)) {
-                    // A compile unit's address is not the address of an
-                    // instruction or a function.
+                    // The addresses of compile units and functions are not
+                    // instructions.
                     assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
                            DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
                     // Note that the new value may be 0, which is the correct
