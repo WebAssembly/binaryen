@@ -571,7 +571,7 @@ void MemoryPacking::createReplacements(Module* module,
         dest =
           builder.makeConst(Literal(int32_t(c->value.geti32() + bytesWritten)));
       } else {
-        auto* get = builder.makeLocalGet(-1, i32);
+        auto* get = builder.makeLocalGet(-1, Type::i32);
         getVars.push_back(&get->index);
         dest = get;
         if (bytesWritten > 0) {
@@ -587,7 +587,7 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Create new memory.init or memory.fill
       if (range.isZero) {
-        Expression* value = builder.makeConst(Literal::makeZero(i32));
+        Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
         appendResult(builder.makeMemoryFill(dest, value, size));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
