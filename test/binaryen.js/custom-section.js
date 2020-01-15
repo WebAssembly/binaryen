@@ -1,15 +1,7 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
+binaryen.setAPITracing(true);
+var module = new binaryen.Module();
 
-function test() {
-  Binaryen.setAPITracing(true);
-  var module = new Binaryen.Module();
+module.addCustomSection("hello", [119, 111, 114, 108, 100]);
 
-  module.addCustomSection("hello", [119, 111, 114, 108, 100]);
-
-  assert(module.validate());
-  console.log(module.emitText());
-}
-
-Binaryen.ready.then(test);
+assert(module.validate());
+console.log(module.emitText());
