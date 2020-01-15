@@ -559,6 +559,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
                   if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
                       tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                      tag == llvm::dwarf::DW_TAG_lexical_block ||
                       tag == llvm::dwarf::DW_TAG_label) {
                     // low_pc in certain tags represent expressions.
                     yamlValue.Value =
