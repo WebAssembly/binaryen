@@ -384,10 +384,10 @@ struct LocationUpdater {
     : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
       newAddrMap(newLocations) {}
 
-  // Updates an address. If there was never an instruction at that address,
-  // or if there was but if that instruction no longer exists, return 0.
-  // Otherwise, return the new updated location.
-  uint32_t getNewAddr(uint32_t oldAddr) const {
+  // Updates an expression's address. If there was never an instruction at that
+  // address, or if there was but if that instruction no longer exists, return
+  // 0. Otherwise, return the new updated location.
+  uint32_t getNewExprAddr(uint32_t oldAddr) const {
     if (auto* expr = oldAddrMap.get(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
@@ -428,7 +428,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
+        if (auto newAddr = locationUpdater.getNewExprAddr(state.addr)) {
           newAddrs.push_back(newAddr);
           newAddrInfo.emplace(newAddr, state);
           auto& updatedState = newAddrInfo.at(newAddr);
@@ -502,18 +502,12 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-                  // If the old address did not refer to an instruction, then
-                  // this is not something we understand and can update.
-                  if (locationUpdater.hasOldAddr(yamlValue.Value)) {
-                    // The addresses of compile units and functions are not
-                    // instructions.
-                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
-                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
-                    // Note that the new value may be 0, which is the correct
-                    // way to indicate that this is no longer a valid wasm
-                    // value, the same as wasm-ld would do.
+                  // low_pc in certain tags represent expressions.
+                  if (DIE.getTag() == llvm::dwarf::DW_TAG_GNU_call_site ||
+                      DIE.getTag() == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                      DIE.getTag() == llvm::dwarf::DW_TAG_label) {
                     yamlValue.Value =
-                      locationUpdater.getNewAddr(yamlValue.Value);
+                      locationUpdater.getNewExprAddr(yamlValue.Value);
                   }
                 }
               });
