@@ -16,34 +16,34 @@ function testBlock() {
   assert(block.type === Binaryen.none);
   block.type = Binaryen.i32;
   assert(block.type === Binaryen.i32);
-  assert(block.size === 0);
+  assert(block.numChildren === 0);
   var child1 = module.i32.const(1);
   block.appendChild(child1);
-  assert(block.size === 1);
+  assert(block.numChildren === 1);
   assert(block.getChildAt(0) === child1);
   var child2 = module.i32.const(2);
   block.insertChildAt(1, child2);
-  assert(block.size === 2);
+  assert(block.numChildren === 2);
   assert(block.getChildAt(0) === child1);
   assert(block.getChildAt(1) === child2);
   var child0 = module.i32.const(0);
   block.insertChildAt(0, child0);
-  assert(block.size === 3);
+  assert(block.numChildren === 3);
   assert(block.getChildAt(0) === child0);
   assert(block.getChildAt(1) === child1);
   assert(block.getChildAt(2) === child2);
   var newChild1 = module.i32.const(11);
   block.setChildAt(1, newChild1);
-  assert(block.size === 3);
+  assert(block.numChildren === 3);
   assert(block.getChildAt(0) === child0);
   assert(block.getChildAt(1) === newChild1);
   assert(block.getChildAt(2) === child2);
   block.removeChildAt(1);
-  assert(block.size === 2);
+  assert(block.numChildren === 2);
   assert(block.getChildAt(0) === child0);
   assert(block.getChildAt(1) === child2);
   block.removeChildAt(1);
-  assert(block.size === 1);
+  assert(block.numChildren === 1);
   assert(block.getChildAt(0) === child0);
   assert(
     block.toText()
@@ -51,7 +51,7 @@ function testBlock() {
     "(block $theName (result i32)\n (i32.const 0)\n)\n"
   );
   block.removeChildAt(0);
-  assert(block.size === 0);
+  assert(block.numChildren === 0);
   assert(block == blockRef);
 
   module.dispose();
@@ -117,7 +117,10 @@ function testLoop() {
 }
 
 Binaryen.ready.then(function() {
+  console.log("block");
   testBlock();
+  console.log("if");
   testIf();
+  console.log("loop");
   testLoop();
 });

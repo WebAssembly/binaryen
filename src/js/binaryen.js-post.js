@@ -2878,121 +2878,338 @@ Module['setAPITracing'] = function(on) {
 
 // Expression wrappers
 
-function makeExpressionWrapper(expr, properties, methods) {
-  if (!expr) return null;
-  // default properties
-  properties['id'] = {
-    get: function() {
-      return Module['_BinaryenExpressionGetId'](expr);
-    }
-  };
-  properties['type'] = {
-    get: function() {
-      return Module['_BinaryenExpressionGetType'](expr);
-    },
-    set: function(type) {
-      Module['_BinaryenExpressionSetType'](expr, type);
-    }
-  }
-  // default methods
-  methods['toText'] = function() {
+var commonMembers = {
+  'getId': function(expr) {
+    return Module['_BinaryenExpressionGetId'](expr);
+  },
+  'getType': function(expr) {
+    return Module['_BinaryenExpressionGetType'](expr);
+  },
+  'setType': function(expr, type) {
+    Module['_BinaryenExpressionSetType'](expr, type);
+  },
+  'toText': function(expr) {
     return Module['emitText'](expr);
+  }
+};
+
+// Makes a wrapper class with the specified static members while
+// automatically deriving instance methods and accessors.
+function makeExpressionWrapper(staticMembers) {
+  function ExpressionWrapper(expr) {
+    if (!(this instanceof ExpressionWrapper)) {
+      if (!expr) return null;
+      return new ExpressionWrapper(expr);
+    }
+    if (!expr) throw Error("expression must not be null");
+    this['expr'] = expr;
+  }
+  Object.assign(ExpressionWrapper, commonMembers);
+  Object.assign(ExpressionWrapper, staticMembers);
+  var prototype = ExpressionWrapper.prototype;
+  makeExpressionWrapperInstanceMembers(prototype, commonMembers);
+  makeExpressionWrapperInstanceMembers(prototype, staticMembers);
+  prototype['valueOf'] = function() {
+    return this['expr'];
   };
-  methods['valueOf'] = function() {
-    return expr;
-  };
-  return Object.defineProperties(methods, properties);
+  return ExpressionWrapper;
 }
 
-Module['Block'] = function(expr) {
-  return makeExpressionWrapper(expr, {
-    'name': {
-      get: function() {
-        var name = Module['_BinaryenBlockGetName'](expr);
-        return name ? UTF8ToString(name) : null;
-      },
-      set: function(name) {
-        preserveStack(function() {
-          Module['_BinaryenBlockSetName'](expr, strToStack(name));
+// Makes instance members from the given static members
+function makeExpressionWrapperInstanceMembers(prototype, members) {
+  Object.keys(members).forEach(function(key) {
+    var member = members[key];
+    if (typeof member === "function") {
+      // Instance method calls the respective static method
+      prototype[key] = function(/* arguments */) {
+        var numArgs = arguments.length;
+        var args = new Array(1 + numArgs);
+        args[0] = this['expr'];
+        for (var i = 0; i < numArgs; ++i) {
+          args[1 + i] = arguments[i];
+        }
+        return this.constructor[key].apply(null, args);
+      };
+      // Instance accessor calls the respective static methods
+      if (member.length === 1 && key.startsWith("get")) {
+        Object.defineProperty(prototype, key.charAt(3).toLowerCase() + key.substring(4), {
+          get: function() {
+            return this.constructor[key](this['expr']);
+          },
+          set: function(value) {
+            this.constructor["set" + key.substring(3)](this['expr'], value);
+          }
         });
       }
-    },
-    'size': {
-      get: function() {
-        return Module['_BinaryenBlockGetNumChildren'](expr);
-      }
-    }
-  }, {
-    'getChildAt': function(index) {
-      return Module['_BinaryenBlockGetChildAt'](expr, index);
-    },
-    'setChildAt': function(index, child) {
-      Module['_BinaryenBlockSetChildAt'](expr, index, child);
-    },
-    'appendChild': function(child) {
-      return Module['_BinaryenBlockAppendChild'](expr, child);
-    },
-    'insertChildAt': function(index, child) {
-      Module['_BinaryenBlockInsertChildAt'](expr, index, child);
-    },
-    'removeChildAt': function(index) {
-      Module['_BinaryenBlockRemoveChildAt'](expr, index);
     }
   });
-};
+}
 
-Module['If'] = function(expr) {
-  return makeExpressionWrapper(expr, {
-    'condition': {
-      get: function() {
-        return Module['_BinaryenIfGetCondition'](expr);
-      },
-      set: function(condExpr) {
-        Module['_BinaryenIfSetCondition'](expr, condExpr);
-      }
-    },
-    'ifTrue': {
-      get: function() {
-        return Module['_BinaryenIfGetIfTrue'](expr);
-      },
-      set: function(ifTrueExpr) {
-        Module['_BinaryenIfSetIfTrue'](expr, ifTrueExpr);
-      }
-    },
-    'ifFalse': {
-      get: function() {
-        return Module['_BinaryenIfGetIfFalse'](expr);
-      },
-      set: function(ifFalseExpr) {
-        Module['_BinaryenIfSetIfFalse'](expr, ifFalseExpr);
-      }
-    }
-  }, {});
-};
+Module['Block'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenBlockGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenBlockSetName'](expr, strToStack(name));
+    });
+  },
+  'getNumChildren': function(expr) {
+    return Module['_BinaryenBlockGetNumChildren'](expr);
+  },
+  'getChildAt': function(expr, index) {
+    return Module['_BinaryenBlockGetChildAt'](expr, index);
+  },
+  'setChildAt': function(expr, index, childExpr) {
+    Module['_BinaryenBlockSetChildAt'](expr, index, childExpr);
+  },
+  'appendChild': function(expr, childExpr) {
+    return Module['_BinaryenBlockAppendChild'](expr, childExpr);
+  },
+  'insertChildAt': function(expr, index, childExpr) {
+    Module['_BinaryenBlockInsertChildAt'](expr, index, childExpr);
+  },
+  'removeChildAt': function(expr, index) {
+    return Module['_BinaryenBlockRemoveChildAt'](expr, index);
+  }
+});
 
-Module['Loop'] = function(expr) {
-  return makeExpressionWrapper(expr, {
-    'name': {
-      get: function() {
-        var name = Module['_BinaryenLoopGetName'](expr);
-        return name ? UTF8ToString(name) : null;
-      },
-      set: function(name) {
-        preserveStack(function() {
-          Module['_BinaryenLoopSetName'](expr, strToStack(name));
-        });
-      }
-    },
-    'body': {
-      get: function() {
-        return Module['_BinaryenLoopGetBody'](expr);
-      },
-      set: function(bodyExpr) {
-        Module['_BinaryenLoopSetBody'](expr, bodyExpr);
-      }
-    }
-  }, {});
-};
+Module['If'] = makeExpressionWrapper({
+  'getCondition': function(expr) {
+    return Module['_BinaryenIfGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenIfSetCondition'](expr, condExpr);
+  },
+  'getIfTrue': function(expr) {
+    return Module['_BinaryenIfGetIfTrue'](expr);
+  },
+  'setIfTrue': function(expr, ifTrueExpr) {
+    Module['_BinaryenIfSetIfTrue'](expr, ifTrueExpr);
+  },
+  'getIfFalse': function(expr) {
+    return Module['_BinaryenIfGetIfFalse'](expr);
+  },
+  'setIfFalse': function(expr, ifFalseExpr) {
+    Module['_BinaryenIfSetIfFalse'](expr, ifFalseExpr);
+  }
+});
+
+Module['Loop'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenLoopGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenLoopSetName'](expr, strToStack(name));
+    });
+  },
+  'getBody': function(expr) {
+    return Module['_BinaryenLoopGetBody'](expr);
+  },
+  'setBody': function(expr, bodyExpr) {
+    Module['_BinaryenLoopSetBody'](expr, bodyExpr);
+  }
+});
+
+Module['Break'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenBreakGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenBreakSetName'](expr, strToStack(name));
+    });
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenBreakGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenBreakSetCondition'](expr, condExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenBreakGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenBreakSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Switch'] = makeExpressionWrapper({
+  'getNumNames': function(expr) {
+    return Module['_BinaryenSwitchGetNumNames'](expr);
+  },
+  'getDefaultName': function(expr) {
+    var name = Module['_BinaryenSwitchGetDefaultName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setDefaultName': function(expr, defaultName) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchSetDefaultName'](expr, strToStack(defaultName));
+    });
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenSwitchGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenSwitchSetCondition'](expr, condExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenSwitchGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenSwitchSetValue'](expr, valueExpr);
+  },
+  'getNameAt': function(expr, index) {
+    return UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index));
+  },
+  'setNameAt': function(expr, index, name) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name));
+    });
+  }
+});
+
+Module['Call'] = makeExpressionWrapper({
+  'getTarget': function(expr) {
+    return UTF8ToString(Module['_BinaryenCallGetTarget'](expr));
+  },
+  'setTarget': function(expr, targetName) {
+    preserveStack(function() {
+      Module['_BinaryenCallSetTarget'](expr, strToStack(targetName));
+    });
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenCallGetNumOperands'](expr);
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenCallGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenCallAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenCallRemoveOperandAt'](expr, index);
+  }
+});
+
+Module['CallIndirect'] = makeExpressionWrapper({
+  'getTarget': function(expr) {
+    return Module['_BinaryenCallIndirectGetTarget'](expr);
+  },
+  'setTarget': function(expr, targetExpr) {
+    Module['_BinaryenCallIndirectSetTarget'](expr, targetExpr);
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenCallIndirectGetNumOperands'](expr);
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenCallIndirectGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenCallIndirectAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallIndirectInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenCallIndirectRemoveOperandAt'](expr, index);
+  }
+});
+
+Module['LocalGet'] = makeExpressionWrapper({
+  'getIndex': function(expr) {
+    return Module['_BinaryenLocalGetGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenLocalGetSetIndex'](expr, index);
+  }
+});
+
+Module['LocalSet'] = makeExpressionWrapper({
+  'getIndex': function(expr) {
+    return Module['_BinaryenLocalSetGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenLocalSetSetIndex'](expr, index);
+  },
+  'isTee': function(expr) {
+    return Boolean(Module['_BinaryenLocalSetIsTee'](expr));
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenLocalSetGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenLocalSetSetValue'](expr, valueExpr);
+  }
+});
+
+Module['GlobalGet'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    return UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr));
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenGlobalGetSetName'](expr, strToStack(name));
+    });
+  }
+});
+
+Module['GlobalSet'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    return UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr));
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenGlobalSetSetName'](expr, strToStack(name));
+    });
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenGlobalSetGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenGlobalSetSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Host'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenHostGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenmHostSetOp'](expr, op);
+  },
+  'getNameOperand': function(expr) {
+    var name = Module['_BinaryenHostGetNameOperand'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setNameOperand': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenHostSetNameOperand'](expr, strToStack(name));
+    });
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenHostGetNumOperands'](expr);
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenHostGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
+  }
+});
 
 // Additional customizations
 

@@ -1856,6 +1856,38 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
 // Specific expression utility
 
+// Common helpers
+BinaryenIndex appendExpression(ExpressionList& list,
+                               BinaryenExpressionRef expr) {
+  assert(expr);
+  auto index = list.size();
+  list.push_back((Expression*)expr);
+  return index;
+}
+void insertExpressionAt(ExpressionList& list,
+                        BinaryenIndex index,
+                        BinaryenExpressionRef expr) {
+  assert(expr);
+  auto size = list.size();
+  assert(index <= size); // appending is ok
+  list.resize(size + 1);
+  for (auto i = size; i > index; --i) {
+    list[i] = list[i - 1];
+  }
+  list[index] = (Expression*)expr;
+}
+BinaryenExpressionRef removeExpressionAt(ExpressionList& list,
+                                         BinaryenIndex index) {
+  auto size = list.size();
+  assert(index < size);
+  auto expr = list[index];
+  for (auto i = index; i < size - 1; ++i) {
+    list[i] = list[i + 1];
+  }
+  list.resize(size - 1);
+  return expr;
+}
+
 // Block
 const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -1924,10 +1956,7 @@ BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  auto& list = static_cast<Block*>(expression)->list;
-  auto index = list.size();
-  list.push_back(child);
-  return index;
+  return appendExpression(static_cast<Block*>(expression)->list, child);
 }
 void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
                                 BinaryenIndex index,
@@ -1940,17 +1969,10 @@ void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  auto& list = static_cast<Block*>(expression)->list;
-  auto size = list.size();
-  assert(index <= size); // appending is ok
-  list.resize(size + 1);
-  for (auto i = size; i > index; --i) {
-    list[i] = list[i - 1];
-  }
-  list[index] = child;
+  insertExpressionAt(static_cast<Block*>(expression)->list, index, child);
 }
-void BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
-                                BinaryenIndex index) {
+BinaryenExpressionRef BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
+                                                 BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenBlockRemoveChildAt(expressions["
               << expressions[expr] << "], " << index << ");\n";
@@ -1958,13 +1980,7 @@ void BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  auto& list = static_cast<Block*>(expression)->list;
-  auto size = list.size();
-  assert(index < size);
-  for (auto i = index; i < size - 1; ++i) {
-    list[i] = list[i + 1];
-  }
-  list.resize(size - 1);
+  return removeExpressionAt(static_cast<Block*>(expression)->list, index);
 }
 // If
 BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
@@ -2308,6 +2324,40 @@ void BinaryenCallSetOperandAt(BinaryenExpressionRef expr,
   assert(operandExpr);
   static_cast<Call*>(expression)->operands[index] = (Expression*)operandExpr;
 }
+BinaryenIndex BinaryenCallAppendOperand(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallAppendOperand(expressions[" << expressions[expr]
+              << "], expressions[" << expressions[operandExpr] << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return appendExpression(static_cast<Call*>(expression)->operands,
+                          operandExpr);
+}
+void BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallInsertOperandAt(expressions["
+              << expressions[expr] << "], " << index << ", expressions["
+              << expressions[operandExpr] << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  insertExpressionAt(
+    static_cast<Call*>(expression)->operands, index, operandExpr);
+}
+BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
+                                                  BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenCallRemoveOperandAt(expressions["
+              << expressions[expr] << "], " << index << ");\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return removeExpressionAt(static_cast<Call*>(expression)->operands, index);
+}
 // CallIndirect
 BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
@@ -2371,6 +2421,44 @@ void BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
   assert(operandExpr);
   static_cast<CallIndirect*>(expression)->operands[index] =
     (Expression*)operandExpr;
+}
+BinaryenIndex
+BinaryenCallIndirectAppendOperand(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectAppendOperand(expressions["
+              << expressions[expr] << "], expressions["
+              << expressions[operandExpr] << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return appendExpression(static_cast<CallIndirect*>(expression)->operands,
+                          operandExpr);
+}
+void BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
+                                         BinaryenIndex index,
+                                         BinaryenExpressionRef operandExpr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectInsertOperandAt(expressions["
+              << expressions[expr] << "], " << index << ", expressions["
+              << expressions[operandExpr] << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  insertExpressionAt(
+    static_cast<CallIndirect*>(expression)->operands, index, operandExpr);
+}
+BinaryenExpressionRef
+BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
+                                    BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectRemoveOperandAt(expressions["
+              << expressions[expr] << "], " << index << ");\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return removeExpressionAt(static_cast<CallIndirect*>(expression)->operands,
+                            index);
 }
 // LocalGet
 BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {

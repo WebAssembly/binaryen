@@ -867,9 +867,9 @@ BINARYEN_API void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
                                              BinaryenIndex index,
                                              BinaryenExpressionRef child);
 // Removes the child expression at the specified index of a `block` expression,
-// moving all subsequent children one index down.
-BINARYEN_API void BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
-                                             BinaryenIndex index);
+// moving all subsequent children one index down. Returns the child expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Gets the condition expression of an `if` expression.
 BINARYEN_API BinaryenExpressionRef
@@ -968,6 +968,21 @@ BinaryenCallGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 BINARYEN_API void BinaryenCallSetOperandAt(BinaryenExpressionRef expr,
                                            BinaryenIndex index,
                                            BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `call` expression, returning its insertion
+// index.
+BinaryenIndex BinaryenCallAppendOperand(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `call` expression,
+// moving existing operands including the one previously at that index one index
+// up.
+void BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `call` expression,
+// moving all subsequent operands one index down. Returns the operand
+// expression.
+BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
+                                                  BinaryenIndex index);
 
 // Gets the target expression of a `call_indirect` expression.
 BINARYEN_API BinaryenExpressionRef
@@ -989,6 +1004,23 @@ BINARYEN_API void
 BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
                                  BinaryenIndex index,
                                  BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `call_indirect` expression, returning its
+// insertion index.
+BinaryenIndex
+BinaryenCallIndirectAppendOperand(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `call_indirect`
+// expression, moving existing operands including the one previously at that
+// index one index up.
+void BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
+                                         BinaryenIndex index,
+                                         BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `call_indirect`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BinaryenExpressionRef
+BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
+                                    BinaryenIndex index);
 
 // Gets the local index of a `local.get` expression.
 BINARYEN_API BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr);
