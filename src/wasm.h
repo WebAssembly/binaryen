@@ -1158,6 +1158,17 @@ struct Importable {
   bool imported() { return module.is(); }
 };
 
+class Function;
+
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  using Span = std::pair<uint32_t, uint32_t>;
+  std::unordered_map<Expression*, uint32_t> expressions;
+  std::unordered_map<Function*, Span> functions;
+};
+
 // Forward declarations of Stack IR, as functions can contain it, see
 // the stackIR property.
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
@@ -1210,6 +1221,10 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
+
+  // General debugging info support: track instructions and the function itself.
+  std::unordered_map<Expression*, uint32_t> expressionLocations;
+  BinaryLocations::Span funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1366,15 +1381,6 @@ public:
   std::vector<char> data;
 };
 
-// Represents a mapping of wasm module elements to their location in the
-// binary representation. This is used for general debugging info support.
-// Offsets are relative to the beginning of the code section, as in DWARF.
-struct BinaryLocations {
-  using Span = std::pair<uint32_t, uint32_t>;
-  std::unordered_map<Expression*, uint32_t> expressions;
-  std::unordered_map<Function*, Span> functions;
-};
-
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
@@ -1399,9 +1405,6 @@ public:
   // too.
   FeatureSet features = FeatureSet::MVP;
   bool hasFeaturesSection = false;
-
-  // General debugging info support.
-  BinaryLocations binaryLocations;
 
   MixedArena allocator;
 

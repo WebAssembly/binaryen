@@ -1440,8 +1440,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       // show a binary position, if there is one
       if (debugInfo) {
-        auto iter = currModule->binaryLocations.expressions.find(curr);
-        if (iter != currModule->binaryLocations.expressions.end()) {
+        auto iter = currFunction->expressionLocations.find(curr);
+        if (iter != currFunction->expressionLocations.end()) {
           Colors::grey(o);
           o << ";; code offset: 0x" << std::hex << iter->second << std::dec
             << '\n';

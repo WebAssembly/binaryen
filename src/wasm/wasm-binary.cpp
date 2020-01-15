@@ -707,7 +707,7 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   }
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well.
-  if (func && !wasm->binaryLocations.expressions.empty()) {
+  if (func && !func->expressionLocations.empty()) {
     binaryLocations.expressions[curr] = o.size();
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
@@ -1370,7 +1370,7 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      wasm.binaryLocations.functions[func] = BinaryLocations::Span(
+      func->funcLocation = BinaryLocations::Span(
         pos - codeSectionLocation, pos - codeSectionLocation + size);
     }
 
@@ -2292,7 +2292,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
-      wasm.binaryLocations.expressions[curr] = startPos - codeSectionLocation;
+      currFunction->expressionLocations[curr] = startPos - codeSectionLocation;
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
