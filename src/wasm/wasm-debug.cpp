@@ -366,12 +366,52 @@ struct AddrExprMap {
   }
 };
 
+
+// Represents a mapping of addresses to expressions.
+struct FuncAddrMap {
+  std::unordered_map<uint32_t, Function*> map;
+
+  // Construct the map from the binaryLocations loaded from the wasm.
+  FuncAddrMap(const Module& wasm) {
+    for (auto& func : wasm.functions) {
+      map[func->funcLocation.first] = func.get();
+      map[func->funcLocation.second] = func.get();
+    }
+  }
+
+  Function* get(uint32_t addr) const {
+    auto iter = map.find(addr);
+    if (iter != map.end()) {
+      return iter->second;
+    }
+    return nullptr;
+  }
+
+  void dump() const {
+    std::cout << "  (size: " << map.size() << ")\n";
+    for (auto pair : map) {
+      std::cout << "  " << pair.first << " => " << pair.second->name << '\n';
+    }
+  }
+};
+
+// Track locations from the original binary and the new one we wrote, so that
+// we can update debug positions.
+// We track expressions and functions separately, instead of having a single
+// big map of (oldAddr) => (newAddr) because of the potentially ambiguous case
+// of the final expression in a function: it's end might be identical in offset
+// to the end of the function. So we have two different things that map to the
+// same offset. However, if the context is "the end of the function" then the
+// updated address is the new end of the function, even if the function ends
+// with a different instruction now, as the old last instruction might have
+// moved or been optimized out.
 struct LocationUpdater {
   Module& wasm;
   const BinaryLocations& newLocations;
 
-  AddrExprMap oldAddrMap;
-  AddrExprMap newAddrMap;
+  AddrExprMap oldExprAddrMap;
+  AddrExprMap newExprAddrMap;
+  FuncAddrMap oldFuncAddrMap;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -381,14 +421,14 @@ struct LocationUpdater {
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
-    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
-      newAddrMap(newLocations) {}
+    : wasm(wasm), newLocations(newLocations), oldExprAddrMap(wasm),
+      newExprAddrMap(newLocations), oldFuncAddrMap(wasm) {}
 
   // Updates an expression's address. If there was never an instruction at that
   // address, or if there was but if that instruction no longer exists, return
   // 0. Otherwise, return the new updated location.
   uint32_t getNewExprAddr(uint32_t oldAddr) const {
-    if (auto* expr = oldAddrMap.get(oldAddr)) {
+    if (auto* expr = oldExprAddrMap.get(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
         uint32_t newAddr = iter->second;
@@ -398,7 +438,22 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
+  uint32_t getNewFuncAddr(uint32_t oldAddr) const {
+    if (auto* func = oldFuncAddrMap.get(oldAddr)) {
+      // The function might have been optimized away, check.
+      auto iter = newLocations.functions.find(func);
+      if (iter != newLocations.functions.end()) {
+        auto oldSpan = func->funcLocation;
+        auto newSpan = iter->second;
+        if (oldAddr == oldSpan.first) {
+          return newSpan.first;
+        } else if (oldAddr == oldSpan.second) {
+          return newSpan.second;
+        }
+      }
+    }
+    return 0;
+  }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -491,6 +546,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
         yamlUnit.Entries,
         [&](const llvm::DWARFDebugInfoEntry& DIE,
             llvm::DWARFYAML::Entry& yamlEntry) {
+          auto tag = DIE.getTag();
           // Process the entries in each relevant DIE, looking for attributes to
           // change.
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
@@ -502,12 +558,19 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-                  // low_pc in certain tags represent expressions.
-                  if (DIE.getTag() == llvm::dwarf::DW_TAG_GNU_call_site ||
-                      DIE.getTag() == llvm::dwarf::DW_TAG_inlined_subroutine ||
-                      DIE.getTag() == llvm::dwarf::DW_TAG_label) {
+                  if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+                      tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                      tag == llvm::dwarf::DW_TAG_label) {
+                    // low_pc in certain tags represent expressions.
                     yamlValue.Value =
                       locationUpdater.getNewExprAddr(yamlValue.Value);
+                  } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
+                             tag == llvm::dwarf::DW_TAG_subprogram) {
+                    // low_pc in certain tags represent function.
+                    yamlValue.Value =
+                      locationUpdater.getNewFuncAddr(yamlValue.Value);
+                  } else {
+                    Fatal() << "unknown tag with low_pc " << llvm::dwarf::TagString(tag).str();
                   }
                 }
               });
