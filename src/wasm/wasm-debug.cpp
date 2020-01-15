@@ -366,7 +366,6 @@ struct AddrExprMap {
   }
 };
 
-
 // Represents a mapping of addresses to expressions.
 struct FuncAddrMap {
   std::unordered_map<uint32_t, Function*> map;
@@ -570,7 +569,8 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     yamlValue.Value =
                       locationUpdater.getNewFuncAddr(yamlValue.Value);
                   } else {
-                    Fatal() << "unknown tag with low_pc " << llvm::dwarf::TagString(tag).str();
+                    Fatal() << "unknown tag with low_pc "
+                            << llvm::dwarf::TagString(tag).str();
                   }
                 }
               });
