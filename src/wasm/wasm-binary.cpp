@@ -160,7 +160,8 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // We are relative to the section start.
     auto totalAdjustment = adjustmentForLEBShrinking + body;
     for (auto& pair : binaryLocations.expressions) {
-      pair.second -= totalAdjustment;
+      pair.second.first -= totalAdjustment;
+      pair.second.second -= totalAdjustment;
     }
     for (auto& pair : binaryLocations.functions) {
       pair.second.first -= totalAdjustment;
@@ -339,7 +340,9 @@ void WasmBinaryWriter::writeFunctions() {
       for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
-        binaryLocations.expressions[curr] -= adjustmentForLEBShrinking;
+        auto& span = binaryLocations.expressions[curr];
+        span.first -= adjustmentForLEBShrinking;
+        span.second -= adjustmentForLEBShrinking;
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
@@ -708,8 +711,16 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well.
   if (func && !func->expressionLocations.empty()) {
-    binaryLocations.expressions[curr] = o.size();
+    binaryLocations.expressions[curr] = BinaryLocations::Span(o.size(), 0);
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
+  }
+}
+
+void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
+  if (func && !func->expressionLocations.empty()) {
+    auto& span = binaryLocations.expressions.at(curr);
+    assert(span.second == 0);
+    span.second = o.size();
   }
 }
 
@@ -2292,7 +2303,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
-      currFunction->expressionLocations[curr] = startPos - codeSectionLocation;
+      currFunction->expressionLocations[curr] = BinaryLocations::Span(
+          startPos - codeSectionLocation, pos - codeSectionLocation);
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);

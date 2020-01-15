@@ -328,16 +328,20 @@ private:
   }
 };
 
-// Represents a mapping of addresses to expressions.
+// Represents a mapping of addresses to expressions. We track beginnings and
+// endings of expressions separately, since the end of one (which is one past
+// the end in DWARF notation) overlaps with the beginning of the next, and also
+// to let us use contextual information (we may know we are looking up the end
+// of an instruction).
 struct AddrExprMap {
-  std::unordered_map<uint32_t, Expression*> map;
+  std::unordered_map<uint32_t, Expression*> startMap;
+  std::unordered_map<uint32_t, Expression*> endMap;
 
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
       for (auto pair : func->expressionLocations) {
-        assert(map.count(pair.second) == 0);
-        map[pair.second] = pair.first;
+        add(pair.first, pair.second);
       }
     }
   }
@@ -345,24 +349,32 @@ struct AddrExprMap {
   // Construct the map from new binaryLocations just written
   AddrExprMap(const BinaryLocations& newLocations) {
     for (auto pair : newLocations.expressions) {
-      assert(map.count(pair.second) == 0);
-      map[pair.second] = pair.first;
+      add(pair.first, pair.second);
     }
   }
 
-  Expression* get(uint32_t addr) const {
-    auto iter = map.find(addr);
-    if (iter != map.end()) {
+  Expression* getStart(uint32_t addr) const {
+    auto iter = startMap.find(addr);
+    if (iter != startMap.end()) {
       return iter->second;
     }
     return nullptr;
   }
 
-  void dump() const {
-    std::cout << "  (size: " << map.size() << ")\n";
-    for (auto pair : map) {
-      std::cout << "  " << pair.first << " => " << pair.second << '\n';
+  Expression* getEnd(uint32_t addr) const {
+    auto iter = endMap.find(addr);
+    if (iter != endMap.end()) {
+      return iter->second;
     }
+    return nullptr;
+  }
+
+private:
+  void add(Expression* expr, BinaryLocations::Span span) {
+    assert(startMap.count(span.first) == 0);
+    startMap[span.first] = expr;
+    assert(endMap.count(span.second) == 0);
+    endMap[span.second] = expr;
   }
 };
 
@@ -427,10 +439,10 @@ struct LocationUpdater {
   // address, or if there was but if that instruction no longer exists, return
   // 0. Otherwise, return the new updated location.
   uint32_t getNewExprAddr(uint32_t oldAddr) const {
-    if (auto* expr = oldExprAddrMap.get(oldAddr)) {
+    if (auto* expr = oldExprAddrMap.getStart(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second;
+        uint32_t newAddr = iter->second.first;
         return newAddr;
       }
     }

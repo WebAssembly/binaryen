@@ -1165,7 +1165,7 @@ class Function;
 // Offsets are relative to the beginning of the code section, as in DWARF.
 struct BinaryLocations {
   using Span = std::pair<uint32_t, uint32_t>;
-  std::unordered_map<Expression*, uint32_t> expressions;
+  std::unordered_map<Expression*, Span> expressions;
   std::unordered_map<Function*, Span> functions;
 };
 
@@ -1223,7 +1223,7 @@ public:
   std::set<DebugLocation> epilogLocation;
 
   // General debugging info support: track instructions and the function itself.
-  std::unordered_map<Expression*, uint32_t> expressionLocations;
+  std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
   BinaryLocations::Span funcLocation;
 
   size_t getNumParams();
