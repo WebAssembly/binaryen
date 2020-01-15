@@ -328,11 +328,50 @@ private:
   }
 };
 
+// Represents a mapping of addresses to expressions.
+struct AddrExprMap {
+  std::unordered_map<uint32_t, Expression*> map;
+
+  // Construct the map from the binaryLocations loaded from the wasm.
+  AddrExprMap(const Module& wasm) {
+    for (auto& func : wasm.functions) {
+      for (auto pair : func->expressionLocations) {
+        assert(map.count(pair.second) == 0);
+        map[pair.second] = pair.first;
+      }
+    }
+  }
+
+  // Construct the map from new binaryLocations just written
+  AddrExprMap(const BinaryLocations& newLocations) {
+    for (auto pair : newLocations.expressions) {
+      assert(map.count(pair.second) == 0);
+      map[pair.second] = pair.first;
+    }
+  }
+
+  Expression* get(uint32_t addr) const {
+    auto iter = map.find(addr);
+    if (iter != map.end()) {
+      return iter->second;
+    }
+    return nullptr;
+  }
+
+  void dump() const {
+    std::cout << "  (size: " << map.size() << ")\n";
+    for (auto pair : map) {
+      std::cout << "  " << pair.first << " => " << pair.second << '\n';
+    }
+  }
+};
+
 struct LocationUpdater {
   Module& wasm;
   const BinaryLocations& newLocations;
 
-  std::unordered_map<uint32_t, uint32_t> oldToNew;
+  AddrExprMap oldAddrMap;
+  AddrExprMap newAddrMap;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -342,50 +381,24 @@ struct LocationUpdater {
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
-    : wasm(wasm), newLocations(newLocations) {
-    auto mapOldToNew = [&](uint32_t oldAddr, uint32_t newAddr) {
-      if (oldAddr != 0) {
-        assert(oldToNew.count(oldAddr) == 0);
-        oldToNew[oldAddr] = newAddr;
-      }
-    };
-    // Expressions.
-    for (auto pair : wasm.binaryLocations.expressions) {
-      auto* expr = pair.first;
-      auto oldAddr = pair.second;
-      uint32_t newAddr = 0;
-      auto iter = newLocations.expressions.find(expr);
-      if (iter != newLocations.expressions.end()) {
-        newAddr = iter->second;
-      }
-      mapOldToNew(oldAddr, newAddr);
-    }
-    // Functions.
-    for (auto& pair : wasm.binaryLocations.functions) {
-      auto* func = pair.first;
-      auto oldSpan = pair.second;
-      // The function may no longer exist, if it was optimized out.
-      auto iter = newLocations.functions.find(func);
-      if (iter != newLocations.functions.end()) {
-        auto newSpan = iter->second;
-        mapOldToNew(oldSpan.first, newSpan.first);
-        mapOldToNew(oldSpan.second, newSpan.second);
-      }
-    }
-  }
+    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
+      newAddrMap(newLocations) {}
 
   // Updates an address. If there was never an instruction at that address,
   // or if there was but if that instruction no longer exists, return 0.
   // Otherwise, return the new updated location.
   uint32_t getNewAddr(uint32_t oldAddr) const {
-    auto iter = oldToNew.find(oldAddr);
-    if (iter != oldToNew.end()) {
-      return iter->second;
+    if (auto* expr = oldAddrMap.get(oldAddr)) {
+      auto iter = newLocations.expressions.find(expr);
+      if (iter != newLocations.expressions.end()) {
+        uint32_t newAddr = iter->second;
+        return newAddr;
+      }
     }
     return 0;
   }
 
-  bool hasOldAddr(uint32_t oldAddr) const { return oldToNew.count(oldAddr); }
+  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -489,7 +502,13 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                  // If the old address did not refer to an instruction, then
+                  // this is not something we understand and can update.
                   if (locationUpdater.hasOldAddr(yamlValue.Value)) {
+                    // The addresses of compile units and functions are not
+                    // instructions.
+                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
+                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
                     // Note that the new value may be 0, which is the correct
                     // way to indicate that this is no longer a valid wasm
                     // value, the same as wasm-ld would do.
