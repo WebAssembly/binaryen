@@ -284,11 +284,11 @@ Abbrev table for offset: 0x00000000
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009c] = "/usr/local/google/home/azakai/Dev/binaryen")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
-              DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
+              DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
 
 0x00000026:   DW_TAG_subprogram [2] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "fib")
                 DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")

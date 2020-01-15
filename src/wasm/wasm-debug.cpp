@@ -378,7 +378,9 @@ private:
   }
 };
 
-// Represents a mapping of addresses to expressions.
+// Represents a mapping of addresses to expressions. Note that we use a single
+// map for the start and end addresses, since there is no chance of a function's
+// start overlapping with another's end (there is the size LEB in the middle).
 struct FuncAddrMap {
   std::unordered_map<uint32_t, Function*> map;
 
@@ -443,6 +445,17 @@ struct LocationUpdater {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
         uint32_t newAddr = iter->second.first;
+        return newAddr;
+      }
+    }
+    return 0;
+  }
+
+  uint32_t getNewExprEndAddr(uint32_t oldAddr) const {
+    if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
+      auto iter = newLocations.expressions.find(expr);
+      if (iter != newLocations.expressions.end()) {
+        uint32_t newAddr = iter->second.second;
         return newAddr;
       }
     }
@@ -568,17 +581,21 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
               [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
-                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc ||
+                    attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
                   if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
                       tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
                       tag == llvm::dwarf::DW_TAG_lexical_block ||
                       tag == llvm::dwarf::DW_TAG_label) {
-                    // low_pc in certain tags represent expressions.
-                    yamlValue.Value =
-                      locationUpdater.getNewExprAddr(yamlValue.Value);
+                    if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                      yamlValue.Value =
+                        locationUpdater.getNewExprAddr(yamlValue.Value);
+                    } else {
+                      yamlValue.Value =
+                        locationUpdater.getNewExprEndAddr(yamlValue.Value);
+                    }
                   } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                              tag == llvm::dwarf::DW_TAG_subprogram) {
-                    // low_pc in certain tags represent function.
                     yamlValue.Value =
                       locationUpdater.getNewFuncAddr(yamlValue.Value);
                   } else {

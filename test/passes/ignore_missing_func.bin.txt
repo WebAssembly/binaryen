@@ -650,7 +650,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000004f:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000005a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c4] = "_Z4usedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cd] = "used")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
@@ -669,7 +669,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000075:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000005a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000d2] = "_Z6unusedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dd] = "unused")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
@@ -688,7 +688,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000009b:   DW_TAG_subprogram [8]  
                 DW_AT_low_pc [DW_FORM_addr]	(0x000000000000005c)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000064)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e4] = "main")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
                 DW_AT_decl_line [DW_FORM_data1]	(16)
