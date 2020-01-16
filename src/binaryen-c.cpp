@@ -1601,6 +1601,7 @@ BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
                                           BinaryenExpressionRef left,
                                           BinaryenExpressionRef right,
                                           const uint8_t mask_[16]) {
+  assert(mask_); // nullptr would be wrong
   std::array<uint8_t, 16> mask;
   memcpy(mask.data(), mask_, 16);
   auto* ret = Builder(*(Module*)module)
@@ -1856,38 +1857,6 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
 // Specific expression utility
 
-// Common helpers
-BinaryenIndex appendExpression(ExpressionList& list,
-                               BinaryenExpressionRef expr) {
-  assert(expr);
-  auto index = list.size();
-  list.push_back((Expression*)expr);
-  return index;
-}
-void insertExpressionAt(ExpressionList& list,
-                        BinaryenIndex index,
-                        BinaryenExpressionRef expr) {
-  assert(expr);
-  auto size = list.size();
-  assert(index <= size); // appending is ok
-  list.resize(size + 1);
-  for (auto i = size; i > index; --i) {
-    list[i] = list[i - 1];
-  }
-  list[index] = (Expression*)expr;
-}
-BinaryenExpressionRef removeExpressionAt(ExpressionList& list,
-                                         BinaryenIndex index) {
-  auto size = list.size();
-  assert(index < size);
-  auto expr = list[index];
-  for (auto i = index; i < size - 1; ++i) {
-    list[i] = list[i + 1];
-  }
-  list.resize(size - 1);
-  return expr;
-}
-
 // Block
 const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -1909,6 +1878,7 @@ void BinaryenBlockSetName(BinaryenExpressionRef expr, const char* name) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
+  // may be null or empty
   static_cast<Block*>(expression)->name = name;
 }
 BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
@@ -1935,41 +1905,47 @@ BinaryenExpressionRef BinaryenBlockGetChildAt(BinaryenExpressionRef expr,
 }
 void BinaryenBlockSetChildAt(BinaryenExpressionRef expr,
                              BinaryenIndex index,
-                             BinaryenExpressionRef child) {
+                             BinaryenExpressionRef childExpr) {
   if (tracing) {
     std::cout << "  BinaryenBlockSetChildAt(expressions[" << expressions[expr]
-              << "], " << index << ", " << expressions[child] << "]);\n";
+              << "], " << index << ", " << expressions[childExpr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
+  assert(childExpr);
   auto& list = static_cast<Block*>(expression)->list;
   assert(index < list.size());
-  list[index] = child;
+  list[index] = (Expression*)childExpr;
 }
 BinaryenIndex BinaryenBlockAppendChild(BinaryenExpressionRef expr,
-                                       BinaryenExpressionRef child) {
+                                       BinaryenExpressionRef childExpr) {
   if (tracing) {
     std::cout << "  BinaryenBlockAppendChild(expressions[" << expressions[expr]
-              << "], " << expressions[child] << "]);\n";
+              << "], " << expressions[childExpr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  return appendExpression(static_cast<Block*>(expression)->list, child);
+  assert(childExpr);
+  auto& list = static_cast<Block*>(expression)->list;
+  auto index = list.size();
+  list.push_back((Expression*)childExpr);
+  return index;
 }
 void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
                                 BinaryenIndex index,
-                                BinaryenExpressionRef child) {
+                                BinaryenExpressionRef childExpr) {
   if (tracing) {
     std::cout << "  BinaryenBlockInsertChildAt(expressions["
               << expressions[expr] << "], " << index << ", "
-              << expressions[child] << "]);\n";
+              << expressions[childExpr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  insertExpressionAt(static_cast<Block*>(expression)->list, index, child);
+  assert(childExpr);
+  static_cast<Block*>(expression)->list.insertAt(index, (Expression*)childExpr);
 }
 BinaryenExpressionRef BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
                                                  BinaryenIndex index) {
@@ -1980,7 +1956,7 @@ BinaryenExpressionRef BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  return removeExpressionAt(static_cast<Block*>(expression)->list, index);
+  return static_cast<Block*>(expression)->list.removeAt(index);
 }
 // If
 BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
@@ -2046,6 +2022,7 @@ void BinaryenIfSetIfFalse(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<If>());
+  // may be null
   static_cast<If*>(expression)->ifFalse = (Expression*)ifFalseExpr;
 }
 // Loop
@@ -2068,6 +2045,7 @@ void BinaryenLoopSetName(BinaryenExpressionRef expr, const char* name) {
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Loop>());
+  // may be null or empty
   static_cast<Loop*>(expression)->name = name;
 }
 BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
@@ -2113,6 +2091,7 @@ void BinaryenBreakSetName(BinaryenExpressionRef expr, const char* name) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Break>());
+  assert(name);
   static_cast<Break*>(expression)->name = name;
 }
 BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
@@ -2134,6 +2113,7 @@ void BinaryenBreakSetCondition(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Break>());
+  // may be null (br)
   static_cast<Break*>(expression)->condition = (Expression*)condExpr;
 }
 BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
@@ -2155,6 +2135,7 @@ void BinaryenBreakSetValue(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Break>());
+  // may be null
   static_cast<Break*>(expression)->value = (Expression*)valueExpr;
 }
 // Switch
@@ -2217,6 +2198,7 @@ void BinaryenSwitchSetDefaultName(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
+  // may be null or empty
   static_cast<Switch*>(expression)->default_ = name;
 }
 BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
@@ -2261,6 +2243,7 @@ void BinaryenSwitchSetValue(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
+  // may be null
   static_cast<Switch*>(expression)->value = (Expression*)valueExpr;
 }
 // Call
@@ -2332,8 +2315,11 @@ BinaryenIndex BinaryenCallAppendOperand(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
-  return appendExpression(static_cast<Call*>(expression)->operands,
-                          operandExpr);
+  assert(operandExpr);
+  auto& list = static_cast<Call*>(expression)->operands;
+  auto index = list.size();
+  list.push_back((Expression*)operandExpr);
+  return index;
 }
 void BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
                                  BinaryenIndex index,
@@ -2345,8 +2331,9 @@ void BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
-  insertExpressionAt(
-    static_cast<Call*>(expression)->operands, index, operandExpr);
+  assert(operandExpr);
+  static_cast<Call*>(expression)
+    ->operands.insertAt(index, (Expression*)operandExpr);
 }
 BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
                                                   BinaryenIndex index) {
@@ -2356,7 +2343,7 @@ BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
-  return removeExpressionAt(static_cast<Call*>(expression)->operands, index);
+  return static_cast<Call*>(expression)->operands.removeAt(index);
 }
 int BinaryenCallIsReturn(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2450,8 +2437,11 @@ BinaryenCallIndirectAppendOperand(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return appendExpression(static_cast<CallIndirect*>(expression)->operands,
-                          operandExpr);
+  assert(operandExpr);
+  auto& list = static_cast<CallIndirect*>(expression)->operands;
+  auto index = list.size();
+  list.push_back((Expression*)operandExpr);
+  return index;
 }
 void BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
                                          BinaryenIndex index,
@@ -2463,8 +2453,9 @@ void BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  insertExpressionAt(
-    static_cast<CallIndirect*>(expression)->operands, index, operandExpr);
+  assert(operandExpr);
+  static_cast<CallIndirect*>(expression)
+    ->operands.insertAt(index, (Expression*)operandExpr);
 }
 BinaryenExpressionRef
 BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
@@ -2475,8 +2466,7 @@ BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return removeExpressionAt(static_cast<CallIndirect*>(expression)->operands,
-                            index);
+  return static_cast<CallIndirect*>(expression)->operands.removeAt(index);
 }
 int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2527,6 +2517,7 @@ int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->isTee();
+  // has no setter
 }
 BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -2681,6 +2672,7 @@ void BinaryenHostSetNameOperand(BinaryenExpressionRef expr, const char* name) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Host>());
+  assert(name);
   static_cast<Host*>(expression)->nameOperand = name;
 }
 BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
@@ -3120,6 +3112,7 @@ void BinaryenConstSetValueV128(BinaryenExpressionRef expr,
   }
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
+  assert(value); // nullptr would be wrong
   static_cast<Const*>(expression)->value = Literal(value);
 }
 // Unary
@@ -3341,6 +3334,7 @@ void BinaryenReturnSetValue(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Return>());
+  // may be null
   static_cast<Return*>(expression)->value = (Expression*)valueExpr;
 }
 // AtomicRMW
@@ -3927,6 +3921,7 @@ void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t* mask) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<SIMDShuffle>());
+  assert(mask); // nullptr would be wrong
   memcpy(mask, static_cast<SIMDShuffle*>(expression)->mask.data(), 16);
 }
 void BinaryenSIMDShuffleSetMask(BinaryenExpressionRef expr,
@@ -3945,6 +3940,7 @@ void BinaryenSIMDShuffleSetMask(BinaryenExpressionRef expr,
 
   auto* expression = (Expression*)expr;
   assert(expression->is<SIMDShuffle>());
+  assert(mask_); // nullptr would be wrong
   auto& mask = static_cast<SIMDShuffle*>(expression)->mask;
   memcpy(mask.data(), mask_, 16);
 }

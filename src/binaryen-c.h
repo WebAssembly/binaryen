@@ -855,17 +855,17 @@ BinaryenBlockGetChildAt(BinaryenExpressionRef expr, BinaryenIndex index);
 // expression.
 BINARYEN_API void BinaryenBlockSetChildAt(BinaryenExpressionRef expr,
                                           BinaryenIndex index,
-                                          BinaryenExpressionRef child);
+                                          BinaryenExpressionRef childExpr);
 // Appends a child expression to a `block` expression, returning its insertion
 // index.
 BINARYEN_API BinaryenIndex BinaryenBlockAppendChild(
-  BinaryenExpressionRef expr, BinaryenExpressionRef child);
+  BinaryenExpressionRef expr, BinaryenExpressionRef childExpr);
 // Inserts a child expression at the specified index of a `block` expression,
 // moving existing children including the one previously at that index one index
 // up.
 BINARYEN_API void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
                                              BinaryenIndex index,
-                                             BinaryenExpressionRef child);
+                                             BinaryenExpressionRef childExpr);
 // Removes the child expression at the specified index of a `block` expression,
 // moving all subsequent children one index down. Returns the child expression.
 BINARYEN_API BinaryenExpressionRef
