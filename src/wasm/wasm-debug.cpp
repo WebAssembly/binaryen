@@ -589,6 +589,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       yamlValue.Value = newValue;
     });
   // Next, process the high_pcs.
+  // TODO: do this more efficiently, without a second traversal (but that's a
+  //       little tricky given the special double-traversal we have).
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
