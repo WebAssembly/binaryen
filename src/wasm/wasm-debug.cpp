@@ -335,7 +335,7 @@ struct AddrExprMap {
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
-      for (auto pair : func->binaryLocations) {
+      for (auto pair : func->expressionLocations) {
         assert(map.count(pair.second) == 0);
         map[pair.second] = pair.first;
       }
@@ -343,8 +343,8 @@ struct AddrExprMap {
   }
 
   // Construct the map from new binaryLocations just written
-  AddrExprMap(const BinaryLocationsMap& newLocations) {
-    for (auto pair : newLocations) {
+  AddrExprMap(const BinaryLocations& newLocations) {
+    for (auto pair : newLocations.expressions) {
       assert(map.count(pair.second) == 0);
       map[pair.second] = pair.first;
     }
@@ -366,12 +366,51 @@ struct AddrExprMap {
   }
 };
 
+// Represents a mapping of addresses to expressions.
+struct FuncAddrMap {
+  std::unordered_map<uint32_t, Function*> map;
+
+  // Construct the map from the binaryLocations loaded from the wasm.
+  FuncAddrMap(const Module& wasm) {
+    for (auto& func : wasm.functions) {
+      map[func->funcLocation.start] = func.get();
+      map[func->funcLocation.end] = func.get();
+    }
+  }
+
+  Function* get(uint32_t addr) const {
+    auto iter = map.find(addr);
+    if (iter != map.end()) {
+      return iter->second;
+    }
+    return nullptr;
+  }
+
+  void dump() const {
+    std::cout << "  (size: " << map.size() << ")\n";
+    for (auto pair : map) {
+      std::cout << "  " << pair.first << " => " << pair.second->name << '\n';
+    }
+  }
+};
+
+// Track locations from the original binary and the new one we wrote, so that
+// we can update debug positions.
+// We track expressions and functions separately, instead of having a single
+// big map of (oldAddr) => (newAddr) because of the potentially ambiguous case
+// of the final expression in a function: it's end might be identical in offset
+// to the end of the function. So we have two different things that map to the
+// same offset. However, if the context is "the end of the function" then the
+// updated address is the new end of the function, even if the function ends
+// with a different instruction now, as the old last instruction might have
+// moved or been optimized out.
 struct LocationUpdater {
   Module& wasm;
-  const BinaryLocationsMap& newLocations;
+  const BinaryLocations& newLocations;
 
-  AddrExprMap oldAddrMap;
-  AddrExprMap newAddrMap;
+  AddrExprMap oldExprAddrMap;
+  AddrExprMap newExprAddrMap;
+  FuncAddrMap oldFuncAddrMap;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -380,17 +419,17 @@ struct LocationUpdater {
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations)
-    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
-      newAddrMap(newLocations) {}
+  LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
+    : wasm(wasm), newLocations(newLocations), oldExprAddrMap(wasm),
+      newExprAddrMap(newLocations), oldFuncAddrMap(wasm) {}
 
-  // Updates an address. If there was never an instruction at that address,
-  // or if there was but if that instruction no longer exists, return 0.
-  // Otherwise, return the new updated location.
-  uint32_t getNewAddr(uint32_t oldAddr) const {
-    if (auto* expr = oldAddrMap.get(oldAddr)) {
-      auto iter = newLocations.find(expr);
-      if (iter != newLocations.end()) {
+  // Updates an expression's address. If there was never an instruction at that
+  // address, or if there was but if that instruction no longer exists, return
+  // 0. Otherwise, return the new updated location.
+  uint32_t getNewExprAddr(uint32_t oldAddr) const {
+    if (auto* expr = oldExprAddrMap.get(oldAddr)) {
+      auto iter = newLocations.expressions.find(expr);
+      if (iter != newLocations.expressions.end()) {
         uint32_t newAddr = iter->second;
         return newAddr;
       }
@@ -398,7 +437,22 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
+  uint32_t getNewFuncAddr(uint32_t oldAddr) const {
+    if (auto* func = oldFuncAddrMap.get(oldAddr)) {
+      // The function might have been optimized away, check.
+      auto iter = newLocations.functions.find(func);
+      if (iter != newLocations.functions.end()) {
+        auto oldSpan = func->funcLocation;
+        auto newSpan = iter->second;
+        if (oldAddr == oldSpan.start) {
+          return newSpan.start;
+        } else if (oldAddr == oldSpan.end) {
+          return newSpan.end;
+        }
+      }
+    }
+    return 0;
+  }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -428,7 +482,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
+        if (auto newAddr = locationUpdater.getNewExprAddr(state.addr)) {
           newAddrs.push_back(newAddr);
           newAddrInfo.emplace(newAddr, state);
           auto& updatedState = newAddrInfo.at(newAddr);
@@ -491,6 +545,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
         yamlUnit.Entries,
         [&](const llvm::DWARFDebugInfoEntry& DIE,
             llvm::DWARFYAML::Entry& yamlEntry) {
+          auto tag = DIE.getTag();
           // Process the entries in each relevant DIE, looking for attributes to
           // change.
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
@@ -502,18 +557,21 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                     attrSpec,
                   llvm::DWARFYAML::FormValue& yamlValue) {
                 if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-                  // If the old address did not refer to an instruction, then
-                  // this is not something we understand and can update.
-                  if (locationUpdater.hasOldAddr(yamlValue.Value)) {
-                    // The addresses of compile units and functions are not
-                    // instructions.
-                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
-                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
-                    // Note that the new value may be 0, which is the correct
-                    // way to indicate that this is no longer a valid wasm
-                    // value, the same as wasm-ld would do.
+                  if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+                      tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                      tag == llvm::dwarf::DW_TAG_lexical_block ||
+                      tag == llvm::dwarf::DW_TAG_label) {
+                    // low_pc in certain tags represent expressions.
                     yamlValue.Value =
-                      locationUpdater.getNewAddr(yamlValue.Value);
+                      locationUpdater.getNewExprAddr(yamlValue.Value);
+                  } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
+                             tag == llvm::dwarf::DW_TAG_subprogram) {
+                    // low_pc in certain tags represent function.
+                    yamlValue.Value =
+                      locationUpdater.getNewFuncAddr(yamlValue.Value);
+                  } else {
+                    Fatal() << "unknown tag with low_pc "
+                            << llvm::dwarf::TagString(tag).str();
                   }
                 }
               });
@@ -522,7 +580,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
     });
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
+void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.
@@ -563,7 +621,7 @@ void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
+void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 

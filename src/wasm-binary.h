@@ -1059,13 +1059,8 @@ private:
 
   std::unique_ptr<ImportInfo> importInfo;
 
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section. This is similar
-  // to binaryLocations on Function objects, which are filled as we load the
-  // functions from the binary. Here we track them as we write, and then
-  // the combination of the two can be used to update DWARF info for the new
-  // locations of things.
-  BinaryLocationsMap binaryLocations;
+  // General debugging info: track locations as we write.
+  BinaryLocations binaryLocations;
   size_t binaryLocationsSizeAtSectionStart;
   // Track the expressions that we added for the current function being
   // written, so that we can update those specific binary locations when
