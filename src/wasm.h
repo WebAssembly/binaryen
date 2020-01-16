@@ -1158,6 +1158,19 @@ struct Importable {
   bool imported() { return module.is(); }
 };
 
+class Function;
+
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  struct Span {
+    uint32_t start, end;
+  };
+  std::unordered_map<Expression*, uint32_t> expressions;
+  std::unordered_map<Function*, Span> functions;
+};
+
 // Forward declarations of Stack IR, as functions can contain it, see
 // the stackIR property.
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
@@ -1165,8 +1178,6 @@ struct Importable {
 class StackInst;
 
 using StackIR = std::vector<StackInst*>;
-
-using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
 
 class Function : public Importable {
 public:
@@ -1213,9 +1224,9 @@ public:
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
 
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section.
-  BinaryLocationsMap binaryLocations;
+  // General debugging info support: track instructions and the function itself.
+  std::unordered_map<Expression*, uint32_t> expressionLocations;
+  BinaryLocations::Span funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();

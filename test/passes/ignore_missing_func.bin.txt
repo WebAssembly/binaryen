@@ -687,7 +687,7 @@ Abbrev table for offset: 0x00000000
 0x0000009a:     NULL
 
 0x0000009b:   DW_TAG_subprogram [8]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000060)
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000005c)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000064)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e4] = "main")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
