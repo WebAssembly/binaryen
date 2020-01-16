@@ -252,10 +252,8 @@ def update_binaryen_js_tests():
         print(basename)
         f = open('a.js', 'w')
         f.write(open(shared.BINARYEN_JS).read())
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
         test_src = open(s).read()
-        f.write(test_src)
+        f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
         if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
             cmd = [shared.MOZJS or shared.NODEJS, 'a.js']

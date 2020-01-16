@@ -1,7 +1,3 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -12,34 +8,30 @@ function cleanInfo(info) {
   return ret;
 }
 
-function test() {
-  var module = new Binaryen.Module();
-  module.setFeatures(Binaryen.Features.MVP | Binaryen.Features.MutableGlobals);
+var module = new binaryen.Module();
+module.setFeatures(binaryen.Features.MVP | binaryen.Features.MutableGlobals);
 
-  var initExpr = module.i32.const(1);
-  var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr);
+var initExpr = module.i32.const(1);
+var global = module.addGlobal("a-global", binaryen.i32, false, initExpr);
 
-  console.log("GetGlobal is equal: " + (global === module.getGlobal("a-global")));
+console.log("GetGlobal is equal: " + (global === module.getGlobal("a-global")));
 
-  var globalInfo = Binaryen.getGlobalInfo(global);
-  console.log("getGlobalInfo=" + JSON.stringify(cleanInfo(globalInfo)));
+var globalInfo = binaryen.getGlobalInfo(global);
+console.log("getGlobalInfo=" + JSON.stringify(cleanInfo(globalInfo)));
 
-  var initExpInfo = Binaryen.getExpressionInfo(globalInfo.init);
-  console.log("getExpressionInfo(init)=" + JSON.stringify(cleanInfo(initExpInfo)));
-  console.log(Binaryen.emitText(globalInfo.init));
+var initExpInfo = binaryen.getExpressionInfo(globalInfo.init);
+console.log("getExpressionInfo(init)=" + JSON.stringify(cleanInfo(initExpInfo)));
+console.log(binaryen.emitText(globalInfo.init));
 
-  module.addGlobalExport("a-global", "a-global-exp");
-  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
-  module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
+module.addGlobalExport("a-global", "a-global-exp");
+module.addGlobalImport("a-global-imp", "module", "base", binaryen.i32, false);
+module.addGlobalImport("a-mut-global-imp", "module", "base", binaryen.i32, true);
 
-  assert(module.validate());
-  console.log(module.emitText());
+assert(module.validate());
+console.log(module.emitText());
 
-  module.removeGlobal("a-global");
-  module.removeExport("a-global-exp");
+module.removeGlobal("a-global");
+module.removeExport("a-global-exp");
 
-  assert(module.validate());
-  console.log(module.emitText());
-}
-
-Binaryen.ready.then(test);
+assert(module.validate());
+console.log(module.emitText());

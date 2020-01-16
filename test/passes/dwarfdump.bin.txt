@@ -39,6 +39,17 @@ Abbrev table for offset: 0x00000000
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
 
+0x00000026:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(3)
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:   NULL
+
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:

@@ -61,7 +61,8 @@ struct BinaryenDWARFInfo {
     }
     // Parse debug sections.
     uint8_t addrSize = 4;
-    context = llvm::DWARFContext::create(sections, addrSize);
+    bool isLittleEndian = true;
+    context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
   }
 };
 
@@ -76,6 +77,8 @@ void dumpDWARF(const Module& wasm) {
     }
   }
   llvm::DIDumpOptions options;
+  options.DumpType = llvm::DIDT_All;
+  options.ShowChildren = true;
   options.Verbose = true;
   info.context->dump(llvm::outs(), options);
 }
@@ -111,8 +114,8 @@ struct LineState {
   uint32_t line = 1;
   uint32_t col = 0;
   uint32_t file = 1;
-  // TODO uint32_t isa = 0;
-  // TODO Discriminator = 0;
+  uint32_t isa = 0;
+  uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
   // XXX these two should be just prologue, epilogue?
@@ -139,9 +142,17 @@ struct LineState {
           case llvm::dwarf::DW_LNE_end_sequence: {
             return true;
           }
+          case llvm::dwarf::DW_LNE_set_discriminator: {
+            discriminator = opcode.Data;
+            break;
+          }
+          case llvm::dwarf::DW_LNE_define_file: {
+            Fatal() << "TODO: DW_LNE_define_file";
+          }
           default: {
-            Fatal() << "unknown debug line sub-opcode: " << std::hex
-                    << opcode.SubOpcode;
+            // An unknown opcode, ignore.
+            std::cerr << "warning: unknown subopcopde " << opcode.SubOpcode
+                      << '\n';
           }
         }
         break;
@@ -174,11 +185,23 @@ struct LineState {
         isStmt = !isStmt;
         break;
       }
+      case llvm::dwarf::DW_LNS_set_basic_block: {
+        basicBlock = true;
+        break;
+      }
       case llvm::dwarf::DW_LNS_const_add_pc: {
         uint8_t AdjustOpcode = 255 - table.OpcodeBase;
         uint64_t AddrOffset =
           (AdjustOpcode / table.LineRange) * table.MinInstLength;
         addr += AddrOffset;
+        break;
+      }
+      case llvm::dwarf::DW_LNS_fixed_advance_pc: {
+        addr += opcode.Data;
+        break;
+      }
+      case llvm::dwarf::DW_LNS_set_isa: {
+        isa = opcode.Data;
         break;
       }
       default: {
@@ -200,6 +223,17 @@ struct LineState {
       }
     }
     return false;
+  }
+
+  // Checks if this starts a new range of addresses. Each range is a set of
+  // related addresses, where in particular, if the first has been zeroed out
+  // by the linker, we must omit the entire range. (If we do not, then the
+  // initial range is 0 and the others are offsets relative to it, which will
+  // look like random addresses, perhaps into the middle of instructions, and
+  // perhaps that happen to collide with real ones.)
+  bool startsNewRange(llvm::DWARFYAML::LineTableOpcode& opcode) {
+    return opcode.Opcode == 0 &&
+           opcode.SubOpcode == llvm::dwarf::DW_LNE_set_address;
   }
 
   bool needToEmit() {
@@ -239,11 +273,23 @@ struct LineState {
       item.Data = file;
       newOpcodes.push_back(item);
     }
+    if (isa != old.isa) {
+      auto item = makeItem(llvm::dwarf::DW_LNS_set_isa);
+      item.Data = isa;
+      newOpcodes.push_back(item);
+    }
+    if (discriminator != old.discriminator) {
+      // len = 1 (subopcode) + 4 (wasm32 address)
+      auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator, 5);
+      item.Data = discriminator;
+      newOpcodes.push_back(item);
+    }
     if (isStmt != old.isStmt) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_negate_stmt));
     }
     if (basicBlock != old.basicBlock) {
-      Fatal() << "bb";
+      assert(basicBlock);
+      newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
     if (prologueEnd != old.prologueEnd) {
       assert(prologueEnd);
@@ -304,7 +350,7 @@ struct AddrExprMap {
     }
   }
 
-  Expression* get(uint32_t addr) {
+  Expression* get(uint32_t addr) const {
     auto iter = map.find(addr);
     if (iter != map.end()) {
       return iter->second;
@@ -312,7 +358,7 @@ struct AddrExprMap {
     return nullptr;
   }
 
-  void dump() {
+  void dump() const {
     std::cout << "  (size: " << map.size() << ")\n";
     for (auto pair : map) {
       std::cout << "  " << pair.first << " => " << pair.second << '\n';
@@ -320,9 +366,13 @@ struct AddrExprMap {
   }
 };
 
-static void updateDebugLines(const Module& wasm,
-                             llvm::DWARFYAML::Data& data,
-                             const BinaryLocationsMap& newLocations) {
+struct LocationUpdater {
+  Module& wasm;
+  const BinaryLocationsMap& newLocations;
+
+  AddrExprMap oldAddrMap;
+  AddrExprMap newAddrMap;
+
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -330,30 +380,60 @@ static void updateDebugLines(const Module& wasm,
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
 
-  AddrExprMap oldAddrMap(wasm);
-  AddrExprMap newAddrMap(newLocations);
+  LocationUpdater(Module& wasm, const BinaryLocationsMap& newLocations)
+    : wasm(wasm), newLocations(newLocations), oldAddrMap(wasm),
+      newAddrMap(newLocations) {}
 
+  // Updates an address. If there was never an instruction at that address,
+  // or if there was but if that instruction no longer exists, return 0.
+  // Otherwise, return the new updated location.
+  uint32_t getNewAddr(uint32_t oldAddr) const {
+    if (auto* expr = oldAddrMap.get(oldAddr)) {
+      auto iter = newLocations.find(expr);
+      if (iter != newLocations.end()) {
+        uint32_t newAddr = iter->second;
+        return newAddr;
+      }
+    }
+    return 0;
+  }
+
+  bool hasOldAddr(uint32_t oldAddr) const { return oldAddrMap.get(oldAddr); }
+};
+
+static void updateDebugLines(llvm::DWARFYAML::Data& data,
+                             const LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
     LineState state(table);
     // All the addresses we need to write out.
     std::vector<uint32_t> newAddrs;
     std::unordered_map<uint32_t, LineState> newAddrInfo;
+    // If the address was zeroed out, we must omit the entire range (we could
+    // also leave it unchanged, so that the debugger ignores it based on the
+    // initial zero; but it's easier and better to just not emit it at all).
+    bool omittingRange = false;
     for (auto& opcode : table.Opcodes) {
       // Update the state, and check if we have a new row to emit.
+      if (state.startsNewRange(opcode)) {
+        omittingRange = false;
+      }
       if (state.update(opcode, table)) {
+        if (state.addr == 0) {
+          omittingRange = true;
+        }
+        if (omittingRange) {
+          state = LineState(table);
+          continue;
+        }
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto* expr = oldAddrMap.get(state.addr)) {
-          auto iter = newLocations.find(expr);
-          if (iter != newLocations.end()) {
-            uint32_t newAddr = iter->second;
-            newAddrs.push_back(newAddr);
-            newAddrInfo.emplace(newAddr, state);
-            auto& updatedState = newAddrInfo.at(newAddr);
-            // The only difference is the address TODO other stuff?
-            updatedState.addr = newAddr;
-          }
+        if (auto newAddr = locationUpdater.getNewAddr(state.addr)) {
+          newAddrs.push_back(newAddr);
+          newAddrInfo.emplace(newAddr, state);
+          auto& updatedState = newAddrInfo.at(newAddr);
+          // The only difference is the address TODO other stuff?
+          updatedState.addr = newAddr;
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
@@ -382,19 +462,64 @@ static void updateDebugLines(const Module& wasm,
   }
 }
 
-static void fixEmittedSection(const std::string& name,
-                              std::vector<char>& data) {
-  if (name == ".debug_line") {
-    // The YAML code does not update the line section size. However, it is
-    // trivial to do so after the fact, as the wasm section's additional size is
-    // easy to compute: it is the emitted size - the 4 bytes of the size itself.
-    uint32_t size = data.size() - 4;
-    BufferWithRandomAccess buf;
-    buf << size;
-    for (int i = 0; i < 4; i++) {
-      data[i] = buf[i];
-    }
+// Iterate in parallel over a DwarfContext representation element and a
+// YAML element, which parallel each other.
+template<typename T, typename U, typename W>
+static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
+  auto yamlValue = yamlList.begin();
+  for (const auto& contextValue : contextList) {
+    assert(yamlValue != yamlList.end());
+    func(contextValue, *yamlValue);
+    yamlValue++;
   }
+  assert(yamlValue == yamlList.end());
+}
+
+static void updateCompileUnits(const BinaryenDWARFInfo& info,
+                               llvm::DWARFYAML::Data& yaml,
+                               const LocationUpdater& locationUpdater) {
+  // The context has the high-level information we need, and the YAML is where
+  // we write changes. First, iterate over the compile units.
+  iterContextAndYAML(
+    info.context->compile_units(),
+    yaml.CompileUnits,
+    [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
+        llvm::DWARFYAML::Unit& yamlUnit) {
+      // Process the DIEs in each compile unit.
+      iterContextAndYAML(
+        CU->dies(),
+        yamlUnit.Entries,
+        [&](const llvm::DWARFDebugInfoEntry& DIE,
+            llvm::DWARFYAML::Entry& yamlEntry) {
+          // Process the entries in each relevant DIE, looking for attributes to
+          // change.
+          auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
+          if (abbrevDecl) {
+            iterContextAndYAML(
+              abbrevDecl->attributes(),
+              yamlEntry.Values,
+              [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
+                    attrSpec,
+                  llvm::DWARFYAML::FormValue& yamlValue) {
+                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+                  // If the old address did not refer to an instruction, then
+                  // this is not something we understand and can update.
+                  if (locationUpdater.hasOldAddr(yamlValue.Value)) {
+                    // The addresses of compile units and functions are not
+                    // instructions.
+                    assert(DIE.getTag() != llvm::dwarf::DW_TAG_compile_unit &&
+                           DIE.getTag() != llvm::dwarf::DW_TAG_subprogram);
+                    // Note that the new value may be 0, which is the correct
+                    // way to indicate that this is no longer a valid wasm
+                    // value, the same as wasm-ld would do.
+                    yamlValue.Value =
+                      locationUpdater.getNewAddr(yamlValue.Value);
+                  }
+                }
+              });
+          }
+        });
+    });
 }
 
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
@@ -406,12 +531,17 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
-  updateDebugLines(wasm, data, newLocations);
+  LocationUpdater locationUpdater(wasm, newLocations);
+
+  updateDebugLines(data, locationUpdater);
+
+  updateCompileUnits(info, data, locationUpdater);
 
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(data, true);
+  auto newSections =
+    EmitDebugSections(data, false /* EmitFixups for debug_info */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
@@ -422,7 +552,6 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
         auto llvmData = newSections[llvmName]->getBuffer();
         section.data.resize(llvmData.size());
         std::copy(llvmData.begin(), llvmData.end(), section.data.data());
-        fixEmittedSection(section.name, section.data);
       }
     }
   }

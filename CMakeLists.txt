@@ -15,17 +15,16 @@ option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
   execute_process(COMMAND
-               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
+               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags --match version_*
            RESULT_VARIABLE
-               GIT_HASH_RESULT
+               GIT_VERSION_RESULT
            OUTPUT_VARIABLE
-               GIT_HASH
+               GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(${GIT_HASH_RESULT})
-    message(WARNING "Error running git describe to determine version")
-    set(CMAKE_PROJECT_VERSION "(unable to determine version)")
+  if(${GIT_VERSION_RESULT})
+    message(FATAL_ERROR "Error running git describe to determine version")
   else()
-    set(CMAKE_PROJECT_VERSION "${GIT_HASH}")
+    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 
@@ -384,7 +383,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
-  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
@@ -406,7 +405,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
@@ -415,9 +414,6 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-  # always emit as 'binaryen.js'
-  set_target_properties(binaryen_wasm binaryen_js PROPERTIES OUTPUT_NAME "binaryen")
 endif()
 
 # Testing
