@@ -1,5 +1,5 @@
-project(binaryen C CXX)
 cmake_minimum_required(VERSION 3.1.3)
+project(binaryen LANGUAGES C CXX VERSION 90)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -11,23 +11,24 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
-find_package(Git QUIET REQUIRED)
-execute_process(COMMAND
-             "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
-         RESULT_VARIABLE
-             GIT_HASH_RESULT
-         OUTPUT_VARIABLE
-             GIT_HASH
-         OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(${GIT_HASH_RESULT})
-  message(WARNING "Error running git describe to determine version")
-  set(BINARYEN_VERSION_INFO "(unable to determine version)")
-else()
-  set(BINARYEN_VERSION_INFO "${GIT_HASH}")
+# For git users, attempt to generate a more useful version string
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+  find_package(Git QUIET REQUIRED)
+  execute_process(COMMAND
+               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags --match version_*
+           RESULT_VARIABLE
+               GIT_VERSION_RESULT
+           OUTPUT_VARIABLE
+               GIT_VERSION
+           OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(${GIT_VERSION_RESULT})
+    message(FATAL_ERROR "Error running git describe to determine version")
+  else()
+    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
+  endif()
 endif()
-configure_file(config.h.in config.h)
 
-option(BUILD_STATIC_LIB "Build as a static library" OFF)
+configure_file(config.h.in config.h)
 
 # Support functionality.
 
@@ -68,12 +69,32 @@ function(ADD_LINK_FLAG value)
   ENDFOREACH(variable)
 endfunction()
 
+# Options
+
+option(BUILD_STATIC_LIB "Build as a static library" OFF)
+
+# For now, don't include full DWARF support in JS builds, for size.
+if (NOT EMSCRIPTEN)
+  option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
+
+  if(BUILD_LLVM_DWARF)
+    if(MSVC)
+      ADD_COMPILE_FLAG("/DBUILD_LLVM_DWARF")
+    else()
+      ADD_COMPILE_FLAG("-DBUILD_LLVM_DWARF")
+    endif()
+  endif()
+endif()
+
 # Compiler setup.
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(BUILD_LLVM_DWARF)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+endif()
 
 # Add output directory to include path so config.h can be found
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
@@ -221,6 +242,7 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
+add_subdirectory(third_party)
 
 # Object files
 set(binaryen_objs
@@ -231,6 +253,10 @@ set(binaryen_objs
     $<TARGET_OBJECTS:ir>
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
+
+IF(BUILD_LLVM_DWARF)
+  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
+ENDIF()
 
 # Sources.
 
@@ -342,26 +368,44 @@ install(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 # binaryen.js
 #
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
-# declared earlier, so we create binaryen_js.js, which must then be copied.
+# declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
+# Note that SHELL: is needed as otherwise cmake will coalesce -s link flags
+# in an incorrect way for emscripten.
 if(EMSCRIPTEN)
-  set(binaryen_js_SOURCES
+  set(binaryen_emscripten_SOURCES
     src/binaryen-c.cpp
   )
+
+  # binaryen.js WebAssembly variant
+  add_executable(binaryen_wasm
+                 ${binaryen_emscripten_SOURCES})
+  target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+  target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
+  target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
+  target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_wasm optimized "--closure 1")
+  target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
+  target_link_libraries(binaryen_wasm debug "--profiling")
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
+  install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  # binaryen.js JavaScript variant
   add_executable(binaryen_js
-                 ${binaryen_js_SOURCES})
+                 ${binaryen_emscripten_SOURCES})
   target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-  # note that SHELL: is needed as otherwise cmake will coalesce -s link flags
-  # in an incorrect way for emscripten
   target_link_libraries(binaryen_js "-s WASM=0")
+  target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
     # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
+    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
   endif()
-  target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")

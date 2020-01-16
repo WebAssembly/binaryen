@@ -46,13 +46,13 @@ namespace wasm {
 
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
-  std::atomic<Index> calls;
+  std::atomic<Index> refs;
   Index size;
   std::atomic<bool> lightweight;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
-    calls = 0;
+    refs = 0;
     size = 0;
     lightweight = true;
     usedGlobally = false;
@@ -75,7 +75,7 @@ struct FunctionInfo {
     // FIXME: move this check to be first in this function, since we should
     // return true if oneCallerInlineMaxSize is bigger than
     // flexibleInlineMaxSize (which it typically should be).
-    if (calls == 1 && !usedGlobally &&
+    if (refs == 1 && !usedGlobally &&
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
@@ -108,9 +108,14 @@ struct FunctionInfoScanner
   void visitCall(Call* curr) {
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
-    (*infos)[curr->target].calls++;
+    (*infos)[curr->target].refs++;
     // having a call is not lightweight
     (*infos)[getFunction()->name].lightweight = false;
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    assert(infos->count(curr->func) > 0);
+    (*infos)[curr->func].refs++;
   }
 
   void visitFunction(Function* curr) {
@@ -149,12 +154,12 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     bool isUnreachable;
     if (curr->isReturn) {
       // Tail calls are only actually unreachable if an argument is
-      isUnreachable =
-        std::any_of(curr->operands.begin(),
-                    curr->operands.end(),
-                    [](Expression* op) { return op->type == unreachable; });
+      isUnreachable = std::any_of(
+        curr->operands.begin(), curr->operands.end(), [](Expression* op) {
+          return op->type == Type::unreachable;
+        });
     } else {
-      isUnreachable = curr->type == unreachable;
+      isUnreachable = curr->type == Type::unreachable;
     }
     if (state->worthInlining.count(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
@@ -268,7 +273,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   // contained void, that is fine too. a bad case is a void function in which
   // we have unreachable code, so we would be replacing a void call with an
   // unreachable.
-  if (contents->type == unreachable && block->type == none) {
+  if (contents->type == Type::unreachable && block->type == Type::none) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
@@ -374,7 +379,7 @@ struct Inlining : public Pass {
         doInlining(module, func.get(), action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
-        assert(inlinedUses[inlinedName] <= infos[inlinedName].calls);
+        assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
     }
     // anything we inlined into may now have non-unique label names, fix it up
@@ -388,7 +393,7 @@ struct Inlining : public Pass {
     module->removeFunctions([&](Function* func) {
       auto name = func->name;
       auto& info = infos[name];
-      return inlinedUses.count(name) && inlinedUses[name] == info.calls &&
+      return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
     // return whether we did any work

@@ -1,8 +1,4 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
-var module = new Binaryen.Module();
+var module = new binaryen.Module();
 
 var fileIndex = module.addDebugInfoFileName("module.c");
 
@@ -12,9 +8,9 @@ console.log();
 var expr = module.i32.const(1);
 var body = module.block("", [
   expr
-], Binaryen.i32);
+], binaryen.i32);
 
-var func = module.addFunction("main", Binaryen.none, Binaryen.i32, [], body);
+var func = module.addFunction("main", binaryen.none, binaryen.i32, [], body);
 
 module.setDebugLocation(func, expr, fileIndex, 1, 2);
 module.setDebugLocation(func, body, fileIndex, 0, 3);

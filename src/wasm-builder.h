@@ -27,7 +27,7 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
-  NameType() : name(nullptr), type(none) {}
+  NameType() : name(nullptr), type(Type::none) {}
   NameType(Name name, Type type) : name(name), type(type) {}
 };
 
@@ -110,6 +110,12 @@ public:
     ret->finalize();
     return ret;
   }
+  Block* makeBlock(const std::vector<Expression*>& items, Type type) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
   Block* makeBlock(const ExpressionList& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
@@ -162,6 +168,13 @@ public:
     ret->name = name;
     ret->body = body;
     ret->finalize();
+    return ret;
+  }
+  Loop* makeLoop(Name name, Expression* body, Type type) {
+    auto* ret = allocator.alloc<Loop>();
+    ret->name = name;
+    ret->body = body;
+    ret->finalize(type);
     return ret;
   }
   Break* makeBreak(Name name,
@@ -459,6 +472,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
+    assert(value.type.isNumber());
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
@@ -488,6 +502,17 @@ public:
     ret->finalize();
     return ret;
   }
+  Select* makeSelect(Expression* condition,
+                     Expression* ifTrue,
+                     Expression* ifFalse,
+                     Type type) {
+    auto* ret = allocator.alloc<Select>();
+    ret->condition = condition;
+    ret->ifTrue = ifTrue;
+    ret->ifFalse = ifFalse;
+    ret->finalize(type);
+    return ret;
+  }
   Return* makeReturn(Expression* value = nullptr) {
     auto* ret = allocator.alloc<Return>();
     ret->value = value;
@@ -499,6 +524,23 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  RefNull* makeRefNull() {
+    auto* ret = allocator.alloc<RefNull>();
+    ret->finalize();
+    return ret;
+  }
+  RefIsNull* makeRefIsNull(Expression* value) {
+    auto* ret = allocator.alloc<RefIsNull>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  RefFunc* makeRefFunc(Name func) {
+    auto* ret = allocator.alloc<RefFunc>();
+    ret->func = func;
     ret->finalize();
     return ret;
   }
@@ -567,6 +609,21 @@ public:
     ret->value = value;
     ret->finalize();
     return ret;
+  }
+
+  Expression* makeConstExpression(Literal value) {
+    switch (value.type.getSingle()) {
+      case Type::nullref:
+        return makeRefNull();
+      case Type::funcref:
+        if (value.getFunc()[0] != 0) {
+          return makeRefFunc(value.getFunc());
+        }
+        return makeRefNull();
+      default:
+        assert(value.type.isNumber());
+        return makeConst(value);
+    }
   }
 
   // Additional utility functions for building on top of nodes
@@ -663,6 +720,13 @@ public:
     return block;
   }
 
+  Block* makeSequence(Expression* left, Expression* right, Type type) {
+    auto* block = makeBlock(left);
+    block->list.push_back(right);
+    block->finalize(type);
+    return block;
+  }
+
   // Grab a slice out of a block, replacing it with nops, and returning
   // either another block with the contents (if more than 1) or a single
   // expression
@@ -709,35 +773,34 @@ public:
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type) {
-      case i32:
+    switch (curr->type.getSingle()) {
+      case Type::i32:
         value = Literal(int32_t(0));
         break;
-      case i64:
+      case Type::i64:
         value = Literal(int64_t(0));
         break;
-      case f32:
+      case Type::f32:
         value = Literal(float(0));
         break;
-      case f64:
+      case Type::f64:
         value = Literal(double(0));
         break;
-      case v128: {
+      case Type::v128: {
         std::array<uint8_t, 16> bytes;
         bytes.fill(0);
         value = Literal(bytes.data());
         break;
       }
-      case anyref:
-        // TODO Implement and return nullref
-        assert(false && "anyref not implemented yet");
-      case exnref:
-        // TODO Implement and return nullref
-        assert(false && "exnref not implemented yet");
-      case none:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+        return ExpressionManipulator::refNull(curr);
+      case Type::none:
         return ExpressionManipulator::nop(curr);
-      case unreachable:
-        return ExpressionManipulator::convert<T, Unreachable>(curr);
+      case Type::unreachable:
+        return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);
   }

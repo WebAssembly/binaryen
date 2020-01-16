@@ -1,15 +1,13 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
-var module = Binaryen.parseText(`
+var wast = `
 (module
   (memory $0 (shared 1 1))
 )
-`);
+`;
+
+var module = binaryen.parseText(wast);
 
 // i32/i64.atomic.load/store
-module.addFunction("main", Binaryen.none, Binaryen.none, [], module.block("", [
+module.addFunction("main", binaryen.none, binaryen.none, [], module.block("", [
   // i32
   module.i32.atomic.store(0,
     module.i32.const(0),
@@ -84,6 +82,6 @@ module.addFunction("main", Binaryen.none, Binaryen.none, [], module.block("", [
   module.atomic.fence()
 ]));
 
-module.setFeatures(Binaryen.Features.Atomics);
+module.setFeatures(binaryen.Features.Atomics);
 assert(module.validate());
 console.log(module.emitText());

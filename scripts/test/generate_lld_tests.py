@@ -30,8 +30,8 @@ def files_with_extensions(path, extensions):
             yield file, ext
 
 
-def generate_wat_files(llvm_bin, emscripten_root):
-    print('\n[ building wat files from C sources... ]\n')
+def generate_wast_files(llvm_bin, emscripten_root):
+    print('\n[ building wast files from C sources... ]\n')
 
     lld_path = os.path.join(shared.options.binaryen_test, 'lld')
     for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp']):
@@ -42,11 +42,11 @@ def generate_wat_files(llvm_bin, emscripten_root):
         obj_path = os.path.join(lld_path, obj_file)
 
         wasm_file = src_file.replace(ext, '.wasm')
-        wat_file = src_file.replace(ext, '.wat')
+        wast_file = src_file.replace(ext, '.wast')
 
         obj_path = os.path.join(lld_path, obj_file)
         wasm_path = os.path.join(lld_path, wasm_file)
-        wat_path = os.path.join(lld_path, wat_file)
+        wast_path = os.path.join(lld_path, wast_file)
         is_shared = 'shared' in src_file
 
         compile_cmd = [
@@ -70,10 +70,6 @@ def generate_wat_files(llvm_bin, emscripten_root):
             '--export', '__data_end',
             '--global-base=568',
         ]
-        # We had a regression where this test only worked if debug names
-        # were included.
-        if 'shared_longjmp' in src_file:
-            link_cmd.append('--strip-debug')
         if is_shared:
             compile_cmd.append('-fPIC')
             compile_cmd.append('-fvisibility=default')
@@ -84,7 +80,7 @@ def generate_wat_files(llvm_bin, emscripten_root):
         try:
             support.run_command(compile_cmd)
             support.run_command(link_cmd)
-            support.run_command(shared.WASM_DIS + [wasm_path, '-o', wat_path])
+            support.run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])
         finally:
             # Don't need the .o or .wasm files, don't leave them around
             shared.delete_from_orbit(obj_path)
@@ -95,4 +91,4 @@ if __name__ == '__main__':
     if len(shared.options.positional_args) != 2:
         print('Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]')
         sys.exit(1)
-    generate_wat_files(*shared.options.positional_args)
+    generate_wast_files(*shared.options.positional_args)

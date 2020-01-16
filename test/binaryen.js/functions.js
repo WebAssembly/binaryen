@@ -1,7 +1,3 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -12,9 +8,9 @@ function cleanInfo(info) {
   return ret;
 }
 
-var module = new Binaryen.Module();
+var module = new binaryen.Module();
 
-var func = module.addFunction("a-function", Binaryen.none, Binaryen.i32, [],
+var func = module.addFunction("a-function", binaryen.none, binaryen.i32, [],
   module.i32.add(
     module.i32.const(1),
     module.i32.const(2)
@@ -25,11 +21,11 @@ console.log("GetFunction is equal: " + (func === module.getFunction("a-function"
 
 module.runPassesOnFunction(func, ["precompute"]);
 
-var funcInfo = Binaryen.getFunctionInfo(func);
+var funcInfo = binaryen.getFunctionInfo(func);
 console.log("getFunctionInfo=" + JSON.stringify(cleanInfo(funcInfo)));
-var expInfo = Binaryen.getExpressionInfo(funcInfo.body);
+var expInfo = binaryen.getExpressionInfo(funcInfo.body);
 console.log("getExpressionInfo(body)=" + JSON.stringify(cleanInfo(expInfo)));
-console.log(Binaryen.emitText(funcInfo.body));
+console.log(binaryen.emitText(funcInfo.body));
 
 module.removeFunction("a-function");
 

@@ -141,6 +141,7 @@ inline void clearModule(Module& wasm) {
   wasm.userSections.clear();
   wasm.debugInfoFileNames.clear();
   wasm.updateMaps();
+  wasm.allocator.clear();
 }
 
 // Renaming

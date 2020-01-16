@@ -1,7 +1,3 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -13,13 +9,14 @@ function cleanInfo(info) {
 }
 
 function stringify(expr) {
-  return JSON.stringify(cleanInfo(Binaryen.getExpressionInfo(expr)));
+  return JSON.stringify(cleanInfo(binaryen.getExpressionInfo(expr)));
 }
 
-var module = new Binaryen.Module();
-module.setFeatures(Binaryen.Features.ExceptionHandling);
+var module = new binaryen.Module();
+module.setFeatures(binaryen.Features.ReferenceTypes |
+                   binaryen.Features.ExceptionHandling);
 
-var event_ = module.addEvent("e", 0, Binaryen.i32, Binaryen.none);
+var event_ = module.addEvent("e", 0, binaryen.i32, binaryen.none);
 
 // (try
 //   (throw $e (i32.const 0))
@@ -36,19 +33,19 @@ var event_ = module.addEvent("e", 0, Binaryen.i32, Binaryen.none);
 //   )
 // )
 var throw_ = module.throw("e", [module.i32.const(0)]);
-var br_on_exn = module.br_on_exn("l", "e", module.local.get(0, Binaryen.exnref));
+var br_on_exn = module.br_on_exn("l", "e", module.local.get(0, binaryen.exnref));
 var rethrow = module.rethrow(br_on_exn);
 var try_ = module.try(
   throw_,
   module.block(null, [
     module.local.set(0, module.exnref.pop()),
     module.drop(
-      module.block("l", [rethrow], Binaryen.i32)
+      module.block("l", [rethrow], binaryen.i32)
     )
   ]
   )
 );
-var func = module.addFunction("test", Binaryen.none, Binaryen.none, [Binaryen.exnref], try_);
+var func = module.addFunction("test", binaryen.none, binaryen.none, [binaryen.exnref], try_);
 
 console.log(module.emitText());
 assert(module.validate());

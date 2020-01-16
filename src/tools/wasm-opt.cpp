@@ -43,7 +43,7 @@
 using namespace wasm;
 
 // runs a command and returns its output TODO: portability, return code checking
-std::string runCommand(std::string command) {
+static std::string runCommand(std::string command) {
 #ifdef __linux__
   std::string output;
   const int MAX_BUFFER = 1024;
@@ -57,6 +57,15 @@ std::string runCommand(std::string command) {
 #else
   Fatal() << "TODO: portability for wasm-opt runCommand";
 #endif
+}
+
+static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
+  for (auto& pass : passes) {
+    if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
+      return true;
+    }
+  }
+  return false;
 }
 
 //
@@ -210,6 +219,10 @@ int main(int argc, const char* argv[]) {
 
   if (!translateToFuzz) {
     ModuleReader reader;
+    // Enable DWARF parsing if we were asked for debug info, and were not
+    // asked to remove it.
+    reader.setDWARF(options.passOptions.debugInfo &&
+                    !willRemoveDebugInfo(options.passes));
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

@@ -56,42 +56,52 @@ Name get_i32("get_i32");
 Name get_i64("get_i64");
 Name get_f32("get_f32");
 Name get_f64("get_f64");
+Name get_funcref("get_funcref");
 Name get_anyref("get_anyref");
+Name get_nullref("get_nullref");
 Name get_exnref("get_exnref");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
 Name set_f32("set_f32");
 Name set_f64("set_f64");
+Name set_funcref("set_funcref");
 Name set_anyref("set_anyref");
+Name set_nullref("set_nullref");
 Name set_exnref("set_exnref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;
-    switch (curr->type) {
-      case i32:
+    switch (curr->type.getSingle()) {
+      case Type::i32:
         import = get_i32;
         break;
-      case i64:
+      case Type::i64:
         return; // TODO
-      case f32:
+      case Type::f32:
         import = get_f32;
         break;
-      case f64:
+      case Type::f64:
         import = get_f64;
         break;
-      case v128:
+      case Type::v128:
         assert(false && "v128 not implemented yet");
-      case anyref:
+      case Type::funcref:
+        import = get_funcref;
+        break;
+      case Type::anyref:
         import = get_anyref;
         break;
-      case exnref:
+      case Type::nullref:
+        import = get_nullref;
+        break;
+      case Type::exnref:
         import = get_exnref;
         break;
-      case none:
-      case unreachable:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     replaceCurrent(
@@ -112,29 +122,35 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
 
     Builder builder(*getModule());
     Name import;
-    switch (curr->value->type) {
-      case i32:
+    switch (curr->value->type.getSingle()) {
+      case Type::i32:
         import = set_i32;
         break;
-      case i64:
+      case Type::i64:
         return; // TODO
-      case f32:
+      case Type::f32:
         import = set_f32;
         break;
-      case f64:
+      case Type::f64:
         import = set_f64;
         break;
-      case v128:
+      case Type::v128:
         assert(false && "v128 not implemented yet");
-      case anyref:
+      case Type::funcref:
+        import = set_funcref;
+        break;
+      case Type::anyref:
         import = set_anyref;
         break;
-      case exnref:
+      case Type::nullref:
+        import = set_nullref;
+        break;
+      case Type::exnref:
         import = set_exnref;
         break;
-      case unreachable:
+      case Type::unreachable:
         return; // nothing to do here
-      case none:
+      case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
     curr->value =
@@ -156,10 +172,26 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     addImport(curr, set_f64, {Type::i32, Type::i32, Type::f64}, Type::f64);
 
     if (curr->features.hasReferenceTypes()) {
+      addImport(curr,
+                get_funcref,
+                {Type::i32, Type::i32, Type::funcref},
+                Type::funcref);
+      addImport(curr,
+                set_funcref,
+                {Type::i32, Type::i32, Type::funcref},
+                Type::funcref);
       addImport(
         curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
       addImport(
         curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      addImport(curr,
+                get_nullref,
+                {Type::i32, Type::i32, Type::nullref},
+                Type::nullref);
+      addImport(curr,
+                set_nullref,
+                {Type::i32, Type::i32, Type::nullref},
+                Type::nullref);
     }
     if (curr->features.hasExceptionHandling()) {
       addImport(

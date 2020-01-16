@@ -35,7 +35,7 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
 
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
-      if (curr->value->type == unreachable) {
+      if (curr->value->type == Type::unreachable) {
         // we don't reach the tee, just remove it
         replaceCurrent(curr->value);
       } else {

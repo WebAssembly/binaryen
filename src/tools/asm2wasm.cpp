@@ -227,7 +227,7 @@ int main(int argc, const char* argv[]) {
     Expression* init;
     const auto& memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, i32);
+      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, Type::i32);
     } else {
       init = Builder(wasm).makeConst(
         Literal(int32_t(atoi(memBase->second.c_str()))));
@@ -248,15 +248,6 @@ int main(int argc, const char* argv[]) {
                            options.runningDefaultOptimizationPasses(),
                            wasmOnly);
   asm2wasm.processAsm(asmjs);
-
-  // finalize the imported mem init
-  if (memInit != options.extra.end()) {
-    if (options.runningDefaultOptimizationPasses()) {
-      PassRunner runner(&wasm);
-      runner.add("memory-packing");
-      runner.run();
-    }
-  }
 
   // Set the max memory size, if requested
   const auto& memMax = options.extra.find("mem max");

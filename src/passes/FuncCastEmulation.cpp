@@ -44,39 +44,40 @@ static const int NUM_PARAMS = 16;
 // Converts a value to the ABI type of i64.
 static Expression* toABI(Expression* value, Module* module) {
   Builder builder(*module);
-  switch (value->type) {
-    case i32: {
+  switch (value->type.getSingle()) {
+    case Type::i32: {
       value = builder.makeUnary(ExtendUInt32, value);
       break;
     }
-    case i64: {
+    case Type::i64: {
       // already good
       break;
     }
-    case f32: {
+    case Type::f32: {
       value = builder.makeUnary(ExtendUInt32,
                                 builder.makeUnary(ReinterpretFloat32, value));
       break;
     }
-    case f64: {
+    case Type::f64: {
       value = builder.makeUnary(ReinterpretFloat64, value);
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: {
-      WASM_UNREACHABLE("anyref cannot be converted to i64");
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
-    case exnref: {
-      WASM_UNREACHABLE("exnref cannot be converted to i64");
-    }
-    case none: {
+    case Type::none: {
       // the value is none, but we need a value here
-      value = builder.makeSequence(value, LiteralUtils::makeZero(i64, *module));
+      value =
+        builder.makeSequence(value, LiteralUtils::makeZero(Type::i64, *module));
       break;
     }
-    case unreachable: {
+    case Type::unreachable: {
       // can leave it, the call isn't taken anyhow
       break;
     }
@@ -87,37 +88,37 @@ static Expression* toABI(Expression* value, Module* module) {
 // Converts a value from the ABI type of i64 to the expected type
 static Expression* fromABI(Expression* value, Type type, Module* module) {
   Builder builder(*module);
-  switch (type) {
-    case i32: {
+  switch (type.getSingle()) {
+    case Type::i32: {
       value = builder.makeUnary(WrapInt64, value);
       break;
     }
-    case i64: {
+    case Type::i64: {
       // already good
       break;
     }
-    case f32: {
+    case Type::f32: {
       value = builder.makeUnary(ReinterpretInt32,
                                 builder.makeUnary(WrapInt64, value));
       break;
     }
-    case f64: {
+    case Type::f64: {
       value = builder.makeUnary(ReinterpretInt64, value);
       break;
     }
-    case v128: {
+    case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: {
-      WASM_UNREACHABLE("anyref cannot be converted from i64");
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
-    case exnref: {
-      WASM_UNREACHABLE("exnref cannot be converted from i64");
-    }
-    case none: {
+    case Type::none: {
       value = builder.makeDrop(value);
     }
-    case unreachable: {
+    case Type::unreachable: {
       // can leave it, the call isn't taken anyhow
       break;
     }
@@ -143,12 +144,12 @@ struct ParallelFuncCastEmulation
     }
     // Add extra operands as needed.
     while (curr->operands.size() < NUM_PARAMS) {
-      curr->operands.push_back(LiteralUtils::makeZero(i64, *getModule()));
+      curr->operands.push_back(LiteralUtils::makeZero(Type::i64, *getModule()));
     }
     // Set the new types
     curr->sig = ABIType;
     auto oldType = curr->type;
-    curr->type = i64;
+    curr->type = Type::i64;
     curr->finalize(); // may be unreachable
     // Fix up return value
     replaceCurrent(fromABI(curr, oldType, getModule()));
@@ -203,12 +204,12 @@ private:
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
       callOperands.push_back(
-        fromABI(builder.makeLocalGet(i, i64), params[i], module));
+        fromABI(builder.makeLocalGet(i, Type::i64), params[i], module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
     for (Index i = 0; i < NUM_PARAMS; i++) {
-      thunkParams.push_back(i64);
+      thunkParams.push_back(Type::i64);
     }
     auto* thunkFunc =
       builder.makeFunction(thunk,

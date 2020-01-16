@@ -1,10 +1,6 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
+var module = new binaryen.Module();
 
-var module = new Binaryen.Module();
-
-module.addFunction("main", Binaryen.i32, Binaryen.i32, [], module.local.get(0, Binaryen.i32));
+module.addFunction("main", binaryen.i32, binaryen.i32, [], module.local.get(0, binaryen.i32));
 
 module.addFunctionExport("main", "main");
 

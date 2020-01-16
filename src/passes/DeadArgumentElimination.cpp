@@ -294,21 +294,21 @@ struct DAE : public Pass {
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
           if (auto* c = operand->dynCast<Const>()) {
-            if (value.type == none) {
+            if (value.type == Type::none) {
               // This is the first value seen.
               value = c->value;
             } else if (value != c->value) {
               // Not identical, give up
-              value.type = none;
+              value.type = Type::none;
               break;
             }
           } else {
             // Not a constant, give up
-            value.type = none;
+            value.type = Type::none;
             break;
           }
         }
-        if (value.type != none) {
+        if (value.type != Type::none) {
           // Success! We can just apply the constant in the function, which
           // makes the parameter value unused, which lets us remove it later.
           Builder builder(*module);
@@ -466,8 +466,8 @@ private:
       Expression** location = iter->second;
       *location = call;
       // Update the call's type.
-      if (call->type != unreachable) {
-        call->type = none;
+      if (call->type != Type::unreachable) {
+        call->type = Type::none;
       }
     }
   }

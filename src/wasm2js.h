@@ -150,11 +150,11 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    if (frees[type].size() > 0) {
-      ret = frees[type].back();
-      frees[type].pop_back();
+    if (frees[type.getSingle()].size() > 0) {
+      ret = frees[type.getSingle()].back();
+      frees[type.getSingle()].pop_back();
     } else {
-      size_t index = temps[type]++;
+      size_t index = temps[type.getSingle()]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
@@ -167,7 +167,9 @@ public:
   }
 
   // Free a temp var.
-  void freeTemp(Type type, IString temp) { frees[type].push_back(temp); }
+  void freeTemp(Type type, IString temp) {
+    frees[type.getSingle()].push_back(temp);
+  }
 
   // Generates a mangled name from `name` within the specified scope.
   //
@@ -329,6 +331,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("reorder-locals");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
+    // DCE at the end to make sure all IR nodes have valid types for conversion
+    // to JS, and not unreachable.
+    runner.add("dce");
     runner.setDebug(flags.debug);
     runner.run();
   }
@@ -412,7 +417,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
                            Signature(Type::none, Type::i32),
                            {},
                            builder.makeReturn(builder.makeGlobalGet(
-                             INT64_TO_32_HIGH_BITS, i32)))));
+                             INT64_TO_32_HIGH_BITS, Type::i32)))));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
     e->value = WASM_FETCH_HIGH_BITS;
@@ -514,7 +519,7 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   Ref module = ValueBuilder::makeName(ENV);
   Ref value =
     ValueBuilder::makeDot(module, fromName(import->base, NameScope::Top));
-  if (import->type == i32) {
+  if (import->type == Type::i32) {
     value = makeAsmCoercion(value, ASM_INT);
   }
   ValueBuilder::appendToVar(
@@ -616,7 +621,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
-    switch (const_->type) {
+    switch (const_->type.getSingle()) {
       case Type::i32: {
         theValue = ValueBuilder::makeInt(const_->value.geti32());
         break;
@@ -674,10 +679,10 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   Names::ensureNames(func);
   Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
   frees.clear();
-  frees.resize(std::max(i32, std::max(f32, f64)) + 1);
+  frees.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
   temps.clear();
-  temps.resize(std::max(i32, std::max(f32, f64)) + 1);
-  temps[i32] = temps[f32] = temps[f64] = 0;
+  temps.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
+  temps[Type::i32] = temps[Type::f32] = temps[Type::f64] = 0;
   // arguments
   bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
                        functionsCallableFromOutside.count(func->name);
@@ -708,9 +713,9 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     ret[3]->splice(theVarIndex, 1);
   }
   // checks: all temp vars should be free at the end
-  assert(frees[i32].size() == temps[i32]);
-  assert(frees[f32].size() == temps[f32]);
-  assert(frees[f64].size() == temps[f64]);
+  assert(frees[Type::i32].size() == temps[Type::i32]);
+  assert(frees[Type::f32].size() == temps[Type::f32]);
+  assert(frees[Type::f64].size() == temps[Type::f64]);
   return ret;
 }
 
@@ -977,8 +982,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       continueLabels.insert(asmLabel);
       Ref body = visit(curr->body, result);
       // if we can reach the end of the block, we must leave the while (1) loop
-      if (curr->body->type != unreachable) {
-        assert(curr->body->type == none); // flat IR
+      if (curr->body->type != Type::Type::unreachable) {
+        assert(curr->body->type == Type::Type::none); // flat IR
         body = blockify(body);
         flattenAppend(
           body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
@@ -1042,7 +1047,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         for (auto* c : code) {
           ValueBuilder::appendCodeToSwitch(
             theSwitch, blockify(visit(c, NO_RESULT)), false);
-          hoistedEndsWithUnreachable = c->type == unreachable;
+          hoistedEndsWithUnreachable = c->type == Type::Type::unreachable;
         }
       }
       // After the hoisted cases, if any remain we must make sure not to
@@ -1135,7 +1140,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       }
       if (mustReorder) {
         Ref ret;
-        ScopedTemp idx(i32, parent, func);
+        ScopedTemp idx(Type::i32, parent, func);
         std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
         for (auto* operand : curr->operands) {
           temps.push_back(new ScopedTemp(operand->type, parent, func));
@@ -1207,8 +1212,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // normal load
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
-      switch (curr->type) {
-        case i32: {
+      switch (curr->type.getSingle()) {
+        case Type::i32: {
           switch (curr->bytes) {
             case 1:
               ret = ValueBuilder::makeSub(
@@ -1236,11 +1241,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
-        case f32:
+        case Type::f32:
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
                                       ValueBuilder::makePtrShift(ptr, 2));
           break;
-        case f64:
+        case Type::f64:
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
@@ -1262,7 +1267,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitStore(Store* curr) {
       if (module->memory.initial < module->memory.max &&
-          curr->type != unreachable) {
+          curr->type != Type::Type::unreachable) {
         // In JS, if memory grows then it is dangerous to write
         //  HEAP[f()] = ..
         // or
@@ -1278,13 +1283,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             !FindAll<Host>(curr->ptr).list.empty() ||
             !FindAll<Host>(curr->value).list.empty()) {
           Ref ret;
-          ScopedTemp ptr(i32, parent, func);
+          ScopedTemp ptr(Type::i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
           ScopedTemp value(curr->value->type, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->value, value));
           LocalGet getPtr;
           getPtr.index = func->getLocalIndex(ptr.getName());
-          getPtr.type = i32;
+          getPtr.type = Type::i32;
           LocalGet getValue;
           getValue.index = func->getLocalIndex(value.getName());
           getValue.type = curr->value->type;
@@ -1303,8 +1308,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->valueType) {
-        case i32: {
+      switch (curr->valueType.getSingle()) {
+        case Type::i32: {
           switch (curr->bytes) {
             case 1:
               ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP8),
@@ -1323,11 +1328,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
-        case f32:
+        case Type::f32:
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
                                       ValueBuilder::makePtrShift(ptr, 2));
           break;
-        case f64:
+        case Type::f64:
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
@@ -1343,13 +1348,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitDrop(Drop* curr) { return visit(curr->value, NO_RESULT); }
 
     Ref visitConst(Const* curr) {
-      switch (curr->type) {
-        case i32:
+      switch (curr->type.getSingle()) {
+        case Type::i32:
           return ValueBuilder::makeInt(curr->value.geti32());
         // An i64 argument translates to two actual arguments to asm.js
         // functions, so we do a bit of a hack here to get our one `Ref` to look
         // like two function arguments.
-        case i64: {
+        case Type::i64: {
           auto lo = (unsigned)curr->value.geti64();
           auto hi = (unsigned)(curr->value.geti64() >> 32);
           std::ostringstream out;
@@ -1358,15 +1363,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString name(os.c_str(), false);
           return ValueBuilder::makeName(name);
         }
-        case f32: {
+        case Type::f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake(allocator);
           fake.value = Literal(double(curr->value.getf32()));
-          fake.type = f64;
+          fake.type = Type::f64;
           ret[2]->push_back(visitConst(&fake));
           return ret;
         }
-        case f64: {
+        case Type::f64: {
           double d = curr->value.getf64();
           if (d == 0 && std::signbit(d)) { // negative zero
             return ValueBuilder::makeUnary(
@@ -1383,8 +1388,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitUnary(Unary* curr) {
       // normal unary
-      switch (curr->type) {
-        case i32: {
+      switch (curr->type.getSingle()) {
+        case Type::i32: {
           switch (curr->op) {
             case ClzInt32: {
               return ValueBuilder::makeCall(
@@ -1443,8 +1448,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             }
           }
         }
-        case f32:
-        case f64: {
+        case Type::f32:
+        case Type::f64: {
           Ref ret;
           switch (curr->op) {
             case NegFloat32:
@@ -1525,7 +1530,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             default:
               WASM_UNREACHABLE("unhandled unary float operator");
           }
-          if (curr->type == f32) { // doubles need much less coercing
+          if (curr->type == Type::f32) { // doubles need much less coercing
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
@@ -1542,8 +1547,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type) {
-        case i32: {
+      switch (curr->type.getSingle()) {
+        case Type::i32: {
           switch (curr->op) {
             case AddInt32:
               ret = ValueBuilder::makeBinary(left, PLUS, right);
@@ -1552,7 +1557,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, MINUS, right);
               break;
             case MulInt32: {
-              if (curr->type == i32) {
+              if (curr->type == Type::i32) {
                 // TODO: when one operand is a small int, emit a multiply
                 return ValueBuilder::makeCall(MATH_IMUL, left, right);
               } else {
@@ -1665,8 +1670,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
-        case f32:
-        case f64:
+        case Type::f32:
+        case Type::f64:
           switch (curr->op) {
             case AddFloat32:
             case AddFloat64:
@@ -1699,7 +1704,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                         << std::endl;
               abort();
           }
-          if (curr->type == f32) {
+          if (curr->type == Type::f32) {
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
@@ -1726,7 +1731,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       if (useLocals) {
         ScopedTemp tempIfTrue(curr->type, parent, func),
           tempIfFalse(curr->type, parent, func),
-          tempCondition(i32, parent, func);
+          tempCondition(Type::i32, parent, func);
         Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
         Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
         Ref condition = visit(curr->condition, EXPRESSION_RESULT);
@@ -1845,6 +1850,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryFill(MemoryFill* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefNull(RefNull* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefIsNull(RefIsNull* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefFunc(RefFunc* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2248,11 +2265,10 @@ void Wasm2JSGlue::emitMemory(
   out << "var " << segmentWriter << " = (" << expr << ")(" << buffer << ");\n";
 
   auto globalOffset = [&](const Memory::Segment& segment) {
-    if (auto* c = segment.offset->template dynCast<Const>()) {
-      ;
+    if (auto* c = segment.offset->dynCast<Const>()) {
       return std::to_string(c->value.getInteger());
     }
-    if (auto* get = segment.offset->template dynCast<GlobalGet>()) {
+    if (auto* get = segment.offset->dynCast<GlobalGet>()) {
       auto internalName = get->name;
       auto importedName = wasm.getGlobal(internalName)->base;
       return accessGlobal(asmangle(importedName.str));

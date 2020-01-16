@@ -1,5 +1,6 @@
 (module
   (event $e0 (attr 0) (param i32))
+  (event $e1 (attr 0) (param anyref))
 
   (func $exnref_test (param $0 exnref) (result exnref)
     (local.get $0)
@@ -52,5 +53,23 @@
         (call $bar)
       )
     )
+  )
+
+  ;; Test subtype relationship
+  (func $subtype_test
+    (try
+      (catch
+        (drop (exnref.pop))
+        (drop
+          (block $l0 (result i32)
+            (rethrow
+              (br_on_exn $l0 $e0 (ref.null))
+            )
+          )
+        )
+      )
+    )
+
+    (throw $e1 (ref.null))
   )
 )

@@ -87,7 +87,6 @@ def parse_args(args):
 
 options = parse_args(sys.argv[1:])
 requested = options.positional_args
-script_dir = os.path.dirname(os.path.abspath(__file__))
 
 num_failures = 0
 warnings = []
@@ -124,7 +123,8 @@ if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
 
 # Locate Binaryen source directory if not specified.
 if not options.binaryen_root:
-    options.binaryen_root = os.path.dirname(os.path.dirname(script_dir))
+    path_parts = os.path.abspath(__file__).split(os.path.sep)
+    options.binaryen_root = os.path.sep.join(path_parts[:-3])
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
@@ -184,9 +184,8 @@ WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
-# Due to cmake limitations, we emit binaryen_js.js (see CMakeLists.txt
-# for why).
 BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen_js.js')
+BINARYEN_WASM = os.path.join(options.binaryen_bin, 'binaryen_wasm.js')
 
 
 def wrap_with_valgrind(cmd):
@@ -207,7 +206,8 @@ if options.valgrind:
 
 
 def in_binaryen(*args):
-    return os.path.join(options.binaryen_root, *args)
+    __rootpath__ = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    return os.path.join(__rootpath__, *args)
 
 
 os.environ['BINARYEN'] = in_binaryen()

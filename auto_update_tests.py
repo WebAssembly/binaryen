@@ -103,7 +103,7 @@ def update_wasm_opt_tests():
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
         if os.path.exists(passes_file):
             passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
@@ -252,10 +252,8 @@ def update_binaryen_js_tests():
         print(basename)
         f = open('a.js', 'w')
         f.write(open(shared.BINARYEN_JS).read())
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
         test_src = open(s).read()
-        f.write(test_src)
+        f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
         if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
             cmd = [shared.MOZJS or shared.NODEJS, 'a.js']
