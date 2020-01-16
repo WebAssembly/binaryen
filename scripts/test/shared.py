@@ -184,7 +184,8 @@ WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
-BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen_js.js')
+BINARYEN_WASM = os.path.join(options.binaryen_bin, 'binaryen_wasm.js')
 
 
 def wrap_with_valgrind(cmd):

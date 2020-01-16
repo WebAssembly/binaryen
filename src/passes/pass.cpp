@@ -430,6 +430,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
+  add("memory-packing");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
@@ -448,7 +449,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     add("simplify-globals");
   }
   add("remove-unused-module-elements");
-  add("memory-packing");
   // may allow more inlining/dae/etc., need --converge for that
   add("directize");
   // perform Stack IR optimizations here, at the very end of the
