@@ -443,7 +443,11 @@ Abbrev table for offset: 0x00000000
 
 0x00000082:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x000000000000003e)
+<<<<<<< HEAD
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000006)
+=======
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000a)
+>>>>>>> origin/master
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a5] = "main")
