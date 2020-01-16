@@ -249,15 +249,6 @@ int main(int argc, const char* argv[]) {
                            wasmOnly);
   asm2wasm.processAsm(asmjs);
 
-  // finalize the imported mem init
-  if (memInit != options.extra.end()) {
-    if (options.runningDefaultOptimizationPasses()) {
-      PassRunner runner(&wasm);
-      runner.add("memory-packing");
-      runner.run();
-    }
-  }
-
   // Set the max memory size, if requested
   const auto& memMax = options.extra.find("mem max");
   if (memMax != options.extra.end()) {
