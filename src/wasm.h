@@ -1167,7 +1167,7 @@ struct BinaryLocations {
   struct Span {
     uint32_t start, end;
   };
-  std::unordered_map<Expression*, uint32_t> expressions;
+  std::unordered_map<Expression*, Span> expressions;
   std::unordered_map<Function*, Span> functions;
 };
 
@@ -1225,7 +1225,7 @@ public:
   std::set<DebugLocation> epilogLocation;
 
   // General debugging info support: track instructions and the function itself.
-  std::unordered_map<Expression*, uint32_t> expressionLocations;
+  std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
   BinaryLocations::Span funcLocation;
 
   size_t getNumParams();

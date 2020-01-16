@@ -92,6 +92,9 @@ public:
       parent.writeDebugLocation(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
+    if (func && !sourceMap) {
+      parent.writeDebugLocationEnd(curr, func);
+    }
   }
 
   void visitBlock(Block* curr);

@@ -1014,6 +1014,7 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
+  void writeDebugLocationEnd(Expression* curr, Function* func);
 
   // helpers
   void writeInlineString(const char* name);
