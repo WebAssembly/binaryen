@@ -2304,7 +2304,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     }
     if (DWARF && currFunction) {
       currFunction->expressionLocations[curr] = BinaryLocations::Span(
-          startPos - codeSectionLocation, pos - codeSectionLocation);
+        startPos - codeSectionLocation, pos - codeSectionLocation);
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);

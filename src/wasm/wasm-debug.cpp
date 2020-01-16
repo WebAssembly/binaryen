@@ -554,7 +554,10 @@ static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
   assert(yamlValue == yamlList.end());
 }
 
-static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Entry& yamlEntry, const llvm::DWARFAbbreviationDeclaration* abbrevDecl, const LocationUpdater& locationUpdater) {
+static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
+                      llvm::DWARFYAML::Entry& yamlEntry,
+                      const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
+                      const LocationUpdater& locationUpdater) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process the low_pcs.
@@ -562,8 +565,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Ent
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
-    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
-          attrSpec,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
         llvm::DWARFYAML::FormValue& yamlValue) {
       auto attr = attrSpec.Attr;
       if (attr != llvm::dwarf::DW_AT_low_pc) {
@@ -574,12 +576,10 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Ent
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
           tag == llvm::dwarf::DW_TAG_lexical_block ||
           tag == llvm::dwarf::DW_TAG_label) {
-        newValue =
-          locationUpdater.getNewExprAddr(oldValue);
+        newValue = locationUpdater.getNewExprAddr(oldValue);
       } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                  tag == llvm::dwarf::DW_TAG_subprogram) {
-        newValue =
-          locationUpdater.getNewFuncAddr(oldValue);
+        newValue = locationUpdater.getNewFuncAddr(oldValue);
       } else {
         Fatal() << "unknown tag with low_pc "
                 << llvm::dwarf::TagString(tag).str();
@@ -592,8 +592,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Ent
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
-    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
-          attrSpec,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
         llvm::DWARFYAML::FormValue& yamlValue) {
       auto attr = attrSpec.Attr;
       if (attr != llvm::dwarf::DW_AT_high_pc) {
@@ -608,12 +607,10 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Ent
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
           tag == llvm::dwarf::DW_TAG_lexical_block ||
           tag == llvm::dwarf::DW_TAG_label) {
-        newValue =
-          locationUpdater.getNewExprEndAddr(oldValue);
+        newValue = locationUpdater.getNewExprEndAddr(oldValue);
       } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                  tag == llvm::dwarf::DW_TAG_subprogram) {
-        newValue =
-          locationUpdater.getNewFuncAddr(oldValue);
+        newValue = locationUpdater.getNewFuncAddr(oldValue);
       } else {
         Fatal() << "unknown tag with low_pc "
                 << llvm::dwarf::TagString(tag).str();
