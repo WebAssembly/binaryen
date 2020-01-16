@@ -1,24 +1,16 @@
-// TODO: remove this
-// if (typeof Binaryen === "undefined") {
-//   Binaryen = require("../../embuild/bin/binaryen");
-// }
-
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
-function testBlock() {
-  var module = new Binaryen.Module();
+console.log("Block");
+(function testBlock() {
+  var module = new binaryen.Module();
 
   var blockRef = module.block(null, []);
-  var block = Binaryen.Block(blockRef);
-  assert(block.id === Binaryen.BlockId);
+  var block = binaryen.Block(blockRef);
+  assert(block.id === binaryen.BlockId);
   assert(block.name === null);
   block.name ="theName";
   assert(block.name === "theName");
-  assert(block.type === Binaryen.none);
-  block.type = Binaryen.i32;
-  assert(block.type === Binaryen.i32);
+  assert(block.type === binaryen.none);
+  block.type = binaryen.i32;
+  assert(block.type === binaryen.i32);
   assert(block.numChildren === 0);
   var child1 = module.i32.const(1);
   block.appendChild(child1);
@@ -58,10 +50,11 @@ function testBlock() {
   assert(block == blockRef);
 
   module.dispose();
-}
+})();
 
-function testIf() {
-  var module = new Binaryen.Module();
+console.log("If");
+(function testIf() {
+  var module = new binaryen.Module();
 
   var conditionRef = module.i32.const(1);
   var ifTrueRef = module.i32.const(2);
@@ -71,8 +64,8 @@ function testIf() {
     ifTrueRef,
     ifFalseRef
   );
-  var if_ = Binaryen.If(ifRef);
-  assert(if_.id === Binaryen.IfId);
+  var if_ = binaryen.If(ifRef);
+  assert(if_.id === binaryen.IfId);
   assert(if_.condition === conditionRef);
   assert(if_.ifTrue === ifTrueRef);
   assert(if_.ifFalse === ifFalseRef);
@@ -93,15 +86,16 @@ function testIf() {
   assert(if_ == ifRef);
 
   module.dispose();
-}
+})();
 
-function testLoop() {
-  var module = new Binaryen.Module();
+console.log("Loop");
+(function testLoop() {
+  var module = new binaryen.Module();
 
   var bodyRef = module.i32.const(1);
   var loopRef = module.loop(null, bodyRef);
-  var loop = Binaryen.Loop(loopRef);
-  assert(loop.id === Binaryen.LoopId);
+  var loop = binaryen.Loop(loopRef);
+  assert(loop.id === binaryen.LoopId);
   assert(loop.name === null);
   assert(loop.body === bodyRef);
   loop.name = "theName";
@@ -117,13 +111,4 @@ function testLoop() {
   assert(loop == loopRef);
 
   module.dispose();
-}
-
-Binaryen.ready.then(function() {
-  console.log("block");
-  testBlock();
-  console.log("if");
-  testIf();
-  console.log("loop");
-  testLoop();
-});
+})();
