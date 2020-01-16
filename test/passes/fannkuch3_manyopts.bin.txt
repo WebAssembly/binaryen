@@ -2113,7 +2113,6 @@ file_names[  4]:
 0x00000549: 03 DW_LNS_advance_line (128)
 0x0000054c: 58 address += 5,  line += 0
             0x000000000000061e    128     13      1   0             0  is_stmt
-<<<<<<< HEAD
 
 0x0000054d: 05 DW_LNS_set_column (22)
 0x0000054f: 06 DW_LNS_negate_stmt
@@ -2125,19 +2124,6 @@ file_names[  4]:
 0x00000554: 5a address += 5,  line += 2
             0x000000000000062b    130     16      1   0             0  is_stmt
 
-=======
-
-0x0000054d: 05 DW_LNS_set_column (22)
-0x0000054f: 06 DW_LNS_negate_stmt
-0x00000550: 82 address += 8,  line += 0
-            0x0000000000000626    128     22      1   0             0 
-
-0x00000551: 05 DW_LNS_set_column (16)
-0x00000553: 06 DW_LNS_negate_stmt
-0x00000554: 5a address += 5,  line += 2
-            0x000000000000062b    130     16      1   0             0  is_stmt
-
->>>>>>> origin/master
 0x00000555: 05 DW_LNS_set_column (14)
 0x00000557: 06 DW_LNS_negate_stmt
 0x00000558: 82 address += 8,  line += 0
@@ -2220,7 +2206,6 @@ file_names[  4]:
 0x0000059b: 05 DW_LNS_set_column (11)
 0x0000059d: 7e address += 8,  line += -4
             0x000000000000069f    143     11      1   0             0  is_stmt
-<<<<<<< HEAD
 
 0x0000059e: 05 DW_LNS_set_column (20)
 0x000005a0: 06 DW_LNS_negate_stmt
@@ -2251,38 +2236,6 @@ file_names[  4]:
 0x000005b8: ba address += 12,  line += 0
             0x00000000000006d2      0      4      1   0             0 
 
-=======
-
-0x0000059e: 05 DW_LNS_set_column (20)
-0x000005a0: 06 DW_LNS_negate_stmt
-0x000005a1: 4a address += 4,  line += 0
-            0x00000000000006a3    143     20      1   0             0 
-
-0x000005a2: 05 DW_LNS_set_column (11)
-0x000005a4: 58 address += 5,  line += 0
-            0x00000000000006a8    143     11      1   0             0 
-
-0x000005a5: 03 DW_LNS_advance_line (0)
-0x000005a8: 3c address += 3,  line += 0
-            0x00000000000006ab      0     11      1   0             0 
-
-0x000005a9: 05 DW_LNS_set_column (4)
-0x000005ab: 06 DW_LNS_negate_stmt
-0x000005ac: 03 DW_LNS_advance_line (141)
-0x000005af: 4a address += 4,  line += 0
-            0x00000000000006af    141      4      1   0             0  is_stmt
-
-0x000005b0: 03 DW_LNS_advance_line (159)
-0x000005b2: 66 address += 6,  line += 0
-            0x00000000000006b5    159      4      1   0             0  is_stmt
-
-0x000005b3: 06 DW_LNS_negate_stmt
-0x000005b4: 03 DW_LNS_advance_line (0)
-0x000005b7: 08 DW_LNS_const_add_pc (0x0000000000000011)
-0x000005b8: ba address += 12,  line += 0
-            0x00000000000006d2      0      4      1   0             0 
-
->>>>>>> origin/master
 0x000005b9: 05 DW_LNS_set_column (1)
 0x000005bb: 06 DW_LNS_negate_stmt
 0x000005bc: 03 DW_LNS_advance_line (161)
@@ -2382,24 +2335,13 @@ Abbrev table for offset: 0x00000000
 	DW_AT_data_member_location	DW_FORM_data1
 
 [5] DW_TAG_base_type	DW_CHILDREN_no
-<<<<<<< HEAD
-=======
 	DW_AT_name	DW_FORM_strp
 	DW_AT_encoding	DW_FORM_data1
 	DW_AT_byte_size	DW_FORM_data1
 
 [6] DW_TAG_namespace	DW_CHILDREN_yes
->>>>>>> origin/master
-	DW_AT_name	DW_FORM_strp
-	DW_AT_encoding	DW_FORM_data1
-	DW_AT_byte_size	DW_FORM_data1
-
-<<<<<<< HEAD
-[6] DW_TAG_namespace	DW_CHILDREN_yes
 	DW_AT_name	DW_FORM_strp
 
-=======
->>>>>>> origin/master
 [7] DW_TAG_typedef	DW_CHILDREN_no
 	DW_AT_type	DW_FORM_ref4
 	DW_AT_name	DW_FORM_strp
@@ -2529,17 +2471,10 @@ Abbrev table for offset: 0x00000000
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000040
                  [0x00000006, 0x0000039d)
                  [0x0000039f, 0x000006e1))
-<<<<<<< HEAD
 
 0x00000026:   DW_TAG_pointer_type [2]  
                 DW_AT_type [DW_FORM_ref4]	(cu + 0x002b => {0x0000002b} "worker_args")
 
-=======
-
-0x00000026:   DW_TAG_pointer_type [2]  
-                DW_AT_type [DW_FORM_ref4]	(cu + 0x002b => {0x0000002b} "worker_args")
-
->>>>>>> origin/master
 0x0000002b:   DW_TAG_structure_type [3] *
                 DW_AT_calling_convention [DW_FORM_data1]	(DW_CC_pass_by_value)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e3] = "worker_args")
@@ -2599,11 +2534,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000082:   DW_TAG_subprogram [10] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000007)
-<<<<<<< HEAD
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000353)
-=======
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000397)
->>>>>>> origin/master
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x00000166] = "_Z15fannkuch_workerPv")
@@ -2887,11 +2818,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000023b:   DW_TAG_subprogram [23] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x000000000000035c)
-<<<<<<< HEAD
                 DW_AT_high_pc [DW_FORM_data4]	(0x000002cf)
-=======
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000342)
->>>>>>> origin/master
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018c] = "main")
@@ -2924,11 +2851,7 @@ Abbrev table for offset: 0x00000000
 0x00000278:     DW_TAG_inlined_subroutine [24] *
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01a8 => {0x000001a8} "_ZL8fannkuchi")
                   DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
-<<<<<<< HEAD
                   DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
-=======
-                  DW_AT_high_pc [DW_FORM_data4]	(0x000002c8)
->>>>>>> origin/master
                   DW_AT_call_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_call_line [DW_FORM_data1]	(159)
                   DW_AT_call_column [DW_FORM_data1]	(0x29)
