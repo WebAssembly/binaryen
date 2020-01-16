@@ -378,15 +378,6 @@ Abbrev table for offset: 0x00000000
               DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
               DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "fib2.c")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
-<<<<<<< HEAD
-              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009c] = "/usr/local/google/home/azakai/Dev/binaryen")
-              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
-              DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
-
-0x00000026:   DW_TAG_subprogram [2] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
-=======
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000070] = "/usr/local/google/home/azakai/Dev/2-binaryen")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
@@ -397,7 +388,6 @@ Abbrev table for offset: 0x00000000
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000038)
                 DW_AT_frame_base [DW_FORM_exprloc]	(<decoding error> 01 00 9f)
->>>>>>> 960db1233... update testcases with new llvm + https://reviews.llvm.org/D71681 on top [ci skip]
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009d] = "fib")
                 DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
@@ -453,7 +443,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000082:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x000000000000003e)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000000a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000006)
                 DW_AT_frame_base [DW_FORM_exprloc]	(<decoding error> 01 00 9f)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a5] = "main")

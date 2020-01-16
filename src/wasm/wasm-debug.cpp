@@ -554,6 +554,77 @@ static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
   assert(yamlValue == yamlList.end());
 }
 
+static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE, llvm::DWARFYAML::Entry& yamlEntry, const llvm::DWARFAbbreviationDeclaration* abbrevDecl, const LocationUpdater& locationUpdater) {
+  auto tag = DIE.getTag();
+  // Pairs of low/high_pc require some special handling, as the high
+  // may be an offset relative to the low. First, process the low_pcs.
+  uint32_t oldLowPC = 0, newLowPC = 0;
+  iterContextAndYAML(
+    abbrevDecl->attributes(),
+    yamlEntry.Values,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
+          attrSpec,
+        llvm::DWARFYAML::FormValue& yamlValue) {
+      auto attr = attrSpec.Attr;
+      if (attr != llvm::dwarf::DW_AT_low_pc) {
+        return;
+      }
+      uint32_t oldValue = yamlValue.Value, newValue = 0;
+      if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+          tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+          tag == llvm::dwarf::DW_TAG_lexical_block ||
+          tag == llvm::dwarf::DW_TAG_label) {
+        newValue =
+          locationUpdater.getNewExprAddr(oldValue);
+      } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
+                 tag == llvm::dwarf::DW_TAG_subprogram) {
+        newValue =
+          locationUpdater.getNewFuncAddr(oldValue);
+      } else {
+        Fatal() << "unknown tag with low_pc "
+                << llvm::dwarf::TagString(tag).str();
+      }
+      oldLowPC = oldValue;
+      newLowPC = newValue;
+      yamlValue.Value = newValue;
+    });
+  // Next, process the high_pcs.
+  iterContextAndYAML(
+    abbrevDecl->attributes(),
+    yamlEntry.Values,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
+          attrSpec,
+        llvm::DWARFYAML::FormValue& yamlValue) {
+      auto attr = attrSpec.Attr;
+      if (attr != llvm::dwarf::DW_AT_high_pc) {
+        return;
+      }
+      uint32_t oldValue = yamlValue.Value, newValue = 0;
+      bool isRelative = attrSpec.Form == llvm::dwarf::DW_FORM_data4;
+      if (isRelative) {
+        oldValue += oldLowPC;
+      }
+      if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+          tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+          tag == llvm::dwarf::DW_TAG_lexical_block ||
+          tag == llvm::dwarf::DW_TAG_label) {
+        newValue =
+          locationUpdater.getNewExprEndAddr(oldValue);
+      } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
+                 tag == llvm::dwarf::DW_TAG_subprogram) {
+        newValue =
+          locationUpdater.getNewFuncAddr(oldValue);
+      } else {
+        Fatal() << "unknown tag with low_pc "
+                << llvm::dwarf::TagString(tag).str();
+      }
+      if (isRelative) {
+        newValue -= newLowPC;
+      }
+      yamlValue.Value = newValue;
+    });
+}
+
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
                                const LocationUpdater& locationUpdater) {
@@ -570,40 +641,12 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
         yamlUnit.Entries,
         [&](const llvm::DWARFDebugInfoEntry& DIE,
             llvm::DWARFYAML::Entry& yamlEntry) {
-          auto tag = DIE.getTag();
           // Process the entries in each relevant DIE, looking for attributes to
           // change.
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
-            iterContextAndYAML(
-              abbrevDecl->attributes(),
-              yamlEntry.Values,
-              [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec&
-                    attrSpec,
-                  llvm::DWARFYAML::FormValue& yamlValue) {
-                if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc ||
-                    attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
-                  if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
-                      tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
-                      tag == llvm::dwarf::DW_TAG_lexical_block ||
-                      tag == llvm::dwarf::DW_TAG_label) {
-                    if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-                      yamlValue.Value =
-                        locationUpdater.getNewExprAddr(yamlValue.Value);
-                    } else {
-                      yamlValue.Value =
-                        locationUpdater.getNewExprEndAddr(yamlValue.Value);
-                    }
-                  } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
-                             tag == llvm::dwarf::DW_TAG_subprogram) {
-                    yamlValue.Value =
-                      locationUpdater.getNewFuncAddr(yamlValue.Value);
-                  } else {
-                    Fatal() << "unknown tag with low_pc "
-                            << llvm::dwarf::TagString(tag).str();
-                  }
-                }
-              });
+            // This is relevant; look for things to update.
+            updateDIE(DIE, yamlEntry, abbrevDecl, locationUpdater);
           }
         });
     });
