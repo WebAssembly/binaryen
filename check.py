@@ -168,10 +168,8 @@ def run_wasm_opt_tests():
 
         shared.fail_if_not_identical_to_file(actual, f)
 
-        # FIXME Remove this condition after nullref is implemented in V8
-        if 'reference-types.wast' not in t:
-            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
-            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
+        shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
+        shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
 
         shared.minify_check(t)
 
@@ -341,9 +339,7 @@ def run_spec_tests():
         #     * comments.wast: contains characters that are not valid utf-8,
         #       so our string splitting code fails there
 
-        # FIXME Remove reference type tests from this list after nullref is
-        # implemented in V8
-        if os.path.basename(wast) not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
+        if os.path.basename(wast) not in ['comments.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
             for module, asserts in support.split_wast(wast):

@@ -228,14 +228,15 @@ def has_shell_timeout():
 # Default options to pass to v8. These enable all features.
 V8_OPTS = [
     '--experimental-wasm-eh',
-    '--experimental-wasm-mv',
-    '--experimental-wasm-sat-f2i-conversions',
-    '--experimental-wasm-se',
-    '--experimental-wasm-threads',
     '--experimental-wasm-simd',
+    '--experimental-wasm-return-call',
+    '--experimental-wasm-compilation-hints',
     '--experimental-wasm-anyref',
-    '--experimental-wasm-bulk-memory',
-    '--experimental-wasm-return-call'
+    '--experimental-wasm-bigint',
+    '--experimental-wasm-mv',
+    '--experimental-wasm-threads',
+    '--experimental-wasm-type-reflection',
+    '--experimental-wasm-bulk-memory'
 ]
 
 has_vanilla_llvm = False

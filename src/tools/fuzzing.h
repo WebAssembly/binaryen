@@ -2721,17 +2721,13 @@ private:
   }
   Type getStorableType() { return pick(getStorableTypes()); }
 
-  // - funcref cannot be logged because referenced functions can be inlined or
-  // removed during optimization
-  // - there's no point in logging anyref because it is opaque
+  // Reference types other than nullref are opaque, so no point in logging them
   std::vector<Type> getLoggableTypes() {
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes, Type::nullref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+        .add(FeatureSet::ReferenceTypes, Type::nullref));
   }
   Type getLoggableType() { return pick(getLoggableTypes()); }
 

@@ -40,7 +40,7 @@ FUZZ_OPTS = []
 
 INPUT_SIZE_LIMIT = 150 * 1024
 
-LOG_LIMIT = 125
+LOG_LIMIT = 500
 
 
 # utilities
@@ -228,7 +228,7 @@ class CompareVMs(TestCaseHandler):
                 break
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-exception-handling']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
