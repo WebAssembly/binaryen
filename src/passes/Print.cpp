@@ -1443,7 +1443,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         auto iter = currFunction->expressionLocations.find(curr);
         if (iter != currFunction->expressionLocations.end()) {
           Colors::grey(o);
-          o << ";; code offset: 0x" << std::hex << iter->second.first
+          o << ";; code offset: 0x" << std::hex << iter->second.start
             << std::dec << '\n';
           restoreNormalColor(o);
           doIndent(o, indent);

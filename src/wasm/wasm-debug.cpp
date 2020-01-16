@@ -371,10 +371,10 @@ struct AddrExprMap {
 
 private:
   void add(Expression* expr, BinaryLocations::Span span) {
-    assert(startMap.count(span.first) == 0);
-    startMap[span.first] = expr;
-    assert(endMap.count(span.second) == 0);
-    endMap[span.second] = expr;
+    assert(startMap.count(span.start) == 0);
+    startMap[span.start] = expr;
+    assert(endMap.count(span.end) == 0);
+    endMap[span.end] = expr;
   }
 };
 
@@ -387,8 +387,8 @@ struct FuncAddrMap {
   // Construct the map from the binaryLocations loaded from the wasm.
   FuncAddrMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
-      map[func->funcLocation.first] = func.get();
-      map[func->funcLocation.second] = func.get();
+      map[func->funcLocation.start] = func.get();
+      map[func->funcLocation.end] = func.get();
     }
   }
 
@@ -444,7 +444,7 @@ struct LocationUpdater {
     if (auto* expr = oldExprAddrMap.getStart(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second.first;
+        uint32_t newAddr = iter->second.start;
         return newAddr;
       }
     }
@@ -455,7 +455,7 @@ struct LocationUpdater {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second.second;
+        uint32_t newAddr = iter->second.end;
         return newAddr;
       }
     }
@@ -469,10 +469,10 @@ struct LocationUpdater {
       if (iter != newLocations.functions.end()) {
         auto oldSpan = func->funcLocation;
         auto newSpan = iter->second;
-        if (oldAddr == oldSpan.first) {
-          return newSpan.first;
-        } else if (oldAddr == oldSpan.second) {
-          return newSpan.second;
+        if (oldAddr == oldSpan.start) {
+          return newSpan.start;
+        } else if (oldAddr == oldSpan.end) {
+          return newSpan.end;
         }
       }
     }

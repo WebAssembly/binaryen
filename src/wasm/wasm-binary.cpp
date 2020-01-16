@@ -160,12 +160,12 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // We are relative to the section start.
     auto totalAdjustment = adjustmentForLEBShrinking + body;
     for (auto& pair : binaryLocations.expressions) {
-      pair.second.first -= totalAdjustment;
-      pair.second.second -= totalAdjustment;
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
     }
     for (auto& pair : binaryLocations.functions) {
-      pair.second.first -= totalAdjustment;
-      pair.second.second -= totalAdjustment;
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
     }
   }
 }
@@ -341,13 +341,13 @@ void WasmBinaryWriter::writeFunctions() {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
         auto& span = binaryLocations.expressions[curr];
-        span.first -= adjustmentForLEBShrinking;
-        span.second -= adjustmentForLEBShrinking;
+        span.start -= adjustmentForLEBShrinking;
+        span.end -= adjustmentForLEBShrinking;
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
-      binaryLocations.functions[func] =
-        BinaryLocations::Span(start - adjustmentForLEBShrinking, o.size());
+      binaryLocations.functions[func] = BinaryLocations::Span{
+        uint32_t(start - adjustmentForLEBShrinking), uint32_t(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
@@ -711,7 +711,7 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well.
   if (func && !func->expressionLocations.empty()) {
-    binaryLocations.expressions[curr] = BinaryLocations::Span(o.size(), 0);
+    binaryLocations.expressions[curr] = BinaryLocations::Span{uint32_t(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
 }
@@ -719,8 +719,8 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
 void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
-    assert(span.second == 0);
-    span.second = o.size();
+    assert(span.end == 0);
+    span.end = o.size();
   }
 }
 
@@ -1381,8 +1381,9 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      func->funcLocation = BinaryLocations::Span(
-        pos - codeSectionLocation, pos - codeSectionLocation + size);
+      func->funcLocation =
+        BinaryLocations::Span{uint32_t(pos - codeSectionLocation),
+                              uint32_t(pos - codeSectionLocation + size)};
     }
 
     readNextDebugLocation();
@@ -2303,8 +2304,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
-      currFunction->expressionLocations[curr] = BinaryLocations::Span(
-        startPos - codeSectionLocation, pos - codeSectionLocation);
+      currFunction->expressionLocations[curr] = BinaryLocations::Span{
+        uint32_t(startPos - codeSectionLocation), uint32_t(pos - codeSectionLocation)};
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
