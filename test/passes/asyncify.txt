@@ -5,6 +5,12 @@
  (global $sleeping (mut i32) (i32.const 0))
  (global $__asyncify_state (mut i32) (i32.const 0))
  (global $__asyncify_data (mut i32) (i32.const 0))
+ (export "do_sleep" (func $do_sleep))
+ (export "work" (func $work))
+ (export "stuff" (func $stuff))
+ (export "first_event" (func $first_event))
+ (export "second_event" (func $second_event))
+ (export "never_sleep" (func $never_sleep))
  (export "asyncify_start_unwind" (func $asyncify_start_unwind))
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
@@ -313,6 +319,9 @@
    (unreachable)
   )
  )
+ ;; custom section "asyncify", size 8, contents: "do_sleep"
+ ;; custom section "asyncify", size 4, contents: "work"
+ ;; custom section "asyncify", size 11, contents: "first_event"
 )
 (module
  (type $none_=>_none (func))
@@ -325,6 +334,22 @@
  (memory $0 1 2)
  (global $__asyncify_state (mut i32) (i32.const 0))
  (global $__asyncify_data (mut i32) (i32.const 0))
+ (export "calls-import" (func $calls-import))
+ (export "calls-import2" (func $calls-import2))
+ (export "calls-import2-drop" (func $calls-import2-drop))
+ (export "calls-nothing" (func $calls-nothing))
+ (export "many-locals" (func $many-locals))
+ (export "calls-import2-if" (func $calls-import2-if))
+ (export "alls-import2-if-else" (func $calls-import2-if-else))
+ (export "calls-import2-if-else-oneside" (func $calls-import2-if-else-oneside))
+ (export "calls-import2-if-else-oneside2" (func $calls-import2-if-else-oneside2))
+ (export "calls-loop" (func $calls-loop))
+ (export "calls-loop2" (func $calls-loop2))
+ (export "calls-mix" (func $calls-mix))
+ (export "boring" (func $boring))
+ (export "calls-mix-deep" (func $calls-mix-deep))
+ (export "boring-deep" (func $boring-deep))
+ (export "import-deep" (func $import-deep))
  (export "asyncify_start_unwind" (func $asyncify_start_unwind))
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
@@ -2648,6 +2673,19 @@
    (unreachable)
   )
  )
+ ;; custom section "asyncify", size 12, contents: "calls-import"
+ ;; custom section "asyncify", size 13, contents: "calls-import2"
+ ;; custom section "asyncify", size 18, contents: "calls-import2-drop"
+ ;; custom section "asyncify", size 11, contents: "many-locals"
+ ;; custom section "asyncify", size 16, contents: "calls-import2-if"
+ ;; custom section "asyncify", size 20, contents: "alls-import2-if-else"
+ ;; custom section "asyncify", size 29, contents: "calls-import2-if-else-oneside"
+ ;; custom section "asyncify", size 30, contents: "calls-import2-if-else-oneside2"
+ ;; custom section "asyncify", size 10, contents: "calls-loop"
+ ;; custom section "asyncify", size 11, contents: "calls-loop2"
+ ;; custom section "asyncify", size 9, contents: "calls-mix"
+ ;; custom section "asyncify", size 14, contents: "calls-mix-deep"
+ ;; custom section "asyncify", size 11, contents: "import-deep"
 )
 (module
  (type $none_=>_none (func))
