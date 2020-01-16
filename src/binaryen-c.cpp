@@ -2358,6 +2358,24 @@ BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
   assert(expression->is<Call>());
   return removeExpressionAt(static_cast<Call*>(expression)->operands, index);
 }
+int BinaryenCallIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIsReturn(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return static_cast<Call*>(expression)->isReturn;
+}
+void BinaryenCallSetReturn(BinaryenExpressionRef expr, int isReturn) {
+  if (tracing) {
+    std::cout << "  BinaryenCallSetReturn(expressions[" << expressions[expr]
+              << "], " << isReturn << ");\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  static_cast<Call*>(expression)->isReturn = isReturn != 0;
+}
 // CallIndirect
 BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
@@ -2459,6 +2477,24 @@ BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
   assert(expression->is<CallIndirect>());
   return removeExpressionAt(static_cast<CallIndirect*>(expression)->operands,
                             index);
+}
+int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectIsReturn(expressions["
+              << expressions[expr] << "]);\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->isReturn;
+}
+void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr, int isReturn) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectSetReturn(expressions["
+              << expressions[expr] << "], " << isReturn << ");\n";
+  }
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  static_cast<CallIndirect*>(expression)->isReturn = isReturn != 0;
 }
 // LocalGet
 BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {

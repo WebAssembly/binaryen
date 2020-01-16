@@ -970,19 +970,25 @@ BINARYEN_API void BinaryenCallSetOperandAt(BinaryenExpressionRef expr,
                                            BinaryenExpressionRef operandExpr);
 // Appends an operand expression to a `call` expression, returning its insertion
 // index.
-BinaryenIndex BinaryenCallAppendOperand(BinaryenExpressionRef expr,
-                                        BinaryenExpressionRef operandExpr);
+BINARYEN_API BinaryenIndex BinaryenCallAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
 // Inserts an operand expression at the specified index of a `call` expression,
 // moving existing operands including the one previously at that index one index
 // up.
-void BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
-                                 BinaryenIndex index,
-                                 BinaryenExpressionRef operandExpr);
+BINARYEN_API void
+BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
+                            BinaryenIndex index,
+                            BinaryenExpressionRef operandExpr);
 // Removes the operand expression at the specified index of a `call` expression,
 // moving all subsequent operands one index down. Returns the operand
 // expression.
-BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
-                                                  BinaryenIndex index);
+BINARYEN_API BinaryenExpressionRef
+BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether the specified `call` expression is a tail call.
+BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
+// Sets whether the specified `call` expression is a tail call.
+BINARYEN_API void BinaryenCallSetReturn(BinaryenExpressionRef expr,
+                                        int isReturn);
 
 // Gets the target expression of a `call_indirect` expression.
 BINARYEN_API BinaryenExpressionRef
@@ -1006,21 +1012,25 @@ BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
                                  BinaryenExpressionRef operandExpr);
 // Appends an operand expression to a `call_indirect` expression, returning its
 // insertion index.
-BinaryenIndex
-BinaryenCallIndirectAppendOperand(BinaryenExpressionRef expr,
-                                  BinaryenExpressionRef operandExpr);
+BINARYEN_API BinaryenIndex BinaryenCallIndirectAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
 // Inserts an operand expression at the specified index of a `call_indirect`
 // expression, moving existing operands including the one previously at that
 // index one index up.
-void BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
-                                         BinaryenIndex index,
-                                         BinaryenExpressionRef operandExpr);
+BINARYEN_API void
+BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
+                                    BinaryenIndex index,
+                                    BinaryenExpressionRef operandExpr);
 // Removes the operand expression at the specified index of a `call_indirect`
 // expression, moving all subsequent operands one index down. Returns the
 // operand expression.
-BinaryenExpressionRef
-BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
-                                    BinaryenIndex index);
+BINARYEN_API BinaryenExpressionRef BinaryenCallIndirectRemoveOperandAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether the specified `call_indirect` expression is a tail call.
+BINARYEN_API int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr);
+// Sets whether the specified `call_indirect` expression is a tail call.
+BINARYEN_API void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr,
+                                                int isReturn);
 
 // Gets the local index of a `local.get` expression.
 BINARYEN_API BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr);
@@ -1277,8 +1287,8 @@ BINARYEN_API void BinaryenAtomicRMWSetPtr(BinaryenExpressionRef expr,
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr);
 // Sets the value expression of an atomic read-modify-write expression.
-void BinaryenAtomicRMWSetValue(BinaryenExpressionRef expr,
-                               BinaryenExpressionRef valueExpr);
+BINARYEN_API void BinaryenAtomicRMWSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
 
 // Gets the number of bytes affected by an atomic compare and exchange
 // expression.

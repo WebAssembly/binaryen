@@ -3107,6 +3107,12 @@ Module['Call'] = makeExpressionWrapper({
   },
   'removeOperandAt': function(expr, index) {
     return Module['_BinaryenCallRemoveOperandAt'](expr, index);
+  },
+  'isReturn': function(expr) {
+    return Module['_BinaryenCallIsReturn'](expr);
+  },
+  'setReturn': function(expr, isReturn) {
+    Module['_BinaryenCallSetReturn'](expr, isReturn);
   }
 });
 
@@ -3134,6 +3140,12 @@ Module['CallIndirect'] = makeExpressionWrapper({
   },
   'removeOperandAt': function(expr, index) {
     return Module['_BinaryenCallIndirectRemoveOperandAt'](expr, index);
+  },
+  'isReturn': function(expr) {
+    return Module['_BinaryenCallIndirectIsReturn'](expr);
+  },
+  'setReturn': function(expr, isReturn) {
+    Module['_BinaryenCallIndirectSetReturn'](expr, isReturn);
   }
 });
 
