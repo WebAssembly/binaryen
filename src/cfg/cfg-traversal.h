@@ -64,7 +64,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   BasicBlock* currBasicBlock;
   // a block or loop => its branches
   std::map<Expression*, std::vector<BasicBlock*>> branches;
-  // stack of the last blocks of if conditons + the last blocks of if true
+  // stack of the last blocks of if conditions + the last blocks of if true
   // bodies
   std::vector<BasicBlock*> ifStack;
   // stack of the first blocks of loops
@@ -233,7 +233,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndTry(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    self->startBasicBlock(); // continuation block after try
+    self->startBasicBlock(); // continuation block after try-catch
     // catch body's last block -> continuation block
     self->link(last, self->currBasicBlock);
     // try body's last block -> continuation block
@@ -311,12 +311,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else
       }
-      case Expression::Id::ThrowId: {
-        self->pushTask(SubType::doEndThrow, currp);
-        break;
-      }
+      case Expression::Id::ThrowId:
       case Expression::Id::RethrowId: {
-        // In CFG perspective, rethrow is the same as throw
         self->pushTask(SubType::doEndThrow, currp);
         break;
       }
@@ -350,6 +346,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     assert(ifStack.size() == 0);
     assert(loopStack.size() == 0);
     assert(tryStack.size() == 0);
+    assert(catchStack.size() == 0);
   }
 
   std::unordered_set<BasicBlock*> findLiveBlocks() {
