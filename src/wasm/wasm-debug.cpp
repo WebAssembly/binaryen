@@ -458,17 +458,6 @@ struct LocationUpdater {
     return 0;
   }
 
-  BinaryLocation getNewExprEndAddr(BinaryLocation oldAddr) const {
-    if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
-      auto iter = newLocations.expressions.find(expr);
-      if (iter != newLocations.expressions.end()) {
-        BinaryLocation newAddr = iter->second.end;
-        return newAddr;
-      }
-    }
-    return 0;
-  }
-
   BinaryLocation getNewFuncAddr(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.get(oldAddr)) {
       // The function might have been optimized away, check.
