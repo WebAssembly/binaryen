@@ -429,10 +429,6 @@ struct LocationUpdater {
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
-  // TODO: apparently DWARF offsets may be into the middle of instructions...
-  //       we may need to track their spans too
-  // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
     : wasm(wasm), newLocations(newLocations), oldExprAddrMap(wasm),
       newExprAddrMap(newLocations), oldFuncAddrMap(wasm) {}
