@@ -2534,7 +2534,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000082:   DW_TAG_subprogram [10] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000006)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000397)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000383)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x00000166] = "_Z15fannkuch_workerPv")
@@ -2818,7 +2818,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000023b:   DW_TAG_subprogram [23] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x000000000000038b)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000342)
+                DW_AT_high_pc [DW_FORM_data4]	(0x000002fb)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018c] = "main")
@@ -2851,7 +2851,7 @@ Abbrev table for offset: 0x00000000
 0x00000278:     DW_TAG_inlined_subroutine [24] *
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01a8 => {0x000001a8} "_ZL8fannkuchi")
                   DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003c6)
-                  DW_AT_high_pc [DW_FORM_data4]	(0x000002c8)
+                  DW_AT_high_pc [DW_FORM_data4]	(0x0000026d)
                   DW_AT_call_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_call_line [DW_FORM_data1]	(159)
                   DW_AT_call_column [DW_FORM_data1]	(0x29)
