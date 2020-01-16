@@ -2931,15 +2931,23 @@ function makeExpressionWrapperInstanceMembers(prototype, members) {
         return this.constructor[key].apply(null, args);
       };
       // Instance accessor calls the respective static methods
-      if (member.length === 1 && key.startsWith("get")) {
-        Object.defineProperty(prototype, key.charAt(3).toLowerCase() + key.substring(4), {
-          get: function() {
-            return this.constructor[key](this['expr']);
-          },
-          set: function(value) {
-            this.constructor["set" + key.substring(3)](this['expr'], value);
-          }
-        });
+      var match;
+      if (member.length === 1 && (match = key.match(/^(get|is)/))) {
+        (function(propertyName, getter, setterIfAny) {
+          Object.defineProperty(prototype, propertyName, {
+            get: function() {
+              return getter(this['expr']);
+            },
+            set: function(value) {
+              if (setterIfAny) setterIfAny(this['expr'], value);
+              else throw Error("property '" + propertyName + "' has no setter");
+            }
+          });
+        })(
+          key.charAt(match[1].length).toLowerCase() + key.substring(match[1].length + 1),
+          members[key],
+          members["set" + key.substring(match[1].length)]
+        );
       }
     }
   });
@@ -3208,6 +3216,279 @@ Module['Host'] = makeExpressionWrapper({
   },
   'setOperandAt': function(expr, index, operandExpr) {
     Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
+  }
+});
+
+Module['Load'] = makeExpressionWrapper({
+  'isAtomic': function(expr) {
+    return Boolean(Module['_BinaryenLoadIsAtomic'](expr));
+  },
+  'setAtomic': function(expr, isAtomic) {
+    Module['_BinaryenLoadSetAtomic'](expr, isAtomic);
+  },
+  'isSigned': function(expr) {
+    return Boolean(Module['_BinaryenLoadIsSigned'](expr));
+  },
+  'setSigned': function(expr, isSigned) {
+    Module['_BinaryenLoadSetSigned'](expr, isSigned);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenLoadGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenLoadSetOffset'](expr, offset);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenLoadGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenLoadSetBytes'](expr, bytes);
+  },
+  'getAlign': function(expr) {
+    return Module['_BinaryenLoadGetAlign'](expr);
+  },
+  'setAlign': function(expr, align) {
+    Module['_BinaryenLoadSetAlign'](expr, align);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenLoadGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenLoadSetPtr'](expr, ptrExpr);
+  }
+});
+
+Module['Store'] = makeExpressionWrapper({
+  'isAtomic': function(expr) {
+    return Boolean(Module['_BinaryenStoreIsAtomic'](expr));
+  },
+  'setAtomic': function(expr, isAtomic) {
+    Module['_BinaryenStoreSetAtomic'](expr, isAtomic);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenStoreGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenStoreSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenStoreGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenStoreSetOffset'](expr, offset);
+  },
+  'getAlign': function(expr) {
+    return Module['_BinaryenStoreGetAlign'](expr);
+  },
+  'setAlign': function(expr, align) {
+    Module['_BinaryenStoreSetAlign'](expr, align);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenStoreGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenStoreSetPtr'](expr, ptrExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenStoreGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenStoreSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Const'] = makeExpressionWrapper({
+  'getValueI32': function(expr) {
+    return Module['_BinaryenConstGetValueI32'](expr);
+  },
+  'setValueI32': function(expr, value) {
+    Module['_BinaryenConstSetValueI32'](expr, value);
+  },
+  'getValueI64Low': function(expr) {
+    return Module['_BinaryenConstGetValueI64Low'](expr);
+  },
+  'setValueI64Low': function(expr, value) {
+    Module['_BinaryenConstSetValueI64Low'](expr, value);
+  },
+  'getValueI64High': function(expr) {
+    return Module['_BinaryenConstGetValueI64High'](expr);
+  },
+  'setValueI64High': function(expr, value) {
+    Module['_BinaryenConstSetValueI64High'](expr, value);
+  },
+  'getValueF32': function(expr) {
+    return Module['_BinaryenConstGetValueF32'](expr);
+  },
+  'setValueF32': function(expr, value) {
+    Module['_BinaryenConstSetValueF32'](expr, value);
+  },
+  'getValueF64': function(expr) {
+    return Module['_BinaryenConstGetValueF64'](expr);
+  },
+  'setValueF64': function(expr, value) {
+    Module['_BinaryenConstSetValueF64'](expr, value);
+  },
+  'getValueV128': function(expr) {
+    var value;
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
+      value = new Array(16);
+      for (var i = 0 ; i < 16; ++i) {
+        value[i] = HEAPU8[tempBuffer + i];
+      }
+    });
+    return value;
+  },
+  'setValueV128': function(expr, value) {
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      for (var i = 0 ; i < 16; ++i) {
+        HEAPU8[tempBuffer + i] = value[i];
+      }
+      Module['_BinaryenConstSetValueV128'](expr, tempBuffer);
+    });
+  }
+});
+
+Module['Unary'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenUnaryGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenUnarySetOp'](expr, op);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenUnaryGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenUnarySetValue'](expr, valueExpr);
+  }
+});
+
+Module['Binary'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenBinaryGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenBinarySetOp'](expr, op);
+  },
+  'getLeft': function(expr) {
+    return Module['_BinaryenBinaryGetLeft'](expr);
+  },
+  'setLeft': function(expr, leftExpr) {
+    Module['_BinaryenBinarySetLeft'](expr, leftExpr);
+  },
+  'getRight': function(expr) {
+    return Module['_BinaryenBinaryGetRight'](expr);
+  },
+  'setRight': function(expr, rightExpr) {
+    Module['_BinaryenBinarySetRight'](expr, rightExpr);
+  }
+});
+
+Module['Select'] = makeExpressionWrapper({
+  'getIfTrue': function(expr) {
+    return Module['_BinaryenSelectGetIfTrue'](expr);
+  },
+  'setIfTrue': function(expr, ifTrueExpr) {
+    Module['_BinaryenSelectSetIfTrue'](expr, ifTrueExpr);
+  },
+  'getIfFalse': function(expr) {
+    return Module['_BinaryenSelectGetIfFalse'](expr);
+  },
+  'setIfFalse': function(expr, ifFalseExpr) {
+    Module['_BinaryenSelectSetIfFalse'](expr, ifFalseExpr);
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenSelectGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenSelectSetCondition'](expr, condExpr);
+  }
+});
+
+Module['Drop'] = makeExpressionWrapper({
+  'getValue': function(expr) {
+    return Module['_BinaryenDropGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenDropSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Return'] = makeExpressionWrapper({
+  'getValue': function(expr) {
+    return Module['_BinaryenReturnGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenReturnSetValue'](expr, valueExpr);
+  }
+});
+
+Module['AtomicRMW'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenAtomicRMWGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenAtomicRMWSetOp'](expr, op);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenAtomicRMWGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenAtomicRMWSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenAtomicRMWGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenAtomicRMWSetOffset'](expr, offset);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicRMWGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicRMWSetPtr'](expr, ptrExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenAtomicRMWGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenAtomicRMWSetValue'](expr, valueExpr);
+  }
+});
+
+Module['AtomicCmpxchg'] = makeExpressionWrapper({
+  'getBytes': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenAtomicCmpxchgSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenAtomicCmpxchgSetOffset'](expr, offset);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicCmpxchgSetPtr'](expr, ptrExpr);
+  },
+  'getExpected': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetExpected'](expr);
+  },
+  'setExpected': function(expr, expectedExpr) {
+    Module['_BinaryenAtomicCmpxchgSetExpected'](expr, expectedExpr);
+  },
+  'getReplacement': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetReplacement'](expr);
+  },
+  'setReplacement': function(expr, replacementExpr) {
+    Module['_BinaryenAtomicCmpxchgSetReplacement'](expr, replacementExpr);
   }
 });
 
