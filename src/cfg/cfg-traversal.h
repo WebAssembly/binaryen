@@ -64,8 +64,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   BasicBlock* currBasicBlock;
   // a block or loop => its branches
   std::map<Expression*, std::vector<BasicBlock*>> branches;
+  // stack of the last blocks of if conditions + the last blocks of if true
+  // bodies
   std::vector<BasicBlock*> ifStack;
+  // stack of the first blocks of loops
   std::vector<BasicBlock*> loopStack;
+  // stack of the last blocks of try bodies
+  std::vector<BasicBlock*> tryStack;
+  // stack of the first blocks of catch bodies
+  std::vector<BasicBlock*> catchStack;
 
   void startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
@@ -198,6 +205,59 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->startUnreachableBlock();
   }
 
+  static void doEndCall(SubType* self, Expression** currp) {
+    // Every call can possibly throw, but we don't end the current basic block
+    // unless the call is within a try-catch, because the CFG will have too many
+    // blocks that way, and if an exception is thrown, the function will be
+    // exited anyway.
+    if (!self->catchStack.empty()) {
+      auto* last = self->currBasicBlock;
+      self->startBasicBlock();
+      self->link(last, self->currBasicBlock);    // exception not thrown
+      self->link(last, self->catchStack.back()); // exception thrown
+    }
+  }
+
+  static void doStartTry(SubType* self, Expression** currp) {
+    auto* last = self->currBasicBlock;
+    self->startBasicBlock(); // catch body's first block
+    self->catchStack.push_back(self->currBasicBlock);
+    self->currBasicBlock = last; // reset to the current block
+  }
+
+  static void doStartCatch(SubType* self, Expression** currp) {
+    self->tryStack.push_back(self->currBasicBlock); // last block of try body
+    self->currBasicBlock = self->catchStack.back();
+    self->catchStack.pop_back();
+  }
+
+  static void doEndTry(SubType* self, Expression** currp) {
+    auto* last = self->currBasicBlock;
+    self->startBasicBlock(); // continuation block after try-catch
+    // catch body's last block -> continuation block
+    self->link(last, self->currBasicBlock);
+    // try body's last block -> continuation block
+    self->link(self->tryStack.back(), self->currBasicBlock);
+    self->tryStack.pop_back();
+  }
+
+  static void doEndThrow(SubType* self, Expression** currp) {
+    // We unwind to the innermost catch, if any
+    if (!self->catchStack.empty()) {
+      self->link(self->currBasicBlock, self->catchStack.back());
+    }
+    self->startUnreachableBlock();
+  }
+
+  static void doEndBrOnExn(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<BrOnExn>();
+    self->branches[self->findBreakTarget(curr->name)].push_back(
+      self->currBasicBlock); // branch to the target
+    auto* last = self->currBasicBlock;
+    self->startBasicBlock();
+    self->link(last, self->currBasicBlock); // we might fall through
+  }
+
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
@@ -238,6 +298,28 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartUnreachableBlock, currp);
         break;
       }
+      case Expression::Id::CallId:
+      case Expression::Id::CallIndirectId: {
+        self->pushTask(SubType::doEndCall, currp);
+        break;
+      }
+      case Expression::Id::TryId: {
+        self->pushTask(SubType::doEndTry, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
+        self->pushTask(SubType::doStartCatch, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        self->pushTask(SubType::doStartTry, currp);
+        return; // don't do anything else
+      }
+      case Expression::Id::ThrowId:
+      case Expression::Id::RethrowId: {
+        self->pushTask(SubType::doEndThrow, currp);
+        break;
+      }
+      case Expression::Id::BrOnExnId: {
+        self->pushTask(SubType::doEndBrOnExn, currp);
+        break;
+      }
       default: {}
     }
 
@@ -263,6 +345,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     assert(branches.size() == 0);
     assert(ifStack.size() == 0);
     assert(loopStack.size() == 0);
+    assert(tryStack.size() == 0);
+    assert(catchStack.size() == 0);
   }
 
   std::unordered_set<BasicBlock*> findLiveBlocks() {
