@@ -163,8 +163,8 @@ void WasmBinaryWriter::finishSection(int32_t start) {
       pair.second -= totalAdjustment;
     }
     for (auto& pair : binaryLocations.functions) {
-      pair.second.first -= totalAdjustment;
-      pair.second.second -= totalAdjustment;
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
     }
   }
 }
@@ -343,8 +343,8 @@ void WasmBinaryWriter::writeFunctions() {
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
-      binaryLocations.functions[func] =
-        BinaryLocations::Span(start - adjustmentForLEBShrinking, o.size());
+      binaryLocations.functions[func] = BinaryLocations::Span{
+        uint32_t(start - adjustmentForLEBShrinking), uint32_t(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
@@ -1370,8 +1370,9 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      func->funcLocation = BinaryLocations::Span(
-        pos - codeSectionLocation, pos - codeSectionLocation + size);
+      func->funcLocation =
+        BinaryLocations::Span{uint32_t(pos - codeSectionLocation),
+                              uint32_t(pos - codeSectionLocation + size)};
     }
 
     readNextDebugLocation();
