@@ -1160,12 +1160,17 @@ struct Importable {
 
 class Function;
 
+// Represents an offset into a wasm binary file. This is used for debug info.
+// For now, assume this is 32 bits as that's the size limit of wasm files
+// anyhow.
+using BinaryLocation = uint32_t;
+
 // Represents a mapping of wasm module elements to their location in the
 // binary representation. This is used for general debugging info support.
 // Offsets are relative to the beginning of the code section, as in DWARF.
 struct BinaryLocations {
   struct Span {
-    uint32_t start, end;
+    BinaryLocation start, end;
   };
   std::unordered_map<Expression*, Span> expressions;
   std::unordered_map<Function*, Span> functions;
@@ -1204,7 +1209,7 @@ public:
 
   // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
-    uint32_t fileIndex, lineNumber, columnNumber;
+    BinaryLocation fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
              columnNumber == other.columnNumber;
