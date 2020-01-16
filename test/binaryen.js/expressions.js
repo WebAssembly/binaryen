@@ -1,7 +1,7 @@
 // TODO: remove this
-if (typeof Binaryen === "undefined") {
-  Binaryen = require("../../embuild/bin/binaryen");
-}
+// if (typeof Binaryen === "undefined") {
+//   Binaryen = require("../../embuild/bin/binaryen");
+// }
 
 function assert(x) {
   if (!x) throw 'error!';
