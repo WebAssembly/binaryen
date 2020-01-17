@@ -2345,9 +2345,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
-// Control flow structure parsing: these have not just the normal binary
-// data for an instruction, but also some bytes later on like "end" or "else".
-// We must be aware of the connection between those things, for debug info.
 void WasmBinaryBuilder::startControlFlow(Expression* curr, BinaryLocation pos) {
   if (DWARF && currFunction) {
     controlFlowStack.push_back(curr);
