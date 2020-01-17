@@ -447,6 +447,10 @@ struct LocationUpdater {
     return 0;
   }
 
+  bool hasOldExprAddr(BinaryLocation oldAddr) const {
+    return oldExprAddrMap.getStart(oldAddr) != nullptr;
+  }
+
   BinaryLocation getNewExprEndAddr(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
@@ -503,7 +507,14 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         // An expression may not exist for this line table item, if we optimized
         // it away.
-        if (auto newAddr = locationUpdater.getNewExprAddr(state.addr)) {
+        BinaryLocation oldAddr = state.addr;
+        BinaryLocation newAddr = 0;
+        if (locationUpdater.hasOldExprAddr(oldAddr)) {
+          newAddr = locationUpdater.getNewExprAddr(oldAddr);
+        } else {
+          newAddr = locationUpdater.getNewFuncAddr(oldAddr);
+        }
+        if (newAddr) {
           newAddrs.push_back(newAddr);
           newAddrInfo.emplace(newAddr, state);
           auto& updatedState = newAddrInfo.at(newAddr);
