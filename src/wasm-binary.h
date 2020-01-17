@@ -1194,7 +1194,7 @@ public:
   std::vector<Expression*> controlFlowStack;
 
   // Called when we parse the beginning of a control flow structure.
-  void startControlFlow(Expression* curr, BinaryLocation pos);
+  void startControlFlow(Expression* curr);
 
   // Called when we parse a later part of a control flow structure, like "end"
   // or "else".

@@ -2345,7 +2345,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
-void WasmBinaryBuilder::startControlFlow(Expression* curr, BinaryLocation pos) {
+void WasmBinaryBuilder::startControlFlow(Expression* curr) {
   if (DWARF && currFunction) {
     controlFlowStack.push_back(curr);
   }
@@ -2366,7 +2366,7 @@ void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id,
     // We are called after parsing the byte, so we need to subtract one to
     // get its position.
     currFunction->extraExpressionLocations[currControlFlow][id] =
-      pos - 1 - codeSectionLocation;
+      pos - codeSectionLocation;
     if (id == BinaryLocations::End) {
       controlFlowStack.pop_back();
     }
@@ -2417,7 +2417,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
 
 void WasmBinaryBuilder::visitBlock(Block* curr) {
   BYN_TRACE("zz node: Block\n");
-  startControlFlow(curr, pos - 1);
+  startControlFlow(curr);
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -2430,7 +2430,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
-      startControlFlow(curr, pos);
+      startControlFlow(curr);
       pos++;
       if (debugLocation.size()) {
         currFunction->debugLocations[curr] = *debugLocation.begin();
@@ -2506,7 +2506,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
 
 void WasmBinaryBuilder::visitIf(If* curr) {
   BYN_TRACE("zz node: If\n");
-  startControlFlow(curr, pos - 1);
+  startControlFlow(curr);
   curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
@@ -2521,7 +2521,7 @@ void WasmBinaryBuilder::visitIf(If* curr) {
 
 void WasmBinaryBuilder::visitLoop(Loop* curr) {
   BYN_TRACE("zz node: Loop\n");
-  startControlFlow(curr, pos - 1);
+  startControlFlow(curr);
   curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
@@ -4528,7 +4528,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
 
 void WasmBinaryBuilder::visitTry(Try* curr) {
   BYN_TRACE("zz node: Try\n");
-  startControlFlow(curr, pos - 1);
+  startControlFlow(curr);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.
