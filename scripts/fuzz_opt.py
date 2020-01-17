@@ -40,8 +40,6 @@ FUZZ_OPTS = []
 
 INPUT_SIZE_LIMIT = 150 * 1024
 
-LOG_LIMIT = 125
-
 
 # utilities
 
@@ -59,12 +57,12 @@ def random_size():
 
 
 def run(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.check_output(cmd)
 
 
 def run_unchecked(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
 
 
