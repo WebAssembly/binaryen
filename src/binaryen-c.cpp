@@ -1856,8 +1856,8 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 }
 void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenExpressionFinalize(expressions[" << expressions[expr]
-              << "]);\n";
+    std::cout << "  BinaryenExpressionFinalize(expressions["
+              << expressions[expr] << "]);\n";
   }
 
   ReFinalizeNode().visit((Expression*)expr);
