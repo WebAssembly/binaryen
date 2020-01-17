@@ -1479,6 +1479,28 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
                                            BinaryenIndex contentsSize);
 
 //
+// ========= Effect analyzer =========
+//
+
+typedef uint32_t BinaryenSideEffects;
+
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectNone(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectBranches(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectCalls(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
+
+BINARYEN_API BinaryenSideEffects
+BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr);
+
+//
 // ========== CFG / Relooper ==========
 //
 // General usage is (1) create a relooper, (2) create blocks, (3) add
