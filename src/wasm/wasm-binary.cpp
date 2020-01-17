@@ -1693,7 +1693,7 @@ void WasmBinaryBuilder::processExpressions() {
                   << std::endl);
         lastSeparator = BinaryConsts::ASTNodes(peek);
         // Read the byte we peeked at. No new instruction is generated for it.
-        Expression* dummy;
+        Expression* dummy = nullptr;
         readExpression(dummy);
         assert(!dummy);
         return;
