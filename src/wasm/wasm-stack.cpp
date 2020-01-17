@@ -33,10 +33,13 @@ void BinaryInstWriter::visitIf(If* curr) {
   o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
-void BinaryInstWriter::emitIfElse() {
+void BinaryInstWriter::emitIfElse(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO dito
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO same as If
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
+  }
   o << int8_t(BinaryConsts::Else);
 }
 
@@ -1595,10 +1598,13 @@ void BinaryInstWriter::visitTry(Try* curr) {
   o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
-void BinaryInstWriter::emitCatch() {
+void BinaryInstWriter::emitCatch(Try* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
+  }
   o << int8_t(BinaryConsts::Catch);
 }
 
@@ -1633,9 +1639,12 @@ void BinaryInstWriter::visitPop(Pop* curr) {
   // Turns into nothing in the binary format
 }
 
-void BinaryInstWriter::emitScopeEnd() {
+void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::End);
+  }
   o << int8_t(BinaryConsts::End);
 }
 
@@ -1838,15 +1847,15 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::TryEnd: {
-        writer.emitScopeEnd();
+        writer.emitScopeEnd(inst->origin);
         break;
       }
       case StackInst::IfElse: {
-        writer.emitIfElse();
+        writer.emitIfElse(inst->origin->cast<If>());
         break;
       }
       case StackInst::Catch: {
-        writer.emitCatch();
+        writer.emitCatch(inst->origin->cast<Try>());
         break;
       }
       default:

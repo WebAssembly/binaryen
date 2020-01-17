@@ -167,6 +167,11 @@ void WasmBinaryWriter::finishSection(int32_t start) {
       pair.second.start -= totalAdjustment;
       pair.second.end -= totalAdjustment;
     }
+    for (auto& pair : binaryLocations.extraExpressions) {
+      for (auto& item : pair.second) {
+        item -= totalAdjustment;
+      }
+    }
   }
 }
 
@@ -343,6 +348,12 @@ void WasmBinaryWriter::writeFunctions() {
         auto& span = binaryLocations.expressions[curr];
         span.start -= adjustmentForLEBShrinking;
         span.end -= adjustmentForLEBShrinking;
+        auto iter = binaryLocations.extraExpressions.find(curr);
+        if (iter != binaryLocations.extraExpressions.end()) {
+          for (auto& item : iter->second) {
+            item -= adjustmentForLEBShrinking;
+          }
+        }
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
@@ -723,6 +734,14 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
     auto& span = binaryLocations.expressions.at(curr);
     assert(span.end == 0);
     span.end = o.size();
+  }
+}
+
+void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
+                                               Function* func,
+                                               BinaryLocations::ExtraId id) {
+  if (func && !func->expressionLocations.empty()) {
+    binaryLocations.extraExpressions[curr][id] = o.size();
   }
 }
 
@@ -1411,6 +1430,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
       assert(expressionStack.empty());
+      assert(controlFlowStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1419,6 +1439,7 @@ void WasmBinaryBuilder::readFunctions() {
       if (!expressionStack.empty()) {
         throwError("stack not empty on function exit");
       }
+      assert(controlFlowStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1675,11 +1696,11 @@ void WasmBinaryBuilder::processExpressions() {
     }
     expressionStack.push_back(curr);
     if (curr->type == Type::unreachable) {
-      // once we see something unreachable, we don't want to add anything else
+      // Once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
-      // our AST. but we do need to skip it
-      // if there is nothing else here, just stop. otherwise, go into
-      // unreachable mode. peek to see what to do
+      // our AST. but we do need to skip it.
+      // If there is nothing else here, just stop. Otherwise, go into
+      // unreachable mode. peek to see what to do.
       if (pos == endOfFunction) {
         throwError("Reached function end without seeing End opcode");
       }
@@ -1691,9 +1712,11 @@ void WasmBinaryBuilder::processExpressions() {
           peek == BinaryConsts::Catch) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
-        readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
-        pos++;
+        // Read the byte we peeked at. No new expression should be created here.
+        Expression* dummy = nullptr;
+        readExpression(dummy);
+        assert(dummy == nullptr);
         return;
       } else {
         skipUnreachableCode();
@@ -2103,12 +2126,15 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   switch (code) {
     case BinaryConsts::Block:
       visitBlock((curr = allocator.alloc<Block>())->cast<Block>());
+      startControlFlow(curr);
       break;
     case BinaryConsts::If:
       visitIf((curr = allocator.alloc<If>())->cast<If>());
+      startControlFlow(curr);
       break;
     case BinaryConsts::Loop:
       visitLoop((curr = allocator.alloc<Loop>())->cast<Loop>());
+      startControlFlow(curr);
       break;
     case BinaryConsts::Br:
     case BinaryConsts::BrIf:
@@ -2170,9 +2196,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitDrop((curr = allocator.alloc<Drop>())->cast<Drop>());
       break;
     case BinaryConsts::End:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::End);
+      break;
     case BinaryConsts::Else:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::Else);
+      break;
     case BinaryConsts::Catch:
       curr = nullptr;
+      continueControlFlow(BinaryLocations::Catch);
       break;
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
@@ -2185,6 +2218,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::Try:
       visitTry((curr = allocator.alloc<Try>())->cast<Try>());
+      startControlFlow(curr);
       break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
@@ -2315,6 +2349,33 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
+// Control flow structure parsing: these have not just the normal binary
+// data for an instruction, but also some bytes later on like "end" or "else".
+// We must be aware of the connection between those things, for debug info.
+void WasmBinaryBuilder::startControlFlow(Expression* curr) {
+  if (DWARF && currFunction) {
+    controlFlowStack.push_back(curr);
+  }
+}
+
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id) {
+  if (DWARF && currFunction) {
+    if (controlFlowStack.empty()) {
+      // We reached the end of the function, which is also marked with an
+      // "end", like a control flow structure.
+      assert(id == BinaryLocations::End);
+      return;
+    }
+    assert(!controlFlowStack.empty());
+    auto currControlFlow = controlFlowStack.back();
+    currFunction->extraExpressionLocations[currControlFlow][id] =
+      pos - codeSectionLocation;
+    if (id == BinaryLocations::End) {
+      controlFlowStack.pop_back();
+    }
+  }
+}
+
 void WasmBinaryBuilder::pushBlockElements(Block* curr,
                                           size_t start,
                                           size_t end) {
@@ -2372,7 +2433,9 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
+      startControlFlow(curr);
       pos++;
+
       if (debugLocation.size()) {
         currFunction->debugLocations[curr] = *debugLocation.begin();
       }

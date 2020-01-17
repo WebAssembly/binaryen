@@ -337,21 +337,28 @@ struct AddrExprMap {
   std::unordered_map<BinaryLocation, Expression*> startMap;
   std::unordered_map<BinaryLocation, Expression*> endMap;
 
+  // Some instructions have extra binary locations, like the else and end in
+  // and if. Track those separately, including their expression and their id
+  // ("else", "end", etc.), as they are rare, and we don't want to
+  // bloat the common case which is represented in the earlier maps.
+  struct ExtraInfo {
+    Expression* expr;
+    BinaryLocations::ExtraId id;
+  };
+  std::unordered_map<BinaryLocation, ExtraInfo> extraMap;
+
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
       for (auto pair : func->expressionLocations) {
         add(pair.first, pair.second);
       }
+      for (auto pair : func->extraExpressionLocations) {
+        add(pair.first, pair.second);
+      }
     }
   }
 
-  // Construct the map from new binaryLocations just written
-  AddrExprMap(const BinaryLocations& newLocations) {
-    for (auto pair : newLocations.expressions) {
-      add(pair.first, pair.second);
-    }
-  }
 
   Expression* getStart(BinaryLocation addr) const {
     auto iter = startMap.find(addr);
@@ -369,12 +376,29 @@ struct AddrExprMap {
     return nullptr;
   }
 
+  ExtraInfo getExtra(BinaryLocation addr) const {
+    auto iter = extraMap.find(addr);
+    if (iter != extraMap.end()) {
+      return iter->second;
+    }
+    return ExtraInfo{nullptr, BinaryLocations::Invalid};
+  }
+
 private:
-  void add(Expression* expr, BinaryLocations::Span span) {
+  void add(Expression* expr, const BinaryLocations::Span span) {
     assert(startMap.count(span.start) == 0);
     startMap[span.start] = expr;
     assert(endMap.count(span.end) == 0);
     endMap[span.end] = expr;
+  }
+
+  void add(Expression* expr, const BinaryLocations::ExtraLocations& extra) {
+    for (Index i = 0; i < extra.size(); i++) {
+      if (extra[i] != 0) {
+        assert(extraMap.count(extra[i]) == 0);
+        extraMap[extra[i]] = ExtraInfo{expr, BinaryLocations::ExtraId(i)};
+      }
+    }
   }
 };
 
@@ -423,7 +447,6 @@ struct LocationUpdater {
   const BinaryLocations& newLocations;
 
   AddrExprMap oldExprAddrMap;
-  AddrExprMap newExprAddrMap;
   FuncAddrMap oldFuncAddrMap;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
@@ -431,7 +454,7 @@ struct LocationUpdater {
 
   LocationUpdater(Module& wasm, const BinaryLocations& newLocations)
     : wasm(wasm), newLocations(newLocations), oldExprAddrMap(wasm),
-      newExprAddrMap(newLocations), oldFuncAddrMap(wasm) {}
+      oldFuncAddrMap(wasm) {}
 
   // Updates an expression's address. If there was never an instruction at that
   // address, or if there was but if that instruction no longer exists, return
@@ -448,15 +471,14 @@ struct LocationUpdater {
   }
 
   bool hasOldExprAddr(BinaryLocation oldAddr) const {
-    return oldExprAddrMap.getStart(oldAddr) != nullptr;
+    return oldExprAddrMap.getStart(oldAddr);
   }
 
   BinaryLocation getNewExprEndAddr(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        BinaryLocation newAddr = iter->second.end;
-        return newAddr;
+        return iter->second.end;
       }
     }
     return 0;
@@ -477,6 +499,25 @@ struct LocationUpdater {
       }
     }
     return 0;
+  }
+
+  bool hasOldFuncAddr(BinaryLocation oldAddr) const {
+    return oldFuncAddrMap.get(oldAddr);
+  }
+
+  BinaryLocation getNewExtraAddr(BinaryLocation oldAddr) const {
+    auto info = oldExprAddrMap.getExtra(oldAddr);
+    if (info.expr) {
+      auto iter = newLocations.extraExpressions.find(info.expr);
+      if (iter != newLocations.extraExpressions.end()) {
+        return iter->second[info.id];
+      }
+    }
+    return 0;
+  }
+
+  bool hasOldExtraAddr(BinaryLocation oldAddr) const {
+    return oldExprAddrMap.getExtra(oldAddr).expr;
   }
 };
 
@@ -511,11 +552,14 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         BinaryLocation newAddr = 0;
         if (locationUpdater.hasOldExprAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExprAddr(oldAddr);
-        } else {
+        } else if (locationUpdater.hasOldFuncAddr(oldAddr)) {
           newAddr = locationUpdater.getNewFuncAddr(oldAddr);
+        } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
+          newAddr = locationUpdater.getNewExtraAddr(oldAddr);
         }
         if (newAddr) {
           newAddrs.push_back(newAddr);
+          assert(newAddrInfo.count(newAddr) == 0);
           newAddrInfo.emplace(newAddr, state);
           auto& updatedState = newAddrInfo.at(newAddr);
           // The only difference is the address TODO other stuff?
