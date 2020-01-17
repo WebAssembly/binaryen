@@ -1194,11 +1194,11 @@ public:
   std::vector<Expression*> controlFlowStack;
 
   // Called when we parse the beginning of a control flow structure.
-  void startControlFlow(Expression* curr);
+  void startControlFlow(Expression* curr, BinaryLocation pos);
 
   // Called when we parse a later part of a control flow structure, like "end"
   // or "else".
-  void continueControlFlow(BinaryLocations::ExtraId id);
+  void continueControlFlow(BinaryLocations::ExtraId id, BinaryLocation pos);
 
   // set when we know code is unreachable in the sense of the wasm spec: we are
   // in a block and after an unreachable element. this helps parse stacky wasm

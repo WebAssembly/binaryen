@@ -557,6 +557,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExtraAddr(oldAddr);
         }
+        // TODO: last 'end' of a function
         if (newAddr) {
           newAddrs.push_back(newAddr);
           assert(newAddrInfo.count(newAddr) == 0);

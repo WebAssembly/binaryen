@@ -2126,15 +2126,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   switch (code) {
     case BinaryConsts::Block:
       visitBlock((curr = allocator.alloc<Block>())->cast<Block>());
-      startControlFlow(curr);
       break;
     case BinaryConsts::If:
       visitIf((curr = allocator.alloc<If>())->cast<If>());
-      startControlFlow(curr);
       break;
     case BinaryConsts::Loop:
       visitLoop((curr = allocator.alloc<Loop>())->cast<Loop>());
-      startControlFlow(curr);
       break;
     case BinaryConsts::Br:
     case BinaryConsts::BrIf:
@@ -2197,15 +2194,15 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::End:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::End);
+      continueControlFlow(BinaryLocations::End, startPos);
       break;
     case BinaryConsts::Else:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::Else);
+      continueControlFlow(BinaryLocations::Else, startPos);
       break;
     case BinaryConsts::Catch:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::Catch);
+      continueControlFlow(BinaryLocations::Catch, startPos);
       break;
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
@@ -2218,7 +2215,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::Try:
       visitTry((curr = allocator.alloc<Try>())->cast<Try>());
-      startControlFlow(curr);
       break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
@@ -2352,24 +2348,27 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 // Control flow structure parsing: these have not just the normal binary
 // data for an instruction, but also some bytes later on like "end" or "else".
 // We must be aware of the connection between those things, for debug info.
-void WasmBinaryBuilder::startControlFlow(Expression* curr) {
+void WasmBinaryBuilder::startControlFlow(Expression* curr, BinaryLocation pos) {
   if (DWARF && currFunction) {
     controlFlowStack.push_back(curr);
   }
 }
 
-void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id) {
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id, BinaryLocation pos) {
   if (DWARF && currFunction) {
     if (controlFlowStack.empty()) {
       // We reached the end of the function, which is also marked with an
       // "end", like a control flow structure.
       assert(id == BinaryLocations::End);
+      assert(pos + 1 == endOfFunction);
       return;
     }
     assert(!controlFlowStack.empty());
     auto currControlFlow = controlFlowStack.back();
+    // We are called after parsing the byte, so we need to subtract one to
+    // get its position.
     currFunction->extraExpressionLocations[currControlFlow][id] =
-      pos - codeSectionLocation;
+      pos - 1 - codeSectionLocation;
     if (id == BinaryLocations::End) {
       controlFlowStack.pop_back();
     }
@@ -2420,7 +2419,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
 
 void WasmBinaryBuilder::visitBlock(Block* curr) {
   BYN_TRACE("zz node: Block\n");
-
+  startControlFlow(curr, pos - 1);
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -2433,9 +2432,8 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
-      startControlFlow(curr);
+      startControlFlow(curr, pos);
       pos++;
-
       if (debugLocation.size()) {
         currFunction->debugLocations[curr] = *debugLocation.begin();
       }
@@ -2510,6 +2508,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
 
 void WasmBinaryBuilder::visitIf(If* curr) {
   BYN_TRACE("zz node: If\n");
+  startControlFlow(curr, pos - 1);
   curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
@@ -2524,6 +2523,7 @@ void WasmBinaryBuilder::visitIf(If* curr) {
 
 void WasmBinaryBuilder::visitLoop(Loop* curr) {
   BYN_TRACE("zz node: Loop\n");
+  startControlFlow(curr, pos - 1);
   curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
@@ -4530,6 +4530,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
 
 void WasmBinaryBuilder::visitTry(Try* curr) {
   BYN_TRACE("zz node: Try\n");
+  startControlFlow(curr, pos - 1);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.
