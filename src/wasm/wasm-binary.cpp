@@ -346,8 +346,9 @@ void WasmBinaryWriter::writeFunctions() {
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
-      binaryLocations.functions[func] = BinaryLocations::Span{
-        uint32_t(start - adjustmentForLEBShrinking), uint32_t(o.size())};
+      binaryLocations.functions[func] =
+        BinaryLocations::Span{BinaryLocation(start - adjustmentForLEBShrinking),
+                              BinaryLocation(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
@@ -712,7 +713,7 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   // binary locations tracked, then track it in the output as well.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.expressions[curr] =
-      BinaryLocations::Span{uint32_t(o.size()), 0};
+      BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
 }
@@ -1383,8 +1384,8 @@ void WasmBinaryBuilder::readFunctions() {
 
     if (DWARF) {
       func->funcLocation =
-        BinaryLocations::Span{uint32_t(pos - codeSectionLocation),
-                              uint32_t(pos - codeSectionLocation + size)};
+        BinaryLocations::Span{BinaryLocation(pos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation + size)};
     }
 
     readNextDebugLocation();
@@ -2306,8 +2307,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     }
     if (DWARF && currFunction) {
       currFunction->expressionLocations[curr] =
-        BinaryLocations::Span{uint32_t(startPos - codeSectionLocation),
-                              uint32_t(pos - codeSectionLocation)};
+        BinaryLocations::Span{BinaryLocation(startPos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation)};
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);

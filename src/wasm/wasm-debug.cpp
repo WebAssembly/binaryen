@@ -334,8 +334,8 @@ private:
 // to let us use contextual information (we may know we are looking up the end
 // of an instruction).
 struct AddrExprMap {
-  std::unordered_map<uint32_t, Expression*> startMap;
-  std::unordered_map<uint32_t, Expression*> endMap;
+  std::unordered_map<BinaryLocation, Expression*> startMap;
+  std::unordered_map<BinaryLocation, Expression*> endMap;
 
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
@@ -353,7 +353,7 @@ struct AddrExprMap {
     }
   }
 
-  Expression* getStart(uint32_t addr) const {
+  Expression* getStart(BinaryLocation addr) const {
     auto iter = startMap.find(addr);
     if (iter != startMap.end()) {
       return iter->second;
@@ -361,7 +361,7 @@ struct AddrExprMap {
     return nullptr;
   }
 
-  Expression* getEnd(uint32_t addr) const {
+  Expression* getEnd(BinaryLocation addr) const {
     auto iter = endMap.find(addr);
     if (iter != endMap.end()) {
       return iter->second;
@@ -382,7 +382,7 @@ private:
 // map for the start and end addresses, since there is no chance of a function's
 // start overlapping with another's end (there is the size LEB in the middle).
 struct FuncAddrMap {
-  std::unordered_map<uint32_t, Function*> map;
+  std::unordered_map<BinaryLocation, Function*> map;
 
   // Construct the map from the binaryLocations loaded from the wasm.
   FuncAddrMap(const Module& wasm) {
@@ -392,7 +392,7 @@ struct FuncAddrMap {
     }
   }
 
-  Function* get(uint32_t addr) const {
+  Function* get(BinaryLocation addr) const {
     auto iter = map.find(addr);
     if (iter != map.end()) {
       return iter->second;
@@ -436,29 +436,29 @@ struct LocationUpdater {
   // Updates an expression's address. If there was never an instruction at that
   // address, or if there was but if that instruction no longer exists, return
   // 0. Otherwise, return the new updated location.
-  uint32_t getNewExprAddr(uint32_t oldAddr) const {
+  BinaryLocation getNewExprAddr(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getStart(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second.start;
+        BinaryLocation newAddr = iter->second.start;
         return newAddr;
       }
     }
     return 0;
   }
 
-  uint32_t getNewExprEndAddr(uint32_t oldAddr) const {
+  BinaryLocation getNewExprEndAddr(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
-        uint32_t newAddr = iter->second.end;
+        BinaryLocation newAddr = iter->second.end;
         return newAddr;
       }
     }
     return 0;
   }
 
-  uint32_t getNewFuncAddr(uint32_t oldAddr) const {
+  BinaryLocation getNewFuncAddr(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.get(oldAddr)) {
       // The function might have been optimized away, check.
       auto iter = newLocations.functions.find(func);
@@ -482,8 +482,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     // Parse the original opcodes and emit new ones.
     LineState state(table);
     // All the addresses we need to write out.
-    std::vector<uint32_t> newAddrs;
-    std::unordered_map<uint32_t, LineState> newAddrInfo;
+    std::vector<BinaryLocation> newAddrs;
+    std::unordered_map<BinaryLocation, LineState> newAddrInfo;
     // If the address was zeroed out, we must omit the entire range (we could
     // also leave it unchanged, so that the debugger ignores it based on the
     // initial zero; but it's easier and better to just not emit it at all).
@@ -523,7 +523,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     {
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
       LineState state(table);
-      for (uint32_t addr : newAddrs) {
+      for (BinaryLocation addr : newAddrs) {
         LineState oldState(state);
         state = newAddrInfo.at(addr);
         if (state.needToEmit()) {
@@ -557,7 +557,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process the low_pcs.
-  uint32_t oldLowPC = 0, newLowPC = 0;
+  BinaryLocation oldLowPC = 0, newLowPC = 0;
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
@@ -567,7 +567,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (attr != llvm::dwarf::DW_AT_low_pc) {
         return;
       }
-      uint32_t oldValue = yamlValue.Value, newValue = 0;
+      BinaryLocation oldValue = yamlValue.Value, newValue = 0;
       if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
           tag == llvm::dwarf::DW_TAG_lexical_block ||
@@ -596,7 +596,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (attr != llvm::dwarf::DW_AT_high_pc) {
         return;
       }
-      uint32_t oldValue = yamlValue.Value, newValue = 0;
+      BinaryLocation oldValue = yamlValue.Value, newValue = 0;
       bool isRelative = attrSpec.Form == llvm::dwarf::DW_FORM_data4;
       if (isRelative) {
         oldValue += oldLowPC;
