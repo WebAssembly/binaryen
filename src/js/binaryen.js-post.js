@@ -2878,61 +2878,46 @@ Module['setAPITracing'] = function(on) {
 
 // Expression wrappers
 
-var commonMembers = {
-  'getId': function(expr) {
-    return Module['_BinaryenExpressionGetId'](expr);
-  },
-  'getType': function(expr) {
-    return Module['_BinaryenExpressionGetType'](expr);
-  },
-  'setType': function(expr, type) {
-    Module['_BinaryenExpressionSetType'](expr, type);
-  },
-  'toText': function(expr) {
-    return Module['emitText'](expr);
-  }
-};
-
 // Makes a wrapper class with the specified static members while
 // automatically deriving instance methods and accessors.
-function makeExpressionWrapper(staticMembers) {
-  function ExpressionWrapper(expr) {
-    if (!(this instanceof ExpressionWrapper)) {
+function makeExpressionWrapper(ownStaticMembers) {
+  function SpecificExpression(expr) {
+    // can call the constructor without `new`
+    if (!(this instanceof SpecificExpression)) {
       if (!expr) return null;
-      return new ExpressionWrapper(expr);
+      return new SpecificExpression(expr);
     }
-    if (!expr) throw Error("expression must not be null");
-    this['expr'] = expr;
+    Expression.call(this, expr);
   }
-  Object.assign(ExpressionWrapper, commonMembers);
-  Object.assign(ExpressionWrapper, staticMembers);
-  var prototype = ExpressionWrapper.prototype;
-  makeExpressionWrapperInstanceMembers(prototype, commonMembers);
-  makeExpressionWrapperInstanceMembers(prototype, staticMembers);
-  prototype['valueOf'] = function() {
-    return this['expr'];
-  };
-  return ExpressionWrapper;
+  // inherit static members of Expression
+  Object.assign(SpecificExpression, Expression);
+  // add own static members
+  Object.assign(SpecificExpression, ownStaticMembers);
+  // inherit from Expression
+  (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
+  // make own instance members
+  makeExpressionWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  return SpecificExpression;
 }
 
 // Makes instance members from the given static members
-function makeExpressionWrapperInstanceMembers(prototype, members) {
-  Object.keys(members).forEach(function(key) {
-    var member = members[key];
+function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
+  Object.keys(staticMembers).forEach(function(memberName) {
+    var member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method
-      prototype[key] = function(/* arguments */) {
+      prototype[memberName] = function(/* arguments */) {
         var numArgs = arguments.length;
         var args = new Array(1 + numArgs);
         args[0] = this['expr'];
         for (var i = 0; i < numArgs; ++i) {
           args[1 + i] = arguments[i];
         }
-        return this.constructor[key].apply(null, args);
+        return this.constructor[memberName].apply(null, args);
       };
       // Instance accessor calls the respective static methods
       var match;
-      if (member.length === 1 && (match = key.match(/^(get|is)/))) {
+      if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
         (function(propertyName, getter, setterIfAny) {
           Object.defineProperty(prototype, propertyName, {
             get: function() {
@@ -2944,14 +2929,41 @@ function makeExpressionWrapperInstanceMembers(prototype, members) {
             }
           });
         })(
-          key.charAt(match[1].length).toLowerCase() + key.substring(match[1].length + 1),
-          members[key],
-          members["set" + key.substring(match[1].length)]
+          memberName.charAt(match[1].length).toLowerCase() + memberName.substring(match[1].length + 1),
+          staticMembers[memberName],
+          staticMembers["set" + memberName.substring(match[1].length)]
         );
       }
     }
   });
 }
+
+// Base class of all expression wrappers
+function Expression(expr) {
+  if (!expr) throw Error("expression reference must not be null");
+  this['expr'] = expr;
+}
+Expression['getId'] = function(expr) {
+  return Module['_BinaryenExpressionGetId'](expr);
+};
+Expression['getType'] = function(expr) {
+  return Module['_BinaryenExpressionGetType'](expr);
+};
+Expression['setType'] = function(expr, type) {
+  Module['_BinaryenExpressionSetType'](expr, type);
+};
+Expression['finalize'] = function(expr) {
+  return Module['_BinaryenExpressionFinalize'](expr);
+};
+Expression['toText'] = function(expr) {
+  return Module['emitText'](expr);
+};
+makeExpressionWrapperInstanceMembers(Expression.prototype, Expression);
+Expression.prototype['valueOf'] = function() {
+  return this['expr'];
+};
+
+Module['Expression'] = Expression;
 
 Module['Block'] = makeExpressionWrapper({
   'getName': function(expr) {

@@ -1,3 +1,17 @@
+console.log("magic");
+(function testMagic() {
+  var block = binaryen.Block(42); // works without new
+  assert(block instanceof binaryen.Expression);
+  assert(block instanceof binaryen.Block);
+  assert(block.constructor === binaryen.Block);
+  assert(typeof binaryen.Block.getId === "function"); // proto
+  assert(typeof binaryen.Block.getName === "function"); // own
+  assert(typeof block.getId === "function"); // proto
+  assert(typeof block.getName === "function"); // own
+  assert(block.expr === 42);
+  assert((block | 0) === 42); // via valueOf
+})();
+
 console.log("Block");
 (function testBlock() {
   var module = new binaryen.Module();
@@ -40,6 +54,7 @@ console.log("Block");
   block.removeChildAt(1);
   assert(block.numChildren === 1);
   assert(block.getChildAt(0) === child0);
+  block.finalize();
   assert(
     block.toText()
     ==
@@ -47,7 +62,6 @@ console.log("Block");
   );
   block.removeChildAt(0);
   assert(block.numChildren === 0);
-  assert(block == blockRef);
 
   module.dispose();
 })();
@@ -78,12 +92,12 @@ console.log("If");
   var newIfFalse = module.i32.const(6);
   if_.ifFalse = newIfFalse;
   assert(if_.ifFalse === newIfFalse);
+  if_.finalize();
   assert(
     if_.toText()
     ==
     "(if (result i32)\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
   );
-  assert(if_ == ifRef);
 
   module.dispose();
 })();
@@ -103,12 +117,12 @@ console.log("Loop");
   var newBodyRef = module.i32.const(2);
   loop.body = newBodyRef;
   assert(loop.body === newBodyRef);
+  loop.finalize();
   assert(
     loop.toText()
     ==
     "(loop $theName (result i32)\n (i32.const 2)\n)\n"
   );
-  assert(loop == loopRef);
 
   module.dispose();
 })();

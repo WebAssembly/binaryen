@@ -839,6 +839,8 @@ BINARYEN_API void BinaryenExpressionSetType(BinaryenExpressionRef expr,
                                             BinaryenType type);
 // Prints text format of the given expression to stdout.
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+// Re-finalizes an expression after it has been modified.
+BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
 
 // Gets the name (label) of a `block` expression.
 BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr);

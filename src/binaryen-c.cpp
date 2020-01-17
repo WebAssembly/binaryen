@@ -1854,6 +1854,14 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   WasmPrinter::printExpression((Expression*)expr, std::cout);
   std::cout << '\n';
 }
+void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionFinalize(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  ReFinalizeNode().visit((Expression*)expr);
+}
 
 // Specific expression utility
 

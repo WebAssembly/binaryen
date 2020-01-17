@@ -1,3 +1,4 @@
+magic
 Block
 If
 Loop
