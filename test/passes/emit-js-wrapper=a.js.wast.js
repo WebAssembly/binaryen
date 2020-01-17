@@ -36,10 +36,11 @@ function literal(x, type) {
 }
 var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {
   'fuzzing-support': {
-    'log-i32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },
-    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(y, 'i32') + ']') },
-    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
-    'log-f64': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
+    'log-i32': function(x)     { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },
+    'log-i64': function(x, y)  { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(y, 'i32') + ']') },
+    'log-f32': function(x)     { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
+    'log-f64': function(x)     { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
+    'log-nullref': function(x) { console.log('[LoggingExternalInterface logging ' + literal(x, 'nullref') + ']') },
   },
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
