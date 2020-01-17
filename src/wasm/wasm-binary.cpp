@@ -2351,7 +2351,8 @@ void WasmBinaryBuilder::startControlFlow(Expression* curr, BinaryLocation pos) {
   }
 }
 
-void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id, BinaryLocation pos) {
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id,
+                                            BinaryLocation pos) {
   if (DWARF && currFunction) {
     if (controlFlowStack.empty()) {
       // We reached the end of the function, which is also marked with an
