@@ -114,17 +114,19 @@ struct FunctionImportsToIndirectCalls
         // Ensure that the fp$ accessor is in the module, if not add it in.
         ensureFunctionImport(module, accessor, Signature(Type::none, Type::i32));
 
-        module->addGlobal(builder.makeGlobal(
-          gpAddr, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
+        module->addGlobal(builder.makeGlobal(gpAddr,
+                             Type::i32,
+                             LiteralUtils::makeZero(Type::i32, *module),
+                             Builder::Mutable));
 
-        Expression* call = builder.makeCall(accessor, {}, i32);
+        Expression* call = builder.makeCall(accessor, {}, Type::i32);
         GlobalSet* globalSet = builder.makeGlobalSet(gpAddr, call);
         block->list.push_back(globalSet);
       }
     }
 
     // Replace the call
-    Expression* fptr = builder.makeGlobalGet(gpAddr, i32);
+    Expression* fptr = builder.makeGlobalGet(gpAddr, Type::i32);
 
     auto indirectCall =
       builder.makeCallIndirect(fptr, args, func->sig, curr->isReturn);
