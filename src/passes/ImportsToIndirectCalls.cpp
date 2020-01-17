@@ -85,6 +85,7 @@ struct FunctionImportsToIndirectCalls
 
     if (m_libraryFns.find(name.c_str()) != m_libraryFns.end() ||
         name.hasSubstring("g$") || name.hasSubstring("fp$") ||
+        name.hasSubstring("emscripten_asm") ||
         name.hasSubstring("__wasi_"))
       return;
 
