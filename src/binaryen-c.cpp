@@ -4463,6 +4463,65 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
 }
 
 //
+// ========= Effect analyzer =========
+//
+
+BinaryenSideEffects BinaryenSideEffectNone(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::None);
+}
+BinaryenSideEffects BinaryenSideEffectBranches(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::Branches);
+}
+BinaryenSideEffects BinaryenSideEffectCalls(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Calls);
+}
+BinaryenSideEffects BinaryenSideEffectReadsLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsLocal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesLocal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsMemory);
+}
+BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ImplicitTrap);
+}
+BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::IsAtomic);
+}
+BinaryenSideEffects BinaryenSideEffectAny(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
+}
+
+BinaryenSideEffects
+BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetSideEffects(expressions["
+              << expressions[expr] << "]);\n";
+  }
+  return EffectAnalyzer(globalPassOptions, (Expression*)expr).getSideEffects();
+}
+
+//
 // ========== CFG / Relooper ==========
 //
 

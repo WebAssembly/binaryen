@@ -408,6 +408,57 @@ struct EffectAnalyzer
     EffectAnalyzer bEffects(passOptions, b);
     return !aEffects.invalidates(bEffects);
   }
+
+  // C-API
+
+  enum SideEffects : uint32_t {
+    None = 0,
+    Branches = 1 << 0,
+    Calls = 1 << 1,
+    ReadsLocal = 1 << 2,
+    WritesLocal = 1 << 3,
+    ReadsGlobal = 1 << 4,
+    WritesGlobal = 1 << 5,
+    ReadsMemory = 1 << 6,
+    WritesMemory = 1 << 7,
+    ImplicitTrap = 1 << 8,
+    IsAtomic = 1 << 9,
+    Any = (1 << 10) - 1
+  };
+  uint32_t getSideEffects() const {
+    uint32_t effects = 0;
+    if (branches) {
+      effects |= SideEffects::Branches;
+    }
+    if (calls) {
+      effects |= SideEffects::Calls;
+    }
+    if (localsRead.size() > 0) {
+      effects |= SideEffects::ReadsLocal;
+    }
+    if (localsWritten.size() > 0) {
+      effects |= SideEffects::WritesLocal;
+    }
+    if (globalsRead.size() > 0) {
+      effects |= SideEffects::ReadsGlobal;
+    }
+    if (globalsWritten.size() > 0) {
+      effects |= SideEffects::WritesGlobal;
+    }
+    if (readsMemory) {
+      effects |= SideEffects::ReadsMemory;
+    }
+    if (writesMemory) {
+      effects |= SideEffects::WritesMemory;
+    }
+    if (implicitTrap) {
+      effects |= SideEffects::ImplicitTrap;
+    }
+    if (isAtomic) {
+      effects |= SideEffects::IsAtomic;
+    }
+    return effects;
+  }
 };
 
 } // namespace wasm

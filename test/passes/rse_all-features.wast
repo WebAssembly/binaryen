@@ -277,5 +277,84 @@
     )
    )
   )
+
+  (event $e (attr 0) (param i32))
+  (func $try1
+    (local $x i32)
+    (try
+      (catch
+        (drop (exnref.pop))
+        (local.set $x (i32.const 1))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should NOT be dropped
+  )
+  (func $try2
+    (local $x i32)
+    (try
+      (block
+        (throw $e (i32.const 0))
+        (local.set $x (i32.const 1))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should NOT be dropped
+  )
+  (func $try3
+    (local $x i32)
+    (try
+      (throw $e (i32.const 0))
+      (catch
+        (drop (exnref.pop))
+        (local.set $x (i32.const 1))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should be dropped
+  )
+  (func $foo)
+  (func $try4
+    (local $x i32)
+    (try
+      (block
+        (call $foo)
+        (local.set $x (i32.const 1))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should NOT be dropped
+  )
+  (func $try5
+    (local $x i32)
+    (try
+      (block
+        (local.set $x (i32.const 1))
+        (call $foo)
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should be dropped
+  )
+  (func $nested-try
+    (local $x i32)
+    (try
+      (try
+        (throw $e (i32.const 0))
+        (catch
+          (rethrow (exnref.pop))
+        )
+      )
+      (catch
+        (drop (exnref.pop))
+        (local.set $x (i32.const 1))
+      )
+    )
+    (local.set $x (i32.const 1)) ;; should be dropped
+  )
 )
 

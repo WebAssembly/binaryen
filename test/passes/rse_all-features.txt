@@ -3,6 +3,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_f64_=>_none (func (param i32 f64)))
+ (event $e (attr 0) (param i32))
  (func $basic (; 0 ;) (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)
@@ -457,6 +458,130 @@
    (drop
     (local.get $0)
    )
+  )
+ )
+ (func $try1 (; 19 ;)
+  (local $x i32)
+  (try
+   (nop)
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+  )
+  (local.set $x
+   (i32.const 1)
+  )
+ )
+ (func $try2 (; 20 ;)
+  (local $x i32)
+  (try
+   (block $block
+    (throw $e
+     (i32.const 0)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+  (local.set $x
+   (i32.const 1)
+  )
+ )
+ (func $try3 (; 21 ;)
+  (local $x i32)
+  (try
+   (throw $e
+    (i32.const 0)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $foo (; 22 ;)
+  (nop)
+ )
+ (func $try4 (; 23 ;)
+  (local $x i32)
+  (try
+   (block $block
+    (call $foo)
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+  (local.set $x
+   (i32.const 1)
+  )
+ )
+ (func $try5 (; 24 ;)
+  (local $x i32)
+  (try
+   (block $block
+    (local.set $x
+     (i32.const 1)
+    )
+    (call $foo)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $nested-try (; 25 ;)
+  (local $x i32)
+  (try
+   (try
+    (throw $e
+     (i32.const 0)
+    )
+    (catch
+     (rethrow
+      (exnref.pop)
+     )
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.const 1)
   )
  )
 )
