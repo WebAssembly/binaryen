@@ -121,6 +121,7 @@ struct LineState {
   // XXX these two should be just prologue, epilogue?
   bool prologueEnd = false;
   bool epilogueBegin = false;
+  bool endSequence = false;
 
   LineState(const LineState& other) = default;
   LineState(const llvm::DWARFYAML::LineTable& table)
@@ -140,6 +141,7 @@ struct LineState {
             break;
           }
           case llvm::dwarf::DW_LNE_end_sequence: {
+            endSequence = true;
             return true;
           }
           case llvm::dwarf::DW_LNE_set_discriminator: {
@@ -299,14 +301,18 @@ struct LineState {
       Fatal() << "eb";
     }
     if (useSpecial) {
-      // Emit a special, which ends a sequence automatically.
+      // Emit a special, which emits a line automatically.
       // TODO
     } else {
-      // End the sequence manually.
-      // len = 1 (subopcode)
-      newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
-      // Reset the state.
-      *this = LineState(table);
+      // Emit the line manually.
+      if (endSequence) {
+        // len = 1 (subopcode)
+        newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
+        // Reset the state.
+        *this = LineState(table);
+      } else {
+        newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
+      }
     }
   }
 
