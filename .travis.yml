@@ -107,7 +107,7 @@ jobs:
       services:
         - docker
       before_install:
-        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten-upstream bash
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too
