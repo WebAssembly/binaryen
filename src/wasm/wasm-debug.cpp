@@ -597,10 +597,15 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         BinaryLocation newAddr = 0;
         if (locationUpdater.hasOldExprAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExprAddr(oldAddr);
+        }
+        // Test for a function's end address first, as LLVM output appears to
+        // use 1-past-the-end-of-the-function as a location in that function,
+        // and not the next (but the first byte of the next function, which is
+        // ambiguously identical to that value, is used at least in low_pc).
+        else if (locationUpdater.hasOldFuncEndAddr(oldAddr)) {
+          newAddr = locationUpdater.getNewFuncEndAddr(oldAddr);
         } else if (locationUpdater.hasOldFuncStartAddr(oldAddr)) {
           newAddr = locationUpdater.getNewFuncStartAddr(oldAddr);
-        } else if (locationUpdater.hasOldFuncEndAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncEndAddr(oldAddr);
         } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExtraAddr(oldAddr);
         }
