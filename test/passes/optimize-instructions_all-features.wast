@@ -238,6 +238,26 @@
       )
       (nop)
     )
+    (if
+      (try (result i32)
+        (i32.eqz
+          (i32.eqz
+            (i32.const 123)
+          )
+        )
+        (catch
+          (drop
+            (exnref.pop)
+          )
+          (i32.eqz
+            (i32.eqz
+              (i32.const 456)
+            )
+          )
+        )
+      )
+      (nop)
+    )
     (drop
       (select
         (i32.const 101)
@@ -3606,6 +3626,8 @@
       )
     )
   )
+  (func $dummy (result i32) (i32.const 1))
+  (event $e (attr 0) (param i32))
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
     (local $x1 i32)
@@ -3615,6 +3637,10 @@
     (local $x5 i32)
     (local $x6 i32)
     (local $x7 i32)
+    (local $x8 i32)
+    (local $x9 i32)
+    (local $x10 i32)
+    (local $x11 i32)
     ;; the trivial case
     (local.set $x0 (i32.const 1))
     (drop (i32.and (local.get $x0) (i32.const 7)))
@@ -3766,6 +3792,14 @@
       (unreachable)
     )
   )
+  ;; Tests when if arms are subtype of if's type
+  (func $if-arms-subtype (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null)
+      (ref.null)
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
@@ -3781,15 +3815,5 @@
      (i32.const 24)
     )
    )
-  )
-)
-(module
-  ;; Tests when if arms are subtype of if's type
-  (func $test (result anyref)
-    (if (result anyref)
-      (i32.const 0)
-      (ref.null)
-      (ref.null)
-    )
   )
 )

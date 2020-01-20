@@ -18,6 +18,7 @@
 #define wasm_ir_properties_h
 
 #include "ir/bits.h"
+#include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -64,6 +65,31 @@ inline bool isNamedControlFlow(Expression* curr) {
     return block->name.is();
   } else if (auto* loop = curr->dynCast<Loop>()) {
     return loop->name.is();
+  }
+  return false;
+}
+
+inline bool isConstantExpression(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
+}
+
+inline bool mayThrow(Expression* curr) {
+  if (curr->is<Throw>() || curr->is<Rethrow>() || curr->is<Call>() ||
+      curr->is<CallIndirect>()) {
+    return true;
+  }
+  for (auto* child : ChildIterator(curr)) {
+    // Skip inner try bodies. Exceptions thrown within inner tries will be
+    // caught by corresponding inner catches.
+    if (auto* tryy = child->dynCast<Try>()) {
+      if (mayThrow(tryy->catchBody)) {
+        return true;
+      }
+      continue;
+    }
+    if (mayThrow(child)) {
+      return true;
+    }
   }
   return false;
 }
@@ -183,12 +209,12 @@ inline Expression* getFallthrough(Expression* curr) {
     if (br->condition && br->value) {
       return getFallthrough(br->value);
     }
+  } else if (auto* tryy = curr->dynCast<Try>()) {
+    if (!mayThrow(tryy->body)) {
+      return getFallthrough(tryy->body);
+    }
   }
   return curr;
-}
-
-inline bool isConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
 
 } // namespace Properties

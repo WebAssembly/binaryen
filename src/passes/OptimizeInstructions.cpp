@@ -979,6 +979,11 @@ private:
     } else if (auto* select = boolean->dynCast<Select>()) {
       select->ifTrue = optimizeBoolean(select->ifTrue);
       select->ifFalse = optimizeBoolean(select->ifFalse);
+    } else if (auto* tryy = boolean->dynCast<Try>()) {
+      if (tryy->type == Type::i32) {
+        tryy->body = optimizeBoolean(tryy->body);
+        tryy->catchBody = optimizeBoolean(tryy->catchBody);
+      }
     }
     // TODO: recurse into br values?
     return boolean;
