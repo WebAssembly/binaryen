@@ -117,7 +117,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
   if (sourceMap) {
     sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   }
-  binaryLocationsSizeAtSectionStart = binaryLocations.size();
+  binaryLocationsSizeAtSectionStart = binaryLocations.expressions.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -145,7 +145,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     }
   }
 
-  if (binaryLocationsSizeAtSectionStart != binaryLocations.size()) {
+  if (binaryLocationsSizeAtSectionStart != binaryLocations.expressions.size()) {
     // We added the binary locations, adjust them: they must be relative
     // to the code section.
     assert(binaryLocationsSizeAtSectionStart == 0);
@@ -153,14 +153,19 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
     auto body = start + sizeFieldSize;
-    for (auto& pair : binaryLocations) {
-      // Offsets are relative to the body of the code section: after the
-      // section type byte and the size.
-      // Everything was moved by the adjustment, track that. After this,
-      // we are at the right absolute address.
-      pair.second -= adjustmentForLEBShrinking;
-      // We are relative to the section start.
-      pair.second -= body;
+    // Offsets are relative to the body of the code section: after the
+    // section type byte and the size.
+    // Everything was moved by the adjustment, track that. After this,
+    // we are at the right absolute address.
+    // We are relative to the section start.
+    auto totalAdjustment = adjustmentForLEBShrinking + body;
+    for (auto& pair : binaryLocations.expressions) {
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
+    }
+    for (auto& pair : binaryLocations.functions) {
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
     }
   }
 }
@@ -335,8 +340,15 @@ void WasmBinaryWriter::writeFunctions() {
       for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
-        binaryLocations[curr] -= adjustmentForLEBShrinking;
+        auto& span = binaryLocations.expressions[curr];
+        span.start -= adjustmentForLEBShrinking;
+        span.end -= adjustmentForLEBShrinking;
       }
+    }
+    if (!binaryLocationTrackedExpressionsForFunc.empty()) {
+      binaryLocations.functions[func] =
+        BinaryLocations::Span{BinaryLocation(start - adjustmentForLEBShrinking),
+                              BinaryLocation(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
@@ -697,12 +709,20 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       writeDebugLocation(iter->second);
     }
   }
-  // TODO: remove source map debugging support and refactor this method
-  // to something that directly thinks about DWARF, instead of indirectly
-  // looking at func->binaryLocations as a proxy for that etc.
-  if (func && !func->binaryLocations.empty()) {
-    binaryLocations[curr] = o.size();
+  // If this is an instruction in a function, and if the original wasm had
+  // binary locations tracked, then track it in the output as well.
+  if (func && !func->expressionLocations.empty()) {
+    binaryLocations.expressions[curr] =
+      BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
+  }
+}
+
+void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
+  if (func && !func->expressionLocations.empty()) {
+    auto& span = binaryLocations.expressions.at(curr);
+    assert(span.end == 0);
+    span.end = o.size();
   }
 }
 
@@ -1357,10 +1377,16 @@ void WasmBinaryBuilder::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    Function* func = new Function;
+    auto* func = new Function;
     func->name = Name::fromInt(i);
     func->sig = functionSignatures[i];
     currFunction = func;
+
+    if (DWARF) {
+      func->funcLocation =
+        BinaryLocations::Span{BinaryLocation(pos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation + size)};
+    }
 
     readNextDebugLocation();
 
@@ -1665,9 +1691,11 @@ void WasmBinaryBuilder::processExpressions() {
           peek == BinaryConsts::Catch) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
-        readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
-        pos++;
+        // Read the byte we peeked at. No new instruction is generated for it.
+        Expression* dummy = nullptr;
+        readExpression(dummy);
+        assert(!dummy);
         return;
       } else {
         skipUnreachableCode();
@@ -2280,7 +2308,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
-      currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
+      currFunction->expressionLocations[curr] =
+        BinaryLocations::Span{BinaryLocation(startPos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation)};
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);

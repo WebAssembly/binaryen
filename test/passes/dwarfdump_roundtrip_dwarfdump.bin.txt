@@ -137,12 +137,12 @@ Abbrev table for offset: 0x00000000
               DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "a.cpp")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/usr/local/google/home/azakai/Dev/emscripten")
-              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-              DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
 
 0x00000026:   DW_TAG_subprogram [2]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")
                 DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/a.cpp")

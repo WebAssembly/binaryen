@@ -457,6 +457,24 @@ function initializeConstants() {
   ].forEach(function(name) {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
+
+  // Expression side effects
+  Module['SideEffects'] = {};
+  [ 'None',
+    'Branches',
+    'Calls',
+    'ReadsLocal',
+    'WritesLocal',
+    'ReadsGlobal',
+    'WritesGlobal',
+    'ReadsMemory',
+    'WritesMemory',
+    'ImplicitTrap',
+    'IsAtomic',
+    'Any'
+  ].forEach(function(name) {
+    Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
+  });
 }
 
 // 'Module' interface
@@ -2737,6 +2755,11 @@ Module['getExpressionInfo'] = function(expr) {
     default:
       throw Error('unexpected id: ' + id);
   }
+};
+
+// Gets the side effects of the specified expression
+Module['getSideEffects'] = function(expr) {
+  return Module['_BinaryenExpressionGetSideEffects'](expr);
 };
 
 Module['createType'] = function(types) {

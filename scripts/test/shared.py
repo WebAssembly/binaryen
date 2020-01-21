@@ -184,7 +184,8 @@ WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
-BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen_js.js')
+BINARYEN_WASM = os.path.join(options.binaryen_bin, 'binaryen_wasm.js')
 
 
 def wrap_with_valgrind(cmd):
@@ -370,7 +371,7 @@ def fail_if_not_contained(actual, expected):
 def fail_if_not_identical_to_file(actual, expected_file):
     binary = expected_file.endswith(".wasm") or type(actual) == bytes
     with open(expected_file, 'rb' if binary else 'r') as f:
-        fail_if_not_identical(actual, f.read(), fromfile=expected_file)
+        fail_if_not_identical(f.read(), actual, fromfile=expected_file)
 
 
 def get_test_dir(name):
