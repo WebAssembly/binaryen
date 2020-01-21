@@ -182,7 +182,7 @@ cmake . && make
 ```
 Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`
 
-* A C++11 compiler is required.
+* A C++14 compiler is required.
 * The JavaScript components can be built using `build-js.sh`, see notes inside. Normally this is not needed as builds are provided in this repo already.
 
 If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)), for more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
@@ -210,6 +210,61 @@ If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAsse
    ```
 
    CMake generates a project named "ALL_BUILD.vcxproj" for conveniently building all the projects.
+
+### Building binaryen.js
+
+binaryen.js can be built with cmake using Emscripten. Install
+thr [emsdk](https://github.com/emscripten-core/emsdk) and
+[cmake](https://cmake.org/download/) if you haven't already, and make sure that
+the Emscripten SDK is up to date:
+
+```
+cd path/to/emsdk
+emsdk install latest
+emsdk activate latest
+```
+
+Then do
+
+```
+cd path/to/binaryen
+mkdir build
+cd build
+emconfigure cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja binaryen_js
+```
+
+The compiled file can be found in `build/bin/`.
+
+The example above uses Ninja (you can also use `make`, of course). On Windows,
+download [ninja](https://ninja-build.org/) and add it to `%PATH%`. One easy way
+to do this is to unpack it into the emsdk directory so it is available as long
+as emsdk is.
+
+### Linking `libbinaryen` to an existing CMake project
+
+You can use something like this in your project:
+
+```cmake
+ExternalProject_Add(
+    Binaryen
+    PREFIX third-party
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/binaryen"
+    CMAKE_ARGS -DBUILD_STATIC_LIB=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    BUILD_BYPRODUCTS "${PROJECT_BINARY_DIR}/third-party/src/Binaryen-build/lib/libbinaryen.a"
+    BUILD_COMMAND ${CMAKE_BUILD_TOOL} binaryen
+    INSTALL_COMMAND ":"
+    )
+include_directories(SYSTEM third-party/binaryen/src)
+add_library(binaryen STATIC IMPORTED)
+set_target_properties(binaryen PROPERTIES IMPORTED_LOCATION "${PROJECT_BINARY_DIR}/third-party/src/Binaryen-build/lib/libbinaryen.a")
+```
+
+Using binaryen is then as simple as something like this:
+
+```cmake
+target_link_libraries(backend binaryen)
+```
 
 ## Running
 
