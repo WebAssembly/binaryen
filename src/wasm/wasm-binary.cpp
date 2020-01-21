@@ -1691,9 +1691,11 @@ void WasmBinaryBuilder::processExpressions() {
           peek == BinaryConsts::Catch) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
-        readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
-        pos++;
+        // Read the byte we peeked at. No new instruction is generated for it.
+        Expression* dummy = nullptr;
+        readExpression(dummy);
+        assert(!dummy);
         return;
       } else {
         skipUnreachableCode();
