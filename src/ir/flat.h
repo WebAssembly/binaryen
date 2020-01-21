@@ -45,8 +45,8 @@
 //  1. Aside from a local.set, the operands of an instruction must be a
 //     local.get, a const, or an unreachable. Anything else is written
 //     to a local earlier.
-//  2. Disallow control flow (block, loop, and if) return values, and do not
-//     allow the function body to have a concrete type, i.e., do not use
+//  2. Disallow control flow (block, loop, ifm and try) return values, and do
+//     not allow the function body to have a concrete type, i.e., do not use
 //     control flow to pass around values.
 //  3. Disallow local.tee, setting a local is always done in a local.set
 //     on a non-nested-expression location.
@@ -81,7 +81,7 @@ inline void verifyFlatness(Function* func) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (auto* set = curr->dynCast<LocalSet>()) {
-        verify(!set->type.isConcrete(), "tees are not allowed, only sets");
+        verify(!set->isTee() || set->type == unreachable, "tees are not allowed, only sets");
         verify(!isControlFlowStructure(set->value),
                "set values cannot be control flow");
       } else {
