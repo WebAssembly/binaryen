@@ -2212,7 +2212,7 @@ function wrapModule(module, self) {
   }
   self['getMemorySegmentInfoByIndex'] = function(id) {
     return {
-      'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
       'data': (function(){
         var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
         var ptr = _malloc(size);
@@ -2221,7 +2221,8 @@ function wrapModule(module, self) {
         res.set(new Uint8Array(buffer, ptr, size));
         _free(ptr);
         return res.buffer;
-      })()
+      })(),
+      'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
   }
   self['setStart'] = function(start) {
