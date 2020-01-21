@@ -3722,6 +3722,20 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   const Memory::Segment& segment = wasm->memory.segments[id];
   return segment.data.size();
 }
+int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                    BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetMemorySegmentPassive(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Memory::Segment& segment = wasm->memory.segments[id];
+  return segment.isPassive;
+}
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
