@@ -343,7 +343,7 @@ struct AddrExprMap {
   // bloat the common case which is represented in the earlier maps.
   struct ExtraInfo {
     Expression* expr;
-    BinaryLocations::ExtraId id;
+    BinaryLocations::DelimiterId id;
   };
   std::unordered_map<BinaryLocation, ExtraInfo> extraMap;
 
@@ -353,7 +353,7 @@ struct AddrExprMap {
       for (auto pair : func->expressionLocations) {
         add(pair.first, pair.second);
       }
-      for (auto pair : func->extraExpressionLocations) {
+      for (auto pair : func->delimiterLocations) {
         add(pair.first, pair.second);
       }
     }
@@ -392,11 +392,11 @@ private:
     endMap[span.end] = expr;
   }
 
-  void add(Expression* expr, const BinaryLocations::ExtraLocations& extra) {
+  void add(Expression* expr, const BinaryLocations::DelimiterLocations& extra) {
     for (Index i = 0; i < extra.size(); i++) {
       if (extra[i] != 0) {
         assert(extraMap.count(extra[i]) == 0);
-        extraMap[extra[i]] = ExtraInfo{expr, BinaryLocations::ExtraId(i)};
+        extraMap[extra[i]] = ExtraInfo{expr, BinaryLocations::DelimiterId(i)};
       }
     }
   }
@@ -508,8 +508,8 @@ struct LocationUpdater {
   BinaryLocation getNewExtraAddr(BinaryLocation oldAddr) const {
     auto info = oldExprAddrMap.getExtra(oldAddr);
     if (info.expr) {
-      auto iter = newLocations.extraExpressions.find(info.expr);
-      if (iter != newLocations.extraExpressions.end()) {
+      auto iter = newLocations.delimiterExpressions.find(info.expr);
+      if (iter != newLocations.delimiterExpressions.end()) {
         return iter->second[info.id];
       }
     }

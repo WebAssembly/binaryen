@@ -167,7 +167,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
       pair.second.start -= totalAdjustment;
       pair.second.end -= totalAdjustment;
     }
-    for (auto& pair : binaryLocations.extraExpressions) {
+    for (auto& pair : binaryLocations.delimiterExpressions) {
       for (auto& item : pair.second) {
         item -= totalAdjustment;
       }
@@ -348,8 +348,8 @@ void WasmBinaryWriter::writeFunctions() {
         auto& span = binaryLocations.expressions[curr];
         span.start -= adjustmentForLEBShrinking;
         span.end -= adjustmentForLEBShrinking;
-        auto iter = binaryLocations.extraExpressions.find(curr);
-        if (iter != binaryLocations.extraExpressions.end()) {
+        auto iter = binaryLocations.delimiterExpressions.find(curr);
+        if (iter != binaryLocations.delimiterExpressions.end()) {
           for (auto& item : iter->second) {
             item -= adjustmentForLEBShrinking;
           }
@@ -739,9 +739,9 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
 
 void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
                                                Function* func,
-                                               BinaryLocations::ExtraId id) {
+                                               BinaryLocations::DelimiterId id) {
   if (func && !func->expressionLocations.empty()) {
-    binaryLocations.extraExpressions[curr][id] = o.size();
+    binaryLocations.delimiterExpressions[curr][id] = o.size();
   }
 }
 
@@ -2351,7 +2351,7 @@ void WasmBinaryBuilder::startControlFlow(Expression* curr) {
   }
 }
 
-void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id,
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
                                             BinaryLocation pos) {
   if (DWARF && currFunction) {
     if (controlFlowStack.empty()) {
@@ -2365,7 +2365,7 @@ void WasmBinaryBuilder::continueControlFlow(BinaryLocations::ExtraId id,
     auto currControlFlow = controlFlowStack.back();
     // We are called after parsing the byte, so we need to subtract one to
     // get its position.
-    currFunction->extraExpressionLocations[currControlFlow][id] =
+    currFunction->delimiterLocations[currControlFlow][id] =
       pos - codeSectionLocation;
     if (id == BinaryLocations::End) {
       controlFlowStack.pop_back();
