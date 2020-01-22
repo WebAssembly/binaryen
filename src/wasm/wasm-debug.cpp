@@ -118,7 +118,6 @@ struct LineState {
   uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
-  // XXX these two should be just prologue, epilogue?
   bool prologueEnd = false;
   bool epilogueBegin = false;
   bool endSequence = false;
@@ -296,7 +295,6 @@ struct LineState {
     if (prologueEnd != old.prologueEnd) {
       assert(prologueEnd);
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_prologue_end));
-      prologueEnd = false;
     }
     if (epilogueBegin != old.epilogueBegin) {
       Fatal() << "eb";
@@ -315,6 +313,12 @@ struct LineState {
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
       }
     }
+    resetAfterLine();
+  }
+
+  // Some flags are automatically reset after each debug line.
+  void resetAfterLine() {
+    prologueEnd = false;
   }
 
 private:
@@ -623,7 +627,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           // The only difference is the address TODO other stuff?
           updatedState.addr = newAddr;
           // Reset relevant state.
-          state.prologueEnd = false;
+          state.resetAfterLine();
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
