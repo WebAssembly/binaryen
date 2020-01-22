@@ -1170,7 +1170,7 @@ using BinaryLocation = uint32_t;
 // Offsets are relative to the beginning of the code section, as in DWARF.
 struct BinaryLocations {
   struct Span {
-    BinaryLocation start, end;
+    BinaryLocation start = 0, end = 0;
   };
   std::unordered_map<Expression*, Span> expressions;
   std::unordered_map<Function*, Span> functions;
