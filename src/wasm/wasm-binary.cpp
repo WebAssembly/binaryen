@@ -737,9 +737,8 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
-                                               Function* func,
-                                               BinaryLocations::DelimiterId id) {
+void WasmBinaryWriter::writeExtraDebugLocation(
+  Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiterExpressions[curr][id] = o.size();
   }

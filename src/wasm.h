@@ -1179,13 +1179,13 @@ struct BinaryLocations {
   // just after this.
   std::unordered_map<Expression*, Span> expressions;
 
-  // Track the extra delimiter positions that some instructions, in particular control
-  // flow, have, like 'end' for loop and block. We keep these in a separate map
-  // because they are rare and we optimize for the storage space for the common
-  // type of instruction which just needs a Span.
-  // We implement this as a simple struct with two elements (as two extra
-  // elements is the maximum currently needed; due to 'catch' and 'end' for
-  // try-catch). The second value may be 0, indicating it is not used.
+  // Track the extra delimiter positions that some instructions, in particular
+  // control flow, have, like 'end' for loop and block. We keep these in a
+  // separate map because they are rare and we optimize for the storage space
+  // for the common type of instruction which just needs a Span. We implement
+  // this as a simple struct with two elements (as two extra elements is the
+  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
+  // second value may be 0, indicating it is not used.
   struct DelimiterLocations : public std::array<BinaryLocation, 2> {
     DelimiterLocations() {
       // Ensure zero-initialization.
