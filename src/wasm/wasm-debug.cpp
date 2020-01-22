@@ -317,9 +317,7 @@ struct LineState {
   }
 
   // Some flags are automatically reset after each debug line.
-  void resetAfterLine() {
-    prologueEnd = false;
-  }
+  void resetAfterLine() { prologueEnd = false; }
 
 private:
   llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) {
