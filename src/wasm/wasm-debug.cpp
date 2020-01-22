@@ -508,8 +508,8 @@ struct LocationUpdater {
   BinaryLocation getNewExtraAddr(BinaryLocation oldAddr) const {
     auto info = oldExprAddrMap.getExtra(oldAddr);
     if (info.expr) {
-      auto iter = newLocations.delimiterExpressions.find(info.expr);
-      if (iter != newLocations.delimiterExpressions.end()) {
+      auto iter = newLocations.delimiters.find(info.expr);
+      if (iter != newLocations.delimiters.end()) {
         return iter->second[info.id];
       }
     }

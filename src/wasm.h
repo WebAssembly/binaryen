@@ -1203,7 +1203,7 @@ struct BinaryLocations {
     Catch = 1,
     Invalid = -1
   };
-  std::unordered_map<Expression*, DelimiterLocations> delimiterExpressions;
+  std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
   std::unordered_map<Function*, Span> functions;
 };

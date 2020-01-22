@@ -167,7 +167,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
       pair.second.start -= totalAdjustment;
       pair.second.end -= totalAdjustment;
     }
-    for (auto& pair : binaryLocations.delimiterExpressions) {
+    for (auto& pair : binaryLocations.delimiters) {
       for (auto& item : pair.second) {
         item -= totalAdjustment;
       }
@@ -348,8 +348,8 @@ void WasmBinaryWriter::writeFunctions() {
         auto& span = binaryLocations.expressions[curr];
         span.start -= adjustmentForLEBShrinking;
         span.end -= adjustmentForLEBShrinking;
-        auto iter = binaryLocations.delimiterExpressions.find(curr);
-        if (iter != binaryLocations.delimiterExpressions.end()) {
+        auto iter = binaryLocations.delimiters.find(curr);
+        if (iter != binaryLocations.delimiters.end()) {
           for (auto& item : iter->second) {
             item -= adjustmentForLEBShrinking;
           }
@@ -740,7 +740,7 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
 void WasmBinaryWriter::writeExtraDebugLocation(
   Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
   if (func && !func->expressionLocations.empty()) {
-    binaryLocations.delimiterExpressions[curr][id] = o.size();
+    binaryLocations.delimiters[curr][id] = o.size();
   }
 }
 
