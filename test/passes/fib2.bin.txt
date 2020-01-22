@@ -305,7 +305,7 @@ Contains section .debug_info (168 bytes)
 Contains section .debug_loc (143 bytes)
 Contains section .debug_ranges (24 bytes)
 Contains section .debug_abbrev (131 bytes)
-Contains section .debug_line (194 bytes)
+Contains section .debug_line (210 bytes)
 Contains section .debug_str (180 bytes)
 
 .debug_abbrev contents:
@@ -484,7 +484,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x000000be
+    total_length: 0x000000ce
          version: 4
  prologue_length: 0x0000001e
  min_inst_length: 1
@@ -576,12 +576,20 @@ file_names[  1]:
 0x000000af: 00 DW_LNE_end_sequence
             0x0000000000000041     12     10      1   0             0  is_stmt end_sequence
 
-0x000000b2: 00 DW_LNE_set_address (0x0000000000000044)
+0x000000b2: 00 DW_LNE_set_address (0x0000000000000043)
 0x000000b9: 03 DW_LNS_advance_line (12)
 0x000000bb: 05 DW_LNS_set_column (3)
 0x000000bd: 06 DW_LNS_negate_stmt
 0x000000be: 0a DW_LNS_set_prologue_end
 0x000000bf: 00 DW_LNE_end_sequence
+            0x0000000000000043     12      3      1   0             0  end_sequence
+
+0x000000c2: 00 DW_LNE_set_address (0x0000000000000044)
+0x000000c9: 03 DW_LNS_advance_line (12)
+0x000000cb: 05 DW_LNS_set_column (3)
+0x000000cd: 06 DW_LNS_negate_stmt
+0x000000ce: 0a DW_LNS_set_prologue_end
+0x000000cf: 00 DW_LNE_end_sequence
             0x0000000000000044     12      3      1   0             0  end_sequence
 
 
@@ -706,7 +714,7 @@ file_names[  1]:
  ;; custom section ".debug_loc", size 143
  ;; custom section ".debug_ranges", size 24
  ;; custom section ".debug_abbrev", size 131
- ;; custom section ".debug_line", size 194
+ ;; custom section ".debug_line", size 210
  ;; custom section ".debug_str", size 180
  ;; custom section "producers", size 127
 )
