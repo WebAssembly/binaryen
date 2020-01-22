@@ -368,7 +368,6 @@ struct AddrExprMap {
     }
   }
 
-
   Expression* getStart(BinaryLocation addr) const {
     auto iter = startMap.find(addr);
     if (iter != startMap.end()) {
@@ -498,6 +497,10 @@ struct LocationUpdater {
     return 0;
   }
 
+  bool hasOldExprEndAddr(BinaryLocation oldAddr) const {
+    return oldExprAddrMap.getEnd(oldAddr);
+  }
+
   BinaryLocation getNewFuncStartAddr(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.getStart(oldAddr)) {
       // The function might have been optimized away, check.
@@ -612,7 +615,6 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExtraAddr(oldAddr);
         }
-        // TODO: last 'end' of a function
         if (newAddr) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
@@ -764,6 +766,55 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
     });
 }
 
+static void updateRanges(llvm::DWARFYAML::Data& yaml,
+                         const LocationUpdater& locationUpdater) {
+  // In each range section, try to update the start and end. If we no longer
+  // have something to map them to, we must skip that part.
+  size_t skip = 0;
+  for (size_t i = 0; i < yaml.Ranges.size(); i++) {
+    auto& range = yaml.Ranges[i];
+    BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
+                   newEnd = 0;
+    // If this was not an end marker, try to find what it should be updated to.
+    if (oldStart != 0 && oldEnd != 0) {
+      if (locationUpdater.hasOldExprAddr(oldStart)) {
+        newStart = locationUpdater.getNewExprAddr(oldStart);
+      } else if (locationUpdater.hasOldFuncStartAddr(oldStart)) {
+        newStart = locationUpdater.getNewFuncStartAddr(oldStart);
+      }
+      if (locationUpdater.hasOldExprEndAddr(oldEnd)) {
+        newEnd = locationUpdater.getNewExprEndAddr(oldEnd);
+      } else if (locationUpdater.hasOldFuncEndAddr(oldEnd)) {
+        newEnd = locationUpdater.getNewFuncEndAddr(oldEnd);
+      }
+      if (newStart == 0 || newEnd == 0) {
+        // This part of the range no longer has a mapping, so we must skip it.
+        skip++;
+        continue;
+      }
+      // The range start and end markers have been preserved. However, TODO
+      // instructions in the middle may have moved around, making the range no
+      // longer contiguous, we should check that, and possibly split/merge
+      // the range. Or, we may need to have tracking in the IR for this.
+    } else {
+      // This was not a valid range in the old binary. It was either two 0's
+      // (an end marker) or an invalid value that should be ignored. Either way,
+      // write an end marker and finish the current section of ranges, filling
+      // it out to the original size (we must fill it out as indexes into
+      // the ranges section are not updated - we could update them and then
+      // pack the section, as an optimization TODO).
+      while (skip) {
+        auto& writtenRange = yaml.Ranges[i - skip];
+        writtenRange.Start = writtenRange.End = 0;
+        skip--;
+      }
+    }
+    auto& writtenRange = yaml.Ranges[i - skip];
+    writtenRange.Start = newStart;
+    writtenRange.End = newEnd;
+  }
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -778,6 +829,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateDebugLines(data, locationUpdater);
 
   updateCompileUnits(info, data, locationUpdater);
+
+  updateRanges(data, locationUpdater);
 
   // Convert to binary sections.
   auto newSections =

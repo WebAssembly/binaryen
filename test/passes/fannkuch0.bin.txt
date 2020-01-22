@@ -2420,9 +2420,9 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000a8] = "/home/alon/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000006, 0x0000088c)
-                 [0x0000088e, 0x000009dc)
-                 [0x000009de, 0x00001042))
+                 [0x00000006, 0x00000872)
+                 [0x00000874, 0x000009a0)
+                 [0x000009a2, 0x00000fde))
 
 0x00000026:   DW_TAG_pointer_type [2]  
                 DW_AT_type [DW_FORM_ref4]	(cu + 0x002b => {0x0000002b} "worker_args")
@@ -5188,9 +5188,9 @@ file_names[  3]:
 0x00000191: "cleanup"
 
 .debug_ranges contents:
-00000000 00000006 0000088c
-00000000 0000088e 000009dc
-00000000 000009de 00001042
+00000000 00000006 00000872
+00000000 00000874 000009a0
+00000000 000009a2 00000fde
 00000000 <End of list>
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
