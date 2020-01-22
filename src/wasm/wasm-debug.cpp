@@ -773,9 +773,7 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   size_t skip = 0;
   for (size_t i = 0; i < yaml.Ranges.size(); i++) {
     auto& range = yaml.Ranges[i];
-    BinaryLocation oldStart = range.Start,
-                   oldEnd = range.End,
-                   newStart = 0,
+    BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
     // If this was not an end marker, try to find what it should be updated to.
     if (oldStart != 0 && oldEnd != 0) {
