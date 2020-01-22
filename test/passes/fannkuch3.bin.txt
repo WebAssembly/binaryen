@@ -2469,8 +2469,8 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000a9] = "/usr/local/google/home/azakai/Dev/2-binaryen")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000040
-                 [0x00000006, 0x0000039d)
-                 [0x0000039f, 0x000006e1))
+                 [0x00000006, 0x00000389)
+                 [0x0000038b, 0x00000686))
 
 0x00000026:   DW_TAG_pointer_type [2]  
                 DW_AT_type [DW_FORM_ref4]	(cu + 0x002b => {0x0000002b} "worker_args")
@@ -2678,10 +2678,10 @@ Abbrev table for offset: 0x00000000
 
 0x00000159:     DW_TAG_lexical_block [14] *
                   DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                     [0x00000185, 0x000001c3)
-                     [0x000001ed, 0x000001f6)
-                     [0x0000030e, 0x0000034c)
-                     [0x00000376, 0x0000037f))
+                     [0x00000175, 0x000001b3)
+                     [0x000001dd, 0x000001e6)
+                     [0x00000302, 0x00000340)
+                     [0x0000036a, 0x00000373))
 
 0x0000015e:       DW_TAG_variable [12]  
                     DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000163] = "p0")
@@ -2927,8 +2927,8 @@ Abbrev table for offset: 0x00000000
 
 0x000002e3:       DW_TAG_lexical_block [14] *
                     DW_AT_ranges [DW_FORM_sec_offset]	(0x00000028
-                       [0x00000517, 0x0000055e)
-                       [0x000005de, 0x0000062b))
+                       [0x000004d9, 0x00000520)
+                       [0x0000059e, 0x000005eb))
 
 0x000002e8:         DW_TAG_variable [26]  
                       DW_AT_location [DW_FORM_sec_offset]	(0x000003bc: 
@@ -4778,16 +4778,16 @@ file_names[  4]:
 0x000001ad: "char"
 
 .debug_ranges contents:
-00000000 00000185 000001c3
-00000000 000001ed 000001f6
-00000000 0000030e 0000034c
-00000000 00000376 0000037f
+00000000 00000175 000001b3
+00000000 000001dd 000001e6
+00000000 00000302 00000340
+00000000 0000036a 00000373
 00000000 <End of list>
-00000028 00000517 0000055e
-00000028 000005de 0000062b
+00000028 000004d9 00000520
+00000028 0000059e 000005eb
 00000028 <End of list>
-00000040 00000006 0000039d
-00000040 0000039f 000006e1
+00000040 00000006 00000389
+00000040 0000038b 00000686
 00000040 <End of list>
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))

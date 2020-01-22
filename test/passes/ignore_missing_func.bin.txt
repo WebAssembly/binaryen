@@ -622,7 +622,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/home/alon/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000005, 0x0000005f))
+                 [0x00000005, 0x0000005b))
 
 0x00000026:   DW_TAG_variable [2]  
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b5] = "quine")
@@ -817,9 +817,9 @@ file_names[  1]:
 0x000000e9: "x"
 
 .debug_ranges contents:
-00000000 00000005 0000005f
+00000000 00000005 0000005b
 00000000 <End of list>
-00000010 00000060 000000c4
+00000010 0000005c 000000ad
 00000010 <End of list>
 (module
  (type $none_=>_none (func))

@@ -382,7 +382,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
                  [0x00000005, 0x0000003d)
-                 [0x0000003e, 0x00000048))
+                 [0x0000003e, 0x00000044))
 
 0x00000026:   DW_TAG_subprogram [2] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
@@ -610,7 +610,7 @@ file_names[  1]:
 
 .debug_ranges contents:
 00000000 00000005 0000003d
-00000000 0000003e 00000048
+00000000 0000003e 00000044
 00000000 <End of list>
 (module
  (type $none_=>_none (func))
