@@ -88,8 +88,9 @@ struct MemoryPacking : public Pass {
   size_t dropStateGlobalCount = 0;
 
   // FIXME: Chrome has a bug decoding section indices that prevents it from
-  // using more than 63. Just use MaxDataSegments once this is fixed.
-  uint32_t MAX_SEGMENTS;
+  // using more than 63. Just use WebLimitations::MaxDataSegments once this is
+  // fixed. See https://bugs.chromium.org/p/v8/issues/detail?id=10151.
+  uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
@@ -120,8 +121,9 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     return;
   }
 
-  MAX_SEGMENTS =
-    module->features.hasBulkMemory() ? 63 : WebLimitations::MaxDataSegments;
+  maxSegments = module->features.hasBulkMemory()
+                  ? 63
+                  : uint32_t(WebLimitations::MaxDataSegments);
   auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
@@ -442,7 +444,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
         offset = segment.offset;
       }
     }
-    if (MAX_SEGMENTS <= packed.size() + segmentsRemaining) {
+    if (maxSegments <= packed.size() + segmentsRemaining) {
       // Give up splitting and merge all remaining ranges except end zeroes
       auto lastNonzero = ranges.end() - 1;
       if (lastNonzero->isZero) {
