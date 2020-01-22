@@ -769,7 +769,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
 static void updateRanges(llvm::DWARFYAML::Data& yaml,
                          const LocationUpdater& locationUpdater) {
   // In each range section, try to update the start and end. If we no longer
-  // have something to map them too, we must skip that part.
+  // have something to map them to, we must skip that part.
   size_t skip = 0;
   for (size_t i = 0; i < yaml.Ranges.size(); i++) {
     auto& range = yaml.Ranges[i];
