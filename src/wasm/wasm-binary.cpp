@@ -165,6 +165,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     }
     for (auto& pair : binaryLocations.functions) {
       pair.second.start -= totalAdjustment;
+      pair.second.declarations -= totalAdjustment;
       pair.second.end -= totalAdjustment;
     }
     for (auto& pair : binaryLocations.delimiters) {
@@ -304,7 +305,7 @@ void WasmBinaryWriter::writeFunctions() {
     return;
   }
   BYN_TRACE("== writeFunctions\n");
-  auto start = startSection(BinaryConsts::Section::Code);
+  auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
@@ -357,15 +358,16 @@ void WasmBinaryWriter::writeFunctions() {
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
-      binaryLocations.functions[func] =
-        BinaryLocations::Span{BinaryLocation(start - adjustmentForLEBShrinking),
-                              BinaryLocation(o.size())};
+      binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos),
+        BinaryLocation(start - adjustmentForLEBShrinking),
+        BinaryLocation(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
     binaryLocationTrackedExpressionsForFunc.clear();
   });
-  finishSection(start);
+  finishSection(sectionStart);
 }
 
 void WasmBinaryWriter::writeGlobals() {
@@ -1389,6 +1391,7 @@ void WasmBinaryBuilder::readFunctions() {
   }
   for (size_t i = 0; i < total; i++) {
     BYN_TRACE("read one at " << pos << std::endl);
+    auto sizePos = pos;
     size_t size = getU32LEB();
     if (size == 0) {
       throwError("empty function size");
@@ -1401,9 +1404,10 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      func->funcLocation =
-        BinaryLocations::Span{BinaryLocation(pos - codeSectionLocation),
-                              BinaryLocation(pos - codeSectionLocation + size)};
+      func->funcLocation = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation + size)};
     }
 
     readNextDebugLocation();

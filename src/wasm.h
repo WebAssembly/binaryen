@@ -1205,7 +1205,17 @@ struct BinaryLocations {
   };
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
-  std::unordered_map<Function*, Span> functions;
+  // DWARF debug info can refer to multiple interesting positions in a function.
+  struct FunctionLocations {
+    // The very start of the function, where the binary has a size LEB.
+    BinaryLocation start = 0;
+    // The area where we declare locals, which is right after the size LEB.
+    BinaryLocation declarations = 0;
+    // The end, which is one past the final "end" instruction byte.
+    BinaryLocation end = 0;
+  };
+
+  std::unordered_map<Function*, FunctionLocations> functions;
 };
 
 // Forward declarations of Stack IR, as functions can contain it, see
@@ -1265,7 +1275,7 @@ public:
   std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
-  BinaryLocations::Span funcLocation;
+  BinaryLocations::FunctionLocations funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();
