@@ -118,7 +118,6 @@ struct LineState {
   uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
-  // XXX these two should be just prologue, epilogue?
   bool prologueEnd = false;
   bool epilogueBegin = false;
   bool endSequence = false;
@@ -314,7 +313,11 @@ struct LineState {
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
       }
     }
+    resetAfterLine();
   }
+
+  // Some flags are automatically reset after each debug line.
+  void resetAfterLine() { prologueEnd = false; }
 
 private:
   llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) {
@@ -597,21 +600,32 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         BinaryLocation newAddr = 0;
         if (locationUpdater.hasOldExprAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExprAddr(oldAddr);
+        }
+        // Test for a function's end address first, as LLVM output appears to
+        // use 1-past-the-end-of-the-function as a location in that function,
+        // and not the next (but the first byte of the next function, which is
+        // ambiguously identical to that value, is used at least in low_pc).
+        else if (locationUpdater.hasOldFuncEndAddr(oldAddr)) {
+          newAddr = locationUpdater.getNewFuncEndAddr(oldAddr);
         } else if (locationUpdater.hasOldFuncStartAddr(oldAddr)) {
           newAddr = locationUpdater.getNewFuncStartAddr(oldAddr);
-        } else if (locationUpdater.hasOldFuncEndAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncEndAddr(oldAddr);
         } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExtraAddr(oldAddr);
         }
         // TODO: last 'end' of a function
         if (newAddr) {
+          // LLVM sometimes emits the same address more than once. We should
+          // probably investigate that.
+          if (newAddrInfo.count(newAddr)) {
+            continue;
+          }
           newAddrs.push_back(newAddr);
-          assert(newAddrInfo.count(newAddr) == 0);
           newAddrInfo.emplace(newAddr, state);
           auto& updatedState = newAddrInfo.at(newAddr);
           // The only difference is the address TODO other stuff?
           updatedState.addr = newAddr;
+          // Reset relevant state.
+          state.resetAfterLine();
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
@@ -764,8 +778,6 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateDebugLines(data, locationUpdater);
 
   updateCompileUnits(info, data, locationUpdater);
-
-  // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
   auto newSections =
