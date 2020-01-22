@@ -57,7 +57,9 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
         continue;
       // XXX BINARYEN
       if (Entry.AbbrCode - FirstAbbrevCode >= DebugInfo.AbbrevDecls.size()) {
-        errs() << "warning: invalid abbreviation code " << Entry.AbbrCode << " (range: " << FirstAbbrevCode << "-" << (DebugInfo.AbbrevDecls.size() - FirstAbbrevCode) << ")\n";
+        errs() << "warning: invalid abbreviation code " << Entry.AbbrCode <<
+               " (range: " << FirstAbbrevCode << "-" <<
+               (DebugInfo.AbbrevDecls.size() - FirstAbbrevCode) << ")\n";
         continue;
       }
       auto &Abbrev = DebugInfo.AbbrevDecls[Entry.AbbrCode - FirstAbbrevCode];
