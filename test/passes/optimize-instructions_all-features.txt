@@ -1,10 +1,10 @@
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
@@ -13,7 +13,9 @@
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_anyref (func (result anyref)))
  (memory $0 0)
+ (event $e (attr 0) (param i32))
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (param $i1 i32) (param $i2 i64)
   (if
@@ -214,6 +216,18 @@
   )
   (if
    (i32.const 123)
+   (nop)
+  )
+  (if
+   (try (result i32)
+    (i32.const 123)
+    (catch
+     (drop
+      (exnref.pop)
+     )
+     (i32.const 456)
+    )
+   )
    (nop)
   )
   (drop
@@ -436,7 +450,7 @@
   )
   (drop
    (i32.and
-    (block $block3 (result i32)
+    (block $block4 (result i32)
      (i32.const -6)
     )
     (local.get $x)
@@ -444,7 +458,7 @@
   )
   (drop
    (i32.and
-    (block $block4 (result i32)
+    (block $block5 (result i32)
      (i32.const 5)
     )
     (loop $loop-in (result i32)
@@ -454,20 +468,20 @@
   )
   (drop
    (i32.and
-    (block $block6 (result i32)
+    (block $block7 (result i32)
      (i32.const 8)
     )
-    (loop $loop-in5 (result i32)
+    (loop $loop-in6 (result i32)
      (i32.const 7)
     )
    )
   )
   (drop
    (i32.and
-    (block $block8 (result i32)
+    (block $block9 (result i32)
      (i32.const 10)
     )
-    (loop $loop-in7 (result i32)
+    (loop $loop-in8 (result i32)
      (call $and-pos1)
      (i32.const 9)
     )
@@ -475,34 +489,34 @@
   )
   (drop
    (i32.and
-    (block $block10 (result i32)
+    (block $block11 (result i32)
      (call $and-pos1)
      (i32.const 12)
     )
-    (loop $loop-in9 (result i32)
+    (loop $loop-in10 (result i32)
      (i32.const 11)
     )
    )
   )
   (drop
    (i32.and
-    (loop $loop-in11 (result i32)
+    (loop $loop-in12 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
-    (block $block12 (result i32)
-     (call $and-pos1)
-     (i32.const 14)
-    )
-   )
-  )
-  (drop
-   (i32.and
     (block $block13 (result i32)
      (call $and-pos1)
      (i32.const 14)
     )
-    (loop $loop-in14 (result i32)
+   )
+  )
+  (drop
+   (i32.and
+    (block $block14 (result i32)
+     (call $and-pos1)
+     (i32.const 14)
+    )
+    (loop $loop-in15 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
@@ -510,7 +524,7 @@
   )
   (drop
    (i32.and
-    (block $block15 (result i32)
+    (block $block16 (result i32)
      (i32.const 15)
     )
     (local.get $x)
@@ -518,7 +532,7 @@
   )
   (drop
    (i32.and
-    (block $block16 (result i32)
+    (block $block17 (result i32)
      (i32.const 15)
     )
     (local.get $x)
@@ -3124,7 +3138,10 @@
    )
   )
  )
- (func $getFallthrough (; 71 ;)
+ (func $dummy (; 71 ;) (result i32)
+  (i32.const 1)
+ )
+ (func $getFallthrough (; 72 ;)
   (local $x0 i32)
   (local $x1 i32)
   (local $x2 i32)
@@ -3133,6 +3150,10 @@
   (local $x5 i32)
   (local $x6 i32)
   (local $x7 i32)
+  (local $x8 i32)
+  (local $x9 i32)
+  (local $x10 i32)
+  (local $x11 i32)
   (local.set $x0
    (i32.const 1)
   )
@@ -3203,7 +3224,7 @@
    )
   )
  )
- (func $tee-with-unreachable-value (; 72 ;) (result f64)
+ (func $tee-with-unreachable-value (; 73 ;) (result f64)
   (local $var$0 i32)
   (block $label$1 (result f64)
    (local.tee $var$0
@@ -3214,7 +3235,7 @@
    )
   )
  )
- (func $add-sub-zero-reorder-1 (; 73 ;) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-1 (; 74 ;) (param $temp i32) (result i32)
   (i32.add
    (i32.add
     (i32.sub
@@ -3228,7 +3249,7 @@
    (i32.const 2)
   )
  )
- (func $add-sub-zero-reorder-2 (; 74 ;) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-2 (; 75 ;) (param $temp i32) (result i32)
   (i32.add
    (i32.sub
     (local.tee $temp
@@ -3239,7 +3260,7 @@
    (i32.const 2)
   )
  )
- (func $pre-combine-or (; 75 ;) (param $x i32) (param $y i32)
+ (func $pre-combine-or (; 76 ;) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3301,7 +3322,7 @@
    )
   )
  )
- (func $combine-or (; 76 ;) (param $x i32) (param $y i32)
+ (func $combine-or (; 77 ;) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3309,7 +3330,7 @@
    )
   )
  )
- (func $select-into-arms (; 77 ;) (param $x i32) (param $y i32)
+ (func $select-into-arms (; 78 ;) (param $x i32) (param $y i32)
   (if
    (select
     (local.get $x)
@@ -3318,6 +3339,9 @@
    )
    (unreachable)
   )
+ )
+ (func $if-arms-subtype (; 79 ;) (result anyref)
+  (ref.null)
  )
 )
 (module
@@ -3335,11 +3359,5 @@
     (i32.const 24)
    )
   )
- )
-)
-(module
- (type $none_=>_anyref (func (result anyref)))
- (func $test (; 0 ;) (result anyref)
-  (ref.null)
  )
 )
