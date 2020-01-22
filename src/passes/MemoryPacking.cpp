@@ -87,6 +87,10 @@ Expression* makeShiftedMemorySize(Builder& builder) {
 struct MemoryPacking : public Pass {
   size_t dropStateGlobalCount = 0;
 
+  // FIXME: Chrome has a bug decoding section indices that prevents it from
+  // using more than 63. Just use MaxDataSegments once this is fixed.
+  uint32_t MAX_SEGMENTS;
+
   void run(PassRunner* runner, Module* module) override;
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
@@ -116,6 +120,8 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     return;
   }
 
+  MAX_SEGMENTS =
+    module->features.hasBulkMemory() ? 63 : WebLimitations::MaxDataSegments;
   auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
@@ -436,7 +442,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
         offset = segment.offset;
       }
     }
-    if (WebLimitations::MaxDataSegments <= packed.size() + segmentsRemaining) {
+    if (MAX_SEGMENTS <= packed.size() + segmentsRemaining) {
       // Give up splitting and merge all remaining ranges except end zeroes
       auto lastNonzero = ranges.end() - 1;
       if (lastNonzero->isZero) {
