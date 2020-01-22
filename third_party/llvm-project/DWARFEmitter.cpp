@@ -130,6 +130,20 @@ void DWARFYAML::EmitDebugRanges(raw_ostream &OS, const DWARFYAML::Data &DI) {
   }
 }
 
+#if 0
+// XXX BINARYEN
+void DWARFYAML::EmitDebugLoc(raw_ostream &OS, const DWARFYAML::Data &DI) {
+  // As DwarfStreamer.cpp says, "The debug_range section
+  // format is totally trivial, consisting just of pairs of address
+  // sized addresses describing the ranges." and apparently it ends
+  // with a null termination of a pair of zeros
+  for (auto Range : DI.Ranges) {
+    writeInteger((uint32_t)Range.Start, OS, DI.IsLittleEndian);
+    writeInteger((uint32_t)Range.End, OS, DI.IsLittleEndian);
+  }
+}
+#endif
+
 void DWARFYAML::EmitPubSection(raw_ostream &OS,
                                const DWARFYAML::PubSection &Sect,
                                bool IsLittleEndian) {
@@ -430,6 +444,8 @@ EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups) {
                        DebugSections);
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugRanges, "debug_ranges",
                        DebugSections); // XXX BINARYEN
+//  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugLoc, "debug_loc",
+ // XXX                      DebugSections); // XXX BINARYEN
   return std::move(DebugSections);
 }
 } // namespace DWARFYAML
