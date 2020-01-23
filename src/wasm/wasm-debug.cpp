@@ -483,7 +483,7 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldExprAddr(BinaryLocation oldAddr) const {
+  bool hasOldExprStartAddr(BinaryLocation oldAddr) const {
     return oldExprAddrMap.getStart(oldAddr);
   }
 
@@ -570,6 +570,31 @@ struct LocationUpdater {
   bool hasOldExtraAddr(BinaryLocation oldAddr) const {
     return oldExprAddrMap.getExtra(oldAddr).expr;
   }
+
+  // getNewStart|EndAddr utilities.
+  // TODO: should we track the start and end of delimiters, even though they
+  //       are just one byte?
+  BinaryLocation getNewStartAddr(BinaryLocation oldStart) const {
+    if (hasOldExprStartAddr(oldStart)) {
+      return getNewExprAddr(oldStart);
+    } else if (hasOldFuncStartAddr(oldStart)) {
+      return getNewFuncStartAddr(oldStart);
+    } else if (hasOldExtraAddr(oldStart)) {
+      return getNewExtraAddr(oldStart);
+    }
+    return 0;
+  }
+
+  BinaryLocation getNewEndAddr(BinaryLocation oldEnd) const {
+    if (hasOldExprEndAddr(oldEnd)) {
+      return getNewExprEndAddr(oldEnd);
+    } else if (hasOldFuncEndAddr(oldEnd)) {
+      return getNewFuncEndAddr(oldEnd);
+    } else if (hasOldExtraAddr(oldEnd)) {
+      return getNewExtraAddr(oldEnd);
+    }
+    return 0;
+  }
 };
 
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -601,7 +626,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         // it away.
         BinaryLocation oldAddr = state.addr;
         BinaryLocation newAddr = 0;
-        if (locationUpdater.hasOldExprAddr(oldAddr)) {
+        if (locationUpdater.hasOldExprStartAddr(oldAddr)) {
           newAddr = locationUpdater.getNewExprAddr(oldAddr);
         }
         // Test for a function's end address first, as LLVM output appears to
@@ -777,16 +802,8 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
                    newEnd = 0;
     // If this was not an end marker, try to find what it should be updated to.
     if (oldStart != 0 && oldEnd != 0) {
-      if (locationUpdater.hasOldExprAddr(oldStart)) {
-        newStart = locationUpdater.getNewExprAddr(oldStart);
-      } else if (locationUpdater.hasOldFuncStartAddr(oldStart)) {
-        newStart = locationUpdater.getNewFuncStartAddr(oldStart);
-      }
-      if (locationUpdater.hasOldExprEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewExprEndAddr(oldEnd);
-      } else if (locationUpdater.hasOldFuncEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewFuncEndAddr(oldEnd);
-      }
+      newStart = locationUpdater.getNewStartAddr(oldStart);
+      newEnd = locationUpdater.getNewEndAddr(oldEnd);
       if (newStart == 0 || newEnd == 0) {
         // This part of the range no longer has a mapping, so we must skip it.
         skip++;
@@ -815,63 +832,51 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   }
 }
 
+// A location that is ignoreable, i.e., not a special value like 0 or -1 (which
+// would indicate an end or a base in .debug_loc).
+static const BinaryLocation IGNOREABLE_LOCATION = 1;
+
+// Update the .debug_loc section.
 static void updateLoc(llvm::DWARFYAML::Data& yaml,
                       const LocationUpdater& locationUpdater) {
-  // Similar to ranges, try to update the start and end, and skip where
-  // needed.
-  size_t skip = 0;
-  // Locs have an optional base.
+  // Similar to ranges, try to update the start and end. Note that here we
+  // can't skip since the location description is a variable number of bytes,
+  // so we mark no longer valid addresses as empty.
+  // Locations have an optional base.
   BinaryLocation base = 0;
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
+      // Note that the base is not the address of an instruction, necessarily -
+      // it's just a number (seems like it could always be an instruction, but
+      // that's not what LLVM emits).
       base = newEnd;
     } else if (newStart == 0 && newEnd == 0) {
-      // This is an end marker.
+      // This is an end marker, this list is done.
       base = 0;
-      // before we write the end marker, finish the current section of locs, filling
-      // it out to the original size (we must fill it out as indexes into
-      // the locs section are not updated - we could update them and then
-      // pack the section, as an optimization TODO).
-      while (skip) {
-        auto& writtenLoc = yaml.Locs[i - skip];
-        writtenLoc.Start = writtenLoc.End = 0;
-        skip--;
-      }
     } else {
       // This is a normal entry, try to find what it should be updated to. First
-      // relative is to the base.
-      newStart += base;
-      newEnd += base;
-      auto oldStart = loc.Start, oldEnd = loc.End;
-      if (locationUpdater.hasOldExprAddr(oldStart)) {
-        newStart = locationUpdater.getNewExprAddr(oldStart);
-      } else if (locationUpdater.hasOldFuncStartAddr(oldStart)) {
-        newStart = locationUpdater.getNewFuncStartAddr(oldStart);
-      }
-      if (locationUpdater.hasOldExprEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewExprEndAddr(oldEnd);
-      } else if (locationUpdater.hasOldFuncEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewFuncEndAddr(oldEnd);
-      }
+      // relativize it to the base.
+      newStart = locationUpdater.getNewStartAddr(loc.Start + base);
+      newEnd = locationUpdater.getNewEndAddr(loc.End + base);
       if (newStart == 0 || newEnd == 0) {
-        // This part of the loc no longer has a mapping, so we must skip it.
-        skip++;
-        continue;
+        // This part of the loc no longer has a mapping, so we must ignore it.
+        newStart = newEnd = IGNOREABLE_LOCATION;
+      } else {
+        // Finally, de-relativize it to the base.
+        newStart -= base;
+        newEnd -= base;
       }
-      // Finally, de-relativize it to the base.
-      newStart -= base;
-      newEnd -= base;
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no
       // longer contiguous, we should check that, and possibly split/merge
       // the loc. Or, we may need to have tracking in the IR for this.
     }
-    auto& writtenLoc = yaml.Locs[i - skip];
-    writtenLoc.Start = newStart;
-    writtenLoc.End = newEnd;
+    loc.Start = newStart;
+    loc.End = newEnd;
+    // Note how the ".Location" field is unchanged.
   }
 }
 
