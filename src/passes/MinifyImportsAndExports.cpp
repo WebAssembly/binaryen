@@ -42,11 +42,11 @@
 namespace wasm {
 
 struct MinifyImportsAndExports : public Pass {
-  bool minifyExports;
+  bool minifyExports, minifyModules;
 
 public:
-  explicit MinifyImportsAndExports(bool minifyExports)
-    : minifyExports(minifyExports) {}
+  explicit MinifyImportsAndExports(bool minifyExports, bool minifyModules)
+    : minifyExports(minifyExports), minifyModules(minifyModules) {}
 
 private:
   // Generates minified names that are valid in JS.
@@ -179,13 +179,41 @@ private:
     for (auto& pair : newToOld) {
       std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
+
+    if (minifyModules) {
+      doMinifyModules(module);
+    }
+  }
+
+  const Name SINGLETON_MODULE_NAME = "a";
+
+  void doMinifyModules(Module* module) {
+    // Minify the module name itself, and also merge all the modules into
+    // one. Assert against overlapping names.
+#ifndef NDEBUG
+    std::set<Name> seenImports;
+#endif
+    auto processImport = [&](Importable* curr) {
+      curr->module = SINGLETON_MODULE_NAME;
+#ifndef NDEBUG
+      assert(seenImports.count(curr->base) == 0);
+      seenImports.insert(curr->base);
+#endif
+    };
+    ModuleUtils::iterImportedGlobals(*module, processImport);
+    ModuleUtils::iterImportedFunctions(*module, processImport);
+    ModuleUtils::iterImportedEvents(*module, processImport);
   }
 };
 
-Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false); }
+Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false, false); }
 
 Pass* createMinifyImportsAndExportsPass() {
-  return new MinifyImportsAndExports(true);
+  return new MinifyImportsAndExports(true, false);
+}
+
+Pass* createMinifyImportsAndExportsAndModulesPass() {
+  return new MinifyImportsAndExports(true, true);
 }
 
 } // namespace wasm

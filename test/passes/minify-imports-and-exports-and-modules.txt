@@ -1,0 +1,10 @@
+longname1 => a
+longname2 => b
+longname3 => c
+(module
+ (type $none_=>_none (func))
+ (import "a" "a" (func $internal1))
+ (import "a" "b" (func $internal2))
+ (import "a" "c" (func $internal3))
+ (import "a" "longname4" (func $internal4))
+)
