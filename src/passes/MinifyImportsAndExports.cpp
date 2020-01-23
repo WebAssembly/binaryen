@@ -203,6 +203,8 @@ private:
     ModuleUtils::iterImportedGlobals(*module, processImport);
     ModuleUtils::iterImportedFunctions(*module, processImport);
     ModuleUtils::iterImportedEvents(*module, processImport);
+    ModuleUtils::iterImportedMemories(*module, processImport);
+    ModuleUtils::iterImportedTables(*module, processImport);
   }
 };
 

@@ -3,6 +3,8 @@ longname2 => b
 longname3 => c
 (module
  (type $none_=>_none (func))
+ (import "a" "memory" (memory $0 256 256))
+ (import "a" "table" (table $0 4 funcref))
  (import "a" "a" (func $internal1))
  (import "a" "b" (func $internal2))
  (import "a" "c" (func $internal3))
