@@ -346,15 +346,15 @@ struct AddrExprMap {
   std::unordered_map<BinaryLocation, Expression*> startMap;
   std::unordered_map<BinaryLocation, Expression*> endMap;
 
-  // Some instructions have extra binary locations, like the else and end in
+  // Some instructions have delimiter binary locations, like the else and end in
   // and if. Track those separately, including their expression and their id
   // ("else", "end", etc.), as they are rare, and we don't want to
   // bloat the common case which is represented in the earlier maps.
-  struct ExtraInfo {
+  struct DelimiterInfo {
     Expression* expr;
     BinaryLocations::DelimiterId id;
   };
-  std::unordered_map<BinaryLocation, ExtraInfo> extraMap;
+  std::unordered_map<BinaryLocation, DelimiterInfo> delimiterMap;
 
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
@@ -384,12 +384,12 @@ struct AddrExprMap {
     return nullptr;
   }
 
-  ExtraInfo getExtra(BinaryLocation addr) const {
-    auto iter = extraMap.find(addr);
-    if (iter != extraMap.end()) {
+  DelimiterInfo getDelimiter(BinaryLocation addr) const {
+    auto iter = delimiterMap.find(addr);
+    if (iter != delimiterMap.end()) {
       return iter->second;
     }
-    return ExtraInfo{nullptr, BinaryLocations::Invalid};
+    return DelimiterInfo{nullptr, BinaryLocations::Invalid};
   }
 
 private:
@@ -400,11 +400,13 @@ private:
     endMap[span.end] = expr;
   }
 
-  void add(Expression* expr, const BinaryLocations::DelimiterLocations& extra) {
-    for (Index i = 0; i < extra.size(); i++) {
-      if (extra[i] != 0) {
-        assert(extraMap.count(extra[i]) == 0);
-        extraMap[extra[i]] = ExtraInfo{expr, BinaryLocations::DelimiterId(i)};
+  void add(Expression* expr,
+           const BinaryLocations::DelimiterLocations& delimiter) {
+    for (Index i = 0; i < delimiter.size(); i++) {
+      if (delimiter[i] != 0) {
+        assert(delimiterMap.count(delimiter[i]) == 0);
+        delimiterMap[delimiter[i]] =
+          DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
       }
     }
   }
@@ -472,7 +474,7 @@ struct LocationUpdater {
   // Updates an expression's address. If there was never an instruction at that
   // address, or if there was but if that instruction no longer exists, return
   // 0. Otherwise, return the new updated location.
-  BinaryLocation getNewExprAddr(BinaryLocation oldAddr) const {
+  BinaryLocation getNewExprStart(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getStart(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
@@ -483,11 +485,11 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldExprAddr(BinaryLocation oldAddr) const {
+  bool hasOldExprStart(BinaryLocation oldAddr) const {
     return oldExprAddrMap.getStart(oldAddr);
   }
 
-  BinaryLocation getNewExprEndAddr(BinaryLocation oldAddr) const {
+  BinaryLocation getNewExprEnd(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
       if (iter != newLocations.expressions.end()) {
@@ -497,11 +499,11 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldExprEndAddr(BinaryLocation oldAddr) const {
+  bool hasOldExprEnd(BinaryLocation oldAddr) const {
     return oldExprAddrMap.getEnd(oldAddr);
   }
 
-  BinaryLocation getNewFuncStartAddr(BinaryLocation oldAddr) const {
+  BinaryLocation getNewFuncStart(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.getStart(oldAddr)) {
       // The function might have been optimized away, check.
       auto iter = newLocations.functions.find(func);
@@ -520,11 +522,11 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldFuncStartAddr(BinaryLocation oldAddr) const {
+  bool hasOldFuncStart(BinaryLocation oldAddr) const {
     return oldFuncAddrMap.getStart(oldAddr);
   }
 
-  BinaryLocation getNewFuncEndAddr(BinaryLocation oldAddr) const {
+  BinaryLocation getNewFuncEnd(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.getEnd(oldAddr)) {
       // The function might have been optimized away, check.
       auto iter = newLocations.functions.find(func);
@@ -544,20 +546,20 @@ struct LocationUpdater {
   }
 
   // Check for either the end opcode, or one past the end.
-  bool hasOldFuncEndAddr(BinaryLocation oldAddr) const {
+  bool hasOldFuncEnd(BinaryLocation oldAddr) const {
     return oldFuncAddrMap.getEnd(oldAddr);
   }
 
   // Check specifically for the end opcode.
-  bool hasOldFuncEndOpcodeAddr(BinaryLocation oldAddr) const {
+  bool hasOldFuncEndOpcode(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.getEnd(oldAddr)) {
       return oldAddr == func->funcLocation.end - 1;
     }
     return false;
   }
 
-  BinaryLocation getNewExtraAddr(BinaryLocation oldAddr) const {
-    auto info = oldExprAddrMap.getExtra(oldAddr);
+  BinaryLocation getNewDelimiter(BinaryLocation oldAddr) const {
+    auto info = oldExprAddrMap.getDelimiter(oldAddr);
     if (info.expr) {
       auto iter = newLocations.delimiters.find(info.expr);
       if (iter != newLocations.delimiters.end()) {
@@ -567,8 +569,33 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldExtraAddr(BinaryLocation oldAddr) const {
-    return oldExprAddrMap.getExtra(oldAddr).expr;
+  bool hasOldDelimiter(BinaryLocation oldAddr) const {
+    return oldExprAddrMap.getDelimiter(oldAddr).expr;
+  }
+
+  // getNewStart|EndAddr utilities.
+  // TODO: should we track the start and end of delimiters, even though they
+  //       are just one byte?
+  BinaryLocation getNewStart(BinaryLocation oldStart) const {
+    if (hasOldExprStart(oldStart)) {
+      return getNewExprStart(oldStart);
+    } else if (hasOldFuncStart(oldStart)) {
+      return getNewFuncStart(oldStart);
+    } else if (hasOldDelimiter(oldStart)) {
+      return getNewDelimiter(oldStart);
+    }
+    return 0;
+  }
+
+  BinaryLocation getNewEnd(BinaryLocation oldEnd) const {
+    if (hasOldExprEnd(oldEnd)) {
+      return getNewExprEnd(oldEnd);
+    } else if (hasOldFuncEnd(oldEnd)) {
+      return getNewFuncEnd(oldEnd);
+    } else if (hasOldDelimiter(oldEnd)) {
+      return getNewDelimiter(oldEnd);
+    }
+    return 0;
   }
 };
 
@@ -601,19 +628,19 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         // it away.
         BinaryLocation oldAddr = state.addr;
         BinaryLocation newAddr = 0;
-        if (locationUpdater.hasOldExprAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewExprAddr(oldAddr);
+        if (locationUpdater.hasOldExprStart(oldAddr)) {
+          newAddr = locationUpdater.getNewExprStart(oldAddr);
         }
         // Test for a function's end address first, as LLVM output appears to
         // use 1-past-the-end-of-the-function as a location in that function,
         // and not the next (but the first byte of the next function, which is
         // ambiguously identical to that value, is used at least in low_pc).
-        else if (locationUpdater.hasOldFuncEndAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncEndAddr(oldAddr);
-        } else if (locationUpdater.hasOldFuncStartAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncStartAddr(oldAddr);
-        } else if (locationUpdater.hasOldExtraAddr(oldAddr)) {
-          newAddr = locationUpdater.getNewExtraAddr(oldAddr);
+        else if (locationUpdater.hasOldFuncEnd(oldAddr)) {
+          newAddr = locationUpdater.getNewFuncEnd(oldAddr);
+        } else if (locationUpdater.hasOldFuncStart(oldAddr)) {
+          newAddr = locationUpdater.getNewFuncStart(oldAddr);
+        } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
+          newAddr = locationUpdater.getNewDelimiter(oldAddr);
         }
         if (newAddr) {
           // LLVM sometimes emits the same address more than once. We should
@@ -691,10 +718,10 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
           tag == llvm::dwarf::DW_TAG_lexical_block ||
           tag == llvm::dwarf::DW_TAG_label) {
-        newValue = locationUpdater.getNewExprAddr(oldValue);
+        newValue = locationUpdater.getNewExprStart(oldValue);
       } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                  tag == llvm::dwarf::DW_TAG_subprogram) {
-        newValue = locationUpdater.getNewFuncStartAddr(oldValue);
+        newValue = locationUpdater.getNewFuncStart(oldValue);
       } else {
         Fatal() << "unknown tag with low_pc "
                 << llvm::dwarf::TagString(tag).str();
@@ -724,10 +751,10 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
           tag == llvm::dwarf::DW_TAG_lexical_block ||
           tag == llvm::dwarf::DW_TAG_label) {
-        newValue = locationUpdater.getNewExprEndAddr(oldValue);
+        newValue = locationUpdater.getNewExprEnd(oldValue);
       } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                  tag == llvm::dwarf::DW_TAG_subprogram) {
-        newValue = locationUpdater.getNewFuncEndAddr(oldValue);
+        newValue = locationUpdater.getNewFuncEnd(oldValue);
       } else {
         Fatal() << "unknown tag with low_pc "
                 << llvm::dwarf::TagString(tag).str();
@@ -777,16 +804,8 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
                    newEnd = 0;
     // If this was not an end marker, try to find what it should be updated to.
     if (oldStart != 0 && oldEnd != 0) {
-      if (locationUpdater.hasOldExprAddr(oldStart)) {
-        newStart = locationUpdater.getNewExprAddr(oldStart);
-      } else if (locationUpdater.hasOldFuncStartAddr(oldStart)) {
-        newStart = locationUpdater.getNewFuncStartAddr(oldStart);
-      }
-      if (locationUpdater.hasOldExprEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewExprEndAddr(oldEnd);
-      } else if (locationUpdater.hasOldFuncEndAddr(oldEnd)) {
-        newEnd = locationUpdater.getNewFuncEndAddr(oldEnd);
-      }
+      newStart = locationUpdater.getNewStart(oldStart);
+      newEnd = locationUpdater.getNewEnd(oldEnd);
       if (newStart == 0 || newEnd == 0) {
         // This part of the range no longer has a mapping, so we must skip it.
         skip++;
@@ -815,6 +834,55 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   }
 }
 
+// A location that is ignoreable, i.e., not a special value like 0 or -1 (which
+// would indicate an end or a base in .debug_loc).
+static const BinaryLocation IGNOREABLE_LOCATION = 1;
+
+// Update the .debug_loc section.
+static void updateLoc(llvm::DWARFYAML::Data& yaml,
+                      const LocationUpdater& locationUpdater) {
+  // Similar to ranges, try to update the start and end. Note that here we
+  // can't skip since the location description is a variable number of bytes,
+  // so we mark no longer valid addresses as empty.
+  // Locations have an optional base.
+  BinaryLocation base = 0;
+  for (size_t i = 0; i < yaml.Locs.size(); i++) {
+    auto& loc = yaml.Locs[i];
+    BinaryLocation newStart = loc.Start, newEnd = loc.End;
+    if (newStart == BinaryLocation(-1)) {
+      // This is a new base.
+      // Note that the base is not the address of an instruction, necessarily -
+      // it's just a number (seems like it could always be an instruction, but
+      // that's not what LLVM emits).
+      base = newEnd;
+    } else if (newStart == 0 && newEnd == 0) {
+      // This is an end marker, this list is done.
+      base = 0;
+    } else {
+      // This is a normal entry, try to find what it should be updated to. First
+      // de-relativize it to the base to get the absolute address, then look for
+      // a new address for it.
+      newStart = locationUpdater.getNewStart(loc.Start + base);
+      newEnd = locationUpdater.getNewEnd(loc.End + base);
+      if (newStart == 0 || newEnd == 0) {
+        // This part of the loc no longer has a mapping, so we must ignore it.
+        newStart = newEnd = IGNOREABLE_LOCATION;
+      } else {
+        // Finally, relativize it against the base.
+        newStart -= base;
+        newEnd -= base;
+      }
+      // The loc start and end markers have been preserved. However, TODO
+      // instructions in the middle may have moved around, making the loc no
+      // longer contiguous, we should check that, and possibly split/merge
+      // the loc. Or, we may need to have tracking in the IR for this.
+    }
+    loc.Start = newStart;
+    loc.End = newEnd;
+    // Note how the ".Location" field is unchanged.
+  }
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -831,6 +899,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateCompileUnits(info, data, locationUpdater);
 
   updateRanges(data, locationUpdater);
+
+  updateLoc(data, locationUpdater);
 
   // Convert to binary sections.
   auto newSections =

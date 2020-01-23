@@ -130,6 +130,24 @@ void DWARFYAML::EmitDebugRanges(raw_ostream &OS, const DWARFYAML::Data &DI) {
   }
 }
 
+// XXX BINARYEN
+void DWARFYAML::EmitDebugLoc(raw_ostream &OS, const DWARFYAML::Data &DI) {
+  for (auto Loc : DI.Locs) {
+    writeInteger((uint32_t)Loc.Start, OS, DI.IsLittleEndian);
+    writeInteger((uint32_t)Loc.End, OS, DI.IsLittleEndian);
+    if (Loc.Start == 0 && Loc.End == 0) {
+      // End of a list.
+      continue;
+    }
+    if (Loc.Start != -1) {
+      writeInteger((uint16_t)Loc.Location.size(), OS, DI.IsLittleEndian);
+      for (auto x : Loc.Location) {
+        writeInteger((uint8_t)x, OS, DI.IsLittleEndian);
+      }
+    }
+  }
+}
+
 void DWARFYAML::EmitPubSection(raw_ostream &OS,
                                const DWARFYAML::PubSection &Sect,
                                bool IsLittleEndian) {
@@ -429,6 +447,8 @@ EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups) {
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugAranges, "debug_aranges",
                        DebugSections);
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugRanges, "debug_ranges",
+                       DebugSections); // XXX BINARYEN
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugLoc, "debug_loc",
                        DebugSections); // XXX BINARYEN
   return std::move(DebugSections);
 }
