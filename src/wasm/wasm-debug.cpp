@@ -400,11 +400,13 @@ private:
     endMap[span.end] = expr;
   }
 
-  void add(Expression* expr, const BinaryLocations::DelimiterLocations& delimiter) {
+  void add(Expression* expr,
+           const BinaryLocations::DelimiterLocations& delimiter) {
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
         assert(delimiterMap.count(delimiter[i]) == 0);
-        delimiterMap[delimiter[i]] = DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
+        delimiterMap[delimiter[i]] =
+          DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
       }
     }
   }
