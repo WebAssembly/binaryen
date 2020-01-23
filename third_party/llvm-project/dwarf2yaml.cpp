@@ -408,6 +408,7 @@ std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   dumpDebugStrings(DCtx, Y);
   dumpDebugARanges(DCtx, Y);
   dumpDebugRanges(DCtx, Y); // XXX BINARYEN
+  dumpDebugLoc(DCtx, Y); // XXX BINARYEN
   dumpDebugPubSections(DCtx, Y);
   dumpDebugInfo(DCtx, Y);
   dumpDebugLines(DCtx, Y);

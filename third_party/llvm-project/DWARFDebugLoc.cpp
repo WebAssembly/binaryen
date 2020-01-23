@@ -92,20 +92,16 @@ DWARFDebugLoc::parseOneLocationList(const DWARFDataExtractor &Data,
   AddressSize = Data.getAddressSize();
   DataExtractor::Cursor C(*Offset);
 
-outs() << "parseOne! " << C.tell() << '\n';
   // 2.6.2 Location Lists
   // A location list entry consists of:
   while (true) {
-outs() << "  in loop at  " << C.tell() << '\n';
     Entry E;
 
     // 1. A beginning address offset. ...
     E.Begin = Data.getRelocatedAddress(C);
-outs() << "  after begin " << C.tell() << ", got " << E.Begin << '\n';
 
     // 2. An ending address offset. ...
     E.End = Data.getRelocatedAddress(C);
-outs() << "  after end   " << C.tell() << ", got " << E.End << '\n';
 
     if (Error Err = C.takeError())
       return std::move(Err);
@@ -115,7 +111,6 @@ outs() << "  after end   " << C.tell() << ", got " << E.End << '\n';
     // ending address offset.
     if (E.Begin == 0 && E.End == 0) {
       *Offset = C.tell();
-outs() << "  end\n\n";
       return LL;
     }
 
@@ -123,9 +118,6 @@ outs() << "  end\n\n";
       unsigned Bytes = Data.getU16(C);
       // A single location description describing the location of the object...
       Data.getU8(C, E.Loc, Bytes);
-outs() << "  after locat " << C.tell() << ", got " << Bytes << "bytes" << '\n';
-    } else {
-outs() << "  begin was -1, so no locat to read\n";
     }
 
     LL.Entries.push_back(std::move(E));
