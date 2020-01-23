@@ -815,6 +815,66 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   }
 }
 
+static void updateLoc(llvm::DWARFYAML::Data& yaml,
+                      const LocationUpdater& locationUpdater) {
+  // Similar to ranges, try to update the start and end, and skip where
+  // needed.
+  size_t skip = 0;
+  // Locs have an optional base.
+  BinaryLocation base = 0;
+  for (size_t i = 0; i < yaml.Locs.size(); i++) {
+    auto& loc = yaml.Locs[i];
+    BinaryLocation newStart = loc.Start, newEnd = loc.End;
+    if (newStart == BinaryLocation(-1)) {
+      // This is a new base.
+      base = newEnd;
+    } else if (newStart == 0 && newEnd == 0) {
+      // This is an end marker.
+      base = 0;
+      // before we write the end marker, finish the current section of locs, filling
+      // it out to the original size (we must fill it out as indexes into
+      // the locs section are not updated - we could update them and then
+      // pack the section, as an optimization TODO).
+      while (skip) {
+        auto& writtenLoc = yaml.Locs[i - skip];
+        writtenLoc.Start = writtenLoc.End = 0;
+        skip--;
+      }
+    } else {
+      // This is a normal entry, try to find what it should be updated to. First
+      // relative is to the base.
+      newStart += base;
+      newEnd += base;
+      auto oldStart = loc.Start, oldEnd = loc.End;
+      if (locationUpdater.hasOldExprAddr(oldStart)) {
+        newStart = locationUpdater.getNewExprAddr(oldStart);
+      } else if (locationUpdater.hasOldFuncStartAddr(oldStart)) {
+        newStart = locationUpdater.getNewFuncStartAddr(oldStart);
+      }
+      if (locationUpdater.hasOldExprEndAddr(oldEnd)) {
+        newEnd = locationUpdater.getNewExprEndAddr(oldEnd);
+      } else if (locationUpdater.hasOldFuncEndAddr(oldEnd)) {
+        newEnd = locationUpdater.getNewFuncEndAddr(oldEnd);
+      }
+      if (newStart == 0 || newEnd == 0) {
+        // This part of the loc no longer has a mapping, so we must skip it.
+        skip++;
+        continue;
+      }
+      // Finally, de-relativize it to the base.
+      newStart -= base;
+      newEnd -= base;
+      // The loc start and end markers have been preserved. However, TODO
+      // instructions in the middle may have moved around, making the loc no
+      // longer contiguous, we should check that, and possibly split/merge
+      // the loc. Or, we may need to have tracking in the IR for this.
+    }
+    auto& writtenLoc = yaml.Locs[i - skip];
+    writtenLoc.Start = newStart;
+    writtenLoc.End = newEnd;
+  }
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -831,6 +891,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateCompileUnits(info, data, locationUpdater);
 
   updateRanges(data, locationUpdater);
+
+  updateLoc(data, locationUpdater);
 
   // Convert to binary sections.
   auto newSections =
