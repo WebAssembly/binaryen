@@ -108,7 +108,7 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
 void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
   uint8_t savedAddressByteSize = 4;
   DWARFDataExtractor locsData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getLocSection(),
-                                DCtx.isLittleEndian(), savedAddressByteSize);
+                              DCtx.isLittleEndian(), savedAddressByteSize);
   uint64_t offset = 0;
   DWARFDebugLoc locList;
   while (locsData.isValidOffset(offset)) {
