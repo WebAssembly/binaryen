@@ -22,7 +22,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
                GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(${GIT_VERSION_RESULT})
-    message(FATAL_ERROR "Error running git describe to determine version")
+    message(WARNING "Error running git describe to determine version")
   else()
     set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
   endif()
