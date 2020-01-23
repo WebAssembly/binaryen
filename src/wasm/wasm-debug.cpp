@@ -860,14 +860,15 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       base = 0;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
-      // relativize it to the base.
+      // de-relativize it to the base to get the absolute address, then look for
+      // a new address for it.
       newStart = locationUpdater.getNewStart(loc.Start + base);
       newEnd = locationUpdater.getNewEnd(loc.End + base);
       if (newStart == 0 || newEnd == 0) {
         // This part of the loc no longer has a mapping, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
-        // Finally, de-relativize it to the base.
+        // Finally, relativize it against the base.
         newStart -= base;
         newEnd -= base;
       }
