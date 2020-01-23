@@ -47,7 +47,7 @@ enum {
 
 // wasm VMs on the web have decided to impose some limits on what they
 // accept
-enum WebLimitations {
+enum WebLimitations : uint32_t {
   MaxDataSegments = 100 * 1000,
   MaxFunctionBodySize = 128 * 1024,
   MaxFunctionLocals = 50 * 1000
