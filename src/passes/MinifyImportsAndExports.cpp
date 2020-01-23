@@ -206,7 +206,9 @@ private:
   }
 };
 
-Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false, false); }
+Pass* createMinifyImportsPass() {
+  return new MinifyImportsAndExports(false, false);
+}
 
 Pass* createMinifyImportsAndExportsPass() {
   return new MinifyImportsAndExports(true, false);
