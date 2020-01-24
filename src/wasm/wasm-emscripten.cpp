@@ -1072,8 +1072,9 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
 struct FixInvokeFunctionNamesWalker
   : public PostWalker<FixInvokeFunctionNamesWalker> {
   Module& wasm;
+  std::vector<Name> toRemove;
   std::map<Name, Name> importRenames;
-  std::map<Name, Name> functionReplace;
+  std::map<Name, Name> functionRenames;
   std::set<Signature> invokeSigs;
   ImportInfo imports;
 
@@ -1134,29 +1135,31 @@ struct FixInvokeFunctionNamesWalker
 
     BYN_TRACE("renaming import: " << curr->module << "." << curr->base << " ("
                                   << curr->name << ") -> " << newname << "\n");
-    assert(importRenames.count(curr->base) == 0);
-    importRenames[curr->base] = newname;
-    // Either rename the import, or replace it with an existing one
-    Function* existingFunc = imports.getImportedFunction(curr->module, newname);
-    if (existingFunc) {
-      BYN_TRACE("replacing with an existing import: " << existingFunc->name
-                                                      << "\n");
-      functionReplace[curr->name] = existingFunc->name;
+
+    if (auto* f = imports.getImportedFunction(curr->module, newname)) {
+      BYN_TRACE("remove redundant import: " << curr->base << "\n");
+      toRemove.push_back(curr->name);
+      // Make sure the existing import has the correct internal name.
+      if (f->name != newname)
+        functionRenames[f->name] = newname;
     } else {
-      BYN_TRACE("renaming the import in place\n");
+      BYN_TRACE("rename import: " << curr->base << "\n");
       curr->base = newname;
     }
+
+    functionRenames[curr->name] = newname;
+
+    // Ensure that an imported functions of this name exists.
+    importRenames[curr->base] = newname;
   }
 
   void visitModule(Module* curr) {
-    // For each replaced function first remove the function itself then
-    // rename all uses to the point to the new function.
-    for (auto& pair : functionReplace) {
-      BYN_TRACE("removeFunction " << pair.first << "\n");
-      wasm.removeFunction(pair.first);
+    for (auto name : toRemove) {
+      wasm.removeFunction(name);
     }
-    // Rename all uses of the removed functions
-    ModuleUtils::renameFunctions(wasm, functionReplace);
+
+    // Rename all uses of the old function to the new import name
+    ModuleUtils::renameFunctions(wasm, functionRenames);
 
     // For imports that for renamed, update any associated GOT.func imports.
     for (auto& pair : importRenames) {
