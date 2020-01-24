@@ -2243,26 +2243,27 @@ void Wasm2JSGlue::emitMemory(
     return;
   }
 
-  auto expr = R"(
-    function(mem) {
-      var _mem = new Uint8Array(mem);
-      return function(offset, s) {
-        var bytes, i;
-        if (typeof Buffer === 'undefined') {
-          bytes = atob(s);
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes.charCodeAt(i);
-        } else {
-          bytes = Buffer.from(s, 'base64');
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes[i];
-        }
-      }
+  auto expr = R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+    base64ReverseLookup[48+i] = 52+i; // '0-9'
+    base64ReverseLookup[65+i] = i; // 'A-Z'
+    base64ReverseLookup[97+i] = 26+i; // 'a-z'
+  }
+  base64ReverseLookup[43] = 62; // '+'
+  base64ReverseLookup[47] = 63; // '/'
+  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
+  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
+    var b1, b2, i = 0, j = offset, bLength = b64.length, length = bLength*3>>2;
+    if (b64[bLength-2] == '=') --length;
+    if (b64[bLength-1] == '=') --length;
+    for (; i < bLength; i += 4, j += 3) {
+      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
+      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
+      uint8Array[j] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
+      uint8Array[j+1] = b1 << 4 | b2 >> 2;
+      uint8Array[j+2] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-  )";
-
-  // var assign$name = ($expr)(mem$name);
-  out << "var " << segmentWriter << " = (" << expr << ")(" << buffer << ");\n";
+  })";
+  out << expr << '\n';
 
   auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -2278,7 +2279,7 @@ void Wasm2JSGlue::emitMemory(
 
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << segmentWriter << "(" << globalOffset(seg) << ", \""
+    out << "base64DecodeToExistingUint8Array(" << buffer << ", " << globalOffset(seg) << ", \""
         << base64Encode(seg.data) << "\");\n";
   }
 }
