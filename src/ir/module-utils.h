@@ -387,10 +387,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 
-  enum IndirectCalls {
-    IgnoreIndirectCalls,
-    IndirectCallsHaveProperty
-  };
+  enum IndirectCalls { IgnoreIndirectCalls, IndirectCallsHaveProperty };
 
   // Propagate a property from a function to those that call it.
   void propagateBack(std::function<bool(const T&)> hasProperty,
@@ -400,7 +397,9 @@ template<typename T> struct CallGraphPropertyAnalysis {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (hasProperty(map[func.get()]) || (indirectCalls == IndirectCallsHaveProperty && map[func.get()].hasIndirectCall)) {
+      if (hasProperty(map[func.get()]) ||
+          (indirectCalls == IndirectCallsHaveProperty &&
+           map[func.get()].hasIndirectCall)) {
         addProperty(map[func.get()]);
         work.push(func.get());
       }
