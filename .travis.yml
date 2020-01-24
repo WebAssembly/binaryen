@@ -122,7 +122,7 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - docker run -w /src -dit --name alpine -v $(pwd):/src node:13-alpine
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:lts-alpine
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
