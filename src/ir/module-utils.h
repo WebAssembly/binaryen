@@ -341,6 +341,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   struct FunctionInfo {
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
+    bool hasCallIndirect = false;
   };
 
   typedef std::map<Function*, T> Map;
@@ -360,6 +361,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
         void visitCall(Call* curr) {
           info.callsTo.insert(module->getFunction(curr->target));
+        }
+
+        void visitCallIndirect(CallIndirect* curr) {
+          info.hasCallIndirect = true;
         }
 
       private:
@@ -390,6 +395,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
       if (hasProperty(map[func.get()])) {
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }

@@ -154,7 +154,8 @@ struct PostEmscripten : public Pass {
         }
       });
 
-    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+    // Assume an indirect call might throw.
+    analyzer.propagateBack([](const Info& info) { return info.canThrow || info.hasCallIndirect; },
                            [](const Info& info) { return true; },
                            [](Info& info) { info.canThrow = true; });
 
