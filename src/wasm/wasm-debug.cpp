@@ -261,7 +261,10 @@ struct LineState {
     }
     if (line != old.line && !useSpecial) {
       auto item = makeItem(llvm::dwarf::DW_LNS_advance_line);
-      item.SData = line - old.line;
+      // In wasm32 we have 32-bit addresses, and the delta here might be
+      // negative (note that SData is 64-bit, as LLVM supports 64-bit
+      // addresses too).
+      item.SData = int32_t(line - old.line);
       newOpcodes.push_back(item);
     }
     if (col != old.col) {
