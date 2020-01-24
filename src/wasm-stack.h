@@ -144,10 +144,12 @@ public:
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
 
-  void emitIfElse();
-  void emitCatch();
-  void emitScopeEnd();    // emit an end at the end of a block/loop/if/try
-  void emitFunctionEnd(); // emit an end at the end of a function
+  void emitIfElse(If* curr);
+  void emitCatch(Try* curr);
+  // emit an end at the end of a block/loop/if/try
+  void emitScopeEnd(Expression* curr);
+  // emit an end at the end of a function
+  void emitFunctionEnd();
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
 
@@ -813,9 +815,9 @@ public:
     }
     writer.mapLocalsAndEmitHeader();
   }
-  void emitIfElse(If* curr) { writer.emitIfElse(); }
-  void emitCatch(Try* curr) { writer.emitCatch(); }
-  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(); }
+  void emitIfElse(If* curr) { writer.emitIfElse(curr); }
+  void emitCatch(Try* curr) { writer.emitCatch(curr); }
+  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());

@@ -165,7 +165,13 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     }
     for (auto& pair : binaryLocations.functions) {
       pair.second.start -= totalAdjustment;
+      pair.second.declarations -= totalAdjustment;
       pair.second.end -= totalAdjustment;
+    }
+    for (auto& pair : binaryLocations.delimiters) {
+      for (auto& item : pair.second) {
+        item -= totalAdjustment;
+      }
     }
   }
 }
@@ -299,7 +305,7 @@ void WasmBinaryWriter::writeFunctions() {
     return;
   }
   BYN_TRACE("== writeFunctions\n");
-  auto start = startSection(BinaryConsts::Section::Code);
+  auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
@@ -343,18 +349,25 @@ void WasmBinaryWriter::writeFunctions() {
         auto& span = binaryLocations.expressions[curr];
         span.start -= adjustmentForLEBShrinking;
         span.end -= adjustmentForLEBShrinking;
+        auto iter = binaryLocations.delimiters.find(curr);
+        if (iter != binaryLocations.delimiters.end()) {
+          for (auto& item : iter->second) {
+            item -= adjustmentForLEBShrinking;
+          }
+        }
       }
     }
     if (!binaryLocationTrackedExpressionsForFunc.empty()) {
-      binaryLocations.functions[func] =
-        BinaryLocations::Span{BinaryLocation(start - adjustmentForLEBShrinking),
-                              BinaryLocation(o.size())};
+      binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos),
+        BinaryLocation(start - adjustmentForLEBShrinking),
+        BinaryLocation(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
     binaryLocationTrackedExpressionsForFunc.clear();
   });
-  finishSection(start);
+  finishSection(sectionStart);
 }
 
 void WasmBinaryWriter::writeGlobals() {
@@ -723,6 +736,13 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
     auto& span = binaryLocations.expressions.at(curr);
     assert(span.end == 0);
     span.end = o.size();
+  }
+}
+
+void WasmBinaryWriter::writeExtraDebugLocation(
+  Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
+  if (func && !func->expressionLocations.empty()) {
+    binaryLocations.delimiters[curr][id] = o.size();
   }
 }
 
@@ -1371,6 +1391,7 @@ void WasmBinaryBuilder::readFunctions() {
   }
   for (size_t i = 0; i < total; i++) {
     BYN_TRACE("read one at " << pos << std::endl);
+    auto sizePos = pos;
     size_t size = getU32LEB();
     if (size == 0) {
       throwError("empty function size");
@@ -1383,9 +1404,10 @@ void WasmBinaryBuilder::readFunctions() {
     currFunction = func;
 
     if (DWARF) {
-      func->funcLocation =
-        BinaryLocations::Span{BinaryLocation(pos - codeSectionLocation),
-                              BinaryLocation(pos - codeSectionLocation + size)};
+      func->funcLocation = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation + size)};
     }
 
     readNextDebugLocation();
@@ -1411,6 +1433,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
       assert(expressionStack.empty());
+      assert(controlFlowStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1419,6 +1442,7 @@ void WasmBinaryBuilder::readFunctions() {
       if (!expressionStack.empty()) {
         throwError("stack not empty on function exit");
       }
+      assert(controlFlowStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1675,11 +1699,11 @@ void WasmBinaryBuilder::processExpressions() {
     }
     expressionStack.push_back(curr);
     if (curr->type == Type::unreachable) {
-      // once we see something unreachable, we don't want to add anything else
+      // Once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
-      // our AST. but we do need to skip it
-      // if there is nothing else here, just stop. otherwise, go into
-      // unreachable mode. peek to see what to do
+      // our AST. but we do need to skip it.
+      // If there is nothing else here, just stop. Otherwise, go into
+      // unreachable mode. peek to see what to do.
       if (pos == endOfFunction) {
         throwError("Reached function end without seeing End opcode");
       }
@@ -2172,9 +2196,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitDrop((curr = allocator.alloc<Drop>())->cast<Drop>());
       break;
     case BinaryConsts::End:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::End, startPos);
+      break;
     case BinaryConsts::Else:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::Else, startPos);
+      break;
     case BinaryConsts::Catch:
       curr = nullptr;
+      continueControlFlow(BinaryLocations::Catch, startPos);
       break;
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
@@ -2317,6 +2348,34 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
+void WasmBinaryBuilder::startControlFlow(Expression* curr) {
+  if (DWARF && currFunction) {
+    controlFlowStack.push_back(curr);
+  }
+}
+
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
+                                            BinaryLocation pos) {
+  if (DWARF && currFunction) {
+    if (controlFlowStack.empty()) {
+      // We reached the end of the function, which is also marked with an
+      // "end", like a control flow structure.
+      assert(id == BinaryLocations::End);
+      assert(pos + 1 == endOfFunction);
+      return;
+    }
+    assert(!controlFlowStack.empty());
+    auto currControlFlow = controlFlowStack.back();
+    // We are called after parsing the byte, so we need to subtract one to
+    // get its position.
+    currFunction->delimiterLocations[currControlFlow][id] =
+      pos - codeSectionLocation;
+    if (id == BinaryLocations::End) {
+      controlFlowStack.pop_back();
+    }
+  }
+}
+
 void WasmBinaryBuilder::pushBlockElements(Block* curr,
                                           size_t start,
                                           size_t end) {
@@ -2361,7 +2420,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
 
 void WasmBinaryBuilder::visitBlock(Block* curr) {
   BYN_TRACE("zz node: Block\n");
-
+  startControlFlow(curr);
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -2374,6 +2433,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
+      startControlFlow(curr);
       pos++;
       if (debugLocation.size()) {
         currFunction->debugLocations[curr] = *debugLocation.begin();
@@ -2449,6 +2509,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
 
 void WasmBinaryBuilder::visitIf(If* curr) {
   BYN_TRACE("zz node: If\n");
+  startControlFlow(curr);
   curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
@@ -2463,6 +2524,7 @@ void WasmBinaryBuilder::visitIf(If* curr) {
 
 void WasmBinaryBuilder::visitLoop(Loop* curr) {
   BYN_TRACE("zz node: Loop\n");
+  startControlFlow(curr);
   curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
@@ -4469,6 +4531,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
 
 void WasmBinaryBuilder::visitTry(Try* curr) {
   BYN_TRACE("zz node: Try\n");
+  startControlFlow(curr);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.

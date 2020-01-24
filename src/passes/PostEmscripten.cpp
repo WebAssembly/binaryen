@@ -34,7 +34,9 @@ namespace wasm {
 
 namespace {
 
-static bool isInvoke(Name name) { return name.startsWith("invoke_"); }
+static bool isInvoke(Function* F) {
+  return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
+}
 
 struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
   bool isFunctionParallel() override { return true; }
@@ -123,7 +125,7 @@ struct PostEmscripten : public Pass {
     // First, check if this code even uses invokes.
     bool hasInvokes = false;
     for (auto& imp : module->functions) {
-      if (imp->imported() && imp->module == ENV && isInvoke(imp->base)) {
+      if (isInvoke(imp.get())) {
         hasInvokes = true;
       }
     }
@@ -152,9 +154,11 @@ struct PostEmscripten : public Pass {
         }
       });
 
+    // Assume an indirect call might throw.
     analyzer.propagateBack([](const Info& info) { return info.canThrow; },
                            [](const Info& info) { return true; },
-                           [](Info& info) { info.canThrow = true; });
+                           [](Info& info) { info.canThrow = true; },
+                           analyzer.IndirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -169,7 +173,8 @@ struct PostEmscripten : public Pass {
         : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {
-        if (isInvoke(curr->target)) {
+        auto* target = getModule()->getFunction(curr->target);
+        if (isInvoke(target)) {
           // The first operand is the function pointer index, which must be
           // constant if we are to optimize it statically.
           if (auto* index = curr->operands[0]->dynCast<Const>()) {
