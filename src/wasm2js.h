@@ -2279,7 +2279,7 @@ void Wasm2JSGlue::emitMemory(
 
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "base64DecodeToExistingUint8Array(" << buffer << ", " << globalOffset(seg) << ", \""
+    out << "base64DecodeToExistingUint8Array(new Uint8Array(" << buffer << "), " << globalOffset(seg) << ", \""
         << base64Encode(seg.data) << "\");\n";
   }
 }
