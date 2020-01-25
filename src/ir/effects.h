@@ -114,7 +114,7 @@ struct EffectAnalyzer
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap || mayThrow;
+           implicitTrap;
   }
   bool hasAnything() const {
     return branches || calls || accessesLocal() || readsMemory ||
