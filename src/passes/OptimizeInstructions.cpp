@@ -236,7 +236,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(curr->value);
+    auto* value = Properties::getFallthrough(getPassOption(), curr->value);
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;

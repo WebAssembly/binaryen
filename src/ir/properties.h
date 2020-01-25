@@ -18,10 +18,13 @@
 #define wasm_ir_properties_h
 
 #include "ir/bits.h"
+#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
+
+class PassOptiions;
 
 namespace Properties {
 
@@ -71,27 +74,6 @@ inline bool isNamedControlFlow(Expression* curr) {
 
 inline bool isConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
-}
-
-inline bool mayThrow(Expression* curr) {
-  if (curr->is<Throw>() || curr->is<Rethrow>() || curr->is<Call>() ||
-      curr->is<CallIndirect>()) {
-    return true;
-  }
-  for (auto* child : ChildIterator(curr)) {
-    // Skip inner try bodies. Exceptions thrown within inner tries will be
-    // caught by corresponding inner catches.
-    if (auto* tryy = child->dynCast<Try>()) {
-      if (mayThrow(tryy->catchBody)) {
-        return true;
-      }
-      continue;
-    }
-    if (mayThrow(child)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // Check if an expression is a sign-extend, and if so, returns the value
@@ -179,7 +161,8 @@ inline Index getZeroExtBits(Expression* curr) {
 
 // Returns a falling-through value, that is, it looks through a local.tee
 // and other operations that receive a value and let it flow through them.
-inline Expression* getFallthrough(Expression* curr) {
+inline Expression* getFallthrough(const PassOptions& passOptions,
+                                  Expression* curr) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -187,31 +170,31 @@ inline Expression* getFallthrough(Expression* curr) {
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value);
+      return getFallthrough(passOptions, set->value);
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back());
+      return getFallthrough(passOptions, block->list.back());
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body);
+    return getFallthrough(passOptions, loop->body);
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return getFallthrough(iff->ifFalse);
+        return getFallthrough(passOptions, iff->ifFalse);
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return getFallthrough(iff->ifTrue);
+        return getFallthrough(passOptions, iff->ifTrue);
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value);
+      return getFallthrough(passOptions, br->value);
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!mayThrow(tryy->body)) {
-      return getFallthrough(tryy->body);
+    if (!EffectAnalyzer(passOptions, tryy->body).mayThrow) {
+      return getFallthrough(passOptions, tryy->body);
     }
   }
   return curr;

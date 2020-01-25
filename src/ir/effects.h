@@ -134,6 +134,8 @@ struct EffectAnalyzer
   bool invalidates(const EffectAnalyzer& other) {
     if ((branches && other.hasSideEffects()) ||
         (other.branches && hasSideEffects()) ||
+        (mayThrow && other.hasSideEffects()) ||
+        (other.mayThrow && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
@@ -188,6 +190,7 @@ struct EffectAnalyzer
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
+    mayThrow = mayThrow || other.mayThrow;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -469,7 +472,8 @@ struct EffectAnalyzer
     WritesMemory = 1 << 7,
     ImplicitTrap = 1 << 8,
     IsAtomic = 1 << 9,
-    Any = (1 << 10) - 1
+    MayThrow = 1 << 10,
+    Any = (1 << 11) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -502,6 +506,9 @@ struct EffectAnalyzer
     }
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;
+    }
+    if (mayThrow) {
+      effects |= SideEffects::MayThrow;
     }
     return effects;
   }
