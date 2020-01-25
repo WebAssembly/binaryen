@@ -45,6 +45,7 @@ struct EffectAnalyzer
     if (breakNames.size() > 0) {
       branches = true;
     }
+    assert(tryDepth == 0);
   }
 
   // Core effect tracking
@@ -66,6 +67,36 @@ struct EffectAnalyzer
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
+  bool mayThrow = false;
+  // The nested depth of try. If an instruction that may throw is inside an
+  // inner try, we don't mark it as 'mayThrow', because it will be caught by an
+  // inner catch.
+  size_t tryDepth = 0;
+
+  static void scan(EffectAnalyzer* self, Expression** currp) {
+    Expression* curr = *currp;
+    // We need to decrement try depth before catch starts, so handle it
+    // separately
+    if (auto* tryy = curr->dynCast<Try>()) {
+      self->pushTask(doVisitTry, currp);
+      self->pushTask(scan, &curr->cast<Try>()->catchBody);
+      self->pushTask(doStartCatch, currp);
+      self->pushTask(scan, &curr->cast<Try>()->body);
+      self->pushTask(doStartTry, currp);
+      return;
+    }
+    PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>>::scan(self,
+                                                                        currp);
+  }
+
+  static void doStartTry(EffectAnalyzer* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doStartCatch(EffectAnalyzer* self, Expression** currp) {
+    assert(self->tryDepth > 0 && "try depth cannot be negative");
+    self->tryDepth--;
+  }
 
   // Helper functions to check for various effect types
 
@@ -78,15 +109,17 @@ struct EffectAnalyzer
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
 
   bool hasGlobalSideEffects() const {
-    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
+    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
+           mayThrow;
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap;
+           implicitTrap || mayThrow;
   }
   bool hasAnything() const {
     return branches || calls || accessesLocal() || readsMemory ||
-           writesMemory || accessesGlobal() || implicitTrap || isAtomic;
+           writesMemory || accessesGlobal() || implicitTrap || isAtomic ||
+           mayThrow;
   }
 
   bool noticesGlobalSideEffects() {
@@ -223,6 +256,9 @@ struct EffectAnalyzer
 
   void visitCall(Call* curr) {
     calls = true;
+    if (tryDepth == 0) {
+      mayThrow = true;
+    }
     if (curr->isReturn) {
       branches = true;
     }
@@ -235,6 +271,9 @@ struct EffectAnalyzer
   }
   void visitCallIndirect(CallIndirect* curr) {
     calls = true;
+    if (tryDepth == 0) {
+      mayThrow = true;
+    }
     if (curr->isReturn) {
       branches = true;
     }
@@ -391,9 +430,16 @@ struct EffectAnalyzer
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitTry(Try* curr) {}
-  // We safely model throws as branches
-  void visitThrow(Throw* curr) { branches = true; }
-  void visitRethrow(Rethrow* curr) { branches = true; }
+  void visitThrow(Throw* curr) {
+    if (tryDepth == 0) {
+      mayThrow = true;
+    }
+  }
+  void visitRethrow(Rethrow* curr) {
+    if (tryDepth == 0) {
+      mayThrow = true;
+    }
+  }
   void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
