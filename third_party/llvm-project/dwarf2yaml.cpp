@@ -235,11 +235,16 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             case dwarf::DW_FORM_data2:
             case dwarf::DW_FORM_data4:
             case dwarf::DW_FORM_data8:
-            case dwarf::DW_FORM_sdata:
             case dwarf::DW_FORM_udata:
             case dwarf::DW_FORM_ref_sup4:
             case dwarf::DW_FORM_ref_sup8:
               if (auto Val = FormValue.getValue().getAsUnsignedConstant())
+                NewValue.Value = Val.getValue();
+              break;
+            // XXX BINARYEN: sdata is signed, and FormValue won't return it as
+            //               unsigned (it returns an empty value).
+            case dwarf::DW_FORM_sdata:
+              if (auto Val = FormValue.getValue().getAsSignedConstant())
                 NewValue.Value = Val.getValue();
               break;
             case dwarf::DW_FORM_string:
