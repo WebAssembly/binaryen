@@ -177,9 +177,11 @@ private:
         }
         auto& effects = iter->second;
         if (cumulativeEffects.invalidates(effects)) {
+          std::cerr << "invalidates!" << std::endl;
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
         } else {
+          std::cerr << "NOT invalidates!" << std::endl;
           // we can push this, great!
           toPush.push_back(pushable);
         }

@@ -46,6 +46,30 @@ struct EffectAnalyzer
       branches = true;
     }
     assert(tryDepth == 0);
+
+    std::cerr << "\n** results: " << ast->_id << std::endl;
+    std::cerr << "branches = " << branches << std::endl;
+    std::cerr << "calls = " << calls << std::endl;
+    std::cerr << "mayThrow = " << mayThrow << std::endl;
+    std::cerr << "readsMemory = " << readsMemory << std::endl;
+    std::cerr << "writesMemory = " << writesMemory << std::endl;
+    std::cerr << "implicitTrap = " << implicitTrap << std::endl;
+    std::cerr << "isAtomic = " << isAtomic << std::endl;
+    std::cerr << "localsRead = " << localsRead.size() << std::endl;
+    std::cerr << "localsWritten = " << localsWritten.size() << std::endl;
+    std::cerr << "globalsRead = " << globalsRead.size() << std::endl;
+    std::cerr << "globalsWritten = " << globalsWritten.size() << std::endl;
+    std::cerr << "accessesLocal() = " << accessesLocal() << std::endl;
+    std::cerr << "accessesGlobal() = " << accessesGlobal() << std::endl;
+    std::cerr << "accessesMemory() = " << accessesMemory() << std::endl;
+    std::cerr << "hasSideEffects() = " << hasSideEffects() << std::endl;
+    std::cerr << "hasGlobalSideEffects() = " << hasGlobalSideEffects()
+              << std::endl;
+    std::cerr << "hasAnything() = " << hasAnything() << std::endl;
+    std::cerr << "noticesGlobalSideEffects() = " << noticesGlobalSideEffects()
+              << std::endl;
+    std::cerr << "hasExternalBreakTargets() = " << hasExternalBreakTargets()
+              << std::endl;
   }
 
   // Core effect tracking
@@ -113,6 +137,9 @@ struct EffectAnalyzer
            mayThrow;
   }
   bool hasSideEffects() const {
+    //bool ret = hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
+    //           implicitTrap;
+    //std::cerr << "hasSideEffects = " << ret << std::endl;
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
            implicitTrap;
   }
