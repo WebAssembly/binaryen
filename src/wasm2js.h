@@ -2243,7 +2243,8 @@ void Wasm2JSGlue::emitMemory(
     return;
   }
 
-  auto expr = R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+  auto expr =
+    R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
     base64ReverseLookup[97+i] = 26+i; // 'a-z'
@@ -2277,10 +2278,12 @@ void Wasm2JSGlue::emitMemory(
     Fatal() << "non-constant offsets aren't supported yet\n";
   };
 
+  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "base64DecodeToExistingUint8Array(new Uint8Array(" << buffer << "), " << globalOffset(seg) << ", \""
-        << base64Encode(seg.data) << "\");\n";
+    out << "base64DecodeToExistingUint8Array(bufferView, "
+        << globalOffset(seg) << ", \"" << base64Encode(seg.data) << "\");\n";
   }
 }
 
