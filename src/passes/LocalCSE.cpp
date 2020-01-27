@@ -60,8 +60,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     Index index; // the local we are assigned to, local.get that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression* value, Index index, PassOptions& passOptions)
-      : value(value), index(index), effects(passOptions, value) {}
+    UsableInfo(Expression* value,
+               Index index,
+               PassOptions& passOptions,
+               FeatureSet features)
+      : value(value), index(index), effects(passOptions, features, value) {}
   };
 
   // a list of usables in a linear execution trace
@@ -136,7 +139,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     // pre operations
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -152,7 +155,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
     // post operations
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPost(curr)) {
       self->checkInvalidations(effects, curr);
     }
@@ -194,7 +197,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         } else {
           // not in table, add this, maybe we can help others later
           usables.emplace(std::make_pair(
-            hashed, UsableInfo(value, set->index, getPassOptions())));
+            hashed,
+            UsableInfo(
+              value, set->index, getPassOptions(), getModule()->features)));
         }
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
@@ -215,7 +220,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (!value->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), getModule()->features, value)
+          .hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     auto& options = getPassRunner()->options;

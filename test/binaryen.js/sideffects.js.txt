@@ -9,4 +9,5 @@ SideEffects.ReadsMemory=64
 SideEffects.WritesMemory=128
 SideEffects.ImplicitTrap=256
 SideEffects.IsAtomic=512
-SideEffects.Any=1023
+SideEffects.MayThrow=1024
+SideEffects.Any=2047

@@ -4508,17 +4508,23 @@ BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::IsAtomic);
 }
+BinaryenSideEffects BinaryenSideEffectMayThrow(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::MayThrow);
+}
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
 
 BinaryenSideEffects
-BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr) {
+BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                 BinaryenFeatures features) {
   if (tracing) {
     std::cout << "  BinaryenExpressionGetSideEffects(expressions["
-              << expressions[expr] << "]);\n";
+              << expressions[expr] << "], " << features << ");\n";
   }
-  return EffectAnalyzer(globalPassOptions, (Expression*)expr).getSideEffects();
+  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+    .getSideEffects();
 }
 
 //
