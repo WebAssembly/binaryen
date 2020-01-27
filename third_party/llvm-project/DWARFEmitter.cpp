@@ -78,6 +78,10 @@ void DWARFYAML::EmitDebugStr(raw_ostream &OS, const DWARFYAML::Data &DI) {
 void DWARFYAML::EmitDebugAbbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto AbbrevDecl : DI.AbbrevDecls) {
     encodeULEB128(AbbrevDecl.Code, OS);
+    // XXX BINARYEN This is a terminator.
+    if (!AbbrevDecl.Code) {
+      continue;
+    }
     encodeULEB128(AbbrevDecl.Tag, OS);
     OS.write(AbbrevDecl.Children);
     for (auto Attr : AbbrevDecl.Attributes) {
@@ -89,10 +93,6 @@ void DWARFYAML::EmitDebugAbbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
     encodeULEB128(0, OS);
     encodeULEB128(0, OS);
   }
-  // XXX BINARYEN: end the list with a zero. LLVM works with or without this,
-  //               but other decoders may error. See
-  //               https://bugs.llvm.org/show_bug.cgi?id=44511
-  writeInteger((uint8_t)0, OS, true /* isLittleEndian */);
 }
 
 void DWARFYAML::EmitDebugAranges(raw_ostream &OS, const DWARFYAML::Data &DI) {

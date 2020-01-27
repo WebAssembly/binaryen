@@ -43,6 +43,14 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
         }
         Y.AbbrevDecls.push_back(Abbrv);
       }
+      // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate
+      // DeclSets from each other, and to null-terminate the entire list
+      // (LLVM works with or without this, but other decoders may error, see
+      //  https://bugs.llvm.org/show_bug.cgi?id=44511).
+      DWARFYAML::Abbrev Abbrv;
+      Abbrv.Code = 0;
+      Abbrv.Tag = dwarf::Tag(0);
+      Y.AbbrevDecls.push_back(Abbrv);
     }
   }
 }
