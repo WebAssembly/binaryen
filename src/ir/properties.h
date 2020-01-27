@@ -24,8 +24,6 @@
 
 namespace wasm {
 
-class PassOptiions;
-
 namespace Properties {
 
 inline bool emitsBoolean(Expression* curr) {
