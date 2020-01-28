@@ -107,7 +107,8 @@ jobs:
       services:
         - docker
       before_install:
-        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+        # TODO: Emscripten upstream produces a broken build in CI environments only :(
+        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten-fastcomp bash
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too
@@ -122,7 +123,7 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - docker run -w /src -dit --name alpine -v $(pwd):/src node:13-alpine
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:lts-alpine
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update

@@ -170,9 +170,12 @@ namespace {
 class DumpVisitor : public DWARFYAML::ConstVisitor {
   raw_ostream &OS;
 
+  size_t StartPos; // XXX BINARYEN
+
 protected:
   void onStartCompileUnit(const DWARFYAML::Unit &CU) override {
     writeInitialLength(CU.Length, OS, DebugInfo.IsLittleEndian);
+    StartPos = OS.tell(); // XXX BINARYEN
     writeInteger((uint16_t)CU.Version, OS, DebugInfo.IsLittleEndian);
     if(CU.Version >= 5) {
       writeInteger((uint8_t)CU.Type, OS, DebugInfo.IsLittleEndian);
@@ -181,6 +184,16 @@ protected:
     }else {
       writeInteger((uint32_t)CU.AbbrOffset, OS, DebugInfo.IsLittleEndian);
       writeInteger((uint8_t)CU.AddrSize, OS, DebugInfo.IsLittleEndian);
+    }
+  }
+
+  // XXX BINARYEN Make sure we emit the right size. We should not change the
+  // size as we only modify relocatable fields like addresses, and such fields
+  // have a fixed size, so any change is a bug.
+  void onEndCompileUnit(const DWARFYAML::Unit &CU) {
+    size_t EndPos = OS.tell();
+    if (EndPos - StartPos != CU.Length.getLength()) {
+      llvm_unreachable("compile unit size was incorrect");
     }
   }
 
