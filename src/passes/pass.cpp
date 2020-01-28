@@ -185,6 +185,10 @@ void PassRegistry::registerPasses() {
                "minifies both import and export names, and emits a mapping to "
                "the minified ones",
                createMinifyImportsAndExportsPass);
+  registerPass("minify-imports-and-exports-and-modules",
+               "minifies both import and export names, and emits a mapping to "
+               "the minified ones, and minifies the modules as well",
+               createMinifyImportsAndExportsAndModulesPass);
   registerPass("mod-asyncify-always-and-only-unwind",
                "apply the assumption that asyncify imports always unwind, "
                "and we never rewind",
