@@ -730,7 +730,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       const LocationUpdater& locationUpdater) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
-  // may be an offset relative to the low. First, process the low_pcs.
+  // may be an offset relative to the low. First, process everything but
+  // the high pcs, so we see the low pcs first.
   BinaryLocation oldLowPC = 0, newLowPC = 0;
   iterContextAndYAML(
     abbrevDecl->attributes(),
