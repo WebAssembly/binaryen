@@ -606,6 +606,10 @@ struct LocationUpdater {
     }
     return 0;
   }
+
+  BinaryLocation getNewDebugLineLocation(BinaryLocation old) const {
+    return debugLineMap.at(old);
+  }
 };
 
 // Update debug lines, and update the locationUpdater with debug line offset
@@ -754,6 +758,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         yamlValue.Value = newValue;
       } else if (attr == llvm::dwarf::DW_AT_stmt_list) {
         // This is an offset into the debug line section.
+        yamlValue.Value = locationUpdater.getNewDebugLineLocation(yamlValue.Value);
       }
     });
   // Next, process the high_pcs.
