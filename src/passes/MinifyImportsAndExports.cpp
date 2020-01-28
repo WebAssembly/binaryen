@@ -167,7 +167,8 @@ private:
       // we will minify all modules names, so we are not being careful).
       // Otherwise, assume we just want to minify "normal" imports like env
       // and wasi, but not special things like asm2wasm or custom user things.
-      if (minifyModules || curr->module == ENV || curr->module.startsWith("wasi_")) {
+      if (minifyModules || curr->module == ENV ||
+          curr->module.startsWith("wasi_")) {
         process(curr->base);
       }
     };
