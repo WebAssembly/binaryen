@@ -758,7 +758,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         yamlValue.Value = newValue;
       } else if (attr == llvm::dwarf::DW_AT_stmt_list) {
         // This is an offset into the debug line section.
-        yamlValue.Value = locationUpdater.getNewDebugLineLocation(yamlValue.Value);
+        yamlValue.Value =
+          locationUpdater.getNewDebugLineLocation(yamlValue.Value);
       }
     });
   // Next, process the high_pcs.
