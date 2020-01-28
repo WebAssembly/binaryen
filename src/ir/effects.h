@@ -80,7 +80,7 @@ struct EffectAnalyzer
     Expression* curr = *currp;
     // We need to decrement try depth before catch starts, so handle it
     // separately
-    if (auto* tryy = curr->dynCast<Try>()) {
+    if (curr->is<Try>()) {
       self->pushTask(doVisitTry, currp);
       self->pushTask(scan, &curr->cast<Try>()->catchBody);
       self->pushTask(doStartCatch, currp);
