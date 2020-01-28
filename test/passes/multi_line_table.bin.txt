@@ -211,7 +211,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (130 bytes)
-Contains section .debug_abbrev (99 bytes)
+Contains section .debug_abbrev (100 bytes)
 Contains section .debug_line (145 bytes)
 Contains section .debug_str (407 bytes)
 
@@ -240,6 +240,7 @@ Abbrev table for offset: 0x00000000
 	DW_AT_encoding	DW_FORM_data1
 	DW_AT_byte_size	DW_FORM_data1
 
+Abbrev table for offset: 0x00000032
 [1] DW_TAG_compile_unit	DW_CHILDREN_yes
 	DW_AT_producer	DW_FORM_strp
 	DW_AT_language	DW_FORM_data2
@@ -291,9 +292,32 @@ Abbrev table for offset: 0x00000000
                 DW_AT_byte_size [DW_FORM_data1]	(0x04)
 
 0x00000040:   NULL
-0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 addr_size = 0x04 (next unit at 0x00000082)
-<compile unit can't be parsed!>
+0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 abbr_offset = 0x0032 addr_size = 0x04 (next unit at 0x00000082)
 
+0x0000004c: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x000000cc] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000161] = "third.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000049)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000016b] = "/tmp/emscripten_test_wasm0_xkAHBX")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+              DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+
+0x00000067:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018d] = "sidef")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/third.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0039 => {0x0000007a} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000007a:   DW_TAG_base_type [3]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000193] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000081:   NULL
 
 .debug_line contents:
 debug_line[0x00000000]
@@ -444,7 +468,7 @@ file_names[  1]:
  )
  ;; custom section "dylink", size 5
  ;; custom section ".debug_info", size 130
- ;; custom section ".debug_abbrev", size 99
+ ;; custom section ".debug_abbrev", size 100
  ;; custom section ".debug_line", size 145
  ;; custom section ".debug_str", size 407
  ;; custom section "producers", size 180
