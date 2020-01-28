@@ -25,7 +25,8 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var syscall$6 = env.__syscall6;
  var syscall$54 = env.__syscall54;
- // EMSCRIPTEN_START_FUNCS;
+ // EMSCRIPTEN_START_FUNCS
+;
  function main() {
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
@@ -183,7 +184,8 @@ function asmFunc(global, env, buffer) {
   abort();
  }
  
- // EMSCRIPTEN_END_FUNCS;
+ // EMSCRIPTEN_END_FUNCS
+;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
  FUNCTION_TABLE[3] = tabled;

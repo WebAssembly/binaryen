@@ -22,8 +22,10 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- // EMSCRIPTEN_START_FUNCS;
- // EMSCRIPTEN_END_FUNCS;
+ // EMSCRIPTEN_START_FUNCS
+;
+ // EMSCRIPTEN_END_FUNCS
+;
  var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
