@@ -46,6 +46,9 @@ bool hasDWARFSections(const Module& wasm) {
 
 #ifdef BUILD_LLVM_DWARF
 
+// In wasm32 the address size is 32 bits.
+static const size_t AddressSize = 4;
+
 struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   std::unique_ptr<llvm::DWARFContext> context;
@@ -60,7 +63,7 @@ struct BinaryenDWARFInfo {
       }
     }
     // Parse debug sections.
-    uint8_t addrSize = 4;
+    uint8_t addrSize = AddressSize;
     bool isLittleEndian = true;
     context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
   }
@@ -467,6 +470,9 @@ struct LocationUpdater {
   AddrExprMap oldExprAddrMap;
   FuncAddrMap oldFuncAddrMap;
 
+  // Map start of line tables in the debug_line section to their new locations.
+  std::map<BinaryLocation, BinaryLocation> debugLineMap;
+
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -602,8 +608,10 @@ struct LocationUpdater {
   }
 };
 
+// Update debug lines, and update the locationUpdater with debug line offset
+// changes so we can update offsets into the debug line section.
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
-                             const LocationUpdater& locationUpdater) {
+                             LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
     LineState state(table);
@@ -684,6 +692,19 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
       table.Opcodes.swap(newOpcodes);
     }
   }
+  // After updating the contents, run the emitter in order to update the
+  // lengths of each section. We will use that to update offsets into the
+  // debug_line section.
+  std::vector<size_t> computedLengths;
+  llvm::DWARFYAML::ComputeDebugLine(data, computedLengths);
+  BinaryLocation oldLocation = 0, newLocation = 0;
+  for (size_t i = 0; i < data.DebugLines.size(); i++) {
+    auto& table = data.DebugLines[i];
+    locationUpdater.debugLineMap[oldLocation] = newLocation;
+    oldLocation += table.Length.getLength() + AddressSize;
+    newLocation += computedLengths[i] + AddressSize;
+    table.Length.setLength(computedLengths[i]);
+  }
 }
 
 // Iterate in parallel over a DwarfContext representation element and a
@@ -713,25 +734,27 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
     [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
         llvm::DWARFYAML::FormValue& yamlValue) {
       auto attr = attrSpec.Attr;
-      if (attr != llvm::dwarf::DW_AT_low_pc) {
-        return;
+      if (attr == llvm::dwarf::DW_AT_low_pc) {
+        // This is an address.
+        BinaryLocation oldValue = yamlValue.Value, newValue = 0;
+        if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+            tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+            tag == llvm::dwarf::DW_TAG_lexical_block ||
+            tag == llvm::dwarf::DW_TAG_label) {
+          newValue = locationUpdater.getNewExprStart(oldValue);
+        } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
+                   tag == llvm::dwarf::DW_TAG_subprogram) {
+          newValue = locationUpdater.getNewFuncStart(oldValue);
+        } else {
+          Fatal() << "unknown tag with low_pc "
+                  << llvm::dwarf::TagString(tag).str();
+        }
+        oldLowPC = oldValue;
+        newLowPC = newValue;
+        yamlValue.Value = newValue;
+      } else if (attr == llvm::dwarf::DW_AT_stmt_list) {
+        // This is an offset into the debug line section.
       }
-      BinaryLocation oldValue = yamlValue.Value, newValue = 0;
-      if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
-          tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
-          tag == llvm::dwarf::DW_TAG_lexical_block ||
-          tag == llvm::dwarf::DW_TAG_label) {
-        newValue = locationUpdater.getNewExprStart(oldValue);
-      } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
-                 tag == llvm::dwarf::DW_TAG_subprogram) {
-        newValue = locationUpdater.getNewFuncStart(oldValue);
-      } else {
-        Fatal() << "unknown tag with low_pc "
-                << llvm::dwarf::TagString(tag).str();
-      }
-      oldLowPC = oldValue;
-      newLowPC = newValue;
-      yamlValue.Value = newValue;
     });
   // Next, process the high_pcs.
   // TODO: do this more efficiently, without a second traversal (but that's a
