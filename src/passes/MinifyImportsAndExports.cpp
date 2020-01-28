@@ -24,9 +24,12 @@
 //   (import "env" "longname" (func $internal))
 // to
 //   (import "env" "a" (func $internal))
-// "a" is the minified name (note that we only minify the base,
-// not the module).
+// "a" is the minified name. If we also minify module names, then the
+// result could be
+//   (import "a" "a" (func $internal))
 //
+// TODO: check if we can minify names to the empty string "", which is even
+//       shorter than one character.
 
 #include <map>
 #include <string>
@@ -160,7 +163,11 @@ private:
       }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV || curr->module.startsWith("wasi_")) {
+      // Minify all import base names if we are importing modules (which means
+      // we will minify all modules names, so we are not being careful).
+      // Otherwise, assume we just want to minify "normal" imports like env
+      // and wasi, but not special things like asm2wasm or custom user things.
+      if (minifyModules || curr->module == ENV || curr->module.startsWith("wasi_")) {
         process(curr->base);
       }
     };

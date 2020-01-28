@@ -1,6 +1,7 @@
 longname1 => a
 longname2 => b
 longname3 => c
+longname4 => d
 (module
  (type $none_=>_none (func))
  (import "a" "memory" (memory $0 256 256))
@@ -8,5 +9,5 @@ longname3 => c
  (import "a" "a" (func $internal1))
  (import "a" "b" (func $internal2))
  (import "a" "c" (func $internal3))
- (import "a" "longname4" (func $internal4))
+ (import "a" "d" (func $internal4))
 )
