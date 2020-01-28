@@ -256,8 +256,12 @@ static void EmitFileEntry(raw_ostream &OS, const DWARFYAML::File &File) {
   encodeULEB128(File.Length, OS);
 }
 
-void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
-  for (const auto &LineTable : DI.DebugLines) {
+// XXX BINARYEN: Refactor to an *Internal method that allows us to optionally
+//               compute the new lengths.
+static void EmitDebugLineInternal(raw_ostream &RealOS,
+                                  const DWARFYAML::Data &DI,
+                                  std::vector<size_t>* computedLengths) {
+  for (auto &LineTable : DI.DebugLines) {
     // XXX BINARYEN We need to update each line table's length. Write to a
     // temp stream first, then get the size from that.
     std::string Buffer;
@@ -348,9 +352,25 @@ void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
     if (Size >= UINT32_MAX) {
       llvm_unreachable("Table is too big");
     }
+    if (computedLengths) {
+      computedLengths->push_back(Size);
+    }
     writeInteger((uint32_t)Size, RealOS, DI.IsLittleEndian);
     RealOS << OS.str();
   }
+}
+
+void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
+  EmitDebugLineInternal(RealOS, DI, nullptr);
+}
+
+void DWARFYAML::ComputeDebugLine(Data &DI,
+                                 std::vector<size_t>& computedLengths) {
+  // TODO: Avoid writing out the data, or at least cache it so we don't need to
+  //       do it again later.
+  std::string buffer;
+  llvm::raw_string_ostream tempStream(buffer);
+  EmitDebugLineInternal(tempStream, DI, &computedLengths);
 }
 
 using EmitFuncType = void (*)(raw_ostream &, const DWARFYAML::Data &);
