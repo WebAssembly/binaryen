@@ -160,7 +160,8 @@ inline Index getZeroExtBits(Expression* curr) {
 // Returns a falling-through value, that is, it looks through a local.tee
 // and other operations that receive a value and let it flow through them.
 inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions) {
+                                  const PassOptions& passOptions,
+                                  FeatureSet features) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -168,31 +169,31 @@ inline Expression* getFallthrough(Expression* curr,
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value, passOptions);
+      return getFallthrough(set->value, passOptions, features);
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back(), passOptions);
+      return getFallthrough(block->list.back(), passOptions, features);
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body, passOptions);
+    return getFallthrough(loop->body, passOptions, features);
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return getFallthrough(iff->ifFalse, passOptions);
+        return getFallthrough(iff->ifFalse, passOptions, features);
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return getFallthrough(iff->ifTrue, passOptions);
+        return getFallthrough(iff->ifTrue, passOptions, features);
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value, passOptions);
+      return getFallthrough(br->value, passOptions, features);
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, tryy->body).mayThrow) {
-      return getFallthrough(tryy->body, passOptions);
+    if (!EffectAnalyzer(passOptions, features, tryy->body).mayThrow) {
+      return getFallthrough(tryy->body, passOptions, features);
     }
   }
   return curr;

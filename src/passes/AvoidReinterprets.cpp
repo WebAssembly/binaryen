@@ -38,7 +38,8 @@ static bool canReplaceWithReinterpret(Load* load) {
 
 static Load* getSingleLoad(LocalGraph* localGraph,
                            LocalGet* get,
-                           const PassOptions& passOptions) {
+                           const PassOptions& passOptions,
+                           FeatureSet features) {
   std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
@@ -50,7 +51,7 @@ static Load* getSingleLoad(LocalGraph* localGraph,
     if (!set) {
       return nullptr;
     }
-    auto* value = Properties::getFallthrough(set->value, passOptions);
+    auto* value = Properties::getFallthrough(set->value, passOptions, features);
     if (auto* parentGet = value->dynCast<LocalGet>()) {
       if (seen.count(parentGet)) {
         // We are in a cycle of gets, in unreachable code.
@@ -100,9 +101,12 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
-      if (auto* get = Properties::getFallthrough(curr->value, getPassOptions())
-                        ->dynCast<LocalGet>()) {
-        if (auto* load = getSingleLoad(localGraph, get, getPassOptions())) {
+      FeatureSet features = getModule()->features;
+      if (auto* get =
+            Properties::getFallthrough(curr->value, getPassOptions(), features)
+              ->dynCast<LocalGet>()) {
+        if (auto* load =
+              getSingleLoad(localGraph, get, getPassOptions(), features)) {
           auto& info = infos[load];
           info.reinterpreted = true;
         }
@@ -143,14 +147,16 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
       void visitUnary(Unary* curr) {
         if (isReinterpret(curr)) {
-          auto* value = Properties::getFallthrough(curr->value, passOptions);
+          auto* value = Properties::getFallthrough(
+            curr->value, passOptions, module->features);
           if (auto* load = value->dynCast<Load>()) {
             // A reinterpret of a load - flip it right here if we can.
             if (canReplaceWithReinterpret(load)) {
               replaceCurrent(makeReinterpretedLoad(load, load->ptr));
             }
           } else if (auto* get = value->dynCast<LocalGet>()) {
-            if (auto* load = getSingleLoad(localGraph, get, passOptions)) {
+            if (auto* load = getSingleLoad(
+                  localGraph, get, passOptions, module->features)) {
               auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;

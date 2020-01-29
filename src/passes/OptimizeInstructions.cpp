@@ -239,7 +239,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(curr->value, passOptions);
+    auto* value = Properties::getFallthrough(
+      curr->value, passOptions, getModule()->features);
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -293,6 +294,7 @@ struct OptimizeInstructions
     // first, scan locals
     {
       LocalScanner scanner(localInfo, getPassOptions());
+      scanner.setModule(getModule());
       scanner.walkFunction(func);
     }
     // main walk
@@ -350,8 +352,9 @@ struct OptimizeInstructions
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
         if (extraShifts == 0) {
-          if (auto* load = Properties::getFallthrough(ext, getPassOptions())
-                             ->dynCast<Load>()) {
+          if (auto* load =
+                Properties::getFallthrough(ext, getPassOptions(), features)
+                  ->dynCast<Load>()) {
             // pattern match a load of 8 bits and a sign extend using a shl of
             // 24 then shr_s of 24 as well, etc.
             if (LoadUtils::canBeSigned(load) &&
