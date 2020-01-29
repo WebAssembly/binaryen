@@ -43,6 +43,14 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
         }
         Y.AbbrevDecls.push_back(Abbrv);
       }
+      // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate
+      // DeclSets from each other, and to null-terminate the entire list
+      // (LLVM works with or without this, but other decoders may error, see
+      //  https://bugs.llvm.org/show_bug.cgi?id=44511).
+      DWARFYAML::Abbrev Abbrv;
+      Abbrv.Code = 0;
+      Abbrv.Tag = dwarf::Tag(0);
+      Y.AbbrevDecls.push_back(Abbrv);
     }
   }
 }
@@ -235,11 +243,16 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             case dwarf::DW_FORM_data2:
             case dwarf::DW_FORM_data4:
             case dwarf::DW_FORM_data8:
-            case dwarf::DW_FORM_sdata:
             case dwarf::DW_FORM_udata:
             case dwarf::DW_FORM_ref_sup4:
             case dwarf::DW_FORM_ref_sup8:
               if (auto Val = FormValue.getValue().getAsUnsignedConstant())
+                NewValue.Value = Val.getValue();
+              break;
+            // XXX BINARYEN: sdata is signed, and FormValue won't return it as
+            //               unsigned (it returns an empty value).
+            case dwarf::DW_FORM_sdata:
+              if (auto Val = FormValue.getValue().getAsSignedConstant())
                 NewValue.Value = Val.getValue();
               break;
             case dwarf::DW_FORM_string:
