@@ -38,6 +38,10 @@ void EmitPubSection(raw_ostream &OS, const PubSection &Sect,
                     bool IsLittleEndian);
 void EmitDebugInfo(raw_ostream &OS, const Data &DI);
 void EmitDebugLine(raw_ostream &OS, const Data &DI);
+// XXX BINARYEN: Same as EmitDebugLine but also update the Length field in
+//               the YAML as we write. We use that information to update
+//               offsets into the debug line section.
+void ComputeDebugLine(Data &DI, std::vector<size_t>& computedLengths);
 
 Expected<StringMap<std::unique_ptr<MemoryBuffer>>>
 EmitDebugSections(StringRef YAMLString, bool ApplyFixups = false,
