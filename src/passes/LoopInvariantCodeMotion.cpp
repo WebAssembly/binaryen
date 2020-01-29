@@ -60,13 +60,14 @@ struct LoopInvariantCodeMotion
     // Accumulate effects of things we can't move out - things
     // we move out later must cross them, so we must verify it
     // is ok to do so.
-    EffectAnalyzer effectsSoFar(getPassOptions());
+    FeatureSet features = getModule()->features;
+    EffectAnalyzer effectsSoFar(getPassOptions(), features);
     // The loop's total effects also matter. For example, a store
     // in the loop means we can't move a load outside.
     // FIXME: we look at the loop "tail" area too, after the last
     //        possible branch back, which can cause false positives
     //        for bad effect interactions.
-    EffectAnalyzer loopEffects(getPassOptions(), loop);
+    EffectAnalyzer loopEffects(getPassOptions(), features, loop);
     // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set
@@ -107,7 +108,7 @@ struct LoopInvariantCodeMotion
         // a branch to it anyhow, so we would stop before that point anyhow.
       }
       // If this may branch, we are done.
-      EffectAnalyzer effects(getPassOptions(), curr);
+      EffectAnalyzer effects(getPassOptions(), features, curr);
       if (effects.branches) {
         break;
       }

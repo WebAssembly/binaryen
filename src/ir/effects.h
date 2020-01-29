@@ -27,9 +27,11 @@ namespace wasm {
 
 struct EffectAnalyzer
   : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
-  EffectAnalyzer(const PassOptions& passOptions, Expression* ast = nullptr) {
-    ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
-    debugInfo = passOptions.debugInfo;
+  EffectAnalyzer(const PassOptions& passOptions,
+                 FeatureSet features,
+                 Expression* ast = nullptr)
+    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       analyze(ast);
     }
@@ -37,6 +39,7 @@ struct EffectAnalyzer
 
   bool ignoreImplicitTraps;
   bool debugInfo;
+  FeatureSet features;
 
   void analyze(Expression* ast) {
     breakNames.clear();
@@ -46,30 +49,6 @@ struct EffectAnalyzer
       branches = true;
     }
     assert(tryDepth == 0);
-
-    std::cerr << "\n** results: " << ast->_id << std::endl;
-    std::cerr << "branches = " << branches << std::endl;
-    std::cerr << "calls = " << calls << std::endl;
-    std::cerr << "mayThrow = " << mayThrow << std::endl;
-    std::cerr << "readsMemory = " << readsMemory << std::endl;
-    std::cerr << "writesMemory = " << writesMemory << std::endl;
-    std::cerr << "implicitTrap = " << implicitTrap << std::endl;
-    std::cerr << "isAtomic = " << isAtomic << std::endl;
-    std::cerr << "localsRead = " << localsRead.size() << std::endl;
-    std::cerr << "localsWritten = " << localsWritten.size() << std::endl;
-    std::cerr << "globalsRead = " << globalsRead.size() << std::endl;
-    std::cerr << "globalsWritten = " << globalsWritten.size() << std::endl;
-    std::cerr << "accessesLocal() = " << accessesLocal() << std::endl;
-    std::cerr << "accessesGlobal() = " << accessesGlobal() << std::endl;
-    std::cerr << "accessesMemory() = " << accessesMemory() << std::endl;
-    std::cerr << "hasSideEffects() = " << hasSideEffects() << std::endl;
-    std::cerr << "hasGlobalSideEffects() = " << hasGlobalSideEffects()
-              << std::endl;
-    std::cerr << "hasAnything() = " << hasAnything() << std::endl;
-    std::cerr << "noticesGlobalSideEffects() = " << noticesGlobalSideEffects()
-              << std::endl;
-    std::cerr << "hasExternalBreakTargets() = " << hasExternalBreakTargets()
-              << std::endl;
   }
 
   // Core effect tracking
@@ -101,7 +80,7 @@ struct EffectAnalyzer
     Expression* curr = *currp;
     // We need to decrement try depth before catch starts, so handle it
     // separately
-    if (auto* tryy = curr->dynCast<Try>()) {
+    if (curr->is<Try>()) {
       self->pushTask(doVisitTry, currp);
       self->pushTask(scan, &curr->cast<Try>()->catchBody);
       self->pushTask(doStartCatch, currp);
@@ -286,7 +265,8 @@ struct EffectAnalyzer
 
   void visitCall(Call* curr) {
     calls = true;
-    if (tryDepth == 0) {
+    // When EH is enabled, any call can throw.
+    if (features.hasExceptionHandling() && tryDepth == 0) {
       mayThrow = true;
     }
     if (curr->isReturn) {
@@ -301,7 +281,7 @@ struct EffectAnalyzer
   }
   void visitCallIndirect(CallIndirect* curr) {
     calls = true;
-    if (tryDepth == 0) {
+    if (features.hasExceptionHandling() && tryDepth == 0) {
       mayThrow = true;
     }
     if (curr->isReturn) {
@@ -478,10 +458,12 @@ struct EffectAnalyzer
 
   // Helpers
 
-  static bool
-  canReorder(const PassOptions& passOptions, Expression* a, Expression* b) {
-    EffectAnalyzer aEffects(passOptions, a);
-    EffectAnalyzer bEffects(passOptions, b);
+  static bool canReorder(const PassOptions& passOptions,
+                         FeatureSet features,
+                         Expression* a,
+                         Expression* b) {
+    EffectAnalyzer aEffects(passOptions, features, a);
+    EffectAnalyzer bEffects(passOptions, features, b);
     return !aEffects.invalidates(bEffects);
   }
 

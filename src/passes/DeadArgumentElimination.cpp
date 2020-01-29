@@ -341,7 +341,8 @@ struct DAE : public Pass {
           bool canRemove =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, operand).hasSideEffects();
+              return EffectAnalyzer(runner->options, module->features, operand)
+                .hasSideEffects();
             });
           if (canRemove) {
             // Wonderful, nothing stands in our way! Do it.
