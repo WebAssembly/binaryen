@@ -471,7 +471,7 @@ function initializeConstants() {
     'WritesMemory',
     'ImplicitTrap',
     'IsAtomic',
-    'MayThrow',
+    'Throws',
     'Any'
   ].forEach(function(name) {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();

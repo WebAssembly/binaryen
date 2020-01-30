@@ -9,7 +9,7 @@ console.log("SideEffects.ReadsMemory=" + binaryen.SideEffects.ReadsMemory);
 console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
-console.log("SideEffects.MayThrow=" + binaryen.SideEffects.MayThrow);
+console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -102,5 +102,5 @@ assert(
     module.call("test", [], binaryen.i32)
   )
   ==
-  binaryen.SideEffects.Calls | binaryen.SideEffects.MayThrow
+  binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
 );

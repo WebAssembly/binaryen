@@ -70,9 +70,9 @@ struct EffectAnalyzer
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
-  bool mayThrow = false;
+  bool throws = false;
   // The nested depth of try. If an instruction that may throw is inside an
-  // inner try, we don't mark it as 'mayThrow', because it will be caught by an
+  // inner try, we don't mark it as 'throws', because it will be caught by an
   // inner catch.
   size_t tryDepth = 0;
 
@@ -110,11 +110,11 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool transfersControlFlow() const { return branches || mayThrow; }
+  bool transfersControlFlow() const { return branches || throws; }
 
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
-           mayThrow;
+           throws;
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
@@ -136,10 +136,9 @@ struct EffectAnalyzer
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if ((branches && other.hasSideEffects()) ||
-        (other.branches && hasSideEffects()) ||
-        (mayThrow && other.hasSideEffects()) ||
-        (other.mayThrow && hasSideEffects()) ||
+    if (transfersControlFlow() && other.hasSideEffects() ||
+        (throws && other.hasSideEffects()) ||
+        (other.throws && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
@@ -176,7 +175,8 @@ struct EffectAnalyzer
       }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+    if ((implicitTrap && other.transfersControlFlow()) ||
+        (other.implicitTrap && transfersControlFlow())) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
@@ -194,7 +194,7 @@ struct EffectAnalyzer
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
-    mayThrow = mayThrow || other.mayThrow;
+    throws = throws || other.throws;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -265,7 +265,7 @@ struct EffectAnalyzer
     calls = true;
     // When EH is enabled, any call can throw.
     if (features.hasExceptionHandling() && tryDepth == 0) {
-      mayThrow = true;
+      throws = true;
     }
     if (curr->isReturn) {
       branches = true;
@@ -280,7 +280,7 @@ struct EffectAnalyzer
   void visitCallIndirect(CallIndirect* curr) {
     calls = true;
     if (features.hasExceptionHandling() && tryDepth == 0) {
-      mayThrow = true;
+      throws = true;
     }
     if (curr->isReturn) {
       branches = true;
@@ -440,12 +440,12 @@ struct EffectAnalyzer
   void visitTry(Try* curr) {}
   void visitThrow(Throw* curr) {
     if (tryDepth == 0) {
-      mayThrow = true;
+      throws = true;
     }
   }
   void visitRethrow(Rethrow* curr) {
     if (tryDepth == 0) {
-      mayThrow = true;
+      throws = true;
     }
   }
   void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
@@ -479,7 +479,7 @@ struct EffectAnalyzer
     WritesMemory = 1 << 7,
     ImplicitTrap = 1 << 8,
     IsAtomic = 1 << 9,
-    MayThrow = 1 << 10,
+    Throws = 1 << 10,
     Any = (1 << 11) - 1
   };
   uint32_t getSideEffects() const {
@@ -514,8 +514,8 @@ struct EffectAnalyzer
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;
     }
-    if (mayThrow) {
-      effects |= SideEffects::MayThrow;
+    if (throws) {
+      effects |= SideEffects::Throws;
     }
     return effects;
   }
