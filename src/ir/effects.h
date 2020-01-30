@@ -110,6 +110,7 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool transfersControlFlow() const { return branches || mayThrow; }
 
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
@@ -120,9 +121,9 @@ struct EffectAnalyzer
            implicitTrap;
   }
   bool hasAnything() const {
-    return branches || calls || accessesLocal() || readsMemory ||
-           writesMemory || accessesGlobal() || implicitTrap || isAtomic ||
-           mayThrow;
+    return calls || accessesLocal() || readsMemory || writesMemory ||
+           accessesGlobal() || implicitTrap || isAtomic ||
+           transfersControlFlow();
   }
 
   bool noticesGlobalSideEffects() {

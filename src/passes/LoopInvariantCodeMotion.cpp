@@ -109,7 +109,7 @@ struct LoopInvariantCodeMotion
       }
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), features, curr);
-      if (effects.branches) {
+      if (effects.transfersControlFlow()) {
         break;
       }
       if (interestingToMove(curr)) {
