@@ -136,7 +136,7 @@ struct EffectAnalyzer
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if (transfersControlFlow() && other.hasSideEffects() ||
+    if ((transfersControlFlow() && other.hasSideEffects()) ||
         (throws && other.hasSideEffects()) ||
         (other.throws && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
