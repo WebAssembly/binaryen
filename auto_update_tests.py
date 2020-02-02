@@ -273,7 +273,7 @@ def update_ctor_eval_tests():
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
-        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
+        cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wast', '-S', '--ctors', ctors]
         support.run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.out'

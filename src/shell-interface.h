@@ -150,6 +150,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callTable(Index index,
+                    Signature sig,
                     LiteralList& arguments,
                     Type results,
                     ModuleInstance& instance) override {
@@ -159,6 +160,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     auto* func = instance.wasm.getFunctionOrNull(table[index]);
     if (!func) {
       trap("uninitialized table element");
+    }
+    if (sig != func->sig) {
+      trap("callIndirect: function signatures don't match");
     }
     const std::vector<Type>& params = func->sig.params.expand();
     if (params.size() != arguments.size()) {
