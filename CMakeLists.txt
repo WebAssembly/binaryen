@@ -24,7 +24,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   if(${GIT_VERSION_RESULT})
     message(WARNING "Error running git describe to determine version")
   else()
-    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
+    set(PROJECT_VERSION "${PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 

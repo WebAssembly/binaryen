@@ -192,7 +192,7 @@ inline Expression* getFallthrough(Expression* curr,
       return getFallthrough(br->value, passOptions, features);
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, features, tryy->body).mayThrow) {
+    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
       return getFallthrough(tryy->body, passOptions, features);
     }
   }

@@ -4508,9 +4508,8 @@ BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::IsAtomic);
 }
-BinaryenSideEffects BinaryenSideEffectMayThrow(void) {
-  return static_cast<BinaryenSideEffects>(
-    EffectAnalyzer::SideEffects::MayThrow);
+BinaryenSideEffects BinaryenSideEffectThrows(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Throws);
 }
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);

@@ -525,7 +525,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       // if there is control flow, we must stop looking
       if (EffectAnalyzer(getPassOptions(), getModule()->features, curr)
-            .branches) {
+            .transfersControlFlow()) {
         return false;
       }
       if (i == 0) {
