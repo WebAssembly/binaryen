@@ -133,7 +133,7 @@ struct ConstantGlobalApplier
       return;
     }
     // Otherwise, invalidate if we need to.
-    EffectAnalyzer effects(getPassOptions());
+    EffectAnalyzer effects(getPassOptions(), getModule()->features);
     effects.visit(curr);
     assert(effects.globalsWritten.empty()); // handled above
     if (effects.calls) {

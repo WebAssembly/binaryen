@@ -9,6 +9,7 @@ console.log("SideEffects.ReadsMemory=" + binaryen.SideEffects.ReadsMemory);
 console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
+console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -91,4 +92,15 @@ assert(
   )
   ==
   binaryen.SideEffects.ImplicitTrap
+);
+
+// If exception handling feature is enabled, calls can throw
+var module_all_features = new binaryen.Module();
+module_all_features.setFeatures(binaryen.Features.All);
+assert(
+  binaryen.getSideEffects(
+    module.call("test", [], binaryen.i32)
+  )
+  ==
+  binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
 );

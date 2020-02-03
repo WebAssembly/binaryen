@@ -35,7 +35,8 @@ namespace wasm {
 // not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
-                              PassOptions& options) {
+                              PassOptions& options,
+                              FeatureSet features) {
   // if the if isn't even reached, this is all dead code anyhow
   if (ifCondition->type == Type::unreachable) {
     return false;
@@ -43,11 +44,11 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (!brValue) {
     return true;
   }
-  EffectAnalyzer value(options, brValue);
+  EffectAnalyzer value(options, features, brValue);
   if (value.hasSideEffects()) {
     return false;
   }
-  return !EffectAnalyzer(options, ifCondition).invalidates(value);
+  return !EffectAnalyzer(options, features, ifCondition).invalidates(value);
 }
 
 // Check if it is not worth it to run code unconditionally. This
@@ -302,11 +303,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void visitIf(If* curr) {
+    FeatureSet features = getModule()->features;
     if (!curr->ifFalse) {
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
-        if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
+        if (canTurnIfIntoBrIf(
+              curr->condition, br->value, getPassOptions(), features)) {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
@@ -327,7 +330,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
             // Of course we can't do this if the br's condition has side
             // effects, as we would then execute those unconditionally.
-            if (EffectAnalyzer(getPassOptions(), br->condition)
+            if (EffectAnalyzer(getPassOptions(), features, br->condition)
                   .hasSideEffects()) {
               return;
             }
@@ -521,7 +524,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         return false;
       }
       // if there is control flow, we must stop looking
-      if (EffectAnalyzer(getPassOptions(), curr).branches) {
+      if (EffectAnalyzer(getPassOptions(), getModule()->features, curr)
+            .transfersControlFlow()) {
         return false;
       }
       if (i == 0) {
@@ -744,6 +748,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         //   the if is dead
         // * note that we do this at the end, because un-conditionalizing can
         //   interfere with optimizeLoop()ing.
+        FeatureSet features = getModule()->features;
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
@@ -755,7 +760,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition &&
               canTurnIfIntoBrIf(
-                iff->condition, ifTrueBreak->value, passOptions)) {
+                iff->condition, ifTrueBreak->value, passOptions, features)) {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
@@ -768,7 +773,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
           if (ifFalseBreak && !ifFalseBreak->condition &&
               canTurnIfIntoBrIf(
-                iff->condition, ifFalseBreak->value, passOptions)) {
+                iff->condition, ifFalseBreak->value, passOptions, features)) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
@@ -797,7 +802,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               if (shrink && br2->type != Type::unreachable) {
                 // Join adjacent br_ifs to the same target, making one br_if
                 // with a "selectified" condition that executes both.
-                if (!EffectAnalyzer(passOptions, br2->condition)
+                if (!EffectAnalyzer(passOptions, features, br2->condition)
                        .hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
@@ -888,8 +893,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 // If the items we move around have side effects, we can't do
                 // this.
                 // TODO: we could use a select, in some cases..?
-                if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
-                    !EffectAnalyzer(passOptions, br->condition)
+                FeatureSet features = getModule()->features;
+                if (!EffectAnalyzer(passOptions, features, br->value)
+                       .hasSideEffects() &&
+                    !EffectAnalyzer(passOptions, features, br->condition)
                        .hasSideEffects()) {
                   ExpressionManipulator::nop(list[0]);
                   Builder builder(*getModule());
@@ -923,11 +930,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         // Check if side effects allow this.
-        EffectAnalyzer condition(passOptions, iff->condition);
+        FeatureSet features = getModule()->features;
+        EffectAnalyzer condition(passOptions, features, iff->condition);
         if (!condition.hasSideEffects()) {
-          EffectAnalyzer ifTrue(passOptions, iff->ifTrue);
+          EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
           if (!ifTrue.hasSideEffects()) {
-            EffectAnalyzer ifFalse(passOptions, iff->ifFalse);
+            EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
             if (!ifFalse.hasSideEffects()) {
               return Builder(*getModule())
                 .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
@@ -1184,7 +1192,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
-          if (EffectAnalyzer(passOptions, conditionValue).hasSideEffects()) {
+          if (EffectAnalyzer(passOptions, getModule()->features, conditionValue)
+                .hasSideEffects()) {
             start++;
             continue;
           }

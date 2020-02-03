@@ -471,6 +471,7 @@ function initializeConstants() {
     'WritesMemory',
     'ImplicitTrap',
     'IsAtomic',
+    'Throws',
     'Any'
   ].forEach(function(name) {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
@@ -2759,8 +2760,8 @@ Module['getExpressionInfo'] = function(expr) {
 };
 
 // Gets the side effects of the specified expression
-Module['getSideEffects'] = function(expr) {
-  return Module['_BinaryenExpressionGetSideEffects'](expr);
+Module['getSideEffects'] = function(expr, features) {
+  return Module['_BinaryenExpressionGetSideEffects'](expr, features);
 };
 
 Module['createType'] = function(types) {

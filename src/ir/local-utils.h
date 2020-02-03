@@ -45,18 +45,23 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   PassOptions& passOptions;
 
   LocalGetCounter* localGetCounter = nullptr;
+  FeatureSet features;
 
-  UnneededSetRemover(Function* func, PassOptions& passOptions)
-    : passOptions(passOptions) {
+  UnneededSetRemover(Function* func,
+                     PassOptions& passOptions,
+                     FeatureSet features)
+    : passOptions(passOptions), features(features) {
     LocalGetCounter counter(func);
-    UnneededSetRemover inner(counter, func, passOptions);
+    UnneededSetRemover inner(counter, func, passOptions, features);
     removed = inner.removed;
   }
 
   UnneededSetRemover(LocalGetCounter& localGetCounter,
                      Function* func,
-                     PassOptions& passOptions)
-    : passOptions(passOptions), localGetCounter(&localGetCounter) {
+                     PassOptions& passOptions,
+                     FeatureSet features)
+    : passOptions(passOptions), localGetCounter(&localGetCounter),
+      features(features) {
     walk(func->body);
   }
 
@@ -91,7 +96,8 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
     auto* value = set->value;
     if (set->isTee()) {
       replaceCurrent(value);
-    } else if (EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
+    } else if (EffectAnalyzer(passOptions, features, set->value)
+                 .hasSideEffects()) {
       Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
       drop->value = value;
       drop->finalize();
