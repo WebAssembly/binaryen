@@ -215,6 +215,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literal callTable(Index index,
+                    Signature sig,
                     LiteralList& arguments,
                     Type result,
                     EvallingModuleInstance& instance) override {
@@ -240,6 +241,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
         // if this is one of our functions, we can call it; if it was imported,
         // fail
         auto* func = wasm->getFunction(name);
+        if (func->sig != sig) {
+          throw FailToEvalException(
+            std::string("callTable signature mismatch: ") + name.str);
+        }
         if (!func->imported()) {
           return instance.callFunctionInternal(name, arguments);
         } else {
