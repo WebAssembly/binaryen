@@ -3626,8 +3626,6 @@
       )
     )
   )
-  (func $dummy (result i32) (i32.const 1))
-  (event $e (attr 0) (param i32))
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
     (local $x1 i32)
@@ -3637,10 +3635,6 @@
     (local $x5 i32)
     (local $x6 i32)
     (local $x7 i32)
-    (local $x8 i32)
-    (local $x9 i32)
-    (local $x10 i32)
-    (local $x11 i32)
     ;; the trivial case
     (local.set $x0 (i32.const 1))
     (drop (i32.and (local.get $x0) (i32.const 7)))

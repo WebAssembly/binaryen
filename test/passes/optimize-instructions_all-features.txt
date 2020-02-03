@@ -1,10 +1,10 @@
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
@@ -15,7 +15,6 @@
  (type $none_=>_f64 (func (result f64)))
  (type $none_=>_anyref (func (result anyref)))
  (memory $0 0)
- (event $e (attr 0) (param i32))
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (param $i1 i32) (param $i2 i64)
   (if
@@ -3138,10 +3137,7 @@
    )
   )
  )
- (func $dummy (; 71 ;) (result i32)
-  (i32.const 1)
- )
- (func $getFallthrough (; 72 ;)
+ (func $getFallthrough (; 71 ;)
   (local $x0 i32)
   (local $x1 i32)
   (local $x2 i32)
@@ -3150,10 +3146,6 @@
   (local $x5 i32)
   (local $x6 i32)
   (local $x7 i32)
-  (local $x8 i32)
-  (local $x9 i32)
-  (local $x10 i32)
-  (local $x11 i32)
   (local.set $x0
    (i32.const 1)
   )
@@ -3224,7 +3216,7 @@
    )
   )
  )
- (func $tee-with-unreachable-value (; 73 ;) (result f64)
+ (func $tee-with-unreachable-value (; 72 ;) (result f64)
   (local $var$0 i32)
   (block $label$1 (result f64)
    (local.tee $var$0
@@ -3235,7 +3227,7 @@
    )
   )
  )
- (func $add-sub-zero-reorder-1 (; 74 ;) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-1 (; 73 ;) (param $temp i32) (result i32)
   (i32.add
    (i32.add
     (i32.sub
@@ -3249,7 +3241,7 @@
    (i32.const 2)
   )
  )
- (func $add-sub-zero-reorder-2 (; 75 ;) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-2 (; 74 ;) (param $temp i32) (result i32)
   (i32.add
    (i32.sub
     (local.tee $temp
@@ -3260,7 +3252,7 @@
    (i32.const 2)
   )
  )
- (func $pre-combine-or (; 76 ;) (param $x i32) (param $y i32)
+ (func $pre-combine-or (; 75 ;) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3322,7 +3314,7 @@
    )
   )
  )
- (func $combine-or (; 77 ;) (param $x i32) (param $y i32)
+ (func $combine-or (; 76 ;) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3330,7 +3322,7 @@
    )
   )
  )
- (func $select-into-arms (; 78 ;) (param $x i32) (param $y i32)
+ (func $select-into-arms (; 77 ;) (param $x i32) (param $y i32)
   (if
    (select
     (local.get $x)
@@ -3340,7 +3332,7 @@
    (unreachable)
   )
  )
- (func $if-arms-subtype (; 79 ;) (result anyref)
+ (func $if-arms-subtype (; 78 ;) (result anyref)
   (ref.null)
  )
 )
