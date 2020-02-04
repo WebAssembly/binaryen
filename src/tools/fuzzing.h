@@ -596,7 +596,7 @@ private:
       wasm.addExport(export_);
     }
     // add some to the table
-    while (oneIn(3)) {
+    while (oneIn(3) && !finishedInput) {
       wasm.table.segments[0].data.push_back(func->name);
     }
     // cleanup
