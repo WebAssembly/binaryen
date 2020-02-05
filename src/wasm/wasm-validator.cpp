@@ -766,6 +766,12 @@ void FunctionValidator::visitLocalSet(LocalSet* curr) {
                       curr,
                       "local.set type must be correct");
       }
+      if (!Type::isSubType(curr->value->type,
+                           getFunction()->getLocalType(curr->index))) {
+        std::cerr << "sdklfsdjlf" << std::endl;
+        std::cerr << "sdklfsdjlf" << std::endl;
+        std::cerr << "sdklfsdjlf" << std::endl;
+      }
       shouldBeSubType(curr->value->type,
                       getFunction()->getLocalType(curr->index),
                       curr,

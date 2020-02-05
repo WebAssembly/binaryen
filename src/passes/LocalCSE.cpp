@@ -54,6 +54,28 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   Pass* create() override { return new LocalCSE(); }
 
+  struct Usable {
+    HashedExpression hashed;
+    Type localType;
+    Usable(HashedExpression hashed, Type localType)
+      : hashed(hashed), localType(localType) {}
+  };
+
+  struct UsableHasher {
+    HashType operator()(const Usable value) const {
+      return rehash(value.hashed.hash, value.localType.getID());
+    }
+  };
+
+  struct UsableComparer {
+    bool operator()(const Usable a, const Usable b) const {
+      if (a.hashed.hash != b.hashed.hash || a.localType != b.localType) {
+        return false;
+      }
+      return ExpressionAnalyzer::equal(a.hashed.expr, b.hashed.expr);
+    }
+  };
+
   // information for an expression we can reuse
   struct UsableInfo {
     Expression* value; // the value we can reuse
@@ -68,7 +90,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   };
 
   // a list of usables in a linear execution trace
-  typedef HashedExpressionMap<UsableInfo> Usables;
+  class Usables
+    : public std::
+        unordered_map<Usable, UsableInfo, UsableHasher, UsableComparer> {};
 
   // locals in current linear execution trace, which we try to sink
   Usables usables;
@@ -104,7 +128,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // taken into account.
   void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
     // TODO: this is O(bad)
-    std::vector<HashedExpression> invalidated;
+    std::vector<Usable> invalidated;
     for (auto& sinkable : usables) {
       // Check invalidations of the values we may want to use.
       if (effects.invalidates(sinkable.second.effects)) {
@@ -185,8 +209,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       // consider the value
       auto* value = set->value;
       if (isRelevant(value)) {
-        HashedExpression hashed(value);
-        auto iter = usables.find(hashed);
+        Usable usable(value, func->getLocalType(set->index));
+        auto iter = usables.find(usable);
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
@@ -197,7 +221,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         } else {
           // not in table, add this, maybe we can help others later
           usables.emplace(std::make_pair(
-            hashed,
+            usable,
             UsableInfo(
               value, set->index, getPassOptions(), getModule()->features)));
         }
