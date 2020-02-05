@@ -238,6 +238,26 @@
       )
       (nop)
     )
+    (if
+      (try (result i32)
+        (i32.eqz
+          (i32.eqz
+            (i32.const 123)
+          )
+        )
+        (catch
+          (drop
+            (exnref.pop)
+          )
+          (i32.eqz
+            (i32.eqz
+              (i32.const 456)
+            )
+          )
+        )
+      )
+      (nop)
+    )
     (drop
       (select
         (i32.const 101)
@@ -3766,6 +3786,14 @@
       (unreachable)
     )
   )
+  ;; Tests when if arms are subtype of if's type
+  (func $if-arms-subtype (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null)
+      (ref.null)
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
@@ -3781,15 +3809,5 @@
      (i32.const 24)
     )
    )
-  )
-)
-(module
-  ;; Tests when if arms are subtype of if's type
-  (func $test (result anyref)
-    (if (result anyref)
-      (i32.const 0)
-      (ref.null)
-      (ref.null)
-    )
   )
 )

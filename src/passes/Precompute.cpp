@@ -327,7 +327,8 @@ private:
           continue; // already known constant
         }
         auto value = setValues[set] =
-          precomputeValue(Properties::getFallthrough(set->value));
+          precomputeValue(Properties::getFallthrough(
+            set->value, getPassOptions(), getModule()->features));
         if (value.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);

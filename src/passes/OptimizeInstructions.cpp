@@ -200,8 +200,11 @@ struct LocalInfo {
 
 struct LocalScanner : PostWalker<LocalScanner> {
   std::vector<LocalInfo>& localInfo;
+  const PassOptions& passOptions;
 
-  LocalScanner(std::vector<LocalInfo>& localInfo) : localInfo(localInfo) {}
+  LocalScanner(std::vector<LocalInfo>& localInfo,
+               const PassOptions& passOptions)
+    : localInfo(localInfo), passOptions(passOptions) {}
 
   void doWalkFunction(Function* func) {
     // prepare
@@ -236,7 +239,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(curr->value);
+    auto* value = Properties::getFallthrough(
+      curr->value, passOptions, getModule()->features);
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -289,7 +293,8 @@ struct OptimizeInstructions
   void doWalkFunction(Function* func) {
     // first, scan locals
     {
-      LocalScanner scanner(localInfo);
+      LocalScanner scanner(localInfo, getPassOptions());
+      scanner.setModule(getModule());
       scanner.walkFunction(func);
     }
     // main walk
@@ -347,7 +352,9 @@ struct OptimizeInstructions
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
         if (extraShifts == 0) {
-          if (auto* load = Properties::getFallthrough(ext)->dynCast<Load>()) {
+          if (auto* load =
+                Properties::getFallthrough(ext, getPassOptions(), features)
+                  ->dynCast<Load>()) {
             // pattern match a load of 8 bits and a sign extend using a shl of
             // 24 then shr_s of 24 as well, etc.
             if (LoadUtils::canBeSigned(load) &&
@@ -984,6 +991,11 @@ private:
     } else if (auto* select = boolean->dynCast<Select>()) {
       select->ifTrue = optimizeBoolean(select->ifTrue);
       select->ifFalse = optimizeBoolean(select->ifFalse);
+    } else if (auto* tryy = boolean->dynCast<Try>()) {
+      if (tryy->type == Type::i32) {
+        tryy->body = optimizeBoolean(tryy->body);
+        tryy->catchBody = optimizeBoolean(tryy->catchBody);
+      }
     }
     // TODO: recurse into br values?
     return boolean;
