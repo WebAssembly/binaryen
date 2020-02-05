@@ -38,25 +38,6 @@ struct HashedExpression {
     : expr(other.expr), hash(other.hash) {}
 };
 
-struct ExpressionHasher {
-  HashType operator()(const HashedExpression value) const { return value.hash; }
-};
-
-struct ExpressionComparer {
-  bool operator()(const HashedExpression a, const HashedExpression b) const {
-    if (a.hash != b.hash) {
-      return false;
-    }
-    return ExpressionAnalyzer::equal(a.expr, b.expr);
-  }
-};
-
-template<typename T>
-class HashedExpressionMap
-  : public std::
-      unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
-};
-
 // A pass that hashes all functions
 
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
