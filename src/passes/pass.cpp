@@ -371,7 +371,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // Untangling to semi-ssa form is helpful (but best to ignore merges
   // so as to not introduce new copies).
   // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF && (options.optimizeLevel >= 3 || options.shrinkLevel >= 1)) {
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 3 || options.shrinkLevel >= 1)) {
     add("ssa-nomerge");
   }
   // if we are willing to work very very hard, flatten the IR and do opts
@@ -413,7 +414,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs");
   // if we are willing to work hard, also optimize copies before coalescing
   // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF && (options.optimizeLevel >= 3 || options.shrinkLevel >= 2)) {
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 3 || options.shrinkLevel >= 2)) {
     add("merge-locals"); // very slow on e.g. sqlite
   }
   // FIXME DWARF updating does not handle local changes yet.
@@ -461,11 +463,13 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
   // FIXME DWARF may be badly affected currently as DAE changes function
   // signatures and hence params and locals.
-  if (!preserveDWARF && (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
     add("dae-optimizing");
   }
   // FIXME DWARF updating does not handle inlining yet.
-  if (!preserveDWARF && (options.optimizeLevel >= 2 || options.shrinkLevel >= 2)) {
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 2)) {
     add("inlining-optimizing");
   }
   // Optimizations show more functions as duplicate, so run this here in Post.
