@@ -3900,6 +3900,64 @@ void BinaryenSetDebugInfo(int on) {
   globalPassOptions.debugInfo = on != 0;
 }
 
+int BinaryenGetLowMemoryUnused(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetLowMemoryUnused();\n";
+  }
+
+  return globalPassOptions.lowMemoryUnused;
+}
+
+void BinaryenSetLowMemoryUnused(int on) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLowMemoryUnused(" << on << ");\n";
+  }
+
+  globalPassOptions.lowMemoryUnused = on != 0;
+}
+
+const char* BinaryenGetPassArgument(const char* key) {
+  if (tracing) {
+    std::cout << "  BinaryenGetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  auto& args = globalPassOptions.arguments;
+  auto it = args.find(key);
+  if (it == args.end()) {
+    return nullptr;
+  }
+  // internalize the string so it remains valid while the module is
+  return Name(it->second).c_str();
+}
+
+void BinaryenSetPassArgument(const char* key, const char* value) {
+  if (tracing) {
+    std::cout << "  BinaryenSetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ", ";
+    traceNameOrNULL(value);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  if (value) {
+    globalPassOptions.arguments[key] = value;
+  } else {
+    globalPassOptions.arguments.erase(key);
+  }
+}
+
+void BinaryenClearPassArguments(void) {
+  if (tracing) {
+    std::cout << "  BinaryenClearPassArguments();\n";
+  }
+
+  globalPassOptions.arguments.clear();
+}
+
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
                              const char** passes,
                              BinaryenIndex numPasses) {

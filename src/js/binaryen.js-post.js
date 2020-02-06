@@ -2896,6 +2896,38 @@ Module['setDebugInfo'] = function(on) {
   return Module['_BinaryenSetDebugInfo'](on);
 };
 
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+Module['getLowMemoryUnused'] = function() {
+  return Boolean(Module['_BinaryenGetLowMemoryUnused']());
+};
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing.
+Module['setLowMemoryUnused'] = function(on) {
+  return Module['_BinaryenSetLowMemoryUnused'](on);
+};
+
+// Gets the value of the specified arbitrary pass argument.
+Module['getPassArgument'] = function(key) {
+  return preserveStack(function() {
+    var ret = Module['_BinaryenGetPassArgument'](strToStack(key));
+    return ret !== 0 ? UTF8ToString(ret) : null;
+  });
+};
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL.
+Module['setPassArgument'] = function (key, value) {
+  preserveStack(function () {
+    Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value));
+  });
+};
+
+// Clears all arbitrary pass arguments.
+Module['clearPassArguments'] = function() {
+  Module['_BinaryenClearPassArguments']();
+};
+
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);

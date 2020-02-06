@@ -1284,6 +1284,26 @@ BINARYEN_API int BinaryenGetDebugInfo(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetDebugInfo(int on);
 
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetLowMemoryUnused(void);
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
+
+// Gets the value of the specified arbitrary pass argument.
+// Applies to all modules, globally.
+BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
+
+// Clears all arbitrary pass arguments.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenClearPassArguments();
+
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
 BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,
