@@ -810,12 +810,13 @@
 
   ;; The exception thrown in the inner try is caught by the inner catch, so the
   ;; outer try body does not throw and the outer try-catch can be removed
-  (func $inner-try-test
+  (func $inner-try-test (local $0 i32)
     (try
       (try
         (throw $e (i32.const 0))
         (catch
           (drop (exnref.pop))
+          (local.set $0 (i32.const 1))
         )
       )
       (catch

@@ -448,6 +448,7 @@
   (nop)
  )
  (func $inner-try-test (; 1 ;)
+  (local $0 i32)
   (try
    (throw $e
     (i32.const 0)
@@ -455,6 +456,9 @@
    (catch
     (drop
      (exnref.pop)
+    )
+    (local.set $0
+     (i32.const 1)
     )
    )
   )
