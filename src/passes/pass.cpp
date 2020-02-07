@@ -26,6 +26,7 @@
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
+#include "wasm-debug.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 
@@ -359,15 +360,25 @@ void PassRunner::addDefaultOptimizationPasses() {
   addDefaultGlobalOptimizationPostPasses();
 }
 
+// Check whether we should preserve valid DWARF while optimizing. If so, we
+// disable optimizations that currently cause issues with debug info.
+static bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
+  return options.debugInfo && Debug::hasDWARFSections(wasm);
+}
+
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
   // Untangling to semi-ssa form is helpful (but best to ignore merges
   // so as to not introduce new copies).
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+  // FIXME DWARF updating does not handle local changes yet.
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 3 || options.shrinkLevel >= 1)) {
     add("ssa-nomerge");
   }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
-  if (options.optimizeLevel >= 4) {
+  // FIXME DWARF updating does not handle local changes yet.
+  if (!preserveDWARF && options.optimizeLevel >= 4) {
     add("flatten");
     add("local-cse");
   }
@@ -402,15 +413,23 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   add("remove-unused-brs");
   // if we are willing to work hard, also optimize copies before coalescing
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+  // FIXME DWARF updating does not handle local changes yet.
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 3 || options.shrinkLevel >= 2)) {
     add("merge-locals"); // very slow on e.g. sqlite
   }
-  add("coalesce-locals");
+  // FIXME DWARF updating does not handle local changes yet.
+  if (!preserveDWARF) {
+    add("coalesce-locals");
+  }
   add("simplify-locals");
   add("vacuum");
   add("reorder-locals");
-  add("coalesce-locals");
-  add("reorder-locals");
+  // FIXME DWARF updating does not handle local changes yet.
+  if (!preserveDWARF) {
+    add("coalesce-locals");
+    add("reorder-locals");
+  }
   add("vacuum");
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("code-folding");
@@ -433,19 +452,31 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
-  add("duplicate-function-elimination");
+  // FIXME DWARF updating does not handle merging debug info with merged code.
+  if (!shouldPreserveDWARF(options, *wasm)) {
+    add("duplicate-function-elimination");
+  }
   add("memory-packing");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+  auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
+  // FIXME DWARF may be badly affected currently as DAE changes function
+  // signatures and hence params and locals.
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
     add("dae-optimizing");
   }
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+  // FIXME DWARF updating does not handle inlining yet.
+  if (!preserveDWARF &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 2)) {
     add("inlining-optimizing");
   }
-  // optimizations show more functions as duplicate
-  add("duplicate-function-elimination");
+  // Optimizations show more functions as duplicate, so run this here in Post.
+  // FIXME DWARF updating does not handle merging debug info with merged code.
+  if (!preserveDWARF) {
+    add("duplicate-function-elimination");
+  }
   add("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("simplify-globals-optimizing");
