@@ -370,7 +370,7 @@ def fail_if_not_contained(actual, expected):
 def fail_if_not_identical_to_file(actual, expected_file):
     binary = expected_file.endswith(".wasm") or type(actual) == bytes
     with open(expected_file, 'rb' if binary else 'r') as f:
-        fail_if_not_identical(f.read(), actual, fromfile=expected_file)
+        fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
 def get_test_dir(name):
