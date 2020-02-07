@@ -2873,7 +2873,7 @@ Module['getOptimizeLevel'] = function() {
 
 // Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 Module['setOptimizeLevel'] = function(level) {
-  return Module['_BinaryenSetOptimizeLevel'](level);
+  Module['_BinaryenSetOptimizeLevel'](level);
 };
 
 // Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
@@ -2883,7 +2883,7 @@ Module['getShrinkLevel'] = function() {
 
 // Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
 Module['setShrinkLevel'] = function(level) {
-  return Module['_BinaryenSetShrinkLevel'](level);
+  Module['_BinaryenSetShrinkLevel'](level);
 };
 
 // Gets whether generating debug information is currently enabled or not.
@@ -2893,7 +2893,7 @@ Module['getDebugInfo'] = function() {
 
 // Enables or disables debug information in emitted binaries.
 Module['setDebugInfo'] = function(on) {
-  return Module['_BinaryenSetDebugInfo'](on);
+  Module['_BinaryenSetDebugInfo'](on);
 };
 
 // Gets whether the low 1K of memory can be considered unused when optimizing.
@@ -2904,7 +2904,7 @@ Module['getLowMemoryUnused'] = function() {
 // Enables or disables whether the low 1K of memory can be considered unused
 // when optimizing.
 Module['setLowMemoryUnused'] = function(on) {
-  return Module['_BinaryenSetLowMemoryUnused'](on);
+  Module['_BinaryenSetLowMemoryUnused'](on);
 };
 
 // Gets the value of the specified arbitrary pass argument.

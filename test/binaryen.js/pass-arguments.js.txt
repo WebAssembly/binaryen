@@ -20,3 +20,6 @@ int main() {
   BinaryenGetPassArgument("theKey");
   BinaryenClearPassArguments();
   BinaryenGetPassArgument("theKey");
+  return 0;
+}
+// ending a Binaryen API trace
