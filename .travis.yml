@@ -50,7 +50,7 @@ jobs:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'g++-5']
+          packages: ['cmake', 'g++-5', 'ninja-build']
       before_install:
         - export ASAN_OPTIONS="$ASAN_OPTIONS symbolize=1"
       install:
@@ -64,13 +64,13 @@ jobs:
         - set -o errexit
         - BUILD_DIR=${BUILD_DIR:-.}
         - mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
-        - cmake ${TRAVIS_BUILD_DIR}
+        - cmake ${TRAVIS_BUILD_DIR} -G Ninja
             -DCMAKE_C_FLAGS="$COMPILER_FLAGS"
             -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
             -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
             -DCMAKE_INSTALL_PREFIX=install
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        - make -j2 install
+        - ninja install
         # Run tests from source directory
         - cd ${TRAVIS_BUILD_DIR}
         - python3 ./check.py --binaryen-bin=${BUILD_DIR}/install/bin
@@ -134,10 +134,10 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2 python3 clang
+        - alpine apk add build-base cmake git python3 clang ninja
       script:
         - alpine cmake .
-        - alpine make -j2
+        - alpine ninja
         - alpine python3 ./check.py
 
     - name: osx
@@ -163,7 +163,7 @@ jobs:
                        -DCMAKE_C_FLAGS="-static" .
                        -DCMAKE_C_COMPILER=clang
                        -DCMAKE_CXX_COMPILER=clang++
-        - alpine make -j2
+        - alpine ninja
         - alpine find bin/ -type f -perm -u=x -exec strip {} +
         - alpine ls -lh bin/
         # Check if the built executables are really statically linked.
