@@ -217,6 +217,17 @@ int main(int argc, const char* argv[]) {
 
   BYN_TRACE("reading...\n");
 
+  auto exitOnInvalidWasm = [&](const char* message) {
+    // If the user asked to print the module, print it even if invalid,
+    // as otherwise there is no way to print the broken module (the pass
+    // to print would not be reached).
+    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
+        options.passes.end()) {
+      WasmPrinter::printModule(&wasm);
+    }
+    Fatal() << message;
+  };
+
   if (!translateToFuzz) {
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
@@ -228,7 +239,7 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing input";
+      Fatal() << "error in parsing wasm";
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -242,14 +253,7 @@ int main(int argc, const char* argv[]) {
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        // If the user asked to print the module, print it even if invalid,
-        // as otherwise there is no way to print the broken module (the pass
-        // to print would not be reached).
-        if (std::find(options.passes.begin(), options.passes.end(), "print") !=
-            options.passes.end()) {
-          WasmPrinter::printModule(&wasm);
-        }
-        Fatal() << "error in validating input";
+        exitOnInvalidWasm("error in validating input");
       }
     }
   } else {
@@ -266,7 +270,7 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
-        Fatal() << "translate-to-fuzz must always generate a valid module";
+        Fatal() << "error after translate-to-fuzz";
       }
     }
   }
@@ -342,7 +346,7 @@ int main(int argc, const char* argv[]) {
       if (options.passOptions.validate) {
         bool valid = WasmValidator().validate(*curr);
         if (!valid) {
-          Fatal() << "opts must always generate a valid module";
+          exitOnInvalidWasm("error after opts");
         }
       }
     };
