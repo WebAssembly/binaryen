@@ -242,7 +242,13 @@ int main(int argc, const char* argv[]) {
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
+        // If the user asked to print the module, print it even if invalid,
+        // as otherwise there is no way to print the broken module (the pass
+        // to print would not be reached).
+        if (std::find(options.passes.begin(), options.passes.end(), "print") !=
+            options.passes.end()) {
+          WasmPrinter::printModule(&wasm);
+        }
         Fatal() << "error in validating input";
       }
     }
@@ -260,8 +266,7 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
-        std::cerr << "translate-to-fuzz must always generate a valid module";
-        abort();
+        Fatal() << "translate-to-fuzz must always generate a valid module";
       }
     }
   }
@@ -320,9 +325,8 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(other);
       if (!valid) {
-        WasmPrinter::printModule(&other);
+        Fatal() << "fuzz-binary must always generate a valid module";
       }
-      assert(valid);
     }
     curr = &other;
   }
@@ -338,9 +342,8 @@ int main(int argc, const char* argv[]) {
       if (options.passOptions.validate) {
         bool valid = WasmValidator().validate(*curr);
         if (!valid) {
-          WasmPrinter::printModule(&*curr);
+          Fatal() << "opts must always generate a valid module";
         }
-        assert(valid);
       }
     };
     runPasses();

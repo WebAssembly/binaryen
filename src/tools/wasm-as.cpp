@@ -126,7 +126,6 @@ int main(int argc, const char* argv[]) {
           wasm,
           WasmValidator::Globally |
             (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
-      WasmPrinter::printModule(&wasm);
       Fatal() << "Error: input module is not valid.\n";
     }
   }
