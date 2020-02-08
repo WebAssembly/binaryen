@@ -365,6 +365,10 @@ struct DeadCodeElimination
           DELEGATE(Rethrow);
         case Expression::Id::BrOnExnId:
           DELEGATE(BrOnExn);
+        case Expression::Id::TupleMakeId:
+          DELEGATE(TupleMake);
+        case Expression::Id::TupleExtractId:
+          DELEGATE(TupleExtract);
         case Expression::Id::InvalidId:
           WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:

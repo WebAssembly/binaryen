@@ -2562,6 +2562,17 @@ switch (op[0]) {
       case 'r':
         if (strcmp(op, "try") == 0) { return makeTry(s); }
         goto parse_error;
+      case 'u': {
+        switch (op[6]) {
+          case 'e':
+            if (strcmp(op, "tuple.extract") == 0) { return makeTupleExtract(s); }
+            goto parse_error;
+          case 'm':
+            if (strcmp(op, "tuple.make") == 0) { return makeTupleMake(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }

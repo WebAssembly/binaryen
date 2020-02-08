@@ -1387,6 +1387,11 @@ struct PrintExpressionContents
     o << ".pop";
     restoreNormalColor(o);
   }
+  void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
+  void visitTupleExtract(TupleExtract* curr) {
+    printMedium(o, "tuple.extract ");
+    o << curr->index;
+  }
 };
 
 // Prints an expression in s-expr format, including both the
@@ -1953,6 +1958,22 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitPop(Pop* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitTupleMake(TupleMake* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    decIndent();
+    o << ')';
+  }
+  void visitTupleExtract(TupleExtract* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    printFullLine(curr->tuple);
     o << ')';
   }
   // Module-level visitors

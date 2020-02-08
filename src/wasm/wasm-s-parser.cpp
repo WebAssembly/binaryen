@@ -1882,6 +1882,21 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
+  auto ret = allocator.alloc<TupleMake>();
+  parseCallOperands(s, 1, s.size(), ret);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
+  auto ret = allocator.alloc<TupleExtract>();
+  ret->index = atoi(s[1]->str().c_str());
+  ret->tuple = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

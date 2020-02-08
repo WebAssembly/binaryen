@@ -1640,6 +1640,14 @@ void BinaryInstWriter::visitPop(Pop* curr) {
   // Turns into nothing in the binary format
 }
 
+void BinaryInstWriter::visitTupleMake(TupleMake* curr) {
+  WASM_UNREACHABLE("tuple.make should have been lowered away");
+}
+
+void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
+  WASM_UNREACHABLE("tuple.extract should have been lowered away");
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

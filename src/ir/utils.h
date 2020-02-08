@@ -157,6 +157,8 @@ struct ReFinalize
   void visitUnreachable(Unreachable* curr);
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
   void visitFunction(Function* curr);
 
@@ -224,6 +226,8 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
   void visitPush(Push* curr) { curr->finalize(); }
   void visitPop(Pop* curr) { curr->finalize(); }
+  void visitTupleMake(TupleMake* curr) { curr->finalize(); }
+  void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

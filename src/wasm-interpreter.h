@@ -1101,6 +1101,16 @@ public:
     NOTE_ENTER("AtomicFence");
     return Flow();
   }
+  Flow visitTupleMake(TupleMake* curr) {
+    NOTE_ENTER("tuple.make");
+    // TODO: make Flow
+    return {};
+  }
+  Flow visitTupleExtract(TupleExtract* curr) {
+    NOTE_ENTER("tuple.extract");
+    // TODO: make Flow
+    return {};
+  }
 
   Flow visitCall(Call*) { WASM_UNREACHABLE("unimp"); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE("unimp"); }

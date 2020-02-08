@@ -235,6 +235,8 @@ private:
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
   Expression* makeBrOnExn(Element& s);
+  Expression* makeTupleMake(Element& s);
+  Expression* makeTupleExtract(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

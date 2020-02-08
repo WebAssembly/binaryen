@@ -538,6 +538,8 @@ public:
     ThrowId,
     RethrowId,
     BrOnExnId,
+    TupleMakeId,
+    TupleExtractId,
     NumExpressionIds
   };
   Id _id;
@@ -1145,6 +1147,25 @@ public:
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
   Type sent;
+
+  void finalize();
+};
+
+class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
+public:
+  TupleMake(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
+public:
+  TupleExtract(MixedArena& allocator) {}
+
+  Expression* tuple;
+  Index index;
 
   void finalize();
 };
