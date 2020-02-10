@@ -403,7 +403,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     }
   });
   if (flags.emscripten) {
-    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS"));
+    asmFunc[3]->push_back(
+      ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS\n"));
   }
   // functions
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
@@ -425,7 +426,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     wasm->addExport(e);
   }
   if (flags.emscripten) {
-    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS"));
+    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
   }
 
   addTable(asmFunc[3], wasm);
