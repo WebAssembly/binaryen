@@ -3229,6 +3229,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // remove that shift. if there is a shift, we can just look through it, etc.
   processUnshifted = [&](Ref ptr, unsigned bytes) {
     auto shifts = bytesToShift(bytes);
+    // E.g. the address variable "$4" in Atomics_compareExchange(HEAP8, $4, $7, $8);
+    if (ptr->isString()) {
+      return process(ptr);
+    }
     // HEAP?[addr >> ?], or HEAP8[x | 0]
     if ((ptr->isArray(BINARY) && ptr[1] == RSHIFT && ptr[3]->isNumber() &&
          ptr[3]->getInteger() == shifts) ||
