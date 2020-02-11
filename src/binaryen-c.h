@@ -1304,6 +1304,30 @@ BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenClearPassArguments();
 
+// Gets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void);
+
+// Sets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void);
+
+// Sets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
+
+// Sets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
+
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
 BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,

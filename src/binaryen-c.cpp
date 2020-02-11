@@ -3958,6 +3958,54 @@ void BinaryenClearPassArguments(void) {
   globalPassOptions.arguments.clear();
 }
 
+BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetAlwaysInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.alwaysInlineMaxSize;
+}
+
+void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetAlwaysInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.alwaysInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFlexibleInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.flexibleInlineMaxSize;
+}
+
+void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetFlexibleInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.flexibleInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetOneCallerInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.oneCallerInlineMaxSize;
+}
+
+void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetOneCallerInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.oneCallerInlineMaxSize = size;
+}
+
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
                              const char** passes,
                              BinaryenIndex numPasses) {

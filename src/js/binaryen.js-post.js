@@ -2928,6 +2928,36 @@ Module['clearPassArguments'] = function() {
   Module['_BinaryenClearPassArguments']();
 };
 
+// Gets the function size at which we always inline.
+Module['getAlwaysInlineMaxSize'] = function() {
+  return Module['_BinaryenGetAlwaysInlineMaxSize']();
+};
+
+// Sets the function size at which we always inline.
+Module['setAlwaysInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetAlwaysInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when functions are lightweight.
+Module['getFlexibleInlineMaxSize'] = function() {
+  return Module['_BinaryenGetFlexibleInlineMaxSize']();
+};
+
+// Sets the function size which we inline when functions are lightweight.
+Module['setFlexibleInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetFlexibleInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when there is only one caller.
+Module['getOneCallerInlineMaxSize'] = function() {
+  return Module['_BinaryenGetOneCallerInlineMaxSize']();
+};
+
+// Sets the function size which we inline when there is only one caller.
+Module['setOneCallerInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetOneCallerInlineMaxSize'](size);
+};
+
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
