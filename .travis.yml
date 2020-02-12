@@ -34,7 +34,7 @@ jobs:
       compiler: clang
       addons:
         apt:
-          packages: ['python3-pip']
+          packages: ['cmake', 'python3-pip']
       install: pip3 install --user flake8==3.7.8
       script:
         - flake8
