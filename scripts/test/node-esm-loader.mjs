@@ -3,29 +3,38 @@
 import path from 'path';
 import process from 'process';
 
-const baseURL = new URL('file://');
-const binaryen_root = path.dirname(path.dirname(process.cwd()));
-baseURL.pathname = `${binaryen_root}/`;
+const binaryen_root = "file://" + path.dirname(path.dirname(process.cwd())) + "/";
 
-const specialTestSuiteModules = [ 'spectest', 'env', 'mod.ule' ];
-const specialTestSuiteUrls = [];
+const specialTestSuiteModules = {
+  'spectest': {
+    url: new URL('scripts/test/spectest.js', binaryen_root).href,
+    format: 'module'
+  },
+  'env': {
+    url: new URL('scripts/test/env.js', binaryen_root).href,
+    format: 'module'
+  },
+  'mod.ule': {
+    url: new URL('scripts/test/mod.ule.js', binaryen_root).href,
+    format: 'module'
+  }
+};
 
 export async function resolve(specifier, context, defaultResolve) {
-  if (specialTestSuiteModules.includes(specifier)) {
-    const url = new URL('./scripts/test/' + specifier + '.js', baseURL).href;
-    specialTestSuiteUrls.push(url);
-    return {
-      url
-    };
+  const specialModule = specialTestSuiteModules[specifier];
+  if (specialModule) {
+    return specialModule;
   }
   return defaultResolve(specifier, context, defaultResolve);
 }
 
 export async function getFormat(url, context, defaultGetFormat) {
-  if (specialTestSuiteUrls.includes(url)) {
-    return {
-      format: 'module'
-    };
+  const specifiers = Object.keys(specialTestSuiteModules);
+  for (let i = 0, k = specifiers.length; i < k; ++i) {
+    const specialModule = specialTestSuiteModules[specifiers[i]];
+    if (specialModule.url == url) {
+      return specialModule;
+    }
   }
   return defaultGetFormat(url, context, defaultGetFormat);
 }
