@@ -1156,10 +1156,6 @@ void Module::updateMaps() {
   for (auto& curr : events) {
     eventsMap[curr->name] = curr.get();
   }
-  // Code to trigger clang-tidy error. Will be deleted before committing.
-  int a = 3;
-  if (true)
-    a = 5;
 }
 
 void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
