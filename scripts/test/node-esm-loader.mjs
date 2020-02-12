@@ -3,19 +3,21 @@
 import path from 'path';
 import process from 'process';
 
-const binaryen_root = "file://" + path.dirname(path.dirname(process.cwd())) + "/";
+const baseURL = new URL('file://');
+const binaryen_root = path.dirname(path.dirname(process.cwd()));
+baseURL.pathname = `${binaryen_root}/`;
 
 const specialTestSuiteModules = {
   'spectest': {
-    url: new URL('scripts/test/spectest.js', binaryen_root).href,
+    url: new URL('scripts/test/spectest.js', baseURL).href,
     format: 'module'
   },
   'env': {
-    url: new URL('scripts/test/env.js', binaryen_root).href,
+    url: new URL('scripts/test/env.js', baseURL).href,
     format: 'module'
   },
   'mod.ule': {
-    url: new URL('scripts/test/mod.ule.js', binaryen_root).href,
+    url: new URL('scripts/test/mod.ule.js', baseURL).href,
     format: 'module'
   }
 };
