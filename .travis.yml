@@ -134,7 +134,7 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2 python3 clang ninja
+        - alpine apk add build-base cmake git python3 clang ninja
       script:
         - alpine cmake . -G Ninja
         - alpine ninja
