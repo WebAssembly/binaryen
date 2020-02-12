@@ -31,6 +31,7 @@ jobs:
   include:
     - name: lint-checks
       stage: test
+      compiler: clang
       addons:
         apt:
           packages: ['python3-pip']
