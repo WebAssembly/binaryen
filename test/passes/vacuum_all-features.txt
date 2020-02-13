@@ -440,3 +440,27 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (event $e (attr 0) (param i32))
+ (func $try-test (; 0 ;)
+  (nop)
+ )
+ (func $inner-try-test (; 1 ;)
+  (local $0 i32)
+  (try
+   (throw $e
+    (i32.const 0)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (local.set $0
+     (i32.const 1)
+    )
+   )
+  )
+ )
+)
