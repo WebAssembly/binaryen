@@ -34,19 +34,14 @@ jobs:
       compiler: clang
       addons:
         apt:
-          packages: ['cmake', 'ninja-build', 'python3-pip']
+          packages: ['cmake', 'python3-pip']
       install: pip3 install --user flake8==3.7.8
       script:
         - flake8
         - ./clang-format-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
-        - cmake ${TRAVIS_BUILD_DIR} -G Ninja
-            -DCMAKE_C_FLAGS="$COMPILER_FLAGS"
-            -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-            -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
-            -DCMAKE_INSTALL_PREFIX=install
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         - ./clang-tidy-diff.sh
 
     # Build with clang and run tests on the host system (Ubuntu).
