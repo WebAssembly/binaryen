@@ -239,13 +239,13 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing wasm";
+      Fatal() << "error parsing wasm";
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing wasm source map";
+      Fatal() << "error parsing wasm source map";
     } catch (std::bad_alloc&) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+      Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
     }
 
@@ -253,7 +253,7 @@ int main(int argc, const char* argv[]) {
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        exitOnInvalidWasm("error in validating input");
+        exitOnInvalidWasm("error validating input");
       }
     }
   } else {
