@@ -198,6 +198,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Visiting.
 
   Node* visitExpression(Expression* curr) {
+    // TODO Exception handling instruction support
+
     // Control flow and get/set etc. are special. Aside from them, we just need
     // to do something very generic.
     if (auto* block = curr->dynCast<Block>()) {
