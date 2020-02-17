@@ -128,6 +128,9 @@ void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
+  if (curr->exnref->type == Type::unreachable) {
+    replaceUntaken(curr->exnref, nullptr);
+  }
   updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
