@@ -63,6 +63,7 @@ Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();
 Pass* createMinifyImportsPass();
 Pass* createMinifyImportsAndExportsPass();
+Pass* createMinifyImportsAndExportsAndModulesPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNoExitRuntimePass();

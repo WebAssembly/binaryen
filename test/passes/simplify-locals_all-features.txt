@@ -161,14 +161,18 @@
    (drop
     (i32.const 8)
    )
-   (nop)
-   (nop)
-   (call $waka)
-   (drop
+   (local.set $a
     (i32.const 9)
    )
-   (drop
+   (local.set $b
     (i32.const 10)
+   )
+   (call $waka)
+   (drop
+    (local.get $a)
+   )
+   (drop
+    (local.get $b)
    )
    (drop
     (i32.const 11)
@@ -201,10 +205,12 @@
     (i32.const 48)
     (i32.const 96)
    )
-   (drop
+   (local.set $a
     (i32.const 17)
    )
-   (nop)
+   (local.set $b
+    (i32.const 18)
+   )
   )
   (block $block3
    (nop)
@@ -470,64 +476,107 @@
   (local.set $$rem
    (local.get $__stackBase__)
   )
-  (nop)
-  (nop)
-  (nop)
-  (nop)
+  (local.set $$1$0
+   (i32.or
+    (i32.shr_s
+     (local.get $$a$1)
+     (i32.const 31)
+    )
+    (i32.shl
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$a$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+  )
+  (local.set $$1$1
+   (i32.or
+    (i32.shr_s
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$a$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 31)
+    )
+    (i32.shl
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$a$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+  )
+  (local.set $$2$0
+   (i32.or
+    (i32.shr_s
+     (local.get $$b$1)
+     (i32.const 31)
+    )
+    (i32.shl
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$b$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+  )
+  (local.set $$2$1
+   (i32.or
+    (i32.shr_s
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$b$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 31)
+    )
+    (i32.shl
+     (if (result i32)
+      (i32.lt_s
+       (local.get $$b$1)
+       (i32.const 0)
+      )
+      (i32.const -1)
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+  )
   (nop)
   (nop)
   (drop
    (call $___udivmoddi4
     (call $_i64Subtract
      (i32.xor
-      (local.tee $$1$0
-       (i32.or
-        (i32.shr_s
-         (local.get $$a$1)
-         (i32.const 31)
-        )
-        (i32.shl
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$a$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 1)
-        )
-       )
-      )
+      (local.get $$1$0)
       (local.get $$a$0)
      )
      (i32.xor
-      (local.tee $$1$1
-       (i32.or
-        (i32.shr_s
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$a$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 31)
-        )
-        (i32.shl
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$a$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 1)
-        )
-       )
-      )
+      (local.get $$1$1)
       (local.get $$a$1)
      )
      (local.get $$1$0)
@@ -538,54 +587,11 @@
     )
     (call $_i64Subtract
      (i32.xor
-      (local.tee $$2$0
-       (i32.or
-        (i32.shr_s
-         (local.get $$b$1)
-         (i32.const 31)
-        )
-        (i32.shl
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$b$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 1)
-        )
-       )
-      )
+      (local.get $$2$0)
       (local.get $$b$0)
      )
      (i32.xor
-      (local.tee $$2$1
-       (i32.or
-        (i32.shr_s
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$b$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 31)
-        )
-        (i32.shl
-         (if (result i32)
-          (i32.lt_s
-           (local.get $$b$1)
-           (i32.const 0)
-          )
-          (i32.const -1)
-          (i32.const 0)
-         )
-         (i32.const 1)
-        )
-       )
-      )
+      (local.get $$2$1)
       (local.get $$b$1)
      )
      (local.get $$2$0)

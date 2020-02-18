@@ -457,6 +457,25 @@ function initializeConstants() {
   ].forEach(function(name) {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
+
+  // Expression side effects
+  Module['SideEffects'] = {};
+  [ 'None',
+    'Branches',
+    'Calls',
+    'ReadsLocal',
+    'WritesLocal',
+    'ReadsGlobal',
+    'WritesGlobal',
+    'ReadsMemory',
+    'WritesMemory',
+    'ImplicitTrap',
+    'IsAtomic',
+    'Throws',
+    'Any'
+  ].forEach(function(name) {
+    Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
+  });
 }
 
 // 'Module' interface
@@ -2216,7 +2235,7 @@ function wrapModule(module, self) {
   }
   self['getMemorySegmentInfoByIndex'] = function(id) {
     return {
-      'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
       'data': (function(){
         var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
         var ptr = _malloc(size);
@@ -2225,7 +2244,8 @@ function wrapModule(module, self) {
         res.set(new Uint8Array(buffer, ptr, size));
         _free(ptr);
         return res.buffer;
-      })()
+      })(),
+      'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
   }
   self['setStart'] = function(start) {
@@ -2761,6 +2781,11 @@ Module['getExpressionInfo'] = function(expr) {
   }
 };
 
+// Gets the side effects of the specified expression
+Module['getSideEffects'] = function(expr, features) {
+  return Module['_BinaryenExpressionGetSideEffects'](expr, features);
+};
+
 Module['createType'] = function(types) {
   return preserveStack(function() {
     var array = i32sToStack(types);
@@ -2870,7 +2895,7 @@ Module['getOptimizeLevel'] = function() {
 
 // Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 Module['setOptimizeLevel'] = function(level) {
-  return Module['_BinaryenSetOptimizeLevel'](level);
+  Module['_BinaryenSetOptimizeLevel'](level);
 };
 
 // Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
@@ -2880,7 +2905,7 @@ Module['getShrinkLevel'] = function() {
 
 // Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
 Module['setShrinkLevel'] = function(level) {
-  return Module['_BinaryenSetShrinkLevel'](level);
+  Module['_BinaryenSetShrinkLevel'](level);
 };
 
 // Gets whether generating debug information is currently enabled or not.
@@ -2890,7 +2915,69 @@ Module['getDebugInfo'] = function() {
 
 // Enables or disables debug information in emitted binaries.
 Module['setDebugInfo'] = function(on) {
-  return Module['_BinaryenSetDebugInfo'](on);
+  Module['_BinaryenSetDebugInfo'](on);
+};
+
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+Module['getLowMemoryUnused'] = function() {
+  return Boolean(Module['_BinaryenGetLowMemoryUnused']());
+};
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing.
+Module['setLowMemoryUnused'] = function(on) {
+  Module['_BinaryenSetLowMemoryUnused'](on);
+};
+
+// Gets the value of the specified arbitrary pass argument.
+Module['getPassArgument'] = function(key) {
+  return preserveStack(function() {
+    var ret = Module['_BinaryenGetPassArgument'](strToStack(key));
+    return ret !== 0 ? UTF8ToString(ret) : null;
+  });
+};
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL.
+Module['setPassArgument'] = function (key, value) {
+  preserveStack(function () {
+    Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value));
+  });
+};
+
+// Clears all arbitrary pass arguments.
+Module['clearPassArguments'] = function() {
+  Module['_BinaryenClearPassArguments']();
+};
+
+// Gets the function size at which we always inline.
+Module['getAlwaysInlineMaxSize'] = function() {
+  return Module['_BinaryenGetAlwaysInlineMaxSize']();
+};
+
+// Sets the function size at which we always inline.
+Module['setAlwaysInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetAlwaysInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when functions are lightweight.
+Module['getFlexibleInlineMaxSize'] = function() {
+  return Module['_BinaryenGetFlexibleInlineMaxSize']();
+};
+
+// Sets the function size which we inline when functions are lightweight.
+Module['setFlexibleInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetFlexibleInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when there is only one caller.
+Module['getOneCallerInlineMaxSize'] = function() {
+  return Module['_BinaryenGetOneCallerInlineMaxSize']();
+};
+
+// Sets the function size which we inline when there is only one caller.
+Module['setOneCallerInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
 // Enables or disables C-API tracing

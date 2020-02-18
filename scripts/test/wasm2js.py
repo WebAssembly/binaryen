@@ -50,7 +50,10 @@ def test_wasm2js_output():
             for module, asserts in support.split_wast(t):
                 support.write_wast('split.wast', module, asserts)
 
-                cmd = shared.WASM2JS + ['split.wast', '-all']
+                # wasm2js does not yet support EH, and enabling it can reduce
+                # optimization opportunities
+                cmd = shared.WASM2JS + ['split.wast', '-all',
+                                        '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
                 if 'emscripten' in t:
@@ -99,7 +102,8 @@ def test_asserts_output():
         traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
 
         wasm = os.path.join(shared.get_test_dir('wasm2js'), wasm)
-        cmd = shared.WASM2JS + [wasm, '--allow-asserts', '-all']
+        cmd = shared.WASM2JS + [wasm, '--allow-asserts', '-all',
+                                '--disable-exception-handling']
         out = support.run_command(cmd)
         shared.fail_if_not_identical_to_file(out, asserts_expected_file)
 
@@ -146,7 +150,10 @@ def update_wasm2js_tests():
             for module, asserts in support.split_wast(t):
                 support.write_wast('split.wast', module, asserts)
 
-                cmd = shared.WASM2JS + ['split.wast', '-all']
+                # wasm2js does not yet support EH, and enable it can reduce
+                # optimization opportunities
+                cmd = shared.WASM2JS + ['split.wast', '-all',
+                                        '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
                 if 'emscripten' in wasm:
@@ -165,7 +172,7 @@ def update_wasm2js_tests():
         asserts_expected_file = os.path.join(shared.options.binaryen_test, asserts)
         traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
 
-        cmd = shared.WASM2JS + [os.path.join(shared.get_test_dir('wasm2js'), wasm), '--allow-asserts', '-all']
+        cmd = shared.WASM2JS + [os.path.join(shared.get_test_dir('wasm2js'), wasm), '--allow-asserts', '-all', '--disable-exception-handling']
         out = support.run_command(cmd)
         with open(asserts_expected_file, 'w') as o:
             o.write(out)

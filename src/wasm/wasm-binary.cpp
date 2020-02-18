@@ -117,7 +117,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
   if (sourceMap) {
     sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   }
-  binaryLocationsSizeAtSectionStart = binaryLocations.size();
+  binaryLocationsSizeAtSectionStart = binaryLocations.expressions.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -145,7 +145,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     }
   }
 
-  if (binaryLocationsSizeAtSectionStart != binaryLocations.size()) {
+  if (binaryLocationsSizeAtSectionStart != binaryLocations.expressions.size()) {
     // We added the binary locations, adjust them: they must be relative
     // to the code section.
     assert(binaryLocationsSizeAtSectionStart == 0);
@@ -153,14 +153,25 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
     auto body = start + sizeFieldSize;
-    for (auto& pair : binaryLocations) {
-      // Offsets are relative to the body of the code section: after the
-      // section type byte and the size.
-      // Everything was moved by the adjustment, track that. After this,
-      // we are at the right absolute address.
-      pair.second -= adjustmentForLEBShrinking;
-      // We are relative to the section start.
-      pair.second -= body;
+    // Offsets are relative to the body of the code section: after the
+    // section type byte and the size.
+    // Everything was moved by the adjustment, track that. After this,
+    // we are at the right absolute address.
+    // We are relative to the section start.
+    auto totalAdjustment = adjustmentForLEBShrinking + body;
+    for (auto& pair : binaryLocations.expressions) {
+      pair.second.start -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
+    }
+    for (auto& pair : binaryLocations.functions) {
+      pair.second.start -= totalAdjustment;
+      pair.second.declarations -= totalAdjustment;
+      pair.second.end -= totalAdjustment;
+    }
+    for (auto& pair : binaryLocations.delimiters) {
+      for (auto& item : pair.second) {
+        item -= totalAdjustment;
+      }
     }
   }
 }
@@ -294,7 +305,7 @@ void WasmBinaryWriter::writeFunctions() {
     return;
   }
   BYN_TRACE("== writeFunctions\n");
-  auto start = startSection(BinaryConsts::Section::Code);
+  auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
@@ -335,14 +346,28 @@ void WasmBinaryWriter::writeFunctions() {
       for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
-        binaryLocations[curr] -= adjustmentForLEBShrinking;
+        auto& span = binaryLocations.expressions[curr];
+        span.start -= adjustmentForLEBShrinking;
+        span.end -= adjustmentForLEBShrinking;
+        auto iter = binaryLocations.delimiters.find(curr);
+        if (iter != binaryLocations.delimiters.end()) {
+          for (auto& item : iter->second) {
+            item -= adjustmentForLEBShrinking;
+          }
+        }
       }
+    }
+    if (!binaryLocationTrackedExpressionsForFunc.empty()) {
+      binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos),
+        BinaryLocation(start - adjustmentForLEBShrinking),
+        BinaryLocation(o.size())};
     }
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
     binaryLocationTrackedExpressionsForFunc.clear();
   });
-  finishSection(start);
+  finishSection(sectionStart);
 }
 
 void WasmBinaryWriter::writeGlobals() {
@@ -697,12 +722,27 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       writeDebugLocation(iter->second);
     }
   }
-  // TODO: remove source map debugging support and refactor this method
-  // to something that directly thinks about DWARF, instead of indirectly
-  // looking at func->binaryLocations as a proxy for that etc.
-  if (func && !func->binaryLocations.empty()) {
-    binaryLocations[curr] = o.size();
+  // If this is an instruction in a function, and if the original wasm had
+  // binary locations tracked, then track it in the output as well.
+  if (func && !func->expressionLocations.empty()) {
+    binaryLocations.expressions[curr] =
+      BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
+  }
+}
+
+void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
+  if (func && !func->expressionLocations.empty()) {
+    auto& span = binaryLocations.expressions.at(curr);
+    assert(span.end == 0);
+    span.end = o.size();
+  }
+}
+
+void WasmBinaryWriter::writeExtraDebugLocation(
+  Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
+  if (func && !func->expressionLocations.empty()) {
+    binaryLocations.delimiters[curr][id] = o.size();
   }
 }
 
@@ -1351,16 +1391,24 @@ void WasmBinaryBuilder::readFunctions() {
   }
   for (size_t i = 0; i < total; i++) {
     BYN_TRACE("read one at " << pos << std::endl);
+    auto sizePos = pos;
     size_t size = getU32LEB();
     if (size == 0) {
       throwError("empty function size");
     }
     endOfFunction = pos + size;
 
-    Function* func = new Function;
+    auto* func = new Function;
     func->name = Name::fromInt(i);
     func->sig = functionSignatures[i];
     currFunction = func;
+
+    if (DWARF) {
+      func->funcLocation = BinaryLocations::FunctionLocations{
+        BinaryLocation(sizePos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation),
+        BinaryLocation(pos - codeSectionLocation + size)};
+    }
 
     readNextDebugLocation();
 
@@ -1385,6 +1433,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
       assert(expressionStack.empty());
+      assert(controlFlowStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1393,6 +1442,7 @@ void WasmBinaryBuilder::readFunctions() {
       if (!expressionStack.empty()) {
         throwError("stack not empty on function exit");
       }
+      assert(controlFlowStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1649,11 +1699,11 @@ void WasmBinaryBuilder::processExpressions() {
     }
     expressionStack.push_back(curr);
     if (curr->type == Type::unreachable) {
-      // once we see something unreachable, we don't want to add anything else
+      // Once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
-      // our AST. but we do need to skip it
-      // if there is nothing else here, just stop. otherwise, go into
-      // unreachable mode. peek to see what to do
+      // our AST. but we do need to skip it.
+      // If there is nothing else here, just stop. Otherwise, go into
+      // unreachable mode. peek to see what to do.
       if (pos == endOfFunction) {
         throwError("Reached function end without seeing End opcode");
       }
@@ -1665,9 +1715,11 @@ void WasmBinaryBuilder::processExpressions() {
           peek == BinaryConsts::Catch) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
-        readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
-        pos++;
+        // Read the byte we peeked at. No new instruction is generated for it.
+        Expression* dummy = nullptr;
+        readExpression(dummy);
+        assert(!dummy);
         return;
       } else {
         skipUnreachableCode();
@@ -2144,9 +2196,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitDrop((curr = allocator.alloc<Drop>())->cast<Drop>());
       break;
     case BinaryConsts::End:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::End, startPos);
+      break;
     case BinaryConsts::Else:
+      curr = nullptr;
+      continueControlFlow(BinaryLocations::Else, startPos);
+      break;
     case BinaryConsts::Catch:
       curr = nullptr;
+      continueControlFlow(BinaryLocations::Catch, startPos);
       break;
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
@@ -2280,11 +2339,41 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
-      currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
+      currFunction->expressionLocations[curr] =
+        BinaryLocations::Span{BinaryLocation(startPos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation)};
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
+}
+
+void WasmBinaryBuilder::startControlFlow(Expression* curr) {
+  if (DWARF && currFunction) {
+    controlFlowStack.push_back(curr);
+  }
+}
+
+void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
+                                            BinaryLocation pos) {
+  if (DWARF && currFunction) {
+    if (controlFlowStack.empty()) {
+      // We reached the end of the function, which is also marked with an
+      // "end", like a control flow structure.
+      assert(id == BinaryLocations::End);
+      assert(pos + 1 == endOfFunction);
+      return;
+    }
+    assert(!controlFlowStack.empty());
+    auto currControlFlow = controlFlowStack.back();
+    // We are called after parsing the byte, so we need to subtract one to
+    // get its position.
+    currFunction->delimiterLocations[currControlFlow][id] =
+      pos - codeSectionLocation;
+    if (id == BinaryLocations::End) {
+      controlFlowStack.pop_back();
+    }
+  }
 }
 
 void WasmBinaryBuilder::pushBlockElements(Block* curr,
@@ -2331,7 +2420,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
 
 void WasmBinaryBuilder::visitBlock(Block* curr) {
   BYN_TRACE("zz node: Block\n");
-
+  startControlFlow(curr);
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -2344,6 +2433,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
+      startControlFlow(curr);
       pos++;
       if (debugLocation.size()) {
         currFunction->debugLocations[curr] = *debugLocation.begin();
@@ -2419,6 +2509,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
 
 void WasmBinaryBuilder::visitIf(If* curr) {
   BYN_TRACE("zz node: If\n");
+  startControlFlow(curr);
   curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
@@ -2433,6 +2524,7 @@ void WasmBinaryBuilder::visitIf(If* curr) {
 
 void WasmBinaryBuilder::visitLoop(Loop* curr) {
   BYN_TRACE("zz node: Loop\n");
+  startControlFlow(curr);
   curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
@@ -4439,6 +4531,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
 
 void WasmBinaryBuilder::visitTry(Try* curr) {
   BYN_TRACE("zz node: Try\n");
+  startControlFlow(curr);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.

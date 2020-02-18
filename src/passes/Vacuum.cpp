@@ -54,6 +54,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   //  * The result may be used or unused.
   //  * The type may or may not matter (a drop can drop anything, for example).
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
+    FeatureSet features = getModule()->features;
     auto type = curr->type;
     // An unreachable node must not be changed.
     if (type == Type::unreachable) {
@@ -97,8 +98,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // side effects (the load itself may trap, if we are not ignoring such
           // things)
           auto* load = curr->cast<Load>();
-          if (!resultUsed &&
-              !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
+          if (!resultUsed && !EffectAnalyzer(getPassOptions(), features, curr)
+                                .hasSideEffects()) {
             if (!typeMatters || load->ptr->type == type) {
               return load->ptr;
             }
@@ -124,12 +125,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // side effects, as well as the node itself, as some unaries and
           // binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
-            EffectAnalyzer tester(getPassOptions());
+            EffectAnalyzer tester(getPassOptions(), features);
             tester.visitUnary(unary);
             if (tester.hasSideEffects()) {
               return curr;
             }
-            if (EffectAnalyzer(getPassOptions(), unary->value)
+            if (EffectAnalyzer(getPassOptions(), features, unary->value)
                   .hasSideEffects()) {
               curr = unary->value;
               continue;
@@ -137,14 +138,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
-            EffectAnalyzer tester(getPassOptions());
+            EffectAnalyzer tester(getPassOptions(), features);
             tester.visitBinary(binary);
             if (tester.hasSideEffects()) {
               return curr;
             }
-            if (EffectAnalyzer(getPassOptions(), binary->left)
+            if (EffectAnalyzer(getPassOptions(), features, binary->left)
                   .hasSideEffects()) {
-              if (EffectAnalyzer(getPassOptions(), binary->right)
+              if (EffectAnalyzer(getPassOptions(), features, binary->right)
                     .hasSideEffects()) {
                 return curr; // leave them
               } else {
@@ -152,7 +153,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                 continue;
               }
             } else {
-              if (EffectAnalyzer(getPassOptions(), binary->right)
+              if (EffectAnalyzer(getPassOptions(), features, binary->right)
                     .hasSideEffects()) {
                 curr = binary->right;
                 continue;
@@ -164,13 +165,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             // TODO: if two have side effects, we could replace the select with
             // say an add?
             auto* select = curr->cast<Select>();
-            if (EffectAnalyzer(getPassOptions(), select->ifTrue)
+            if (EffectAnalyzer(getPassOptions(), features, select->ifTrue)
                   .hasSideEffects()) {
-              if (EffectAnalyzer(getPassOptions(), select->ifFalse)
+              if (EffectAnalyzer(getPassOptions(), features, select->ifFalse)
                     .hasSideEffects()) {
                 return curr; // leave them
               } else {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   return curr; // leave them
                 } else {
@@ -179,9 +181,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                 }
               }
             } else {
-              if (EffectAnalyzer(getPassOptions(), select->ifFalse)
+              if (EffectAnalyzer(getPassOptions(), features, select->ifFalse)
                     .hasSideEffects()) {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   return curr; // leave them
                 } else {
@@ -189,7 +192,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                   continue;
                 }
               } else {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   curr = select->condition;
                   continue;
@@ -410,6 +414,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
   }
 
+  void visitTry(Try* curr) {
+    // If try's body does not throw, the whole try-catch can be replaced with
+    // the try's body.
+    if (!EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+           .throws) {
+      replaceCurrent(curr->body);
+    }
+  }
+
   void visitFunction(Function* curr) {
     auto* optimized =
       optimize(curr->body, curr->sig.results != Type::none, true);
@@ -419,7 +432,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       ExpressionManipulator::nop(curr->body);
     }
     if (curr->sig.results == Type::none &&
-        !EffectAnalyzer(getPassOptions(), curr->body).hasSideEffects()) {
+        !EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+           .hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
   }

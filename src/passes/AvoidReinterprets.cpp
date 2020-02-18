@@ -36,7 +36,10 @@ static bool canReplaceWithReinterpret(Load* load) {
          load->bytes == load->type.getByteSize();
 }
 
-static Load* getSingleLoad(LocalGraph* localGraph, LocalGet* get) {
+static Load* getSingleLoad(LocalGraph* localGraph,
+                           LocalGet* get,
+                           const PassOptions& passOptions,
+                           FeatureSet features) {
   std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
@@ -48,7 +51,7 @@ static Load* getSingleLoad(LocalGraph* localGraph, LocalGet* get) {
     if (!set) {
       return nullptr;
     }
-    auto* value = Properties::getFallthrough(set->value);
+    auto* value = Properties::getFallthrough(set->value, passOptions, features);
     if (auto* parentGet = value->dynCast<LocalGet>()) {
       if (seen.count(parentGet)) {
         // We are in a cycle of gets, in unreachable code.
@@ -98,9 +101,12 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
+      FeatureSet features = getModule()->features;
       if (auto* get =
-            Properties::getFallthrough(curr->value)->dynCast<LocalGet>()) {
-        if (auto* load = getSingleLoad(localGraph, get)) {
+            Properties::getFallthrough(curr->value, getPassOptions(), features)
+              ->dynCast<LocalGet>()) {
+        if (auto* load =
+              getSingleLoad(localGraph, get, getPassOptions(), features)) {
           auto& info = infos[load];
           info.reinterpreted = true;
         }
@@ -130,22 +136,27 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
       std::map<Load*, Info>& infos;
       LocalGraph* localGraph;
       Module* module;
+      const PassOptions& passOptions;
 
       FinalOptimizer(std::map<Load*, Info>& infos,
                      LocalGraph* localGraph,
-                     Module* module)
-        : infos(infos), localGraph(localGraph), module(module) {}
+                     Module* module,
+                     const PassOptions& passOptions)
+        : infos(infos), localGraph(localGraph), module(module),
+          passOptions(passOptions) {}
 
       void visitUnary(Unary* curr) {
         if (isReinterpret(curr)) {
-          auto* value = Properties::getFallthrough(curr->value);
+          auto* value = Properties::getFallthrough(
+            curr->value, passOptions, module->features);
           if (auto* load = value->dynCast<Load>()) {
             // A reinterpret of a load - flip it right here if we can.
             if (canReplaceWithReinterpret(load)) {
               replaceCurrent(makeReinterpretedLoad(load, load->ptr));
             }
           } else if (auto* get = value->dynCast<LocalGet>()) {
-            if (auto* load = getSingleLoad(localGraph, get)) {
+            if (auto* load = getSingleLoad(
+                  localGraph, get, passOptions, module->features)) {
               auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;
@@ -188,7 +199,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                                 ptr,
                                 load->type.reinterpret());
       }
-    } finalOptimizer(infos, localGraph, getModule());
+    } finalOptimizer(infos, localGraph, getModule(), getPassOptions());
 
     finalOptimizer.walk(func->body);
   }

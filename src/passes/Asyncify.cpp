@@ -549,7 +549,8 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inBlacklist;
                           },
-                          [](Info& info) { info.canChangeState = true; });
+                          [](Info& info) { info.canChangeState = true; },
+                          scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
 

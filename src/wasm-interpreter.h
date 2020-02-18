@@ -1188,6 +1188,7 @@ public:
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literal callTable(Index index,
+                              Signature sig,
                               LiteralList& arguments,
                               Type result,
                               SubType& instance) = 0;
@@ -1575,7 +1576,7 @@ private:
       Index index = target.value.geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
-        index, arguments, type, *instance.self());
+        index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         Const c;

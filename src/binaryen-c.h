@@ -1234,6 +1234,8 @@ BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
+BINARYEN_API int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                                 BinaryenIndex id);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex id,
                                                 char* buffer);
@@ -1295,6 +1297,50 @@ BINARYEN_API int BinaryenGetDebugInfo(void);
 // Enables or disables debug information in emitted binaries.
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetDebugInfo(int on);
+
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetLowMemoryUnused(void);
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
+
+// Gets the value of the specified arbitrary pass argument.
+// Applies to all modules, globally.
+BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
+
+// Clears all arbitrary pass arguments.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenClearPassArguments();
+
+// Gets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void);
+
+// Sets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void);
+
+// Sets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
+
+// Sets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
@@ -1491,6 +1537,29 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
                                            const char* name,
                                            const char* contents,
                                            BinaryenIndex contentsSize);
+
+//
+// ========= Effect analyzer =========
+//
+
+typedef uint32_t BinaryenSideEffects;
+
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectNone(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectBranches(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectCalls(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
+
+BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
+  BinaryenExpressionRef expr, BinaryenFeatures features);
 
 //
 // ========== CFG / Relooper ==========

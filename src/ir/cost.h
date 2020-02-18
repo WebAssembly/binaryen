@@ -726,6 +726,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitDrop(Drop* curr) { return visit(curr->value); }
   Index visitReturn(Return* curr) { return maybeVisit(curr->value); }
   Index visitHost(Host* curr) { return 100; }
+  Index visitRefNull(RefNull* curr) { return 1; }
+  Index visitRefIsNull(RefIsNull* curr) { return 1; }
+  Index visitRefFunc(RefFunc* curr) { return 1; }
+  Index visitTry(Try* curr) {
+    // We assume no exception will be thrown in most cases
+    return visit(curr->body);
+  }
+  Index visitThrow(Throw* curr) { return 100; }
+  Index visitRethrow(Rethrow* curr) { return 100; }
+  Index visitBrOnExn(BrOnExn* curr) {
+    return 1 + visit(curr->exnref) + curr->sent.size();
+  }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
 };

@@ -47,7 +47,7 @@ enum {
 
 // wasm VMs on the web have decided to impose some limits on what they
 // accept
-enum WebLimitations {
+enum WebLimitations : uint32_t {
   MaxDataSegments = 100 * 1000,
   MaxFunctionBodySize = 128 * 1024,
   MaxFunctionLocals = 50 * 1000
@@ -1014,6 +1014,10 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
+  void writeDebugLocationEnd(Expression* curr, Function* func);
+  void writeExtraDebugLocation(Expression* curr,
+                               Function* func,
+                               BinaryLocations::DelimiterId id);
 
   // helpers
   void writeInlineString(const char* name);
@@ -1059,13 +1063,8 @@ private:
 
   std::unique_ptr<ImportInfo> importInfo;
 
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section. This is similar
-  // to binaryLocations on Function objects, which are filled as we load the
-  // functions from the binary. Here we track them as we write, and then
-  // the combination of the two can be used to update DWARF info for the new
-  // locations of things.
-  BinaryLocationsMap binaryLocations;
+  // General debugging info: track locations as we write.
+  BinaryLocations binaryLocations;
   size_t binaryLocationsSizeAtSectionStart;
   // Track the expressions that we added for the current function being
   // written, so that we can update those specific binary locations when
@@ -1188,6 +1187,18 @@ public:
   std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
+
+  // Control flow structure parsing: these have not just the normal binary
+  // data for an instruction, but also some bytes later on like "end" or "else".
+  // We must be aware of the connection between those things, for debug info.
+  std::vector<Expression*> controlFlowStack;
+
+  // Called when we parse the beginning of a control flow structure.
+  void startControlFlow(Expression* curr);
+
+  // Called when we parse a later part of a control flow structure, like "end"
+  // or "else".
+  void continueControlFlow(BinaryLocations::DelimiterId id, BinaryLocation pos);
 
   // set when we know code is unreachable in the sense of the wasm spec: we are
   // in a block and after an unreachable element. this helps parse stacky wasm

@@ -3806,6 +3806,20 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   const Memory::Segment& segment = wasm->memory.segments[id];
   return segment.data.size();
 }
+int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                    BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetMemorySegmentPassive(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Memory::Segment& segment = wasm->memory.segments[id];
+  return segment.isPassive;
+}
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
@@ -3968,6 +3982,112 @@ void BinaryenSetDebugInfo(int on) {
   }
 
   globalPassOptions.debugInfo = on != 0;
+}
+
+int BinaryenGetLowMemoryUnused(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetLowMemoryUnused();\n";
+  }
+
+  return globalPassOptions.lowMemoryUnused;
+}
+
+void BinaryenSetLowMemoryUnused(int on) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLowMemoryUnused(" << on << ");\n";
+  }
+
+  globalPassOptions.lowMemoryUnused = on != 0;
+}
+
+const char* BinaryenGetPassArgument(const char* key) {
+  if (tracing) {
+    std::cout << "  BinaryenGetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  auto& args = globalPassOptions.arguments;
+  auto it = args.find(key);
+  if (it == args.end()) {
+    return nullptr;
+  }
+  // internalize the string so it remains valid while the module is
+  return Name(it->second).c_str();
+}
+
+void BinaryenSetPassArgument(const char* key, const char* value) {
+  if (tracing) {
+    std::cout << "  BinaryenSetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ", ";
+    traceNameOrNULL(value);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  if (value) {
+    globalPassOptions.arguments[key] = value;
+  } else {
+    globalPassOptions.arguments.erase(key);
+  }
+}
+
+void BinaryenClearPassArguments(void) {
+  if (tracing) {
+    std::cout << "  BinaryenClearPassArguments();\n";
+  }
+
+  globalPassOptions.arguments.clear();
+}
+
+BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetAlwaysInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.alwaysInlineMaxSize;
+}
+
+void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetAlwaysInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.alwaysInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFlexibleInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.flexibleInlineMaxSize;
+}
+
+void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetFlexibleInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.flexibleInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetOneCallerInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.oneCallerInlineMaxSize;
+}
+
+void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetOneCallerInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
@@ -4530,6 +4650,70 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
   customSection.name = name;
   customSection.data = std::vector<char>(contents, contents + contentsSize);
   wasm->userSections.push_back(customSection);
+}
+
+//
+// ========= Effect analyzer =========
+//
+
+BinaryenSideEffects BinaryenSideEffectNone(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::None);
+}
+BinaryenSideEffects BinaryenSideEffectBranches(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::Branches);
+}
+BinaryenSideEffects BinaryenSideEffectCalls(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Calls);
+}
+BinaryenSideEffects BinaryenSideEffectReadsLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsLocal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesLocal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsMemory);
+}
+BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ImplicitTrap);
+}
+BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::IsAtomic);
+}
+BinaryenSideEffects BinaryenSideEffectThrows(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Throws);
+}
+BinaryenSideEffects BinaryenSideEffectAny(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
+}
+
+BinaryenSideEffects
+BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                 BinaryenFeatures features) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetSideEffects(expressions["
+              << expressions[expr] << "], " << features << ");\n";
+  }
+  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+    .getSideEffects();
 }
 
 //

@@ -762,6 +762,7 @@
  )
 )
 (module
+ (type $none_=>_none (func))
  (type $none_=>_funcref (func (result funcref)))
  (func $subtype-test (; 0 ;) (result funcref)
   (local $0 nullref)
@@ -787,6 +788,25 @@
   )
   (return
    (local.get $2)
+  )
+ )
+ (func $test (; 1 ;)
+  (local $0 anyref)
+  (local $1 nullref)
+  (local $2 nullref)
+  (block $label$1
+   (local.set $0
+    (ref.null)
+   )
+   (local.set $1
+    (ref.null)
+   )
+  )
+  (local.set $2
+   (local.get $1)
+  )
+  (drop
+   (local.get $1)
   )
  )
 )

@@ -44,18 +44,38 @@ static unsigned getRefSize(const DWARFYAML::Unit &Unit) {
 }
 
 template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
+  // XXX BINARYEN: Handle multiple linked compile units. Each one has its own
+  // range of values, terminated by a zero. AbbrevStart refers to the start
+  // index for the current unit, and AbbrevEnd to one past the last one
+  // (which is the index of the 0 terminator).
+  // TODO: This code appears to assume that abbreviation codes increment by 1
+  // so that lookups are linear. In LLVM output that is true, but it might not
+  // be in general.
+  size_t AbbrevStart = 0, AbbrevEnd = -1;
   for (auto &Unit : DebugInfo.CompileUnits) {
+    // Skip the 0 terminator.
+    AbbrevEnd = AbbrevStart = AbbrevEnd + 1;
+    while (AbbrevEnd < DebugInfo.AbbrevDecls.size() &&
+           DebugInfo.AbbrevDecls[AbbrevEnd].Code) {
+      AbbrevEnd++;
+    }
     onStartCompileUnit(Unit);
     if (Unit.Entries.empty()) { // XXX BINARYEN
       continue;
     }
     auto FirstAbbrevCode = Unit.Entries[0].AbbrCode;
-
     for (auto &Entry : Unit.Entries) {
       onStartDIE(Unit, Entry);
       if (Entry.AbbrCode == 0u)
         continue;
-      auto &Abbrev = DebugInfo.AbbrevDecls[Entry.AbbrCode - FirstAbbrevCode];
+      // XXX BINARYEN
+      if (Entry.AbbrCode - FirstAbbrevCode + AbbrevStart >= AbbrevEnd) {
+        errs() << "warning: invalid abbreviation code " << Entry.AbbrCode
+               << " (range: " << FirstAbbrevCode << " : " << AbbrevStart
+               << ".." << AbbrevEnd << ")\n";
+        continue;
+      }
+      auto &Abbrev = DebugInfo.AbbrevDecls[Entry.AbbrCode - FirstAbbrevCode + AbbrevStart];
       auto FormVal = Entry.Values.begin();
       auto AbbrForm = Abbrev.Attributes.begin();
       for (;
