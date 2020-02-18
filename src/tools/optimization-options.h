@@ -180,6 +180,13 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
+           })
+      .add("--force-unsupported-passes",
+           "-fup",
+           "Force execution of passes for current feature sets",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.forceUnsupportedPasses = true;
            });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {

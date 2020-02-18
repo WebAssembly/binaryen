@@ -707,7 +707,11 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
 
   bool singleUseOnly;
 
-  Souperify(bool singleUseOnly) : singleUseOnly(singleUseOnly) {}
+  Souperify(bool singleUseOnly) : singleUseOnly(singleUseOnly) {
+    // Exception handling does not yet support flatten and flatten-requiring
+    // passes
+    supportedFeatures.disable(FeatureSet::ExceptionHandling);
+  }
 
   void doWalkFunction(Function* func) {
     std::cout << "\n; function: " << func->name << '\n';

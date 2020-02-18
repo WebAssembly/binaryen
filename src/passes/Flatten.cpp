@@ -47,6 +47,12 @@ namespace wasm {
 struct Flatten
   : public WalkerPass<
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
+  Flatten() {
+    // Exception handling does not yet support flatten and flatten-requiring
+    // passes
+    supportedFeatures.disable(FeatureSet::ExceptionHandling);
+  }
+
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Flatten; }

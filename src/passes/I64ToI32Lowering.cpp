@@ -40,6 +40,12 @@ namespace wasm {
 static Name makeHighName(Name n) { return std::string(n.c_str()) + "$hi"; }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
+  I64ToI32Lowering() {
+    // Exception handling does not yet support flatten and flatten-requiring
+    // passes
+    supportedFeatures.disable(FeatureSet::ExceptionHandling);
+  }
+
   struct TempVar {
     TempVar(Index idx, Type ty, I64ToI32Lowering& pass)
       : idx(idx), pass(pass), moved(false), ty(ty) {}

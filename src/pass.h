@@ -101,6 +101,8 @@ struct PassOptions {
   enum { LowMemoryBound = 1024 };
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
+  // Force execution of unsupported passes for the given features sets.
+  bool forceUnsupportedPasses = false;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::map<std::string, std::string> arguments;
@@ -297,12 +299,15 @@ public:
   // out any Stack IR - it would need to be regenerated and optimized.
   virtual bool modifiesBinaryenIR() { return true; }
 
+  bool supports(FeatureSet f) { return supportedFeatures.has(f); }
+
   std::string name;
 
 protected:
   Pass() = default;
   Pass(Pass&) = default;
   Pass& operator=(const Pass&) = delete;
+  FeatureSet supportedFeatures = FeatureSet::All;
 };
 
 //

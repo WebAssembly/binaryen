@@ -204,6 +204,11 @@ static bool isAllocCall(Call* expr) {
 // To detect the latter, we'd have to follow control structures around, which
 // we don't do since it isn't neccessary / to keep the amount of work minimal.
 struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
+  OptimizeARC() {
+    // Exception handling does not yet support flatten and flatten-requiring
+    // passes
+    supportedFeatures.disable(FeatureSet::ExceptionHandling);
+  }
 
   bool isFunctionParallel() override { return true; }
 

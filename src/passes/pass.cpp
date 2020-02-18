@@ -647,6 +647,11 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
+  if (!pass->supports(wasm->features) && !options.forceUnsupportedPasses) {
+    std::cerr << "[PassRunner] Skipping '" << pass->name
+              << "' because module has unsupported features" << std::endl;
+    return;
+  }
   pass->prepareToRun(this, wasm);
   passes.emplace_back(std::move(pass));
 }

@@ -38,6 +38,12 @@
 namespace wasm {
 
 struct ReReloop final : public Pass {
+  ReReloop() {
+    // Exception handling does not yet support flatten and flatten-requiring
+    // passes
+    supportedFeatures.disable(FeatureSet::ExceptionHandling);
+  }
+
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReReloop; }
