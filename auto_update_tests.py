@@ -108,7 +108,9 @@ def update_wasm_opt_tests():
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast', '--print']
+            cmd = shared.WASM_OPT + opts + ['split.wast']
+            if 'noprint' not in t:
+                cmd.append('--print')
             actual += support.run_command(cmd)
         with open(os.path.join(shared.options.binaryen_test, 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o:
             o.write(actual)
