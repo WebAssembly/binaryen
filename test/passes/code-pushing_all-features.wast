@@ -60,4 +60,18 @@
       (drop (local.get $x))
     )
   )
+
+  (func $push-past-br-on-exn
+    (local $x i32)
+    (local $y exnref)
+    (drop
+      (block $out (result i32)
+        (local.set $x (i32.const 1))
+        (drop
+          (br_on_exn $out $e (local.get $y))
+        )
+        (local.get $x)
+      )
+    )
+  )
 )
