@@ -183,7 +183,7 @@ struct OptimizationOptions : public ToolOptions {
            })
       .add("--force-unsupported-passes",
            "-fup",
-           "Force execution of passes for current feature sets",
+           "Force execution of unsupported passes for current feature sets",
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.forceUnsupportedPasses = true;
