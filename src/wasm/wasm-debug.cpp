@@ -835,31 +835,27 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
     auto& range = yaml.Ranges[i];
     BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
-    // If this was not an end marker, try to find what it should be updated to.
-    if (oldStart != 0 && oldEnd != 0) {
+    // If this is an end marker (0, 0), or an invalid range (0, x) or (x, 0)
+    // then just emit it as it is - either to mark the end, or to mark an
+    // invalid entry.
+    if (oldStart == 0 || oldEnd == 0) {
+      newStart = oldStart;
+      newEnd = oldEnd;
+    } else {
+      // This was a valid entry; update it.
       newStart = locationUpdater.getNewStart(oldStart);
       newEnd = locationUpdater.getNewEnd(oldEnd);
       if (newStart == 0 || newEnd == 0) {
         // This part of the range no longer has a mapping, so we must skip it.
-        skip++;
-        continue;
+        // Don't use (0, 0) as that would be an end marker; emit something
+        // invalid for the debugger to ignore.
+        newStart = 0;
+        newEnd = 1;
       }
-      // The range start and end markers have been preserved. However, TODO
+      // TODO even if range start and end markers have been preserved,
       // instructions in the middle may have moved around, making the range no
-      // longer contiguous, we should check that, and possibly split/merge
+      // longer contiguous. We should check that, and possibly split/merge
       // the range. Or, we may need to have tracking in the IR for this.
-    } else {
-      // This was not a valid range in the old binary. It was either two 0's
-      // (an end marker) or an invalid value that should be ignored. Either way,
-      // write an end marker and finish the current section of ranges, filling
-      // it out to the original size (we must fill it out as indexes into
-      // the ranges section are not updated - we could update them and then
-      // pack the section, as an optimization TODO).
-      while (skip) {
-        auto& writtenRange = yaml.Ranges[i - skip];
-        writtenRange.Start = writtenRange.End = 0;
-        skip--;
-      }
     }
     auto& writtenRange = yaml.Ranges[i - skip];
     writtenRange.Start = newStart;
