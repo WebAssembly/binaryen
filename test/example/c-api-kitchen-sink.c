@@ -1296,12 +1296,10 @@ void test_for_each() {
     assert(1 == BinaryenGetNumFunctionTableSegments(module));
     assert(constExprRef == BinaryenGetFunctionTableSegmentOffset(module, 0));
     assert(3 == BinaryenGetFunctionTableSegmentLength(module, 0));
-    for (i = 0 ; i != BinaryenGetFunctionTableSegmentLength(module, 0) ; ++i)
+    for (i = 0; i != BinaryenGetFunctionTableSegmentLength(module, 0); ++i)
     {
-      char out[15] = {};
-      assert(BinaryenGetFunctionTableSegmentDataByteLength(module, 0, i) == strlen(funcNames[i])+1);
-      BinaryenCopyFunctionTableSegmentData(module, 0, i, out);
-      assert(0 == strcmp(funcNames[i], out));
+      const char * str = BinaryenGetFunctionTableSegmentData(module, 0, i);
+      assert(0 == strcmp(funcNames[i], str));
     }
   }
   BinaryenModulePrint(module);

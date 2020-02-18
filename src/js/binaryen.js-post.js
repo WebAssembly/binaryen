@@ -2182,16 +2182,11 @@ function wrapModule(module, self) {
       'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
       'segments': (function() {
         var arr = [];
-        for (var i = 0, j = Module['_BinaryenGetNumFunctionTableSegments'](module) ; i !== j ; ++i)
-        {
+        for (var i = 0, numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module); i !== numSegments; ++i) {
           var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
-          for (var k = 0, l = Module['_BinaryenGetFunctionTableSegmentLength'](module, i) ; k !== l ; ++k)
-          {
-            var size = Module['_BinaryenGetFunctionTableSegmentDataByteLength'](module, i, k);
-            var ptr = _malloc(size);
-            Module['_BinaryenCopyFunctionTableSegmentData'](module, i, k, ptr);
+          for (var j = 0, segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i); j !== segmentLength; ++j) {
+            var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
             seg['names'].push(UTF8ToString(ptr));
-            _free(ptr);
           }
           arr.push(seg);
         }
@@ -2533,7 +2528,7 @@ Module['getExpressionInfo'] = function(expr) {
             var tempBuffer = stackAlloc(16);
             Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
             value = new Array(16);
-            for (var i = 0 ; i < 16; i++) {
+            for (var i = 0; i < 16; i++) {
               value[i] = HEAPU8[tempBuffer + i];
             }
           });
@@ -2661,7 +2656,7 @@ Module['getExpressionInfo'] = function(expr) {
         var tempBuffer = stackAlloc(16);
         Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
         var mask = new Array(16);
-        for (var i = 0 ; i < 16; i++) {
+        for (var i = 0; i < 16; i++) {
           mask[i] = HEAPU8[tempBuffer + i];
         }
         return {

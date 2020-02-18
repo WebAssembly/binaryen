@@ -926,7 +926,7 @@ function test_for_each() {
   ];
 
   var i;
-  for (i = 0 ; i < module.getNumFunctions() ; i++) {
+  for (i = 0; i < module.getNumFunctions(); i++) {
     assert(module.getFunctionByIndex(i) === fns[i]);
   }
 
@@ -936,7 +936,7 @@ function test_for_each() {
     module.addFunctionExport(funcNames[2], "export2")
   ];
 
-  for (i = 0 ; i < module.getNumExports() ; i++) {
+  for (i = 0; i < module.getNumExports(); i++) {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
@@ -957,7 +957,7 @@ function test_for_each() {
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
-  for (i = 0 ; i < module.getNumMemorySegments() ; i++) {
+  for (i = 0; i < module.getNumMemorySegments(); i++) {
     var segment = module.getMemorySegmentInfoByIndex(i);
     assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
@@ -974,7 +974,7 @@ function test_for_each() {
   assert(1 === ftable.segments.length);
   assert(constExprRef === ftable.segments[0].offset);
   assert(3 === ftable.segments[0].names.length);
-  for (i = 0 ; i < ftable.segments[0].names.length ; i++) {
+  for (i = 0; i < ftable.segments[0].names.length; i++) {
     assert(funcNames[i] === ftable.segments[0].names[i]);
   }
 
