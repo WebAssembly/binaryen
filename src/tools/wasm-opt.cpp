@@ -217,6 +217,17 @@ int main(int argc, const char* argv[]) {
 
   BYN_TRACE("reading...\n");
 
+  auto exitOnInvalidWasm = [&](const char* message) {
+    // If the user asked to print the module, print it even if invalid,
+    // as otherwise there is no way to print the broken module (the pass
+    // to print would not be reached).
+    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
+        options.passes.end()) {
+      WasmPrinter::printModule(&wasm);
+    }
+    Fatal() << message;
+  };
+
   if (!translateToFuzz) {
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
@@ -228,13 +239,13 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing input";
+      Fatal() << "error parsing wasm";
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing wasm source map";
+      Fatal() << "error parsing wasm source map";
     } catch (std::bad_alloc&) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+      Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
     }
 
@@ -242,8 +253,7 @@ int main(int argc, const char* argv[]) {
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
-        Fatal() << "error in validating input";
+        exitOnInvalidWasm("error validating input");
       }
     }
   } else {
@@ -260,8 +270,7 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
-        std::cerr << "translate-to-fuzz must always generate a valid module";
-        abort();
+        Fatal() << "error after translate-to-fuzz";
       }
     }
   }
@@ -320,9 +329,8 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(other);
       if (!valid) {
-        WasmPrinter::printModule(&other);
+        Fatal() << "fuzz-binary must always generate a valid module";
       }
-      assert(valid);
     }
     curr = &other;
   }
@@ -338,9 +346,8 @@ int main(int argc, const char* argv[]) {
       if (options.passOptions.validate) {
         bool valid = WasmValidator().validate(*curr);
         if (!valid) {
-          WasmPrinter::printModule(&*curr);
+          exitOnInvalidWasm("error after opts");
         }
-        assert(valid);
       }
     };
     runPasses();
