@@ -38,4 +38,3 @@ class ErrorsTest(utils.BinaryenTestCase):
         # the stage of runnning passes, and print is a pass, so nothing would
         # be printed)
         test(['--print'], '(module')
-
