@@ -80,9 +80,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           return curr; // not always needed, but handled in visitLoop()
         case Expression::Id::DropId:
           return curr; // not always needed, but handled in visitDrop()
+        case Expression::Id::TryId:
+          return curr; // not always needed, but handled in visitTry()
 
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
+        case Expression::Id::BrOnExnId:
         case Expression::Id::CallId:
         case Expression::Id::CallIndirectId:
         case Expression::Id::LocalSetId:

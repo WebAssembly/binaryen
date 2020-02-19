@@ -94,4 +94,21 @@
    )
   )
  )
+ (func $push-past-br-on-exn (; 4 ;)
+  (local $x i32)
+  (local $y exnref)
+  (drop
+   (block $out (result i32)
+    (drop
+     (br_on_exn $out $e
+      (local.get $y)
+     )
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+    (local.get $x)
+   )
+  )
+ )
 )

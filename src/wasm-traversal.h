@@ -1159,7 +1159,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        // an if, ignorable
+        // an if or try, ignorable
         assert(curr->template is<If>() || curr->template is<Try>());
       }
       if (i == 0) {
