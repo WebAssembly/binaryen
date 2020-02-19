@@ -188,7 +188,7 @@ struct Precompute
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.value.type.isVector()) {
+    if (flow.getValue().type.isVector()) {
       return;
     }
     if (flow.breaking()) {
@@ -199,24 +199,25 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          if (flow.value.type != Type::none) {
+          if (flow.getValue().type != Type::none) {
             // reuse a const value if there is one
             if (ret->value) {
               if (auto* value = ret->value->dynCast<Const>()) {
-                value->value = flow.value;
+                value->value = flow.getValue();
                 value->finalize();
                 return;
               }
             }
-            ret->value = Builder(*getModule()).makeConstExpression(flow.value);
+            ret->value =
+              Builder(*getModule()).makeConstExpression(flow.getValue());
           } else {
             ret->value = nullptr;
           }
         } else {
           Builder builder(*getModule());
           replaceCurrent(
-            builder.makeReturn(flow.value.type != Type::none
-                                 ? builder.makeConstExpression(flow.value)
+            builder.makeReturn(flow.getValue().type != Type::none
+                                 ? builder.makeConstExpression(flow.getValue())
                                  : nullptr));
         }
         return;
@@ -226,17 +227,18 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        if (flow.value.type != Type::none) {
+        if (flow.getValue().type != Type::none) {
           // reuse a const value if there is one
           if (br->value) {
             if (auto* value = br->value->dynCast<Const>()) {
-              value->value = flow.value;
+              value->value = flow.getValue();
               value->finalize();
               br->finalize();
               return;
             }
           }
-          br->value = Builder(*getModule()).makeConstExpression(flow.value);
+          br->value =
+            Builder(*getModule()).makeConstExpression(flow.getValue());
         } else {
           br->value = nullptr;
         }
@@ -245,15 +247,16 @@ struct Precompute
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeBreak(flow.breakTo,
-                            flow.value.type != Type::none
-                              ? builder.makeConstExpression(flow.value)
+                            flow.getValue().type != Type::none
+                              ? builder.makeConstExpression(flow.getValue())
                               : nullptr));
       }
       return;
     }
     // this was precomputed
-    if (flow.value.type.isConcrete()) {
-      replaceCurrent(Builder(*getModule()).makeConstExpression(flow.value));
+    if (flow.getValue().type.isConcrete()) {
+      replaceCurrent(
+        Builder(*getModule()).makeConstExpression(flow.getValue()));
       worked = true;
     } else {
       ExpressionManipulator::nop(curr);
@@ -292,7 +295,7 @@ private:
     if (flow.breaking()) {
       return Literal();
     }
-    return flow.value;
+    return flow.getValue();
   }
 
   // Propagates values around. Returns whether we propagated.
