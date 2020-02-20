@@ -2177,6 +2177,23 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getFunctionTable'] = function() {
+    return {
+      'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
+      'segments': (function() {
+        var arr = [];
+        for (var i = 0, numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module); i !== numSegments; ++i) {
+          var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
+          for (var j = 0, segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i); j !== segmentLength; ++j) {
+            var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
+            seg['names'].push(UTF8ToString(ptr));
+          }
+          arr.push(seg);
+        }
+        return arr;
+      })()
+    };
+  };
   self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
@@ -2511,7 +2528,7 @@ Module['getExpressionInfo'] = function(expr) {
             var tempBuffer = stackAlloc(16);
             Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
             value = new Array(16);
-            for (var i = 0 ; i < 16; i++) {
+            for (var i = 0; i < 16; i++) {
               value[i] = HEAPU8[tempBuffer + i];
             }
           });
@@ -2639,7 +2656,7 @@ Module['getExpressionInfo'] = function(expr) {
         var tempBuffer = stackAlloc(16);
         Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
         var mask = new Array(16);
-        for (var i = 0 ; i < 16; i++) {
+        for (var i = 0; i < 16; i++) {
           mask[i] = HEAPU8[tempBuffer + i];
         }
         return {

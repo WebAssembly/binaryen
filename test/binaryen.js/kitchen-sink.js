@@ -917,24 +917,26 @@ function test_internals() {
 function test_for_each() {
   module = new binaryen.Module();
 
+  var funcNames = [ "fn0", "fn1", "fn2" ];
+
   var fns = [
-    module.addFunction("fn0", binaryen.none, binaryen.none, [], module.nop()),
-    module.addFunction("fn1", binaryen.none, binaryen.none, [], module.nop()),
-    module.addFunction("fn2", binaryen.none, binaryen.none, [], module.nop())
+    module.addFunction(funcNames[0], binaryen.none, binaryen.none, [], module.nop()),
+    module.addFunction(funcNames[1], binaryen.none, binaryen.none, [], module.nop()),
+    module.addFunction(funcNames[2], binaryen.none, binaryen.none, [], module.nop())
   ];
 
   var i;
-  for (i = 0 ; i < module.getNumFunctions() ; i++) {
+  for (i = 0; i < module.getNumFunctions(); i++) {
     assert(module.getFunctionByIndex(i) === fns[i]);
   }
 
   var exps = [
-    module.addFunctionExport("fn0", "export0"),
-    module.addFunctionExport("fn1", "export1"),
-    module.addFunctionExport("fn2", "export2")
+    module.addFunctionExport(funcNames[0], "export0"),
+    module.addFunctionExport(funcNames[1], "export1"),
+    module.addFunctionExport(funcNames[2], "export2")
   ];
 
-  for (i = 0 ; i < module.getNumExports() ; i++) {
+  for (i = 0; i < module.getNumExports(); i++) {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
@@ -955,13 +957,25 @@ function test_for_each() {
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
-  for (i = 0 ; i < module.getNumMemorySegments() ; i++) {
+  for (i = 0; i < module.getNumMemorySegments(); i++) {
     var segment = module.getMemorySegmentInfoByIndex(i);
     assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
     assert(expected_passive[i] === segment.passive);
+  }
+
+  var constExprRef = module.i32.const(0);
+  module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
+
+  var ftable = module.getFunctionTable();
+  assert(false === ftable.imported);
+  assert(1 === ftable.segments.length);
+  assert(constExprRef === ftable.segments[0].offset);
+  assert(3 === ftable.segments[0].names.length);
+  for (i = 0; i < ftable.segments[0].names.length; i++) {
+    assert(funcNames[i] === ftable.segments[0].names[i]);
   }
 
   console.log(module.emitText());

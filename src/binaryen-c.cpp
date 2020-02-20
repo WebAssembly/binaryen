@@ -3561,6 +3561,65 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   wasm->table.segments.push_back(segment);
 }
 
+int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenIsFunctionTableImported(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.imported();
+}
+BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumFunctionTableSegments(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.segments.size();
+}
+BinaryenExpressionRef
+BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
+                                      BinaryenIndex segmentId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentOffset(the_module, "
+              << segmentId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[segmentId].offset;
+}
+BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
+                                                    BinaryenIndex segmentId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentLength(the_module, "
+              << segmentId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[segmentId].data.size();
+}
+const char* BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
+                                                BinaryenIndex segmentId,
+                                                BinaryenIndex dataId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentData(the_module, "
+              << segmentId << ", " << dataId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId ||
+      wasm->table.segments[segmentId].data.size() <= dataId) {
+    Fatal() << "invalid function table segment or data id.";
+  }
+  return wasm->table.segments[segmentId].data[dataId].c_str();
+}
+
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,
