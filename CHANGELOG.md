@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v91
+---
+
 - `BinaryenExpressionGetSideEffects` (C API) and `getSideEffects` (JS API) now
   takes an additional `features` parameter.
 - Reference type support is added. Supported instructions are `ref.null`,
