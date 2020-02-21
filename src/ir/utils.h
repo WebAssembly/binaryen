@@ -301,6 +301,20 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
   }
 
+  void visitTry(Try* curr) {
+    bool acted = false;
+    if (maybeDrop(curr->body)) {
+      acted = true;
+    }
+    if (maybeDrop(curr->catchBody)) {
+      acted = true;
+    }
+    if (acted) {
+      reFinalize();
+      assert(curr->type == Type::none);
+    }
+  }
+
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
