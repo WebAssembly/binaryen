@@ -59,6 +59,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/iteration.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -153,6 +154,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     }
     unoptimizables.insert(curr->default_);
   }
+
+  void visitBrOnExn(BrOnExn* curr) { unoptimizables.insert(curr->name); }
 
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
@@ -299,6 +302,13 @@ private:
                             std::back_inserter(intersection));
       if (intersection.size() > 0) {
         // anything exiting that is in all targets is something bad
+        return false;
+      }
+      // Currently pop instructions are only used for exnref.pop, which is a
+      // pseudo instruction following a catch. In practice, the exnref.pop is a
+      // child of a local.set or a rethrow. We check if the current expression
+      // has a pop child within a limited depth (2).
+      if (containsChild<Pop>(item, 2)) {
         return false;
       }
     }

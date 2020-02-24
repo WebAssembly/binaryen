@@ -1191,4 +1191,52 @@
       )
     )
   )
+
+  (func $exnref_pop_test (local $exn exnref)
+    (try
+      (try
+        (catch
+          (local.set $exn (exnref.pop))
+          (drop (i32.const 111))
+          (drop (i32.const 222))
+          (drop (i32.const 333))
+          (unreachable)
+        )
+      )
+      (catch
+        (local.set $exn (exnref.pop))
+        (drop (i32.const 111))
+        (drop (i32.const 222))
+        (drop (i32.const 333))
+        (unreachable)
+      )
+    )
+  )
+
+  (event $e (attr 0)) ;; exception with no param
+  (func $br_on_exn_target_block (local $exn exnref)
+    ;; Here this block $x is targeted by br_on_exn, so code folding out of this
+    ;; block should NOT happen.
+    (block $x
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (drop (br_on_exn $x $e (local.get $exn)))
+      ;; no fallthrough, another thing to merge
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+      (br $x)
+    )
+  )
 )
