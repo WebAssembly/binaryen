@@ -3252,6 +3252,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
          ptr[3]->isNumber() && ptr[3]->getInteger() == 0)) {
       return process(ptr[2]);
     }
+    // If there is no shift at all, process the variable directly
+    // E.g. the address variable "$4" in Atomics_compareExchange(HEAP8, $4, $7,
+    // $8);
+    if (ptr->isString()) {
+      return process(ptr);
+    }
     // Otherwise do the same as processUnshifted.
     return processUnshifted(ptr, bytes);
   };
