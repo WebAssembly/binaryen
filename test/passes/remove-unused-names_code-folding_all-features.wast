@@ -1196,6 +1196,8 @@
     (try
       (try
         (catch
+          ;; Expressions containing exnref.pop should NOT be taken out and
+          ;; folded.
           (local.set $exn (exnref.pop))
           (drop (i32.const 111))
           (drop (i32.const 222))
