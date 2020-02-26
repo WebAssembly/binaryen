@@ -305,10 +305,10 @@ private:
         return false;
       }
       // Currently pop instructions are only used for exnref.pop, which is a
-      // pseudo instruction following a catch. In practice, the exnref.pop is a
-      // child of a local.set or a rethrow. We check if the current expression
-      // has a pop child within a limited depth (2).
-      if (containsChild<Pop>(item, 2)) {
+      // pseudo instruction following a catch. We check if the current
+      // expression has a pop child. This can be overly conservative, because
+      // this can also exclude whole try-catches that contain a pop within them.
+      if (containsChild<Pop>(item)) {
         return false;
       }
     }
