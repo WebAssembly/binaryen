@@ -308,7 +308,8 @@ private:
       // pseudo instruction following a catch. We check if the current
       // expression has a pop child. This can be overly conservative, because
       // this can also exclude whole try-catches that contain a pop within them.
-      if (containsChild<Pop>(item)) {
+      if (getModule()->features.hasExceptionHandling() &&
+          containsChild<Pop>(item)) {
         return false;
       }
     }
