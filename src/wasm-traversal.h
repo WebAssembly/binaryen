@@ -1161,6 +1161,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::TupleExtractId: {
         self->pushTask(SubType::doVisitTupleExtract, currp);
         self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
+        break;
       }
       case Expression::Id::NumExpressionIds:
         WASM_UNREACHABLE("unexpected expression type");

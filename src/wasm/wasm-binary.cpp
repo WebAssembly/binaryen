@@ -1699,7 +1699,19 @@ void WasmBinaryBuilder::processExpressions() {
       BYN_TRACE("== processExpressions finished\n");
       return;
     }
-    expressionStack.push_back(curr);
+    if (curr->type.isMulti()) {
+      // Store tuple to local and push individual extracted values
+      Builder builder(wasm);
+      Index tuple = builder.addVar(currFunction, curr->type);
+      const std::vector<Type> types = curr->type.expand();
+      for (Index i = 0; i < types.size(); ++i) {
+        expressionStack.push_back(
+          builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
+      }
+      expressionStack.push_back(builder.makeLocalSet(tuple, curr));
+    } else {
+      expressionStack.push_back(curr);
+    }
     if (curr->type == Type::unreachable) {
       // Once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
@@ -2117,6 +2129,16 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
   }
 }
 
+Expression* WasmBinaryBuilder::getTuple(size_t numElems) {
+  Builder builder(wasm);
+  std::vector<Expression*> elements;
+  elements.resize(numElems);
+  for (size_t i = 0; i < numElems; i++) {
+    elements[numElems - i - 1] = popNonVoidExpression();
+  }
+  return Builder(wasm).makeTupleMake(std::move(elements));
+}
+
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {
     throwError("Reached function end without seeing End opcode");
@@ -2386,8 +2408,10 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   assert(start <= expressionStack.size());
   // The results of this block are the last values pushed to the expressionStack
   Expression* results = nullptr;
-  if (type != Type::none) {
+  if (type.isSingle()) {
     results = popNonVoidExpression();
+  } else if (type.isMulti()) {
+    results = getTuple(type.size());
   }
   if (expressionStack.size() < start) {
     throwError("Block requires more values than are available");
@@ -2571,8 +2595,10 @@ void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
   if (code == BinaryConsts::BrIf) {
     curr->condition = popNonVoidExpression();
   }
-  if (target.arity) {
+  if (target.arity == 1) {
     curr->value = popNonVoidExpression();
+  } else if (target.arity > 1) {
+    curr->value = getTuple(target.arity);
   }
   curr->finalize();
 }
@@ -4453,8 +4479,10 @@ void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  if (currFunction->sig.results != Type::none) {
+  if (currFunction->sig.results.isSingle()) {
     curr->value = popNonVoidExpression();
+  } else if (currFunction->sig.results.isMulti()) {
+    curr->value = getTuple(currFunction->sig.results.size());
   }
   curr->finalize();
 }

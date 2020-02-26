@@ -1260,6 +1260,9 @@ public:
   // AST reading
   int depth = 0; // only for debugging
 
+  // Creates a tuple with the given number of values
+  Expression* getTuple(size_t numElems);
+
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, Type type, size_t start);
   void visitBlock(Block* curr);

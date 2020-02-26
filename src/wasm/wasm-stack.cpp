@@ -18,10 +18,20 @@
 
 namespace wasm {
 
+void BinaryInstWriter::emitBlockType(Type type) {
+  if (type == Type::unreachable) {
+    o << binaryType(Type::none);
+  } else if (type.isMulti()) {
+    o << U32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+  } else {
+    o << binaryType(type);
+  }
+}
+
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Block);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitBlockType(curr->type);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -30,7 +40,7 @@ void BinaryInstWriter::visitIf(If* curr) {
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::If);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitBlockType(curr->type);
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
@@ -46,7 +56,7 @@ void BinaryInstWriter::emitIfElse(If* curr) {
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Loop);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitBlockType(curr->type);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
@@ -76,13 +86,29 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
-  o << int8_t(BinaryConsts::LocalGet)
-    << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+  for (Index i = 0; i < func->getLocalType(curr->index).size(); ++i) {
+    o << int8_t(BinaryConsts::LocalGet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+  }
 }
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
-  o << int8_t(curr->isTee() ? BinaryConsts::LocalTee : BinaryConsts::LocalSet)
-    << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+  size_t numLocals = func->getLocalType(curr->index).size();
+  for (Index i = numLocals - 1; i >= 1; --i) {
+    o << int8_t(BinaryConsts::LocalSet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+  }
+  if (!curr->isTee()) {
+    o << int8_t(BinaryConsts::LocalSet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+  } else {
+    o << int8_t(BinaryConsts::LocalTee)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+    for (Index i = 1; i < numLocals; ++i) {
+      o << int8_t(BinaryConsts::LocalGet)
+        << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+    }
+  }
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
@@ -1596,7 +1622,7 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitBlockType(curr->type);
 }
 
 void BinaryInstWriter::emitCatch(Try* curr) {
@@ -1629,7 +1655,10 @@ void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
 }
 
 void BinaryInstWriter::visitDrop(Drop* curr) {
-  o << int8_t(BinaryConsts::Drop);
+  size_t numValues = curr->value->type.size();
+  for (size_t i = 0; i < numValues; i++) {
+    o << int8_t(BinaryConsts::Drop);
+  }
 }
 
 void BinaryInstWriter::visitPush(Push* curr) {
@@ -1641,11 +1670,27 @@ void BinaryInstWriter::visitPop(Pop* curr) {
 }
 
 void BinaryInstWriter::visitTupleMake(TupleMake* curr) {
-  WASM_UNREACHABLE("tuple.make should have been lowered away");
+  // Turns into nothing in the binary format
 }
 
 void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
-  WASM_UNREACHABLE("tuple.extract should have been lowered away");
+  size_t numVals = curr->tuple->type.size();
+  // Drop all values after the one we want
+  for (size_t i = curr->index + 1; i < numVals; ++i) {
+    o << int8_t(BinaryConsts::Drop);
+  }
+  // If the extracted value is the only one left, we're done
+  if (curr->index == 0) {
+    return;
+  }
+  // Otherwise, save it to a scratch local, drop the others, then retrieve it
+  assert(scratchLocals.find(curr->type) != scratchLocals.end());
+  Index scratch = scratchLocals[curr->type];
+  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratch);
+  for (size_t i = 0; i < curr->index; ++i) {
+    o << int8_t(BinaryConsts::Drop);
+  }
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
@@ -1675,13 +1720,16 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       numLocalsByType[t]++;
     }
   }
+  countScratchLocals();
+  // TODO: add a scratch register in `numLocalsByType` for each type of
+  // tuple.extract with nonzero index present.
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     const std::vector<Type> types = func->getLocalType(i).expand();
     for (Index j = 0; j < types.size(); j++) {
       Type type = types[j];
       auto fullIndex = std::make_pair(i, j);
-      size_t index = func->getVarIndexBase();
+      Index index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {
           mappedLocals[fullIndex] = index + currLocalsByType[typeCount.first];
@@ -1692,9 +1740,39 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       }
     }
   }
+  setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& typeCount : numLocalsByType) {
     o << U32LEB(typeCount.second) << binaryType(typeCount.first);
+  }
+}
+
+void BinaryInstWriter::countScratchLocals() {
+  // Add a scratch register in `numLocalsByType` for each type of
+  // tuple.extract with nonzero index present.
+  struct ScratchFinder : PostWalker<ScratchFinder> {
+    std::map<Type, Index>& scratchLocals;
+    ScratchFinder(std::map<Type, Index>& scratchLocals)
+      : scratchLocals(scratchLocals){};
+    void visitTupleExtract(TupleExtract* curr) {
+      if (curr->type != Type::unreachable && curr->index != 0) {
+        scratchLocals[curr->type] = 0;
+      }
+    }
+  } finder(scratchLocals);
+  finder.walkFunction(func);
+  for (auto t : scratchLocals) {
+    numLocalsByType[t.first]++;
+  }
+}
+
+void BinaryInstWriter::setScratchLocals() {
+  Index index = func->getVarIndexBase();
+  for (auto& typeCount : numLocalsByType) {
+    index += typeCount.second;
+    if (scratchLocals.find(typeCount.first) != scratchLocals.end()) {
+      scratchLocals[typeCount.first] = index - 1;
+    }
   }
 }
 
