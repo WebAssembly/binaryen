@@ -689,7 +689,6 @@ void WasmBinaryWriter::writeFeaturesSection() {
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
       default:
-        std::cerr << int(f) << "\n";
         WASM_UNREACHABLE("unexpected feature flag");
     }
   };
