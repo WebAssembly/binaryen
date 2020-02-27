@@ -76,12 +76,13 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(mappedLocals[curr->index]);
+  o << int8_t(BinaryConsts::LocalGet)
+    << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
 }
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
   o << int8_t(curr->isTee() ? BinaryConsts::LocalTee : BinaryConsts::LocalSet)
-    << U32LEB(mappedLocals[curr->index]);
+    << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
@@ -1656,102 +1657,36 @@ void BinaryInstWriter::emitUnreachable() {
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {
   assert(func && "BinaryInstWriter: function is not set");
-  // Map them
+  // Map params
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
-    mappedLocals[i] = curr;
+    mappedLocals[std::make_pair(i, 0)] = curr;
   }
   for (auto type : func->vars) {
-    numLocalsByType[type]++;
+    for (auto t : type.expand()) {
+      numLocalsByType[t]++;
+    }
   }
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    size_t index = func->getVarIndexBase();
-    Type type = func->getLocalType(i);
-    // increment now for simplicity, must decrement it in returns
-    currLocalsByType[type]++;
-    if (type == Type::i32) {
-      mappedLocals[i] = index + currLocalsByType[Type::i32] - 1;
-      continue;
+    const std::vector<Type> types = func->getLocalType(i).expand();
+    for (Index j = 0; j < types.size(); j++) {
+      Type type = types[j];
+      auto varIndex = std::make_pair(i, j);
+      size_t index = func->getVarIndexBase();
+      for (auto& typeCount : numLocalsByType) {
+        if (type == typeCount.first) {
+          mappedLocals[varIndex] = index + currLocalsByType[typeCount.first];
+          currLocalsByType[type]++;
+          break;
+        }
+        index += typeCount.second;
+      }
     }
-    index += numLocalsByType[Type::i32];
-    if (type == Type::i64) {
-      mappedLocals[i] = index + currLocalsByType[Type::i64] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::i64];
-    if (type == Type::f32) {
-      mappedLocals[i] = index + currLocalsByType[Type::f32] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::f32];
-    if (type == Type::f64) {
-      mappedLocals[i] = index + currLocalsByType[Type::f64] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::f64];
-    if (type == Type::v128) {
-      mappedLocals[i] = index + currLocalsByType[Type::v128] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::v128];
-    if (type == Type::funcref) {
-      mappedLocals[i] = index + currLocalsByType[Type::funcref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::funcref];
-    if (type == Type::anyref) {
-      mappedLocals[i] = index + currLocalsByType[Type::anyref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::anyref];
-    if (type == Type::nullref) {
-      mappedLocals[i] = index + currLocalsByType[Type::nullref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::nullref];
-    if (type == Type::exnref) {
-      mappedLocals[i] = index + currLocalsByType[Type::exnref] - 1;
-      continue;
-    }
-    WASM_UNREACHABLE("unexpected type");
   }
-  // Emit them.
-  o << U32LEB((numLocalsByType[Type::i32] ? 1 : 0) +
-              (numLocalsByType[Type::i64] ? 1 : 0) +
-              (numLocalsByType[Type::f32] ? 1 : 0) +
-              (numLocalsByType[Type::f64] ? 1 : 0) +
-              (numLocalsByType[Type::v128] ? 1 : 0) +
-              (numLocalsByType[Type::funcref] ? 1 : 0) +
-              (numLocalsByType[Type::anyref] ? 1 : 0) +
-              (numLocalsByType[Type::nullref] ? 1 : 0) +
-              (numLocalsByType[Type::exnref] ? 1 : 0));
-  if (numLocalsByType[Type::i32]) {
-    o << U32LEB(numLocalsByType[Type::i32]) << binaryType(Type::i32);
-  }
-  if (numLocalsByType[Type::i64]) {
-    o << U32LEB(numLocalsByType[Type::i64]) << binaryType(Type::i64);
-  }
-  if (numLocalsByType[Type::f32]) {
-    o << U32LEB(numLocalsByType[Type::f32]) << binaryType(Type::f32);
-  }
-  if (numLocalsByType[Type::f64]) {
-    o << U32LEB(numLocalsByType[Type::f64]) << binaryType(Type::f64);
-  }
-  if (numLocalsByType[Type::v128]) {
-    o << U32LEB(numLocalsByType[Type::v128]) << binaryType(Type::v128);
-  }
-  if (numLocalsByType[Type::funcref]) {
-    o << U32LEB(numLocalsByType[Type::funcref]) << binaryType(Type::funcref);
-  }
-  if (numLocalsByType[Type::anyref]) {
-    o << U32LEB(numLocalsByType[Type::anyref]) << binaryType(Type::anyref);
-  }
-  if (numLocalsByType[Type::nullref]) {
-    o << U32LEB(numLocalsByType[Type::nullref]) << binaryType(Type::nullref);
-  }
-  if (numLocalsByType[Type::exnref]) {
-    o << U32LEB(numLocalsByType[Type::exnref]) << binaryType(Type::exnref);
+  o << U32LEB(numLocalsByType.size());
+  for (auto& typeCount : numLocalsByType) {
+    o << U32LEB(typeCount.second) << binaryType(typeCount.first);
   }
 }
 

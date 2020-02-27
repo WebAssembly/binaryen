@@ -166,8 +166,8 @@ private:
 
   // type => number of locals of that type in the compact form
   std::map<Type, size_t> numLocalsByType;
-  // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<Index, size_t> mappedLocals;
+  // (local index, tuple index) => binary local index
+  std::map<std::pair<Index, Index>, size_t> mappedLocals;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
