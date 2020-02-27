@@ -59,7 +59,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
-#include "ir/iteration.h"
+#include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -309,7 +309,7 @@ private:
       // expression has a pop child. This can be overly conservative, because
       // this can also exclude whole try-catches that contain a pop within them.
       if (getModule()->features.hasExceptionHandling() &&
-          containsChild<Pop>(item)) {
+          !FindAll<Pop>(item).list.empty()) {
         return false;
       }
     }
