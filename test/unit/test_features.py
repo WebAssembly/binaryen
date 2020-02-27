@@ -275,7 +275,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertIn('all used features should be allowed', p.stderr)
 
     def test_explicit_detect_features(self):
-        self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'],
+        self.check_features('signext_target_feature.wasm', ['simd', 'sign-ext'],
                             opts=['-mvp', '--detect-features', '--enable-simd'])
 
     def test_emit_all_features(self):
@@ -291,12 +291,13 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertEqual(p2.returncode, 0)
         self.assertEqual([
             '--enable-threads',
-            '--enable-bulk-memory',
-            '--enable-exception-handling',
             '--enable-mutable-globals',
             '--enable-nontrapping-float-to-int',
-            '--enable-sign-ext',
             '--enable-simd',
+            '--enable-bulk-memory',
+            '--enable-sign-ext',
+            '--enable-exception-handling',
             '--enable-tail-call',
-            '--enable-reference-types'
+            '--enable-reference-types',
+            '--enable-multivalue'
         ], p2.stdout.split())

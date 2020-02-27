@@ -42,6 +42,7 @@ const char* SignExtFeature = "sign-ext";
 const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
+const char* MultivalueFeature = "multivalue";
 } // namespace UserSections
 } // namespace BinaryConsts
 

@@ -108,7 +108,7 @@ struct FeatureSet {
   }
 
   template<typename F> void iterFeatures(F f) {
-    for (uint32_t feature = MVP + 1; feature < All; feature++) {
+    for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
       if (has(feature)) {
         f(static_cast<Feature>(feature));
       }
