@@ -183,7 +183,7 @@ cmake . && make
 
 A C++14 compiler is required. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
 
-Binaryen.js can be built using Emscripten, which can be emgotten via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)). For more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
+Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
 
 ```
 emcmake cmake . && emmake make binaryen_js
