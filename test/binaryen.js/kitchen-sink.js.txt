@@ -1836,7 +1836,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   }
   BinaryenSetStart(the_module, functions[1]);
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 511);
+  BinaryenModuleSetFeatures(the_module, 1023);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModulePrint(the_module);
 (module
@@ -6282,7 +6282,8 @@ Features.SIMD128: 8
 Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
-Features.All: 511
+Features.Multivalue: 512
+Features.All: 1023
 InvalidId: 0
 BlockId: 1
 IfId: 2

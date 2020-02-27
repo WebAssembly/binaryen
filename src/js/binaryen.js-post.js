@@ -124,6 +124,7 @@ function initializeConstants() {
     'ExceptionHandling',
     'TailCall',
     'ReferenceTypes',
+    'Multivalue',
     'All'
   ].forEach(function(name) {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();

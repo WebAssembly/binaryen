@@ -375,6 +375,7 @@ extern const char* SIMD128Feature;
 extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
+extern const char* MultivalueFeature;
 
 enum Subsection {
   NameFunction = 1,

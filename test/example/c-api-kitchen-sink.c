@@ -246,6 +246,7 @@ void test_features() {
   printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
   printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
+  printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

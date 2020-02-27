@@ -1789,7 +1789,7 @@ int main() {
   }
   BinaryenSetStart(the_module, functions[1]);
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 511);
+  BinaryenModuleSetFeatures(the_module, 1023);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
@@ -4490,7 +4490,8 @@ BinaryenFeatureSIMD128: 8
 BinaryenFeatureExceptionHandling: 64
 BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
-BinaryenFeatureAll: 511
+BinaryenFeatureMultivalue: 512
+BinaryenFeatureAll: 1023
 (f32.neg
  (f32.const -33.61199951171875)
 )

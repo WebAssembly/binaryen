@@ -482,6 +482,9 @@ BinaryenFeatures BinaryenFeatureTailCall(void) {
 BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::ReferenceTypes);
 }
+BinaryenFeatures BinaryenFeatureMultivalue(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
