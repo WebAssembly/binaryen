@@ -3,6 +3,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (event $e (attr 0) (param))
  (func $ifs (; 0 ;)
   (if
    (i32.const 0)
@@ -1706,6 +1707,80 @@
     )
    )
    (i32.const 2)
+  )
+ )
+ (func $exnref_pop_test (; 36 ;)
+  (local $exn exnref)
+  (block $folding-inner0
+   (try
+    (try
+     (nop)
+     (catch
+      (local.set $exn
+       (exnref.pop)
+      )
+      (br $folding-inner0)
+     )
+    )
+    (catch
+     (local.set $exn
+      (exnref.pop)
+     )
+     (br $folding-inner0)
+    )
+   )
+   (return)
+  )
+  (drop
+   (i32.const 111)
+  )
+  (drop
+   (i32.const 222)
+  )
+  (drop
+   (i32.const 333)
+  )
+  (unreachable)
+ )
+ (func $br_on_exn_target_block (; 37 ;)
+  (local $exn exnref)
+  (block $x
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (drop
+      (i32.const 2)
+     )
+     (br $x)
+    )
+   )
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (drop
+      (i32.const 2)
+     )
+     (br $x)
+    )
+   )
+   (drop
+    (br_on_exn $x $e
+     (local.get $exn)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (br $x)
   )
  )
 )
