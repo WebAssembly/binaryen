@@ -334,10 +334,10 @@ TEST_SUITES = OrderedDict([
     ('wasm-metadce', update_metadce_tests),
     ('wasm-reduce', update_reduce_tests),
     ('spec', update_spec_tests),
-    ('binaryenjs', update_binaryen_js_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binfmt', update_bin_fmt_tests),
+    ('binaryenjs', update_binaryen_js_tests),
 ])
 
 

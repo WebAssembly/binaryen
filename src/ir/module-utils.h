@@ -418,7 +418,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting the type signature used in a module
+// Helper function for collecting the type signatures used in a module
 //
 // Used when emitting or printing a module to give signatures canonical
 // indices. Signatures are sorted in order of decreasing frequency to minize the
@@ -441,6 +441,11 @@ collectSignatures(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
+      void visitBlock(Block* curr) {
+        if (curr->type.isMulti()) {
+          counts[Signature(Type::none, curr->type)]++;
+        }
+      }
     };
     TypeCounter(counts).walk(func->body);
   };
