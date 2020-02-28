@@ -1672,11 +1672,11 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     const std::vector<Type> types = func->getLocalType(i).expand();
     for (Index j = 0; j < types.size(); j++) {
       Type type = types[j];
-      auto varIndex = std::make_pair(i, j);
+      auto fullIndex = std::make_pair(i, j);
       size_t index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {
-          mappedLocals[varIndex] = index + currLocalsByType[typeCount.first];
+          mappedLocals[fullIndex] = index + currLocalsByType[typeCount.first];
           currLocalsByType[type]++;
           break;
         }
