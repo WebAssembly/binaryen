@@ -59,7 +59,7 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 
 struct LocalType {
   Type type;
-  LocalType(Type type) : type(type) {};
+  LocalType(Type type) : type(type){};
 };
 
 static std::ostream& operator<<(std::ostream& o, const LocalType& localType) {
@@ -2135,7 +2135,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMinor(o, "local ");
-      printLocal(i, currFunction, o) << ' ' << LocalType(curr->getLocalType(i)) << ')';
+      printLocal(i, currFunction, o)
+        << ' ' << LocalType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
