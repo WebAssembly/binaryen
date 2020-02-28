@@ -2386,12 +2386,34 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   assert(start <= expressionStack.size());
   assert(start <= end);
   assert(end <= expressionStack.size());
-  // the first dropped element may be consumed by code later - it was on the
-  // stack first, and is the only thing left on the stack. there must be just
-  // one thing on the stack since we are at the end of a block context. note
-  // that we may need to drop more than one thing, since a bunch of concrete
-  // values may be all "consumed" by an unreachable (in which case, the first
-  // value can't be consumed anyhow, so it doesn't matter)
+  // We may need to drop some elements in the case of unreachable code that
+  // ignores them, e.g.
+  //
+  //  block i32
+  //   i32.const 1
+  //   i32.const 2
+  //   i32.const 3
+  //   return
+  //  end
+  //
+  // The const elements will be emitted as drops in the block; due to the
+  // return, they are not consumed by anything (our binary parsing code
+  // will ignore unreachable code *after* a return like that, but here we handle
+  // the converse case).
+  //
+  // However, a first dropped element may be consumed by code later, e.g.
+  //
+  //  block i32
+  //   i32.const 1 ;; this is left to flow out of the block at the end
+  //   i32.const 2
+  //   i32.const 3
+  //   i32.store
+  //  end
+  //
+  // That will appear to us as a list of two elements: the const 1, and the
+  // store (which has two nested children). The const 1 should be consumed as
+  // the block return value at the end.
+  // TODO This will need to be extended for multivalue.
   const Index NONE = -1;
   Index consumable = NONE;
   for (size_t i = start; i < end; i++) {
