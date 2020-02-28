@@ -2384,6 +2384,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
                                           Type type,
                                           size_t start) {
   assert(start <= expressionStack.size());
+  // The results of this block are the last values pushed to the expressionStack
   Expression* results = nullptr;
   if (type != Type::none) {
     results = popNonVoidExpression();
@@ -2391,6 +2392,10 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   if (expressionStack.size() < start) {
     throwError("Block requires more values than are available");
   }
+  // Everything else on the stack after `start` is either a none-type expression
+  // or a concretely-type expression that is implicitly dropped due to
+  // unreachability at the end of the block. Because these expressions may have
+  // side effects, preserve them by making the drop explicit.
   for (size_t i = start; i < expressionStack.size(); ++i) {
     auto* item = expressionStack[i];
     if (item->type.isConcrete()) {
