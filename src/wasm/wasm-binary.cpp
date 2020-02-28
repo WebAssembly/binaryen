@@ -2381,44 +2381,31 @@ void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
 }
 
 void WasmBinaryBuilder::pushBlockElements(Block* curr,
-                                          size_t start,
-                                          size_t end) {
+                                          Type type,
+                                          size_t start) {
   assert(start <= expressionStack.size());
-  assert(start <= end);
-  assert(end <= expressionStack.size());
-  // the first dropped element may be consumed by code later - it was on the
-  // stack first, and is the only thing left on the stack. there must be just
-  // one thing on the stack since we are at the end of a block context. note
-  // that we may need to drop more than one thing, since a bunch of concrete
-  // values may be all "consumed" by an unreachable (in which case, the first
-  // value can't be consumed anyhow, so it doesn't matter)
-  const Index NONE = -1;
-  Index consumable = NONE;
-  for (size_t i = start; i < end; i++) {
+  // The results of this block are the last values pushed to the expressionStack
+  Expression* results = nullptr;
+  if (type != Type::none) {
+    results = popNonVoidExpression();
+  }
+  if (expressionStack.size() < start) {
+    throwError("Block requires more values than are available");
+  }
+  // Everything else on the stack after `start` is either a none-type expression
+  // or a concretely-type expression that is implicitly dropped due to
+  // unreachability at the end of the block. Because these expressions may have
+  // side effects, preserve them by making the drop explicit.
+  for (size_t i = start; i < expressionStack.size(); ++i) {
     auto* item = expressionStack[i];
-    curr->list.push_back(item);
-    if (i < end - 1) {
-      // stacky&unreachable code may introduce elements that need to be dropped
-      // in non-final positions
-      if (item->type.isConcrete()) {
-        curr->list.back() = Builder(wasm).makeDrop(item);
-        if (consumable == NONE) {
-          // this is the first, and hence consumable value. note the location
-          consumable = curr->list.size() - 1;
-        }
-      }
+    if (item->type.isConcrete()) {
+      item = Builder(wasm).makeDrop(item);
     }
+    curr->list.push_back(item);
   }
   expressionStack.resize(start);
-  // if we have a consumable item and need it, use it
-  if (consumable != NONE && curr->list.back()->type == Type::none) {
-    requireFunctionContext(
-      "need an extra var in a non-function context, invalid wasm");
-    Builder builder(wasm);
-    auto* item = curr->list[consumable]->cast<Drop>()->value;
-    auto temp = builder.addVar(currFunction, item->type);
-    curr->list[consumable] = builder.makeLocalSet(temp, item);
-    curr->list.push_back(builder.makeLocalGet(temp, item->type));
+  if (results != nullptr) {
+    curr->list.push_back(results);
   }
 }
 
@@ -2464,7 +2451,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     if (end < start) {
       throwError("block cannot pop from outside");
     }
-    pushBlockElements(curr, start, end);
+    pushBlockElements(curr, curr->type, start);
     curr->finalize(curr->type,
                    breakTargetNames.find(curr->name) !=
                      breakTargetNames.end() /* hasBreak */);
@@ -2497,7 +2484,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
   }
   breakStack.pop_back();
   auto* block = allocator.alloc<Block>();
-  pushBlockElements(block, start, end);
+  pushBlockElements(block, type, start);
   block->name = label;
   block->finalize(type);
   // maybe we don't need a block here?
@@ -2547,7 +2534,7 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
       throwError("block cannot pop from outside");
     }
     auto* block = allocator.alloc<Block>();
-    pushBlockElements(block, start, end);
+    pushBlockElements(block, curr->type, start);
     block->finalize(curr->type);
     curr->body = block;
   }
