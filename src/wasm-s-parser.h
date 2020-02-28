@@ -243,7 +243,7 @@ private:
   Index parseMemoryLimits(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
-  Type parseResults(Element& s);
+  std::vector<Type> parseResults(Element& s);
   Signature parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,

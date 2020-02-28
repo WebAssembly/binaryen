@@ -57,6 +57,26 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
+struct LocalType {
+  Type type;
+  LocalType(Type type) : type(type) {};
+};
+
+static std::ostream& operator<<(std::ostream& o, const LocalType& localType) {
+  Type type = localType.type;
+  if (type.isMulti()) {
+    const std::vector<Type>& types = type.expand();
+    o << '(' << types[0];
+    for (size_t i = 1; i < types.size(); ++i) {
+      o << ' ' << types[i];
+    }
+    o << ')';
+    return o;
+  }
+  o << type;
+  return o;
+}
+
 // Wrapper for printing signature names
 struct SigName {
   Signature sig;
@@ -1391,6 +1411,7 @@ struct PrintExpressionContents
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
     o << curr->index;
+    restoreNormalColor(o);
   }
 };
 
@@ -1968,13 +1989,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       printFullLine(operand);
     }
     decIndent();
-    o << ')';
   }
   void visitTupleExtract(TupleExtract* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
     printFullLine(curr->tuple);
-    o << ')';
+    decIndent();
   }
   // Module-level visitors
   void handleSignature(Signature curr, Name* funcName = nullptr) {
@@ -2114,7 +2135,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMinor(o, "local ");
-      printLocal(i, currFunction, o) << ' ' << curr->getLocalType(i) << ')';
+      printLocal(i, currFunction, o) << ' ' << LocalType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.

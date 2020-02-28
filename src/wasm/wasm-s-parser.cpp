@@ -538,19 +538,34 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
       name = Name::fromInt(localIndex);
     }
     localIndex++;
-    Type type = stringToType(s[i]->str());
+    Type type;
+    if (s[i]->isStr()) {
+      type = stringToType(s[i]->str());
+    } else {
+      if (elementStartsWith(s, PARAM)) {
+        throw ParseException(
+          "params may not have tuple types", s[i]->line, s[i]->col);
+      }
+      auto& tuple = s[i]->list();
+      std::vector<Type> types;
+      for (size_t j = 0; j < s[i]->size(); ++j) {
+        types.push_back(stringToType(tuple[j]->str()));
+      }
+      type = Type(types);
+    }
     namedParams.emplace_back(name, type);
   }
   return namedParams;
 }
 
 // Parses (result type) element. (e.g. (result i32))
-Type SExpressionWasmBuilder::parseResults(Element& s) {
+std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
-  if (s.size() != 2) {
-    throw ParseException("invalid result arity", s.line, s.col);
+  std::vector<Type> types;
+  for (size_t i = 1; i < s.size(); i++) {
+    types.push_back(stringToType(s[i]->str()));
   }
-  return stringToType(s[1]->str());
+  return types;
 }
 
 // Parses an element that references an entry in the type section. The element
@@ -599,8 +614,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   while (i < s.size() && elementStartsWith(*s[i], RESULT)) {
     paramsOrResultsExist = true;
-    // TODO: make parseResults return a vector
-    results.push_back(parseResults(*s[i++]));
+    for (auto result : parseResults(*s[i++])) {
+      results.push_back(result);
+    }
   }
 
   auto inlineSig = Signature(Type(params), Type(results));
@@ -1635,14 +1651,13 @@ Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
     return stringToType(s[i++]->str());
   }
 
-  Element& params = *s[i];
-  IString id = params[0]->str();
-  if (id != RESULT) {
-    return Type::none;
+  Element& results = *s[i];
+  IString id = results[0]->str();
+  if (id == RESULT) {
+    i++;
+    return Type(parseResults(results));
   }
-
-  i++;
-  return stringToType(params[1]->str());
+  return Type::none;
 }
 
 Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
@@ -2455,8 +2470,9 @@ void SExpressionWasmBuilder::parseType(Element& s) {
       auto newParams = parseParamOrLocal(curr);
       params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
-      // TODO: Parse multiple results at once
-      results.push_back(parseResults(curr));
+      for (auto result : parseResults(curr)) {
+        results.push_back(result);
+      }
     }
   }
   signatures.emplace_back(Type(params), Type(results));
