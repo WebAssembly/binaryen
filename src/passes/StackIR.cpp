@@ -253,10 +253,11 @@ private:
         //       with a drop.
         auto droppedIndex = valueStack.back();
         valueStack.pop_back();
-        auto consumedByDropped = getNumConsumedValues(insts[droppedIndex]);
+        auto* droppedInst = insts[droppedIndex];
+        auto consumedByDropped = getNumConsumedValues(droppedInst);
         if (consumedByDropped < 2) {
           EffectAnalyzer effects(passOptions, module->features);
-          effects.visit(inst->origin);
+          effects.visit(droppedInst->origin);
           if (!effects.hasSideEffects()) {
             // Great, we don't need to push it in the first place!
             insts[droppedIndex] = nullptr;
