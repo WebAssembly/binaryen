@@ -1087,6 +1087,9 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
+  if (type >= 0) {
+    return signatures[type].results;
+  }
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
@@ -1703,12 +1706,12 @@ void WasmBinaryBuilder::processExpressions() {
       // Store tuple to local and push individual extracted values
       Builder builder(wasm);
       Index tuple = builder.addVar(currFunction, curr->type);
+      expressionStack.push_back(builder.makeLocalSet(tuple, curr));
       const std::vector<Type> types = curr->type.expand();
       for (Index i = 0; i < types.size(); ++i) {
         expressionStack.push_back(
           builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
       }
-      expressionStack.push_back(builder.makeLocalSet(tuple, curr));
     } else {
       expressionStack.push_back(curr);
     }
