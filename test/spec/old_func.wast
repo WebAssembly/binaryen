@@ -344,19 +344,6 @@
 ;; Invalid typing of result
 
 (assert_invalid
-  (module (func $type-multiple-result (result i32 i32) (unreachable)))
-  "invalid result arity"
-)
-(assert_invalid
-  (module
-    (type (func (result i32 i32)))
-    (func $type-multiple-result (type 0) (unreachable))
-  )
-  "invalid result arity"
-)
-
-
-(assert_invalid
   (module (func $type-empty-i32 (result i32)))
   "type mismatch"
 )
@@ -529,4 +516,3 @@
   ))
   "type mismatch"
 )
-
