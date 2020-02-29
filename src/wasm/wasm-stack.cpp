@@ -1721,8 +1721,6 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
   }
   countScratchLocals();
-  // TODO: add a scratch register in `numLocalsByType` for each type of
-  // tuple.extract with nonzero index present.
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     const std::vector<Type> types = func->getLocalType(i).expand();
