@@ -56,7 +56,8 @@ class StackIROptimizer {
 
 public:
   StackIROptimizer(Function* func, Module* module, PassOptions& passOptions)
-    : func(func), module(module), passOptions(passOptions), insts(*func->stackIR.get()) {
+    : func(func), module(module), passOptions(passOptions),
+      insts(*func->stackIR.get()) {
     assert(func->stackIR);
   }
 
@@ -244,8 +245,7 @@ private:
       if (!inst) {
         continue;
       }
-      if (inst->op == StackInst::Basic && 
-          inst->origin->is<Drop>()) {
+      if (inst->op == StackInst::Basic && inst->origin->is<Drop>()) {
         // The value on the top of the stack is being dropped, do we need it? If
         // it consumes more than 1 value then we'd need to add more drops to get
         // rid of it, which might not be worth it.
@@ -264,8 +264,8 @@ private:
             if (!effects.hasSideEffects()) {
               // Great, we don't need to push it in the first place!
               insts[droppedIndex] = nullptr;
-              // If it dropped one value, keep the drop for that value; otherwise
-              // remove the drop too.
+              // If it dropped one value, keep the drop for that value;
+              // otherwise remove the drop too.
               if (consumedByDropped == 0) {
                 insts[i] = nullptr;
               }
