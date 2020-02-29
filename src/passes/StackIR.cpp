@@ -254,17 +254,21 @@ private:
         auto droppedIndex = valueStack.back();
         valueStack.pop_back();
         auto* droppedInst = insts[droppedIndex];
-        auto consumedByDropped = getNumConsumedValues(droppedInst);
-        if (consumedByDropped < 2) {
-          EffectAnalyzer effects(passOptions, module->features);
-          effects.visit(droppedInst->origin);
-          if (!effects.hasSideEffects()) {
-            // Great, we don't need to push it in the first place!
-            insts[droppedIndex] = nullptr;
-            // If it dropped one value, keep the drop for that value; otherwise
-            // remove the drop too.
-            if (consumedByDropped == 0) {
-              insts[i] = nullptr;
+        // TODO: handle drops of control flow elements like blocks, which show
+        //       up as multiple insts.
+        if (!isControlFlow(droppedInst)) {
+          auto consumedByDropped = getNumConsumedValues(droppedInst);
+          if (consumedByDropped < 2) {
+            EffectAnalyzer effects(passOptions, module->features);
+            effects.visit(droppedInst->origin);
+            if (!effects.hasSideEffects()) {
+              // Great, we don't need to push it in the first place!
+              insts[droppedIndex] = nullptr;
+              // If it dropped one value, keep the drop for that value; otherwise
+              // remove the drop too.
+              if (consumedByDropped == 0) {
+                insts[i] = nullptr;
+              }
             }
           }
         }
@@ -278,7 +282,7 @@ private:
         valueStack.pop_back();
         consumed--;
       }
-      if (inst->type.isConcrete()) {
+      if (isBegin(inst) && inst->type.isConcrete()) {
         valueStack.push_back(i);
       }
     }
@@ -347,6 +351,12 @@ private:
   }
 
   bool isControlFlow(StackInst* inst) { return inst->op != StackInst::Basic; }
+
+  // The beginning of an instruction: either the beginning of a control flow,
+  // or a basic instruction in which case this is also the end.
+  bool isBegin(StackInst* inst) {
+    return inst->op == StackInst::Basic || isControlFlowBegin(inst);
+  }
 
   // Remove the instruction at index i. If the instruction
   // is control flow, and so has been expanded to multiple
