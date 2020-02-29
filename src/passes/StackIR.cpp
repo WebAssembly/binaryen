@@ -251,12 +251,13 @@ private:
         // rid of it, which might not be worth it.
         // TODO: the case of 2 seems optimizable, by replacing the old value
         //       with a drop.
+        assert(!valueStack.empty());
         auto droppedIndex = valueStack.back();
         valueStack.pop_back();
         auto* droppedInst = insts[droppedIndex];
         // TODO: handle drops of control flow elements like blocks, which show
         //       up as multiple insts.
-        if (!isControlFlow(droppedInst)) {
+        if (droppedInst && !isControlFlow(droppedInst)) {
           auto consumedByDropped = getNumConsumedValues(droppedInst);
           if (consumedByDropped < 2) {
             EffectAnalyzer effects(passOptions, module->features);
@@ -279,10 +280,13 @@ private:
       //       to handle unreachable code here - it's ok to pop multiple values
       //       there even if the stack is at size 0.
       while (consumed > 0) {
+        assert(!valueStack.empty());
         valueStack.pop_back();
         consumed--;
       }
-      if (isBegin(inst) && inst->type.isConcrete()) {
+      // Push a value on the stack if there is one (note the convention in stack
+      // IR where the end of a block etc. represents the value).
+      if (inst->type.isConcrete() && isEnd(inst)) {
         valueStack.push_back(i);
       }
     }
@@ -356,6 +360,10 @@ private:
   // or a basic instruction in which case this is also the end.
   bool isBegin(StackInst* inst) {
     return inst->op == StackInst::Basic || isControlFlowBegin(inst);
+  }
+
+  bool isEnd(StackInst* inst) {
+    return inst->op == StackInst::Basic || isControlFlowEnd(inst);
   }
 
   // Remove the instruction at index i. If the instruction

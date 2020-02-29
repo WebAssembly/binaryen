@@ -1753,7 +1753,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
       stackType = Type::none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
                op != StackInst::LoopEnd && op != StackInst::TryEnd) {
-      // If a concrete type is returned, we mark the end of the construct has
+      // If a concrete type is returned, we mark the end of the construct as
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).
       stackType = Type::none;

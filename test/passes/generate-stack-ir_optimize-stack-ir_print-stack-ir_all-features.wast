@@ -1,6 +1,5 @@
 (module
   (event $e0 (attr 0) (param i32))
-
   (func $eh (local $exn exnref)
     (try
       (throw $e0 (i32.const 0))
@@ -15,5 +14,13 @@
         )
       )
     )
+  )
+  (func $drop_unreachable_block (result i64)
+    (drop
+      (block $label$1 (result i32)
+        (unreachable)
+      )
+    )
+    (i64.const 1)
   )
 )
