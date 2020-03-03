@@ -1833,6 +1833,26 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   return block;
 }
 
+Expression* WasmBinaryBuilder::popTuple(size_t numElems) {
+  Builder builder(wasm);
+  std::vector<Expression*> elements;
+  elements.resize(numElems);
+  for (size_t i = 0; i < numElems; i++) {
+    elements[numElems - i - 1] = popNonVoidExpression();
+  }
+  return Builder(wasm).makeTupleMake(std::move(elements));
+}
+
+Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
+  if (type.isSingle()) {
+    return popNonVoidExpression();
+  } else if (type.isMulti()) {
+    return popTuple(type.size());
+  } else {
+    WASM_UNREACHABLE("Invalid popped type");
+  }
+}
+
 void WasmBinaryBuilder::validateBinary() {
   if (hasDataCount && wasm.memory.segments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
@@ -2132,16 +2152,6 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
   }
 }
 
-Expression* WasmBinaryBuilder::getTuple(size_t numElems) {
-  Builder builder(wasm);
-  std::vector<Expression*> elements;
-  elements.resize(numElems);
-  for (size_t i = 0; i < numElems; i++) {
-    elements[numElems - i - 1] = popNonVoidExpression();
-  }
-  return Builder(wasm).makeTupleMake(std::move(elements));
-}
-
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {
     throwError("Reached function end without seeing End opcode");
@@ -2410,12 +2420,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
                                           size_t start) {
   assert(start <= expressionStack.size());
   // The results of this block are the last values pushed to the expressionStack
-  Expression* results = nullptr;
-  if (type.isSingle()) {
-    results = popNonVoidExpression();
-  } else if (type.isMulti()) {
-    results = getTuple(type.size());
-  }
+  Expression* results = popTypedExpression(type);
   if (expressionStack.size() < start) {
     throwError("Block requires more values than are available");
   }
@@ -2601,7 +2606,7 @@ void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
   if (target.arity == 1) {
     curr->value = popNonVoidExpression();
   } else if (target.arity > 1) {
-    curr->value = getTuple(target.arity);
+    curr->value = popTuple(target.arity);
   }
   curr->finalize();
 }
@@ -4482,11 +4487,7 @@ void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  if (currFunction->sig.results.isSingle()) {
-    curr->value = popNonVoidExpression();
-  } else if (currFunction->sig.results.isMulti()) {
-    curr->value = getTuple(currFunction->sig.results.size());
-  }
+  curr->value = popTypedExpression(currFunction->sig.results);
   curr->finalize();
 }
 

@@ -1228,6 +1228,8 @@ public:
 
   Expression* popExpression();
   Expression* popNonVoidExpression();
+  Expression* popTuple(size_t numElems);
+  Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
   void processFunctions();
@@ -1259,9 +1261,6 @@ public:
 
   // AST reading
   int depth = 0; // only for debugging
-
-  // Creates a tuple with the given number of values
-  Expression* getTuple(size_t numElems);
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, Type type, size_t start);
