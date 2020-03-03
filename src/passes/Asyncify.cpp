@@ -269,6 +269,7 @@ namespace wasm {
 namespace {
 
 static const Name ASYNCIFY_STATE = "__asyncify_state";
+static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
 static const Name ASYNCIFY_DATA = "__asyncify_data";
 static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
 static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
@@ -1336,6 +1337,14 @@ private:
     makeFunction(ASYNCIFY_STOP_UNWIND, false, State::Normal);
     makeFunction(ASYNCIFY_START_REWIND, true, State::Rewinding);
     makeFunction(ASYNCIFY_STOP_REWIND, false, State::Normal);
+
+    module->addFunction(
+      builder.makeFunction(ASYNCIFY_GET_STATE,
+                           Signature(Type::none, Type::i32),
+                           {},
+                           builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
+    module->addExport(builder.makeExport(
+      ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
 };
 
