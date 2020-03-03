@@ -1,0 +1,3561 @@
+DWARF debug info
+================
+
+Contains section .debug_info (1467 bytes)
+Contains section .debug_macinfo (1 bytes)
+Contains section .debug_pubtypes (27353 bytes)
+Contains section .debug_aranges (0 bytes)
+Contains section .debug_abbrev (585 bytes)
+Contains section .debug_line (743 bytes)
+Contains section .debug_str (30051 bytes)
+Contains section .debug_pubnames (3622 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_GNU_pubnames	DW_FORM_flag_present
+
+[2] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+
+[3] DW_TAG_structure_type	DW_CHILDREN_no
+	DW_AT_containing_type	DW_FORM_ref4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[4] DW_TAG_pointer_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_name	DW_FORM_strp
+
+[5] DW_TAG_namespace	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+
+[6] DW_TAG_structure_type	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[7] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+
+[8] DW_TAG_template_type_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_name	DW_FORM_strp
+
+[9] DW_TAG_structure_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[10] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_linkage_name	DW_FORM_strp
+
+[11] DW_TAG_enumeration_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_enum_class	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[12] DW_TAG_enumerator	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_const_value	DW_FORM_udata
+
+[13] DW_TAG_union_type	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[14] DW_TAG_variant_part	DW_CHILDREN_yes
+	DW_AT_discr	DW_FORM_ref4
+
+[15] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+	DW_AT_artificial	DW_FORM_flag_present
+
+[16] DW_TAG_variant	DW_CHILDREN_yes
+	DW_AT_discr_value	DW_FORM_data1
+
+[17] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+[18] DW_TAG_array_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref4
+
+[19] DW_TAG_subrange_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_lower_bound	DW_FORM_data1
+	DW_AT_count	DW_FORM_data1
+
+[20] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_encoding	DW_FORM_data1
+
+[21] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref_addr
+
+[22] DW_TAG_pointer_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_name	DW_FORM_strp
+
+[23] DW_TAG_enumeration_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_enum_class	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[24] DW_TAG_variant	DW_CHILDREN_yes
+
+[25] DW_TAG_template_type_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_name	DW_FORM_strp
+
+[26] DW_TAG_namespace	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+
+[27] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+
+[28] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_linkage_name	DW_FORM_strp
+
+[29] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_linkage_name	DW_FORM_strp
+
+[30] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+	DW_AT_artificial	DW_FORM_flag_present
+
+[31] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data2
+	DW_AT_linkage_name	DW_FORM_strp
+
+[32] DW_TAG_variant	DW_CHILDREN_yes
+	DW_AT_discr_value	DW_FORM_data4
+
+[33] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+	DW_AT_artificial	DW_FORM_flag_present
+
+[34] DW_TAG_array_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref_addr
+
+[35] DW_TAG_structure_type	DW_CHILDREN_no
+	DW_AT_containing_type	DW_FORM_ref_addr
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+
+[36] DW_TAG_subrange_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_lower_bound	DW_FORM_data1
+	DW_AT_count	DW_FORM_data2
+
+[37] DW_TAG_subroutine_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref4
+
+[38] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+
+[39] DW_TAG_subroutine_type	DW_CHILDREN_yes
+
+[40] DW_TAG_subroutine_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref_addr
+
+[41] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data2
+	DW_AT_linkage_name	DW_FORM_strp
+
+[42] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data1
+	DW_AT_artificial	DW_FORM_flag_present
+
+[43] DW_TAG_variant_part	DW_CHILDREN_no
+
+[44] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data2
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_linkage_name	DW_FORM_strp
+
+[45] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_linkage_name	DW_FORM_strp
+
+[46] DW_TAG_structure_type	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data2
+	DW_AT_alignment	DW_FORM_udata
+
+[47] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data2
+
+[48] DW_TAG_variant_part	DW_CHILDREN_yes
+
+[49] DW_TAG_enumerator	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_const_value	DW_FORM_sdata
+
+[50] DW_TAG_subrange_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_lower_bound	DW_FORM_data1
+
+[51] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref_addr
+
+[52] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref_addr
+	DW_AT_alignment	DW_FORM_udata
+	DW_AT_data_member_location	DW_FORM_data2
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x000005b7 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x000005bb)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang LLVM (rustc version 1.41.1 (f3e1a954d 2020-02-24))")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_Rust)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000039] = "src/liballoc/lib.rs")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000004d] = "/rustc/f3e1a954d2ead4e2fc197c7da7d71e6c61bad196/")
+              DW_AT_GNU_pubnames [DW_FORM_flag_present]	(true)
+
+0x0000001e:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0027 => {0x00000027} "vtable")
+
+0x00000027:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x0032 => {0x00000032})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000032:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0045 => {0x00000045} "String")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000013c] = "&mut alloc::string::String")
+
+0x0000003b:   DW_TAG_namespace [5] *
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000085] = "alloc")
+
+0x00000040:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000008b] = "string")
+
+0x00000045:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000135] = "String")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x0c)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x0000004c:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000092] = "vec")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x005e => {0x0000005e} "Vec<u8>")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000057:         NULL
+
+0x00000058:       NULL
+
+0x00000059:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000092] = "vec")
+
+0x0000005e:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000012d] = "Vec<u8>")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x0c)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000065:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000096] = "buf")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x008b => {0x0000008b} "RawVec<u8, alloc::alloc::Global>")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000070:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000129] = "len")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0491 => {0x00000491} "usize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x08)
+
+0x0000007b:         DW_TAG_template_type_parameter [8]  
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000084:         NULL
+
+0x00000085:       NULL
+
+0x00000086:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009a] = "raw_vec")
+
+0x0000008b:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000108] = "RawVec<u8, alloc::alloc::Global>")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000092:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a2] = "ptr")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x01fa => {0x000001fa} "Unique<u8>")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000009d:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000f3] = "cap")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0491 => {0x00000491} "usize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x04)
+
+0x000000a8:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000fd] = "a")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x00cc => {0x000000cc} "Global")
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000000b3:         DW_TAG_template_type_parameter [8]  
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x000000bc:         DW_TAG_template_type_parameter [8]  
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x00cc => {0x000000cc} "Global")
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000106] = "A")
+
+0x000000c5:         NULL
+
+0x000000c6:       NULL
+
+0x000000c7:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000085] = "alloc")
+
+0x000000cc:       DW_TAG_structure_type [9]  
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ff] = "Global")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x000000d3:       NULL
+
+0x000000d4:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000017c] = "collections")
+
+0x000000d9:       DW_TAG_namespace [5] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000188] = "btree")
+
+0x000000de:         DW_TAG_namespace [5] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018e] = "node")
+
+0x000000e3:           DW_TAG_variable [10]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000193] = "EMPTY_ROOT_NODE")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x00f2 => {0x000000f2} "NodeHeader<(), (), ()>")
+                        DW_AT_external [DW_FORM_flag_present]	(true)
+                        DW_AT_decl_file [DW_FORM_data1]	("/rustc/f3e1a954d2ead4e2fc197c7da7d71e6c61bad196/src/liballoc/collections/btree/node.rs")
+                        DW_AT_decl_line [DW_FORM_data1]	(130)
+                        DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x00000423] = "_ZN5alloc11collections5btree4node15EMPTY_ROOT_NODE17heb2293ea0fba367cE")
+
+0x000000f2:           DW_TAG_structure_type [6] *
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000040c] = "NodeHeader<(), (), ()>")
+                        DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000000f9:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001a3] = "parent")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04ff => {0x000004ff} "*const alloc::collections::btree::node::InternalNode<(), ()>")
+                          DW_AT_alignment [DW_FORM_udata]	(4)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000104:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001af] = "parent_idx")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x02f0 => {0x000002f0} "MaybeUninit<u16>")
+                          DW_AT_alignment [DW_FORM_udata]	(2)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x04)
+
+0x0000010f:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000129] = "len")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0508 => {0x00000508} "u16")
+                          DW_AT_alignment [DW_FORM_udata]	(2)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x06)
+
+0x0000011a:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000003fe] = "keys_start")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0539 => {0x00000539} "()[0]")
+                          DW_AT_alignment [DW_FORM_udata]	(1)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x08)
+
+0x00000125:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024c] = "K")
+
+0x0000012e:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024e] = "V")
+
+0x00000137:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000409] = "K2")
+
+0x00000140:             NULL
+
+0x00000141:           DW_TAG_structure_type [6] *
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000003ac] = "InternalNode<(), ()>")
+                        DW_AT_byte_size [DW_FORM_data1]	(0x38)
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000148:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001aa] = "data")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0171 => {0x00000171} "LeafNode<(), ()>")
+                          DW_AT_alignment [DW_FORM_udata]	(4)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000153:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000261] = "edges")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0523 => {0x00000523} "MaybeUninit<alloc::collections::btree::node::BoxedNode<(), ()>>[12]")
+                          DW_AT_alignment [DW_FORM_udata]	(4)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x08)
+
+0x0000015e:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024c] = "K")
+
+0x00000167:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024e] = "V")
+
+0x00000170:             NULL
+
+0x00000171:           DW_TAG_structure_type [6] *
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000250] = "LeafNode<(), ()>")
+                        DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000178:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001a3] = "parent")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04ff => {0x000004ff} "*const alloc::collections::btree::node::InternalNode<(), ()>")
+                          DW_AT_alignment [DW_FORM_udata]	(4)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000183:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001af] = "parent_idx")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x02f0 => {0x000002f0} "MaybeUninit<u16>")
+                          DW_AT_alignment [DW_FORM_udata]	(2)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x04)
+
+0x0000018e:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000129] = "len")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0508 => {0x00000508} "u16")
+                          DW_AT_alignment [DW_FORM_udata]	(2)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x06)
+
+0x00000199:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000020d] = "keys")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x050f => {0x0000050f} "MaybeUninit<()>[11]")
+                          DW_AT_alignment [DW_FORM_udata]	(1)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x08)
+
+0x000001a4:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000247] = "vals")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x050f => {0x0000050f} "MaybeUninit<()>[11]")
+                          DW_AT_alignment [DW_FORM_udata]	(1)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x08)
+
+0x000001af:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024c] = "K")
+
+0x000001b8:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024e] = "V")
+
+0x000001c1:             NULL
+
+0x000001c2:           DW_TAG_structure_type [6] *
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000319] = "BoxedNode<(), ()>")
+                        DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000001c9:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a2] = "ptr")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0221 => {0x00000221} "Unique<alloc::collections::btree::node::LeafNode<(), ()>>")
+                          DW_AT_alignment [DW_FORM_udata]	(4)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000001d4:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024c] = "K")
+
+0x000001dd:             DW_TAG_template_type_parameter [8]  
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000024e] = "V")
+
+0x000001e6:             NULL
+
+0x000001e7:           NULL
+
+0x000001e8:         NULL
+
+0x000001e9:       NULL
+
+0x000001ea:     NULL
+
+0x000001eb:   DW_TAG_namespace [5] *
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a6] = "core")
+
+0x000001f0:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a2] = "ptr")
+
+0x000001f5:       DW_TAG_namespace [5] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ab] = "unique")
+
+0x000001fa:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e8] = "Unique<u8>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000201:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b2] = "pointer")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0481 => {0x00000481} "*const u8")
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000020c:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "_marker")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x024f => {0x0000024f} "PhantomData<u8>")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000217:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000220:           NULL
+
+0x00000221:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000002df] = "Unique<alloc::collections::btree::node::LeafNode<(), ()>>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000228:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b2] = "pointer")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0530 => {0x00000530} "*const alloc::collections::btree::node::LeafNode<(), ()>")
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000233:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "_marker")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0260 => {0x00000260} "PhantomData<alloc::collections::btree::node::LeafNode<(), ()>>")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000023e:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0171 => {0x00000171} "LeafNode<(), ()>")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000247:           NULL
+
+0x00000248:         NULL
+
+0x00000249:       NULL
+
+0x0000024a:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cf] = "marker")
+
+0x0000024f:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d8] = "PhantomData<u8>")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x00000256:         DW_TAG_template_type_parameter [8]  
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x0000025f:         NULL
+
+0x00000260:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000002a0] = "PhantomData<alloc::collections::btree::node::LeafNode<(), ()>>")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x00000267:         DW_TAG_template_type_parameter [8]  
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0171 => {0x00000171} "LeafNode<(), ()>")
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000270:         NULL
+
+0x00000271:       NULL
+
+0x00000272:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000015b] = "fmt")
+
+0x00000277:       DW_TAG_structure_type [9]  
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000015f] = "Error")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000027e:       DW_TAG_namespace [5] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000052c] = "rt")
+
+0x00000283:         DW_TAG_namespace [5] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000052f] = "v1")
+
+0x00000288:           DW_TAG_enumeration_type [11] *
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_enum_class [DW_FORM_flag_present]	(true)
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000054c] = "Alignment")
+                        DW_AT_byte_size [DW_FORM_data1]	(0x01)
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x00000293:             DW_TAG_enumerator [12]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000532] = "Left")
+                          DW_AT_const_value [DW_FORM_udata]	(0)
+
+0x00000299:             DW_TAG_enumerator [12]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000537] = "Right")
+                          DW_AT_const_value [DW_FORM_udata]	(1)
+
+0x0000029f:             DW_TAG_enumerator [12]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000053d] = "Center")
+                          DW_AT_const_value [DW_FORM_udata]	(2)
+
+0x000002a5:             DW_TAG_enumerator [12]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000544] = "Unknown")
+                          DW_AT_const_value [DW_FORM_udata]	(3)
+
+0x000002ab:             NULL
+
+0x000002ac:           NULL
+
+0x000002ad:         NULL
+
+0x000002ae:       NULL
+
+0x000002af:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000085] = "alloc")
+
+0x000002b4:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000170] = "LayoutErr")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x000002bb:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000165] = "private")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000002c6:         NULL
+
+0x000002c7:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000048c] = "Layout")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000002ce:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000046a] = "size_")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0491 => {0x00000491} "usize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000002d9:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000470] = "align_")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x03c6 => {0x000003c6} "NonZeroUsize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x04)
+
+0x000002e4:         NULL
+
+0x000002e5:       NULL
+
+0x000002e6:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001ba] = "mem")
+
+0x000002eb:       DW_TAG_namespace [5] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001be] = "maybe_uninit")
+
+0x000002f0:         DW_TAG_union_type [13] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001fc] = "MaybeUninit<u16>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x02)
+                      DW_AT_alignment [DW_FORM_udata]	(2)
+
+0x000002f7:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001cb] = "uninit")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000302:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x036b => {0x0000036b} "ManuallyDrop<u16>")
+                        DW_AT_alignment [DW_FORM_udata]	(2)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000030d:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0508 => {0x00000508} "u16")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000316:           NULL
+
+0x00000317:         DW_TAG_union_type [13] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000223] = "MaybeUninit<()>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000031e:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001cb] = "uninit")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000329:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0387 => {0x00000387} "ManuallyDrop<()>")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000334:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x0000033d:           NULL
+
+0x0000033e:         DW_TAG_union_type [13] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000036c] = "MaybeUninit<alloc::collections::btree::node::BoxedNode<(), ()>>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000345:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001cb] = "uninit")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000350:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x03a3 => {0x000003a3} "ManuallyDrop<alloc::collections::btree::node::BoxedNode<(), ()>>")
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000035b:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x01c2 => {0x000001c2} "BoxedNode<(), ()>")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000364:           NULL
+
+0x00000365:         NULL
+
+0x00000366:       DW_TAG_namespace [5] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d8] = "manually_drop")
+
+0x0000036b:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001ea] = "ManuallyDrop<u16>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x02)
+                      DW_AT_alignment [DW_FORM_udata]	(2)
+
+0x00000372:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0508 => {0x00000508} "u16")
+                        DW_AT_alignment [DW_FORM_udata]	(2)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x0000037d:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x0508 => {0x00000508} "u16")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000386:           NULL
+
+0x00000387:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000212] = "ManuallyDrop<()>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000038e:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000399:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x000003a2:           NULL
+
+0x000003a3:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000032b] = "ManuallyDrop<alloc::collections::btree::node::BoxedNode<(), ()>>")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000003aa:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001d2] = "value")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x01c2 => {0x000001c2} "BoxedNode<(), ()>")
+                        DW_AT_alignment [DW_FORM_udata]	(4)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000003b5:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x01c2 => {0x000001c2} "BoxedNode<(), ()>")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x000003be:           NULL
+
+0x000003bf:         NULL
+
+0x000003c0:       NULL
+
+0x000003c1:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000477] = "num")
+
+0x000003c6:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000047f] = "NonZeroUsize")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000003cd:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000047b] = "__0")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0491 => {0x00000491} "usize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000003d8:         NULL
+
+0x000003d9:       NULL
+
+0x000003da:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004c1] = "str")
+
+0x000003df:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004f7] = "Utf8Error")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                    DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000003e6:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004c5] = "valid_up_to")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0491 => {0x00000491} "usize")
+                      DW_AT_alignment [DW_FORM_udata]	(4)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x000003f1:         DW_TAG_member [7]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004d1] = "error_len")
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x0403 => {0x00000403} "Option<u8>")
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+                      DW_AT_data_member_location [DW_FORM_data1]	(0x04)
+
+0x000003fc:         NULL
+
+0x000003fd:       NULL
+
+0x000003fe:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004db] = "option")
+
+0x00000403:       DW_TAG_structure_type [6] *
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004ec] = "Option<u8>")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x02)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000040a:         DW_TAG_variant_part [14] *
+                      DW_AT_discr [DW_FORM_ref4]	(cu + 0x040f => {0x0000040f})
+
+0x0000040f:           DW_TAG_member [15]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+                        DW_AT_artificial [DW_FORM_flag_present]	(true)
+
+0x00000416:           DW_TAG_variant [16] *
+                        DW_AT_discr_value [DW_FORM_data1]	(0x00)
+
+0x00000418:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004e2] = "None")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0433 => {0x00000433} "None")
+                          DW_AT_alignment [DW_FORM_udata]	(1)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000423:             NULL
+
+0x00000424:           DW_TAG_variant [16] *
+                        DW_AT_discr_value [DW_FORM_data1]	(0x01)
+
+0x00000426:             DW_TAG_member [7]  
+                          DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004e7] = "Some")
+                          DW_AT_type [DW_FORM_ref4]	(cu + 0x0444 => {0x00000444} "Some")
+                          DW_AT_alignment [DW_FORM_udata]	(1)
+                          DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+
+0x00000431:             NULL
+
+0x00000432:           NULL
+
+0x00000433:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004e2] = "None")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x02)
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000043a:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x00000443:           NULL
+
+0x00000444:         DW_TAG_structure_type [6] *
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004e7] = "Some")
+                      DW_AT_byte_size [DW_FORM_data1]	(0x02)
+                      DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x0000044b:           DW_TAG_member [7]  
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000047b] = "__0")
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_alignment [DW_FORM_udata]	(1)
+                        DW_AT_data_member_location [DW_FORM_data1]	(0x01)
+
+0x00000456:           DW_TAG_template_type_parameter [8]  
+                        DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                        DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "T")
+
+0x0000045f:           NULL
+
+0x00000460:         NULL
+
+0x00000461:       NULL
+
+0x00000462:     DW_TAG_namespace [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000517] = "result")
+
+0x00000467:       DW_TAG_enumeration_type [11] *
+                    DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                    DW_AT_enum_class [DW_FORM_flag_present]	(true)
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000525] = "Result")
+                    DW_AT_byte_size [DW_FORM_data1]	(0x01)
+                    DW_AT_alignment [DW_FORM_udata]	(1)
+
+0x00000472:         DW_TAG_enumerator [12]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000051e] = "Ok")
+                      DW_AT_const_value [DW_FORM_udata]	(0)
+
+0x00000478:         DW_TAG_enumerator [12]  
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000521] = "Err")
+                      DW_AT_const_value [DW_FORM_udata]	(1)
+
+0x0000047e:         NULL
+
+0x0000047f:       NULL
+
+0x00000480:     NULL
+
+0x00000481:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000bd] = "*const u8")
+
+0x0000048a:   DW_TAG_base_type [17]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ba] = "u8")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x01)
+
+0x00000491:   DW_TAG_base_type [17]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000f7] = "usize")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000498:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04a1 => {0x000004a1} "vtable")
+
+0x000004a1:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x04ac => {0x000004ac})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000004ac:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x048a => {0x0000048a} "u8")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000157] = "&u8")
+
+0x000004b5:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04be => {0x000004be} "vtable")
+
+0x000004be:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x0277 => {0x00000277})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000004c9:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04d2 => {0x000004d2} "vtable")
+
+0x000004d2:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x02b4 => {0x000002b4})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000004dd:   DW_TAG_base_type [17]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000016d] = "()")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+
+0x000004e4:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04ed => {0x000004ed} "vtable")
+
+0x000004ed:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x04f8 => {0x000004f8})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000004f8:   DW_TAG_base_type [17]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000017a] = "!")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+
+0x000004ff:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0141 => {0x00000141} "InternalNode<(), ()>")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000003c1] = "*const alloc::collections::btree::node::InternalNode<(), ()>")
+
+0x00000508:   DW_TAG_base_type [17]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000001e6] = "u16")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x02)
+
+0x0000050f:   DW_TAG_array_type [18] *
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0317 => {0x00000317} "MaybeUninit<()>")
+
+0x00000514:     DW_TAG_subrange_type [19]  
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x051c => {0x0000051c} "__ARRAY_SIZE_TYPE__")
+                  DW_AT_lower_bound [DW_FORM_data1]	(0x00)
+                  DW_AT_count [DW_FORM_data1]	(0x0b)
+
+0x0000051b:     NULL
+
+0x0000051c:   DW_TAG_base_type [20]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000233] = "__ARRAY_SIZE_TYPE__")
+                DW_AT_byte_size [DW_FORM_data1]	(0x08)
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+
+0x00000523:   DW_TAG_array_type [18] *
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x033e => {0x0000033e} "MaybeUninit<alloc::collections::btree::node::BoxedNode<(), ()>>")
+
+0x00000528:     DW_TAG_subrange_type [19]  
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x051c => {0x0000051c} "__ARRAY_SIZE_TYPE__")
+                  DW_AT_lower_bound [DW_FORM_data1]	(0x00)
+                  DW_AT_count [DW_FORM_data1]	(0x0c)
+
+0x0000052f:     NULL
+
+0x00000530:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0171 => {0x00000171} "LeafNode<(), ()>")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000267] = "*const alloc::collections::btree::node::LeafNode<(), ()>")
+
+0x00000539:   DW_TAG_array_type [18] *
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+
+0x0000053e:     DW_TAG_subrange_type [19]  
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x051c => {0x0000051c} "__ARRAY_SIZE_TYPE__")
+                  DW_AT_lower_bound [DW_FORM_data1]	(0x00)
+                  DW_AT_count [DW_FORM_data1]	(0x00)
+
+0x00000545:     NULL
+
+0x00000546:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x054f => {0x0000054f} "vtable")
+
+0x0000054f:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x055a => {0x0000055a})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x0000055a:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x02c7 => {0x000002c7} "Layout")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000493] = "&core::alloc::Layout")
+
+0x00000563:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x056c => {0x0000056c} "vtable")
+
+0x0000056c:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x0577 => {0x00000577})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000577:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x04dd => {0x000004dd} "()")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004a8] = "&()")
+
+0x00000580:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0589 => {0x00000589} "vtable")
+
+0x00000589:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x0594 => {0x00000594})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x00000594:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x005e => {0x0000005e} "Vec<u8>")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000004ac] = "&alloc::vec::Vec<u8>")
+
+0x0000059d:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x05a6 => {0x000005a6} "vtable")
+
+0x000005a6:   DW_TAG_structure_type [3]  
+                DW_AT_containing_type [DW_FORM_ref4]	(cu + 0x05b1 => {0x000005b1})
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "vtable")
+                DW_AT_byte_size [DW_FORM_data1]	(0x00)
+                DW_AT_alignment [DW_FORM_udata]	(4)
+
+0x000005b1:   DW_TAG_pointer_type [4]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x03df => {0x000003df} "Utf8Error")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000501] = "&core::str::Utf8Error")
+
+0x000005ba:   NULL
+
+.debug_macinfo contents:
+
+
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000044
+         version: 4
+ prologue_length: 0x0000003e
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  1] = "src/liballoc/collections/btree"
+file_names[  1]:
+           name: "node.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+debug_line[0x00000048]
+Line table prologue:
+    total_length: 0x0000001a
+         version: 4
+ prologue_length: 0x00000014
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+debug_line[0x00000066]
+Line table prologue:
+    total_length: 0x00000088
+         version: 4
+ prologue_length: 0x00000082
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  1] = "src/libcore/num/flt2dec/strategy"
+include_directories[  2] = "src/libcore/str"
+include_directories[  3] = "src/libcore/fmt"
+file_names[  1]:
+           name: "dragon.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  2]:
+           name: "grisu.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  3]:
+           name: "mod.rs"
+      dir_index: 2
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  4]:
+           name: "num.rs"
+      dir_index: 3
+       mod_time: 0x00000000
+         length: 0x00000000
+debug_line[0x000000f2]
+Line table prologue:
+    total_length: 0x00000070
+         version: 4
+ prologue_length: 0x0000006a
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  1] = "/cargo/registry/src/github.com-1ecc6299db9ec823/hashbrown-0.6.2/src/raw"
+file_names[  1]:
+           name: "generic.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+debug_line[0x00000166]
+Line table prologue:
+    total_length: 0x0000001a
+         version: 4
+ prologue_length: 0x00000014
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+debug_line[0x00000184]
+Line table prologue:
+    total_length: 0x0000015f
+         version: 4
+ prologue_length: 0x00000159
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  1] = "src/libstd/thread"
+include_directories[  2] = "src/libstd"
+include_directories[  3] = "src/libstd/io"
+include_directories[  4] = "src/libstd/sys_common"
+include_directories[  5] = "src/libstd/../stdarch/crates/std_detect/src/detect"
+include_directories[  6] = "src/libstd/sys/wasm"
+file_names[  1]:
+           name: "mod.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  2]:
+           name: "backtrace.rs"
+      dir_index: 2
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  3]:
+           name: "stdio.rs"
+      dir_index: 3
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  4]:
+           name: "time.rs"
+      dir_index: 2
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  5]:
+           name: "at_exit_imp.rs"
+      dir_index: 4
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  6]:
+           name: "backtrace.rs"
+      dir_index: 4
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  7]:
+           name: "thread.rs"
+      dir_index: 4
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  8]:
+           name: "thread_local.rs"
+      dir_index: 4
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  9]:
+           name: "mod.rs"
+      dir_index: 4
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[ 10]:
+           name: "alloc.rs"
+      dir_index: 2
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[ 11]:
+           name: "panicking.rs"
+      dir_index: 2
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[ 12]:
+           name: "cache.rs"
+      dir_index: 5
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[ 13]:
+           name: "local.rs"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[ 14]:
+           name: "alloc.rs"
+      dir_index: 6
+       mod_time: 0x00000000
+         length: 0x00000000
+
+.debug_str contents:
+0x00000000: "clang LLVM (rustc version 1.41.1 (f3e1a954d 2020-02-24))"
+0x00000039: "src/liballoc/lib.rs"
+0x0000004d: "/rustc/f3e1a954d2ead4e2fc197c7da7d71e6c61bad196/"
+0x0000007e: "vtable"
+0x00000085: "alloc"
+0x0000008b: "string"
+0x00000092: "vec"
+0x00000096: "buf"
+0x0000009a: "raw_vec"
+0x000000a2: "ptr"
+0x000000a6: "core"
+0x000000ab: "unique"
+0x000000b2: "pointer"
+0x000000ba: "u8"
+0x000000bd: "*const u8"
+0x000000c7: "_marker"
+0x000000cf: "marker"
+0x000000d6: "T"
+0x000000d8: "PhantomData<u8>"
+0x000000e8: "Unique<u8>"
+0x000000f3: "cap"
+0x000000f7: "usize"
+0x000000fd: "a"
+0x000000ff: "Global"
+0x00000106: "A"
+0x00000108: "RawVec<u8, alloc::alloc::Global>"
+0x00000129: "len"
+0x0000012d: "Vec<u8>"
+0x00000135: "String"
+0x0000013c: "&mut alloc::string::String"
+0x00000157: "&u8"
+0x0000015b: "fmt"
+0x0000015f: "Error"
+0x00000165: "private"
+0x0000016d: "()"
+0x00000170: "LayoutErr"
+0x0000017a: "!"
+0x0000017c: "collections"
+0x00000188: "btree"
+0x0000018e: "node"
+0x00000193: "EMPTY_ROOT_NODE"
+0x000001a3: "parent"
+0x000001aa: "data"
+0x000001af: "parent_idx"
+0x000001ba: "mem"
+0x000001be: "maybe_uninit"
+0x000001cb: "uninit"
+0x000001d2: "value"
+0x000001d8: "manually_drop"
+0x000001e6: "u16"
+0x000001ea: "ManuallyDrop<u16>"
+0x000001fc: "MaybeUninit<u16>"
+0x0000020d: "keys"
+0x00000212: "ManuallyDrop<()>"
+0x00000223: "MaybeUninit<()>"
+0x00000233: "__ARRAY_SIZE_TYPE__"
+0x00000247: "vals"
+0x0000024c: "K"
+0x0000024e: "V"
+0x00000250: "LeafNode<(), ()>"
+0x00000261: "edges"
+0x00000267: "*const alloc::collections::btree::node::LeafNode<(), ()>"
+0x000002a0: "PhantomData<alloc::collections::btree::node::LeafNode<(), ()>>"
+0x000002df: "Unique<alloc::collections::btree::node::LeafNode<(), ()>>"
+0x00000319: "BoxedNode<(), ()>"
+0x0000032b: "ManuallyDrop<alloc::collections::btree::node::BoxedNode<(), ()>>"
+0x0000036c: "MaybeUninit<alloc::collections::btree::node::BoxedNode<(), ()>>"
+0x000003ac: "InternalNode<(), ()>"
+0x000003c1: "*const alloc::collections::btree::node::InternalNode<(), ()>"
+0x000003fe: "keys_start"
+0x00000409: "K2"
+0x0000040c: "NodeHeader<(), (), ()>"
+0x00000423: "_ZN5alloc11collections5btree4node15EMPTY_ROOT_NODE17heb2293ea0fba367cE"
+0x0000046a: "size_"
+0x00000470: "align_"
+0x00000477: "num"
+0x0000047b: "__0"
+0x0000047f: "NonZeroUsize"
+0x0000048c: "Layout"
+0x00000493: "&core::alloc::Layout"
+0x000004a8: "&()"
+0x000004ac: "&alloc::vec::Vec<u8>"
+0x000004c1: "str"
+0x000004c5: "valid_up_to"
+0x000004d1: "error_len"
+0x000004db: "option"
+0x000004e2: "None"
+0x000004e7: "Some"
+0x000004ec: "Option<u8>"
+0x000004f7: "Utf8Error"
+0x00000501: "&core::str::Utf8Error"
+0x00000517: "result"
+0x0000051e: "Ok"
+0x00000521: "Err"
+0x00000525: "Result"
+0x0000052c: "rt"
+0x0000052f: "v1"
+0x00000532: "Left"
+0x00000537: "Right"
+0x0000053d: "Center"
+0x00000544: "Unknown"
+0x0000054c: "Alignment"
+0x00000556: "/cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.40/src/lib.rs"
+0x000005a2: "/cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.40"
+0x000005e3: "&u16"
+0x000005e8: "ffi"
+0x000005ec: "__variant1"
+0x000005f7: "__variant2"
+0x00000602: "c_void"
+0x00000609: "*mut core::ffi::c_void"
+0x00000620: "backtrace"
+0x0000062a: "symbolize"
+0x00000634: "bytes"
+0x0000063a: "data_ptr"
+0x00000643: "length"
+0x0000064a: "&[u8]"
+0x00000650: "demangled"
+0x0000065a: "u32"
+0x0000065e: "rustc_demangle"
+0x0000066d: "style"
+0x00000673: "Legacy"
+0x0000067a: "legacy"
+0x00000681: "inner"
+0x00000687: "&str"
+0x0000068c: "elements"
+0x00000695: "Demangle"
+0x0000069e: "V0"
+0x000006a1: "v0"
+0x000006a4: "DemangleStyle"
+0x000006b2: "Option<rustc_demangle::DemangleStyle>"
+0x000006d8: "original"
+0x000006e1: "suffix"
+0x000006e8: "Option<rustc_demangle::Demangle>"
+0x00000709: "cpp_demangled"
+0x00000717: "PhantomData<&()>"
+0x00000728: "OptionCppSymbol"
+0x00000738: "SymbolName"
+0x00000743: "*const u16"
+0x0000074e: "&[u16]"
+0x00000755: "&&[u16]"
+0x0000075d: "&&[u8]"
+0x00000764: "print"
+0x0000076a: "Short"
+0x00000770: "Full"
+0x00000775: "__Nonexhaustive"
+0x00000785: "PrintFmt"
+0x0000078e: "src/libcore/lib.rs"
+0x000007a1: "flt2dec"
+0x000007a9: "strategy"
+0x000007b2: "dragon"
+0x000007b9: "POW10"
+0x000007bf: "_ZN4core3num7flt2dec8strategy6dragon5POW1017h5da6aadeddbe229aE"
+0x000007fe: "TWOPOW10"
+0x00000807: "_ZN4core3num7flt2dec8strategy6dragon8TWOPOW1017h5c4d607532daff48E"
+0x00000849: "POW10TO16"
+0x00000853: "_ZN4core3num7flt2dec8strategy6dragon9POW10TO1617h83d7c98d78d159e5E"
+0x00000896: "POW10TO32"
+0x000008a0: "_ZN4core3num7flt2dec8strategy6dragon9POW10TO3217ha50c214ff7dc18dcE"
+0x000008e3: "POW10TO64"
+0x000008ed: "_ZN4core3num7flt2dec8strategy6dragon9POW10TO6417hb6568a1145d38427E"
+0x00000930: "POW10TO128"
+0x0000093b: "_ZN4core3num7flt2dec8strategy6dragon10POW10TO12817hf317ca5f522894bfE"
+0x00000980: "POW10TO256"
+0x0000098b: "_ZN4core3num7flt2dec8strategy6dragon10POW10TO25617hd39a45a52e6994c4E"
+0x000009d0: "grisu"
+0x000009d6: "CACHED_POW10"
+0x000009e3: "u64"
+0x000009e7: "__1"
+0x000009eb: "i16"
+0x000009ef: "__2"
+0x000009f3: "(u64, i16, i16)"
+0x00000a03: "_ZN4core3num7flt2dec8strategy5grisu12CACHED_POW1017h9f185b784b2ba834E"
+0x00000a49: "panic"
+0x00000a4f: "{{impl}}"
+0x00000a58: "internal_constructor"
+0x00000a6d: "NoPayload"
+0x00000a77: "iter"
+0x00000a7c: "adapters"
+0x00000a85: "flatten"
+0x00000a8d: "slice"
+0x00000a93: "end"
+0x00000a97: "PhantomData<&u8>"
+0x00000aa8: "Iter<u8>"
+0x00000ab1: "Chars"
+0x00000ab7: "f"
+0x00000ab9: "CharEscapeDebugContinue"
+0x00000ad1: "I"
+0x00000ad3: "F"
+0x00000ad5: "Map<core::str::Chars, core::str::CharEscapeDebugContinue>"
+0x00000b0f: "frontiter"
+0x00000b19: "char"
+0x00000b1e: "state"
+0x00000b24: "Done"
+0x00000b29: "Char"
+0x00000b2e: "Backslash"
+0x00000b38: "Unicode"
+0x00000b40: "c"
+0x00000b42: "RightBrace"
+0x00000b4d: "Value"
+0x00000b53: "LeftBrace"
+0x00000b5d: "Type"
+0x00000b62: "EscapeUnicodeState"
+0x00000b75: "hex_digit_idx"
+0x00000b83: "EscapeUnicode"
+0x00000b91: "EscapeDefaultState"
+0x00000ba4: "EscapeDefault"
+0x00000bb2: "EscapeDebug"
+0x00000bbe: "Option<core::char::EscapeDebug>"
+0x00000bde: "backiter"
+0x00000be7: "U"
+0x00000be9: "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDebugContinue>, core::char::EscapeDebug>"
+0x00000c61: "CharEscapeUnicode"
+0x00000c73: "Map<core::str::Chars, core::str::CharEscapeUnicode>"
+0x00000ca7: "Option<core::char::EscapeUnicode>"
+0x00000cc9: "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeUnicode>, core::char::EscapeUnicode>"
+0x00000d3d: "CharEscapeDefault"
+0x00000d4f: "Map<core::str::Chars, core::str::CharEscapeDefault>"
+0x00000d83: "Option<core::char::EscapeDefault>"
+0x00000da5: "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDefault>, core::char::EscapeDefault>"
+0x00000e19: "opt"
+0x00000e1d: "Item<core::char::EscapeDebug>"
+0x00000e3b: "IntoIter<core::char::EscapeDebug>"
+0x00000e5d: "FlattenCompat<core::option::IntoIter<core::char::EscapeDebug>, core::char::EscapeDebug>"
+0x00000eb5: "v"
+0x00000eb7: "pred"
+0x00000ebc: "IsAsciiWhitespace"
+0x00000ece: "finished"
+0x00000ed7: "bool"
+0x00000edc: "P"
+0x00000ede: "Split<u8, core::str::IsAsciiWhitespace>"
+0x00000f06: "predicate"
+0x00000f10: "BytesIsNotEmpty"
+0x00000f20: "Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>"
+0x00000f79: "start"
+0x00000f7f: "matcher"
+0x00000f87: "pattern"
+0x00000f8f: "haystack"
+0x00000f98: "finger"
+0x00000f9f: "finger_back"
+0x00000fab: "needle"
+0x00000fb2: "utf8_size"
+0x00000fbc: "utf8_encoded"
+0x00000fc9: "CharSearcher"
+0x00000fd6: "allow_trailing_empty"
+0x00000feb: "SplitInternal<char>"
+0x00000fff: "SplitTerminator<char>"
+0x00001015: "char_eq"
+0x0000101d: "IsWhitespace"
+0x0000102a: "char_indices"
+0x00001037: "front_offset"
+0x00001044: "CharIndices"
+0x00001050: "C"
+0x00001052: "MultiCharEqSearcher<core::str::IsWhitespace>"
+0x0000107f: "CharPredicateSearcher<core::str::IsWhitespace>"
+0x000010ae: "SplitInternal<core::str::IsWhitespace>"
+0x000010d5: "Split<core::str::IsWhitespace>"
+0x000010f4: "UTF8_CHAR_WIDTH"
+0x00001104: "_ZN4core3str15UTF8_CHAR_WIDTH17he5efe023055697dbE"
+0x00001136: "builders"
+0x0000113f: "*mut u8"
+0x00001147: "&[usize; 3]"
+0x00001153: "&mut Write"
+0x0000115e: "on_newline"
+0x00001169: "PadAdapterState"
+0x00001179: "&mut core::fmt::builders::PadAdapterState"
+0x000011a3: "PadAdapter"
+0x000011ae: "&char"
+0x000011b4: "DEC_DIGITS_LUT"
+0x000011c3: "&[u8; 200]"
+0x000011ce: "_ZN4core3fmt3num14DEC_DIGITS_LUT17hce877a6ba795938eE"
+0x00001203: "&mut core::fmt::builders::PadAdapter"
+0x00001228: "task"
+0x0000122d: "wake"
+0x00001232: "waker"
+0x00001238: "*const ()"
+0x00001242: "clone"
+0x00001248: "unsafe fn(*const ()) -> core::task::wake::RawWaker"
+0x0000127b: "unsafe fn(*const ())"
+0x00001290: "wake_by_ref"
+0x0000129c: "drop"
+0x000012a1: "RawWakerVTable"
+0x000012b0: "&core::task::wake::RawWakerVTable"
+0x000012d2: "RawWaker"
+0x000012db: "Waker"
+0x000012e1: "&core::task::wake::Waker"
+0x000012fa: "*const core::task::wake::RawWakerVTable"
+0x00001322: "i64"
+0x00001326: "&i64"
+0x0000132b: "dec2flt"
+0x00001333: "parse"
+0x00001339: "integral"
+0x00001342: "fractional"
+0x0000134d: "exp"
+0x00001351: "Decimal"
+0x00001359: "&core::num::dec2flt::parse::Decimal"
+0x0000137d: "&u64"
+0x00001382: "&i16"
+0x00001387: "Empty"
+0x0000138d: "Invalid"
+0x00001395: "FloatErrorKind"
+0x000013a4: "&core::num::dec2flt::FloatErrorKind"
+0x000013c8: "&bool"
+0x000013ce: "decoder"
+0x000013d6: "mant"
+0x000013db: "minus"
+0x000013e1: "plus"
+0x000013e6: "inclusive"
+0x000013f0: "Decoded"
+0x000013f8: "&core::num::flt2dec::decoder::Decoded"
+0x0000141e: "&usize"
+0x00001425: "InvalidDigit"
+0x00001432: "Overflow"
+0x0000143b: "Underflow"
+0x00001445: "Zero"
+0x0000144a: "IntErrorKind"
+0x00001457: "&core::num::IntErrorKind"
+0x00001470: "convert"
+0x00001478: "EmptyString"
+0x00001484: "TooManyChars"
+0x00001491: "CharErrorKind"
+0x0000149f: "&core::char::convert::CharErrorKind"
+0x000014c3: "&core::char::EscapeUnicodeState"
+0x000014e3: "&core::char::EscapeDefaultState"
+0x00001503: "&core::char::EscapeUnicode"
+0x0000151e: "&core::char::EscapeDefault"
+0x00001539: "Three"
+0x0000153f: "Two"
+0x00001543: "One"
+0x00001547: "CaseMappingIter"
+0x00001557: "&core::char::CaseMappingIter"
+0x00001574: "any"
+0x00001578: "&Any"
+0x0000157d: "&&Any"
+0x00001583: "pieces"
+0x0000158a: "*const &str"
+0x00001596: "&[&str]"
+0x0000159e: "position"
+0x000015a7: "Next"
+0x000015ac: "At"
+0x000015af: "Position"
+0x000015b8: "format"
+0x000015bf: "fill"
+0x000015c4: "align"
+0x000015ca: "flags"
+0x000015d0: "precision"
+0x000015da: "Is"
+0x000015dd: "Param"
+0x000015e3: "NextParam"
+0x000015ed: "Implied"
+0x000015f5: "Count"
+0x000015fb: "width"
+0x00001601: "FormatSpec"
+0x0000160c: "Argument"
+0x00001615: "*const core::fmt::rt::v1::Argument"
+0x00001638: "&[core::fmt::rt::v1::Argument]"
+0x00001657: "Option<&[core::fmt::rt::v1::Argument]>"
+0x0000167e: "args"
+0x00001683: "_priv"
+0x00001689: "_oibit_remover"
+0x00001698: "ops"
+0x0000169c: "function"
+0x000016a5: "*mut Fn<()>"
+0x000016b1: "PhantomData<*mut Fn<()>>"
+0x000016ca: "Void"
+0x000016cf: "&core::fmt::Void"
+0x000016e0: "formatter"
+0x000016ea: "Option<usize>"
+0x000016f8: "curarg"
+0x000016ff: "&core::fmt::ArgumentV1"
+0x00001716: "PhantomData<&core::fmt::ArgumentV1>"
+0x0000173a: "Iter<core::fmt::ArgumentV1>"
+0x00001756: "Formatter"
+0x00001760: "&mut core::fmt::Formatter"
+0x0000177a: "fn(&core::fmt::Void, &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error>"
+0x000017d8: "ArgumentV1"
+0x000017e3: "*const core::fmt::ArgumentV1"
+0x00001800: "&[core::fmt::ArgumentV1]"
+0x00001819: "Arguments"
+0x00001823: "&core::fmt::Arguments"
+0x00001839: "Option<&core::fmt::Arguments>"
+0x00001857: "&core::option::Option<&core::fmt::Arguments>"
+0x00001884: "file"
+0x00001889: "line"
+0x0000188e: "col"
+0x00001892: "Location"
+0x0000189b: "&core::panic::Location"
+0x000018b2: "&&core::panic::Location"
+0x000018ca: "&&str"
+0x000018d0: "&u32"
+0x000018d5: "Flatten<core::option::IntoIter<core::char::EscapeDebug>>"
+0x0000190e: "&core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>"
+0x00001967: "FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>"
+0x000019be: "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>"
+0x00001a35: "chain"
+0x00001a3b: "Both"
+0x00001a40: "Front"
+0x00001a46: "Back"
+0x00001a4b: "ChainState"
+0x00001a56: "&core::iter::adapters::chain::ChainState"
+0x00001a7f: "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeUnicode>"
+0x00001aca: "&core::option::Option<core::char::EscapeUnicode>"
+0x00001afb: "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDebugContinue>"
+0x00001b4c: "&core::option::Option<core::char::EscapeDebug>"
+0x00001b7b: "&core::option::IntoIter<core::char::EscapeDebug>"
+0x00001bac: "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDefault>"
+0x00001bf7: "&core::option::Option<core::char::EscapeDefault>"
+0x00001c28: "&core::slice::Iter<u8>"
+0x00001c3f: "&core::char::EscapeDebug"
+0x00001c58: "&&core::fmt::Arguments"
+0x00001c6f: "&core::option::Item<core::char::EscapeDebug>"
+0x00001c9c: "&core::ffi::c_void"
+0x00001caf: "&mut &core::ffi::c_void"
+0x00001cc7: "PhantomData<&mut &core::ffi::c_void>"
+0x00001cec: "VaListImpl"
+0x00001cf7: "&core::ffi::VaListImpl"
+0x00001d0e: "&mut core::ffi::VaListImpl"
+0x00001d29: "PhantomData<&mut core::ffi::VaListImpl>"
+0x00001d51: "&core::marker::PhantomData<&mut core::ffi::VaListImpl>"
+0x00001d88: "&[u8; 4]"
+0x00001d91: "*const char"
+0x00001d9d: "&[char]"
+0x00001da5: "&&[char]"
+0x00001dae: "&core::str::CharIndices"
+0x00001dc6: "MultiCharEqSearcher<&[char]>"
+0x00001de3: "&core::str::pattern::MultiCharEqSearcher<&[char]>"
+0x00001e15: "is_match_fw"
+0x00001e21: "is_match_bw"
+0x00001e2d: "EmptyNeedle"
+0x00001e39: "TwoWay"
+0x00001e40: "crit_pos"
+0x00001e49: "crit_pos_back"
+0x00001e57: "period"
+0x00001e5e: "byteset"
+0x00001e66: "memory"
+0x00001e6d: "memory_back"
+0x00001e79: "TwoWaySearcher"
+0x00001e88: "StrSearcherImpl"
+0x00001e98: "&core::str::pattern::StrSearcherImpl"
+0x00001ebd: "&core::str::pattern::TwoWaySearcher"
+0x00001ee1: "&core::str::pattern::EmptyNeedle"
+0x00001f02: "&core::option::Option<u8>"
+0x00001f1c: "&core::str::Chars"
+0x00001f2e: "it"
+0x00001f31: "Cloned<core::slice::Iter<u8>>"
+0x00001f4f: "&core::iter::adapters::Cloned<core::slice::Iter<u8>>"
+0x00001f84: "LinesAnyMap"
+0x00001f90: "Map<core::str::SplitTerminator<char>, core::str::LinesAnyMap>"
+0x00001fce: "&core::iter::adapters::Map<core::str::SplitTerminator<char>, core::str::LinesAnyMap>"
+0x00002023: "Lines"
+0x00002029: "&core::str::Lines"
+0x0000203b: "IsNotEmpty"
+0x00002046: "Filter<core::str::Split<core::str::IsWhitespace>, core::str::IsNotEmpty>"
+0x0000208f: "&core::iter::adapters::Filter<core::str::Split<core::str::IsWhitespace>, core::str::IsNotEmpty>"
+0x000020ef: "UnsafeBytesToStr"
+0x00002100: "Map<core::iter::adapters::Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>, core::str::UnsafeBytesToStr>"
+0x00002191: "&core::iter::adapters::Map<core::iter::adapters::Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>, core::str::UnsafeBytesToStr>"
+0x00002239: "b"
+0x0000223b: "B"
+0x0000223d: "Chain<core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>, core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>>"
+0x00002313: "&core::iter::adapters::chain::Chain<core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>, core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>>"
+0x00002407: "FlatMap<core::str::Chars, core::char::EscapeDefault, core::str::CharEscapeDefault>"
+0x0000245a: "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDefault, core::str::CharEscapeDefault>"
+0x000024cd: "FlatMap<core::str::Chars, core::char::EscapeUnicode, core::str::CharEscapeUnicode>"
+0x00002520: "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeUnicode, core::str::CharEscapeUnicode>"
+0x00002593: "hash"
+0x00002598: "sip"
+0x0000259c: "k0"
+0x0000259f: "k1"
+0x000025a2: "v2"
+0x000025a5: "v3"
+0x000025a8: "State"
+0x000025ae: "tail"
+0x000025b3: "ntail"
+0x000025b9: "Sip13Rounds"
+0x000025c5: "PhantomData<core::hash::sip::Sip13Rounds>"
+0x000025ef: "S"
+0x000025f1: "Hasher<core::hash::sip::Sip13Rounds>"
+0x00002616: "&core::hash::sip::Hasher<core::hash::sip::Sip13Rounds>"
+0x0000264d: "Sip24Rounds"
+0x00002659: "PhantomData<core::hash::sip::Sip24Rounds>"
+0x00002683: "Hasher<core::hash::sip::Sip24Rounds>"
+0x000026a8: "&core::hash::sip::Hasher<core::hash::sip::Sip24Rounds>"
+0x000026df: "hasher"
+0x000026e6: "SipHasher24"
+0x000026f2: "&core::hash::sip::SipHasher24"
+0x00002710: "&core::hash::sip::State"
+0x00002728: "&core::marker::PhantomData<core::hash::sip::Sip13Rounds>"
+0x00002761: "&core::marker::PhantomData<core::hash::sip::Sip24Rounds>"
+0x0000279a: "&*const ()"
+0x000027a5: "&&core::task::wake::RawWakerVTable"
+0x000027c8: "&unsafe fn(*const ()) -> core::task::wake::RawWaker"
+0x000027fc: "&unsafe fn(*const ())"
+0x00002812: "non_null"
+0x0000281b: "NonNull<u8>"
+0x00002827: "&core::ptr::non_null::NonNull<u8>"
+0x00002849: "&core::num::NonZeroUsize"
+0x00002862: "i8"
+0x00002865: "&i8"
+0x00002869: "i32"
+0x0000286d: "&i32"
+0x00002872: "f32"
+0x00002876: "&f32"
+0x0000287b: "f64"
+0x0000287f: "&f64"
+0x00002884: "/cargo/registry/src/github.com-1ecc6299db9ec823/hashbrown-0.6.2/src/lib.rs"
+0x000028cf: "/cargo/registry/src/github.com-1ecc6299db9ec823/hashbrown-0.6.2"
+0x0000290f: "hashbrown"
+0x00002919: "raw"
+0x0000291d: "generic"
+0x00002925: "static_empty"
+0x00002932: "ALIGNED_BYTES"
+0x00002940: "_align"
+0x00002947: "Group"
+0x0000294d: "AlignedBytes"
+0x0000295a: "_ZN9hashbrown3raw7generic5Group12static_empty13ALIGNED_BYTES17h1f7469ddd7751ab9E"
+0x000029ab: "Fallible"
+0x000029b4: "Infallible"
+0x000029bf: "Fallibility"
+0x000029cb: "/cargo/registry/src/github.com-1ecc6299db9ec823/rustc-demangle-0.1.16/src/lib.rs"
+0x00002a1c: "/cargo/registry/src/github.com-1ecc6299db9ec823/rustc-demangle-0.1.16"
+0x00002a62: "kind"
+0x00002a67: "ParseIntError"
+0x00002a75: "src/libstd/lib.rs"
+0x00002a87: "std"
+0x00002a8b: "io"
+0x00002a8e: "Write"
+0x00002a94: "write_fmt"
+0x00002a9e: "&mut alloc::vec::Vec<u8>"
+0x00002ab7: "error"
+0x00002abd: "repr"
+0x00002ac2: "Os"
+0x00002ac5: "Simple"
+0x00002acc: "NotFound"
+0x00002ad5: "PermissionDenied"
+0x00002ae6: "ConnectionRefused"
+0x00002af8: "ConnectionReset"
+0x00002b08: "ConnectionAborted"
+0x00002b1a: "NotConnected"
+0x00002b27: "AddrInUse"
+0x00002b31: "AddrNotAvailable"
+0x00002b42: "BrokenPipe"
+0x00002b4d: "AlreadyExists"
+0x00002b5b: "WouldBlock"
+0x00002b66: "InvalidInput"
+0x00002b73: "InvalidData"
+0x00002b7f: "TimedOut"
+0x00002b88: "WriteZero"
+0x00002b92: "Interrupted"
+0x00002b9e: "Other"
+0x00002ba4: "UnexpectedEof"
+0x00002bb2: "ErrorKind"
+0x00002bbc: "Custom"
+0x00002bc3: "Box<Error>"
+0x00002bce: "Box<std::io::error::Custom>"
+0x00002bea: "Repr"
+0x00002bef: "E"
+0x00002bf1: "Result<(), std::io::error::Error>"
+0x00002c13: "Adaptor<alloc::vec::Vec<u8>>"
+0x00002c30: "&mut std::io::Write::write_fmt::Adaptor<alloc::vec::Vec<u8>>"
+0x00002c6d: "stdio"
+0x00002c73: "sys_common"
+0x00002c7e: "remutex"
+0x00002c86: "__lock"
+0x00002c8d: "sys"
+0x00002c91: "wasm"
+0x00002c96: "mutex"
+0x00002c9c: "ReentrantMutex"
+0x00002cab: "Box<std::sys::wasm::mutex::ReentrantMutex>"
+0x00002cd6: "poison"
+0x00002cdd: "failed"
+0x00002ce4: "sync"
+0x00002ce9: "atomic"
+0x00002cf0: "cell"
+0x00002cf5: "UnsafeCell<u8>"
+0x00002d04: "AtomicBool"
+0x00002d0f: "Flag"
+0x00002d14: "borrow"
+0x00002d1b: "isize"
+0x00002d21: "UnsafeCell<isize>"
+0x00002d33: "Cell<isize>"
+0x00002d3f: "Real"
+0x00002d44: "Fake"
+0x00002d49: "Maybe"
+0x00002d4f: "UnsafeCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>"
+0x00002d8c: "RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>"
+0x00002dc6: "ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00002e1c: "&std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00002e8d: "__poison"
+0x00002e96: "panicking"
+0x00002ea0: "Guard"
+0x00002ea6: "ReentrantMutexGuard<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00002f01: "StderrLock"
+0x00002f0c: "&mut std::io::stdio::StderrLock"
+0x00002f2c: "Adaptor<std::io::stdio::StderrLock>"
+0x00002f50: "&mut std::io::Write::write_fmt::Adaptor<std::io::stdio::StderrLock>"
+0x00002f94: "buffered"
+0x00002f9d: "Option<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x00002fd6: "panicked"
+0x00002fdf: "W"
+0x00002fe1: "BufWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x0000301d: "need_flush"
+0x00003028: "LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x00003065: "UnsafeCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>"
+0x000030c1: "RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>"
+0x0000311a: "ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x0000318f: "&std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x0000321f: "ReentrantMutexGuard<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x00003299: "StdoutLock"
+0x000032a4: "&mut std::io::stdio::StdoutLock"
+0x000032c4: "Adaptor<std::io::stdio::StdoutLock>"
+0x000032e8: "&mut std::io::Write::write_fmt::Adaptor<std::io::stdio::StdoutLock>"
+0x0000332c: "os_str"
+0x00003333: "os_str_bytes"
+0x00003340: "Buf"
+0x00003344: "OsString"
+0x0000334d: "&std::ffi::os_str::OsString"
+0x00003369: "Option<std::ffi::os_str::OsString>"
+0x0000338c: "&core::option::Option<std::ffi::os_str::OsString>"
+0x000033be: "path"
+0x000033c3: "Prefix"
+0x000033ca: "Slice"
+0x000033d0: "OsStr"
+0x000033d6: "&std::ffi::os_str::OsStr"
+0x000033ef: "parsed"
+0x000033f6: "Verbatim"
+0x000033ff: "VerbatimUNC"
+0x0000340b: "VerbatimDisk"
+0x00003418: "DeviceNS"
+0x00003421: "UNC"
+0x00003425: "Disk"
+0x0000342a: "PrefixComponent"
+0x0000343a: "RootDir"
+0x00003442: "CurDir"
+0x00003449: "ParentDir"
+0x00003453: "Normal"
+0x0000345a: "Component"
+0x00003464: "_private"
+0x0000346d: "BorrowMutError"
+0x0000347c: "thread"
+0x00003483: "local"
+0x00003489: "AccessError"
+0x00003495: "c_str"
+0x0000349b: "NulError"
+0x000034a4: "BorrowError"
+0x000034b0: "guard"
+0x000034b6: "lock"
+0x000034bb: "locked"
+0x000034c2: "UnsafeCell<bool>"
+0x000034d3: "Mutex"
+0x000034d9: "Box<std::sys_common::mutex::Mutex>"
+0x000034fc: "barrier"
+0x00003504: "count"
+0x0000350a: "generation_id"
+0x00003518: "BarrierState"
+0x00003525: "UnsafeCell<std::sync::barrier::BarrierState>"
+0x00003552: "Mutex<std::sync::barrier::BarrierState>"
+0x0000357a: "&std::sync::mutex::Mutex<std::sync::barrier::BarrierState>"
+0x000035b5: "MutexGuard<std::sync::barrier::BarrierState>"
+0x000035e2: "PoisonError<std::sync::mutex::MutexGuard<std::sync::barrier::BarrierState>>"
+0x0000362e: "UnsafeCell<()>"
+0x0000363d: "Mutex<()>"
+0x00003647: "&std::sync::mutex::Mutex<()>"
+0x00003664: "MutexGuard<()>"
+0x00003673: "PoisonError<std::sync::mutex::MutexGuard<()>>"
+0x000036a1: "actual_start"
+0x000036ae: "resolved"
+0x000036b7: "frames"
+0x000036be: "frame"
+0x000036c4: "noop"
+0x000036c9: "Frame"
+0x000036cf: "symbols"
+0x000036d7: "name"
+0x000036dc: "Option<alloc::vec::Vec<u8>>"
+0x000036f8: "filename"
+0x00003701: "Bytes"
+0x00003707: "Wide"
+0x0000370c: "PhantomData<u16>"
+0x0000371d: "Unique<u16>"
+0x00003729: "RawVec<u16, alloc::alloc::Global>"
+0x0000374b: "Vec<u16>"
+0x00003754: "BytesOrWide"
+0x00003760: "Option<std::backtrace::BytesOrWide>"
+0x00003784: "lineno"
+0x0000378b: "Option<u32>"
+0x00003797: "BacktraceSymbol"
+0x000037a7: "*const std::backtrace::BacktraceSymbol"
+0x000037ce: "PhantomData<std::backtrace::BacktraceSymbol>"
+0x000037fb: "Unique<std::backtrace::BacktraceSymbol>"
+0x00003823: "RawVec<std::backtrace::BacktraceSymbol, alloc::alloc::Global>"
+0x00003861: "Vec<std::backtrace::BacktraceSymbol>"
+0x00003886: "BacktraceFrame"
+0x00003895: "*const std::backtrace::BacktraceFrame"
+0x000038bb: "PhantomData<std::backtrace::BacktraceFrame>"
+0x000038e7: "Unique<std::backtrace::BacktraceFrame>"
+0x0000390e: "RawVec<std::backtrace::BacktraceFrame, alloc::alloc::Global>"
+0x0000394b: "Vec<std::backtrace::BacktraceFrame>"
+0x0000396f: "Capture"
+0x00003977: "UnsafeCell<std::backtrace::Capture>"
+0x0000399b: "Mutex<std::backtrace::Capture>"
+0x000039ba: "&std::sync::mutex::Mutex<std::backtrace::Capture>"
+0x000039ec: "MutexGuard<std::backtrace::Capture>"
+0x00003a10: "PoisonError<std::sync::mutex::MutexGuard<std::backtrace::Capture>>"
+0x00003a53: "condvar"
+0x00003a5b: "WaitTimeoutResult"
+0x00003a6d: "(std::sync::mutex::MutexGuard<()>, std::sync::condvar::WaitTimeoutResult)"
+0x00003ab7: "PoisonError<(std::sync::mutex::MutexGuard<()>, std::sync::condvar::WaitTimeoutResult)>"
+0x00003b0e: "process"
+0x00003b16: "pipe"
+0x00003b1b: "AnonPipe"
+0x00003b24: "ChildStderr"
+0x00003b30: "&std::process::ChildStderr"
+0x00003b4b: "&alloc::string::String"
+0x00003b62: "&Error"
+0x00003b69: "&&Error"
+0x00003b71: "ChildStdin"
+0x00003b7c: "&std::process::ChildStdin"
+0x00003b96: "ChildStdout"
+0x00003ba2: "&std::process::ChildStdout"
+0x00003bbd: "Path"
+0x00003bc2: "&std::path::Path"
+0x00003bd3: "&&std::path::Path"
+0x00003be5: "&std::io::error::Error"
+0x00003bfc: "time"
+0x00003c01: "secs"
+0x00003c06: "nanos"
+0x00003c0c: "Duration"
+0x00003c15: "SystemTime"
+0x00003c20: "&std::time::SystemTime"
+0x00003c37: "_print_fmt"
+0x00003c42: "&backtrace::print::PrintFmt"
+0x00003c5e: "&mut usize"
+0x00003c69: "frame_index"
+0x00003c75: "print_path"
+0x00003c80: "&mut FnMut<(&mut core::fmt::Formatter, backtrace::types::BytesOrWideString)>"
+0x00003ccd: "BacktraceFmt"
+0x00003cda: "&mut backtrace::print::BacktraceFmt"
+0x00003cfe: "__3"
+0x00003d02: "&mut core::result::Result<(), core::fmt::Error>"
+0x00003d32: "closure-1"
+0x00003d3c: "create"
+0x00003d43: "&mut alloc::vec::Vec<std::backtrace::BacktraceFrame>"
+0x00003d78: "&mut core::option::Option<usize>"
+0x00003d99: "closure-0"
+0x00003da3: "{{closure}}"
+0x00003daf: "&mut bool"
+0x00003db9: "__4"
+0x00003dbd: "&backtrace::backtrace::Frame"
+0x00003dda: "&&backtrace::backtrace::Frame"
+0x00003df8: "__5"
+0x00003dfc: "resolve"
+0x00003e04: "&mut alloc::vec::Vec<std::backtrace::BacktraceSymbol>"
+0x00003e3a: "&mut &mut alloc::vec::Vec<std::backtrace::BacktraceSymbol>"
+0x00003e75: "new"
+0x00003e79: "GUARD"
+0x00003e7f: "_ZN3std6thread8ThreadId3new5GUARD17h834af12fe6d53ddaE"
+0x00003eb5: "COUNTER"
+0x00003ebd: "_ZN3std6thread8ThreadId3new7COUNTER17h390aabab3ddd9d5fE"
+0x00003ef5: "NonZeroU64"
+0x00003f00: "ThreadId"
+0x00003f09: "Option<&str>"
+0x00003f16: "enabled"
+0x00003f1e: "ENABLED"
+0x00003f26: "UnsafeCell<usize>"
+0x00003f38: "AtomicUsize"
+0x00003f44: "_ZN3std9backtrace9Backtrace7enabled7ENABLED17h719c03ab8183ef76E"
+0x00003f84: "PathBuf"
+0x00003f8c: "Result<std::path::PathBuf, std::io::error::Error>"
+0x00003fbe: "*const std::ffi::os_str::OsString"
+0x00003fe0: "&[std::ffi::os_str::OsString]"
+0x00003ffe: "from"
+0x00004003: "StringError"
+0x0000400f: "fs"
+0x00004012: "FileType"
+0x0000401b: "FilePermissions"
+0x0000402b: "Permissions"
+0x00004037: "Result<std::time::SystemTime, std::io::error::Error>"
+0x0000406c: "stdin"
+0x00004072: "INSTANCE"
+0x0000407b: "lazy"
+0x00004080: "strong"
+0x00004087: "weak"
+0x0000408c: "alloc::boxed::Box<[u8]>"
+0x000040a4: "pos"
+0x000040a8: "R"
+0x000040aa: "BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>"
+0x000040e5: "UnsafeCell<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>"
+0x0000413f: "Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>"
+0x00004194: "ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00004205: "*const alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x0000428a: "NonNull<alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x00004311: "phantom"
+0x00004319: "PhantomData<alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x000043a4: "Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00004410: "*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x0000448e: "UnsafeCell<*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x00004518: "Cell<*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x0000459c: "Lazy<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00004609: "_ZN3std2io5stdio5stdin8INSTANCE17hb34a6bd077afc212E"
+0x0000463d: "stdout"
+0x00004644: "ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x000046dd: "*const alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x0000478a: "NonNull<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00004839: "PhantomData<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x000048ec: "Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00004980: "*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00004a26: "UnsafeCell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00004ad8: "Cell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00004b84: "Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00004c19: "_ZN3std2io5stdio6stdout8INSTANCE17h5c4fcb62e722504fE"
+0x00004c4e: "stderr"
+0x00004c55: "ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00004ccf: "*const alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00004d5d: "NonNull<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00004ded: "PhantomData<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00004e81: "Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00004ef6: "*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00004f7d: "UnsafeCell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00005010: "Cell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x0000509d: "Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00005113: "_ZN3std2io5stdio6stderr8INSTANCE17he176d178450107c5E"
+0x00005148: "DebugHelper"
+0x00005154: "Option<std::process::ChildStdin>"
+0x00005175: "Option<std::process::ChildStdout>"
+0x00005197: "Option<std::process::ChildStderr>"
+0x000051b9: "ExitStatus"
+0x000051c4: "once"
+0x000051c9: "call_once"
+0x000051d3: "Option"
+0x000051da: "&mut core::option::Option<closure-0>"
+0x000051ff: "now"
+0x00005203: "LOCK"
+0x00005208: "_ZN3std4time7Instant3now4LOCK17h45c9dbfee6cd1010E"
+0x0000523a: "LAST_NOW"
+0x00005243: "Instant"
+0x0000524b: "_ZN3std4time7Instant3now8LAST_NOW17h3810eec8d251b9cdE"
+0x00005281: "at_exit_imp"
+0x0000528d: "_ZN3std10sys_common11at_exit_imp4LOCK17he226c81d6a9832a8E"
+0x000052c7: "QUEUE"
+0x000052cd: "FnOnce<()>"
+0x000052d8: "Box<FnOnce<()>>"
+0x000052e8: "*const alloc::boxed::Box<FnOnce<()>>"
+0x0000530d: "PhantomData<alloc::boxed::Box<FnOnce<()>>>"
+0x00005338: "Unique<alloc::boxed::Box<FnOnce<()>>>"
+0x0000535e: "RawVec<alloc::boxed::Box<FnOnce<()>>, alloc::alloc::Global>"
+0x0000539a: "Vec<alloc::boxed::Box<FnOnce<()>>>"
+0x000053bd: "*mut alloc::vec::Vec<alloc::boxed::Box<FnOnce<()>>>"
+0x000053f1: "_ZN3std10sys_common11at_exit_imp5QUEUE17hf3f926524d2d1450E"
+0x0000542c: "_ZN3std10sys_common9backtrace4lock4LOCK17h92aae827bd981655E"
+0x00005468: "Option<std::path::PathBuf>"
+0x00005483: "rust_backtrace_env"
+0x00005496: "AtomicIsize"
+0x000054a2: "_ZN3std10sys_common9backtrace18rust_backtrace_env7ENABLED17hbca2b5ba25098ae1E"
+0x000054f0: "min_stack"
+0x000054fa: "MIN"
+0x000054fe: "_ZN3std10sys_common6thread9min_stack3MIN17h7733854898bd634cE"
+0x0000553b: "thread_local"
+0x00005548: "lazy_init"
+0x00005552: "INIT_LOCK"
+0x0000555c: "_ZN3std10sys_common12thread_local9StaticKey9lazy_init9INIT_LOCK17h8647b9820286d39dE"
+0x000055b0: "register_dtor_fallback"
+0x000055c7: "DTORS"
+0x000055cd: "key"
+0x000055d1: "dtor"
+0x000055d6: "unsafe extern "C" fn(*mut u8)"
+0x000055f4: "Option<unsafe extern "C" fn(*mut u8)>"
+0x0000561a: "StaticKey"
+0x00005624: "_ZN3std10sys_common12thread_local22register_dtor_fallback5DTORS17hf55a93c94c347a76E"
+0x00005678: "init"
+0x0000567d: "&std::io::lazy::Lazy<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x000056fa: "&std::io::lazy::Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x0000579f: "&std::io::lazy::Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00005825: "cleanup"
+0x0000582d: "CLEANUP"
+0x00005835: "state_and_queue"
+0x00005845: "CString"
+0x0000584d: "Option<std::ffi::c_str::CString>"
+0x0000586e: "id"
+0x00005871: "cvar"
+0x00005876: "Condvar"
+0x0000587e: "Box<std::sys_common::condvar::Condvar>"
+0x000058a5: "Inner"
+0x000058ab: "ArcInner<std::thread::Inner>"
+0x000058c8: "*const alloc::sync::ArcInner<std::thread::Inner>"
+0x000058f9: "NonNull<alloc::sync::ArcInner<std::thread::Inner>>"
+0x0000592c: "PhantomData<alloc::sync::ArcInner<std::thread::Inner>>"
+0x00005963: "Arc<std::thread::Inner>"
+0x0000597b: "Thread"
+0x00005982: "Option<std::thread::Thread>"
+0x0000599e: "UnsafeCell<core::option::Option<std::thread::Thread>>"
+0x000059d4: "Cell<core::option::Option<std::thread::Thread>>"
+0x00005a04: "signaled"
+0x00005a0d: "next"
+0x00005a12: "Waiter"
+0x00005a19: "*const std::sync::once::Waiter"
+0x00005a38: "PhantomData<*const std::sync::once::Waiter>"
+0x00005a64: "Once"
+0x00005a69: "_ZN3std10sys_common7cleanup7CLEANUP17hc43ee5a11edd78e2E"
+0x00005aa1: "HOOK"
+0x00005aa6: "p"
+0x00005aa8: "*mut ()"
+0x00005ab0: "UnsafeCell<*mut ()>"
+0x00005ac4: "AtomicPtr<()>"
+0x00005ad2: "_ZN3std5alloc4HOOK17h50e3d0754ee0d371E"
+0x00005af9: "HOOK_LOCK"
+0x00005b03: "rwlock"
+0x00005b0a: "mode"
+0x00005b0f: "RWLock"
+0x00005b16: "_ZN3std9panicking9HOOK_LOCK17h8c64965529158c7cE"
+0x00005b46: "Default"
+0x00005b4e: "*mut Fn<(&core::panic::PanicInfo)>"
+0x00005b71: "Hook"
+0x00005b76: "_ZN3std9panicking4HOOK17h35014f4acfd76438E"
+0x00005ba1: "payload"
+0x00005ba9: "message"
+0x00005bb1: "location"
+0x00005bba: "PanicInfo"
+0x00005bc4: "&core::panic::PanicInfo"
+0x00005bdc: "fn(&core::panic::PanicInfo)"
+0x00005bf8: "Box<Write>"
+0x00005c03: "default_hook"
+0x00005c10: "FIRST_PANIC"
+0x00005c1c: "_ZN3std9panicking12default_hook28_$u7b$$u7b$closure$u7d$$u7d$11FIRST_PANIC17h854bab1bfa898236E"
+0x00005c7b: "begin_panic_handler"
+0x00005c8f: "Option<alloc::string::String>"
+0x00005cad: "PanicPayload"
+0x00005cba: "begin_panic"
+0x00005cc6: "PanicPayload<&str>"
+0x00005cd9: "rust_panic_without_hook"
+0x00005cf1: "Any"
+0x00005cf5: "Box<Any>"
+0x00005cfe: "RewrapBox"
+0x00005d08: "std_detect"
+0x00005d13: "detect"
+0x00005d1a: "cache"
+0x00005d20: "CACHE"
+0x00005d26: "UnsafeCell<u32>"
+0x00005d36: "AtomicU32"
+0x00005d40: "Cache"
+0x00005d46: "_ZN3std10std_detect6detect5cache5CACHE17hbc4210edd58044efE"
+0x00005d81: "&core::option::Option<alloc::string::String>"
+0x00005dae: "&core::option::Option<usize>"
+0x00005dcb: "&core::num::NonZeroU64"
+0x00005de2: "map"
+0x00005de6: "KEYS"
+0x00005deb: "__getit"
+0x00005df3: "__KEY"
+0x00005df9: "statik"
+0x00005e00: "(u64, u64)"
+0x00005e0b: "UnsafeCell<(u64, u64)>"
+0x00005e22: "Cell<(u64, u64)>"
+0x00005e33: "Option<core::cell::Cell<(u64, u64)>>"
+0x00005e58: "UnsafeCell<core::option::Option<core::cell::Cell<(u64, u64)>>>"
+0x00005e97: "LazyKeyInner<core::cell::Cell<(u64, u64)>>"
+0x00005ec2: "Key<core::cell::Cell<(u64, u64)>>"
+0x00005ee4: "_ZN3std11collections4hash3map11RandomState3new4KEYS7__getit5__KEY17ha5686ebf7e8d3103E"
+0x00005f3a: "SipHasher13"
+0x00005f46: "&core::hash::sip::SipHasher13"
+0x00005f64: "os"
+0x00005f67: "JoinPathsError"
+0x00005f76: "&std::sys::wasm::os::JoinPathsError"
+0x00005f9a: "Option<&Error>"
+0x00005fa9: "&core::option::Option<&Error>"
+0x00005fc7: "InteriorNul"
+0x00005fd3: "NotNulTerminated"
+0x00005fe4: "FromBytesWithNulErrorKind"
+0x00005ffe: "&std::ffi::c_str::FromBytesWithNulErrorKind"
+0x0000602a: "&std::ffi::c_str::CString"
+0x00006044: "ReadDir"
+0x0000604c: "&std::sys::wasm::fs::ReadDir"
+0x00006069: "OpenOptions"
+0x00006075: "&std::sys::wasm::fs::OpenOptions"
+0x00006096: "&std::sys::wasm::fs::FilePermissions"
+0x000060bb: "&std::sys::wasm::fs::FileType"
+0x000060d9: "DirBuilder"
+0x000060e4: "&std::sys::wasm::fs::DirBuilder"
+0x00006104: "&std::io::error::ErrorKind"
+0x0000611f: "&alloc::boxed::Box<Error>"
+0x00006139: "LOCAL_STDOUT"
+0x00006146: "Option<alloc::boxed::Box<Write>>"
+0x00006167: "UnsafeCell<core::option::Option<alloc::boxed::Box<Write>>>"
+0x000061a2: "RefCell<core::option::Option<alloc::boxed::Box<Write>>>"
+0x000061da: "Option<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x00006226: "UnsafeCell<core::option::Option<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>>"
+0x0000628c: "LazyKeyInner<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x000062de: "Key<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x00006327: "_ZN3std2io5stdio12LOCAL_STDOUT7__getit5__KEY17he06b13a73cd08edfE"
+0x00006368: "LOCAL_STDERR"
+0x00006375: "_ZN3std2io5stdio12LOCAL_STDERR7__getit5__KEY17hdc7310932b4e0aa5E"
+0x000063b6: "net"
+0x000063ba: "ip"
+0x000063bd: "netc"
+0x000063c2: "s6_addr"
+0x000063ca: "in6_addr"
+0x000063d3: "Ipv6Addr"
+0x000063dc: "&std::net::ip::Ipv6Addr"
+0x000063f4: "s_addr"
+0x000063fb: "in_addr"
+0x00006403: "Ipv4Addr"
+0x0000640c: "&std::net::ip::Ipv4Addr"
+0x00006424: "addr"
+0x00006429: "sin6_family"
+0x00006435: "sin6_port"
+0x0000643f: "sin6_addr"
+0x00006449: "sin6_flowinfo"
+0x00006457: "sin6_scope_id"
+0x00006465: "sockaddr_in6"
+0x00006472: "SocketAddrV6"
+0x0000647f: "&std::net::addr::SocketAddrV6"
+0x0000649d: "sin_family"
+0x000064a8: "sin_port"
+0x000064b1: "sin_addr"
+0x000064ba: "sockaddr_in"
+0x000064c6: "SocketAddrV4"
+0x000064d3: "&std::net::addr::SocketAddrV4"
+0x000064f1: "tcp"
+0x000064f5: "TcpListener"
+0x00006501: "&std::net::tcp::TcpListener"
+0x0000651d: "&&std::net::tcp::TcpListener"
+0x0000653a: "&&std::ffi::os_str::OsStr"
+0x00006554: "&std::path::Prefix"
+0x00006567: "&std::path::PrefixComponent"
+0x00006583: "Option<&std::path::Path>"
+0x0000659c: "&core::option::Option<&std::path::Path>"
+0x000065c4: "&std::sys::wasm::process::ExitStatus"
+0x000065e9: "ExitCode"
+0x000065f2: "&std::sys::wasm::process::ExitCode"
+0x00006615: "&core::time::Duration"
+0x0000662b: "future"
+0x00006632: "TLS_CX"
+0x00006639: "fn(&()) -> &()"
+0x00006648: "PhantomData<fn(&()) -> &()>"
+0x00006664: "Context"
+0x0000666c: "*const core::task::wake::Context"
+0x0000668d: "NonNull<core::task::wake::Context>"
+0x000066b0: "Option<core::ptr::non_null::NonNull<core::task::wake::Context>>"
+0x000066f0: "UnsafeCell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>"
+0x0000674a: "Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>"
+0x0000679e: "Option<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x00006806: "UnsafeCell<core::option::Option<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>>"
+0x00006888: "LazyKeyInner<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x000068f6: "Key<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x0000695b: "_ZN3std6future6TLS_CX7__getit5__KEY17hffb21c30460c0459E"
+0x00006993: "thread_info"
+0x0000699f: "THREAD_INFO"
+0x000069ab: "stack_guard"
+0x000069b7: "Option<!>"
+0x000069c1: "ThreadInfo"
+0x000069cc: "Option<std::sys_common::thread_info::ThreadInfo>"
+0x000069fd: "UnsafeCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>"
+0x00006a48: "RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>"
+0x00006a90: "Option<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x00006aec: "UnsafeCell<core::option::Option<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>>"
+0x00006b62: "LazyKeyInner<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x00006bc4: "Key<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x00006c1d: "_ZN3std10sys_common11thread_info11THREAD_INFO7__getit5__KEY17ha6d8f612bed40e8eE"
+0x00006c6d: "root"
+0x00006c72: "ManuallyDrop<alloc::collections::btree::node::BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00006cf9: "MaybeUninit<alloc::collections::btree::node::BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00006d7f: "InternalNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00006dda: "*const alloc::collections::btree::node::InternalNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00006e5d: "ManuallyDrop<std::ffi::os_str::OsString>"
+0x00006e86: "MaybeUninit<std::ffi::os_str::OsString>"
+0x00006eae: "ManuallyDrop<core::option::Option<std::ffi::os_str::OsString>>"
+0x00006eed: "MaybeUninit<core::option::Option<std::ffi::os_str::OsString>>"
+0x00006f2b: "LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00006f82: "*const alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00007001: "PhantomData<alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00007086: "Unique<alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00007106: "BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x0000715e: "height"
+0x00007165: "Root<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x000071b8: "BTreeMap<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x0000720f: "&alloc::collections::btree::map::BTreeMap<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00007287: "DLMALLOC"
+0x00007290: "dlmalloc"
+0x00007299: "smallmap"
+0x000072a2: "treemap"
+0x000072aa: "smallbins"
+0x000072b4: "prev_foot"
+0x000072be: "head"
+0x000072c3: "prev"
+0x000072c8: "Chunk"
+0x000072ce: "*mut dlmalloc::dlmalloc::Chunk"
+0x000072ed: "treebins"
+0x000072f6: "chunk"
+0x000072fc: "child"
+0x00007302: "index"
+0x00007308: "TreeChunk"
+0x00007312: "*mut dlmalloc::dlmalloc::TreeChunk"
+0x00007335: "dvsize"
+0x0000733c: "topsize"
+0x00007344: "dv"
+0x00007347: "top"
+0x0000734b: "footprint"
+0x00007355: "max_footprint"
+0x00007363: "seg"
+0x00007367: "base"
+0x0000736c: "size"
+0x00007371: "*mut dlmalloc::dlmalloc::Segment"
+0x00007392: "Segment"
+0x0000739a: "trim_check"
+0x000073a5: "least_addr"
+0x000073b0: "release_checks"
+0x000073bf: "Dlmalloc"
+0x000073c8: "_ZN3std3sys4wasm5alloc8DLMALLOC17h02765b1b78e74130E"
+0x000073fc: "update_panic_count"
+0x0000740f: "PANIC_COUNT"
+0x0000741b: "Cell<usize>"
+0x00007427: "Option<core::cell::Cell<usize>>"
+0x00007447: "UnsafeCell<core::option::Option<core::cell::Cell<usize>>>"
+0x00007481: "LazyKeyInner<core::cell::Cell<usize>>"
+0x000074a7: "Key<core::cell::Cell<usize>>"
+0x000074c4: "_ZN3std9panicking18update_panic_count11PANIC_COUNT7__getit5__KEY17h3963c946c82ddc30E"
+0x00007519: "StartDir"
+0x00007522: "Body"
+0x00007527: "cmp"
+0x0000752b: "Less"
+0x00007530: "Equal"
+0x00007536: "Greater"
+0x0000753e: "Ordering"
+0x00007547: "Inherit"
+0x0000754f: "Null"
+0x00007554: "MakePipe"
+0x0000755d: "Stdio"
+
+.debug_pubnames contents:
+length = 0x00000140 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x000005bb
+Offset     Name
+0x000000d4 "collections"
+0x0000024a "marker"
+0x000002eb "maybe_uninit"
+0x00000086 "raw_vec"
+0x000001eb "core"
+0x00000293 "Left"
+0x000002a5 "Unknown"
+0x000001f0 "ptr"
+0x000000e3 "EMPTY_ROOT_NODE"
+0x000003da "str"
+0x00000472 "Ok"
+0x000003fe "option"
+0x0000059d "vtable"
+0x000002e6 "mem"
+0x00000059 "vec"
+0x0000029f "Center"
+0x00000299 "Right"
+0x000000de "node"
+0x00000272 "fmt"
+0x00000283 "v1"
+0x00000478 "Err"
+0x000002af "alloc"
+0x0000027e "rt"
+0x000003c1 "num"
+0x000000d9 "btree"
+0x00000040 "string"
+0x000001f5 "unique"
+0x00000366 "manually_drop"
+0x00000462 "result"
+length = 0x000000f1 version = 0x0002 unit_offset = 0x000005bb unit_size = 0x0000036e
+Offset     Name
+0x00000186 "backtrace"
+0x0000018b "symbolize"
+0x00000144 "marker"
+0x00000076 "__variant1"
+0x0000007c "__variant2"
+0x000002c0 "v0"
+0x00000160 "fmt"
+0x0000016a "v1"
+0x00000061 "core"
+0x00000165 "rt"
+0x00000217 "rustc_demangle"
+0x000001cd "print"
+0x000001e9 "__Nonexhaustive"
+0x000001dd "Short"
+0x000001e3 "Full"
+0x00000066 "ffi"
+0x0000029c "legacy"
+0x00000084 "option"
+0x00000350 "vtable"
+0x0000015b "result"
+length = 0x00000310 version = 0x0002 unit_offset = 0x00000929 unit_size = 0x00001f8d
+Offset     Name
+0x0000081d "UTF8_CHAR_WIDTH"
+0x00000028 "flt2dec"
+0x000000fe "dec2flt"
+0x00000d32 "Done"
+0x000000a1 "grisu"
+0x00000189 "panic"
+0x0000043d "Both"
+0x000001d5 "flatten"
+0x00001123 "ops"
+0x00000082 "POW10TO128"
+0x0000053a "str"
+0x00000978 "option"
+0x00000d38 "RightBrace"
+0x00001f68 "vtable"
+0x000005d9 "pattern"
+0x00001298 "non_null"
+0x00000ebc "rt"
+0x00000d44 "LeftBrace"
+0x00000d50 "Backslash"
+0x0000117b "sip"
+0x00000856 "slice"
+0x000001cb "iter"
+0x00000162 "Overflow"
+0x000000b8 "decoder"
+0x00000091 "POW10TO256"
+0x00000168 "Underflow"
+0x0000114d "result"
+0x00000055 "POW10TO16"
+0x0000018e "{{impl}}"
+0x000008fb "marker"
+0x00000e83 "DEC_DIGITS_LUT"
+0x00001176 "hash"
+0x00000d67 "EmptyString"
+0x00000143 "Invalid"
+0x000010ff "any"
+0x0000001e "core"
+0x00000443 "Front"
+0x00001128 "function"
+0x000000a6 "CACHED_POW10"
+0x00000449 "Back"
+0x0000108e "task"
+0x000001d0 "adapters"
+0x00001293 "ptr"
+0x00000037 "POW10"
+0x0000015c "InvalidDigit"
+0x00000d6d "TooManyChars"
+0x00000103 "parse"
+0x00000c46 "char"
+0x0000016e "Zero"
+0x00000d57 "convert"
+0x00000193 "internal_constructor"
+0x00000d4a "Type"
+0x00000073 "POW10TO64"
+0x0000042d "chain"
+0x00000e24 "fmt"
+0x00001093 "wake"
+0x00000ec1 "v1"
+0x00000156 "Empty"
+0x00000e7e "num"
+0x00000046 "TWOPOW10"
+0x0000002d "strategy"
+0x00001152 "ffi"
+0x00000e29 "builders"
+0x00000032 "dragon"
+0x00000d3e "Value"
+0x00000064 "POW10TO32"
+length = 0x000000a2 version = 0x0002 unit_offset = 0x000028b6 unit_size = 0x000000f5
+Offset     Name
+0x000000da "num"
+0x00000085 "Fallible"
+0x0000002d "{{impl}}"
+0x0000008b "Infallible"
+0x00000032 "static_empty"
+0x000000b1 "core"
+0x00000023 "raw"
+0x00000037 "ALIGNED_BYTES"
+0x0000001e "hashbrown"
+0x00000028 "generic"
+0x000000b6 "alloc"
+0x00000094 "vtable"
+length = 0x0000004b version = 0x0002 unit_offset = 0x000029ab unit_size = 0x00000071
+Offset     Name
+0x00000037 "num"
+0x0000005a "rt"
+0x00000055 "fmt"
+0x0000005f "v1"
+0x00000032 "core"
+0x00000067 "vtable"
+0x00000050 "result"
+length = 0x000007e0 version = 0x0002 unit_offset = 0x00002a1c unit_size = 0x0000429d
+Offset     Name
+0x00000670 "backtrace"
+0x000001a9 "InvalidData"
+0x000010c5 "call_once"
+0x00000827 "THREAD_INFO"
+0x00003236 "maybe_uninit"
+0x00000045 "Write"
+0x000007ac "DTORS"
+0x0000018b "AddrNotAvailable"
+0x00003030 "panic"
+0x00002cce "time"
+0x00000d2f "StartDir"
+0x0000004a "write_fmt"
+0x00000179 "ConnectionAborted"
+0x00000675 "_print_fmt"
+0x00002653 "Some"
+0x00002f48 "ops"
+0x0000143f "PANIC_COUNT"
+0x0000058f "poison"
+0x0000076c "thread"
+0x00000771 "min_stack"
+0x00001358 "HOOK_LOCK"
+0x00001e07 "atomic"
+0x0000016d "ConnectionRefused"
+0x00003231 "mem"
+0x00000e9f "COUNTER"
+0x00001b16 "non_null"
+0x00002d57 "rt"
+0x00001449 "__KEY"
+0x000010bb "once"
+0x0000193a "node"
+0x00001241 "enabled"
+0x000030f6 "sip"
+0x00000167 "PermissionDenied"
+0x00000657 "mutex"
+0x00001777 "string"
+0x0000336e "Equal"
+0x00001c8c "result"
+0x00000862 "sys"
+0x00001ba9 "marker"
+0x000001ed "stdio"
+0x00000776 "MIN"
+0x000014aa "{{impl}}"
+0x00002f4d "function"
+0x00001645 "raw_vec"
+0x00000230 "stdin"
+0x0000071d "lock"
+0x000030f1 "hash"
+0x00000737 "ENABLED"
+0x00000822 "thread_info"
+0x00003088 "any"
+0x000013ff "begin_panic"
+0x0000264d "None"
+0x00000e8f "GUARD"
+0x000004b7 "from"
+0x00001353 "panicking"
+0x0000019d "WouldBlock"
+0x00000216 "Fake"
+0x00000791 "lazy_init"
+0x00000a6d "os_str"
+0x00001421 "rust_panic_without_hook"
+0x00000796 "INIT_LOCK"
+0x0000157c "vec"
+0x00000197 "AlreadyExists"
+0x00000245 "stdout"
+0x0000145c "std_detect"
+0x00000787 "thread_local"
+0x00000cf1 "fmt"
+0x00002d5c "v1"
+0x000014af "new"
+0x000001b5 "WriteZero"
+0x000013db "begin_panic_handler"
+0x00000b1c "path"
+0x000001c7 "UnexpectedEof"
+0x00002ff3 "num"
+0x000009a4 "net"
+0x0000025b "stderr"
+0x00000a68 "ffi"
+0x000013c0 "default_hook"
+0x00000a99 "c_str"
+0x00001506 "addr"
+0x00000927 "process"
+0x00001e76 "cell"
+0x00001228 "resolve"
+0x00000185 "AddrInUse"
+0x000002a8 "buffered"
+0x00000d3b "Done"
+0x0000003b "std"
+0x00000d48 "local"
+0x000018fa "collections"
+0x00000d35 "Body"
+0x00001466 "cache"
+0x000001a3 "InvalidInput"
+0x000022da "option"
+0x0000300c "str"
+0x00000963 "Null"
+0x00003594 "noop"
+0x0000409a "vtable"
+0x000008da "fs"
+0x00003354 "cmp"
+0x00001904 "map"
+0x000001c1 "Other"
+0x00001461 "detect"
+0x00000210 "Real"
+0x00001060 "barrier"
+0x000012ff "LAST_NOW"
+0x000007db "cleanup"
+0x000004d7 "remutex"
+0x000009a9 "netc"
+0x000007a7 "register_dtor_fallback"
+0x00000971 "condvar"
+0x00001551 "TLS_CX"
+0x00002f10 "slice"
+0x00001532 "tcp"
+0x000018ff "btree"
+0x00000173 "ConnectionReset"
+0x000012eb "now"
+0x00000732 "rust_backtrace_env"
+0x0000143a "update_panic_count"
+0x000003c3 "init"
+0x00003364 "Less"
+0x000014b4 "KEYS"
+0x0000062b "os_str_bytes"
+0x00000df2 "lazy"
+0x00000997 "os"
+0x0000075c "QUEUE"
+0x000007e0 "CLEANUP"
+0x00001a1c "core"
+0x0000044a "error"
+0x00004109 "dlmalloc"
+0x00000722 "LOCK"
+0x00000161 "NotFound"
+0x000013c5 "{{closure}}"
+0x00000969 "MakePipe"
+0x00000271 "LOCAL_STDOUT"
+0x00001367 "HOOK"
+0x00000a56 "DLMALLOC"
+0x00000748 "at_exit_imp"
+0x000031a2 "task"
+0x00000260 "INSTANCE"
+0x00001a21 "ptr"
+0x000001bb "Interrupted"
+0x00003374 "Greater"
+0x0000154c "future"
+0x00001790 "sync"
+0x0000028c "LOCAL_STDERR"
+0x0000334f "char"
+0x0000095d "Inherit"
+0x0000017f "NotConnected"
+0x000004d2 "sys_common"
+0x000031a7 "wake"
+0x00000a51 "alloc"
+0x000001af "TimedOut"
+0x000035a2 "print"
+0x0000088c "pipe"
+0x00000191 "BrokenPipe"
+0x00000d60 "statik"
+0x00000d29 "Prefix"
+0x0000097e "rwlock"
+0x000013ca "FIRST_PANIC"
+0x000011f9 "create"
+0x0000146b "CACHE"
+0x00001a26 "unique"
+0x00000040 "io"
+0x00000867 "wasm"
+0x000014da "ip"
+0x00001444 "__getit"
+0x000032d8 "manually_drop"
+
+.debug_pubtypes contents:
+length = 0x000003d7 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x000005bb
+Offset     Name
+0x000003c6 "NonZeroUsize"
+0x00000260 "PhantomData<alloc::collections::btree::node::LeafNode<(), ()>>"
+0x000003a3 "ManuallyDrop<alloc::collections::btree::node::BoxedNode<(), ()>>"
+0x00000171 "LeafNode<(), ()>"
+0x00000467 "Result"
+0x0000048a "u8"
+0x000004ff "*const alloc::collections::btree::node::InternalNode<(), ()>"
+0x00000491 "usize"
+0x000004dd "()"
+0x000003df "Utf8Error"
+0x00000317 "MaybeUninit<()>"
+0x00000288 "Alignment"
+0x00000045 "String"
+0x0000024f "PhantomData<u8>"
+0x00000032 "&mut alloc::string::String"
+0x00000481 "*const u8"
+0x000005a6 "vtable"
+0x000001c2 "BoxedNode<(), ()>"
+0x000004f8 "!"
+0x000005b1 "&core::str::Utf8Error"
+0x00000387 "ManuallyDrop<()>"
+0x0000005e "Vec<u8>"
+0x0000055a "&core::alloc::Layout"
+0x000002b4 "LayoutErr"
+0x00000221 "Unique<alloc::collections::btree::node::LeafNode<(), ()>>"
+0x0000008b "RawVec<u8, alloc::alloc::Global>"
+0x00000277 "Error"
+0x00000141 "InternalNode<(), ()>"
+0x0000036b "ManuallyDrop<u16>"
+0x00000530 "*const alloc::collections::btree::node::LeafNode<(), ()>"
+0x000000cc "Global"
+0x0000033e "MaybeUninit<alloc::collections::btree::node::BoxedNode<(), ()>>"
+0x000004ac "&u8"
+0x000000f2 "NodeHeader<(), (), ()>"
+0x00000403 "Option<u8>"
+0x00000577 "&()"
+0x000002f0 "MaybeUninit<u16>"
+0x00000508 "u16"
+0x00000594 "&alloc::vec::Vec<u8>"
+0x000001fa "Unique<u8>"
+0x000002c7 "Layout"
+length = 0x00000147 version = 0x0002 unit_offset = 0x000005bb unit_size = 0x0000036e
+Offset     Name
+0x00000320 "&&[u16]"
+0x0000003b "&u16"
+0x000000e6 "Option<rustc_demangle::DemangleStyle>"
+0x00000329 "&[u16]"
+0x00000149 "PhantomData<&()>"
+0x00000364 "&&[u8]"
+0x000001f2 "&[u8]"
+0x00000347 "*const u16"
+0x00000245 "DemangleStyle"
+0x00000089 "Option<rustc_demangle::Demangle>"
+0x000001b9 "OptionCppSymbol"
+0x0000006b "c_void"
+0x000001d2 "PrintFmt"
+0x00000190 "SymbolName"
+0x00000058 "*mut core::ffi::c_void"
+0x00000210 "u32"
+0x000002c5 "Demangle"
+0x00000359 "vtable"
+0x000002da "&str"
+length = 0x00001dc9 version = 0x0002 unit_offset = 0x00000929 unit_size = 0x00001f8d
+Offset     Name
+0x000015d4 "&core::task::wake::Waker"
+0x00000591 "SplitInternal<char>"
+0x00000676 "MultiCharEqSearcher<&[char]>"
+0x00001567 "&char"
+0x00000628 "CharPredicateSearcher<core::str::IsWhitespace>"
+0x00001807 "&core::char::EscapeDefault"
+0x00001406 "bool"
+0x0000127e "SipHasher24"
+0x000017b0 "&core::char::EscapeUnicodeState"
+0x00001b23 "&core::ffi::VaListImpl"
+0x00001867 "&core::fmt::Arguments"
+0x0000102d "Formatter"
+0x0000154a "&mut core::fmt::builders::PadAdapterState"
+0x000003cd "Map<core::str::Chars, core::str::CharEscapeDefault>"
+0x00000900 "PhantomData<&u8>"
+0x00000b89 "Option<usize>"
+0x00001953 "&&str"
+0x00000198 "NoPayload"
+0x000015e6 "&core::task::wake::RawWakerVTable"
+0x00000f6e "Count"
+0x000017ea "&core::char::EscapeUnicode"
+0x000001da "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDebugContinue>, core::char::EscapeDebug>"
+0x00000c5e "EscapeDefault"
+0x0000158d "&[u8; 200]"
+0x00001675 "&i64"
+0x000002e2 "FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>"
+0x00001b95 "&&[char]"
+0x00001e62 "&*const ()"
+0x00001d5d "&core::iter::adapters::chain::Chain<core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>, core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>>"
+0x00000cfe "EscapeUnicode"
+0x0000028b "FlattenCompat<core::option::IntoIter<core::char::EscapeDebug>, core::char::EscapeDebug>"
+0x0000082d "LinesAnyMap"
+0x00000ec6 "Argument"
+0x0000084e "UnsafeBytesToStr"
+0x00000132 "FloatErrorKind"
+0x00000ff1 "ArgumentV1"
+0x00001acc "&core::char::EscapeDebug"
+0x00001ce9 "&core::iter::adapters::Map<core::str::SplitTerminator<char>, core::str::LinesAnyMap>"
+0x00000310 "FlatMap<core::str::Chars, core::char::EscapeDefault, core::str::CharEscapeDefault>"
+0x00001a1e "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDebugContinue>"
+0x0000085b "Iter<u8>"
+0x00001936 "&core::panic::Location"
+0x00001ca4 "&core::iter::adapters::Cloned<core::slice::Iter<u8>>"
+0x0000039d "Map<core::str::Chars, core::str::CharEscapeUnicode>"
+0x0000152b "*mut u8"
+0x0000129d "NonNull<u8>"
+0x00001eb9 "&unsafe fn(*const ())"
+0x00001824 "&core::char::CaseMappingIter"
+0x00001dd1 "&core::hash::sip::Hasher<core::hash::sip::Sip24Rounds>"
+0x00000ee4 "Position"
+0x000018ee "fn(&core::fmt::Void, &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error>"
+0x00001f71 "vtable"
+0x00001a58 "&core::option::IntoIter<core::char::EscapeDebug>"
+0x000010c9 "RawWakerVTable"
+0x00001bf6 "&core::str::pattern::MultiCharEqSearcher<&[char]>"
+0x00000933 "PhantomData<&mut &core::ffi::c_void>"
+0x00001f61 "f32"
+0x000017cd "&core::char::EscapeDefaultState"
+0x00000a97 "IntoIter<core::char::EscapeDebug>"
+0x00001db4 "&core::hash::sip::Hasher<core::hash::sip::Sip13Rounds>"
+0x0000100f "Void"
+0x00001841 "&&Any"
+0x00001219 "Hasher<core::hash::sip::Sip24Rounds>"
+0x0000033e "FlatMap<core::str::Chars, core::char::EscapeUnicode, core::str::CharEscapeUnicode>"
+0x00001c87 "&core::str::Chars"
+0x00001776 "&core::num::IntErrorKind"
+0x0000036d "Map<core::str::Chars, core::str::CharEscapeDebugContinue>"
+0x00000450 "Chain<core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>, core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>>"
+0x00000911 "PhantomData<*mut Fn<()>>"
+0x00000d5c "CharErrorKind"
+0x000018e5 "&core::fmt::Void"
+0x00001658 "&&[u8]"
+0x00001180 "Hasher<core::hash::sip::Sip13Rounds>"
+0x0000088d "Split<u8, core::str::IsAsciiWhitespace>"
+0x00001b9e "&[char]"
+0x0000137d "char"
+0x00001347 "u64"
+0x00001970 "&u32"
+0x00001e9c "&unsafe fn(*const ()) -> core::task::wake::RawWaker"
+0x00001b5b "&mut core::ffi::VaListImpl"
+0x000007f8 "IsWhitespace"
+0x000013e8 "&[u8]"
+0x000008c8 "Iter<core::fmt::ArgumentV1>"
+0x0000053f "Chars"
+0x000007b0 "SplitInternal<core::str::IsWhitespace>"
+0x000001a1 "Location"
+0x00001c13 "&core::str::pattern::StrSearcherImpl"
+0x00001c30 "&core::str::pattern::TwoWaySearcher"
+0x00001e0b "&core::hash::sip::State"
+0x00000847 "IsNotEmpty"
+0x00000175 "NonZeroUsize"
+0x00001421 "&str"
+0x000002c6 "Flatten<core::option::IntoIter<core::char::EscapeDebug>>"
+0x00001907 "&mut core::fmt::Formatter"
+0x00000575 "SplitTerminator<char>"
+0x00001910 "&core::fmt::ArgumentV1"
+0x00001a92 "&core::option::Option<core::char::EscapeDefault>"
+0x00000108 "Decimal"
+0x00001f85 "f64"
+0x00001e7f "&&core::task::wake::RawWakerVTable"
+0x00000567 "IsAsciiWhitespace"
+0x00001f58 "&f32"
+0x00000a3a "Option<core::char::EscapeDefault>"
+0x00000d27 "EscapeUnicodeState"
+0x00001534 "&[usize; 3]"
+0x00001870 "&[&str]"
+0x0000112d "*mut Fn<()>"
+0x0000192d "&&core::panic::Location"
+0x000006ff "EmptyNeedle"
+0x00001d7a "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDefault, core::str::CharEscapeDefault>"
+0x00000215 "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeUnicode>, core::char::EscapeUnicode>"
+0x000019c7 "&core::iter::adapters::chain::ChainState"
+0x00001bbc "*const char"
+0x0000134e "i16"
+0x0000172a "&core::num::flt2dec::decoder::Decoded"
+0x0000170d "&bool"
+0x00000508 "Map<core::iter::adapters::Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>, core::str::UnsafeBytesToStr>"
+0x00001750 "&usize"
+0x00000e4c "PadAdapterState"
+0x000015ef "unsafe fn(*const ()) -> core::task::wake::RawWaker"
+0x00000e93 "Arguments"
+0x00001098 "Waker"
+0x00000552 "CharEscapeDebugContinue"
+0x00001699 "&core::num::dec2flt::parse::Decimal"
+0x000004a8 "Map<core::str::SplitTerminator<char>, core::str::LinesAnyMap>"
+0x000010ab "RawWaker"
+0x000016b6 "&u64"
+0x00001e45 "&core::marker::PhantomData<core::hash::sip::Sip24Rounds>"
+0x0000131e "(u64, i16, i16)"
+0x00001d23 "&core::iter::adapters::Filter<core::str::Split<core::str::IsWhitespace>, core::str::IsNotEmpty>"
+0x0000048c "Cloned<core::slice::Iter<u8>>"
+0x00001d06 "&core::str::Lines"
+0x00000966 "PhantomData<core::hash::sip::Sip24Rounds>"
+0x00001277 "Sip24Rounds"
+0x0000188e "*const &str"
+0x0000185e "&core::option::Option<&core::fmt::Arguments>"
+0x000015b7 "&mut core::fmt::builders::PadAdapter"
+0x00000794 "Split<core::str::IsWhitespace>"
+0x00000644 "MultiCharEqSearcher<core::str::IsWhitespace>"
+0x00001b78 "&[u8; 4]"
+0x000015dd "*const ()"
+0x00000432 "ChainState"
+0x00001157 "VaListImpl"
+0x00000250 "FlattenCompat<core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDefault>, core::char::EscapeDefault>"
+0x00000acf "Option<&core::fmt::Arguments>"
+0x00001603 "unsafe fn(*const ())"
+0x00001a01 "&core::option::Option<core::char::EscapeUnicode>"
+0x00000955 "PhantomData<core::hash::sip::Sip13Rounds>"
+0x00001f10 "&i8"
+0x00001897 "&[core::fmt::rt::v1::Argument]"
+0x00001d97 "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeUnicode, core::str::CharEscapeUnicode>"
+0x00001f3d "i32"
+0x000019aa "&core::iter::adapters::flatten::FlatMap<core::str::Chars, core::char::EscapeDebug, core::str::CharEscapeDebugContinue>"
+0x00001ed6 "&core::ptr::non_null::NonNull<u8>"
+0x0000198d "&core::iter::adapters::flatten::Flatten<core::option::IntoIter<core::char::EscapeDebug>>"
+0x00001f7c "&f64"
+0x00001e28 "&core::marker::PhantomData<core::hash::sip::Sip13Rounds>"
+0x000009da "Option<core::char::EscapeUnicode>"
+0x00000834 "Lines"
+0x00000d75 "CaseMappingIter"
+0x00001c4d "&core::str::pattern::EmptyNeedle"
+0x000018b5 "*const core::fmt::rt::v1::Argument"
+0x000000bd "Decoded"
+0x00001d40 "&core::iter::adapters::Map<core::iter::adapters::Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>, core::str::UnsafeBytesToStr>"
+0x00001dee "&core::hash::sip::SipHasher24"
+0x00001104 "&Any"
+0x00001a75 "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeDefault>"
+0x000018dc "*const core::fmt::ArgumentV1"
+0x00000f2f "FormatSpec"
+0x000016d3 "&i16"
+0x000006a8 "StrSearcherImpl"
+0x00001b35 "&core::ffi::c_void"
+0x00000b2c "Option<&[core::fmt::rt::v1::Argument]>"
+0x000016f0 "&core::num::dec2flt::FloatErrorKind"
+0x000005de "CharSearcher"
+0x00001b52 "&core::marker::PhantomData<&mut core::ffi::VaListImpl>"
+0x00001212 "Sip13Rounds"
+0x00000922 "PhantomData<&core::fmt::ArgumentV1>"
+0x00000560 "CharEscapeDefault"
+0x00000e2e "PadAdapter"
+0x00000c71 "EscapeDefaultState"
+0x00001793 "&core::char::convert::CharErrorKind"
+0x000018be "&[core::fmt::ArgumentV1]"
+0x00001b06 "&core::option::Item<core::char::EscapeDebug>"
+0x000011de "State"
+0x0000056e "BytesIsNotEmpty"
+0x00001f19 "i8"
+0x00000e60 "&mut Write"
+0x00001bd9 "&core::str::CharIndices"
+0x00000ab3 "Item<core::char::EscapeDebug>"
+0x00001c6a "&core::option::Option<u8>"
+0x0000163b "*const core::task::wake::RawWakerVTable"
+0x0000167e "i64"
+0x000003fd "Filter<core::slice::Split<u8, core::str::IsAsciiWhitespace>, core::str::BytesIsNotEmpty>"
+0x00000559 "CharEscapeUnicode"
+0x00001f34 "&i32"
+0x00000c4b "EscapeDebug"
+0x00000733 "TwoWaySearcher"
+0x0000014b "IntErrorKind"
+0x00001b2c "&mut &core::ffi::c_void"
+0x00000be7 "Option<u8>"
+0x00001aaf "&core::slice::Iter<u8>"
+0x00001ef3 "&core::num::NonZeroUsize"
+0x00001a3b "&core::option::Option<core::char::EscapeDebug>"
+0x000019e4 "&core::iter::adapters::Map<core::str::Chars, core::str::CharEscapeUnicode>"
+0x00000944 "PhantomData<&mut core::ffi::VaListImpl>"
+0x000004d8 "Filter<core::str::Split<core::str::IsWhitespace>, core::str::IsNotEmpty>"
+0x0000097d "Option<core::char::EscapeDebug>"
+0x00001ae9 "&&core::fmt::Arguments"
+0x000007ff "CharIndices"
+length = 0x00000079 version = 0x0002 unit_offset = 0x000028b6 unit_size = 0x000000f5
+Offset     Name
+0x000000a8 "&core::alloc::Layout"
+0x0000007a "Fallibility"
+0x00000046 "AlignedBytes"
+0x000000df "NonZeroUsize"
+0x00000066 "Group"
+0x0000009d "vtable"
+0x000000bb "Layout"
+length = 0x0000002b version = 0x0002 unit_offset = 0x000029ab unit_size = 0x00000071
+Offset     Name
+0x0000003c "ParseIntError"
+0x00000027 "vtable"
+length = 0x00004736 version = 0x0002 unit_offset = 0x00002a1c unit_size = 0x0000429d
+Offset     Name
+0x00001eda "UnsafeCell<isize>"
+0x00002ab8 "Option<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x00004060 "&core::task::wake::Waker"
+0x000039a3 "*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00003f7a "&std::net::tcp::TcpListener"
+0x0000377e "&mut usize"
+0x00003ce7 "&core::option::Option<usize>"
+0x000003ee "closure-0"
+0x0000067a "closure-1"
+0x000008f2 "FilePermissions"
+0x000039dc "*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00003331 "ManuallyDrop<core::option::Option<std::ffi::os_str::OsString>>"
+0x00000842 "ThreadInfo"
+0x0000193f "Root<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00003b43 "&std::io::lazy::Lazy<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00002e09 "Count"
+0x000033ff "&mut std::io::stdio::StdoutLock"
+0x0000225e "RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>"
+0x000015f6 "Vec<u16>"
+0x00000acf "FromBytesWithNulErrorKind"
+0x0000099c "JoinPathsError"
+0x00000d81 "Key<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x00003758 "&std::time::SystemTime"
+0x00000630 "Buf"
+0x00001a2b "Unique<u8>"
+0x000020e7 "UnsafeCell<core::option::Option<std::thread::Thread>>"
+0x00003408 "&std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x00001e32 "AtomicIsize"
+0x00001fcf "UnsafeCell<std::backtrace::Capture>"
+0x00003fda "&std::path::PrefixComponent"
+0x00003b7d "&std::io::lazy::Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00000156 "ErrorKind"
+0x00003468 "&std::ffi::os_str::OsStr"
+0x00002173 "UnsafeCell<(u64, u64)>"
+0x0000196f "BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x000032dd "ManuallyDrop<alloc::collections::btree::node::BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x000014f2 "Ipv4Addr"
+0x00002d61 "Argument"
+0x00001bd0 "PhantomData<std::backtrace::BacktraceFrame>"
+0x00002eaa "ArgumentV1"
+0x00002f70 "&mut FnMut<(&mut core::fmt::Formatter, backtrace::types::BytesOrWideString)>"
+0x000025f2 "Option<std::process::ChildStdout>"
+0x00001fb3 "UnsafeCell<()>"
+0x00003f71 "&&std::net::tcp::TcpListener"
+0x00001f39 "UnsafeCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>"
+0x0000211f "UnsafeCell<u32>"
+0x000016fb "RawVec<u16, alloc::alloc::Global>"
+0x00003c2e "&core::panic::Location"
+0x00000f49 "Mutex<std::sync::barrier::BarrierState>"
+0x00000306 "BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>"
+0x000016c0 "RawVec<std::backtrace::BacktraceSymbol, alloc::alloc::Global>"
+0x00003698 "&alloc::string::String"
+0x000009ae "in6_addr"
+0x0000323b "MaybeUninit<alloc::collections::btree::node::BoxedNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00000976 "Condvar"
+0x00003ba1 "*mut ()"
+0x00002c2e "Option<!>"
+0x00002d7f "Position"
+0x00003e7e "&std::sys::wasm::fs::DirBuilder"
+0x00001847 "Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x000037ab "fn(&core::fmt::Void, &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error>"
+0x0000132a "Permissions"
+0x000040a3 "vtable"
+0x00002226 "UnsafeCell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>"
+0x0000203f "UnsafeCell<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>"
+0x000031fb "RawWakerVTable"
+0x00001b8b "NonNull<core::task::wake::Context>"
+0x00001ef6 "UnsafeCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>"
+0x00002c56 "Option<core::cell::Cell<usize>>"
+0x00003775 "&backtrace::print::PrintFmt"
+0x00002242 "UnsafeCell<core::option::Option<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>>"
+0x0000112d "Capture"
+0x00001be1 "PhantomData<*mut Fn<()>>"
+0x000037a2 "&core::fmt::Void"
+0x000013e0 "PanicPayload"
+0x000023f6 "Option<std::backtrace::BytesOrWide>"
+0x00000e13 "LazyKeyInner<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x000001ce "Custom"
+0x000036ef "&std::process::ChildStdout"
+0x000040ae "&alloc::collections::btree::map::BTreeMap<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x000008df "FileType"
+0x00002093 "Cell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x000019e6 "InternalNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x0000060e "PoisonError<(std::sync::mutex::MutexGuard<()>, std::sync::condvar::WaitTimeoutResult)>"
+0x00001d86 "Result<std::time::SystemTime, std::io::error::Error>"
+0x00003e44 "&std::sys::wasm::fs::FilePermissions"
+0x00003d04 "&core::num::NonZeroU64"
+0x00000f22 "MutexGuard<std::sync::barrier::BarrierState>"
+0x00003af0 "&mut core::option::Option<closure-0>"
+0x00003d79 "&core::option::Option<&Error>"
+0x00003787 "&mut backtrace::print::BacktraceFmt"
+0x00003837 "&&backtrace::backtrace::Frame"
+0x0000213b "UnsafeCell<core::option::Option<core::cell::Cell<(u64, u64)>>>"
+0x00000bb7 "PrefixComponent"
+0x00002943 "Option<&Error>"
+0x000037c4 "&core::fmt::ArgumentV1"
+0x0000042b "Write"
+0x00003011 "Utf8Error"
+0x0000156e "&mut alloc::vec::Vec<u8>"
+0x00004014 "&std::sys::wasm::process::ExitStatus"
+0x00000891 "AnonPipe"
+0x00003be0 "&[&str]"
+0x00002f52 "*mut Fn<()>"
+0x00003ea4 "&std::io::error::ErrorKind"
+0x00000952 "Stdio"
+0x00000032 "&mut std::io::Write::write_fmt::Adaptor<alloc::vec::Vec<u8>>"
+0x000035a7 "BacktraceFmt"
+0x00000d09 "DebugHelper"
+0x000029a0 "Option<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>"
+0x00002ee6 "Arguments"
+0x00003ec1 "&alloc::boxed::Box<Error>"
+0x000031ca "Waker"
+0x0000220a "Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>"
+0x00001ac7 "Unique<alloc::boxed::Box<FnOnce<()>>>"
+0x0000265a "Option<std::path::PathBuf>"
+0x00001c14 "PhantomData<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00001aee "Unique<alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x000031dd "RawWaker"
+0x000031ac "Context"
+0x000039ee "*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00003b98 "Box<std::sys_common::condvar::Condvar>"
+0x00002453 "Option<u32>"
+0x00003289 "MaybeUninit<std::ffi::os_str::OsString>"
+0x0000371e "&std::path::Path"
+0x00001795 "Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x000028e5 "Option<core::cell::Cell<(u64, u64)>>"
+0x000014df "Ipv6Addr"
+0x000008c6 "Instant"
+0x00000349 "Lazy<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00002fb5 "FnOnce<()>"
+0x000012a7 "ChildStdout"
+0x000027ce "Option<&core::fmt::Arguments>"
+0x00001e0c "AtomicBool"
+0x000017ee "Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00001aa0 "Unique<u16>"
+0x000038bf "&[std::ffi::os_str::OsString]"
+0x00003c07 "&[core::fmt::rt::v1::Argument]"
+0x00001404 "PanicPayload<&str>"
+0x0000147a "Cache"
+0x00003715 "&&std::path::Path"
+0x000041bc "Chunk"
+0x00001685 "RawVec<std::backtrace::BacktraceFrame, alloc::alloc::Global>"
+0x000001f2 "StderrLock"
+0x00001e45 "AtomicPtr<()>"
+0x000015cf "Vec<std::backtrace::BacktraceSymbol>"
+0x00001d0b "Result<std::path::PathBuf, std::io::error::Error>"
+0x00000fd4 "MutexGuard<std::backtrace::Capture>"
+0x00002bd1 "Option<std::sys_common::thread_info::ThreadInfo>"
+0x00003599 "Frame"
+0x0000308d "&Any"
+0x0000356e "*const std::backtrace::BacktraceFrame"
+0x00000494 "&Error"
+0x0000102d "Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>"
+0x00000503 "ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00003799 "*const core::fmt::ArgumentV1"
+0x00001c25 "PhantomData<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00000983 "RWLock"
+0x00002dca "FormatSpec"
+0x000002ad "LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x00000abc "CString"
+0x00003359 "Ordering"
+0x00003035 "PanicInfo"
+0x00002888 "Option<alloc::string::String>"
+0x000038dd "*const std::ffi::os_str::OsString"
+0x0000055c "ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x000029fe "Option<alloc::boxed::Box<Write>>"
+0x00001065 "BarrierState"
+0x0000410e "Dlmalloc"
+0x00000476 "Error"
+0x00000e2f "LazyKeyInner<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x000041f0 "TreeChunk"
+0x00004267 "*mut dlmalloc::dlmalloc::Chunk"
+0x00002157 "Cell<(u64, u64)>"
+0x0000186e "ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x000039f7 "*const alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x000033c0 "&mut std::io::stdio::StderrLock"
+0x00003262 "MaybeUninit<u16>"
+0x00003b02 "*const alloc::boxed::Box<FnOnce<()>>"
+0x000037cd "&[core::fmt::ArgumentV1]"
+0x00000d1e "State"
+0x000004dc "ReentrantMutexGuard<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00001294 "ChildStdin"
+0x00004293 "*mut dlmalloc::dlmalloc::Segment"
+0x00001909 "BTreeMap<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x000039ac "*const alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x000020cb "Cell<core::option::Option<std::thread::Thread>>"
+0x00001f55 "BorrowMutError"
+0x00003315 "ManuallyDrop<std::ffi::os_str::OsString>"
+0x0000427d "*mut dlmalloc::dlmalloc::TreeChunk"
+0x00002cd3 "Duration"
+0x00002f8e "Box<FnOnce<()>>"
+0x00001e7b "UnsafeCell<u8>"
+0x000030fb "SipHasher13"
+0x00000a3d "TcpListener"
+0x00000bd5 "Prefix"
+0x00001c03 "PhantomData<alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x00003640 "&std::process::ChildStderr"
+0x000035fa "(std::sync::mutex::MutexGuard<()>, std::sync::condvar::WaitTimeoutResult)"
+0x00001c58 "PhantomData<alloc::sync::ArcInner<std::thread::Inner>>"
+0x000022a1 "UnsafeCell<core::option::Option<core::cell::Cell<usize>>>"
+0x000015a8 "Vec<std::backtrace::BacktraceFrame>"
+0x00002714 "Option<std::thread::Thread>"
+0x00003d0d "(u64, u64)"
+0x00000fa2 "Mutex<()>"
+0x00001994 "LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x000026b7 "Option<unsafe extern "C" fn(*mut u8)>"
+0x000021ab "RefCell<core::option::Option<alloc::boxed::Box<Write>>>"
+0x00001f7b "UnsafeCell<bool>"
+0x0000404e "&core::time::Duration"
+0x00003b1f "unsafe extern "C" fn(*mut u8)"
+0x0000218f "UnsafeCell<core::option::Option<core::cell::RefCell<core::option::Option<alloc::boxed::Box<Write>>>>>"
+0x00000878 "Mutex"
+0x00002cf7 "Formatter"
+0x00003bd7 "&core::fmt::Arguments"
+0x00003d5c "&std::sys::wasm::os::JoinPathsError"
+0x00002b16 "Option<core::ptr::non_null::NonNull<core::task::wake::Context>>"
+0x00000d4d "AccessError"
+0x000024b1 "Option<usize>"
+0x00001581 "Vec<u8>"
+0x0000365d "&&str"
+0x00002cba "LayoutErr"
+0x00004069 "&core::task::wake::RawWakerVTable"
+0x000022bd "Cell<usize>"
+0x00003f1a "&std::net::ip::Ipv4Addr"
+0x000033b7 "&mut std::io::Write::write_fmt::Adaptor<std::io::stdio::StderrLock>"
+0x00001376 "Hook"
+0x0000205b "Cell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00003425 "&std::ffi::os_str::OsString"
+0x000036b5 "&&Error"
+0x00001e61 "AtomicU32"
+0x00001a79 "Unique<std::backtrace::BacktraceSymbol>"
+0x0000350e "&std::sync::mutex::Mutex<std::sync::barrier::BarrierState>"
+0x000036d2 "&std::process::ChildStdin"
+0x00000076 "Adaptor<std::io::stdio::StderrLock>"
+0x000005d6 "PoisonError<std::sync::mutex::MutexGuard<()>>"
+0x0000385d "&mut &mut alloc::vec::Vec<std::backtrace::BacktraceSymbol>"
+0x000010fd "Waiter"
+0x00000cc6 "Path"
+0x00001e1f "AtomicUsize"
+0x000007bc "StaticKey"
+0x00003442 "&core::option::Option<std::ffi::os_str::OsString>"
+0x00001bbf "PhantomData<std::backtrace::BacktraceSymbol>"
+0x00000a9e "NulError"
+0x00000e67 "LazyKeyInner<core::cell::Cell<usize>>"
+0x0000233c "Option<std::ffi::os_str::OsString>"
+0x00003808 "&mut alloc::vec::Vec<std::backtrace::BacktraceFrame>"
+0x0000091f "DirBuilder"
+0x00000d65 "Key<core::cell::Cell<(u64, u64)>>"
+0x00001156 "BacktraceFrame"
+0x00002103 "UnsafeCell<*mut ()>"
+0x000033d2 "Box<std::sys::wasm::mutex::ReentrantMutex>"
+0x0000151e "SocketAddrV4"
+0x0000150b "SocketAddrV6"
+0x00003db3 "&std::ffi::c_str::FromBytesWithNulErrorKind"
+0x00000ffb "Mutex<std::backtrace::Capture>"
+0x00003fbd "&std::path::Prefix"
+0x0000093f "ExitCode"
+0x00001281 "ChildStderr"
+0x000005f2 "PoisonError<std::sync::mutex::MutexGuard<std::backtrace::Capture>>"
+0x00003fa0 "&&std::ffi::os_str::OsStr"
+0x000033f6 "&mut std::io::Write::write_fmt::Adaptor<std::io::stdio::StdoutLock>"
+0x0000092c "ExitStatus"
+0x00001e97 "RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>"
+0x00000df7 "LazyKeyInner<core::cell::Cell<(u64, u64)>>"
+0x000020af "UnsafeCell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00001bae "PhantomData<u16>"
+0x00001b53 "NonNull<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>>"
+0x00000643 "Slice"
+0x0000009d "Adaptor<std::io::stdio::StdoutLock>"
+0x00003af9 "*mut alloc::vec::Vec<alloc::boxed::Box<FnOnce<()>>>"
+0x00003dd0 "&std::ffi::c_str::CString"
+0x000035dd "*const std::backtrace::BacktraceSymbol"
+0x00000db9 "Key<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x00001ebe "Cell<isize>"
+0x00000918 "OpenOptions"
+0x00000a13 "sockaddr_in"
+0x000040b7 "*const alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00002ec8 "Void"
+0x00001b6f "NonNull<alloc::sync::ArcInner<std::thread::Inner>>"
+0x0000161d "Vec<alloc::boxed::Box<FnOnce<()>>>"
+0x00000eb2 "ThreadId"
+0x00001c91 "Result<(), std::io::error::Error>"
+0x000002d4 "BufWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x00003e61 "&std::sys::wasm::fs::FileType"
+0x0000310e "Hasher<core::hash::sip::Sip13Rounds>"
+0x00001c36 "PhantomData<alloc::boxed::Box<FnOnce<()>>>"
+0x00000594 "Flag"
+0x0000004f "Adaptor<alloc::vec::Vec<u8>>"
+0x00003bbe "fn(&core::panic::PanicInfo)"
+0x00003ded "&core::str::Utf8Error"
+0x00001f68 "BorrowError"
+0x000039e5 "*const alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x000021d2 "UnsafeCell<core::option::Option<alloc::boxed::Box<Write>>>"
+0x00003e27 "&std::sys::wasm::fs::OpenOptions"
+0x00002f15 "Iter<core::fmt::ArgumentV1>"
+0x00001f12 "RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>"
+0x000017bc "ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>"
+0x00001174 "BacktraceSymbol"
+0x000009d4 "sockaddr_in6"
+0x00000ec5 "Thread"
+0x0000373b "&std::io::error::Error"
+0x0000305e "Location"
+0x00003534 "&std::sync::mutex::Mutex<()>"
+0x00003666 "&str"
+0x000010df "Once"
+0x000005ba "PoisonError<std::sync::mutex::MutexGuard<std::sync::barrier::BarrierState>>"
+0x00001815 "ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00003790 "&mut core::fmt::Formatter"
+0x000040c0 "*const alloc::collections::btree::node::InternalNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>"
+0x00002285 "UnsafeCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>"
+0x00000d9d "Key<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>"
+0x0000250f "Option<&str>"
+0x000008b3 "SystemTime"
+0x0000177c "String"
+0x000004bc "StringError"
+0x000030d2 "Any"
+0x000022df "Option<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>"
+0x00003e0a "&std::sys::wasm::fs::ReadDir"
+0x00003ef0 "&std::net::ip::Ipv6Addr"
+0x00001f97 "UnsafeCell<std::sync::barrier::BarrierState>"
+0x00000f7b "MutexGuard<()>"
+0x00004072 "unsafe fn(*const ()) -> core::task::wake::RawWaker"
+0x00000a72 "OsString"
+0x00003b60 "&std::io::lazy::Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00000e4b "LazyKeyInner<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x000033db "isize"
+0x00002023 "UnsafeCell<*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x00000871 "ReentrantMutex"
+0x00001b1b "NonNull<alloc::sync::ArcInner<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x0000382e "&mut bool"
+0x00002771 "Option<std::ffi::c_str::CString>"
+0x000032b0 "MaybeUninit<core::option::Option<std::ffi::os_str::OsString>>"
+0x00004031 "&std::sys::wasm::process::ExitCode"
+0x000039b5 "alloc::boxed::Box<[u8]>"
+0x00000205 "Maybe"
+0x00000404 "Box<Write>"
+0x00003bfe "*const &str"
+0x0000119d "BytesOrWide"
+0x00001c47 "PhantomData<*const std::sync::once::Waiter>"
+0x00000b21 "Component"
+0x00003ff7 "&core::option::Option<&std::path::Path>"
+0x00003517 "Box<std::sys_common::mutex::Mutex>"
+0x00003bce "&core::panic::PanicInfo"
+0x00001426 "RewrapBox"
+0x00001089 "WaitTimeoutResult"
+0x00000905 "ReadDir"
+0x0000339a "&mut alloc::string::String"
+0x00001c7a "PhantomData<alloc::collections::btree::node::LeafNode<std::ffi::os_str::OsString, core::option::Option<std::ffi::os_str::OsString>>>"
+0x00003d3f "&core::hash::sip::SipHasher13"
+0x0000337d "Box<std::io::error::Custom>"
+0x00003811 "&mut core::option::Option<usize>"
+0x00000cd9 "PathBuf"
+0x00002a5b "Option<&std::path::Path>"
+0x00000370 "Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>"
+0x00000535 "ReentrantMutexGuard<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>"
+0x00002642 "Option"
+0x00004086 "fn(&()) -> &()"
+0x00003c25 "*const core::fmt::rt::v1::Argument"
+0x00003cca "&core::option::Option<alloc::string::String>"
+0x000021ee "UnsafeCell<core::option::Option<core::cell::Cell<core::option::Option<core::ptr::non_null::NonNull<core::task::wake::Context>>>>>"
+0x00001736 "RawVec<alloc::boxed::Box<FnOnce<()>>, alloc::alloc::Global>"
+0x00001feb "UnsafeCell<usize>"
+0x00002b73 "Option<core::cell::RefCell<core::option::Option<std::sys_common::thread_info::ThreadInfo>>>"
+0x00003866 "&mut alloc::vec::Vec<std::backtrace::BacktraceSymbol>"
+0x00001a52 "Unique<std::backtrace::BacktraceFrame>"
+0x00003565 "&std::sync::mutex::Mutex<std::backtrace::Capture>"
+0x000018c7 "ArcInner<std::thread::Inner>"
+0x00004224 "Segment"
+0x00002077 "UnsafeCell<*mut alloc::sync::Arc<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x00001b37 "NonNull<alloc::sync::ArcInner<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::buffered::LineWriter<std::io::stdio::Maybe<std::io::stdio::StdoutRaw>>>>>>"
+0x000000de "Repr"
+0x00004057 "*const core::task::wake::Context"
+0x0000261a "Option<std::process::ChildStderr>"
+0x0000282b "Option<&[core::fmt::rt::v1::Argument]>"
+0x000037eb "&mut core::result::Result<(), core::fmt::Error>"
+0x00002399 "Option<alloc::vec::Vec<u8>>"
+0x000032f9 "ManuallyDrop<u16>"
+0x000009c1 "in_addr"
+0x00001bf2 "PhantomData<&core::fmt::ArgumentV1>"
+0x00002fd3 "*mut Fn<(&core::panic::PanicInfo)>"
+0x00003d96 "&alloc::vec::Vec<u8>"
+0x00003f54 "&std::net::addr::SocketAddrV4"
+0x00000dd5 "Key<core::cell::Cell<usize>>"
+0x00003f37 "&std::net::addr::SocketAddrV6"
+0x00002e8c "&mut Write"
+0x00002ff8 "NonZeroU64"
+0x000025ca "Option<std::process::ChildStdin>"
+0x000030ab "Box<Any>"
+0x0000044f "Box<Error>"
+0x000005a7 "Guard"
+0x00003840 "&backtrace::backtrace::Frame"
+0x00000a85 "OsStr"
+0x00000ed8 "Inner"
+0x0000256c "Option<u8>"
+0x00002007 "Cell<*mut alloc::sync::Arc<std::sync::mutex::Mutex<std::io::buffered::BufReader<std::io::stdio::Maybe<std::io::stdio::StdinRaw>>>>>"
+0x00000397 "Lazy<std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>>"
+0x00003b86 "*const std::sync::once::Waiter"
+0x00001c69 "PhantomData<fn(&()) -> &()>"
+0x0000164a "RawVec<u8, alloc::alloc::Global>"
+0x0000021d "StdoutLock"
+0x000033c9 "&std::sys_common::remutex::ReentrantMutex<core::cell::RefCell<std::io::stdio::Maybe<std::io::stdio::StderrRaw>>>"
+0x00003b8f "*const alloc::sync::ArcInner<std::thread::Inner>"
+0x000018a0 "Arc<std::thread::Inner>"
