@@ -49,9 +49,9 @@ extern Name WASM, RETURN_FLOW;
 // in control flow.
 class Flow {
 public:
-  Flow() { values.push_back(Literal()); }
-  Flow(Literal value) { values.push_back(value); }
-  Flow(Name breakTo) : breakTo(breakTo) { values.push_back(Literal()); }
+  Flow() : values{Literal()} {}
+  Flow(Literal value) : values{value} {}
+  Flow(Name breakTo) : values{Literal()}, breakTo(breakTo) {}
 
   SmallVector<Literal, 1> values;
   Name breakTo; // if non-null, a break is going on

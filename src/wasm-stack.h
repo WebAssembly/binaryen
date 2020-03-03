@@ -809,10 +809,7 @@ void BinaryenIRWriter<SubType>::visitTupleMake(TupleMake* curr) {
   for (auto* operand : curr->operands) {
     visit(operand);
   }
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
+  // No need to handle unreachable since we don't actually emit an instruction
   emit(curr);
 }
 

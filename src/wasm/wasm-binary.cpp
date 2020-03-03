@@ -1088,6 +1088,7 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   if (type >= 0) {
+    // TODO: Handle block input types properly
     return signatures[type].results;
   }
   switch (type) {
@@ -2420,7 +2421,10 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
                                           size_t start) {
   assert(start <= expressionStack.size());
   // The results of this block are the last values pushed to the expressionStack
-  Expression* results = popTypedExpression(type);
+  Expression* results = nullptr;
+  if (type.isConcrete()) {
+    results = popTypedExpression(type);
+  }
   if (expressionStack.size() < start) {
     throwError("Block requires more values than are available");
   }
@@ -4487,7 +4491,9 @@ void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  curr->value = popTypedExpression(currFunction->sig.results);
+  if (currFunction->sig.results.isConcrete()) {
+    curr->value = popTypedExpression(currFunction->sig.results);
+  }
   curr->finalize();
 }
 

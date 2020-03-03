@@ -1413,7 +1413,6 @@ struct PrintExpressionContents
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
     o << curr->index;
-    restoreNormalColor(o);
   }
 };
 

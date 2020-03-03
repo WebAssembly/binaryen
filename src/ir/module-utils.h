@@ -442,6 +442,7 @@ collectSignatures(Module& wasm,
 
       void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
       void visitBlock(Block* curr) {
+        // TODO: Allow blocks to have input types as well
         if (curr->type.isMulti()) {
           counts[Signature(Type::none, curr->type)]++;
         }
