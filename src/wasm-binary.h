@@ -1261,7 +1261,7 @@ public:
   int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
-  void pushBlockElements(Block* curr, size_t start, size_t end);
+  void pushBlockElements(Block* curr, Type type, size_t start);
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.

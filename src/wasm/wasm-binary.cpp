@@ -2381,13 +2381,20 @@ void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
 }
 
 void WasmBinaryBuilder::pushBlockElements(Block* curr,
-                                          size_t start,
-                                          size_t end) {
+                                          Type type,
+                                          size_t start) {
   assert(start <= expressionStack.size());
-  assert(start <= end);
-  assert(end <= expressionStack.size());
-  // We may need to drop some elements in the case of unreachable code that
-  // ignores them, e.g.
+  // The results of this block are the last values pushed to the expressionStack
+  Expression* results = nullptr;
+  if (type != Type::none) {
+    results = popNonVoidExpression();
+  }
+  if (expressionStack.size() < start) {
+    throwError("Block requires more values than are available");
+  }
+  // Everything else on the stack after `start` is either a none-type expression
+  // or a concretely-type expression that is implicitly dropped due to
+  // unreachability at the end of the block, like this:
   //
   //  block i32
   //   i32.const 1
@@ -2396,51 +2403,20 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   //   return
   //  end
   //
-  // The const elements will be emitted as drops in the block; due to the
-  // return, they are not consumed by anything (our binary parsing code
-  // will ignore unreachable code *after* a return like that, but here we handle
-  // the converse case).
+  // The first two const elements will be emitted as drops in the block (the
+  // optimizer can remove them, of course, but in general we may need dropped
+  // items here as they may have side effects).
   //
-  // However, a first dropped element may be consumed by code later, e.g.
-  //
-  //  block i32
-  //   i32.const 1 ;; this is left to flow out of the block at the end
-  //   i32.const 2
-  //   i32.const 3
-  //   i32.store
-  //  end
-  //
-  // That will appear to us as a list of two elements: the const 1, and the
-  // store (which has two nested children). The const 1 should be consumed as
-  // the block return value at the end.
-  // TODO This will need to be extended for multivalue.
-  const Index NONE = -1;
-  Index consumable = NONE;
-  for (size_t i = start; i < end; i++) {
+  for (size_t i = start; i < expressionStack.size(); ++i) {
     auto* item = expressionStack[i];
-    curr->list.push_back(item);
-    if (i < end - 1) {
-      // stacky&unreachable code may introduce elements that need to be dropped
-      // in non-final positions
-      if (item->type.isConcrete()) {
-        curr->list.back() = Builder(wasm).makeDrop(item);
-        if (consumable == NONE) {
-          // this is the first, and hence consumable value. note the location
-          consumable = curr->list.size() - 1;
-        }
-      }
+    if (item->type.isConcrete()) {
+      item = Builder(wasm).makeDrop(item);
     }
+    curr->list.push_back(item);
   }
   expressionStack.resize(start);
-  // if we have a consumable item and need it, use it
-  if (consumable != NONE && curr->list.back()->type == Type::none) {
-    requireFunctionContext(
-      "need an extra var in a non-function context, invalid wasm");
-    Builder builder(wasm);
-    auto* item = curr->list[consumable]->cast<Drop>()->value;
-    auto temp = builder.addVar(currFunction, item->type);
-    curr->list[consumable] = builder.makeLocalSet(temp, item);
-    curr->list.push_back(builder.makeLocalGet(temp, item->type));
+  if (results != nullptr) {
+    curr->list.push_back(results);
   }
 }
 
@@ -2486,7 +2462,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     if (end < start) {
       throwError("block cannot pop from outside");
     }
-    pushBlockElements(curr, start, end);
+    pushBlockElements(curr, curr->type, start);
     curr->finalize(curr->type,
                    breakTargetNames.find(curr->name) !=
                      breakTargetNames.end() /* hasBreak */);
@@ -2519,7 +2495,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
   }
   breakStack.pop_back();
   auto* block = allocator.alloc<Block>();
-  pushBlockElements(block, start, end);
+  pushBlockElements(block, type, start);
   block->name = label;
   block->finalize(type);
   // maybe we don't need a block here?
@@ -2569,7 +2545,7 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
       throwError("block cannot pop from outside");
     }
     auto* block = allocator.alloc<Block>();
-    pushBlockElements(block, start, end);
+    pushBlockElements(block, curr->type, start);
     block->finalize(curr->type);
     curr->body = block;
   }
