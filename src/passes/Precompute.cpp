@@ -188,6 +188,10 @@ struct Precompute
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
+    if (flow.values.size() > 1) {
+      // TODO: handle multivalue types
+      return;
+    }
     if (flow.getValue().type.isVector()) {
       return;
     }

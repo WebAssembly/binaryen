@@ -15,10 +15,11 @@
  */
 
 #include "wasm-stack.h"
+#include "ir/find_all.h"
 
 namespace wasm {
 
-void BinaryInstWriter::emitBlockType(Type type) {
+void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);
   } else if (type.isMulti()) {
@@ -31,7 +32,7 @@ void BinaryInstWriter::emitBlockType(Type type) {
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Block);
-  emitBlockType(curr->type);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -40,7 +41,7 @@ void BinaryInstWriter::visitIf(If* curr) {
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::If);
-  emitBlockType(curr->type);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
@@ -56,7 +57,7 @@ void BinaryInstWriter::emitIfElse(If* curr) {
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Loop);
-  emitBlockType(curr->type);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
@@ -86,7 +87,8 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
-  for (Index i = 0; i < func->getLocalType(curr->index).size(); ++i) {
+  size_t numValues = func->getLocalType(curr->index).size();
+  for (Index i = 0; i < numValues; ++i) {
     o << int8_t(BinaryConsts::LocalGet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
   }
@@ -1622,7 +1624,7 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
-  emitBlockType(curr->type);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::emitCatch(Try* curr) {
@@ -1685,7 +1687,7 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   }
   // Otherwise, save it to a scratch local, drop the others, then retrieve it
   assert(scratchLocals.find(curr->type) != scratchLocals.end());
-  Index scratch = scratchLocals[curr->type];
+  auto scratch = scratchLocals[curr->type];
   o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratch);
   for (size_t i = 0; i < curr->index; ++i) {
     o << int8_t(BinaryConsts::Drop);
@@ -1748,17 +1750,12 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
 void BinaryInstWriter::countScratchLocals() {
   // Add a scratch register in `numLocalsByType` for each type of
   // tuple.extract with nonzero index present.
-  struct ScratchFinder : PostWalker<ScratchFinder> {
-    std::map<Type, Index>& scratchLocals;
-    ScratchFinder(std::map<Type, Index>& scratchLocals)
-      : scratchLocals(scratchLocals){};
-    void visitTupleExtract(TupleExtract* curr) {
-      if (curr->type != Type::unreachable && curr->index != 0) {
-        scratchLocals[curr->type] = 0;
-      }
+  FindAll<TupleExtract> extracts(func->body);
+  for (auto* extract : extracts.list) {
+    if (extract->type != Type::unreachable && extract->index != 0) {
+      scratchLocals[extract->type] = 0;
     }
-  } finder(scratchLocals);
-  finder.walkFunction(func);
+  }
   for (auto t : scratchLocals) {
     numLocalsByType[t.first]++;
   }

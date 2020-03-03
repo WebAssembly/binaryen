@@ -57,6 +57,8 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
+// Unlike the default format, tuple types in s-expressions should not have
+// commas.
 struct LocalType {
   Type type;
   LocalType(Type type) : type(type){};

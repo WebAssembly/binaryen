@@ -146,7 +146,7 @@ public:
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
 
-  void emitBlockType(Type type);
+  void emitResultType(Type type);
   void emitIfElse(If* curr);
   void emitCatch(Try* curr);
   // emit an end at the end of a block/loop/if/try
