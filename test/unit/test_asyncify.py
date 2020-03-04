@@ -24,11 +24,20 @@ class AsyncifyTest(utils.BinaryenTestCase):
         test(['-Os', '-g'])
 
     def test_asyncify_pure_wasm(self):
-        shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '-o', 'a.wasm'])
-        shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
-        output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
-        with open(self.input_path('asyncify-pure.txt'), 'r') as f:
-            self.assertEqual(f.read(), output)
+        def test(input_file):
+            shared.run_process(shared.WASM_OPT + [input_file, '--asyncify', '-o', 'a.wasm'])
+            shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
+            output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
+            with open(self.input_path('asyncify-pure.txt'), 'r') as f:
+                self.assertEqual(f.read(), output)
+
+        # test wat input
+        wat = self.input_path('asyncify-pure.wat')
+        test(wat)
+
+        # test wasm input
+        shared.run_process(shared.WASM_AS + [wat, '-o', 'a.wasm'])
+        test('a.wasm')
 
     def test_asyncify_list_bad(self):
         for arg, warning in [

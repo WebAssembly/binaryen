@@ -154,7 +154,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second));
+      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
       F->name = pair.second;
     }
   }
