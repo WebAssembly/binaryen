@@ -150,6 +150,12 @@
 //  * asyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
 //
+//  * asyncify_get_state(): call this to get the current value of the
+//    internal "__asyncify_state" variable as described above.
+//    It can be used to distinguish between unwinding/rewinding and normal
+//    calls, so that you know when to start an asynchronous operation and
+//    when to propagate results back.
+//
 // These four functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
