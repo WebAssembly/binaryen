@@ -454,8 +454,7 @@ public:
         } else if (func->base == STOP_REWIND) {
           renamings[func->name] = ASYNCIFY_STOP_REWIND;
         } else {
-          Fatal() << "call to unidenfied asyncify import: "
-                  << func->base;
+          Fatal() << "call to unidenfied asyncify import: " << func->base;
         }
       }
     }
@@ -483,7 +482,9 @@ public:
           Module& module;
           bool canIndirectChangeState;
 
-          Walker(Info& info, Module& module, bool canIndirectChangeState) : info(info), module(module), canIndirectChangeState(canIndirectChangeState) {}
+          Walker(Info& info, Module& module, bool canIndirectChangeState)
+            : info(info), module(module),
+              canIndirectChangeState(canIndirectChangeState) {}
 
           void visitCall(Call* curr) {
             if (curr->isReturn) {
@@ -516,7 +517,6 @@ public:
             }
             // TODO optimize the other case, at least by type
           }
-
         };
         Walker walker(info, module, canIndirectChangeState);
         walker.walk(func->body);
