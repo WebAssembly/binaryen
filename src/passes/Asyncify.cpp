@@ -127,7 +127,7 @@
 // proper place, and the end to the proper end based on how much memory
 // you reserved. Note that asyncify will grow the stack up.
 //
-// The pass will also create four functions that let you control unwinding
+// The pass will also create five functions that let you control unwinding
 // and rewinding:
 //
 //  * asyncify_start_unwind(data : i32): call this to start unwinding the
