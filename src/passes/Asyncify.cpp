@@ -254,7 +254,6 @@
 
 #include "ir/effects.h"
 #include "ir/find_all.h"
-#include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
