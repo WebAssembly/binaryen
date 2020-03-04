@@ -127,7 +127,7 @@
 // proper place, and the end to the proper end based on how much memory
 // you reserved. Note that asyncify will grow the stack up.
 //
-// The pass will also create four functions that let you control unwinding
+// The pass will also create five functions that let you control unwinding
 // and rewinding:
 //
 //  * asyncify_start_unwind(data : i32): call this to start unwinding the
@@ -149,6 +149,12 @@
 //
 //  * asyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
+//
+//  * asyncify_get_state(): call this to get the current value of the
+//    internal "__asyncify_state" variable as described above.
+//    It can be used to distinguish between unwinding/rewinding and normal
+//    calls, so that you know when to start an asynchronous operation and
+//    when to propagate results back.
 //
 // These four functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
@@ -269,6 +275,7 @@ namespace wasm {
 namespace {
 
 static const Name ASYNCIFY_STATE = "__asyncify_state";
+static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
 static const Name ASYNCIFY_DATA = "__asyncify_data";
 static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
 static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
@@ -1336,6 +1343,14 @@ private:
     makeFunction(ASYNCIFY_STOP_UNWIND, false, State::Normal);
     makeFunction(ASYNCIFY_START_REWIND, true, State::Rewinding);
     makeFunction(ASYNCIFY_STOP_REWIND, false, State::Normal);
+
+    module->addFunction(
+      builder.makeFunction(ASYNCIFY_GET_STATE,
+                           Signature(Type::none, Type::i32),
+                           {},
+                           builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
+    module->addExport(builder.makeExport(
+      ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
 };
 

@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "import" (func $import))
  (import "env" "import2" (func $import2 (result i32)))
  (import "env" "import3" (func $import3 (param i32)))
@@ -13,6 +13,7 @@
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
+ (export "asyncify_get_state" (func $asyncify_get_state))
  (func $calls-import (; 3 ;)
   (local $0 i32)
   (local.set $0
@@ -1633,5 +1634,8 @@
    )
    (unreachable)
   )
+ )
+ (func $asyncify_get_state (; 23 ;) (result i32)
+  (global.get $__asyncify_state)
  )
 )
