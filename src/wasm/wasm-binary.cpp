@@ -2394,8 +2394,19 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   }
   // Everything else on the stack after `start` is either a none-type expression
   // or a concretely-type expression that is implicitly dropped due to
-  // unreachability at the end of the block. Because these expressions may have
-  // side effects, preserve them by making the drop explicit.
+  // unreachability at the end of the block, like this:
+  //
+  //  block i32
+  //   i32.const 1
+  //   i32.const 2
+  //   i32.const 3
+  //   return
+  //  end
+  //
+  // The first two const elements will be emitted as drops in the block (the
+  // optimizer can remove them, of course, but in general we may need dropped
+  // items here as they may have side effects).
+  //
   for (size_t i = start; i < expressionStack.size(); ++i) {
     auto* item = expressionStack[i];
     if (item->type.isConcrete()) {
