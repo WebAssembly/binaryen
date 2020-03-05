@@ -59,6 +59,11 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
            DebugInfo.AbbrevDecls[AbbrevEnd].Code) {
       AbbrevEnd++;
     }
+    // XXX BINARYEN If there are no abbreviations, there is nothing to
+    //              do in this unit.
+    if (AbbrevStart == AbbrevEnd) {
+      continue;
+    }
     onStartCompileUnit(Unit);
     if (Unit.Entries.empty()) { // XXX BINARYEN
       continue;

@@ -56,7 +56,7 @@ struct BinaryenDWARFInfo {
   BinaryenDWARFInfo(const Module& wasm) {
     // Get debug sections from the wasm.
     for (auto& section : wasm.userSections) {
-      if (Name(section.name).startsWith(".debug_")) {
+      if (Name(section.name).startsWith(".debug_") && section.data.data()) {
         // TODO: efficiency
         sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
           llvm::StringRef(section.data.data(), section.data.size()));
