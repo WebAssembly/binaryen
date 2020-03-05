@@ -538,19 +538,34 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
       name = Name::fromInt(localIndex);
     }
     localIndex++;
-    Type type = stringToType(s[i]->str());
+    Type type;
+    if (s[i]->isStr()) {
+      type = stringToType(s[i]->str());
+    } else {
+      if (elementStartsWith(s, PARAM)) {
+        throw ParseException(
+          "params may not have tuple types", s[i]->line, s[i]->col);
+      }
+      auto& tuple = s[i]->list();
+      std::vector<Type> types;
+      for (size_t j = 0; j < s[i]->size(); ++j) {
+        types.push_back(stringToType(tuple[j]->str()));
+      }
+      type = Type(types);
+    }
     namedParams.emplace_back(name, type);
   }
   return namedParams;
 }
 
 // Parses (result type) element. (e.g. (result i32))
-Type SExpressionWasmBuilder::parseResults(Element& s) {
+std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
-  if (s.size() != 2) {
-    throw ParseException("invalid result arity", s.line, s.col);
+  std::vector<Type> types;
+  for (size_t i = 1; i < s.size(); i++) {
+    types.push_back(stringToType(s[i]->str()));
   }
-  return stringToType(s[1]->str());
+  return types;
 }
 
 // Parses an element that references an entry in the type section. The element
@@ -599,8 +614,8 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   while (i < s.size() && elementStartsWith(*s[i], RESULT)) {
     paramsOrResultsExist = true;
-    // TODO: make parseResults return a vector
-    results.push_back(parseResults(*s[i++]));
+    auto newResults = parseResults(*s[i++]);
+    results.insert(results.end(), newResults.begin(), newResults.end());
   }
 
   auto inlineSig = Signature(Type(params), Type(results));
@@ -1635,14 +1650,13 @@ Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
     return stringToType(s[i++]->str());
   }
 
-  Element& params = *s[i];
-  IString id = params[0]->str();
-  if (id != RESULT) {
-    return Type::none;
+  Element& results = *s[i];
+  IString id = results[0]->str();
+  if (id == RESULT) {
+    i++;
+    return Type(parseResults(results));
   }
-
-  i++;
-  return stringToType(params[1]->str());
+  return Type::none;
 }
 
 Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
@@ -1878,6 +1892,21 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
   ret->sent = event->sig.params;
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
+  auto ret = allocator.alloc<TupleMake>();
+  parseCallOperands(s, 1, s.size(), ret);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
+  auto ret = allocator.alloc<TupleExtract>();
+  ret->index = atoi(s[1]->str().c_str());
+  ret->tuple = parseExpression(s[2]);
   ret->finalize();
   return ret;
 }
@@ -2440,8 +2469,8 @@ void SExpressionWasmBuilder::parseType(Element& s) {
       auto newParams = parseParamOrLocal(curr);
       params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
-      // TODO: Parse multiple results at once
-      results.push_back(parseResults(curr));
+      auto newResults = parseResults(curr);
+      results.insert(results.end(), newResults.begin(), newResults.end());
     }
   }
   signatures.emplace_back(Type(params), Type(results));

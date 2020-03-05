@@ -601,6 +601,19 @@ public:
     ret->finalize();
     return ret;
   }
+  TupleMake* makeTupleMake(std::vector<Expression*>&& operands) {
+    auto* ret = allocator.alloc<TupleMake>();
+    ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  TupleExtract* makeTupleExtract(Expression* tuple, Index index) {
+    auto* ret = allocator.alloc<TupleExtract>();
+    ret->tuple = tuple;
+    ret->index = index;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

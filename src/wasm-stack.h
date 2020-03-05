@@ -143,7 +143,10 @@ public:
   void visitDrop(Drop* curr);
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
+  void emitResultType(Type type);
   void emitIfElse(If* curr);
   void emitCatch(Try* curr);
   // emit an end at the end of a block/loop/if/try
@@ -168,6 +171,12 @@ private:
   std::map<Type, size_t> numLocalsByType;
   // (local index, tuple index) => binary local index
   std::map<std::pair<Index, Index>, size_t> mappedLocals;
+
+  // Keeps track of the binary index of the scratch locals used to lower
+  // tuple.extract.
+  std::map<Type, Index> scratchLocals;
+  void countScratchLocals();
+  void setScratchLocals();
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
@@ -227,6 +236,8 @@ public:
   void visitDrop(Drop* curr);
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
 protected:
   Function* func = nullptr;
@@ -790,6 +801,25 @@ void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
 }
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitTupleMake(TupleMake* curr) {
+  for (auto* operand : curr->operands) {
+    visit(operand);
+  }
+  // No need to handle unreachable since we don't actually emit an instruction
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitTupleExtract(TupleExtract* curr) {
+  visit(curr->tuple);
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 

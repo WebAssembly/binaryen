@@ -261,6 +261,16 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makePush(copy(curr->value));
     }
     Expression* visitPop(Pop* curr) { return builder.makePop(curr->type); }
+    Expression* visitTupleMake(TupleMake* curr) {
+      std::vector<Expression*> operands;
+      for (auto* op : curr->operands) {
+        operands.push_back(copy(op));
+      }
+      return builder.makeTupleMake(std::move(operands));
+    }
+    Expression* visitTupleExtract(TupleExtract* curr) {
+      return builder.makeTupleExtract(copy(curr->tuple), curr->index);
+    }
   };
 
   Copier copier(wasm, custom);

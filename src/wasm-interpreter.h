@@ -49,12 +49,18 @@ extern Name WASM, RETURN_FLOW;
 // in control flow.
 class Flow {
 public:
-  Flow() = default;
-  Flow(Literal value) : value(value) {}
-  Flow(Name breakTo) : breakTo(breakTo) {}
+  Flow() : values{Literal()} {}
+  Flow(Literal value) : values{value} {}
+  Flow(Name breakTo) : values{Literal()}, breakTo(breakTo) {}
 
-  Literal value;
+  SmallVector<Literal, 1> values;
   Name breakTo; // if non-null, a break is going on
+
+  // A helper function for the common case where there is only one value
+  Literal& getSingleValue() {
+    assert(values.size() == 1);
+    return values[0];
+  }
 
   bool breaking() { return breakTo.is(); }
 
@@ -65,8 +71,14 @@ public:
   }
 
   friend std::ostream& operator<<(std::ostream& o, Flow& flow) {
-    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : "
-      << flow.value << ')';
+    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : {";
+    for (size_t i = 0; i < flow.values.size(); ++i) {
+      if (i > 0) {
+        o << ", ";
+      }
+      o << flow.values[i];
+    }
+    o << "})";
     return o;
   }
 };
@@ -131,6 +143,21 @@ protected:
 
   Index depth = 0;
 
+  Flow generateArguments(const ExpressionList& operands,
+                         LiteralList& arguments) {
+    NOTE_ENTER_("generateArguments");
+    arguments.reserve(operands.size());
+    for (auto expression : operands) {
+      Flow flow = this->visit(expression);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow.getSingleValue());
+      arguments.push_back(flow.getSingleValue());
+    }
+    return Flow();
+  }
+
 public:
   ExpressionRunner(Index maxDepth) : maxDepth(maxDepth) {}
 
@@ -141,15 +168,15 @@ public:
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
-        (curr->type.isConcrete() || ret.value.type.isConcrete())) {
+        (curr->type.isConcrete() || ret.getSingleValue().type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (!Type::isSubType(ret.value.type, curr->type)) {
-        std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
-                  << " from\n"
+      if (!Type::isSubType(ret.getSingleValue().type, curr->type)) {
+        std::cerr << "expected " << curr->type << ", seeing "
+                  << ret.getSingleValue().type << " from\n"
                   << curr << '\n';
       }
 #endif
-      assert(Type::isSubType(ret.value.type, curr->type));
+      assert(Type::isSubType(ret.getSingleValue().type, curr->type));
     }
     depth--;
     return ret;
@@ -195,11 +222,11 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    NOTE_EVAL1(flow.value);
-    if (flow.value.geti32()) {
+    NOTE_EVAL1(flow.getSingleValue());
+    if (flow.getSingleValue().geti32()) {
       Flow flow = visit(curr->ifTrue);
       if (!flow.breaking() && !curr->ifFalse) {
-        flow.value = Literal(); // if_else returns a value, but if does not
+        flow = Flow(); // if_else returns a value, but if does not
       }
       return flow;
     }
@@ -236,7 +263,7 @@ public:
       if (conditionFlow.breaking()) {
         return conditionFlow;
       }
-      condition = conditionFlow.value.getInteger() != 0;
+      condition = conditionFlow.getSingleValue().getInteger() != 0;
       if (!condition) {
         return flow;
       }
@@ -253,20 +280,20 @@ public:
       if (flow.breaking()) {
         return flow;
       }
-      value = flow.value;
+      value = flow.getSingleValue();
       NOTE_EVAL1(value);
     }
     flow = visit(curr->condition);
     if (flow.breaking()) {
       return flow;
     }
-    int64_t index = flow.value.getInteger();
+    int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
       target = curr->targets[(size_t)index];
     }
     flow.breakTo = target;
-    flow.value = value;
+    flow.getSingleValue() = value;
     return flow;
   }
 
@@ -285,7 +312,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.value;
+    Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
       case ClzInt32:
@@ -475,12 +502,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.value;
+    Literal left = flow.getSingleValue();
     flow = visit(curr->right);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.value;
+    Literal right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
                                          : true);
@@ -860,7 +887,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.value;
+    Literal vec = flow.getSingleValue();
     switch (curr->op) {
       case ExtractLaneSVecI8x16:
         return vec.extractLaneSI8x16(curr->index);
@@ -887,12 +914,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.value;
+    Literal vec = flow.getSingleValue();
     flow = this->visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.value;
+    Literal value = flow.getSingleValue();
     switch (curr->op) {
       case ReplaceLaneVecI8x16:
         return vec.replaceLaneI8x16(value, curr->index);
@@ -915,12 +942,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.value;
+    Literal left = flow.getSingleValue();
     flow = this->visit(curr->right);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.value;
+    Literal right = flow.getSingleValue();
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
@@ -929,17 +956,17 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal a = flow.value;
+    Literal a = flow.getSingleValue();
     flow = this->visit(curr->b);
     if (flow.breaking()) {
       return flow;
     }
-    Literal b = flow.value;
+    Literal b = flow.getSingleValue();
     flow = this->visit(curr->c);
     if (flow.breaking()) {
       return flow;
     }
-    Literal c = flow.value;
+    Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
         return c.bitselectV128(a, b);
@@ -954,12 +981,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.value;
+    Literal vec = flow.getSingleValue();
     flow = this->visit(curr->shift);
     if (flow.breaking()) {
       return flow;
     }
-    Literal shift = flow.value;
+    Literal shift = flow.getSingleValue();
     switch (curr->op) {
       case ShlVecI8x16:
         return vec.shlI8x16(shift);
@@ -1002,8 +1029,8 @@ public:
     if (condition.breaking()) {
       return condition;
     }
-    NOTE_EVAL1(condition.value);
-    return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
+    NOTE_EVAL1(condition.getSingleValue());
+    return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
@@ -1021,7 +1048,7 @@ public:
       if (flow.breaking()) {
         return flow;
       }
-      NOTE_EVAL1(flow.value);
+      NOTE_EVAL1(flow.getSingleValue());
     }
     flow.breakTo = RETURN_FLOW;
     return flow;
@@ -1101,6 +1128,27 @@ public:
     NOTE_ENTER("AtomicFence");
     return Flow();
   }
+  Flow visitTupleMake(TupleMake* curr) {
+    NOTE_ENTER("tuple.make");
+    LiteralList arguments;
+    Flow flow = generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    for (auto arg : arguments) {
+      flow.values.push_back(arg);
+    }
+    return flow;
+  }
+  Flow visitTupleExtract(TupleExtract* curr) {
+    NOTE_ENTER("tuple.extract");
+    Flow flow = visit(curr->tuple);
+    if (flow.breaking()) {
+      return flow;
+    }
+    assert(flow.values.size() > curr->index);
+    return Flow(flow.values[curr->index]);
+  }
 
   Flow visitCall(Call*) { WASM_UNREACHABLE("unimp"); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE("unimp"); }
@@ -1133,7 +1181,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.value;
+    Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(value.type == Type::nullref);
   }
@@ -1359,7 +1407,7 @@ public:
       globals[global->name] =
         ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(global->init)
-          .value;
+          .getSingleValue();
     });
 
     // initialize the rest of the external interface
@@ -1424,7 +1472,8 @@ private:
       Address offset =
         (uint32_t)ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment.offset)
-          .value.geti32();
+          .getSingleValue()
+          .geti32();
       if (offset + segment.data.size() > wasm.table.initial) {
         externalInterface->trap("invalid offset when initializing table");
       }
@@ -1518,26 +1567,11 @@ private:
       : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
         scope(scope) {}
 
-    Flow generateArguments(const ExpressionList& operands,
-                           LiteralList& arguments) {
-      NOTE_ENTER_("generateArguments");
-      arguments.reserve(operands.size());
-      for (auto expression : operands) {
-        Flow flow = this->visit(expression);
-        if (flow.breaking()) {
-          return flow;
-        }
-        NOTE_EVAL1(flow.value);
-        arguments.push_back(flow.value);
-      }
-      return Flow();
-    }
-
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
       NOTE_NAME(curr->target);
       LiteralList arguments;
-      Flow flow = generateArguments(curr->operands, arguments);
+      Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
       }
@@ -1552,9 +1586,10 @@ private:
       std::cout << "(returned to " << scope.function->name << ")\n";
 #endif
       // TODO: make this a proper tail call (return first)
+      // TODO: handle multivalue return_calls
       if (curr->isReturn) {
         Const c;
-        c.value = ret.value;
+        c.value = ret.getSingleValue();
         c.finalize();
         Return return_;
         return_.value = &c;
@@ -1565,7 +1600,7 @@ private:
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
-      Flow flow = generateArguments(curr->operands, arguments);
+      Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
       }
@@ -1573,14 +1608,15 @@ private:
       if (target.breaking()) {
         return target;
       }
-      Index index = target.value.geti32();
+      Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
         index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
+      // TODO: handle multivalue return_call_indirects
       if (curr->isReturn) {
         Const c;
-        c.value = ret.value;
+        c.value = ret.getSingleValue();
         c.finalize();
         Return return_;
         return_.value = &c;
@@ -1604,10 +1640,11 @@ private:
         return flow;
       }
       NOTE_EVAL1(index);
-      NOTE_EVAL1(flow.value);
-      assert(curr->isTee() ? Type::isSubType(flow.value.type, curr->type)
-                           : true);
-      scope.locals[index] = flow.value;
+      NOTE_EVAL1(flow.getSingleValue());
+      assert(curr->isTee()
+               ? Type::isSubType(flow.getSingleValue().type, curr->type)
+               : true);
+      scope.locals[index] = flow.getSingleValue();
       return curr->isTee() ? flow : Flow();
     }
 
@@ -1627,8 +1664,8 @@ private:
         return flow;
       }
       NOTE_EVAL1(name);
-      NOTE_EVAL1(flow.value);
-      instance.globals[name] = flow.value;
+      NOTE_EVAL1(flow.getSingleValue());
+      instance.globals[name] = flow.getSingleValue();
       return Flow();
     }
 
@@ -1639,7 +1676,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      auto addr = instance.getFinalAddress(curr, flow.value);
+      auto addr = instance.getFinalAddress(curr, flow.getSingleValue());
       auto ret = instance.externalInterface->load(curr, addr);
       NOTE_EVAL1(addr);
       NOTE_EVAL1(ret);
@@ -1655,10 +1692,10 @@ private:
       if (value.breaking()) {
         return value;
       }
-      auto addr = instance.getFinalAddress(curr, ptr.value);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
-      instance.externalInterface->store(curr, addr, value.value);
+      instance.externalInterface->store(curr, addr, value.getSingleValue());
       return Flow();
     }
 
@@ -1673,30 +1710,30 @@ private:
         return value;
       }
       NOTE_EVAL1(ptr);
-      auto addr = instance.getFinalAddress(curr, ptr.value);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
       auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
-      auto computed = value.value;
+      auto computed = value.getSingleValue();
       switch (curr->op) {
         case Add:
-          computed = computed.add(value.value);
+          computed = computed.add(value.getSingleValue());
           break;
         case Sub:
-          computed = computed.sub(value.value);
+          computed = computed.sub(value.getSingleValue());
           break;
         case And:
-          computed = computed.and_(value.value);
+          computed = computed.and_(value.getSingleValue());
           break;
         case Or:
-          computed = computed.or_(value.value);
+          computed = computed.or_(value.getSingleValue());
           break;
         case Xor:
-          computed = computed.xor_(value.value);
+          computed = computed.xor_(value.getSingleValue());
           break;
         case Xchg:
-          computed = value.value;
+          computed = value.getSingleValue();
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -1717,14 +1754,14 @@ private:
       if (replacement.breaking()) {
         return replacement;
       }
-      auto addr = instance.getFinalAddress(curr, ptr.value);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
       auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
-      if (loaded == expected.value) {
-        instance.doAtomicStore(addr, curr->bytes, replacement.value);
+      if (loaded == expected.getSingleValue()) {
+        instance.doAtomicStore(addr, curr->bytes, replacement.getSingleValue());
       }
       return loaded;
     }
@@ -1746,10 +1783,10 @@ private:
         return timeout;
       }
       auto bytes = curr->expectedType.getByteSize();
-      auto addr = instance.getFinalAddress(ptr.value, bytes);
+      auto addr = instance.getFinalAddress(ptr.getSingleValue(), bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
-      if (loaded != expected.value) {
+      if (loaded != expected.getSingleValue()) {
         return Literal(int32_t(1)); // not equal
       }
       // TODO: add threads support!
@@ -1821,7 +1858,7 @@ private:
       if (flow.breaking()) {
         return flow;
       }
-      return (flow.value.*splat)();
+      return (flow.getSingleValue().*splat)();
     }
     Flow visitSIMDLoadExtend(SIMDLoad* curr) {
       Flow flow = this->visit(curr->ptr);
@@ -1829,7 +1866,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      Address src(uint32_t(flow.value.geti32()));
+      Address src(uint32_t(flow.getSingleValue().geti32()));
       auto loadLane = [&](Address addr) {
         switch (curr->op) {
           case LoadExtSVec8x8ToVecI16x8:
@@ -1890,7 +1927,7 @@ private:
             return flow;
           }
           int32_t ret = instance.memorySize;
-          uint32_t delta = flow.value.geti32();
+          uint32_t delta = flow.getSingleValue().geti32();
           if (delta > uint32_t(-1) / Memory::kPageSize) {
             return fail;
           }
@@ -1931,9 +1968,9 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      Address destVal(uint32_t(dest.value.geti32()));
-      Address offsetVal(uint32_t(offset.value.geti32()));
-      Address sizeVal(uint32_t(size.value.geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if (offsetVal + sizeVal > 0 &&
           instance.droppedSegments.count(curr->segment)) {
@@ -1975,9 +2012,9 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(source);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.value.geti32()));
-      Address sourceVal(uint32_t(source.value.geti32()));
-      Address sizeVal(uint32_t(size.value.geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address sourceVal(uint32_t(source.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if ((uint64_t)sourceVal + sizeVal >
             (uint64_t)instance.memorySize * Memory::kPageSize ||
@@ -2020,14 +2057,14 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(value);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.value.geti32()));
-      Address sizeVal(uint32_t(size.value.geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if ((uint64_t)destVal + sizeVal >
           (uint64_t)instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
-      uint8_t val(value.value.geti32());
+      uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
@@ -2040,7 +2077,7 @@ private:
       if (value.breaking()) {
         return value;
       }
-      instance.multiValues.push_back(value.value);
+      instance.multiValues.push_back(value.getSingleValue());
       return Flow();
     }
     Flow visitPop(Pop* curr) {
@@ -2092,7 +2129,7 @@ public:
       RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
-    Literal ret = flow.value;
+    Literal ret = flow.getSingleValue();
     if (!Type::isSubType(ret.type, function->sig.results)) {
       std::cerr << "calling " << function->name << " resulted in " << ret
                 << " but the function type is " << function->sig.results

@@ -5,41 +5,45 @@ from . import utils
 
 
 class FeatureValidationTest(utils.BinaryenTestCase):
-    def check_feature(self, module, error, flag):
+    def check_feature(self, module, error, flag, const_flags=[]):
         p = shared.run_process(shared.WASM_OPT +
-                               ['--mvp-features', '--print', '-o', os.devnull],
+                               ['--mvp-features', '--print', '-o', os.devnull] +
+                               const_flags,
                                input=module, check=False, capture_output=True)
         self.assertIn(error, p.stderr)
         self.assertIn('Fatal: error validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
         p = shared.run_process(
             shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
-            flag,
+            const_flags + [flag],
             input=module,
             check=False,
             capture_output=True)
         self.assertEqual(p.returncode, 0)
 
     def check_simd(self, module, error):
-        self.check_feature(module, error, ['--enable-simd'])
+        self.check_feature(module, error, '--enable-simd')
 
     def check_sign_ext(self, module, error):
-        self.check_feature(module, error, ['--enable-sign-ext'])
+        self.check_feature(module, error, '--enable-sign-ext')
 
     def check_bulk_mem(self, module, error):
-        self.check_feature(module, error, ['--enable-bulk-memory'])
+        self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
         # Exception handling implies reference types
-        self.check_feature(module, error,
-                           ['--enable-reference-types',
-                            '--enable-exception-handling'])
+        self.check_feature(module, error, '--enable-exception-handling',
+                           ['--enable-reference-types'])
 
     def check_tail_call(self, module, error):
-        self.check_feature(module, error, ['--enable-tail-call'])
+        self.check_feature(module, error, '--enable-tail-call')
 
     def check_reference_types(self, module, error):
-        self.check_feature(module, error, ['--enable-reference-types'])
+        self.check_feature(module, error, '--enable-reference-types')
+
+    def check_multivalue(self, module, error):
+        self.check_feature(module, error, '--enable-multivalue',
+                           ['--enable-exception-handling'])
 
     def test_v128_signature(self):
         module = '''
@@ -194,6 +198,56 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_exception_handling(module, 'Module has events')
+
+    def test_multivalue_import(self):
+        module = '''
+        (module
+         (import "env" "foo" (func $foo (result i32 i64)))
+        )
+        '''
+        self.check_multivalue(module, 'Imported multivalue function ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_function(self):
+        module = '''
+        (module
+         (func $foo (result i32 i64)
+          (tuple.make
+           (i32.const 42)
+           (i64.const 42)
+          )
+         )
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue function results ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_event(self):
+        module = '''
+        (module
+         (event $foo (attr 0) (param i32 i64))
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue event type ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_block(self):
+        module = '''
+        (module
+         (func $foo
+          (drop
+           (block (result i32 i64)
+            (tuple.make
+             (i32.const 42)
+             (i64.const 42)
+            )
+           )
+          )
+         )
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue block type ' +
+                              '(multivalue is not enabled)')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):

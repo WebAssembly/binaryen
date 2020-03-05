@@ -41,6 +41,11 @@ public:
   using value_type = T;
 
   SmallVector() {}
+  SmallVector(std::initializer_list<T> init) {
+    for (T item : init) {
+      push_back(item);
+    }
+  }
 
   T& operator[](size_t i) {
     return const_cast<T&>(static_cast<const SmallVector<T, N>&>(*this)[i]);

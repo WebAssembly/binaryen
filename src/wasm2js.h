@@ -1894,6 +1894,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitTupleMake(TupleMake* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitTupleExtract(TupleExtract* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
 
   private:
     Ref makePointer(Expression* ptr, Address offset) {

@@ -188,6 +188,10 @@ const char* getExpressionName(Expression* curr) {
       return "rethrow";
     case Expression::Id::BrOnExnId:
       return "br_on_exn";
+    case Expression::Id::TupleMakeId:
+      return "tuple.make";
+    case Expression::Id::TupleExtractId:
+      return "tuple.extract";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
@@ -897,6 +901,20 @@ void Push::finalize() {
     type = Type::none;
   }
 }
+
+void TupleMake::finalize() {
+  std::vector<Type> types;
+  for (auto* op : operands) {
+    if (op->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
+    types.push_back(op->type);
+  }
+  type = Type(types);
+}
+
+void TupleExtract::finalize() { type = tuple->type.expand()[index]; }
 
 size_t Function::getNumParams() { return sig.params.size(); }
 

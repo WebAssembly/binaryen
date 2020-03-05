@@ -235,13 +235,15 @@ private:
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
   Expression* makeBrOnExn(Element& s);
+  Expression* makeTupleMake(Element& s);
+  Expression* makeTupleExtract(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
-  Type parseResults(Element& s);
+  std::vector<Type> parseResults(Element& s);
   Signature parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
