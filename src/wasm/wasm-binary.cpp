@@ -2028,7 +2028,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     auto subsectionPos = pos;
     if (nameType != BinaryConsts::UserSections::Subsection::NameFunction) {
       // TODO: locals
-      std::cerr << "unknown name subsection at " << pos << std::endl;
+      std::cerr << "warning: unknown name subsection at " << pos << std::endl;
       pos = subsectionPos + subsectionSize;
       continue;
     }
