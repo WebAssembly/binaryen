@@ -1793,7 +1793,6 @@ Expression* WasmBinaryBuilder::popExpression() {
       BYN_TRACE("== popping unreachable from polymorphic stack" << std::endl);
       return allocator.alloc<Unreachable>();
     }
-    assert(false);
     throwError(
       "attempted pop from empty stack / beyond block start boundary at " +
       std::to_string(pos));
