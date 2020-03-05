@@ -1,6 +1,6 @@
 (module
- (type $none_=>_none (func))
  (type $none_=>_i32_i64 (func (result i32 i64)))
+ (type $none_=>_none (func))
  (type $none_=>_f32_i64_i32 (func (result f32 i64 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
@@ -14,7 +14,7 @@
    (f32.const 13)
   )
  )
- (func $get_first (; 2 ;) (result i32)
+ (func $get-first (; 2 ;) (result i32)
   (local $0 (i32 i64 f32))
   (local $1 i64)
   (local $2 i32)
@@ -45,7 +45,7 @@
    (local.get $2)
   )
  )
- (func $get_second (; 3 ;) (result i64)
+ (func $get-second (; 3 ;) (result i64)
   (local $0 i64)
   (local $1 (i32 i64 f32))
   (local $2 i64)
@@ -80,7 +80,7 @@
   )
   (local.get $0)
  )
- (func $get_third (; 4 ;) (result f32)
+ (func $get-third (; 4 ;) (result f32)
   (local $0 f32)
   (local $1 (i32 i64 f32))
   (local $2 i64)
@@ -224,7 +224,7 @@
    )
   )
  )
- (func $drop_call (; 6 ;)
+ (func $drop-call (; 6 ;)
   (local $0 (i32 i64))
   (local $1 i32)
   (local.set $0
@@ -246,7 +246,7 @@
    )
   )
  )
- (func $drop_tuple_make (; 7 ;)
+ (func $drop-tuple-make (; 7 ;)
   (local $0 i32)
   (drop
    (block (result i32)
@@ -260,7 +260,7 @@
    )
   )
  )
- (func $drop_block (; 8 ;)
+ (func $drop-block (; 8 ;)
   (local $0 (i32 i64))
   (local $1 i32)
   (local.set $0
@@ -283,6 +283,154 @@
       (local.get $0)
      )
     )
+    (local.get $1)
+   )
+  )
+ )
+ (func $mv-return (; 9 ;) (result i32 i64)
+  (return
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $mv-return-in-block (; 10 ;) (result i32 i64)
+  (return
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $mv-block-break (; 11 ;) (result i32 i64)
+  (local $0 (i32 i64))
+  (local.set $0
+   (block $label$1 (result i32 i64)
+    (br $label$1
+     (tuple.make
+      (i32.const 42)
+      (i64.const 42)
+     )
+    )
+   )
+  )
+  (tuple.make
+   (tuple.extract 0
+    (local.get $0)
+   )
+   (tuple.extract 1
+    (local.get $0)
+   )
+  )
+ )
+ (func $mv-block-br-if (; 12 ;) (result i32 i64)
+  (local $0 (i32 i64))
+  (local $1 (i32 i64))
+  (local.set $1
+   (block $label$1 (result i32 i64)
+    (local.set $0
+     (br_if $label$1
+      (tuple.make
+       (i32.const 42)
+       (i64.const 42)
+      )
+      (i32.const 1)
+     )
+    )
+    (tuple.make
+     (tuple.extract 0
+      (local.get $0)
+     )
+     (tuple.extract 1
+      (local.get $0)
+     )
+    )
+   )
+  )
+  (tuple.make
+   (tuple.extract 0
+    (local.get $1)
+   )
+   (tuple.extract 1
+    (local.get $1)
+   )
+  )
+ )
+ (func $mv-if (; 13 ;) (result i32 i64)
+  (local $0 (i32 i64))
+  (local.set $0
+   (if (result i32 i64)
+    (i32.const 1)
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+   )
+  )
+  (tuple.make
+   (tuple.extract 0
+    (local.get $0)
+   )
+   (tuple.extract 1
+    (local.get $0)
+   )
+  )
+ )
+ (func $mv-loop (; 14 ;) (result i32 i64)
+  (local $0 (i32 i64))
+  (local.set $0
+   (loop $label$1 (result i32 i64)
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+   )
+  )
+  (tuple.make
+   (tuple.extract 0
+    (local.get $0)
+   )
+   (tuple.extract 1
+    (local.get $0)
+   )
+  )
+ )
+ (func $mv-switch (; 15 ;) (result i32 i64)
+  (local $0 (i32 i64))
+  (local $1 (i32 i64))
+  (local.set $1
+   (block $label$1 (result i32 i64)
+    (local.set $0
+     (block $label$2 (result i32 i64)
+      (br_table $label$1 $label$2
+       (tuple.make
+        (i32.const 42)
+        (i64.const 42)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (tuple.make
+     (tuple.extract 0
+      (local.get $0)
+     )
+     (tuple.extract 1
+      (local.get $0)
+     )
+    )
+   )
+  )
+  (tuple.make
+   (tuple.extract 0
+    (local.get $1)
+   )
+   (tuple.extract 1
     (local.get $1)
    )
   )

@@ -95,8 +95,8 @@ void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
 }
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
-  size_t numLocals = func->getLocalType(curr->index).size();
-  for (Index i = numLocals - 1; i >= 1; --i) {
+  size_t numValues = func->getLocalType(curr->index).size();
+  for (Index i = numValues - 1; i >= 1; --i) {
     o << int8_t(BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
   }
@@ -106,7 +106,7 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
   } else {
     o << int8_t(BinaryConsts::LocalTee)
       << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
-    for (Index i = 1; i < numLocals; ++i) {
+    for (Index i = 1; i < numValues; ++i) {
       o << int8_t(BinaryConsts::LocalGet)
         << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
     }

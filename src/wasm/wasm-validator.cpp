@@ -1937,8 +1937,8 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(!curr->sig.results.isMulti(),
+  if (curr->sig.results.isMulti()) {
+    shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
   }

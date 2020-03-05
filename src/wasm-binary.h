@@ -1179,8 +1179,8 @@ public:
 
   struct BreakTarget {
     Name name;
-    int arity;
-    BreakTarget(Name name, int arity) : name(name), arity(arity) {}
+    Type type;
+    BreakTarget(Name name, Type type) : name(name), type(type) {}
   };
   std::vector<BreakTarget> breakStack;
   // the names that breaks target. this lets us know if a block has breaks to it
@@ -1226,6 +1226,7 @@ public:
   void processExpressions();
   void skipUnreachableCode();
 
+  void pushExpression(Expression* curr);
   Expression* popExpression();
   Expression* popNonVoidExpression();
   Expression* popTuple(size_t numElems);

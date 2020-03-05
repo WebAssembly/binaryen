@@ -2470,9 +2470,8 @@ void SExpressionWasmBuilder::parseType(Element& s) {
       auto newParams = parseParamOrLocal(curr);
       params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
-      for (auto result : parseResults(curr)) {
-        results.push_back(result);
-      }
+      auto newResults = parseResults(curr);
+      results.insert(results.end(), newResults.begin(), newResults.end());
     }
   }
   signatures.emplace_back(Type(params), Type(results));

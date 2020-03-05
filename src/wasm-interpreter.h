@@ -56,7 +56,8 @@ public:
   SmallVector<Literal, 1> values;
   Name breakTo; // if non-null, a break is going on
 
-  Literal& getValue() {
+  // A helper function for the common case where there is only one value
+  Literal& getSingleValue() {
     assert(values.size() == 1);
     return values[0];
   }
@@ -151,8 +152,8 @@ protected:
       if (flow.breaking()) {
         return flow;
       }
-      NOTE_EVAL1(flow.getValue());
-      arguments.push_back(flow.getValue());
+      NOTE_EVAL1(flow.getSingleValue());
+      arguments.push_back(flow.getSingleValue());
     }
     return Flow();
   }
@@ -167,15 +168,15 @@ public:
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
-        (curr->type.isConcrete() || ret.getValue().type.isConcrete())) {
+        (curr->type.isConcrete() || ret.getSingleValue().type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (!Type::isSubType(ret.getValue().type, curr->type)) {
+      if (!Type::isSubType(ret.getSingleValue().type, curr->type)) {
         std::cerr << "expected " << curr->type << ", seeing "
-                  << ret.getValue().type << " from\n"
+                  << ret.getSingleValue().type << " from\n"
                   << curr << '\n';
       }
 #endif
-      assert(Type::isSubType(ret.getValue().type, curr->type));
+      assert(Type::isSubType(ret.getSingleValue().type, curr->type));
     }
     depth--;
     return ret;
@@ -221,8 +222,8 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    NOTE_EVAL1(flow.getValue());
-    if (flow.getValue().geti32()) {
+    NOTE_EVAL1(flow.getSingleValue());
+    if (flow.getSingleValue().geti32()) {
       Flow flow = visit(curr->ifTrue);
       if (!flow.breaking() && !curr->ifFalse) {
         flow = Flow(); // if_else returns a value, but if does not
@@ -262,7 +263,7 @@ public:
       if (conditionFlow.breaking()) {
         return conditionFlow;
       }
-      condition = conditionFlow.getValue().getInteger() != 0;
+      condition = conditionFlow.getSingleValue().getInteger() != 0;
       if (!condition) {
         return flow;
       }
@@ -279,20 +280,20 @@ public:
       if (flow.breaking()) {
         return flow;
       }
-      value = flow.getValue();
+      value = flow.getSingleValue();
       NOTE_EVAL1(value);
     }
     flow = visit(curr->condition);
     if (flow.breaking()) {
       return flow;
     }
-    int64_t index = flow.getValue().getInteger();
+    int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
       target = curr->targets[(size_t)index];
     }
     flow.breakTo = target;
-    flow.getValue() = value;
+    flow.getSingleValue() = value;
     return flow;
   }
 
@@ -311,7 +312,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.getValue();
+    Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
       case ClzInt32:
@@ -501,12 +502,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.getValue();
+    Literal left = flow.getSingleValue();
     flow = visit(curr->right);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.getValue();
+    Literal right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
                                          : true);
@@ -886,7 +887,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.getValue();
+    Literal vec = flow.getSingleValue();
     switch (curr->op) {
       case ExtractLaneSVecI8x16:
         return vec.extractLaneSI8x16(curr->index);
@@ -913,12 +914,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.getValue();
+    Literal vec = flow.getSingleValue();
     flow = this->visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.getValue();
+    Literal value = flow.getSingleValue();
     switch (curr->op) {
       case ReplaceLaneVecI8x16:
         return vec.replaceLaneI8x16(value, curr->index);
@@ -941,12 +942,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.getValue();
+    Literal left = flow.getSingleValue();
     flow = this->visit(curr->right);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.getValue();
+    Literal right = flow.getSingleValue();
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
@@ -955,17 +956,17 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal a = flow.getValue();
+    Literal a = flow.getSingleValue();
     flow = this->visit(curr->b);
     if (flow.breaking()) {
       return flow;
     }
-    Literal b = flow.getValue();
+    Literal b = flow.getSingleValue();
     flow = this->visit(curr->c);
     if (flow.breaking()) {
       return flow;
     }
-    Literal c = flow.getValue();
+    Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
         return c.bitselectV128(a, b);
@@ -980,12 +981,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal vec = flow.getValue();
+    Literal vec = flow.getSingleValue();
     flow = this->visit(curr->shift);
     if (flow.breaking()) {
       return flow;
     }
-    Literal shift = flow.getValue();
+    Literal shift = flow.getSingleValue();
     switch (curr->op) {
       case ShlVecI8x16:
         return vec.shlI8x16(shift);
@@ -1028,8 +1029,8 @@ public:
     if (condition.breaking()) {
       return condition;
     }
-    NOTE_EVAL1(condition.getValue());
-    return condition.getValue().geti32() ? ifTrue : ifFalse; // ;-)
+    NOTE_EVAL1(condition.getSingleValue());
+    return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
@@ -1047,7 +1048,7 @@ public:
       if (flow.breaking()) {
         return flow;
       }
-      NOTE_EVAL1(flow.getValue());
+      NOTE_EVAL1(flow.getSingleValue());
     }
     flow.breakTo = RETURN_FLOW;
     return flow;
@@ -1180,7 +1181,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.getValue();
+    Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(value.type == Type::nullref);
   }
@@ -1406,7 +1407,7 @@ public:
       globals[global->name] =
         ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(global->init)
-          .getValue();
+          .getSingleValue();
     });
 
     // initialize the rest of the external interface
@@ -1471,7 +1472,7 @@ private:
       Address offset =
         (uint32_t)ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment.offset)
-          .getValue()
+          .getSingleValue()
           .geti32();
       if (offset + segment.data.size() > wasm.table.initial) {
         externalInterface->trap("invalid offset when initializing table");
@@ -1588,7 +1589,7 @@ private:
       // TODO: handle multivalue return_calls
       if (curr->isReturn) {
         Const c;
-        c.value = ret.getValue();
+        c.value = ret.getSingleValue();
         c.finalize();
         Return return_;
         return_.value = &c;
@@ -1607,7 +1608,7 @@ private:
       if (target.breaking()) {
         return target;
       }
-      Index index = target.getValue().geti32();
+      Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
         index, curr->sig, arguments, type, *instance.self());
@@ -1615,7 +1616,7 @@ private:
       // TODO: handle multivalue return_call_indirects
       if (curr->isReturn) {
         Const c;
-        c.value = ret.getValue();
+        c.value = ret.getSingleValue();
         c.finalize();
         Return return_;
         return_.value = &c;
@@ -1639,10 +1640,11 @@ private:
         return flow;
       }
       NOTE_EVAL1(index);
-      NOTE_EVAL1(flow.getValue());
-      assert(curr->isTee() ? Type::isSubType(flow.getValue().type, curr->type)
-                           : true);
-      scope.locals[index] = flow.getValue();
+      NOTE_EVAL1(flow.getSingleValue());
+      assert(curr->isTee()
+               ? Type::isSubType(flow.getSingleValue().type, curr->type)
+               : true);
+      scope.locals[index] = flow.getSingleValue();
       return curr->isTee() ? flow : Flow();
     }
 
@@ -1662,8 +1664,8 @@ private:
         return flow;
       }
       NOTE_EVAL1(name);
-      NOTE_EVAL1(flow.getValue());
-      instance.globals[name] = flow.getValue();
+      NOTE_EVAL1(flow.getSingleValue());
+      instance.globals[name] = flow.getSingleValue();
       return Flow();
     }
 
@@ -1674,7 +1676,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      auto addr = instance.getFinalAddress(curr, flow.getValue());
+      auto addr = instance.getFinalAddress(curr, flow.getSingleValue());
       auto ret = instance.externalInterface->load(curr, addr);
       NOTE_EVAL1(addr);
       NOTE_EVAL1(ret);
@@ -1690,10 +1692,10 @@ private:
       if (value.breaking()) {
         return value;
       }
-      auto addr = instance.getFinalAddress(curr, ptr.getValue());
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
-      instance.externalInterface->store(curr, addr, value.getValue());
+      instance.externalInterface->store(curr, addr, value.getSingleValue());
       return Flow();
     }
 
@@ -1708,30 +1710,30 @@ private:
         return value;
       }
       NOTE_EVAL1(ptr);
-      auto addr = instance.getFinalAddress(curr, ptr.getValue());
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
       auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
-      auto computed = value.getValue();
+      auto computed = value.getSingleValue();
       switch (curr->op) {
         case Add:
-          computed = computed.add(value.getValue());
+          computed = computed.add(value.getSingleValue());
           break;
         case Sub:
-          computed = computed.sub(value.getValue());
+          computed = computed.sub(value.getSingleValue());
           break;
         case And:
-          computed = computed.and_(value.getValue());
+          computed = computed.and_(value.getSingleValue());
           break;
         case Or:
-          computed = computed.or_(value.getValue());
+          computed = computed.or_(value.getSingleValue());
           break;
         case Xor:
-          computed = computed.xor_(value.getValue());
+          computed = computed.xor_(value.getSingleValue());
           break;
         case Xchg:
-          computed = value.getValue();
+          computed = value.getSingleValue();
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -1752,14 +1754,14 @@ private:
       if (replacement.breaking()) {
         return replacement;
       }
-      auto addr = instance.getFinalAddress(curr, ptr.getValue());
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
       auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
-      if (loaded == expected.getValue()) {
-        instance.doAtomicStore(addr, curr->bytes, replacement.getValue());
+      if (loaded == expected.getSingleValue()) {
+        instance.doAtomicStore(addr, curr->bytes, replacement.getSingleValue());
       }
       return loaded;
     }
@@ -1781,10 +1783,10 @@ private:
         return timeout;
       }
       auto bytes = curr->expectedType.getByteSize();
-      auto addr = instance.getFinalAddress(ptr.getValue(), bytes);
+      auto addr = instance.getFinalAddress(ptr.getSingleValue(), bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
-      if (loaded != expected.getValue()) {
+      if (loaded != expected.getSingleValue()) {
         return Literal(int32_t(1)); // not equal
       }
       // TODO: add threads support!
@@ -1856,7 +1858,7 @@ private:
       if (flow.breaking()) {
         return flow;
       }
-      return (flow.getValue().*splat)();
+      return (flow.getSingleValue().*splat)();
     }
     Flow visitSIMDLoadExtend(SIMDLoad* curr) {
       Flow flow = this->visit(curr->ptr);
@@ -1864,7 +1866,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      Address src(uint32_t(flow.getValue().geti32()));
+      Address src(uint32_t(flow.getSingleValue().geti32()));
       auto loadLane = [&](Address addr) {
         switch (curr->op) {
           case LoadExtSVec8x8ToVecI16x8:
@@ -1925,7 +1927,7 @@ private:
             return flow;
           }
           int32_t ret = instance.memorySize;
-          uint32_t delta = flow.getValue().geti32();
+          uint32_t delta = flow.getSingleValue().geti32();
           if (delta > uint32_t(-1) / Memory::kPageSize) {
             return fail;
           }
@@ -1966,9 +1968,9 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      Address destVal(uint32_t(dest.getValue().geti32()));
-      Address offsetVal(uint32_t(offset.getValue().geti32()));
-      Address sizeVal(uint32_t(size.getValue().geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if (offsetVal + sizeVal > 0 &&
           instance.droppedSegments.count(curr->segment)) {
@@ -2010,9 +2012,9 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(source);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.getValue().geti32()));
-      Address sourceVal(uint32_t(source.getValue().geti32()));
-      Address sizeVal(uint32_t(size.getValue().geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address sourceVal(uint32_t(source.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if ((uint64_t)sourceVal + sizeVal >
             (uint64_t)instance.memorySize * Memory::kPageSize ||
@@ -2055,14 +2057,14 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(value);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.getValue().geti32()));
-      Address sizeVal(uint32_t(size.getValue().geti32()));
+      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if ((uint64_t)destVal + sizeVal >
           (uint64_t)instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
-      uint8_t val(value.getValue().geti32());
+      uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
@@ -2075,7 +2077,7 @@ private:
       if (value.breaking()) {
         return value;
       }
-      instance.multiValues.push_back(value.getValue());
+      instance.multiValues.push_back(value.getSingleValue());
       return Flow();
     }
     Flow visitPop(Pop* curr) {
@@ -2127,7 +2129,7 @@ public:
       RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
-    Literal ret = flow.getValue();
+    Literal ret = flow.getSingleValue();
     if (!Type::isSubType(ret.type, function->sig.results)) {
       std::cerr << "calling " << function->name << " resulted in " << ret
                 << " but the function type is " << function->sig.results

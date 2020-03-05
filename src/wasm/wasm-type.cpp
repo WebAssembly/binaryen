@@ -229,7 +229,7 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::Type::isSubType(Type left, Type right) {
+bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
@@ -240,7 +240,7 @@ bool Type::Type::isSubType(Type left, Type right) {
   return false;
 }
 
-Type Type::Type::getLeastUpperBound(Type a, Type b) {
+Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
   }
@@ -250,8 +250,24 @@ Type Type::Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::unreachable) {
     return a;
   }
+  if (a.size() != b.size()) {
+    return Type::none; // a poison value that must not be consumed
+  }
+  if (a.isMulti()) {
+    std::vector<Type> types;
+    types.resize(a.size());
+    const auto& as = a.expand();
+    const auto& bs = b.expand();
+    for (size_t i = 0; i < types.size(); ++i) {
+      types[i] = getLeastUpperBound(as[i], bs[i]);
+      if (types[i] == Type::none) {
+        return Type::none;
+      }
+    }
+    return Type(types);
+  }
   if (!a.isRef() || !b.isRef()) {
-    return none; // a poison value that must not be consumed
+    return Type::none;
   }
   if (a == Type::nullref) {
     return b;

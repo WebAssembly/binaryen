@@ -1,7 +1,7 @@
 (module
  (import "env" "pair" (func $pair (result i32 i64)))
- ;; Test basic lowering of tuple.make, tuple.extract, and tuple locals
 
+ ;; Test basic lowering of tuple.make, tuple.extract, and tuple locals
  (func $triple (result i32 i64 f32)
   (tuple.make
    (i32.const 42)
@@ -9,25 +9,21 @@
    (f32.const 13)
   )
  )
-
- (func $get_first (result i32)
+ (func $get-first (result i32)
   (tuple.extract 0
    (call $triple)
   )
  )
-
- (func $get_second (result i64)
+ (func $get-second (result i64)
   (tuple.extract 1
    (call $triple)
   )
  )
-
- (func $get_third (result f32)
+ (func $get-third (result f32)
   (tuple.extract 2
    (call $triple)
   )
  )
-
  (func $reverse (result f32 i64 i32)
   (local $x (i32 i64 f32))
   (local.set $x
@@ -47,13 +43,12 @@
  )
 
  ;; Test lowering of multivalue drops
- (func $drop_call
+ (func $drop-call
   (drop
    (call $pair)
   )
  )
-
- (func $drop_tuple_make
+ (func $drop-tuple-make
   (drop
    (tuple.make
     (i32.const 42)
@@ -61,13 +56,87 @@
    )
   )
  )
-
- (func $drop_block
+ (func $drop-block
   (drop
    (block (result i32 i64)
     (tuple.make
      (i32.const 42)
      (i64.const 42)
+    )
+   )
+  )
+ )
+
+ ;; Test multivalue control structures
+ (func $mv-return (result i32 i64)
+  (return
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $mv-return-in-block (result i32 i64)
+  (block (result i32 i64)
+   (return
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+   )
+  )
+ )
+ (func $mv-block-break (result i32 i64)
+  (block $l (result i32 i64)
+   (br $l
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+   )
+  )
+ )
+ (func $mv-block-br-if (result i32 i64)
+  (block $l (result i32 i64)
+   (br_if $l
+    (tuple.make
+     (i32.const 42)
+     (i64.const 42)
+    )
+    (i32.const 1)
+   )
+  )
+ )
+ (func $mv-if (result i32 i64)
+  (if (result i32 i64)
+   (i32.const 1)
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $mv-loop (result i32 i64)
+  (loop (result i32 i64)
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $mv-switch (result i32 i64)
+  (block $a (result i32 i64)
+   (block $b (result i32 i64)
+    (br_table $a $b
+     (tuple.make
+      (i32.const 42)
+      (i64.const 42)
+     )
+     (i32.const 0)
     )
    )
   )

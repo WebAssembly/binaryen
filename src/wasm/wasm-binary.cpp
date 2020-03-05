@@ -1087,6 +1087,7 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
+  // Single value types are negative; signature indices are non-negative
   if (type >= 0) {
     // TODO: Handle block input types properly
     return signatures[type].results;
@@ -1703,19 +1704,7 @@ void WasmBinaryBuilder::processExpressions() {
       BYN_TRACE("== processExpressions finished\n");
       return;
     }
-    if (curr->type.isMulti()) {
-      // Store tuple to local and push individual extracted values
-      Builder builder(wasm);
-      Index tuple = builder.addVar(currFunction, curr->type);
-      expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-      const std::vector<Type> types = curr->type.expand();
-      for (Index i = 0; i < types.size(); ++i) {
-        expressionStack.push_back(
-          builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
-      }
-    } else {
-      expressionStack.push_back(curr);
-    }
+    pushExpression(curr);
     if (curr->type == Type::unreachable) {
       // Once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
@@ -1775,6 +1764,22 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       expressionStack = savedStack;
       return;
     }
+    pushExpression(curr);
+  }
+}
+
+void WasmBinaryBuilder::pushExpression(Expression* curr) {
+  if (curr->type.isMulti()) {
+    // Store tuple to local and push individual extracted values
+    Builder builder(wasm);
+    Index tuple = builder.addVar(currFunction, curr->type);
+    expressionStack.push_back(builder.makeLocalSet(tuple, curr));
+    const std::vector<Type> types = curr->type.expand();
+    for (Index i = 0; i < types.size(); ++i) {
+      expressionStack.push_back(
+        builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
+    }
+  } else {
     expressionStack.push_back(curr);
   }
 }
@@ -1788,12 +1793,14 @@ Expression* WasmBinaryBuilder::popExpression() {
       BYN_TRACE("== popping unreachable from polymorphic stack" << std::endl);
       return allocator.alloc<Unreachable>();
     }
+    assert(false);
     throwError(
       "attempted pop from empty stack / beyond block start boundary at " +
       std::to_string(pos));
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
+  assert(!ret->type.isMulti());
   expressionStack.pop_back();
   return ret;
 }
@@ -1839,7 +1846,16 @@ Expression* WasmBinaryBuilder::popTuple(size_t numElems) {
   std::vector<Expression*> elements;
   elements.resize(numElems);
   for (size_t i = 0; i < numElems; i++) {
-    elements[numElems - i - 1] = popNonVoidExpression();
+    auto* elem = popNonVoidExpression();
+    if (elem->type == Type::unreachable) {
+      // All the previously-popped items cannot be reached, so ignore them. We
+      // cannot continue popping because there might not be enough items on the
+      // expression stack after an unreachable expression. Any remaining
+      // elements can stay unperturbed on the stack and will be explicitly
+      // dropped by some parent call to pushBlockElements.
+      return elem;
+    }
+    elements[numElems - i - 1] = elem;
   }
   return Builder(wasm).makeTupleMake(std::move(elements));
 }
@@ -2454,7 +2470,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   while (1) {
     curr->type = getType();
     curr->name = getNextLabel();
-    breakStack.push_back({curr->name, curr->type != Type::none});
+    breakStack.push_back({curr->name, curr->type});
     stack.push_back(curr);
     if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
@@ -2479,7 +2495,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     size_t start = expressionStack.size();
     if (last) {
       // the previous block is our first-position element
-      expressionStack.push_back(last);
+      pushExpression(last);
     }
     last = curr;
     processExpressions();
@@ -2503,14 +2519,13 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
                                                    unsigned numPops) {
   Name label = getNextLabel();
-  breakStack.push_back(
-    {label, type != Type::none && type != Type::unreachable});
+  breakStack.push_back({label, type});
   auto start = expressionStack.size();
 
   Builder builder(wasm);
   for (unsigned i = 0; i < numPops; i++) {
     auto* pop = builder.makePop(Type::exnref);
-    expressionStack.push_back(pop);
+    pushExpression(pop);
   }
 
   processExpressions();
@@ -2554,7 +2569,7 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
   startControlFlow(curr);
   curr->type = getType();
   curr->name = getNextLabel();
-  breakStack.push_back({curr->name, 0});
+  breakStack.push_back({curr->name, Type::none});
   // find the expressions in the block, and create the body
   // a loop may have a list of instructions in wasm, much like
   // a block, but it only has a label at the top of the loop,
@@ -2589,8 +2604,8 @@ WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (index >= breakStack.size()) {
     throwError("bad breakindex (high)");
   }
-  BYN_TRACE("breaktarget " << breakStack[index].name << " arity "
-                           << breakStack[index].arity << std::endl);
+  BYN_TRACE("breaktarget " << breakStack[index].name << " type "
+                           << breakStack[index].type << std::endl);
   auto& ret = breakStack[index];
   // if the break is in literally unreachable code, then we will not emit it
   // anyhow, so do not note that the target has breaks to it
@@ -2607,10 +2622,8 @@ void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
   if (code == BinaryConsts::BrIf) {
     curr->condition = popNonVoidExpression();
   }
-  if (target.arity == 1) {
-    curr->value = popNonVoidExpression();
-  } else if (target.arity > 1) {
-    curr->value = popTuple(target.arity);
+  if (target.type.isConcrete()) {
+    curr->value = popTypedExpression(target.type);
   }
   curr->finalize();
 }
@@ -2626,8 +2639,8 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
   auto defaultTarget = getBreakTarget(getU32LEB());
   curr->default_ = defaultTarget.name;
   BYN_TRACE("default: " << curr->default_ << "\n");
-  if (defaultTarget.arity) {
-    curr->value = popNonVoidExpression();
+  if (defaultTarget.type.isConcrete()) {
+    curr->value = popTypedExpression(defaultTarget.type);
   }
   curr->finalize();
 }
