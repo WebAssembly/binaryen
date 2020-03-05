@@ -614,9 +614,8 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   while (i < s.size() && elementStartsWith(*s[i], RESULT)) {
     paramsOrResultsExist = true;
-    for (auto result : parseResults(*s[i++])) {
-      results.push_back(result);
-    }
+    auto newResults = parseResults(*s[i++]);
+    results.insert(results.end(), newResults.begin(), newResults.end());
   }
 
   auto inlineSig = Signature(Type(params), Type(results));
