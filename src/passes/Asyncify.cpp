@@ -445,6 +445,27 @@ public:
     PatternMatcher blacklist("black", module, blacklistInput);
     PatternMatcher whitelist("white", module, whitelistInput);
 
+    // Rename the asyncify imports so their internal name matches the
+    // convention. This makes replacing them with the implementations
+    // later easier.
+    std::map<Name, Name> renamings;
+    for (auto& func : module.functions) {
+      if (func->module == ASYNCIFY) {
+        if (func->base == START_UNWIND) {
+          renamings[func->name] = ASYNCIFY_START_UNWIND;
+        } else if (func->base == STOP_UNWIND) {
+          renamings[func->name] = ASYNCIFY_STOP_UNWIND;
+        } else if (func->base == START_REWIND) {
+          renamings[func->name] = ASYNCIFY_START_REWIND;
+        } else if (func->base == STOP_REWIND) {
+          renamings[func->name] = ASYNCIFY_STOP_REWIND;
+        } else {
+          Fatal() << "call to unidenfied asyncify import: " << func->base;
+        }
+      }
+    }
+    ModuleUtils::renameFunctions(module, renamings);
+
     // Scan to see which functions can directly change the state.
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -463,30 +484,33 @@ public:
           return;
         }
         struct Walker : PostWalker<Walker> {
+          Info& info;
+          Module& module;
+          bool canIndirectChangeState;
+
+          Walker(Info& info, Module& module, bool canIndirectChangeState)
+            : info(info), module(module),
+              canIndirectChangeState(canIndirectChangeState) {}
+
           void visitCall(Call* curr) {
             if (curr->isReturn) {
               Fatal() << "tail calls not yet supported in asyncify";
             }
-            auto* target = module->getFunction(curr->target);
+            auto* target = module.getFunction(curr->target);
             if (target->imported() && target->module == ASYNCIFY) {
               // Redirect the imports to the functions we'll add later.
               if (target->base == START_UNWIND) {
-                curr->target = ASYNCIFY_START_UNWIND;
-                info->canChangeState = true;
-                info->isTopMostRuntime = true;
+                info.canChangeState = true;
+                info.isTopMostRuntime = true;
               } else if (target->base == STOP_UNWIND) {
-                curr->target = ASYNCIFY_STOP_UNWIND;
-                info->isBottomMostRuntime = true;
+                info.isBottomMostRuntime = true;
               } else if (target->base == START_REWIND) {
-                curr->target = ASYNCIFY_START_REWIND;
-                info->isBottomMostRuntime = true;
+                info.isBottomMostRuntime = true;
               } else if (target->base == STOP_REWIND) {
-                curr->target = ASYNCIFY_STOP_REWIND;
-                info->canChangeState = true;
-                info->isTopMostRuntime = true;
+                info.canChangeState = true;
+                info.isTopMostRuntime = true;
               } else {
-                Fatal() << "call to unidenfied asyncify import: "
-                        << target->base;
+                WASM_UNREACHABLE("call to unidenfied asyncify import");
               }
             }
           }
@@ -495,20 +519,12 @@ public:
               Fatal() << "tail calls not yet supported in asyncify";
             }
             if (canIndirectChangeState) {
-              info->canChangeState = true;
+              info.canChangeState = true;
             }
             // TODO optimize the other case, at least by type
           }
-          Info* info;
-          Module* module;
-          ModuleAnalyzer* analyzer;
-          bool canIndirectChangeState;
         };
-        Walker walker;
-        walker.info = &info;
-        walker.module = &module;
-        walker.analyzer = this;
-        walker.canIndirectChangeState = canIndirectChangeState;
+        Walker walker(info, module, canIndirectChangeState);
         walker.walk(func->body);
 
         if (info.isBottomMostRuntime) {
