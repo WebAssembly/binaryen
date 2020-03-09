@@ -71,7 +71,18 @@ inline bool isNamedControlFlow(Expression* curr) {
 }
 
 inline bool isConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return true;
+  }
+  if (auto* tuple = curr->dynCast<TupleMake>()) {
+    for (auto* op : tuple->operands) {
+      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 // Check if an expression is a sign-extend, and if so, returns the value

@@ -147,7 +147,7 @@ struct ExecutionResults {
       // call the method
       for (Type param : func->sig.params.expand()) {
         // zeros in arguments TODO: more?
-        arguments.push_back(Literal::makeZero(param));
+        arguments.push_back(Literal::makeSingleZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {

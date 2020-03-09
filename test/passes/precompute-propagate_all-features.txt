@@ -2,6 +2,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $none_=>_v128 (func (result v128)))
  (memory $0 10 10)
@@ -263,5 +264,25 @@
    )
   )
   (local.get $x)
+ )
+ (func $tuple-local (; 18 ;) (result i32 i64)
+  (local $i32s (i32 i32))
+  (local $i64s (i64 i64))
+  (local.set $i32s
+   (tuple.make
+    (i32.const 42)
+    (i32.const 0)
+   )
+  )
+  (local.set $i64s
+   (tuple.make
+    (i64.const 42)
+    (i64.const 0)
+   )
+  )
+  (tuple.make
+   (i32.const 42)
+   (i64.const 0)
+  )
  )
 )

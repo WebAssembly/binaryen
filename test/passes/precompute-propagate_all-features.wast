@@ -175,4 +175,28 @@
    (local.set $x (v8x16.load_splat (i32.const 0)))
    (local.get $x)
   )
+  (func $tuple-local (result i32 i64)
+   (local $i32s (i32 i32))
+   (local $i64s (i64 i64))
+   (local.set $i32s
+    (tuple.make
+     (i32.const 42)
+     (i32.const 0)
+    )
+   )
+   (local.set $i64s
+    (tuple.make
+     (i64.const 42)
+     (i64.const 0)
+    )
+   )
+   (tuple.make
+    (tuple.extract 0
+     (local.get $i32s)
+    )
+    (tuple.extract 1
+     (local.get $i64s)
+    )
+   )
+  )
 )
