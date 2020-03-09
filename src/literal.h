@@ -23,6 +23,7 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/name.h"
+#include "support/small_vector.h"
 #include "support/utilities.h"
 #include "wasm-type.h"
 
@@ -445,6 +446,8 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
+using Literals = SmallVector<Literal, 1>;
+
 } // namespace wasm
 
 namespace std {
@@ -489,6 +492,17 @@ template<> struct less<wasm::Literal> {
     WASM_UNREACHABLE("unexpected type");
   }
 };
+inline std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
+  o << '(';
+  if (literals.size() > 0) {
+    o << literals[0];
+  }
+  for (size_t i = 1; i < literals.size(); ++i) {
+    o << ", " << literals[i];
+  }
+  o << ')';
+  return o;
+}
 } // namespace std
 
 #endif // wasm_literal_h

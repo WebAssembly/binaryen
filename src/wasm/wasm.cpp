@@ -198,7 +198,7 @@ const char* getExpressionName(Expression* curr) {
   WASM_UNREACHABLE("invalid expr id");
 }
 
-Literal getLiteralFromConstExpression(Expression* curr) {
+Literal getSingleLiteralFromConstExpression(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (curr->is<RefNull>()) {
@@ -207,6 +207,18 @@ Literal getLiteralFromConstExpression(Expression* curr) {
     return Literal::makeFuncref(r->func);
   } else {
     WASM_UNREACHABLE("Not a constant expression");
+  }
+}
+
+Literals getLiteralsFromConstExpression(Expression* curr) {
+  if (auto* t = curr->dynCast<TupleMake>()) {
+    Literals values;
+    for (auto* operand : t->operands) {
+      values.push_back(getSingleLiteralFromConstExpression(operand));
+    }
+    return values;
+  } else {
+    return {getSingleLiteralFromConstExpression(curr)};
   }
 }
 
