@@ -180,8 +180,6 @@ public:
   static void printDouble(std::ostream& o, double d);
   static void printVec128(std::ostream& o, const std::array<uint8_t, 16>& v);
 
-  friend std::ostream& operator<<(std::ostream& o, Literal literal);
-
   Literal countLeadingZeroes() const;
   Literal countTrailingZeroes() const;
   Literal popCount() const;
@@ -448,6 +446,9 @@ private:
 
 using Literals = SmallVector<Literal, 1>;
 
+std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
+std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
+
 } // namespace wasm
 
 namespace std {
@@ -492,17 +493,6 @@ template<> struct less<wasm::Literal> {
     WASM_UNREACHABLE("unexpected type");
   }
 };
-inline std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
-  o << '(';
-  if (literals.size() > 0) {
-    o << literals[0];
-  }
-  for (size_t i = 1; i < literals.size(); ++i) {
-    o << ", " << literals[i];
-  }
-  o << ')';
-  return o;
-}
 } // namespace std
 
 #endif // wasm_literal_h

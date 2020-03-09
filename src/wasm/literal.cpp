@@ -271,10 +271,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "?";
       break;
     case Type::i32:
-      o << literal.i32;
+      o << literal.geti32();
       break;
     case Type::i64:
-      o << literal.i64;
+      o << literal.geti64();
       break;
     case Type::f32:
       literal.printFloat(o, literal.getf32());
@@ -299,6 +299,21 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
   }
   restoreNormalColor(o);
   return o;
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
+  if (literals.size() == 1) {
+    return o << literals[0];
+  } else {
+    o << '(';
+    if (literals.size() > 0) {
+      o << literals[0];
+    }
+    for (size_t i = 1; i < literals.size(); ++i) {
+      o << ", " << literals[i];
+    }
+    return o << ')';
+  }
 }
 
 Literal Literal::countLeadingZeroes() const {
