@@ -134,10 +134,10 @@ public:
     typedef long difference_type;
     typedef T& reference;
 
-    const SmallVector<T, N>* parent;
+    SmallVector<T, N>* parent;
     size_t index;
 
-    Iterator(const SmallVector<T, N>* parent, size_t index)
+    Iterator(SmallVector<T, N>* parent, size_t index)
       : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
@@ -155,15 +155,11 @@ public:
       return Iterator(*this) += off;
     }
 
-    const value_type operator*() const { return (*parent)[index]; }
+    value_type& operator*() const { return (*parent)[index]; }
   };
 
-  Iterator begin() const {
-    return Iterator(static_cast<const SmallVector<T, N>*>(this), 0);
-  }
-  Iterator end() const {
-    return Iterator(static_cast<const SmallVector<T, N>*>(this), size());
-  }
+  Iterator begin() { return Iterator(this, 0); }
+  Iterator end() { return Iterator(this, size()); }
 };
 
 } // namespace wasm

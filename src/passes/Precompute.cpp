@@ -192,11 +192,8 @@ struct Precompute
       // TODO: handle multivalue types
       return;
     }
-    // Abort if there is a vector involved
-    for (auto type : flow.getType().expand()) {
-      if (type.isVector()) {
-        return;
-      }
+    if (flow.getType().hasVector()) {
+      return;
     }
     if (flow.breaking()) {
       if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) {

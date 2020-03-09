@@ -73,9 +73,9 @@ struct ExecutionResults {
           // We cannot compare funcrefs by name because function names can
           // change (after duplicate function elimination or roundtripping)
           // while the function contents are still the same
-          for (auto& val : ret) {
+          for (Literal& val : ret) {
             if (val.type == Type::funcref) {
-              return;
+              val = Literal::makeFuncref(Name("funcref"));
             }
           }
           results[exp->name] = ret;
