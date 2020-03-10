@@ -3,7 +3,7 @@
 set -e
 
 echo "travis-test build:wasm"
-emconfigure cmake -DCMAKE_BUILD_TYPE=Release
+emcmake cmake -DCMAKE_BUILD_TYPE=Release
 emmake make -j4 binaryen_wasm
 echo "travis-test test:wasm"
 python3 -m scripts.test.binaryenjs wasm
