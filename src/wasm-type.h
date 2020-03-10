@@ -72,6 +72,21 @@ public:
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   constexpr bool isRef() const { return id >= funcref && id <= exnref; }
+
+private:
+  template<bool (Type::*pred)() const> bool hasPredicate() {
+    for (auto t : expand()) {
+      if ((t.*pred)()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+public:
+  bool hasVector() { return hasPredicate<&Type::isVector>(); }
+  bool hasRef() { return hasPredicate<&Type::isRef>(); }
+
   constexpr uint32_t getID() const { return id; }
   constexpr ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");

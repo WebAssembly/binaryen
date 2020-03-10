@@ -74,15 +74,15 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(getLiteralFromConstExpression(argument));
+      arguments.push_back(getSingleLiteralFromConstExpression(argument));
     }
   }
 
-  Literal operate() {
+  Literals operate() {
     if (operation == INVOKE) {
       return instance->callExport(name, arguments);
     } else if (operation == GET) {
-      return instance->getExport(name);
+      return {instance->getExport(name)};
     } else {
       WASM_UNREACHABLE("unknown operation");
     }
@@ -203,7 +203,7 @@ static void run_asserts(Name moduleName,
       // an invoke test
       bool trapped = false;
       WASM_UNUSED(trapped);
-      Literal result;
+      Literals result;
       try {
         Operation operation(*curr[1], instance, *builder);
         result = operation.operate();
@@ -212,21 +212,15 @@ static void run_asserts(Name moduleName,
       }
       if (id == ASSERT_RETURN) {
         assert(!trapped);
+        Literals expected;
         if (curr.size() >= 3) {
-          Literal expected =
-            getLiteralFromConstExpression(builder->parseExpression(*curr[2]));
-          std::cerr << "seen " << result << ", expected " << expected << '\n';
-          if (expected != result) {
-            std::cout << "unexpected, should be identical\n";
-            abort();
-          }
-        } else {
-          Literal expected;
-          std::cerr << "seen " << result << ", expected " << expected << '\n';
-          if (expected != result) {
-            std::cout << "unexpected, should be identical\n";
-            abort();
-          }
+          expected =
+            getLiteralsFromConstExpression(builder->parseExpression(*curr[2]));
+        }
+        std::cerr << "seen " << result << ", expected " << expected << '\n';
+        if (expected != result) {
+          std::cout << "unexpected, should be identical\n";
+          abort();
         }
       }
       if (id == ASSERT_TRAP) {

@@ -134,12 +134,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
       }
-      return Literal();
+      return {};
     } else if (import->module == ENV && import->base == EXIT) {
       // XXX hack for torture tests
       std::cout << "exit()\n";
@@ -149,11 +149,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literal callTable(Index index,
-                    Signature sig,
-                    LiteralList& arguments,
-                    Type results,
-                    ModuleInstance& instance) override {
+  Literals callTable(Index index,
+                     Signature sig,
+                     LiteralList& arguments,
+                     Type results,
+                     ModuleInstance& instance) override {
     if (index >= table.size()) {
       trap("callTable overflow");
     }

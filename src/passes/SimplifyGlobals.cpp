@@ -109,7 +109,7 @@ struct ConstantGlobalApplier
     if (auto* set = curr->dynCast<GlobalSet>()) {
       if (Properties::isConstantExpression(set->value)) {
         currConstantGlobals[set->name] =
-          getLiteralFromConstExpression(set->value);
+          getSingleLiteralFromConstExpression(set->value);
       } else {
         currConstantGlobals.erase(set->name);
       }
@@ -253,7 +253,7 @@ struct SimplifyGlobals : public Pass {
       if (!global->imported()) {
         if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
-            getLiteralFromConstExpression(global->init);
+            getSingleLiteralFromConstExpression(global->init);
         } else if (auto* get = global->init->dynCast<GlobalGet>()) {
           auto iter = constantGlobals.find(get->name);
           if (iter != constantGlobals.end()) {

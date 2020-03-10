@@ -574,7 +574,8 @@ public:
 
 const char* getExpressionName(Expression* curr);
 
-Literal getLiteralFromConstExpression(Expression* curr);
+Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 

@@ -23,6 +23,7 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/name.h"
+#include "support/small_vector.h"
 #include "support/utilities.h"
 #include "wasm-type.h"
 
@@ -178,8 +179,6 @@ public:
   static void printFloat(std::ostream& o, float f);
   static void printDouble(std::ostream& o, double d);
   static void printVec128(std::ostream& o, const std::array<uint8_t, 16>& v);
-
-  friend std::ostream& operator<<(std::ostream& o, Literal literal);
 
   Literal countLeadingZeroes() const;
   Literal countTrailingZeroes() const;
@@ -444,6 +443,11 @@ private:
   Literal maxUInt(const Literal& other) const;
   Literal avgrUInt(const Literal& other) const;
 };
+
+using Literals = SmallVector<Literal, 1>;
+
+std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
+std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
 } // namespace wasm
 

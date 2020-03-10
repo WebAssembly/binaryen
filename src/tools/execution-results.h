@@ -32,7 +32,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, LiteralList& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
@@ -42,7 +42,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       }
       std::cout << "]\n";
     }
-    return Literal();
+    return {};
   }
 };
 
@@ -51,7 +51,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
-  std::map<Name, Literal> results;
+  std::map<Name, Literals> results;
   Loggings loggings;
 
   // get results of execution
@@ -69,17 +69,20 @@ struct ExecutionResults {
         auto* func = wasm.getFunction(exp->value);
         if (func->sig.results != Type::none) {
           // this has a result
-          Literal ret = run(func, wasm, instance);
+          Literals ret = run(func, wasm, instance);
           // We cannot compare funcrefs by name because function names can
           // change (after duplicate function elimination or roundtripping)
           // while the function contents are still the same
-          if (ret.type != Type::funcref) {
-            results[exp->name] = ret;
-            // ignore the result if we hit an unreachable and returned no value
-            if (results[exp->name].type.isConcrete()) {
-              std::cout << "[fuzz-exec] note result: " << exp->name << " => "
-                        << results[exp->name] << '\n';
+          for (Literal& val : ret) {
+            if (val.type == Type::funcref) {
+              val = Literal::makeFuncref(Name("funcref"));
             }
+          }
+          results[exp->name] = ret;
+          // ignore the result if we hit an unreachable and returned no value
+          if (ret.size() > 0) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => "
+                      << ret << '\n';
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
@@ -123,18 +126,18 @@ struct ExecutionResults {
 
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
-  Literal run(Function* func, Module& wasm) {
+  Literals run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
-      return Literal();
+      return {};
     }
   }
 
-  Literal run(Function* func, Module& wasm, ModuleInstance& instance) {
+  Literals run(Function* func, Module& wasm, ModuleInstance& instance) {
     try {
       LiteralList arguments;
       // init hang support, if present
@@ -148,7 +151,7 @@ struct ExecutionResults {
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      return Literal();
+      return {};
     }
   }
 };

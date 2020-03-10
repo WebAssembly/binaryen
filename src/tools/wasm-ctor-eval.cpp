@@ -203,7 +203,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     });
   }
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
@@ -214,11 +214,11 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
-  Literal callTable(Index index,
-                    Signature sig,
-                    LiteralList& arguments,
-                    Type result,
-                    EvallingModuleInstance& instance) override {
+  Literals callTable(Index index,
+                     Signature sig,
+                     LiteralList& arguments,
+                     Type result,
+                     EvallingModuleInstance& instance) override {
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
     for (auto& segment : wasm->table.segments) {

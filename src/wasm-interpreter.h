@@ -30,6 +30,7 @@
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
+#include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -49,17 +50,40 @@ extern Name WASM, RETURN_FLOW;
 // in control flow.
 class Flow {
 public:
-  Flow() : values{Literal()} {}
-  Flow(Literal value) : values{value} {}
-  Flow(Name breakTo) : values{Literal()}, breakTo(breakTo) {}
+  Flow() : values() {}
+  Flow(Literal value) : values{value} { assert(value.type.isConcrete()); }
+  Flow(Literals&& values) : values(values) {}
+  Flow(Name breakTo) : values(), breakTo(breakTo) {}
 
-  SmallVector<Literal, 1> values;
+  Literals values;
   Name breakTo; // if non-null, a break is going on
 
   // A helper function for the common case where there is only one value
-  Literal& getSingleValue() {
+  const Literal& getSingleValue() {
     assert(values.size() == 1);
     return values[0];
+  }
+
+  Type getType() {
+    std::vector<Type> types;
+    for (auto& val : values) {
+      types.push_back(val.type);
+    }
+    return Type(types);
+  }
+
+  Expression* getConstExpression(Module& module) {
+    assert(values.size() > 0);
+    Builder builder(module);
+    if (values.size() == 1) {
+      return builder.makeConstExpression(getSingleValue());
+    } else {
+      std::vector<Expression*> consts;
+      for (auto& val : values) {
+        consts.push_back(builder.makeConstExpression(val));
+      }
+      return builder.makeTupleMake(std::move(consts));
+    }
   }
 
   bool breaking() { return breakTo.is(); }
@@ -167,16 +191,18 @@ public:
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-    if (!ret.breaking() &&
-        (curr->type.isConcrete() || ret.getSingleValue().type.isConcrete())) {
+    if (!ret.breaking()) {
+      Type type = ret.getType();
+      if (type.isConcrete() || curr->type.isConcrete()) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (!Type::isSubType(ret.getSingleValue().type, curr->type)) {
-        std::cerr << "expected " << curr->type << ", seeing "
-                  << ret.getSingleValue().type << " from\n"
-                  << curr << '\n';
-      }
+        if (!Type::isSubType(type, curr->type)) {
+          std::cerr << "expected " << curr->type << ", seeing " << type
+                    << " from\n"
+                    << curr << '\n';
+        }
 #endif
-      assert(Type::isSubType(ret.getSingleValue().type, curr->type));
+        assert(Type::isSubType(type, curr->type));
+      }
     }
     depth--;
     return ret;
@@ -274,14 +300,13 @@ public:
   Flow visitSwitch(Switch* curr) {
     NOTE_ENTER("Switch");
     Flow flow;
-    Literal value;
+    Literals values;
     if (curr->value) {
       flow = visit(curr->value);
       if (flow.breaking()) {
         return flow;
       }
-      value = flow.getSingleValue();
-      NOTE_EVAL1(value);
+      values = flow.values;
     }
     flow = visit(curr->condition);
     if (flow.breaking()) {
@@ -293,7 +318,7 @@ public:
       target = curr->targets[(size_t)index];
     }
     flow.breakTo = target;
-    flow.getSingleValue() = value;
+    flow.values = values;
     return flow;
   }
 
@@ -1136,6 +1161,7 @@ public:
       return flow;
     }
     for (auto arg : arguments) {
+      assert(arg.type.isConcrete());
       flow.values.push_back(arg);
     }
     return flow;
@@ -1234,12 +1260,12 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
-    virtual Literal callImport(Function* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index,
-                              Signature sig,
-                              LiteralList& arguments,
-                              Type result,
-                              SubType& instance) = 0;
+    virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
+    virtual Literals callTable(Index index,
+                               Signature sig,
+                               LiteralList& arguments,
+                               Type result,
+                               SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
 
@@ -1424,7 +1450,7 @@ public:
   }
 
   // call an exported function
-  Literal callExport(Name name, const LiteralList& arguments) {
+  Literals callExport(Name name, const LiteralList& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_) {
       externalInterface->trap("callExport not found");
@@ -1578,9 +1604,9 @@ private:
       auto* func = instance.wasm.getFunction(curr->target);
       Flow ret;
       if (func->imported()) {
-        ret = instance.externalInterface->callImport(func, arguments);
+        ret.values = instance.externalInterface->callImport(func, arguments);
       } else {
-        ret = instance.callFunctionInternal(curr->target, arguments);
+        ret.values = instance.callFunctionInternal(curr->target, arguments);
       }
 #ifdef WASM_INTERPRETER_DEBUG
       std::cout << "(returned to " << scope.function->name << ")\n";
@@ -2095,7 +2121,7 @@ private:
 
 public:
   // Call a function, starting an invocation.
-  Literal callFunction(Name name, const LiteralList& arguments) {
+  Literals callFunction(Name name, const LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
@@ -2105,7 +2131,7 @@ public:
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  Literal callFunctionInternal(Name name, const LiteralList& arguments) {
+  Literals callFunctionInternal(Name name, const LiteralList& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
@@ -2129,12 +2155,12 @@ public:
       RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
-    Literal ret = flow.getSingleValue();
-    if (!Type::isSubType(ret.type, function->sig.results)) {
-      std::cerr << "calling " << function->name << " resulted in " << ret
+    auto type = flow.getType();
+    if (!Type::isSubType(type, function->sig.results)) {
+      std::cerr << "calling " << function->name << " resulted in " << type
                 << " but the function type is " << function->sig.results
                 << '\n';
-      WASM_UNREACHABLE("unexpect result type");
+      WASM_UNREACHABLE("unexpected result type");
     }
     // may decrease more than one, if we jumped up the stack
     callDepth = previousCallDepth;
@@ -2145,7 +2171,7 @@ public:
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "exiting " << function->name << " with " << ret << '\n';
 #endif
-    return ret;
+    return flow.values;
   }
 
 protected:
