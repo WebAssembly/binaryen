@@ -250,7 +250,7 @@ struct Precompute
       return;
     }
     // this was precomputed
-    if (flow.getType().isConcrete()) {
+    if (flow.values.isConcrete()) {
       replaceCurrent(flow.getConstExpression(*getModule()));
       worked = true;
     } else {
@@ -321,13 +321,13 @@ private:
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
       if (auto* set = curr->dynCast<LocalSet>()) {
-        if (setValues[set].getType().isConcrete()) {
+        if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
         auto values = setValues[set] =
           precomputeValue(Properties::getFallthrough(
             set->value, getPassOptions(), getModule()->features));
-        if (values.getType().isConcrete()) {
+        if (values.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
