@@ -444,7 +444,7 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
-class Literals : SmallVector<Literal, 1> {
+class Literals : public SmallVector<Literal, 1> {
 public:
   Literals() = default;
   Literals(std::initializer_list<Literal> init)
