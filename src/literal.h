@@ -46,7 +46,9 @@ public:
 
 public:
   Literal() : v128(), type(Type::none) {}
-  explicit Literal(Type type) : v128(), type(type) {}
+  explicit Literal(Type type) : v128(), type(type) {
+    assert(type != Type::unreachable);
+  }
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
@@ -64,8 +66,8 @@ public:
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
 
-  bool isConcrete() { return type != Type::none; }
-  bool isNone() { return type == Type::none; }
+  bool isConcrete() const { return type != Type::none; }
+  bool isNone() const { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getSingle()) {
@@ -442,10 +444,17 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
-struct Literals : SmallVector<Literal, 1> {
+class Literals : SmallVector<Literal, 1> {
+public:
   Literals() = default;
   Literals(std::initializer_list<Literal> init)
-    : SmallVector<Literal, 1>(init){};
+    : SmallVector<Literal, 1>(init) {
+#ifndef NDEBUG
+    for (auto& lit : init) {
+      assert(lit.isConcrete());
+    }
+#endif
+  };
   Type getType() {
     std::vector<Type> types;
     for (auto& val : *this) {
