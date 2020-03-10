@@ -70,15 +70,15 @@ Literals Literal::makeZero(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
   for (auto t : type.expand()) {
-    zeroes.push_back(makeSingleZero(t);
+    zeroes.push_back(makeSingleZero(t));
   }
   return zeroes;
 }
 
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
-  if (t.isRef()) {
-    return makeNullRef();
+  if (type.isRef()) {
+    return makeNullref();
   } else {
     return makeFromInt32(0, type);
   }
