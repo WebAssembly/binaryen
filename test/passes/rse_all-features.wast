@@ -20,6 +20,15 @@
     (local.set $a (i32.const 1))
     (local.set $a (i32.const 0))
   )
+  (func $tuple-value
+    (local $x (i32 i64))
+    (local.set $x
+      (tuple.make (i32.const 42) (i64.const 42))
+    )
+    (local.set $x
+      (tuple.make (i32.const 42) (i64.const 42))
+    )
+  )
   (func $unreach
     (local $a i32)
     (block $x
@@ -357,4 +366,3 @@
     (local.set $x (i32.const 1)) ;; should be dropped
   )
 )
-

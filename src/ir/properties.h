@@ -85,6 +85,32 @@ inline bool isConstantExpression(const Expression* curr) {
   return false;
 }
 
+inline Literal getSingleConstantValue(const Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    return c->value;
+  } else if (curr->is<RefNull>()) {
+    return Literal(Type::nullref);
+  } else if (auto* c = curr->dynCast<RefFunc>()) {
+    return Literal(c->func);
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
+}
+
+inline Literals getConstantValues(const Expression* curr) {
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return {getSingleConstantValue(curr)};
+  } else if (auto* tuple = curr->dynCast<TupleMake>()) {
+    Literals literals;
+    for (auto* op : tuple->operands) {
+      literals.push_back(getSingleConstantValue(op));
+    }
+    return literals;
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
+}
+
 // Check if an expression is a sign-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {

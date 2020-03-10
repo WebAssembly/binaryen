@@ -49,7 +49,22 @@
    (i32.const 0)
   )
  )
- (func $unreach (; 3 ;)
+ (func $tuple-value (; 3 ;)
+  (local $x (i32 i64))
+  (local.set $x
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+  (drop
+   (tuple.make
+    (i32.const 42)
+    (i64.const 42)
+   )
+  )
+ )
+ (func $unreach (; 4 ;)
   (local $a i32)
   (block $x
    (drop
@@ -73,7 +88,7 @@
    )
   )
  )
- (func $loop (; 4 ;)
+ (func $loop (; 5 ;)
   (local $a i32)
   (local $b i32)
   (loop $x
@@ -100,7 +115,7 @@
    (i32.const 1)
   )
  )
- (func $if (; 5 ;)
+ (func $if (; 6 ;)
   (local $x i32)
   (if
    (i32.const 0)
@@ -115,7 +130,7 @@
    (i32.const 1)
   )
  )
- (func $if2 (; 6 ;)
+ (func $if2 (; 7 ;)
   (local $x i32)
   (if
    (local.tee $x
@@ -132,7 +147,7 @@
    (i32.const 1)
   )
  )
- (func $if3 (; 7 ;)
+ (func $if3 (; 8 ;)
   (local $x i32)
   (if
    (local.tee $x
@@ -149,7 +164,7 @@
    (i32.const 1)
   )
  )
- (func $copy (; 8 ;)
+ (func $copy (; 9 ;)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -193,7 +208,7 @@
    (local.get $x)
   )
  )
- (func $param-unique (; 9 ;) (param $x i32)
+ (func $param-unique (; 10 ;) (param $x i32)
   (local $a i32)
   (local.set $a
    (local.get $x)
@@ -213,7 +228,7 @@
    (local.get $x)
   )
  )
- (func $set-unique (; 10 ;)
+ (func $set-unique (; 11 ;)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -271,7 +286,7 @@
    (local.get $x)
   )
  )
- (func $identical_complex (; 11 ;) (param $x i32)
+ (func $identical_complex (; 12 ;) (param $x i32)
   (local $y i32)
   (local.set $y
    (local.get $x)
@@ -292,7 +307,7 @@
    (local.get $y)
   )
  )
- (func $merge (; 12 ;)
+ (func $merge (; 13 ;)
   (local $x i32)
   (if
    (i32.const 1)
@@ -327,7 +342,7 @@
    (i32.const 2)
   )
  )
- (func $one-arm (; 13 ;) (param $1 i32) (param $3 i32)
+ (func $one-arm (; 14 ;) (param $1 i32) (param $3 i32)
   (local.set $1
    (local.get $3)
   )
@@ -339,7 +354,7 @@
    )
   )
  )
- (func $one-arm2 (; 14 ;) (param $1 i32) (param $3 i32)
+ (func $one-arm2 (; 15 ;) (param $1 i32) (param $3 i32)
   (local.set $1
    (local.get $3)
   )
@@ -350,7 +365,7 @@
    )
   )
  )
- (func $many-merges (; 15 ;)
+ (func $many-merges (; 16 ;)
   (local $0 i32)
   (local $1 i32)
   (block $block
@@ -379,7 +394,7 @@
    )
   )
  )
- (func $fuzz (; 16 ;)
+ (func $fuzz (; 17 ;)
   (local $x i32)
   (loop $label$4
    (block $label$5
@@ -408,7 +423,7 @@
    )
   )
  )
- (func $fuzz2 (; 17 ;)
+ (func $fuzz2 (; 18 ;)
   (local $var$1 i32)
   (if
    (i32.const 0)
@@ -431,7 +446,7 @@
    )
   )
  )
- (func $fuzz-nan (; 18 ;)
+ (func $fuzz-nan (; 19 ;)
   (local $0 f64)
   (local $1 f64)
   (block $block
@@ -460,7 +475,7 @@
    )
   )
  )
- (func $try1 (; 19 ;)
+ (func $try1 (; 20 ;)
   (local $x i32)
   (try
    (nop)
@@ -477,7 +492,7 @@
    (i32.const 1)
   )
  )
- (func $try2 (; 20 ;)
+ (func $try2 (; 21 ;)
   (local $x i32)
   (try
    (block $block
@@ -498,7 +513,7 @@
    (i32.const 1)
   )
  )
- (func $try3 (; 21 ;)
+ (func $try3 (; 22 ;)
   (local $x i32)
   (try
    (throw $e
@@ -517,10 +532,10 @@
    (i32.const 1)
   )
  )
- (func $foo (; 22 ;)
+ (func $foo (; 23 ;)
   (nop)
  )
- (func $try4 (; 23 ;)
+ (func $try4 (; 24 ;)
   (local $x i32)
   (try
    (block $block
@@ -539,7 +554,7 @@
    (i32.const 1)
   )
  )
- (func $try5 (; 24 ;)
+ (func $try5 (; 25 ;)
   (local $x i32)
   (try
    (block $block
@@ -558,7 +573,7 @@
    (i32.const 1)
   )
  )
- (func $nested-try (; 25 ;)
+ (func $nested-try (; 26 ;)
   (local $x i32)
   (try
    (try
