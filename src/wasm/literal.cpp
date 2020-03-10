@@ -70,18 +70,18 @@ Literals Literal::makeZero(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
   for (auto t : type.expand()) {
-    if (t.isRef()) {
-      zeroes.push_back(makeNullref());
-    } else {
-      zeroes.push_back(makeFromInt32(0, type));
-    }
+    zeroes.push_back(makeSingleZero(t);
   }
   return zeroes;
 }
 
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
-  return makeZero(type)[0];
+  if (t.isRef()) {
+    return makeNullRef();
+  } else {
+    return makeFromInt32(0, type);
+  }
 }
 
 std::array<uint8_t, 16> Literal::getv128() const {

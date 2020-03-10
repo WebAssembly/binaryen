@@ -353,7 +353,7 @@ private:
           } else {
             curr = setValues[set];
           }
-          if (curr.size() == 0) {
+          if (curr.isNone()) {
             // not a constant, give up
             values = {};
             break;
