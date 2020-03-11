@@ -228,6 +228,9 @@ private:
   // The maximum amount of vars in each function.
   static const int MAX_VARS = 20;
 
+  // The maximum number of tuple elements.
+  static const int MAX_TUPLE_SIZE = 6;
+
   // some things require luck, try them a few times
   static const int TRIES = 10;
 
@@ -309,22 +312,29 @@ private:
 
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
-  SmallVector<Type, 2> getSubTypes(Type type) {
-    SmallVector<Type, 2> ret;
-    ret.push_back(type); // includes itself
+  Type getSubType(Type type) {
+    if (type.isMulti()) {
+      std::vector<Type> types;
+      for (auto t : type.expand()) {
+        types.push_back(getSubType(t));
+      }
+      return Type(types);
+    }
+    SmallVector<Type, 2> options;
+    options.push_back(type); // includes itself
     switch (type.getSingle()) {
       case Type::anyref:
-        ret.push_back(Type::funcref);
-        ret.push_back(Type::exnref);
+        options.push_back(Type::funcref);
+        options.push_back(Type::exnref);
         // falls through
       case Type::funcref:
       case Type::exnref:
-        ret.push_back(Type::nullref);
+        options.push_back(Type::nullref);
         break;
       default:
         break;
     }
-    return ret;
+    return pick(options);
   }
 
   void setupMemory() {
@@ -407,7 +417,7 @@ private:
 
   void setupGlobals() {
     size_t index = 0;
-    for (auto type : getConcreteTypes()) {
+    for (auto type : getSingleConcreteTypes()) {
       auto num = upTo(3);
       for (size_t i = 0; i < num; i++) {
         auto* glob =
@@ -425,15 +435,10 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      std::vector<Type> params;
-      Index numValues =
-        wasm.features.hasMultivalue() ? upToSquared(MAX_PARAMS) : upTo(2);
-      for (Index i = 0; i < numValues; i++) {
-        params.push_back(getConcreteType());
-      }
-      auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
-                                      WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      Signature(Type(params), Type::none));
+      auto* event =
+        builder.makeEvent(std::string("event$") + std::to_string(i),
+                          WASM_EVENT_ATTRIBUTE_EXCEPTION,
+                          Signature(getControlFlowType(), Type::none));
       wasm.addEvent(event);
     }
   }
@@ -544,11 +549,11 @@ private:
     std::vector<Type> params;
     params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
-      auto type = getConcreteType();
+      auto type = getSingleConcreteType();
       typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
-    func->sig = Signature(Type(params), getReachableType());
+    func->sig = Signature(Type(params), getControlFlowType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
@@ -859,32 +864,22 @@ private:
     }
     nesting++;
     Expression* ret = nullptr;
-    switch (type.getSingle()) {
-      case Type::i32:
-      case Type::i64:
-      case Type::f32:
-      case Type::f64:
-      case Type::v128:
-      case Type::funcref:
-      case Type::anyref:
-      case Type::nullref:
-      case Type::exnref:
-        ret = _makeConcrete(type);
-        break;
-      case Type::none:
-        ret = _makenone();
-        break;
-      case Type::unreachable:
-        ret = _makeunreachable();
-        break;
+    if (type.isConcrete()) {
+      ret = _makeConcrete(type);
+    } else if (type == Type::none) {
+      ret = _makenone();
+    } else {
+      assert(type == Type::unreachable);
+      ret = _makeunreachable();
     }
     // we should create the right type of thing
     assert(Type::isSubType(ret->type, type));
     nesting--;
     return ret;
   }
-
   Expression* _makeConcrete(Type type) {
+    bool canMakeControlFlow =
+      !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
     auto choice = upTo(100);
     if (choice < 10) {
       return makeConst(type);
@@ -895,41 +890,53 @@ private:
     if (choice < 50) {
       return makeLocalGet(type);
     }
-    if (choice < 60) {
+    if (choice < 60 && canMakeControlFlow) {
       return makeBlock(type);
     }
-    if (choice < 70) {
+    if (choice < 70 && canMakeControlFlow) {
       return makeIf(type);
     }
-    if (choice < 80) {
+    if (choice < 80 && canMakeControlFlow) {
       return makeLoop(type);
     }
-    if (choice < 90) {
+    if (choice < 90 && canMakeControlFlow) {
       return makeBreak(type);
     }
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
-                     .add(FeatureSet::MVP,
-                          &Self::makeBlock,
-                          &Self::makeIf,
-                          &Self::makeLoop,
-                          &Self::makeBreak,
-                          &Self::makeCall,
-                          &Self::makeCallIndirect,
-                          &Self::makeLocalGet,
-                          &Self::makeLocalSet,
-                          &Self::makeLoad,
-                          &Self::makeConst,
-                          &Self::makeUnary,
-                          &Self::makeBinary,
-                          &Self::makeSelect,
-                          &Self::makeGlobalGet)
-                     .add(FeatureSet::SIMD, &Self::makeSIMD);
-    if (type == Type::i32 || type == Type::i64) {
+    FeatureOptions<Expression* (Self::*)(Type)> options;
+    options.add(FeatureSet::MVP,
+                &Self::makeLocalGet,
+                &Self::makeLocalSet,
+                &Self::makeConst);
+    if (canMakeControlFlow) {
+      options.add(FeatureSet::MVP,
+                  &Self::makeBlock,
+                  &Self::makeIf,
+                  &Self::makeLoop,
+                  &Self::makeBreak,
+                  &Self::makeCall,
+                  &Self::makeCallIndirect);
+    }
+    if (type.isSingle()) {
+      options.add(FeatureSet::MVP,
+                  &Self::makeUnary,
+                  &Self::makeBinary,
+                  &Self::makeSelect,
+                  &Self::makeGlobalGet,
+                  &Self::makeTupleExtract);
+    }
+    if (type.isSingle() && !type.isRef()) {
+      options.add(FeatureSet::MVP, &Self::makeLoad);
+      options.add(FeatureSet::SIMD, &Self::makeSIMD);
+    }
+    if (type.isInteger()) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+    }
+    if (type.isMulti()) {
+      options.add(FeatureSet::MVP, &Self::makeTupleMake);
     }
     return (this->*pick(options))(type);
   }
@@ -1330,6 +1337,42 @@ private:
     }
     auto* value = make(type);
     return builder.makeGlobalSet(pick(globals), value);
+  }
+
+  Expression* makeTupleMake(Type type) {
+    assert(type.isMulti());
+    std::vector<Expression*> elements;
+    for (auto t : type.expand()) {
+      elements.push_back(make(t));
+    }
+    return builder.makeTupleMake(std::move(elements));
+  }
+
+  Expression* makeTupleExtract(Type type) {
+    assert(type.isSingle() && type.isConcrete());
+    Type tuple = getTupleType();
+    const std::vector<Type>& elements = tuple.expand();
+
+    // Find indices from which we can extract `type`
+    std::vector<size_t> extractIndices;
+    for (size_t i = 0; i < elements.size(); ++i) {
+      if (elements[i] == type) {
+        extractIndices.push_back(i);
+      }
+    }
+
+    // If there are none, inject one
+    if (extractIndices.size() == 0) {
+      std::vector<Type> newElements = elements;
+      size_t injected = upTo(elements.size());
+      newElements[injected] = type;
+      tuple = Type(newElements);
+      extractIndices.push_back(injected);
+    }
+
+    Index index = pick(extractIndices);
+    Expression* child = make(tuple);
+    return builder.makeTupleExtract(child, index);
   }
 
   Expression* makePointer() {
@@ -1782,6 +1825,13 @@ private:
       }
       return builder.makeRefNull();
     }
+    if (type.isMulti()) {
+      std::vector<Expression*> operands;
+      for (auto t : type.expand()) {
+        operands.push_back(makeConst(t));
+      }
+      return builder.makeTupleMake(std::move(operands));
+    }
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
     ret->type = type;
@@ -1793,8 +1843,9 @@ private:
   }
 
   Expression* makeUnary(Type type) {
+    assert(!type.isMulti());
     if (type == Type::unreachable) {
-      if (auto* unary = makeUnary(getConcreteType())->dynCast<Unary>()) {
+      if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
         return makeDeNanOp(
           builder.makeUnary(unary->op, make(Type::unreachable)));
       }
@@ -1808,7 +1859,7 @@ private:
 
     switch (type.getSingle()) {
       case Type::i32: {
-        switch (getConcreteType().getSingle()) {
+        switch (getSingleConcreteType().getSingle()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -2012,8 +2063,10 @@ private:
   }
 
   Expression* makeBinary(Type type) {
+    assert(!type.isMulti());
     if (type == Type::unreachable) {
-      if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
+      if (auto* binary =
+            makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
         return makeDeNanOp(buildBinary(
           {binary->op, make(Type::unreachable), make(Type::unreachable)}));
       }
@@ -2247,8 +2300,8 @@ private:
   }
 
   Expression* makeSelect(Type type) {
-    Type subType1 = pick(getSubTypes(type));
-    Type subType2 = pick(getSubTypes(type));
+    Type subType1 = getSubType(type);
+    Type subType2 = getSubType(type);
     return makeDeNanOp(
       buildSelect({make(Type::i32), make(subType1), make(subType2)}, type));
   }
@@ -2313,7 +2366,8 @@ private:
     }
     wasm.memory.shared = true;
     if (type == Type::none) {
-      return builder.makeAtomicFence();
+      // return builder.makeAtomicFence();
+      return builder.makeNop();
     }
     if (type == Type::i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
@@ -2677,27 +2731,7 @@ private:
   }
 
   // special getters
-
-  std::vector<Type> getReachableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP,
-             Type::i32,
-             Type::i64,
-             Type::f32,
-             Type::f64,
-             Type::none)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes,
-             Type::funcref,
-             Type::anyref,
-             Type::nullref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
-  }
-  Type getReachableType() { return pick(getReachableTypes()); }
-
-  std::vector<Type> getConcreteTypes() {
+  std::vector<Type> getSingleConcreteTypes() {
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
@@ -2709,20 +2743,48 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
-  Type getConcreteType() { return pick(getConcreteTypes()); }
 
-  // Get types that can be stored in memory
-  std::vector<Type> getStorableTypes() {
-    return items(
+  Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  Type getTupleType() {
+    std::vector<Type> elements;
+    size_t numElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
+    elements.resize(numElements);
+    for (size_t i = 0; i < numElements; ++i) {
+      elements[i] = getSingleConcreteType();
+    }
+    return Type(elements);
+  }
+
+  Type getConcreteType() {
+    if (oneIn(3)) {
+      return getTupleType();
+    } else {
+      return getSingleConcreteType();
+    }
+  }
+
+  Type getControlFlowType() {
+    if (oneIn(5)) {
+      return Type::none;
+    } else if (wasm.features.hasMultivalue()) {
+      return getConcreteType();
+    } else {
+      return getSingleConcreteType();
+    }
+  }
+
+  Type getStorableType() {
+    return pick(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128));
   }
-  Type getStorableType() { return pick(getStorableTypes()); }
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
+  // - don't bother logging tuples
   std::vector<Type> getLoggableTypes() {
     return items(
       FeatureOptions<Type>()
@@ -2732,6 +2794,7 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
+
   Type getLoggableType() { return pick(getLoggableTypes()); }
 
   // statistical distributions
