@@ -66,6 +66,24 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
   extractBytes<uint64_t, 2>(v128, lanes);
 }
 
+Literals Literal::makeZero(Type type) {
+  assert(type.isConcrete());
+  Literals zeroes;
+  for (auto t : type.expand()) {
+    zeroes.push_back(makeSingleZero(t));
+  }
+  return zeroes;
+}
+
+Literal Literal::makeSingleZero(Type type) {
+  assert(type.isSingle());
+  if (type.isRef()) {
+    return makeNullref();
+  } else {
+    return makeFromInt32(0, type);
+  }
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
@@ -1483,7 +1501,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal any_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] != Literal::makeZero(lanes[i].type)) {
+    if (lanes[i] != Literal::makeSingleZero(lanes[i].type)) {
       return Literal(int32_t(1));
     }
   }
@@ -1494,7 +1512,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal all_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] == Literal::makeZero(lanes[i].type)) {
+    if (lanes[i] == Literal::makeSingleZero(lanes[i].type)) {
       return Literal(int32_t(0));
     }
   }

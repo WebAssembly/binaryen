@@ -157,7 +157,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return ret;
   }
 
-  Node* makeZero(wasm::Type type) { return makeConst(Literal::makeZero(type)); }
+  Node* makeZero(wasm::Type type) {
+    return makeConst(Literal::makeSingleZero(type));
+  }
 
   // Add a new node to our list of owned nodes.
   Node* addNode(Node* node) {

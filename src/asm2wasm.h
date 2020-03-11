@@ -457,7 +457,7 @@ private:
   void allocateGlobal(IString name, Type type, Literal value = Literal()) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     if (value.type == Type::none) {
-      value = Literal::makeZero(type);
+      value = Literal::makeSingleZero(type);
     }
     mappedGlobals.emplace(name, MappedGlobal(type));
     wasm.addGlobal(builder.makeGlobal(

@@ -29,6 +29,8 @@
 
 namespace wasm {
 
+class Literals;
+
 class Literal {
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
@@ -44,7 +46,9 @@ public:
 
 public:
   Literal() : v128(), type(Type::none) {}
-  explicit Literal(Type type) : v128(), type(type) {}
+  explicit Literal(Type type) : v128(), type(type) {
+    assert(type != Type::unreachable);
+  }
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
@@ -62,8 +66,8 @@ public:
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
 
-  bool isConcrete() { return type != Type::none; }
-  bool isNone() { return type == Type::none; }
+  bool isConcrete() const { return type != Type::none; }
+  bool isNone() const { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getSingle()) {
@@ -95,12 +99,8 @@ public:
     WASM_UNREACHABLE("unexpected type");
   }
 
-  static Literal makeZero(Type type) {
-    if (type.isRef()) {
-      return makeNullref();
-    }
-    return makeFromInt32(0, type);
-  }
+  static Literals makeZero(Type type);
+  static Literal makeSingleZero(Type type);
 
   static Literal makeNullref() { return Literal(Type(Type::nullref)); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
@@ -444,7 +444,27 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
-using Literals = SmallVector<Literal, 1>;
+class Literals : public SmallVector<Literal, 1> {
+public:
+  Literals() = default;
+  Literals(std::initializer_list<Literal> init)
+    : SmallVector<Literal, 1>(init) {
+#ifndef NDEBUG
+    for (auto& lit : init) {
+      assert(lit.isConcrete());
+    }
+#endif
+  };
+  Type getType() {
+    std::vector<Type> types;
+    for (auto& val : *this) {
+      types.push_back(val.type);
+    }
+    return Type(types);
+  }
+  bool isNone() { return size() == 0; }
+  bool isConcrete() { return size() != 0; }
+};
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
@@ -461,6 +481,15 @@ template<> struct hash<wasm::Literal> {
     return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
                                      uint64_t(hash<int64_t>()(chunks[0]))),
                         uint64_t(hash<int64_t>()(chunks[1])));
+  }
+};
+template<> struct hash<wasm::Literals> {
+  size_t operator()(const wasm::Literals& a) const {
+    size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
+    for (const auto& lit : a) {
+      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
+    }
+    return h;
   }
 };
 template<> struct less<wasm::Literal> {

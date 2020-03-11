@@ -595,7 +595,8 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Create new memory.init or memory.fill
       if (range.isZero) {
-        Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
+        Expression* value =
+          builder.makeConst(Literal::makeSingleZero(Type::i32));
         appendResult(builder.makeMemoryFill(dest, value, size));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;

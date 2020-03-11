@@ -64,13 +64,7 @@ public:
     return values[0];
   }
 
-  Type getType() {
-    std::vector<Type> types;
-    for (auto& val : values) {
-      types.push_back(val.type);
-    }
-    return Type(types);
-  }
+  Type getType() { return values.getType(); }
 
   Expression* getConstExpression(Module& module) {
     assert(values.size() > 0);
@@ -1573,7 +1567,7 @@ private:
           locals[i] = arguments[i];
         } else {
           assert(function->isVar(i));
-          locals[i] = Literal::makeZero(function->getLocalType(i));
+          locals[i] = Literal::makeSingleZero(function->getLocalType(i));
         }
       }
     }

@@ -92,11 +92,13 @@ struct RedundantSetElimination
   // numbering
 
   Index nextValue = 1; // 0 is reserved for the "unseen value"
-  std::unordered_map<Literal, Index> literalValues; // each constant has a value
-  std::unordered_map<Expression*, Index>
-    expressionValues; // each value can have a value
+  // each constant has a value
+  std::unordered_map<Literals, Index> literalValues;
+  // each value can have a value
+  std::unordered_map<Expression*, Index> expressionValues;
+  // each block has values for each merge
   std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
-    blockMergeValues; // each block has values for each merge
+    blockMergeValues;
 
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
@@ -108,7 +110,7 @@ struct RedundantSetElimination
     return nextValue++;
   }
 
-  Index getLiteralValue(Literal lit) {
+  Index getLiteralValue(Literals lit) {
     auto iter = literalValues.find(lit);
     if (iter != literalValues.end()) {
       return iter->second;
@@ -159,7 +161,7 @@ struct RedundantSetElimination
   Index getValue(Expression* value, LocalValues& currValues) {
     if (auto* c = value->dynCast<Const>()) {
       // a constant
-      return getLiteralValue(c->value);
+      return getLiteralValue({c->value});
     } else if (auto* get = value->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
