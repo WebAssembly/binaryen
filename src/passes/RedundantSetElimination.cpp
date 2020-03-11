@@ -162,7 +162,7 @@ struct RedundantSetElimination
   Index getValue(Expression* value, LocalValues& currValues) {
     if (Properties::isConstantExpression(value)) {
       // a constant
-      return getLiteralValue(Properties::getConstantValues(value));
+      return getLiteralValue(Properties::getLiterals(value));
     } else if (auto* get = value->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
