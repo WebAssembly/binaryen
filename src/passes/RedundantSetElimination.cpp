@@ -35,6 +35,7 @@
 
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
@@ -159,9 +160,9 @@ struct RedundantSetElimination
   }
 
   Index getValue(Expression* value, LocalValues& currValues) {
-    if (auto* c = value->dynCast<Const>()) {
+    if (Properties::isConstantExpression(value)) {
       // a constant
-      return getLiteralValue({c->value});
+      return getLiteralValue(Properties::getLiterals(value));
     } else if (auto* get = value->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
