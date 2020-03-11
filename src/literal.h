@@ -487,7 +487,7 @@ template<> struct hash<wasm::Literals> {
   size_t operator()(const wasm::Literals& a) const {
     size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
     for (const auto& lit : a) {
-      h = wasm::rehash(h, hash<wasm::Literal>{}(lit));
+      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
     }
     return h;
   }
