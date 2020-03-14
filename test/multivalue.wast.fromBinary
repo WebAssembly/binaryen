@@ -1,10 +1,10 @@
 (module
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_none (func))
+ (type $none_=>_i64 (func (result i64)))
  (type $none_=>_f32_i64_i32 (func (result f32 i64 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
- (type $none_=>_i64 (func (result i64)))
  (type $none_=>_f32 (func (result f32)))
  (import "env" "pair" (func $pair (result i32 i64)))
  (func $triple (; 1 ;) (result i32 i64 f32)
@@ -224,7 +224,16 @@
    )
   )
  )
- (func $drop-call (; 6 ;)
+ (func $unreachable (; 6 ;) (result i64)
+  (drop
+   (i32.const 42)
+  )
+  (drop
+   (i64.const 7)
+  )
+  (unreachable)
+ )
+ (func $drop-call (; 7 ;)
   (local $0 (i32 i64))
   (local $1 i32)
   (local.set $0
@@ -246,7 +255,7 @@
    )
   )
  )
- (func $drop-tuple-make (; 7 ;)
+ (func $drop-tuple-make (; 8 ;)
   (local $0 i32)
   (drop
    (block (result i32)
@@ -260,7 +269,7 @@
    )
   )
  )
- (func $drop-block (; 8 ;)
+ (func $drop-block (; 9 ;)
   (local $0 (i32 i64))
   (local $1 i32)
   (local.set $0
@@ -287,7 +296,7 @@
    )
   )
  )
- (func $mv-return (; 9 ;) (result i32 i64)
+ (func $mv-return (; 10 ;) (result i32 i64)
   (return
    (tuple.make
     (i32.const 42)
@@ -295,7 +304,7 @@
    )
   )
  )
- (func $mv-return-in-block (; 10 ;) (result i32 i64)
+ (func $mv-return-in-block (; 11 ;) (result i32 i64)
   (return
    (tuple.make
     (i32.const 42)
@@ -303,7 +312,7 @@
    )
   )
  )
- (func $mv-block-break (; 11 ;) (result i32 i64)
+ (func $mv-block-break (; 12 ;) (result i32 i64)
   (local $0 (i32 i64))
   (local.set $0
    (block $label$1 (result i32 i64)
@@ -324,7 +333,7 @@
    )
   )
  )
- (func $mv-block-br-if (; 12 ;) (result i32 i64)
+ (func $mv-block-br-if (; 13 ;) (result i32 i64)
   (local $0 (i32 i64))
   (local $1 (i32 i64))
   (local.set $1
@@ -357,7 +366,7 @@
    )
   )
  )
- (func $mv-if (; 13 ;) (result i32 i64)
+ (func $mv-if (; 14 ;) (result i32 i64)
   (local $0 (i32 i64))
   (local.set $0
    (if (result i32 i64)
@@ -381,7 +390,7 @@
    )
   )
  )
- (func $mv-loop (; 14 ;) (result i32 i64)
+ (func $mv-loop (; 15 ;) (result i32 i64)
   (local $0 (i32 i64))
   (local.set $0
    (loop $label$1 (result i32 i64)
@@ -400,7 +409,7 @@
    )
   )
  )
- (func $mv-switch (; 15 ;) (result i32 i64)
+ (func $mv-switch (; 16 ;) (result i32 i64)
   (local $0 (i32 i64))
   (local $1 (i32 i64))
   (local.set $1
