@@ -59,6 +59,11 @@ inline bool isSymmetric(Binary* binary) {
   }
 }
 
+inline bool isControlFlowStructure(Expression* curr) {
+  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
+         curr->is<Try>();
+}
+
 // Check if an expression is a control flow construct with a name,
 // which implies it may have breaks to it.
 inline bool isNamedControlFlow(Expression* curr) {

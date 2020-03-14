@@ -19,6 +19,7 @@
 
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -435,16 +436,19 @@ collectSignatures(Module& wasm,
     if (func->imported()) {
       return;
     }
-    struct TypeCounter : PostWalker<TypeCounter> {
+    struct TypeCounter
+      : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
       Counts& counts;
 
       TypeCounter(Counts& counts) : counts(counts) {}
-
-      void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
-      void visitBlock(Block* curr) {
-        // TODO: Allow blocks to have input types as well
-        if (curr->type.isMulti()) {
-          counts[Signature(Type::none, curr->type)]++;
+      void visitExpression(Expression* curr) {
+        if (auto* call = curr->dynCast<CallIndirect>()) {
+          counts[call->sig]++;
+        } else if (Properties::isControlFlowStructure(curr)) {
+          // TODO: Allow control flow to have input types as well
+          if (curr->type.isMulti()) {
+            counts[Signature(Type::none, curr->type)]++;
+          }
         }
       }
     };

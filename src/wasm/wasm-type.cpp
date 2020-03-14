@@ -237,6 +237,19 @@ bool Type::isSubType(Type left, Type right) {
       (right == Type::anyref || left == Type::nullref)) {
     return true;
   }
+  if (left.isMulti() && right.isMulti()) {
+    const std::vector<Type>& leftElems = left.expand();
+    const std::vector<Type>& rightElems = right.expand();
+    if (leftElems.size() != rightElems.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < leftElems.size(); ++i) {
+      if (!isSubType(leftElems[i], rightElems[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
   return false;
 }
 
