@@ -601,7 +601,7 @@ public:
     ret->finalize();
     return ret;
   }
-  TupleMake* makeTupleMake(std::vector<Expression*>&& operands) {
+  template<typename ListType> TupleMake* makeTupleMake(ListType&& operands) {
     auto* ret = allocator.alloc<TupleMake>();
     ret->operands.set(operands);
     ret->finalize();
@@ -636,6 +636,19 @@ public:
       default:
         assert(value.type.isNumber());
         return makeConst(value);
+    }
+  }
+
+  Expression* makeConstExpression(Literals values) {
+    assert(values.size() > 0);
+    if (values.size() == 1) {
+      return makeConstExpression(values[0]);
+    } else {
+      std::vector<Expression*> consts;
+      for (auto value : values) {
+        consts.push_back(makeConstExpression(value));
+      }
+      return makeTupleMake(consts);
     }
   }
 
