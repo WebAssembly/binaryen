@@ -1090,6 +1090,7 @@ Type WasmBinaryBuilder::getType() {
   // Single value types are negative; signature indices are non-negative
   if (type >= 0) {
     // TODO: Handle block input types properly
+    assert(size_t(type) < signatures.size());
     return signatures[type].results;
   }
   switch (type) {

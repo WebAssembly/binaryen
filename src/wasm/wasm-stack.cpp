@@ -23,7 +23,7 @@ void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);
   } else if (type.isMulti()) {
-    o << U32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
     o << binaryType(type);
   }
