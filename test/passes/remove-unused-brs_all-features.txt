@@ -4,6 +4,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_f64_i32_f64_f32_f32_=>_i32 (func (param i32 f64 i32 f64 f32 f32) (result i32)))
@@ -191,14 +192,33 @@
    (i32.const 1)
   )
  )
- (func $b15 (; 15 ;)
+ (func $b14-tuple (; 15 ;) (result i32 i64)
+  (if (result i32 i64)
+   (i32.const 1)
+   (block $topmost (result i32 i64)
+    (block $block1 (result i32 i64)
+     (tuple.make
+      (i32.const 12)
+      (i64.const 12)
+     )
+    )
+   )
+   (block $block3 (result i32 i64)
+    (tuple.make
+     (i32.const 27)
+     (i64.const 27)
+    )
+   )
+  )
+ )
+ (func $b15 (; 16 ;)
   (block $topmost
    (br_if $topmost
     (i32.const 17)
    )
   )
  )
- (func $b15b (; 16 ;)
+ (func $b15b (; 17 ;)
   (if
    (i32.const 18)
    (block $topmost
@@ -210,7 +230,7 @@
    )
   )
  )
- (func $b16 (; 17 ;)
+ (func $b16 (; 18 ;)
   (block $a
    (block $b
     (block $c
@@ -230,7 +250,7 @@
    )
   )
  )
- (func $b17 (; 18 ;)
+ (func $b17 (; 19 ;)
   (if
    (i32.const 0)
    (block $a
@@ -272,16 +292,16 @@
    )
   )
  )
- (func $ret-1 (; 19 ;)
+ (func $ret-1 (; 20 ;)
   (nop)
  )
- (func $ret-2 (; 20 ;)
+ (func $ret-2 (; 21 ;)
   (block $block0
    (block $block1
    )
   )
  )
- (func $ret-3 (; 21 ;)
+ (func $ret-3 (; 22 ;)
   (if
    (i32.const 0)
    (block $block0
@@ -290,14 +310,14 @@
    )
   )
  )
- (func $ret-value (; 22 ;) (result i32)
+ (func $ret-value (; 23 ;) (result i32)
   (block $block0 (result i32)
    (block $block1 (result i32)
     (i32.const 1)
    )
   )
  )
- (func $no-select-but-the-last (; 23 ;)
+ (func $no-select-but-the-last (; 24 ;)
   (block $a
    (if
     (i32.const 0)
@@ -371,7 +391,7 @@
    )
   )
  )
- (func $side-effects-and-order (; 24 ;) (result i32)
+ (func $side-effects-and-order (; 25 ;) (result i32)
   (local $x i32)
   (block $do-once$0
    (if
@@ -429,7 +449,7 @@
    (i32.const 1)
   )
  )
- (func $loops (; 25 ;)
+ (func $loops (; 26 ;)
   (loop $in
    (block $out
     (br_if $in
@@ -505,10 +525,11 @@
   )
   (loop $in-todo
    (if
-    (i32.const 0)
-    (block $out-todo
+    (i32.eqz
+     (i32.const 0)
     )
-    (block
+    (block $out-todo
+     (nop)
      (call $loops)
      (br $in-todo)
     )
@@ -649,10 +670,11 @@
   )
   (loop $in-todo2
    (if
-    (i32.const 0)
-    (block $out-todo2
+    (i32.eqz
+     (i32.const 0)
     )
-    (block
+    (block $out-todo2
+     (nop)
      (call $loops)
      (br $in-todo2)
     )
@@ -686,10 +708,11 @@
   )
   (loop $in-todo287
    (if
-    (i32.const 0)
-    (block $out-todo288
+    (i32.eqz
+     (i32.const 0)
     )
-    (block
+    (block $out-todo288
+     (nop)
      (call $loops)
      (drop
       (i32.const 1)
@@ -699,7 +722,7 @@
    )
   )
  )
- (func $br_if_in_block (; 26 ;) (result i32)
+ (func $br_if_in_block (; 27 ;) (result i32)
   (block $outval (result i32)
    (block $in
     (drop
@@ -733,7 +756,7 @@
    )
   )
  )
- (func $threading (; 27 ;)
+ (func $threading (; 28 ;)
   (drop
    (block $value-out (result i32)
     (block $value-in (result i32)
@@ -767,7 +790,7 @@
    )
   )
  )
- (func $if-to-br_if-conflict (; 28 ;) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-conflict (; 29 ;) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -794,7 +817,7 @@
    (local.get $y)
   )
  )
- (func $if-to-br_if-conflict2 (; 29 ;) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-conflict2 (; 30 ;) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -821,7 +844,7 @@
    (local.get $y)
   )
  )
- (func $if-to-br_if-value-sideeffect (; 30 ;) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-value-sideeffect (; 31 ;) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -849,7 +872,7 @@
    (local.get $y)
   )
  )
- (func $fuzz (; 31 ;) (param $j i32) (param $g i32)
+ (func $fuzz (; 32 ;) (param $j i32) (param $g i32)
   (loop $label$continue$d
    (block $label$break$c
     (block $label$break$d
@@ -879,7 +902,7 @@
    )
   )
  )
- (func $iffify (; 32 ;)
+ (func $iffify (; 33 ;)
   (if
    (i32.eqz
     (i32.const 0)
@@ -934,7 +957,7 @@
    )
   )
  )
- (func $loop-if (; 33 ;) (result i32)
+ (func $loop-if (; 34 ;) (result i32)
   (loop $typed (result i32)
    (block $outer (result i32)
     (block (result i32)
@@ -953,7 +976,7 @@
    )
   )
  )
- (func $block-break (; 34 ;) (param $0 i32)
+ (func $block-break (; 35 ;) (param $0 i32)
   (block $block$7$break
    (block $shape$6$continue
     (call $block-break
@@ -962,7 +985,7 @@
    )
   )
  )
- (func $loop-break (; 35 ;) (param $0 i32)
+ (func $loop-break (; 36 ;) (param $0 i32)
   (loop $shape$6$continue
    (block $block$7$break
     (block
@@ -977,7 +1000,7 @@
    )
   )
  )
- (func $untaken-brs-might-prevent-block-removal (; 36 ;) (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
+ (func $untaken-brs-might-prevent-block-removal (; 37 ;) (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
   (block $label$0 (result i32)
    (block $label$1
     (br_if $label$1
@@ -1012,7 +1035,7 @@
    (i32.const 1935947830)
   )
  )
- (func $unexitable-loops-result (; 37 ;) (param $0 i32) (result i64)
+ (func $unexitable-loops-result (; 38 ;) (param $0 i32) (result i64)
   (loop $label$0
    (loop $label$1
     (br_if $label$0
@@ -1031,7 +1054,7 @@
    )
   )
  )
- (func $untaken-br-with-concrete-last-element (; 38 ;)
+ (func $untaken-br-with-concrete-last-element (; 39 ;)
   (block $label$8
    (block $label$11
     (block $label$14
@@ -1042,7 +1065,7 @@
    )
   )
  )
- (func $untaken-br-with-concrete-last-element2 (; 39 ;) (result i32)
+ (func $untaken-br-with-concrete-last-element2 (; 40 ;) (result i32)
   (block $label$8 (result i32)
    (block $label$11 (result i32)
     (block $label$14 (result i32)
@@ -1056,7 +1079,7 @@
    )
   )
  )
- (func $untaken-br_if-then-if (; 40 ;)
+ (func $untaken-br_if-then-if (; 41 ;)
   (block $label$0
    (br_if $label$0
     (unreachable)
@@ -1067,7 +1090,7 @@
    )
   )
  )
- (func $unreachable-if-that-could-be-a-br_if (; 41 ;) (result i64)
+ (func $unreachable-if-that-could-be-a-br_if (; 42 ;) (result i64)
   (loop $label$3 (result i64)
    (drop
     (if (result f64)
@@ -1079,7 +1102,7 @@
    (i64.const 1)
   )
  )
- (func $nop-br-might-update-type (; 42 ;)
+ (func $nop-br-might-update-type (; 43 ;)
   (block $label$39
    (drop
     (if (result i32)
@@ -1094,7 +1117,7 @@
    )
   )
  )
- (func $no-flow-through-if-without-else (; 43 ;) (result f32)
+ (func $no-flow-through-if-without-else (; 44 ;) (result f32)
   (local $0 i32)
   (local $2 f32)
   (if (result f32)
@@ -1115,7 +1138,7 @@
    (f32.const -9223372036854775808)
   )
  )
- (func $unreachable-return-loop-value (; 44 ;) (result i64)
+ (func $unreachable-return-loop-value (; 45 ;) (result i64)
   (loop $loop
    (if
     (i32.const 1)
@@ -1129,7 +1152,7 @@
    (br $loop)
   )
  )
- (func $obviously-flows-out-maybe (; 45 ;) (param $var$0 i32) (result f32)
+ (func $obviously-flows-out-maybe (; 46 ;) (param $var$0 i32) (result f32)
   (block $label$1 (result f32)
    (br $label$1
     (f32.const 1)
@@ -1148,7 +1171,7 @@
    )
   )
  )
- (func $br-to-table (; 46 ;) (param $a i32)
+ (func $br-to-table (; 47 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1167,7 +1190,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-too-few (; 47 ;) (param $a i32)
+ (func $br-to-table-too-few (; 48 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1187,7 +1210,7 @@
    )
   )
  )
- (func $br-to-table-one-more (; 48 ;) (param $a i32)
+ (func $br-to-table-one-more (; 49 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1207,7 +1230,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-overlap (; 49 ;) (param $a i32)
+ (func $br-to-table-overlap (; 50 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1237,7 +1260,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-overlap-start (; 50 ;) (param $a i32)
+ (func $br-to-table-overlap-start (; 51 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1267,7 +1290,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-offset (; 51 ;) (param $a i32)
+ (func $br-to-table-offset (; 52 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1289,7 +1312,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-RANGE-high (; 52 ;) (param $a i32)
+ (func $br-to-table-RANGE-high (; 53 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1319,7 +1342,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-RANGE-low (; 53 ;) (param $a i32)
+ (func $br-to-table-RANGE-low (; 54 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1338,7 +1361,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad (; 54 ;) (param $a i32) (result i32)
+ (func $br-to-table-bad (; 55 ;) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1361,7 +1384,7 @@
    (i32.const 2000)
   )
  )
- (func $br-to-table-bad2 (; 55 ;) (param $a i32) (result i32)
+ (func $br-to-table-bad2 (; 56 ;) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1392,7 +1415,7 @@
    (i32.const 2000)
   )
  )
- (func $br-to-table-bad3 (; 56 ;) (param $a i32)
+ (func $br-to-table-bad3 (; 57 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1417,7 +1440,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-multi (; 57 ;) (param $a i32)
+ (func $br-to-table-multi (; 58 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1446,7 +1469,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad4 (; 58 ;) (param $a i32)
+ (func $br-to-table-bad4 (; 59 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1476,7 +1499,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad5 (; 59 ;) (param $a i32)
+ (func $br-to-table-bad5 (; 60 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1506,7 +1529,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad6 (; 60 ;) (param $a i32)
+ (func $br-to-table-bad6 (; 61 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1536,7 +1559,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad7 (; 61 ;) (param $a i32)
+ (func $br-to-table-bad7 (; 62 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1566,7 +1589,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-defaultNameOverlaps (; 62 ;) (param $a i32)
+ (func $br-to-table-defaultNameOverlaps (; 63 ;) (param $a i32)
   (block $x
    (block $tablify|0
     (block $z
@@ -1585,7 +1608,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-unreach (; 63 ;) (param $a i32)
+ (func $br-to-table-unreach (; 64 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1615,7 +1638,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-overlap-but-later (; 64 ;) (param $a i32)
+ (func $br-to-table-overlap-but-later (; 65 ;) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1649,7 +1672,7 @@
   )
   (unreachable)
  )
- (func $tiny-switch (; 65 ;)
+ (func $tiny-switch (; 66 ;)
   (if
    (i32.const 0)
    (block $y
@@ -1666,7 +1689,7 @@
    )
   )
  )
- (func $trim-switch (; 66 ;)
+ (func $trim-switch (; 67 ;)
   (block $A
    (block $y
     (br_table $A $y $A $y $A $y
@@ -1679,7 +1702,7 @@
    (call $trim-switch)
   )
  )
- (func $same-target-br_if-and-br (; 67 ;)
+ (func $same-target-br_if-and-br (; 68 ;)
   (block $x
    (drop
     (i32.const 0)
@@ -1688,7 +1711,7 @@
    (unreachable)
   )
  )
- (func $simple-switch (; 68 ;) (result i32)
+ (func $simple-switch (; 69 ;) (result i32)
   (block $A
    (block $B
     (block $y
@@ -1709,7 +1732,7 @@
   )
   (i32.const 3)
  )
- (func $simple-switch-2 (; 69 ;) (result i32)
+ (func $simple-switch-2 (; 70 ;) (result i32)
   (block $A
    (block $B
     (block $y
@@ -1730,7 +1753,7 @@
   )
   (i32.const 3)
  )
- (func $simple-switch-3 (; 70 ;) (result i32)
+ (func $simple-switch-3 (; 71 ;) (result i32)
   (block $A
    (block $B
     (block $y
@@ -1751,7 +1774,7 @@
   )
   (i32.const 3)
  )
- (func $simple-switch43 (; 71 ;) (result i32)
+ (func $simple-switch43 (; 72 ;) (result i32)
   (local $0 i32)
   (block $A
    (block $B
@@ -1784,7 +1807,7 @@
   )
   (i32.const 3)
  )
- (func $simple-switch-5 (; 72 ;) (result i32)
+ (func $simple-switch-5 (; 73 ;) (result i32)
   (block $A
    (block $B
     (block $y
@@ -1805,7 +1828,7 @@
   )
   (i32.const 3)
  )
- (func $undo-if-return (; 73 ;) (param $p i32) (result i32)
+ (func $undo-if-return (; 74 ;) (param $p i32) (result i32)
   (local $x i32)
   (block $out
    (block
@@ -1836,7 +1859,7 @@
   )
   (local.get $p)
  )
- (func $if-unreachable-but-declares-value (; 74 ;) (param $var$0 i32) (param $var$1 f64) (param $var$2 i32) (param $var$3 f64) (param $var$4 f32) (param $var$5 f32) (result i32)
+ (func $if-unreachable-but-declares-value (; 75 ;) (param $var$0 i32) (param $var$1 f64) (param $var$2 i32) (param $var$3 f64) (param $var$4 f32) (param $var$5 f32) (result i32)
   (local $var$6 f64)
   (if
    (i32.const 0)
@@ -1861,28 +1884,28 @@
   )
   (i32.const 0)
  )
- (func $if-flow-1 (; 75 ;) (result i32)
+ (func $if-flow-1 (; 76 ;) (result i32)
   (select
    (i32.const 1)
    (i32.const 2)
    (i32.const 0)
   )
  )
- (func $if-flow-2 (; 76 ;) (result i32)
+ (func $if-flow-2 (; 77 ;) (result i32)
   (if (result i32)
    (i32.const 0)
    (unreachable)
    (i32.const 2)
   )
  )
- (func $if-flow-3 (; 77 ;) (result i32)
+ (func $if-flow-3 (; 78 ;) (result i32)
   (if (result i32)
    (i32.const 0)
    (i32.const 1)
    (unreachable)
   )
  )
- (func $if-flow-4 (; 78 ;) (result i32)
+ (func $if-flow-4 (; 79 ;) (result i32)
   (if
    (return
     (i32.const 0)
@@ -1895,7 +1918,7 @@
    )
   )
  )
- (func $iff-flow-fuzz-bug (; 79 ;) (result i32)
+ (func $iff-flow-fuzz-bug (; 80 ;) (result i32)
   (loop $label$1
    (br_if $label$1
     (i32.eqz
@@ -1914,7 +1937,7 @@
    )
   )
  )
- (func $fuzz-block-unreachable-brs-with-values (; 80 ;) (result i32)
+ (func $fuzz-block-unreachable-brs-with-values (; 81 ;) (result i32)
   (local $0 i32)
   (loop $label$1
    (if
@@ -1937,7 +1960,7 @@
    )
   )
  )
- (func $drop-restructure-if (; 81 ;) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if (; 82 ;) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1947,7 +1970,7 @@
    )
   )
  )
- (func $drop-restructure-if-final (; 82 ;) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-final (; 83 ;) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1957,7 +1980,7 @@
    )
   )
  )
- (func $drop-restructure-if-middle (; 83 ;) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-middle (; 84 ;) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1968,7 +1991,7 @@
    )
   )
  )
- (func $drop-restructure-if-bad (; 84 ;) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-bad (; 85 ;) (param $x i32) (param $y i32) (result i32)
   (block $label$2 (result i32)
    (drop
     (br_if $label$2
@@ -1981,7 +2004,7 @@
    (i32.const 0)
   )
  )
- (func $drop-restructure-if-bad-2 (; 85 ;) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-bad-2 (; 86 ;) (param $x i32) (param $y i32) (result i32)
   (block $label$2 (result i32)
    (drop
     (br_if $label$2
@@ -1994,7 +2017,7 @@
    (i32.const 0)
   )
  )
- (func $if-block (; 86 ;)
+ (func $if-block (; 87 ;)
   (if
    (i32.const 1)
    (block $label
@@ -2009,7 +2032,7 @@
    )
   )
  )
- (func $if-block-bad (; 87 ;)
+ (func $if-block-bad (; 88 ;)
   (block $label
    (if
     (br $label)
@@ -2024,14 +2047,14 @@
    )
   )
  )
- (func $if-block-br (; 88 ;)
+ (func $if-block-br (; 89 ;)
   (block $label
    (br_if $label
     (i32.const 1)
    )
   )
  )
- (func $if-block-br-1 (; 89 ;)
+ (func $if-block-br-1 (; 90 ;)
   (if
    (i32.const 1)
    (block $label
@@ -2041,7 +2064,7 @@
    )
   )
  )
- (func $if-block-br-2 (; 90 ;)
+ (func $if-block-br-2 (; 91 ;)
   (if
    (i32.const 1)
    (block $label
@@ -2052,7 +2075,7 @@
    (nop)
   )
  )
- (func $if-block-br-3 (; 91 ;)
+ (func $if-block-br-3 (; 92 ;)
   (if
    (i32.const 1)
    (block $label
@@ -2060,7 +2083,7 @@
    (nop)
   )
  )
- (func $if-block-br-4-eithre (; 92 ;)
+ (func $if-block-br-4-eithre (; 93 ;)
   (if
    (i32.const 1)
    (block $label
@@ -2073,7 +2096,7 @@
    )
   )
  )
- (func $if-block-br-5-value (; 93 ;) (result i32)
+ (func $if-block-br-5-value (; 94 ;) (result i32)
   (select
    (block $label (result i32)
     (i32.const 2)
@@ -2082,7 +2105,7 @@
    (i32.const 1)
   )
  )
- (func $restructure-if-outerType-change (; 94 ;)
+ (func $restructure-if-outerType-change (; 95 ;)
   (loop $label$1
    (br_if $label$1
     (block $label$2
@@ -2099,7 +2122,7 @@
    )
   )
  )
- (func $if-arm-unreachable (; 95 ;)
+ (func $if-arm-unreachable (; 96 ;)
   (if
    (unreachable)
    (block $label$1
@@ -2108,7 +2131,7 @@
    (unreachable)
   )
  )
- (func $propagate-type-if-we-optimize (; 96 ;)
+ (func $propagate-type-if-we-optimize (; 97 ;)
   (if
    (i32.const 1)
    (nop)
@@ -2131,7 +2154,7 @@
    )
   )
  )
- (func $switch-to-br (; 97 ;)
+ (func $switch-to-br (; 98 ;)
   (block $A
    (block $y
     (block
@@ -2143,7 +2166,7 @@
    )
   )
  )
- (func $switch-to-br-value (; 98 ;) (result i32)
+ (func $switch-to-br-value (; 99 ;) (result i32)
   (block $A (result i32)
    (block $y (result i32)
     (block
@@ -2157,7 +2180,7 @@
    )
   )
  )
- (func $switch-threading-multi (; 99 ;) (param $x i32) (param $y i32) (result i32)
+ (func $switch-threading-multi (; 100 ;) (param $x i32) (param $y i32) (result i32)
   (block $block$5$break
    (block $block$4$break
     (loop $shape$1$continue
@@ -2191,7 +2214,7 @@
   )
   (unreachable)
  )
- (func $fuzz-type-changes-in-our-cycles (; 100 ;) (result i32)
+ (func $fuzz-type-changes-in-our-cycles (; 101 ;) (result i32)
   (loop $label$1
    (if
     (i32.const 0)
@@ -2209,7 +2232,7 @@
    (br $label$1)
   )
  )
- (func $refinalize-need-br-value (; 101 ;) (result i32)
+ (func $refinalize-need-br-value (; 102 ;) (result i32)
   (loop $label$3 (result i32)
    (block $label$6 (result i32)
     (block $label$10
@@ -2231,7 +2254,7 @@
    )
   )
  )
- (func $selectify (; 102 ;) (param $x i32)
+ (func $selectify (; 103 ;) (param $x i32)
   (drop
    (if (result i32)
     (i32.eq
@@ -2265,7 +2288,7 @@
    )
   )
  )
- (func $if-one-side (; 103 ;) (result i32)
+ (func $if-one-side (; 104 ;) (result i32)
   (local $x i32)
   (local.set $x
    (select
@@ -2276,7 +2299,7 @@
   )
   (local.get $x)
  )
- (func $if-one-side-b (; 104 ;) (result i32)
+ (func $if-one-side-b (; 105 ;) (result i32)
   (local $x i32)
   (local.set $x
    (select
@@ -2287,7 +2310,7 @@
   )
   (local.get $x)
  )
- (func $if-one-side-tee-etc (; 105 ;) (param $0 i32) (result i32)
+ (func $if-one-side-tee-etc (; 106 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2308,7 +2331,7 @@
   )
   (i32.const 0)
  )
- (func $ifs-copies-recursive (; 106 ;) (param $20 i32) (result i32)
+ (func $ifs-copies-recursive (; 107 ;) (param $20 i32) (result i32)
   (if
    (i32.const 1)
    (local.set $20
@@ -2325,7 +2348,7 @@
   )
   (local.get $20)
  )
- (func $if-copy1 (; 107 ;)
+ (func $if-copy1 (; 108 ;)
   (local $x i32)
   (local $y i32)
   (loop $top
@@ -2339,7 +2362,7 @@
    (br $top)
   )
  )
- (func $if-copy3 (; 108 ;)
+ (func $if-copy3 (; 109 ;)
   (local $x i32)
   (local $y i32)
   (loop $top
@@ -2352,7 +2375,7 @@
    (br $top)
   )
  )
- (func $if-copy4 (; 109 ;)
+ (func $if-copy4 (; 110 ;)
   (local $x i32)
   (local $y i32)
   (loop $top
@@ -2366,7 +2389,7 @@
    (br $top)
   )
  )
- (func $if-copy-tee (; 110 ;)
+ (func $if-copy-tee (; 111 ;)
   (local $x i32)
   (local $y i32)
   (loop $top
@@ -2382,7 +2405,7 @@
    (br $top)
   )
  )
- (func $loop-end-set (; 111 ;) (param $x i32) (result i32)
+ (func $loop-end-set (; 112 ;) (param $x i32) (result i32)
   (loop $loop
    (nop)
    (br_if $loop
@@ -2394,7 +2417,7 @@
   )
   (local.get $x)
  )
- (func $loop-end-value (; 112 ;) (param $x i32) (result i32)
+ (func $loop-end-value (; 113 ;) (param $x i32) (result i32)
   (loop $loop (result i32)
    (nop)
    (br_if $loop
@@ -2403,7 +2426,7 @@
    (i32.const 1)
   )
  )
- (func $do-not-flow-values-through-unreachable-code (; 113 ;) (result i32)
+ (func $do-not-flow-values-through-unreachable-code (; 114 ;) (result i32)
   (block $block
    (unreachable)
    (if
@@ -2417,7 +2440,7 @@
    )
   )
  )
- (func $do-not-flow-values-through-unreachable-code-b (; 114 ;) (result i32)
+ (func $do-not-flow-values-through-unreachable-code-b (; 115 ;) (result i32)
   (loop $loop-in
    (unreachable)
    (if
@@ -2431,7 +2454,7 @@
    )
   )
  )
- (func $if_br_if (; 115 ;)
+ (func $if_br_if (; 116 ;)
   (local $0 i32)
   (block $label$1
    (br_if $label$1
