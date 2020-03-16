@@ -190,6 +190,25 @@
       )
     )
   )
+  (func $b14-tuple (result i32 i64)
+    (block $topmost (result i32 i64)
+      (if (result i32 i64)
+        (i32.const 1)
+        (block $block1 (result i32 i64)
+          (tuple.make
+            (i32.const 12)
+            (i64.const 12)
+          )
+        )
+        (block $block3 (result i32 i64)
+          (tuple.make
+            (i32.const 27)
+            (i64.const 27)
+          )
+        )
+      )
+    )
+  )
   (func $b15 (type $1)
     (block $topmost
       (if
@@ -2088,4 +2107,3 @@
   )
  )
 )
-

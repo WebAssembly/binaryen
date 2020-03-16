@@ -321,6 +321,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // zero (also 3 bytes). The size is unchanged, but the select may
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
+            // Multivalue selects are not supported
+            if (br->value && br->value->type.isMulti()) {
+              return;
+            }
             // If running the br's condition unconditionally is too expensive,
             // give up.
             auto* zero = LiteralUtils::makeZero(Type::i32, *getModule());
@@ -918,8 +922,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse || !iff->ifTrue->type.isConcrete() ||
-            !iff->ifFalse->type.isConcrete()) {
+        if (!iff->ifFalse || !iff->ifTrue->type.isSingle() ||
+            !iff->ifFalse->type.isSingle()) {
           return nullptr;
         }
         // This is always helpful for code size, but can be a tradeoff with
