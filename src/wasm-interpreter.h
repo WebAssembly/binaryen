@@ -52,7 +52,8 @@ class Flow {
 public:
   Flow() : values() {}
   Flow(Literal value) : values{value} { assert(value.type.isConcrete()); }
-  Flow(Literals&& values) : values(values) {}
+  Flow(Literals& values) : values(values) {}
+  Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
 
   Literals values;
@@ -69,15 +70,7 @@ public:
   Expression* getConstExpression(Module& module) {
     assert(values.size() > 0);
     Builder builder(module);
-    if (values.size() == 1) {
-      return builder.makeConstExpression(getSingleValue());
-    } else {
-      std::vector<Expression*> consts;
-      for (auto& val : values) {
-        consts.push_back(builder.makeConstExpression(val));
-      }
-      return builder.makeTupleMake(std::move(consts));
-    }
+    return builder.makeConstExpression(values);
   }
 
   bool breaking() { return breakTo.is(); }
@@ -170,7 +163,7 @@ protected:
       if (flow.breaking()) {
         return flow;
       }
-      NOTE_EVAL1(flow.getSingleValue());
+      NOTE_EVAL1(flow.values);
       arguments.push_back(flow.getSingleValue());
     }
     return Flow();
@@ -242,7 +235,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    NOTE_EVAL1(flow.getSingleValue());
+    NOTE_EVAL1(flow.values);
     if (flow.getSingleValue().geti32()) {
       Flow flow = visit(curr->ifTrue);
       if (!flow.breaking() && !curr->ifFalse) {
@@ -1542,7 +1535,7 @@ private:
 
   class FunctionScope {
   public:
-    std::vector<Literal> locals;
+    std::vector<Literals> locals;
     Function* function;
 
     FunctionScope(Function* function, const LiteralList& arguments)
@@ -1564,10 +1557,10 @@ private:
                       << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE("invalid param count");
           }
-          locals[i] = arguments[i];
+          locals[i] = {arguments[i]};
         } else {
           assert(function->isVar(i));
-          locals[i] = Literal::makeSingleZero(function->getLocalType(i));
+          locals[i] = Literal::makeZero(function->getLocalType(i));
         }
       }
     }
@@ -1606,14 +1599,8 @@ private:
       std::cout << "(returned to " << scope.function->name << ")\n";
 #endif
       // TODO: make this a proper tail call (return first)
-      // TODO: handle multivalue return_calls
       if (curr->isReturn) {
-        Const c;
-        c.value = ret.getSingleValue();
-        c.finalize();
-        Return return_;
-        return_.value = &c;
-        return this->visit(&return_);
+        ret.breakTo = RETURN_FLOW;
       }
       return ret;
     }
@@ -1633,14 +1620,8 @@ private:
       Flow ret = instance.externalInterface->callTable(
         index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
-      // TODO: handle multivalue return_call_indirects
       if (curr->isReturn) {
-        Const c;
-        c.value = ret.getSingleValue();
-        c.finalize();
-        Return return_;
-        return_.value = &c;
-        return this->visit(&return_);
+        ret.breakTo = RETURN_FLOW;
       }
       return ret;
     }
@@ -1661,10 +1642,9 @@ private:
       }
       NOTE_EVAL1(index);
       NOTE_EVAL1(flow.getSingleValue());
-      assert(curr->isTee()
-               ? Type::isSubType(flow.getSingleValue().type, curr->type)
-               : true);
-      scope.locals[index] = flow.getSingleValue();
+      assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type)
+                           : true);
+      scope.locals[index] = flow.values;
       return curr->isTee() ? flow : Flow();
     }
 
