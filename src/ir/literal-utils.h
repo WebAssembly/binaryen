@@ -32,18 +32,14 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 }
 
 inline Expression* makeZero(Type type, Module& wasm) {
-  // TODO: Switch to using v128.const once V8 supports it
+  // TODO: Remove this function once V8 supports v128.const
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
+  Builder builder(wasm);
   if (type == Type::v128) {
-    Builder builder(wasm);
     return builder.makeUnary(SplatVecI32x4,
                              builder.makeConst(Literal(int32_t(0))));
   }
-  if (type.isRef()) {
-    Builder builder(wasm);
-    return builder.makeRefNull();
-  }
-  return makeFromInt32(0, type, wasm);
+  return builder.makeConstExpression(Literal::makeZero(type));
 }
 
 } // namespace LiteralUtils
