@@ -1090,6 +1090,9 @@ Type WasmBinaryBuilder::getType() {
   // Single value types are negative; signature indices are non-negative
   if (type >= 0) {
     // TODO: Handle block input types properly
+    if (size_t(type) >= signatures.size()) {
+      throwError("invalid signature index: " + std::to_string(type));
+    }
     return signatures[type].results;
   }
   switch (type) {
