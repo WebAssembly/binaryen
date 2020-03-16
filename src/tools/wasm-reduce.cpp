@@ -566,14 +566,14 @@ struct Reducer
         }
       }
     }
-    // If that didn't work, try to replace with a child + a unary conversion
-    if (curr->type.isConcrete() &&
-        !curr->is<Unary>()) { // but not if it's already unary
+    // If that didn't work, try to replace with a child + a unary conversion,
+    // but not if it's already unary
+    if (curr->type.isSingle() && !curr->is<Unary>()) {
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!child->type.isConcrete()) {
+        if (!child->type.isSingle()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
@@ -1011,6 +1011,11 @@ struct Reducer
     // try to replace with a trivial value
     if (curr->type.isRef()) {
       RefNull* n = builder->makeRefNull();
+      return tryToReplaceCurrent(n);
+    }
+    if (curr->type.isMulti()) {
+      Expression* n =
+        builder->makeConstExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);
     }
     Const* c = builder->makeConst(Literal(int32_t(0)));

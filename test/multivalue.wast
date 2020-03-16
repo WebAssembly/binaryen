@@ -41,6 +41,15 @@
    )
   )
  )
+ (func $unreachable (result i64)
+  (tuple.extract 1
+   (tuple.make
+    (i32.const 42)
+    (i64.const 7)
+    (unreachable)
+   )
+  )
+ )
 
  ;; Test lowering of multivalue drops
  (func $drop-call

@@ -926,7 +926,13 @@ void TupleMake::finalize() {
   type = Type(types);
 }
 
-void TupleExtract::finalize() { type = tuple->type.expand()[index]; }
+void TupleExtract::finalize() {
+  if (tuple->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = tuple->type.expand()[index];
+  }
+}
 
 size_t Function::getNumParams() { return sig.params.size(); }
 
