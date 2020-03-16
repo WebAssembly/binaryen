@@ -1,10 +1,12 @@
 (module
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_none (func))
+ (type $none_=>_i32_i64_anyref (func (result i32 i64 anyref)))
  (type $none_=>_i64 (func (result i64)))
  (type $none_=>_f32_i64_i32 (func (result f32 i64 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
+ (type $none_=>_i32_i64_nullref (func (result i32 i64 nullref)))
  (type $none_=>_f32 (func (result f32)))
  (import "env" "pair" (func $fimport$0 (result i32 i64)))
  (func $0 (; 1 ;) (result i32 i64 f32)
@@ -366,18 +368,20 @@
    )
   )
  )
- (func $13 (; 14 ;) (result i32 i64)
-  (local $0 (i32 i64))
+ (func $13 (; 14 ;) (result i32 i64 anyref)
+  (local $0 (i32 i64 nullref))
   (local.set $0
-   (if (result i32 i64)
+   (if (result i32 i64 nullref)
     (i32.const 1)
     (tuple.make
      (i32.const 42)
      (i64.const 42)
+     (ref.null)
     )
     (tuple.make
      (i32.const 42)
      (i64.const 42)
+     (ref.null)
     )
    )
   )
@@ -386,6 +390,9 @@
     (local.get $0)
    )
    (tuple.extract 1
+    (local.get $0)
+   )
+   (tuple.extract 2
     (local.get $0)
    )
   )
