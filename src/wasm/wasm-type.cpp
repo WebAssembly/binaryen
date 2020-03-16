@@ -238,8 +238,8 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isMulti() && right.isMulti()) {
-    const std::vector<Type>& leftElems = left.expand();
-    const std::vector<Type>& rightElems = right.expand();
+    const auto& leftElems = left.expand();
+    const auto& rightElems = right.expand();
     if (leftElems.size() != rightElems.size()) {
       return false;
     }
