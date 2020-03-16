@@ -525,11 +525,10 @@
   )
   (loop $in-todo
    (if
-    (i32.eqz
-     (i32.const 0)
-    )
+    (i32.const 0)
     (block $out-todo
-     (nop)
+    )
+    (block
      (call $loops)
      (br $in-todo)
     )
@@ -670,11 +669,10 @@
   )
   (loop $in-todo2
    (if
-    (i32.eqz
-     (i32.const 0)
-    )
+    (i32.const 0)
     (block $out-todo2
-     (nop)
+    )
+    (block
      (call $loops)
      (br $in-todo2)
     )
@@ -708,11 +706,10 @@
   )
   (loop $in-todo287
    (if
-    (i32.eqz
-     (i32.const 0)
-    )
+    (i32.const 0)
     (block $out-todo288
-     (nop)
+    )
+    (block
      (call $loops)
      (drop
       (i32.const 1)
