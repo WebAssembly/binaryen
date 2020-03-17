@@ -1015,7 +1015,7 @@ struct Reducer
     }
     if (curr->type.isMulti()) {
       Expression* n =
-        builder->makeConstExpression(Literal::makeZero(curr->type));
+        builder->makeConstantExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);
     }
     Const* c = builder->makeConst(Literal(int32_t(0)));

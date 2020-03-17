@@ -39,7 +39,7 @@ inline Expression* makeZero(Type type, Module& wasm) {
     return builder.makeUnary(SplatVecI32x4,
                              builder.makeConst(Literal(int32_t(0))));
   }
-  return builder.makeConstExpression(Literal::makeZero(type));
+  return builder.makeConstantExpression(Literal::makeZero(type));
 }
 
 } // namespace LiteralUtils

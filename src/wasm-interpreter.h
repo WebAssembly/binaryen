@@ -70,7 +70,7 @@ public:
   Expression* getConstExpression(Module& module) {
     assert(values.size() > 0);
     Builder builder(module);
-    return builder.makeConstExpression(values);
+    return builder.makeConstantExpression(values);
   }
 
   bool breaking() { return breakTo.is(); }
