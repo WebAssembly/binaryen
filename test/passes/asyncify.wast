@@ -35,7 +35,7 @@
     ;; work will sleep, so we exit through here while it is paused
   )
   ;; the second event called from the main event loop: to resume $work,
-  ;; stop the unwind, then prepare a rewind, and initiate it by doing 
+  ;; stop the unwind, then prepare a rewind, and initiate it by doing
   ;; the call to rewind the call stack back up to where it was
   (func $second_event
     (call $asyncify_stop_unwind)
@@ -71,6 +71,7 @@
   )
   (func $many-locals (param $x i32) (result i32)
     (local $y i32)
+    (local $z (f32 i64))
     (loop $l
       (local.set $x
         (i32.add (local.get $y) (i32.const 1))
@@ -149,4 +150,3 @@
 ;; empty module, in particular with no memory
 (module
 )
-
