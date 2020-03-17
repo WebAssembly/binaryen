@@ -1914,7 +1914,7 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
     }
     types.push_back(op->type);
   }
-  shouldBeTrue(Type(types) == curr->type,
+  shouldBeTrue(Type::isSubType(Type(types), curr->type),
                curr,
                "Type of tuple.make does not match types of its operands");
 }
@@ -1926,13 +1926,14 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
       curr,
       "If tuple.extract has an unreachable operand, it must be unreachable");
   } else {
-    shouldBeTrue(curr->index < curr->tuple->type.size(),
-                 curr,
-                 "tuple.extract index out of bounds");
-    shouldBeTrue(
-      curr->type == curr->tuple->type.expand()[curr->index],
-      curr,
-      "tuple.extract type does not match the type of the extracted element");
+    bool inBounds = curr->index < curr->tuple->type.size();
+    shouldBeTrue(inBounds, curr, "tuple.extract index out of bounds");
+    if (inBounds) {
+      shouldBeTrue(
+        Type::isSubType(curr->tuple->type.expand()[curr->index], curr->type),
+        curr,
+        "tuple.extract type does not match the type of the extracted element");
+    }
   }
 }
 
