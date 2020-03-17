@@ -624,7 +624,9 @@ public:
     return ret;
   }
 
-  Expression* makeConstExpression(Literal value) {
+  // Make a constant expression. This might be a wasm Const, or something
+  // else of constant value like ref.null.
+  Expression* makeConstantExpression(Literal value) {
     switch (value.type.getSingle()) {
       case Type::nullref:
         return makeRefNull();
@@ -639,14 +641,14 @@ public:
     }
   }
 
-  Expression* makeConstExpression(Literals values) {
+  Expression* makeConstantExpression(Literals values) {
     assert(values.size() > 0);
     if (values.size() == 1) {
-      return makeConstExpression(values[0]);
+      return makeConstantExpression(values[0]);
     } else {
       std::vector<Expression*> consts;
       for (auto value : values) {
-        consts.push_back(makeConstExpression(value));
+        consts.push_back(makeConstantExpression(value));
       }
       return makeTupleMake(consts);
     }
@@ -798,7 +800,7 @@ public:
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     if (curr->type.isMulti()) {
-      return makeConstExpression(Literal::makeZero(curr->type));
+      return makeConstantExpression(Literal::makeZero(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
