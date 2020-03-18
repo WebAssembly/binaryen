@@ -1626,9 +1626,9 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
 namespace wasm {
 class StandaloneExpressionRunner;
 } // namespace wasm
-typedef wasm::StandaloneExpressionRunner* ExpressionRunnerRef;
+typedef class wasm::StandaloneExpressionRunner* ExpressionRunnerRef;
 #else
-typedef StandaloneExpressionRunner* ExpressionRunnerRef;
+typedef struct StandaloneExpressionRunner* ExpressionRunnerRef;
 #endif
 
 // Creates an ExpressionRunner instance
