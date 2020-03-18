@@ -1115,9 +1115,7 @@ private:
     auto* func = getFunction();
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      total += size;
+      total += func->getLocalType(i).getByteSize();
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1126,19 +1124,31 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(builder->makeLocalSet(
-        i,
-        builder->makeLoad(size,
-                          true,
-                          offset,
-                          STACK_ALIGN,
-                          builder->makeLocalGet(tempIndex, Type::i32),
-                          type)));
-      offset += size;
+      const auto& types = func->getLocalType(i).expand();
+      SmallVector<Expression*, 1> loads;
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        loads.push_back(
+          builder->makeLoad(size,
+                            true,
+                            offset,
+                            STACK_ALIGN,
+                            builder->makeLocalGet(tempIndex, Type::i32),
+                            type));
+        offset += size;
+      }
+      Expression* load;
+      if (loads.size() == 1) {
+        load = loads[0];
+      } else if (types.size() > 1) {
+        load = builder->makeTupleMake(std::move(loads));
+      } else {
+        WASM_UNREACHABLE("Unexpected empty type");
+      }
+      block->list.push_back(builder->makeLocalSet(i, load));
     }
     block->finalize();
     return block;
@@ -1155,18 +1165,26 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(
-        builder->makeStore(size,
-                           offset,
-                           STACK_ALIGN,
-                           builder->makeLocalGet(tempIndex, Type::i32),
-                           builder->makeLocalGet(i, type),
-                           type));
-      offset += size;
+      auto localType = func->getLocalType(i);
+      const auto& types = localType.expand();
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        Expression* localGet = builder->makeLocalGet(i, localType);
+        if (types.size() > 1) {
+          localGet = builder->makeTupleExtract(localGet, j);
+        }
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        block->list.push_back(
+          builder->makeStore(size,
+                             offset,
+                             STACK_ALIGN,
+                             builder->makeLocalGet(tempIndex, Type::i32),
+                             localGet,
+                             type));
+        offset += size;
+      }
     }
     block->list.push_back(builder->makeIncStackPos(offset));
     block->finalize();
