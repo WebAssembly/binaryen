@@ -2390,6 +2390,17 @@ Module['Relooper'] = function(module) {
   };
 };
 
+// 'ExpressionRunner' interface
+Module['ExpressionRunner'] = function(module, maxDepth) {
+  if (typeof maxDepth === "undefined") maxDepth = 50; // default used by precompute
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], maxDepth);
+  this['ptr'] = runner;
+
+  this['runAndDispose'] = function(expr) {
+    return Module['_ExpressionRunnerRunAndDispose'](runner, expr);
+  };
+};
+
 function getAllNested(ref, numFn, getFn) {
   var num = numFn(ref);
   var ret = new Array(num);

@@ -1619,6 +1619,28 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
   RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper);
 
 //
+// ========= ExpressionRunner ==========
+//
+
+#ifdef __cplusplus
+namespace wasm {
+class StandaloneExpressionRunner;
+} // namespace wasm
+typedef wasm::StandaloneExpressionRunner* ExpressionRunnerRef;
+#else
+typedef StandaloneExpressionRunner* ExpressionRunnerRef;
+#endif
+
+// Creates an ExpressionRunner instance
+BINARYEN_API ExpressionRunnerRef
+ExpressionRunnerCreate(BinaryenModuleRef module, BinaryenIndex maxDepth);
+
+// Runs the expression and returns the constant value expression it evaluates
+// to, if any. Otherwise returns `NULL`. Also disposes the runner.
+BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
+  ExpressionRunnerRef runner, BinaryenExpressionRef expr);
+
+//
 // ========= Other APIs =========
 //
 

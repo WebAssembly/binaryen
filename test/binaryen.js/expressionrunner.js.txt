@@ -1,0 +1,43 @@
+// beginning a Binaryen API trace
+#include <math.h>
+#include <map>
+#include "binaryen-c.h"
+int main() {
+  std::map<size_t, BinaryenExpressionRef> expressions;
+  std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenEventRef> events;
+  std::map<size_t, BinaryenExportRef> exports;
+  std::map<size_t, RelooperBlockRef> relooperBlocks;
+  BinaryenModuleRef the_module = NULL;
+  RelooperRef the_relooper = NULL;
+  ExpressionRunnerRef the_runner = NULL;
+  the_module = BinaryenModuleCreate();
+  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  the_runner = ExpressionRunnerCreate(the_module, 50);
+  expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[3] = BinaryenBinary(the_module, 0, expressions[1], expressions[2]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[3]);
+  BinaryenExpressionGetId(expressions[0]);
+  BinaryenExpressionGetType(expressions[0]);
+  BinaryenConstGetValueI32(expressions[0]);
+  the_runner = ExpressionRunnerCreate(the_module, 50);
+  expressions[5] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[8] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[9] = BinaryenIf(the_module, expressions[6], expressions[7], expressions[8]);
+  expressions[10] = BinaryenBinary(the_module, 0, expressions[5], expressions[9]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[10]);
+  BinaryenExpressionGetId(expressions[0]);
+  BinaryenExpressionGetType(expressions[0]);
+  BinaryenConstGetValueI32(expressions[0]);
+  the_runner = ExpressionRunnerCreate(the_module, 50);
+  expressions[12] = BinaryenLocalGet(the_module, 0, 2);
+  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[14] = BinaryenBinary(the_module, 0, expressions[12], expressions[13]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[14]);
+  return 0;
+}
+// ending a Binaryen API trace

@@ -39,107 +39,11 @@
 
 namespace wasm {
 
-static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
-
 // Limit evaluation depth for 2 reasons: first, it is highly unlikely
 // that we can do anything useful to precompute a hugely nested expression
 // (we should succed at smaller parts of it first). Second, a low limit is
 // helpful to avoid platform differences in native stack sizes.
-static const Index MAX_DEPTH = 50;
-
-typedef std::unordered_map<LocalGet*, Literals> GetValues;
-
-// Precomputes an expression. Errors if we hit anything that can't be
-// precomputed.
-class PrecomputingExpressionRunner
-  : public ExpressionRunner<PrecomputingExpressionRunner> {
-  Module* module;
-
-  // map gets to constant values, if they are known to be constant
-  GetValues& getValues;
-
-  // Whether we are trying to precompute down to an expression (which we can do
-  // on say 5 + 6) or to a value (which we can't do on a local.tee that flows a
-  // 7 through it). When we want to replace the expression, we can only do so
-  // when it has no side effects. When we don't care about replacing the
-  // expression, we just want to know if it will contain a known constant.
-  bool replaceExpression;
-
-public:
-  PrecomputingExpressionRunner(Module* module,
-                               GetValues& getValues,
-                               bool replaceExpression)
-    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH), module(module),
-      getValues(getValues), replaceExpression(replaceExpression) {}
-
-  struct NonstandaloneException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
-  Flow visitLoop(Loop* curr) {
-    // loops might be infinite, so must be careful
-    // but we can't tell if non-infinite, since we don't have state, so loops
-    // are just impossible to optimize for now
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-
-  Flow visitCall(Call* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitLocalGet(LocalGet* curr) {
-    auto iter = getValues.find(curr);
-    if (iter != getValues.end()) {
-      auto values = iter->second;
-      if (values.isConcrete()) {
-        return Flow(std::move(values));
-      }
-    }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitLocalSet(LocalSet* curr) {
-    // If we don't need to replace the whole expression, see if there
-    // is a value flowing through a tee.
-    if (!replaceExpression) {
-      if (curr->type.isConcrete()) {
-        assert(curr->isTee());
-        return visit(curr->value);
-      }
-    }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitGlobalGet(GlobalGet* curr) {
-    auto* global = module->getGlobal(curr->name);
-    if (!global->imported() && !global->mutable_) {
-      return visit(global->init);
-    }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitLoad(Load* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitStore(Store* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicNotify(AtomicNotify* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitTry(Try* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-
-  void trap(const char* why) override { throw NonstandaloneException(); }
-};
+static const Index PRECOMPUTE_MAX_DEPTH = 50;
 
 struct Precompute
   : public WalkerPass<
@@ -192,7 +96,7 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) {
+      if (flow.breakTo == NONSTANDALONE_FLOW) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -268,11 +172,11 @@ private:
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      return PrecomputingExpressionRunner(
-               getModule(), getValues, replaceExpression)
+      return StandaloneExpressionRunner(
+               getModule(), getValues, replaceExpression, PRECOMPUTE_MAX_DEPTH)
         .visit(curr);
-    } catch (PrecomputingExpressionRunner::NonstandaloneException&) {
-      return Flow(NOTPRECOMPUTABLE_FLOW);
+    } catch (StandaloneExpressionRunner::NonstandaloneException&) {
+      return Flow(NONSTANDALONE_FLOW);
     }
   }
 

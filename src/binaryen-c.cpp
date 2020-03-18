@@ -4813,6 +4813,39 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 }
 
 //
+// ========= ExpressionRunner =========
+//
+
+ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
+                                           BinaryenIndex maxDepth) {
+  if (tracing) {
+    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << maxDepth << ");\n";
+  }
+  auto* wasm = (Module*)module;
+  GetValues getValues;
+  return ExpressionRunnerRef(
+    new StandaloneExpressionRunner(wasm, getValues, false, maxDepth));
+}
+
+BinaryenExpressionRef
+ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
+                              BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  ExpressionRunnerRunAndDispose(the_runner, expressions[" << expressions[expr] << "]);\n";
+  }
+  auto* R = (StandaloneExpressionRunner*)runner;
+  auto flow = R->visit(expr);
+  Expression* ret;
+  if (flow.breaking() || flow.values.empty()) {
+    ret = nullptr;
+  } else {
+    ret = flow.getConstExpression(*R->getModule());
+  }
+  delete R;
+  return BinaryenExpressionRef(ret);
+}
+
+//
 // ========= Other APIs =========
 //
 
@@ -4832,7 +4865,8 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
-                 "  RelooperRef the_relooper = NULL;\n";
+                 "  RelooperRef the_relooper = NULL;\n"
+                 "  ExpressionRunnerRef the_runner = NULL;\n";
   } else {
     std::cout << "  return 0;\n";
     std::cout << "}\n";

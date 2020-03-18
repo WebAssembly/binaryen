@@ -2228,6 +2228,107 @@ public:
     : ModuleInstanceBase(wasm, externalInterface) {}
 };
 
+static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
+
+typedef std::unordered_map<LocalGet*, Literals> GetValues;
+
+// Evaluates a standalone expression. Errors if we hit anything that can't be
+// evaluated.
+class StandaloneExpressionRunner
+  : public ExpressionRunner<StandaloneExpressionRunner> {
+  Module* module;
+
+  // map gets to constant values, if they are known to be constant
+  GetValues& getValues;
+
+  // Whether we are trying to precompute down to an expression (which we can do
+  // on say 5 + 6) or to a value (which we can't do on a local.tee that flows a
+  // 7 through it). When we want to replace the expression, we can only do so
+  // when it has no side effects. When we don't care about replacing the
+  // expression, we just want to know if it will contain a known constant.
+  bool replaceExpression;
+
+public:
+  StandaloneExpressionRunner(Module* module,
+                             GetValues& getValues,
+                             bool replaceExpression,
+                             Index maxDepth)
+    : ExpressionRunner<StandaloneExpressionRunner>(maxDepth), module(module),
+      getValues(getValues), replaceExpression(replaceExpression) {}
+
+  virtual ~StandaloneExpressionRunner() {}
+
+  struct NonstandaloneException {
+  }; // TODO: use a flow with a special name, as this is likely very slow
+
+  Module* getModule() { return module; }
+
+  Flow visitLoop(Loop* curr) {
+    // loops might be infinite, so must be careful
+    // but we can't tell if non-infinite, since we don't have state, so loops
+    // are just impossible to optimize for now
+    return Flow(NONSTANDALONE_FLOW);
+  }
+
+  Flow visitCall(Call* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitCallIndirect(CallIndirect* curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitLocalGet(LocalGet* curr) {
+    auto iter = getValues.find(curr);
+    if (iter != getValues.end()) {
+      auto values = iter->second;
+      if (values.isConcrete()) {
+        return Flow(std::move(values));
+      }
+    }
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitLocalSet(LocalSet* curr) {
+    // If we don't need to replace the whole expression, see if there
+    // is a value flowing through a tee.
+    if (!replaceExpression) {
+      if (curr->type.isConcrete()) {
+        assert(curr->isTee());
+        return visit(curr->value);
+      }
+    }
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitGlobalGet(GlobalGet* curr) {
+    auto* global = module->getGlobal(curr->name);
+    if (!global->imported() && !global->mutable_) {
+      return visit(global->init);
+    }
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitLoad(Load* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitStore(Store* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitAtomicNotify(AtomicNotify* curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitDataDrop(DataDrop* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitHost(Host* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitTry(Try* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitThrow(Throw* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitRethrow(Rethrow* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitPush(Push* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitPop(Pop* curr) { return Flow(NONSTANDALONE_FLOW); }
+
+  void trap(const char* why) override { throw NonstandaloneException(); }
+};
+
 } // namespace wasm
 
 #endif // wasm_wasm_interpreter_h
