@@ -1115,11 +1115,7 @@ private:
     auto* func = getFunction();
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      const auto& types = func->getLocalType(i).expand();
-      for (Index j = 0; j < types.size(); j++) {
-        auto size = types[j].getByteSize();
-        total += size;
-      }
+      total += func->getLocalType(i).getByteSize();
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1144,9 +1140,13 @@ private:
                             type));
         offset += size;
       }
-      Expression* load = loads[0];
-      if (types.size() > 1) {
+      Expression* load;
+      if (loads.size() == 1) {
+        load = loads[0];
+      } else if (types.size() > 1) {
         load = builder->makeTupleMake(std::move(loads));
+      } else {
+        WASM_UNREACHABLE("Unexpected empty type");
       }
       block->list.push_back(builder->makeLocalSet(i, load));
     }

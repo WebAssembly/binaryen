@@ -145,28 +145,31 @@ bool Type::operator<(const Type& other) const {
 }
 
 unsigned Type::getByteSize() const {
-  assert(isSingle() && "getByteSize does not works with single types");
-  Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
-    case Type::i32:
-      return 4;
-    case Type::i64:
-      return 8;
-    case Type::f32:
-      return 4;
-    case Type::f64:
-      return 8;
-    case Type::v128:
-      return 16;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
+  // TODO: alignment?
+  unsigned size = 0;
+  for (auto t : expand()) {
+    switch (t.getSingle()) {
+      case Type::i32:
+      case Type::f32:
+        size += 4;
+        break;
+      case Type::i64:
+      case Type::f64:
+        size += 8;
+        break;
+      case Type::v128:
+        size += 16;
+        break;
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("invalid type");
+    }
   }
-  WASM_UNREACHABLE("invalid type");
+  return size;
 }
 
 Type Type::reinterpret() const {
