@@ -33,4 +33,10 @@ expr = runner.runAndDispose(
 );
 assert(expr === 0);
 
+runner = new binaryen.ExpressionRunner(module);
+expr = runner.runAndDispose(
+  module.unreachable()
+);
+assert(expr === 0);
+
 binaryen.setAPITracing(false);

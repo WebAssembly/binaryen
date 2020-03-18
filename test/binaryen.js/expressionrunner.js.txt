@@ -38,6 +38,9 @@ int main() {
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[14] = BinaryenBinary(the_module, 0, expressions[12], expressions[13]);
   ExpressionRunnerRunAndDispose(the_runner, expressions[14]);
+  the_runner = ExpressionRunnerCreate(the_module, 50);
+  expressions[15] = BinaryenUnreachable(the_module);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[15]);
   return 0;
 }
 // ending a Binaryen API trace

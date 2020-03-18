@@ -4819,7 +4819,8 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
                                            BinaryenIndex maxDepth) {
   if (tracing) {
-    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << maxDepth << ");\n";
+    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, "
+              << maxDepth << ");\n";
   }
   auto* wasm = (Module*)module;
   GetValues getValues;
@@ -4831,18 +4832,20 @@ BinaryenExpressionRef
 ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
                               BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  ExpressionRunnerRunAndDispose(the_runner, expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  ExpressionRunnerRunAndDispose(the_runner, expressions["
+              << expressions[expr] << "]);\n";
   }
   auto* R = (StandaloneExpressionRunner*)runner;
-  auto flow = R->visit(expr);
-  Expression* ret;
-  if (flow.breaking() || flow.values.empty()) {
-    ret = nullptr;
-  } else {
-    ret = flow.getConstExpression(*R->getModule());
+  Expression* ret = nullptr;
+  try {
+    auto flow = R->visit(expr);
+    if (!flow.breaking() && !flow.values.empty()) {
+      ret = flow.getConstExpression(*R->getModule());
+    }
+  } catch (StandaloneExpressionRunner::NonstandaloneException&) {
   }
   delete R;
-  return BinaryenExpressionRef(ret);
+  return ret;
 }
 
 //

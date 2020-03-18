@@ -43,7 +43,7 @@ namespace wasm {
 // that we can do anything useful to precompute a hugely nested expression
 // (we should succed at smaller parts of it first). Second, a low limit is
 // helpful to avoid platform differences in native stack sizes.
-static const Index PRECOMPUTE_MAX_DEPTH = 50;
+static const Index MAX_DEPTH = 50;
 
 struct Precompute
   : public WalkerPass<
@@ -173,7 +173,7 @@ private:
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
       return StandaloneExpressionRunner(
-               getModule(), getValues, replaceExpression, PRECOMPUTE_MAX_DEPTH)
+               getModule(), getValues, replaceExpression, MAX_DEPTH)
         .visit(curr);
     } catch (StandaloneExpressionRunner::NonstandaloneException&) {
       return Flow(NONSTANDALONE_FLOW);
