@@ -11,6 +11,7 @@ int main() {
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
+  ExpressionRunnerRef the_runner = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));

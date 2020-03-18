@@ -11,6 +11,7 @@ int main() {
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
+  ExpressionRunnerRef the_runner = NULL;
   BinaryenGetAlwaysInlineMaxSize();
 // alwaysInlineMaxSize=2
   BinaryenSetAlwaysInlineMaxSize(11);
