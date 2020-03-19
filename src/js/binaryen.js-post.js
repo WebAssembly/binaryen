@@ -477,6 +477,12 @@ function initializeConstants() {
   ].forEach(function(name) {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
+
+  // ExpressionRunner intents
+  Module['ExpressionRunner']['Intent'] = {
+    'Evaluate': Module['_ExpressionRunnerIntentEvaluate'](),
+    'ReplaceExpression': Module['_ExpressionRunnerIntentReplaceExpression']()
+  };
 }
 
 // 'Module' interface
@@ -2391,9 +2397,9 @@ Module['Relooper'] = function(module) {
 };
 
 // 'ExpressionRunner' interface
-Module['ExpressionRunner'] = function(module, maxDepth) {
+Module['ExpressionRunner'] = function(module, intent, maxDepth) {
   if (typeof maxDepth === "undefined") maxDepth = 50; // default used by precompute
-  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], maxDepth);
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], intent, maxDepth);
   this['ptr'] = runner;
 
   this['runAndDispose'] = function(expr) {

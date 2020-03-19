@@ -170,10 +170,13 @@ struct Precompute
 private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
-  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+  Flow precomputeExpression(
+    Expression* curr,
+    StandaloneExpressionRunner::Intent intent =
+      StandaloneExpressionRunner::Intent::REPLACE_EXPRESSION) {
     try {
       return StandaloneExpressionRunner(
-               getModule(), getValues, replaceExpression, MAX_DEPTH)
+               getModule(), getValues, intent, MAX_DEPTH)
         .visit(curr);
     } catch (StandaloneExpressionRunner::NonstandaloneException&) {
       return Flow(NONSTANDALONE_FLOW);
@@ -188,9 +191,10 @@ private:
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
   Literals precomputeValue(Expression* curr) {
-    // Note that we set replaceExpression to false, as we just care about
-    // the value here.
-    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
+    // Note that we do not intent to replace the expression, as we just care
+    // about the value here.
+    Flow flow =
+      precomputeExpression(curr, StandaloneExpressionRunner::Intent::EVALUATE);
     if (flow.breaking()) {
       return {};
     }

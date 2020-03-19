@@ -1631,9 +1631,19 @@ typedef class wasm::StandaloneExpressionRunner* ExpressionRunnerRef;
 typedef struct StandaloneExpressionRunner* ExpressionRunnerRef;
 #endif
 
+typedef uint32_t ExpressionRunnerIntent;
+
+// Intent is to evaluate the expression, so we can ignore some side effects.
+BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentEvaluate();
+
+// Intent is to replace the expression, so side effects must be retained.
+BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentReplaceExpression();
+
 // Creates an ExpressionRunner instance
 BINARYEN_API ExpressionRunnerRef
-ExpressionRunnerCreate(BinaryenModuleRef module, BinaryenIndex maxDepth);
+ExpressionRunnerCreate(BinaryenModuleRef module,
+                       ExpressionRunnerIntent intent,
+                       BinaryenIndex maxDepth);
 
 // Runs the expression and returns the constant value expression it evaluates
 // to, if any. Otherwise returns `NULL`. Also disposes the runner.

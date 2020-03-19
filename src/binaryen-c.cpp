@@ -4816,16 +4816,25 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= ExpressionRunner =========
 //
 
+ExpressionRunnerIntent ExpressionRunnerIntentEvaluate() {
+  return StandaloneExpressionRunner::Intent::EVALUATE;
+}
+
+ExpressionRunnerIntent ExpressionRunnerIntentReplaceExpression() {
+  return StandaloneExpressionRunner::Intent::REPLACE_EXPRESSION;
+}
+
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
+                                           ExpressionRunnerIntent intent,
                                            BinaryenIndex maxDepth) {
   if (tracing) {
-    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, "
-              << maxDepth << ");\n";
+    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << intent
+              << ", " << maxDepth << ");\n";
   }
   auto* wasm = (Module*)module;
   GetValues getValues;
-  return ExpressionRunnerRef(
-    new StandaloneExpressionRunner(wasm, getValues, false, maxDepth));
+  return ExpressionRunnerRef(new StandaloneExpressionRunner(
+    wasm, getValues, StandaloneExpressionRunner::Intent(intent), maxDepth));
 }
 
 BinaryenExpressionRef

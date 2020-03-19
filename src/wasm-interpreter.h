@@ -2241,20 +2241,27 @@ class StandaloneExpressionRunner
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
-  // Whether we are trying to precompute down to an expression (which we can do
-  // on say 5 + 6) or to a value (which we can't do on a local.tee that flows a
-  // 7 through it). When we want to replace the expression, we can only do so
-  // when it has no side effects. When we don't care about replacing the
-  // expression, we just want to know if it will contain a known constant.
-  bool replaceExpression;
-
 public:
+  // Whether we are trying to precompute down to an expression (which we can
+  // do on say 5 + 6) or to a value (which we can't do on a local.tee that
+  // flows a 7 through it). When we want to replace the expression, we can
+  // only do so when it has no side effects. When we don't care about
+  // replacing the expression, we just want to know if it will contain a known
+  // constant.
+  enum Intent {
+    // Intent is to evaluate the expression, so we can ignore some side effects
+    EVALUATE,
+    // Intent is to replace the expression, so side effects must be retained
+    REPLACE_EXPRESSION
+  };
+  Intent intent;
+
   StandaloneExpressionRunner(Module* module,
                              GetValues& getValues,
-                             bool replaceExpression,
+                             Intent intent,
                              Index maxDepth)
     : ExpressionRunner<StandaloneExpressionRunner>(maxDepth), module(module),
-      getValues(getValues), replaceExpression(replaceExpression) {}
+      getValues(getValues), intent(intent) {}
 
   virtual ~StandaloneExpressionRunner() {}
 
@@ -2287,7 +2294,7 @@ public:
   Flow visitLocalSet(LocalSet* curr) {
     // If we don't need to replace the whole expression, see if there
     // is a value flowing through a tee.
-    if (!replaceExpression) {
+    if (intent == Intent::EVALUATE) {
       if (curr->type.isConcrete()) {
         assert(curr->isTee());
         return visit(curr->value);

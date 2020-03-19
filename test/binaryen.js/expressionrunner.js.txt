@@ -14,7 +14,7 @@ int main() {
   ExpressionRunnerRef the_runner = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
-  the_runner = ExpressionRunnerCreate(the_module, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   expressions[3] = BinaryenBinary(the_module, 0, expressions[1], expressions[2]);
@@ -22,7 +22,7 @@ int main() {
   BinaryenExpressionGetId(expressions[0]);
   BinaryenExpressionGetType(expressions[0]);
   BinaryenConstGetValueI32(expressions[0]);
-  the_runner = ExpressionRunnerCreate(the_module, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
   expressions[5] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -33,14 +33,29 @@ int main() {
   BinaryenExpressionGetId(expressions[0]);
   BinaryenExpressionGetType(expressions[0]);
   BinaryenConstGetValueI32(expressions[0]);
-  the_runner = ExpressionRunnerCreate(the_module, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
   expressions[12] = BinaryenLocalGet(the_module, 0, 2);
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[14] = BinaryenBinary(the_module, 0, expressions[12], expressions[13]);
   ExpressionRunnerRunAndDispose(the_runner, expressions[14]);
-  the_runner = ExpressionRunnerCreate(the_module, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
   expressions[15] = BinaryenUnreachable(the_module);
   ExpressionRunnerRunAndDispose(the_runner, expressions[15]);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
+  expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  expressions[17] = BinaryenLocalTee(the_module, 0, expressions[16], 2);
+  expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[19] = BinaryenBinary(the_module, 0, expressions[17], expressions[18]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[19]);
+  BinaryenExpressionGetId(expressions[0]);
+  BinaryenExpressionGetType(expressions[0]);
+  BinaryenConstGetValueI32(expressions[0]);
+  the_runner = ExpressionRunnerCreate(the_module, 1, 50);
+  expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  expressions[22] = BinaryenLocalTee(the_module, 0, expressions[21], 2);
+  expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[24] = BinaryenBinary(the_module, 0, expressions[22], expressions[23]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[24]);
   return 0;
 }
 // ending a Binaryen API trace
