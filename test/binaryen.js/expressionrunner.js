@@ -64,4 +64,17 @@ expr = runner.runAndDispose(
 );
 assert(expr === 0);
 
+// Should work with temporary locals if the intent is to evaluate the expression
+runner = new binaryen.ExpressionRunner(module, Intent.Evaluate);
+expr = runner.runAndDispose(
+  module.i32.add(
+    module.block(null, [
+      module.local.set(0, module.i32.const(5)),
+      module.local.get(0, binaryen.i32)
+    ], binaryen.i32),
+    module.i32.const(1)
+  )
+);
+assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":6}');
+
 binaryen.setAPITracing(false);

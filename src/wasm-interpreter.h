@@ -2231,6 +2231,7 @@ public:
 static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
 typedef std::unordered_map<LocalGet*, Literals> GetValues;
+typedef std::unordered_map<Index, Literals> SetValues;
 
 // Evaluates a standalone expression. Errors if we hit anything that can't be
 // evaluated.
@@ -2240,6 +2241,8 @@ class StandaloneExpressionRunner
 
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
+  // map local indexes to set expressions, keeping track of temporary values
+  SetValues setValues;
 
 public:
   // Whether we are trying to precompute down to an expression (which we can
@@ -2282,12 +2285,18 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitLocalGet(LocalGet* curr) {
+    // Check if we already know the exact constant value
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto values = iter->second;
       if (values.isConcrete()) {
         return Flow(std::move(values));
       }
+    }
+    // Otherwise check if a constant value has been set herein
+    auto iter2 = setValues.find(curr->index);
+    if (iter2 != setValues.end()) {
+      return Flow(std::move(iter2->second));
     }
     return Flow(NONSTANDALONE_FLOW);
   }
@@ -2299,6 +2308,16 @@ public:
         assert(curr->isTee());
         return visit(curr->value);
       }
+      // If the set value is constant, remember it for subsequent gets
+      auto setFlow = visit(curr->value);
+      if (!setFlow.breaking()) {
+        auto values = setFlow.values;
+        if (values.isConcrete()) {
+          setValues[curr->index] = std::move(values);
+          return Flow();
+        }
+      }
+      setValues.erase(curr->index);
     }
     return Flow(NONSTANDALONE_FLOW);
   }

@@ -4840,10 +4840,6 @@ ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
 BinaryenExpressionRef
 ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
                               BinaryenExpressionRef expr) {
-  if (tracing) {
-    std::cout << "  ExpressionRunnerRunAndDispose(the_runner, expressions["
-              << expressions[expr] << "]);\n";
-  }
   auto* R = (StandaloneExpressionRunner*)runner;
   Expression* ret = nullptr;
   try {
@@ -4853,6 +4849,18 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
     }
   } catch (StandaloneExpressionRunner::NonstandaloneException&) {
   }
+
+  if (tracing) {
+    if (ret != nullptr) {
+      auto id = noteExpression(ret);
+      std::cout << "  expressions[" << id << "] = ";
+    } else {
+      std::cout << "  ";
+    }
+    std::cout << "ExpressionRunnerRunAndDispose(the_runner, expressions["
+              << expressions[expr] << "]);\n";
+  }
+
   delete R;
   return ret;
 }
