@@ -318,14 +318,16 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
           .c_str());
       assert(wasm.table.segments.size() == 1);
       auto& segment = wasm.table.segments[0];
-      auto tableIndex = segment.size();
-      segment.push_back(f->name);
-      auto* global = builder.makeGlobal(name, Type::i32, LiteralUtils::makeConstant(Type::i32, tableIndex), Builder::Immutable);
+      auto tableIndex = segment.data.size();
+      segment.data.push_back(f->name);
+      auto makeConst = [&]() {
+        return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+      };
+      auto* global = builder.makeGlobal(name, Type::i32, makeConst(), Builder::Immutable);
       wasm.addExport(
           builder.makeExport(name, global->name, ExternalKind::Global));
       auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
-      auto* c = LiteralUtils::makeConstant(Type::i32, tableIndex);
-      auto* add = builder.makeBinary(AddInt32, get, c);
+      auto* add = builder.makeBinary(AddInt32, get, makeConst());
       auto* globalSet = builder.makeGlobalSet(g->name, add);
       block->list.push_back(globalSet);
     } else {
