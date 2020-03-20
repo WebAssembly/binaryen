@@ -39,6 +39,10 @@
 
 namespace wasm {
 
+// Special name also used by ContextAwareExpressionRunner to indicate a
+// non-constant flow.
+static const Name NONCONSTANT_FLOW("Binaryen|nonconstant");
+
 // Limit evaluation depth for 2 reasons: first, it is highly unlikely
 // that we can do anything useful to precompute a hugely nested expression
 // (we should succed at smaller parts of it first). Second, a low limit is
@@ -56,7 +60,7 @@ struct Precompute
 
   Precompute(bool propagate) : propagate(propagate) {}
 
-  GetValues getValues;
+  ContextAwareExpressionRunner::GetValues getValues;
 
   bool worked;
 
@@ -96,7 +100,7 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == NONSTANDALONE_FLOW) {
+      if (flow.breakTo == NONCONSTANT_FLOW) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -171,14 +175,14 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr,
-                            StandaloneExpressionRunner::Intent intent =
-                              StandaloneExpressionRunner::Intent::REPLACE) {
+                            ContextAwareExpressionRunner::Mode mode =
+                              ContextAwareExpressionRunner::Mode::REPLACE) {
     try {
-      return StandaloneExpressionRunner(
-               getModule(), getValues, intent, MAX_DEPTH)
+      return ContextAwareExpressionRunner(
+               getModule(), mode, MAX_DEPTH, &getValues)
         .visit(curr);
-    } catch (StandaloneExpressionRunner::NonstandaloneException&) {
-      return Flow(NONSTANDALONE_FLOW);
+    } catch (ContextAwareExpressionRunner::NonconstantException&) {
+      return Flow(NONCONSTANT_FLOW);
     }
   }
 
@@ -193,7 +197,7 @@ private:
     // Note that we do not intent to replace the expression, as we just care
     // about the value here.
     Flow flow =
-      precomputeExpression(curr, StandaloneExpressionRunner::Intent::EVALUATE);
+      precomputeExpression(curr, ContextAwareExpressionRunner::Mode::EVALUATE);
     if (flow.breaking()) {
       return {};
     }

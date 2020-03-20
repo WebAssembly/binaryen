@@ -1624,26 +1624,26 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
 
 #ifdef __cplusplus
 namespace wasm {
-class StandaloneExpressionRunner;
+class ContextAwareExpressionRunner;
 } // namespace wasm
-typedef class wasm::StandaloneExpressionRunner* ExpressionRunnerRef;
+typedef class wasm::ContextAwareExpressionRunner* ExpressionRunnerRef;
 #else
-typedef struct StandaloneExpressionRunner* ExpressionRunnerRef;
+typedef struct ContextAwareExpressionRunner* ExpressionRunnerRef;
 #endif
 
-typedef uint32_t ExpressionRunnerIntent;
+typedef uint32_t ExpressionRunnerMode;
 
-// Intent is to evaluate the expression, so we can ignore some side effects.
-BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentEvaluate();
+// Just evaluate the expression, so we can ignore some side effects like those
+// of a `local.tee`, but not others like traps.
+BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluate();
 
-// Intent is to replace the expression, so side effects must be retained.
-BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentReplace();
+// We are going to replace the expression afterwards, so side effects including
+// those of `local.tee`s for example must be retained.
+BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplace();
 
 // Creates an ExpressionRunner instance
-BINARYEN_API ExpressionRunnerRef
-ExpressionRunnerCreate(BinaryenModuleRef module,
-                       ExpressionRunnerIntent intent,
-                       BinaryenIndex maxDepth);
+BINARYEN_API ExpressionRunnerRef ExpressionRunnerCreate(
+  BinaryenModuleRef module, ExpressionRunnerMode mode, BinaryenIndex maxDepth);
 
 // Sets a known local value to use. Order matters if expressions have side
 // effects. Returns `true` if the expression actually evaluates to a constant.

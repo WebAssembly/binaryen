@@ -2228,57 +2228,67 @@ public:
     : ModuleInstanceBase(wasm, externalInterface) {}
 };
 
-static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
-
-typedef std::unordered_map<LocalGet*, Literals> GetValues;
-
-// Evaluates a standalone expression. Errors if we hit anything that can't be
-// evaluated.
-class StandaloneExpressionRunner
-  : public ExpressionRunner<StandaloneExpressionRunner> {
+// Evaluates an expression given its surrounding context. Errors if we hit
+// anything that can't be evaluated down to a constant.
+class ContextAwareExpressionRunner
+  : public ExpressionRunner<ContextAwareExpressionRunner> {
   Module* module;
 
-  // map gets to constant values, if they are known to be constant
-  GetValues& getValues;
-  // map local indexes to values set in the context of this runner
-  std::unordered_map<Index, Literals> setLocalValues;
-  // map global names to values set in the context of this runner
-  std::unordered_map<Name, Literals> setGlobalValues;
-
 public:
+  // map of `local.get`s to their respective values.
+  typedef std::unordered_map<LocalGet*, Literals> GetValues;
+
   // Whether we are trying to precompute down to an expression (which we can
   // do on say 5 + 6) or to a value (which we can't do on a local.tee that
   // flows a 7 through it). When we want to replace the expression, we can
   // only do so when it has no side effects. When we don't care about
   // replacing the expression, we just want to know if it will contain a known
   // constant.
-  enum Intent {
-    // Intent is to evaluate the expression, so we can ignore some side effects
+  enum Mode {
+    // Just evaluate the expression, so we can ignore some side effects like
+    // those of a `local.tee`, but not others like traps.
     EVALUATE,
-    // Intent is to replace the expression, so side effects must be retained
+    // We are going to replace the expression afterwards, so side effects
+    // including those of `local.tee`s for example must be retained.
     REPLACE
   };
-  Intent intent;
 
-  StandaloneExpressionRunner(Module* module,
-                             GetValues& getValues,
-                             Intent intent,
-                             Index maxDepth)
-    : ExpressionRunner<StandaloneExpressionRunner>(maxDepth), module(module),
-      getValues(getValues), intent(intent) {}
+  // special name indicating a flow not evaluating to a constant
+  const Name NONCONSTANT_FLOW = "Binaryen|nonconstant";
 
-  virtual ~StandaloneExpressionRunner() {}
-
-  struct NonstandaloneException {
+  // special exception indicating a flow not evaluating to a constant
+  struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
+
+private:
+  // map of local indexes to values set in the context of this runner
+  std::unordered_map<Index, Literals> setLocalValues;
+  // map of global names to values set in the context of this runner
+  std::unordered_map<Name, Literals> setGlobalValues;
+  // optional reference to the (possibly large) map of gets to constant values
+  // in a full pass context
+  GetValues* getValues;
+  // Whether we are just evaluating or also going to replace the expression
+  // afterwards.
+  Mode mode;
+
+public:
+  ContextAwareExpressionRunner(Module* module,
+                               Mode mode,
+                               Index maxDepth,
+                               GetValues* getValues = nullptr)
+    : ExpressionRunner<ContextAwareExpressionRunner>(maxDepth), module(module),
+      getValues(getValues), mode(mode) {}
+
+  virtual ~ContextAwareExpressionRunner() {}
 
   Module* getModule() { return module; }
 
   // Sets a known local value to use. Returns `true` if the value is actually
   // constant.
-  bool setLocalValue(Index index, Literals values) {
+  bool setLocalValue(Index index, Literals& values) {
     if (values.isConcrete()) {
-      setLocalValues[index] = std::move(values);
+      setLocalValues[index] = values;
       return true;
     }
     setLocalValues.erase(index);
@@ -2290,16 +2300,16 @@ public:
   bool setLocalValue(Index index, Expression* expr) {
     auto setFlow = visit(expr);
     if (!setFlow.breaking()) {
-      return setLocalValue(index, std::move(setFlow.values));
+      return setLocalValue(index, setFlow.values);
     }
     return false;
   }
 
   // Sets a known global value to use. Returns `true` if the value is actually
   // constant.
-  bool setGlobalValue(Name name, Literals values) {
+  bool setGlobalValue(Name name, Literals& values) {
     if (values.isConcrete()) {
-      setGlobalValues[name] = std::move(values);
+      setGlobalValues[name] = values;
       return true;
     }
     setGlobalValues.erase(name);
@@ -2311,7 +2321,7 @@ public:
   bool setGlobalValue(Name name, Expression* expr) {
     auto setFlow = visit(expr);
     if (!setFlow.breaking()) {
-      return setGlobalValue(name, std::move(setFlow.values));
+      return setGlobalValue(name, setFlow.values);
     }
     return false;
   }
@@ -2320,31 +2330,30 @@ public:
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops
     // are just impossible to optimize for now
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
-
-  Flow visitCall(Call* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NONSTANDALONE_FLOW);
-  }
+  Flow visitCall(Call* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitCallIndirect(CallIndirect* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitLocalGet(LocalGet* curr) {
     // Check if we already know the constant value from pass context.
-    auto iter = getValues.find(curr);
-    if (iter != getValues.end()) {
-      auto values = iter->second;
-      if (values.isConcrete()) {
-        return Flow(std::move(values));
+    if (getValues != nullptr) {
+      auto iter = getValues->find(curr);
+      if (iter != getValues->end()) {
+        auto values = iter->second;
+        if (values.isConcrete()) {
+          return Flow(std::move(values));
+        }
       }
     }
     // Check if a constant value has been set in the context of this runner.
-    auto iter2 = setLocalValues.find(curr->index);
-    if (iter2 != setLocalValues.end()) {
-      return Flow(std::move(iter2->second));
+    auto iter = setLocalValues.find(curr->index);
+    if (iter != setLocalValues.end()) {
+      return Flow(std::move(iter->second));
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitLocalSet(LocalSet* curr) {
-    if (intent == Intent::EVALUATE) {
+    if (mode == Mode::EVALUATE) {
       // If we are evaluating and not replacing the expression, see if there is
       // a value flowing through a tee.
       if (curr->type.isConcrete()) {
@@ -2356,7 +2365,7 @@ public:
         return Flow();
       }
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitGlobalGet(GlobalGet* curr) {
     auto* global = module->getGlobal(curr->name);
@@ -2369,10 +2378,10 @@ public:
     if (iter != setGlobalValues.end()) {
       return Flow(std::move(iter->second));
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitGlobalSet(GlobalSet* curr) {
-    if (intent == Intent::EVALUATE) {
+    if (mode == Mode::EVALUATE) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
       assert(module->getGlobal(curr->name)->mutable_);
@@ -2380,32 +2389,30 @@ public:
         return Flow();
       }
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitLoad(Load* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitStore(Store* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitLoad(Load* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStore(Store* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitAtomicNotify(AtomicNotify* curr) {
-    return Flow(NONSTANDALONE_FLOW);
-  }
-  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitDataDrop(DataDrop* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitHost(Host* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitTry(Try* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitThrow(Throw* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitRethrow(Rethrow* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitPush(Push* curr) { return Flow(NONSTANDALONE_FLOW); }
-  Flow visitPop(Pop* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitDataDrop(DataDrop* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitHost(Host* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTry(Try* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitThrow(Throw* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitRethrow(Rethrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitPush(Push* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitPop(Pop* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override { throw NonstandaloneException(); }
+  void trap(const char* why) override { throw NonconstantException(); }
 };
 
 } // namespace wasm
