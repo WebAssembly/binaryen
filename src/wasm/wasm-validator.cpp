@@ -1689,6 +1689,9 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
     case NotVec128:
+    case AbsVecI8x16:
+    case AbsVecI16x8:
+    case AbsVecI32x4:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -1720,17 +1723,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
     case AnyTrueVecI8x16:
-    case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
-    case AllTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
+    case AllTrueVecI8x16:
+    case AllTrueVecI16x8:
+    case AllTrueVecI32x4:
     case AllTrueVecI64x2:
-      shouldBeEqual(curr->type,
-                    Type(Type::i32),
-                    curr,
-                    "expected boolean reduction to have i32 type");
+    case BitmaskVecI8x16:
+    case BitmaskVecI16x8:
+    case BitmaskVecI32x4:
+      shouldBeEqual(curr->type, Type(Type::i32), curr, "expected i32 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;

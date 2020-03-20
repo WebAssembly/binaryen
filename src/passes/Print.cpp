@@ -717,6 +717,9 @@ struct PrintExpressionContents
       case NotVec128:
         o << "v128.not";
         break;
+      case AbsVecI8x16:
+        o << "i8x16.abs";
+        break;
       case NegVecI8x16:
         o << "i8x16.neg";
         break;
@@ -725,6 +728,12 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI8x16:
         o << "i8x16.all_true";
+        break;
+      case BitmaskVecI8x16:
+        o << "i8x16.bitmask";
+        break;
+      case AbsVecI16x8:
+        o << "i16x8.abs";
         break;
       case NegVecI16x8:
         o << "i16x8.neg";
@@ -735,6 +744,12 @@ struct PrintExpressionContents
       case AllTrueVecI16x8:
         o << "i16x8.all_true";
         break;
+      case BitmaskVecI16x8:
+        o << "i16x8.bitmask";
+        break;
+      case AbsVecI32x4:
+        o << "i32x4.abs";
+        break;
       case NegVecI32x4:
         o << "i32x4.neg";
         break;
@@ -743,6 +758,9 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI32x4:
         o << "i32x4.all_true";
+        break;
+      case BitmaskVecI32x4:
+        o << "i32x4.bitmask";
         break;
       case NegVecI64x2:
         o << "i64x2.neg";

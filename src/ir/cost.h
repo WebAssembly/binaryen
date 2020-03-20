@@ -152,15 +152,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
+      case AbsVecI8x16:
       case NegVecI8x16:
       case AnyTrueVecI8x16:
       case AllTrueVecI8x16:
+      case BitmaskVecI8x16:
+      case AbsVecI16x8:
       case NegVecI16x8:
       case AnyTrueVecI16x8:
       case AllTrueVecI16x8:
+      case BitmaskVecI16x8:
+      case AbsVecI32x4:
       case NegVecI32x4:
       case AnyTrueVecI32x4:
       case AllTrueVecI32x4:
+      case BitmaskVecI32x4:
       case NegVecI64x2:
       case AnyTrueVecI64x2:
       case AllTrueVecI64x2:
