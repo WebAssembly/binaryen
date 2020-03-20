@@ -2253,20 +2253,21 @@ public:
     REPLACE
   };
 
-  // special name indicating a flow not evaluating to a constant
+  // Special name indicating a flow not evaluating to a constant
   const Name NONCONSTANT_FLOW = "Binaryen|nonconstant";
 
-  // special exception indicating a flow not evaluating to a constant
+  // Special exception indicating a flow not evaluating to a constant
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
 
 private:
-  // map of local indexes to values set in the context of this runner
-  std::unordered_map<Index, Literals> setLocalValues;
-  // map of global names to values set in the context of this runner
-  std::unordered_map<Name, Literals> setGlobalValues;
-  // optional reference to the (possibly large) map of gets to constant values
-  // in a full pass context
+  // Map of local indexes to values set in the context of this runner
+  std::unordered_map<Index, Literals> localValues;
+  // Map of global names to values set in the context of this runner
+  std::unordered_map<Name, Literals> globalValues;
+  // Optional reference to a map of gets to constant values, for example where a
+  // pass did already compute these. Not applicable in C-API usage and possibly
+  // large, hence a reference to the respective map (must not be mutated).
   GetValues* getValues;
   // Whether we are just evaluating or also going to replace the expression
   // afterwards.
@@ -2288,10 +2289,10 @@ public:
   // constant.
   bool setLocalValue(Index index, Literals& values) {
     if (values.isConcrete()) {
-      setLocalValues[index] = values;
+      localValues[index] = values;
       return true;
     }
-    setLocalValues.erase(index);
+    localValues.erase(index);
     return false;
   }
 
@@ -2309,10 +2310,10 @@ public:
   // constant.
   bool setGlobalValue(Name name, Literals& values) {
     if (values.isConcrete()) {
-      setGlobalValues[name] = values;
+      globalValues[name] = values;
       return true;
     }
-    setGlobalValues.erase(name);
+    globalValues.erase(name);
     return false;
   }
 
@@ -2335,7 +2336,15 @@ public:
   Flow visitCall(Call* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitCallIndirect(CallIndirect* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitLocalGet(LocalGet* curr) {
-    // Check if we already know the constant value from pass context.
+    // Check if a constant value has been set in the context of this runner.
+    auto iter = localValues.find(curr->index);
+    if (iter != localValues.end()) {
+      return Flow(std::move(iter->second));
+    }
+    // If not the case, see if the calling pass did compute the value of this
+    // specific `local.get` in an earlier step already. This is a fallback
+    // targeting the precompute pass specifically, which already did this work,
+    // but is not applicable when the runner is used via the C-API for example.
     if (getValues != nullptr) {
       auto iter = getValues->find(curr);
       if (iter != getValues->end()) {
@@ -2344,11 +2353,6 @@ public:
           return Flow(std::move(values));
         }
       }
-    }
-    // Check if a constant value has been set in the context of this runner.
-    auto iter = setLocalValues.find(curr->index);
-    if (iter != setLocalValues.end()) {
-      return Flow(std::move(iter->second));
     }
     return Flow(NONCONSTANT_FLOW);
   }
@@ -2374,8 +2378,8 @@ public:
       return visit(global->init);
     }
     // Check if a constant value has been set in the context of this runner.
-    auto iter = setGlobalValues.find(curr->name);
-    if (iter != setGlobalValues.end()) {
+    auto iter = globalValues.find(curr->name);
+    if (iter != globalValues.end()) {
       return Flow(std::move(iter->second));
     }
     return Flow(NONCONSTANT_FLOW);
