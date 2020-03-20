@@ -214,18 +214,35 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
-  // Then see if its already imported
+  // See if its already imported.
   ImportInfo info(*module);
-  if (Function* f = info.getImportedFunction(ENV, name)) {
+  if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
   }
-  // Failing that create a new function import.
+  // Failing that create a new import.
   auto import = new Function;
   import->name = name;
   import->module = ENV;
   import->base = name;
   import->sig = sig;
   module->addFunction(import);
+  return import;
+}
+
+static Global*
+ensureGlobalImport(Module* module, Name name, Type type) {
+  // See if its already imported.
+  ImportInfo info(*module);
+  if (auto* g = info.getImportedGlobal(ENV, name)) {
+    return g;
+  }
+  // Failing that create a new import.
+  auto import = new Global;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  import->type = type;
+  module->addGlobal(import);
   return import;
 }
 
@@ -277,6 +294,10 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     block->list.push_back(globalSet);
   }
 
+  ImportInfo importInfo(wasm);
+
+  auto* tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
+
   for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
@@ -284,23 +305,43 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
     if (ex) {
+      // This is exported, so must be one of the functions implemented here.
+      // Add it to the table and export an rfp$ so that the loader knows what
+      // index it is at.
       assert(ex->kind == ExternalKind::Function);
       f = wasm.getFunction(ex->value);
+      if (f->imported()) {
+        Fatal() << "GOT.func entry export but not implemented: " << g->base;
+      }
+      Name name(
+        (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
+      assert(wasm.table.segments.size() == 1);
+      auto& segment = wasm.table.segments[0];
+      auto tableIndex = segment.size();
+      segment.push_back(f->name);
+      auto* global = builder.makeGlobal(name, Type::i32, LiteralUtils::makeConstant(Type::i32, tableIndex), Builder::Immutable);
+      wasm.addExport(
+          builder.makeExport(name, global->name, ExternalKind::Global));
+      auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
+      auto* c = LiteralUtils::makeConstant(Type::i32, tableIndex);
+      auto* add = builder.makeBinary(AddInt32, get, c);
+      auto* globalSet = builder.makeGlobalSet(g->name, add);
+      block->list.push_back(globalSet);
     } else {
-      ImportInfo info(wasm);
-      f = info.getImportedFunction(ENV, g->base);
+      // This is imported. Create an fp$ import to get the function table index.
+      f = importInfo.getImportedFunction(ENV, g->base);
       if (!f) {
         Fatal() << "GOT.func entry with no import/export: " << g->base;
       }
+      Name getter(
+        (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
+      ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
+      auto* call = builder.makeCall(getter, {}, Type::i32);
+      auto* globalSet = builder.makeGlobalSet(g->name, call);
+      block->list.push_back(globalSet);
     }
-
-    Name getter(
-      (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
-        .c_str());
-    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, Type::i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
-    block->list.push_back(globalSet);
   }
 
   wasm.addFunction(assignFunc);
