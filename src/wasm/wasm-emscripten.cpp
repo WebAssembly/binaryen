@@ -299,7 +299,7 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         if (f->imported()) {
           Fatal() << "GOT.func entry export but not implemented: " << g->base;
         }
-        auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name);
+        auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
         auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
         // The base relative to which we are computed is the offset of the
         // singleton segment.
