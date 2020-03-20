@@ -49,18 +49,38 @@ struct FlatTable {
 
 namespace TableUtils {
 
-inline Index append(Table& table, Name name) {
+inline Table::Segment& ensureOneSegment(Table& table) {
   if (table.segments.size() == 0) {
     table.segments.resize(1);
   }
   if (table.segments.size() != 1) {
-    Fatal() << "TableUtils::append can't handle multiple segments";
+    Fatal() << "can't ensure 1 segment";
   }
-  auto& segment = table.segments[0];
+  return table.segments[0];
+}
+
+// Appends a name to the table. This assumes the table has 0 or 1 segments,
+// as with 2 or more it's ambiguous what we should do (use a hole in the middle
+// or not).
+inline Index append(Table& table, Name name) {
+  auto& segment = ensureOneSegment(table);
+  table.segments[0];
   auto tableIndex = segment.data.size();
   segment.data.push_back(name);
   table.initial = table.initial + 1;
   return tableIndex;
+}
+
+// Checks if a function is already in the table. Returns that index if so,
+// otherwise appends it.
+inline Index getOrAppend(Table& table, Name name) {
+  auto& segment = ensureOneSegment(table);
+  for (Index i = 0; i < segment.data.size(); i++) {
+    if (segment.data[i] == name) {
+      return i;
+    }
+  }
+  return append(table, name);
 }
 
 } // namespace TableUtils

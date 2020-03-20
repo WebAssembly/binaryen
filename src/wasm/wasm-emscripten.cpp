@@ -316,12 +316,10 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         if (f->imported()) {
           Fatal() << "GOT.func entry export but not implemented: " << g->base;
         }
-        auto tableIndex = TableUtils::append(wasm.table, f->name);
-        auto makeConst = [&]() {
-          return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
-        };
+        auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name);
+        auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
         auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
-        auto* add = builder.makeBinary(AddInt32, get, makeConst());
+        auto* add = builder.makeBinary(AddInt32, get, c);
         auto* globalSet = builder.makeGlobalSet(g->name, add);
         block->list.push_back(globalSet);
         continue;
