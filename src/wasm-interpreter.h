@@ -2231,7 +2231,6 @@ public:
 static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
 typedef std::unordered_map<LocalGet*, Literals> GetValues;
-typedef std::unordered_map<Index, Literals> SetValues;
 
 // Evaluates a standalone expression. Errors if we hit anything that can't be
 // evaluated.
@@ -2241,8 +2240,10 @@ class StandaloneExpressionRunner
 
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
-  // map local indexes to set expressions, keeping track of temporary values
-  SetValues setValues;
+  // map local indexes to values set in the context of this runner
+  std::unordered_map<Index, Literals> setLocalValues;
+  // map global names to values set in the context of this runner
+  std::unordered_map<Name, Literals> setGlobalValues;
 
 public:
   // Whether we are trying to precompute down to an expression (which we can
@@ -2273,6 +2274,40 @@ public:
 
   Module* getModule() { return module; }
 
+  bool setLocalValue(Index index, Literals values) {
+    if (values.isConcrete()) {
+      setLocalValues[index] = std::move(values);
+      return true;
+    }
+    setLocalValues.erase(index);
+    return false;
+  }
+
+  bool setLocalValue(Index index, Expression* expr) {
+    auto setFlow = visit(expr);
+    if (!setFlow.breaking()) {
+      return setLocalValue(index, setFlow.values);
+    }
+    return false;
+  }
+
+  bool setGlobalValue(Name name, Literals values) {
+    if (values.isConcrete()) {
+      setGlobalValues[name] = std::move(values);
+      return true;
+    }
+    setGlobalValues.erase(name);
+    return false;
+  }
+
+  bool setGlobalValue(Name name, Expression* expr) {
+    auto setFlow = visit(expr);
+    if (!setFlow.breaking()) {
+      return setGlobalValue(name, setFlow.values);
+    }
+    return false;
+  }
+
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops
@@ -2293,10 +2328,9 @@ public:
         return Flow(std::move(values));
       }
     }
-    // Otherwise check if a constant value has been set in the context of this
-    // runner.
-    auto iter2 = setValues.find(curr->index);
-    if (iter2 != setValues.end()) {
+    // Check if a constant value has been set in the context of this runner.
+    auto iter2 = setLocalValues.find(curr->index);
+    if (iter2 != setLocalValues.end()) {
       return Flow(std::move(iter2->second));
     }
     return Flow(NONSTANDALONE_FLOW);
@@ -2309,27 +2343,37 @@ public:
         assert(curr->isTee());
         return visit(curr->value);
       }
-      // Otherwise remember the constant value, if any, for subsequent gets.
-      auto setFlow = visit(curr->value);
-      if (!setFlow.breaking()) {
-        auto values = setFlow.values;
-        if (values.isConcrete()) {
-          setValues[curr->index] = std::move(values);
-          return Flow();
-        }
+      // Otherwise remember the constant value set, if any, for subsequent gets.
+      if (setLocalValue(curr->index, curr->value)) {
+        return Flow();
       }
-      setValues.erase(curr->index);
     }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGlobalGet(GlobalGet* curr) {
     auto* global = module->getGlobal(curr->name);
+    // Check if the global has an immutable value anyway
     if (!global->imported() && !global->mutable_) {
       return visit(global->init);
     }
+    // Check if a constant value has been set in the context of this runner.
+    auto iter = setGlobalValues.find(curr->name);
+    if (iter != setGlobalValues.end()) {
+      return Flow(std::move(iter->second));
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
-  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NONSTANDALONE_FLOW); }
+  Flow visitGlobalSet(GlobalSet* curr) {
+    if (intent == Intent::EVALUATE) {
+      // If we are evaluating and not replacing the expression, remember the
+      // constant value set, if any, for subsequent gets.
+      assert(module->getGlobal(curr->name)->mutable_);
+      if (setGlobalValue(curr->name, curr->value)) {
+        return Flow();
+      }
+    }
+    return Flow(NONSTANDALONE_FLOW);
+  }
   Flow visitLoad(Load* curr) { return Flow(NONSTANDALONE_FLOW); }
   Flow visitStore(Store* curr) { return Flow(NONSTANDALONE_FLOW); }
   Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONSTANDALONE_FLOW); }

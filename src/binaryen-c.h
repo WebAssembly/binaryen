@@ -1637,13 +1637,23 @@ typedef uint32_t ExpressionRunnerIntent;
 BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentEvaluate();
 
 // Intent is to replace the expression, so side effects must be retained.
-BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentReplaceExpression();
+BINARYEN_API ExpressionRunnerIntent ExpressionRunnerIntentReplace();
 
 // Creates an ExpressionRunner instance
 BINARYEN_API ExpressionRunnerRef
 ExpressionRunnerCreate(BinaryenModuleRef module,
                        ExpressionRunnerIntent intent,
                        BinaryenIndex maxDepth);
+
+// Sets the value of a local.
+BINARYEN_API int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                               BinaryenIndex index,
+                                               BinaryenExpressionRef value);
+
+// Sets the value of a global.
+BINARYEN_API int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                                const char* name,
+                                                BinaryenExpressionRef value);
 
 // Runs the expression and returns the constant value expression it evaluates
 // to, if any. Otherwise returns `NULL`. Also disposes the runner.

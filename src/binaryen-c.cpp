@@ -4837,6 +4837,31 @@ ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
     wasm, getValues, StandaloneExpressionRunner::Intent(intent), maxDepth));
 }
 
+int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                  BinaryenIndex index,
+                                  BinaryenExpressionRef value) {
+  if (tracing) {
+    std::cout << "  ExpressionRunnerSetLocalValue(the_runner, "
+              << index << ", expressions[" << expressions[value] << "]);\n";
+  }
+
+  auto* R = (StandaloneExpressionRunner*)runner;
+  return R->setLocalValue(index, value);
+}
+
+int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                   const char* name,
+                                   BinaryenExpressionRef value) {
+  if (tracing) {
+    std::cout << "  ExpressionRunnerSetGlobalValue(the_runner, ";
+    traceNameOrNULL(name);
+    std::cout << ", expressions[" << expressions[value] << "]);\n";
+  }
+
+  auto* R = (StandaloneExpressionRunner*)runner;
+  return R->setGlobalValue(name, value);
+}
+
 BinaryenExpressionRef
 ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
                               BinaryenExpressionRef expr) {

@@ -2402,6 +2402,14 @@ Module['ExpressionRunner'] = function(module, intent, maxDepth) {
   var runner = Module['_ExpressionRunnerCreate'](module['ptr'], intent, maxDepth);
   this['ptr'] = runner;
 
+  this['setLocalValue'] = function(index, valueExpr) {
+    return Boolean(Module['_ExpressionRunnerSetLocalValue'](runner, index, valueExpr));
+  };
+  this['setGlobalValue'] = function(name, valueExpr) {
+    return preserveStack(function() {
+      return Boolean(Module['_ExpressionRunnerSetGlobalValue'](runner, strToStack(name), valueExpr));
+    });
+  };
   this['runAndDispose'] = function(expr) {
     return Module['_ExpressionRunnerRunAndDispose'](runner, expr);
   };
