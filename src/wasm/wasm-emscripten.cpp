@@ -257,7 +257,7 @@ static Global* ensureGlobalImport(Module* module, Name name, Type type) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
+Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
   BYN_TRACE("generateAssignGOTEntriesFunction\n");
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
@@ -305,44 +305,49 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
     if (ex) {
-      // This is exported, so must be one of the functions implemented here.
-      // Add it to the table and export an rfp$ so that the loader knows what
-      // index it is at.
       assert(ex->kind == ExternalKind::Function);
       f = wasm.getFunction(ex->value);
-      if (f->imported()) {
-        Fatal() << "GOT.func entry export but not implemented: " << g->base;
+      if (!isSideModule) {
+        // This is exported, so must be one of the functions implemented here.
+        // Add it to the table and export an rfp$ so that the loader knows what
+        // index it is at.
+        if (f->imported()) {
+          Fatal() << "GOT.func entry export but not implemented: " << g->base;
+        }
+        Name relativeName(
+          (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
+            .c_str());
+        auto tableIndex = TableUtils::append(wasm.table, f->name);
+        auto makeConst = [&]() {
+          return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+        };
+        auto* global = builder.makeGlobal(
+          relativeName, Type::i32, makeConst(), Builder::Immutable);
+        wasm.addGlobal(global);
+        wasm.addExport(
+          builder.makeExport(relativeName, global->name, ExternalKind::Global));
+        auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
+        auto* add = builder.makeBinary(AddInt32, get, makeConst());
+        auto* globalSet = builder.makeGlobalSet(g->name, add);
+        block->list.push_back(globalSet);
+        break;
       }
-      Name relativeName(
-        (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
-          .c_str());
-      auto tableIndex = TableUtils::append(wasm.table, f->name);
-      auto makeConst = [&]() {
-        return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
-      };
-      auto* global = builder.makeGlobal(
-        relativeName, Type::i32, makeConst(), Builder::Immutable);
-      wasm.addGlobal(global);
-      wasm.addExport(
-        builder.makeExport(relativeName, global->name, ExternalKind::Global));
-      auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
-      auto* add = builder.makeBinary(AddInt32, get, makeConst());
-      auto* globalSet = builder.makeGlobalSet(g->name, add);
-      block->list.push_back(globalSet);
+      // Otherwise, this is a side module, and fall through to join the case
+      // of an import.
     } else {
       // This is imported. Create an fp$ import to get the function table index.
       f = importInfo.getImportedFunction(ENV, g->base);
-      if (!f) {
-        Fatal() << "GOT.func entry with no import/export: " << g->base;
-      }
-      Name getter(
-        (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
-          .c_str());
-      ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-      auto* call = builder.makeCall(getter, {}, Type::i32);
-      auto* globalSet = builder.makeGlobalSet(g->name, call);
-      block->list.push_back(globalSet);
     }
+    if (!f) {
+      Fatal() << "GOT.func entry with no import/export: " << g->base;
+    }
+    Name getter(
+      (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
+        .c_str());
+    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
+    auto* call = builder.makeCall(getter, {}, Type::i32);
+    auto* globalSet = builder.makeGlobalSet(g->name, call);
+    block->list.push_back(globalSet);
   }
 
   wasm.addFunction(assignFunc);
@@ -368,7 +373,7 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
     POST_INSTANTIATE, std::vector<NameType>{}, Type::none, {});
   wasm.addFunction(post_instantiate);
 
-  if (Function* F = generateAssignGOTEntriesFunction()) {
+  if (Function* F = generateAssignGOTEntriesFunction(true /*isSideModule*/)) {
     // call __assign_got_enties from post_instantiate
     Expression* call = builder.makeCall(F->name, {}, Type::none);
     post_instantiate->body = builder.blockify(post_instantiate->body, call);
