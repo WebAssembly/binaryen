@@ -170,10 +170,9 @@ struct Precompute
 private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
-  Flow precomputeExpression(
-    Expression* curr,
-    StandaloneExpressionRunner::Intent intent =
-      StandaloneExpressionRunner::Intent::REPLACE_EXPRESSION) {
+  Flow precomputeExpression(Expression* curr,
+                            StandaloneExpressionRunner::Intent intent =
+                              StandaloneExpressionRunner::Intent::REPLACE) {
     try {
       return StandaloneExpressionRunner(
                getModule(), getValues, intent, MAX_DEPTH)

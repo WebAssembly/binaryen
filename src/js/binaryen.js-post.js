@@ -481,7 +481,7 @@ function initializeConstants() {
   // ExpressionRunner intents
   Module['ExpressionRunner']['Intent'] = {
     'Evaluate': Module['_ExpressionRunnerIntentEvaluate'](),
-    'ReplaceExpression': Module['_ExpressionRunnerIntentReplaceExpression']()
+    'Replace': Module['_ExpressionRunnerIntentReplace']()
   };
 }
 

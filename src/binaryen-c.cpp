@@ -4820,8 +4820,8 @@ ExpressionRunnerIntent ExpressionRunnerIntentEvaluate() {
   return StandaloneExpressionRunner::Intent::EVALUATE;
 }
 
-ExpressionRunnerIntent ExpressionRunnerIntentReplaceExpression() {
-  return StandaloneExpressionRunner::Intent::REPLACE_EXPRESSION;
+ExpressionRunnerIntent ExpressionRunnerIntentReplace() {
+  return StandaloneExpressionRunner::Intent::REPLACE;
 }
 
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,

@@ -2255,7 +2255,7 @@ public:
     // Intent is to evaluate the expression, so we can ignore some side effects
     EVALUATE,
     // Intent is to replace the expression, so side effects must be retained
-    REPLACE_EXPRESSION
+    REPLACE
   };
   Intent intent;
 
@@ -2285,7 +2285,7 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitLocalGet(LocalGet* curr) {
-    // Check if we already know the exact constant value
+    // Check if we already know the constant value from pass context.
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto values = iter->second;
@@ -2293,7 +2293,8 @@ public:
         return Flow(std::move(values));
       }
     }
-    // Otherwise check if a constant value has been set herein
+    // Otherwise check if a constant value has been set in the context of this
+    // runner.
     auto iter2 = setValues.find(curr->index);
     if (iter2 != setValues.end()) {
       return Flow(std::move(iter2->second));
@@ -2301,14 +2302,14 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitLocalSet(LocalSet* curr) {
-    // If we don't need to replace the whole expression, see if there
-    // is a value flowing through a tee.
     if (intent == Intent::EVALUATE) {
+      // If we are evaluating and not replacing the expression, see if there is
+      // a value flowing through a tee.
       if (curr->type.isConcrete()) {
         assert(curr->isTee());
         return visit(curr->value);
       }
-      // If the set value is constant, remember it for subsequent gets
+      // Otherwise remember the constant value, if any, for subsequent gets.
       auto setFlow = visit(curr->value);
       if (!setFlow.breaking()) {
         auto values = setFlow.values;

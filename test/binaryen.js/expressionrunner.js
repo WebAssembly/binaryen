@@ -55,7 +55,7 @@ expr = runner.runAndDispose(
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":5}');
 
 // Should keep side-effects if the intent is to replace the expression
-runner = new binaryen.ExpressionRunner(module, Intent.ReplaceExpression);
+runner = new binaryen.ExpressionRunner(module, Intent.Replace);
 expr = runner.runAndDispose(
   module.i32.add(
     module.local.tee(0, module.i32.const(4), binaryen.i32),
