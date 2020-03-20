@@ -2274,6 +2274,8 @@ public:
 
   Module* getModule() { return module; }
 
+  // Sets a known local value to use. Returns `true` if the value is actually
+  // constant.
   bool setLocalValue(Index index, Literals values) {
     if (values.isConcrete()) {
       setLocalValues[index] = std::move(values);
@@ -2283,14 +2285,18 @@ public:
     return false;
   }
 
+  // Sets a known local value to use. Order matters if expressions have side
+  // effects. Returns `true` if the expression actually evaluates to a constant.
   bool setLocalValue(Index index, Expression* expr) {
     auto setFlow = visit(expr);
     if (!setFlow.breaking()) {
-      return setLocalValue(index, setFlow.values);
+      return setLocalValue(index, std::move(setFlow.values));
     }
     return false;
   }
 
+  // Sets a known global value to use. Returns `true` if the value is actually
+  // constant.
   bool setGlobalValue(Name name, Literals values) {
     if (values.isConcrete()) {
       setGlobalValues[name] = std::move(values);
@@ -2300,10 +2306,12 @@ public:
     return false;
   }
 
+  // Sets a known global value to use. Order matters if expressions have side
+  // effects. Returns `true` if the expression actually evaluates to a constant.
   bool setGlobalValue(Name name, Expression* expr) {
     auto setFlow = visit(expr);
     if (!setFlow.breaking()) {
-      return setGlobalValue(name, setFlow.values);
+      return setGlobalValue(name, std::move(setFlow.values));
     }
     return false;
   }

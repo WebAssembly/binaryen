@@ -1645,12 +1645,14 @@ ExpressionRunnerCreate(BinaryenModuleRef module,
                        ExpressionRunnerIntent intent,
                        BinaryenIndex maxDepth);
 
-// Sets the value of a local.
+// Sets a known local value to use. Order matters if expressions have side
+// effects. Returns `true` if the expression actually evaluates to a constant.
 BINARYEN_API int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
                                                BinaryenIndex index,
                                                BinaryenExpressionRef value);
 
-// Sets the value of a global.
+// Sets a known global value to use. Order matters if expressions have side
+// effects. Returns `true` if the expression actually evaluates to a constant.
 BINARYEN_API int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
                                                 const char* name,
                                                 BinaryenExpressionRef value);

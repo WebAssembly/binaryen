@@ -4841,8 +4841,8 @@ int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
                                   BinaryenIndex index,
                                   BinaryenExpressionRef value) {
   if (tracing) {
-    std::cout << "  ExpressionRunnerSetLocalValue(the_runner, "
-              << index << ", expressions[" << expressions[value] << "]);\n";
+    std::cout << "  ExpressionRunnerSetLocalValue(the_runner, " << index
+              << ", expressions[" << expressions[value] << "]);\n";
   }
 
   auto* R = (StandaloneExpressionRunner*)runner;
