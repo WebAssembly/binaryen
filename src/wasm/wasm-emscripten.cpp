@@ -22,6 +22,7 @@
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "shared-constants.h"
@@ -230,22 +231,6 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
   return import;
 }
 
-static Global* ensureGlobalImport(Module* module, Name name, Type type) {
-  // See if its already imported.
-  ImportInfo info(*module);
-  if (auto* g = info.getImportedGlobal(ENV, name)) {
-    return g;
-  }
-  // Failing that create a new import.
-  auto import = new Global;
-  import->name = name;
-  import->module = ENV;
-  import->base = name;
-  import->type = type;
-  module->addGlobal(import);
-  return import;
-}
-
 // Convert LLVM PIC ABI to emscripten ABI
 //
 // When generating -fPIC code llvm will generate imports call GOT.mem and
@@ -297,8 +282,6 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
 
   ImportInfo importInfo(wasm);
 
-  auto* tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
-
   for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
@@ -318,8 +301,10 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         }
         auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name);
         auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
-        auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
-        auto* add = builder.makeBinary(AddInt32, get, c);
+        // The base relative to which we are computed is the offset of the
+        // singleton segment.
+        auto* getBase = ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
+        auto* add = builder.makeBinary(AddInt32, getBase, c);
         auto* globalSet = builder.makeGlobalSet(g->name, add);
         block->list.push_back(globalSet);
         continue;

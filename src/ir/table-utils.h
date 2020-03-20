@@ -49,7 +49,10 @@ struct FlatTable {
 
 namespace TableUtils {
 
-inline Table::Segment& ensureOneSegment(Table& table) {
+// Ensure one table segment exists. This adds the table if necessary, then
+// adds a segment if we need one.
+inline Table::Segment& ensureTableWithOneSegment(Table& table) {
+  table.exists = true;
   if (table.segments.size() == 0) {
     table.segments.resize(1);
   }
@@ -63,7 +66,7 @@ inline Table::Segment& ensureOneSegment(Table& table) {
 // as with 2 or more it's ambiguous what we should do (use a hole in the middle
 // or not).
 inline Index append(Table& table, Name name) {
-  auto& segment = ensureOneSegment(table);
+  auto& segment = ensureTableWithOneSegment(table);
   table.segments[0];
   auto tableIndex = segment.data.size();
   segment.data.push_back(name);
@@ -74,7 +77,7 @@ inline Index append(Table& table, Name name) {
 // Checks if a function is already in the table. Returns that index if so,
 // otherwise appends it.
 inline Index getOrAppend(Table& table, Name name) {
-  auto& segment = ensureOneSegment(table);
+  auto& segment = ensureTableWithOneSegment(table);
   for (Index i = 0; i < segment.data.size(); i++) {
     if (segment.data[i] == name) {
       return i;
