@@ -325,8 +325,6 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         auto* global = builder.makeGlobal(
           relativeName, Type::i32, makeConst(), Builder::Immutable);
         wasm.addGlobal(global);
-        wasm.addExport(
-          builder.makeExport(relativeName, global->name, ExternalKind::Global));
         auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
         auto* add = builder.makeBinary(AddInt32, get, makeConst());
         auto* globalSet = builder.makeGlobalSet(g->name, add);
