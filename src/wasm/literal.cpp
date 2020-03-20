@@ -565,9 +565,9 @@ Literal Literal::neg() const {
 Literal Literal::abs() const {
   switch (type.getSingle()) {
     case Type::i32:
-      return Literal(i32 >= 0 ? i32 : -i32);
+      return Literal(std::abs(i32));
     case Type::i64:
-      return Literal(i64 >= 0 ? i64 : -i64);
+      return Literal(std::abs(i64));
     case Type::f32:
       return Literal(i32 & 0x7fffffff).castToF32();
     case Type::f64:
