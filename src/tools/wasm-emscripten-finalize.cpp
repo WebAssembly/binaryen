@@ -246,7 +246,8 @@ int main(int argc, const char* argv[]) {
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
-    if (Function* F = generator.generateAssignGOTEntriesFunction(false /*isSideModule*/)) {
+    if (Function* F =
+          generator.generateAssignGOTEntriesFunction(false /*isSideModule*/)) {
       auto* ex = new Export();
       ex->value = F->name;
       ex->name = F->name;

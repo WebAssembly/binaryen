@@ -257,7 +257,8 @@ static Global* ensureGlobalImport(Module* module, Name name, Type type) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
+Function*
+EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
   BYN_TRACE("generateAssignGOTEntriesFunction\n");
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
