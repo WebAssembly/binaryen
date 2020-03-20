@@ -331,7 +331,7 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         auto* add = builder.makeBinary(AddInt32, get, makeConst());
         auto* globalSet = builder.makeGlobalSet(g->name, add);
         block->list.push_back(globalSet);
-        break;
+        continue;
       }
       // Otherwise, this is a side module, and fall through to join the case
       // of an import.
