@@ -310,14 +310,12 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
       f = wasm.getFunction(ex->value);
       if (!isSideModule) {
         // This is exported, so must be one of the functions implemented here.
-        // Add it to the table and export an rfp$ so that the loader knows what
-        // index it is at.
+        // Simply add it to the table, and use that index. The loader will
+        // know to reuse that index for other modules so they all share the
+        // same index and function pointer equality works.
         if (f->imported()) {
           Fatal() << "GOT.func entry export but not implemented: " << g->base;
         }
-        Name relativeName(
-          (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
-            .c_str());
         auto tableIndex = TableUtils::append(wasm.table, f->name);
         auto makeConst = [&]() {
           return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
