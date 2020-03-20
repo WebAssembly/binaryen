@@ -303,7 +303,8 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
         // The base relative to which we are computed is the offset of the
         // singleton segment.
-        auto* getBase = ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
+        auto* getBase =
+          ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
         auto* add = builder.makeBinary(AddInt32, getBase, c);
         auto* globalSet = builder.makeGlobalSet(g->name, add);
         block->list.push_back(globalSet);
