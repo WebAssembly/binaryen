@@ -2204,7 +2204,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (i32x4.bitmask
+       (i32x4.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -3954,7 +3954,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (i32x4.bitmask
+       (i32x4.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -6418,7 +6418,6 @@ RethrowId: 45
 BrOnExnId: 46
 PushId: 38
 PopId: 39
-got abs!
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -6762,7 +6761,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (i32x4.bitmask
+       (i32x4.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -8510,7 +8509,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (i32x4.bitmask
+       (i32x4.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
