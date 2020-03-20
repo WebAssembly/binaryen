@@ -322,9 +322,6 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
         auto makeConst = [&]() {
           return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
         };
-        auto* global = builder.makeGlobal(
-          relativeName, Type::i32, makeConst(), Builder::Immutable);
-        wasm.addGlobal(global);
         auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
         auto* add = builder.makeBinary(AddInt32, get, makeConst());
         auto* globalSet = builder.makeGlobalSet(g->name, add);
