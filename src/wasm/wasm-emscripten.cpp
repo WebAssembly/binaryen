@@ -313,19 +313,21 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       if (f->imported()) {
         Fatal() << "GOT.func entry export but not implemented: " << g->base;
       }
-      Name name(
+      Name relativeName(
         (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
           .c_str());
       assert(wasm.table.segments.size() == 1);
       auto& segment = wasm.table.segments[0];
       auto tableIndex = segment.data.size();
       segment.data.push_back(f->name);
+      wasm.table.initial = wasm.table.initial + 1;
       auto makeConst = [&]() {
         return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       };
-      auto* global = builder.makeGlobal(name, Type::i32, makeConst(), Builder::Immutable);
+      auto* global = builder.makeGlobal(relativeName, Type::i32, makeConst(), Builder::Immutable);
+      wasm.addGlobal(global);
       wasm.addExport(
-          builder.makeExport(name, global->name, ExternalKind::Global));
+          builder.makeExport(relativeName, global->name, ExternalKind::Global));
       auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
       auto* add = builder.makeBinary(AddInt32, get, makeConst());
       auto* globalSet = builder.makeGlobalSet(g->name, add);
