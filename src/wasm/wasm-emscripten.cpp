@@ -229,8 +229,7 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
   return import;
 }
 
-static Global*
-ensureGlobalImport(Module* module, Name name, Type type) {
+static Global* ensureGlobalImport(Module* module, Name name, Type type) {
   // See if its already imported.
   ImportInfo info(*module);
   if (auto* g = info.getImportedGlobal(ENV, name)) {
@@ -324,10 +323,11 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       auto makeConst = [&]() {
         return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       };
-      auto* global = builder.makeGlobal(relativeName, Type::i32, makeConst(), Builder::Immutable);
+      auto* global = builder.makeGlobal(
+        relativeName, Type::i32, makeConst(), Builder::Immutable);
       wasm.addGlobal(global);
       wasm.addExport(
-          builder.makeExport(relativeName, global->name, ExternalKind::Global));
+        builder.makeExport(relativeName, global->name, ExternalKind::Global));
       auto* get = builder.makeGlobalGet(tableBase->name, Type::i32);
       auto* add = builder.makeBinary(AddInt32, get, makeConst());
       auto* globalSet = builder.makeGlobalSet(g->name, add);
