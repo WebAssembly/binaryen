@@ -23,6 +23,7 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"
@@ -315,11 +316,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       Name relativeName(
         (std::string("rfp$") + g->base.c_str() + std::string("$") + getSig(f))
           .c_str());
-      assert(wasm.table.segments.size() == 1);
-      auto& segment = wasm.table.segments[0];
-      auto tableIndex = segment.data.size();
-      segment.data.push_back(f->name);
-      wasm.table.initial = wasm.table.initial + 1;
+      auto tableIndex = TableUtils::append(wasm.table, f->name);
       auto makeConst = [&]() {
         return LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       };

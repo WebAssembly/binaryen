@@ -47,6 +47,24 @@ struct FlatTable {
   }
 };
 
+namespace TableUtils {
+
+inline Index append(Table& table, Name name) {
+  if (table.segments.size() == 0) {
+    table.segments.resize(1);
+  }
+  if (table.segments.size() != 1) {
+    Fatal() << "TableUtils::append can't handle multiple segments";
+  }
+  auto& segment = table.segments[0];
+  auto tableIndex = segment.data.size();
+  segment.data.push_back(name);
+  table.initial = table.initial + 1;
+  return tableIndex;
+}
+
+} // namespace TableUtils
+
 } // namespace wasm
 
 #endif // wasm_ir_table_h
