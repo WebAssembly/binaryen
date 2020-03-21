@@ -26,7 +26,10 @@ ContextAwareExpressionRunner::ContextAwareExpressionRunner(Module* module,
                                                            Index maxDepth,
                                                            GetValues* getValues)
   : ExpressionRunner<ContextAwareExpressionRunner>(maxDepth), module(module),
-    getValues(getValues), mode(mode) {}
+    getValues(getValues), mode(mode) {
+  // Trap instead of aborting if we hit an invalid expression.
+  trapIfInvalid = true;
+}
 
 ContextAwareExpressionRunner::~ContextAwareExpressionRunner() {}
 
@@ -76,6 +79,34 @@ Flow ContextAwareExpressionRunner::visitLoop(Loop* curr) {
 }
 
 Flow ContextAwareExpressionRunner::visitCall(Call* curr) {
+  // Traverse into functions using the same mode, which we can also do
+  // when replacing as long as the function does not have any side effects.
+  // Might yield something useful for simple functions like `clamp`, sometimes
+  // even if arguments are only partially constant or not constant at all.
+  // Note that we are not a validator, so we skip calls to functions that do not
+  // exist yet or where the signature does not match.
+  auto* func = module->getFunctionOrNull(curr->target);
+  if (func != nullptr && !func->imported()) {
+    if (func->sig.results.isConcrete()) {
+      auto numOperands = curr->operands.size();
+      if (numOperands == func->getNumParams()) {
+        ContextAwareExpressionRunner runner(module, mode, maxDepth);
+        runner.depth = depth + 1;
+        for (Index i = 0; i < numOperands; ++i) {
+          auto argFlow = visit(curr->operands[i]);
+          if (!argFlow.breaking() && argFlow.values.isConcrete()) {
+            runner.localValues[i] = std::move(argFlow.values);
+          }
+        }
+        auto retFlow = runner.visit(func->body);
+        if (retFlow.breakTo == RETURN_FLOW) {
+          return Flow(std::move(retFlow.values));
+        } else if (!retFlow.breaking()) {
+          return retFlow;
+        }
+      }
+    }
+  }
   return Flow(NONCONSTANT_FLOW);
 }
 
@@ -122,15 +153,17 @@ Flow ContextAwareExpressionRunner::visitLocalSet(LocalSet* curr) {
 }
 
 Flow ContextAwareExpressionRunner::visitGlobalGet(GlobalGet* curr) {
-  auto* global = module->getGlobal(curr->name);
-  // Check if the global has an immutable value anyway
-  if (!global->imported() && !global->mutable_) {
-    return visit(global->init);
-  }
-  // Check if a constant value has been set in the context of this runner.
-  auto iter = globalValues.find(curr->name);
-  if (iter != globalValues.end()) {
-    return Flow(std::move(iter->second));
+  auto* global = module->getGlobalOrNull(curr->name);
+  if (global != nullptr) {
+    // Check if the global has an immutable value anyway
+    if (!global->imported() && !global->mutable_) {
+      return visit(global->init);
+    }
+    // Check if a constant value has been set in the context of this runner.
+    auto iter = globalValues.find(curr->name);
+    if (iter != globalValues.end()) {
+      return Flow(std::move(iter->second));
+    }
   }
   return Flow(NONCONSTANT_FLOW);
 }
@@ -139,9 +172,11 @@ Flow ContextAwareExpressionRunner::visitGlobalSet(GlobalSet* curr) {
   if (mode == Mode::EVALUATE) {
     // If we are evaluating and not replacing the expression, remember the
     // constant value set, if any, for subsequent gets.
-    assert(module->getGlobal(curr->name)->mutable_);
-    if (setGlobalValue(curr->name, curr->value)) {
-      return Flow();
+    auto* global = module->getGlobalOrNull(curr->name);
+    if (global != nullptr && global->mutable_) {
+      if (setGlobalValue(curr->name, curr->value)) {
+        return Flow();
+      }
     }
   }
   return Flow(NONCONSTANT_FLOW);

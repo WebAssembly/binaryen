@@ -154,6 +154,10 @@ protected:
 
   Index depth = 0;
 
+  // Trap instead of aborting if we hit an invalid expression. Useful where
+  // we are only interested in valid expressions before validation.
+  bool trapIfInvalid = false;
+
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
     NOTE_ENTER_("generateArguments");
@@ -181,14 +185,17 @@ public:
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
-#if 1 // def WASM_INTERPRETER_DEBUG
         if (!Type::isSubType(type, curr->type)) {
+          if (trapIfInvalid) {
+            trap("unexpected type");
+          }
+#if 1 // def WASM_INTERPRETER_DEBUG
           std::cerr << "expected " << curr->type << ", seeing " << type
                     << " from\n"
                     << curr << '\n';
-        }
 #endif
-        assert(Type::isSubType(type, curr->type));
+          assert(false);
+        }
       }
     }
     depth--;

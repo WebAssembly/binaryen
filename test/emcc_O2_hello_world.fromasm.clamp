@@ -8768,10 +8768,6 @@
   )
  )
  (func $_fwrite (; 29 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (local $2 i32)
-  (local.set $2
-   (local.get $0)
-  )
   (if (result i32)
    (block (result i32)
     (drop
@@ -8780,10 +8776,10 @@
      )
     )
     (i32.ne
-     (local.get $2)
+     (local.get $0)
      (local.tee $1
       (call $___fwritex
-       (local.get $2)
+       (local.get $0)
        (local.get $1)
       )
      )

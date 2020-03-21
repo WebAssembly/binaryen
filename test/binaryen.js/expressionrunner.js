@@ -93,4 +93,25 @@ expr = runner.runAndDispose(
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":7}');
 
+// Should traverse into simple functions
+runner = new binaryen.ExpressionRunner(module, Mode.Evaluate);
+module.addFunction("add", binaryen.createType([ binaryen.i32, binaryen.i32 ]), binaryen.i32, [],
+  module.block(null, [
+    module.i32.add(
+      module.local.get(0, binaryen.i32),
+      module.local.get(1, binaryen.i32)
+    )
+  ], binaryen.i32)
+);
+expr = runner.runAndDispose(
+  module.i32.add(
+    module.i32.const(1),
+    module.call("add", [
+      module.i32.const(3),
+      module.i32.const(4)
+    ], binaryen.i32)
+  )
+);
+assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":8}');
+
 binaryen.setAPITracing(false);

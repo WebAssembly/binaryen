@@ -29,7 +29,7 @@
      )
      (f32.const 1)
     )
-    (call $1)
+    (f32.const 0)
    )
   )
   (i32.const -11)

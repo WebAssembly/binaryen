@@ -1165,11 +1165,6 @@
   (local.get $1)
  )
  (func $keepAlive (; 59 ;) (; has Stack IR ;)
-  (drop
-   (call $f64-to-int
-    (f64.const 100)
-   )
-  )
   (call_indirect (type $i32_=>_none)
    (i32.const 0)
    (i32.const 17)
