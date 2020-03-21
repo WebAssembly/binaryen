@@ -1,3 +1,7 @@
+// Mode.Evaluate = 0
+// Mode.Replace = 1
+// Mode.EvaluateDeterministic = 2
+// Mode.ReplaceDeterministic = 3
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
@@ -118,6 +122,16 @@ int main() {
   BinaryenExpressionGetId(expressions[51]);
   BinaryenExpressionGetType(expressions[51]);
   BinaryenConstGetValueI32(expressions[51]);
+  the_runner = ExpressionRunnerCreate(the_module, 2, 50);
+  expressions[52] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[53] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  {
+    BinaryenExpressionRef operands[] = { expressions[53], expressions[54] };
+    expressions[55] = BinaryenCall(the_module, "add", operands, 2, 2);
+  }
+  expressions[56] = BinaryenBinary(the_module, 0, expressions[52], expressions[55]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[56]);
   return 0;
 }
 // ending a Binaryen API trace

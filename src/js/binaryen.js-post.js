@@ -481,7 +481,9 @@ function initializeConstants() {
   // ExpressionRunner modes
   Module['ExpressionRunner']['Mode'] = {
     'Evaluate': Module['_ExpressionRunnerModeEvaluate'](),
-    'Replace': Module['_ExpressionRunnerModeReplace']()
+    'Replace': Module['_ExpressionRunnerModeReplace'](),
+    'EvaluateDeterministic': Module['_ExpressionRunnerModeEvaluateDeterministic'](),
+    'ReplaceDeterministic': Module['_ExpressionRunnerModeReplaceDeterministic']()
   };
 }
 

@@ -4824,6 +4824,14 @@ ExpressionRunnerMode ExpressionRunnerModeReplace() {
   return ContextAwareExpressionRunner::Mode::REPLACE;
 }
 
+ExpressionRunnerMode ExpressionRunnerModeEvaluateDeterministic() {
+  return ContextAwareExpressionRunner::Mode::EVALUATE_DETERMINISTIC;
+}
+
+ExpressionRunnerMode ExpressionRunnerModeReplaceDeterministic() {
+  return ContextAwareExpressionRunner::Mode::REPLACE_DETERMINISTIC;
+}
+
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
                                            ExpressionRunnerMode mode,
                                            BinaryenIndex maxDepth) {

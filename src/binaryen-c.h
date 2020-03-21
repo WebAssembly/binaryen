@@ -1641,6 +1641,14 @@ BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluate();
 // those of `local.tee`s for example must be retained.
 BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplace();
 
+// Like ExpressionRunnerModeEvaluate, excluding potentially non-deterministic
+// traversal in function-parallel scenarios.
+BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluateDeterministic();
+
+// Like ExpressionRunnerModeReplaceDeterministic, excluding potentially
+// non-deterministic traversal in function-parallel scenarios.
+BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplaceDeterministic();
+
 // Creates an ExpressionRunner instance
 BINARYEN_API ExpressionRunnerRef ExpressionRunnerCreate(
   BinaryenModuleRef module, ExpressionRunnerMode mode, BinaryenIndex maxDepth);

@@ -1,8 +1,13 @@
+var Mode = binaryen.ExpressionRunner.Mode;
+console.log("// Mode.Evaluate = " + Mode.Evaluate);
+console.log("// Mode.Replace = " + Mode.Replace);
+console.log("// Mode.EvaluateDeterministic = " + Mode.EvaluateDeterministic);
+console.log("// Mode.ReplaceDeterministic = " + Mode.ReplaceDeterministic);
+
 binaryen.setAPITracing(true);
 
 var module = new binaryen.Module();
 module.addGlobal("aGlobal", binaryen.i32, true, module.i32.const(0));
-var Mode = binaryen.ExpressionRunner.Mode;
 
 // Should evaluate down to a constant
 var runner = new binaryen.ExpressionRunner(module, Mode.Evaluate);
@@ -113,5 +118,18 @@ expr = runner.runAndDispose(
   )
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":8}');
+
+// Should not attempt to traverse into functions if required to be deterministic
+runner = new binaryen.ExpressionRunner(module, Mode.EvaluateDeterministic);
+expr = runner.runAndDispose(
+  module.i32.add(
+    module.i32.const(1),
+    module.call("add", [
+      module.i32.const(3),
+      module.i32.const(4)
+    ], binaryen.i32)
+  )
+);
+assert(expr === 0);
 
 binaryen.setAPITracing(false);
