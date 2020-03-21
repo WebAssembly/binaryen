@@ -35,6 +35,15 @@ ContextAwareExpressionRunner::~ContextAwareExpressionRunner() {}
 
 Module* ContextAwareExpressionRunner::getModule() { return module; }
 
+bool ContextAwareExpressionRunner::isEvaluate() {
+  return mode == Mode::EVALUATE || mode == Mode::EVALUATE_DETERMINISTIC;
+}
+
+bool ContextAwareExpressionRunner::isDeterministic() {
+  return mode == Mode::EVALUATE_DETERMINISTIC ||
+         mode == Mode::REPLACE_DETERMINISTIC;
+}
+
 bool ContextAwareExpressionRunner::setLocalValue(Index index,
                                                  Literals& values) {
   if (values.isConcrete()) {
@@ -83,26 +92,32 @@ Flow ContextAwareExpressionRunner::visitCall(Call* curr) {
   // when replacing as long as the function does not have any side effects.
   // Might yield something useful for simple functions like `clamp`, sometimes
   // even if arguments are only partially constant or not constant at all.
-  // Note that we are not a validator, so we skip calls to functions that do not
-  // exist yet or where the signature does not match.
-  auto* func = module->getFunctionOrNull(curr->target);
-  if (func != nullptr && !func->imported()) {
-    if (func->sig.results.isConcrete()) {
-      auto numOperands = curr->operands.size();
-      if (numOperands == func->getNumParams()) {
-        ContextAwareExpressionRunner runner(module, mode, maxDepth);
-        runner.depth = depth + 1;
-        for (Index i = 0; i < numOperands; ++i) {
-          auto argFlow = visit(curr->operands[i]);
-          if (!argFlow.breaking() && argFlow.values.isConcrete()) {
-            runner.localValues[i] = std::move(argFlow.values);
+
+  // Skip traversing into functions if in a function-parallel scenario, where
+  // functions may or may not have been optimized already to something we can
+  // traverse successfully.
+  if (!isDeterministic()) {
+    // Note that we are not a validator, so we skip calls to functions that do
+    // not exist yet or where the signature does not match.
+    auto* func = module->getFunctionOrNull(curr->target);
+    if (func != nullptr && !func->imported()) {
+      if (func->sig.results.isConcrete()) {
+        auto numOperands = curr->operands.size();
+        if (numOperands == func->getNumParams()) {
+          ContextAwareExpressionRunner runner(module, mode, maxDepth);
+          runner.depth = depth + 1;
+          for (Index i = 0; i < numOperands; ++i) {
+            auto argFlow = visit(curr->operands[i]);
+            if (!argFlow.breaking() && argFlow.values.isConcrete()) {
+              runner.localValues[i] = std::move(argFlow.values);
+            }
           }
-        }
-        auto retFlow = runner.visit(func->body);
-        if (retFlow.breakTo == RETURN_FLOW) {
-          return Flow(std::move(retFlow.values));
-        } else if (!retFlow.breaking()) {
-          return retFlow;
+          auto retFlow = runner.visit(func->body);
+          if (retFlow.breakTo == RETURN_FLOW) {
+            return Flow(std::move(retFlow.values));
+          } else if (!retFlow.breaking()) {
+            return retFlow;
+          }
         }
       }
     }
@@ -137,7 +152,7 @@ Flow ContextAwareExpressionRunner::visitLocalGet(LocalGet* curr) {
 }
 
 Flow ContextAwareExpressionRunner::visitLocalSet(LocalSet* curr) {
-  if (mode == Mode::EVALUATE) {
+  if (isEvaluate()) {
     // If we are evaluating and not replacing the expression, see if there is
     // a value flowing through a tee.
     if (curr->type.isConcrete()) {
@@ -169,7 +184,7 @@ Flow ContextAwareExpressionRunner::visitGlobalGet(GlobalGet* curr) {
 }
 
 Flow ContextAwareExpressionRunner::visitGlobalSet(GlobalSet* curr) {
-  if (mode == Mode::EVALUATE) {
+  if (isEvaluate()) {
     // If we are evaluating and not replacing the expression, remember the
     // constant value set, if any, for subsequent gets.
     auto* global = module->getGlobalOrNull(curr->name);

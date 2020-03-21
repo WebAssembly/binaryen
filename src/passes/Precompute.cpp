@@ -174,7 +174,8 @@ struct Precompute
 private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
-  Flow precomputeExpression(Expression* curr, Mode mode = Mode::REPLACE) {
+  Flow precomputeExpression(Expression* curr,
+                            Mode mode = Mode::REPLACE_DETERMINISTIC) {
     try {
       return ContextAwareExpressionRunner(
                getModule(), mode, MAX_DEPTH, &getValues)
@@ -194,7 +195,7 @@ private:
   Literals precomputeValue(Expression* curr) {
     // Note that we do not intent to replace the expression, as we just care
     // about the value here.
-    Flow flow = precomputeExpression(curr, Mode::EVALUATE);
+    Flow flow = precomputeExpression(curr, Mode::EVALUATE_DETERMINISTIC);
     if (flow.breaking()) {
       return {};
     }

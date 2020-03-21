@@ -8591,6 +8591,7 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
+  (local $3 i32)
   (drop
    (i32.load offset=76
     (local.tee $0
@@ -8604,23 +8605,25 @@
    (if (result i32)
     (i32.lt_s
      (i32.add
-      (if (result i32)
-       (i32.ne
-        (local.tee $2
+      (select
+       (i32.div_u
+        (local.tee $3
          (call $Wa
-          (local.tee $1
-           (call $Za)
+          (local.tee $2
+           (local.tee $1
+            (call $Za)
+           )
           )
           (local.get $0)
          )
         )
         (local.get $1)
        )
-       (i32.div_u
-        (local.get $2)
-        (local.get $1)
-       )
        (i32.const 1)
+       (i32.ne
+        (local.get $2)
+        (local.get $3)
+       )
       )
       (i32.const -1)
      )

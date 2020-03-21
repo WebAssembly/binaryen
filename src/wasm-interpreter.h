@@ -2256,7 +2256,13 @@ public:
     EVALUATE,
     // We are going to replace the expression afterwards, so side effects
     // including those of `local.tee`s for example must be retained.
-    REPLACE
+    REPLACE,
+    // Like EVALUATE, excluding potentially non-deterministic traversal in
+    // function-parallel scenarios.
+    EVALUATE_DETERMINISTIC,
+    // Like REPLACE, excluding potentially non-deterministic traversal in
+    // function-parallel scenarios.
+    REPLACE_DETERMINISTIC
   };
 
   // Special break target indicating a flow not evaluating to a constant
@@ -2339,6 +2345,12 @@ private:
   // Whether we are just evaluating or also going to replace the expression
   // afterwards.
   Mode mode;
+
+  // Whether `mode` is any of the `EVALUATE` modes.
+  bool isEvaluate();
+
+  // Whether `mode` is any of the `DETERMINISTIC` modes.
+  bool isDeterministic();
 };
 
 } // namespace wasm
