@@ -1,9 +1,12 @@
+# Python 3.5 is the version shipped in Ubuntu Xenial
+find_package(PythonInterp 3.5 REQUIRED)
+
 add_custom_command(
   OUTPUT WasmIntrinsics.cpp
-  COMMAND python ${PROJECT_SOURCE_DIR}/scripts/embedwast.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
-  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwast.py wasm-intrinsics.wast)
+  COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
-SET(passes_SOURCES
+set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
@@ -18,6 +21,7 @@ SET(passes_SOURCES
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
+  DWARF.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -47,12 +51,12 @@ SET(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
+  RoundTrip.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
-  ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -61,6 +65,7 @@ SET(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  ReReloop.cpp
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
@@ -72,4 +77,4 @@ SET(passes_SOURCES
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
-ADD_LIBRARY(passes OBJECT ${passes_SOURCES})
+add_library(passes OBJECT ${passes_SOURCES})

@@ -146,6 +146,9 @@ struct ReFinalize
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -154,10 +157,11 @@ struct ReFinalize
   void visitUnreachable(Unreachable* curr);
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
   void visitFunction(Function* curr);
 
-  void visitFunctionType(FunctionType* curr);
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
@@ -211,6 +215,9 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
   void visitHost(Host* curr) { curr->finalize(); }
+  void visitRefNull(RefNull* curr) { curr->finalize(); }
+  void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
+  void visitRefFunc(RefFunc* curr) { curr->finalize(); }
   void visitTry(Try* curr) { curr->finalize(); }
   void visitThrow(Throw* curr) { curr->finalize(); }
   void visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -219,14 +226,15 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
   void visitPush(Push* curr) { curr->finalize(); }
   void visitPop(Pop* curr) { curr->finalize(); }
+  void visitTupleMake(TupleMake* curr) { curr->finalize(); }
+  void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
 
-  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-  void visitExport(Export* curr) { WASM_UNREACHABLE(); }
-  void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-  void visitTable(Table* curr) { WASM_UNREACHABLE(); }
-  void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-  void visitEvent(Event* curr) { WASM_UNREACHABLE(); }
-  void visitModule(Module* curr) { WASM_UNREACHABLE(); }
+  void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
   // given a stack of nested expressions, update them all from child to parent
   static void updateStack(ExpressionStack& expressionStack) {
@@ -277,7 +285,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (maybeDrop(curr->list.back())) {
       reFinalize();
-      assert(curr->type == none || curr->type == unreachable);
+      assert(curr->type == Type::none || curr->type == Type::unreachable);
     }
   }
 
@@ -293,14 +301,28 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (acted) {
       reFinalize();
-      assert(curr->type == none);
+      assert(curr->type == Type::none);
+    }
+  }
+
+  void visitTry(Try* curr) {
+    bool acted = false;
+    if (maybeDrop(curr->body)) {
+      acted = true;
+    }
+    if (maybeDrop(curr->catchBody)) {
+      acted = true;
+    }
+    if (acted) {
+      reFinalize();
+      assert(curr->type == Type::none);
     }
   }
 
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == none && curr->body->type.isConcrete()) {
+    if (curr->sig.results == Type::none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());
@@ -319,20 +341,21 @@ struct I64Utilities {
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
-    return recreateI64(
-      builder, builder.makeLocalGet(low, i32), builder.makeLocalGet(high, i32));
+    return recreateI64(builder,
+                       builder.makeLocalGet(low, Type::i32),
+                       builder.makeLocalGet(high, Type::i32));
   };
 
   static Expression* getI64High(Builder& builder, Index index) {
     return builder.makeUnary(
       WrapInt64,
       builder.makeBinary(ShrUInt64,
-                         builder.makeLocalGet(index, i64),
+                         builder.makeLocalGet(index, Type::i64),
                          builder.makeConst(Literal(int64_t(32)))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {
-    return builder.makeUnary(WrapInt64, builder.makeLocalGet(index, i64));
+    return builder.makeUnary(WrapInt64, builder.makeLocalGet(index, Type::i64));
   }
 };
 

@@ -24,9 +24,12 @@
 //   (import "env" "longname" (func $internal))
 // to
 //   (import "env" "a" (func $internal))
-// "a" is the minified name (note that we only minify the base,
-// not the module).
+// "a" is the minified name. If we also minify module names, then the
+// result could be
+//   (import "a" "a" (func $internal))
 //
+// TODO: check if we can minify names to the empty string "", which is even
+//       shorter than one character.
 
 #include <map>
 #include <string>
@@ -41,14 +44,12 @@
 
 namespace wasm {
 
-static Name WASI_UNSTABLE("wasi_unstable");
-
 struct MinifyImportsAndExports : public Pass {
-  bool minifyExports;
+  bool minifyExports, minifyModules;
 
 public:
-  explicit MinifyImportsAndExports(bool minifyExports)
-    : minifyExports(minifyExports) {}
+  explicit MinifyImportsAndExports(bool minifyExports, bool minifyModules)
+    : minifyExports(minifyExports), minifyModules(minifyModules) {}
 
 private:
   // Generates minified names that are valid in JS.
@@ -162,7 +163,12 @@ private:
       }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV || curr->module == WASI_UNSTABLE) {
+      // Minify all import base names if we are importing modules (which means
+      // we will minify all modules names, so we are not being careful).
+      // Otherwise, assume we just want to minify "normal" imports like env
+      // and wasi, but not special things like asm2wasm or custom user things.
+      if (minifyModules || curr->module == ENV ||
+          curr->module.startsWith("wasi_")) {
         process(curr->base);
       }
     };
@@ -181,13 +187,45 @@ private:
     for (auto& pair : newToOld) {
       std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
+
+    if (minifyModules) {
+      doMinifyModules(module);
+    }
+  }
+
+  const Name SINGLETON_MODULE_NAME = "a";
+
+  void doMinifyModules(Module* module) {
+    // Minify the module name itself, and also merge all the modules into
+    // one. Assert against overlapping names.
+#ifndef NDEBUG
+    std::set<Name> seenImports;
+#endif
+    auto processImport = [&](Importable* curr) {
+      curr->module = SINGLETON_MODULE_NAME;
+#ifndef NDEBUG
+      assert(seenImports.count(curr->base) == 0);
+      seenImports.insert(curr->base);
+#endif
+    };
+    ModuleUtils::iterImportedGlobals(*module, processImport);
+    ModuleUtils::iterImportedFunctions(*module, processImport);
+    ModuleUtils::iterImportedEvents(*module, processImport);
+    ModuleUtils::iterImportedMemories(*module, processImport);
+    ModuleUtils::iterImportedTables(*module, processImport);
   }
 };
 
-Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false); }
+Pass* createMinifyImportsPass() {
+  return new MinifyImportsAndExports(false, false);
+}
 
 Pass* createMinifyImportsAndExportsPass() {
-  return new MinifyImportsAndExports(true);
+  return new MinifyImportsAndExports(true, false);
+}
+
+Pass* createMinifyImportsAndExportsAndModulesPass() {
+  return new MinifyImportsAndExports(true, true);
 }
 
 } // namespace wasm

@@ -16,23 +16,24 @@
 
 import os
 import subprocess
+import sys
 
 from . import shared
 from . import support
 
 
-def test_binaryen_js():
+def do_test_binaryen_js_with(which):
     if not (shared.MOZJS or shared.NODEJS):
         print('no vm to run binaryen.js tests')
         return
 
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
 
-    if not os.path.exists(shared.BINARYEN_JS):
-        print('no binaryen.js build to test')
+    if not os.path.exists(which):
+        print('no ' + which + ' build to test')
         return
 
-    print('\n[ checking binaryen.js testcases... ]\n')
+    print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
 
     for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
         if not s.endswith('.js'):
@@ -41,15 +42,13 @@ def test_binaryen_js():
         f = open('a.js', 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
         f.write('''
-            console.warn = function(x) { console.log(x) };
+            console.warn = console.error = console.log;
         ''')
-        binaryen_js = open(shared.BINARYEN_JS).read()
+        binaryen_js = open(which).read()
         f.write(binaryen_js)
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
         test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
         test_src = open(test_path).read()
-        f.write(test_src)
+        f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
 
         def test(engine):
@@ -73,5 +72,23 @@ def test_binaryen_js():
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 
 
-if __name__ == "__main__":
+def test_binaryen_js():
+    do_test_binaryen_js_with(shared.BINARYEN_JS)
+
+
+def test_binaryen_wasm():
+    do_test_binaryen_js_with(shared.BINARYEN_WASM)
+
+
+def test_binaryen_js_and_wasm():
     test_binaryen_js()
+    test_binaryen_wasm()
+
+
+if __name__ == "__main__":
+    if sys.argv[1] == "js":
+        test_binaryen_js()
+    elif sys.argv[1] == "wasm":
+        test_binaryen_wasm()
+    else:
+        test_binaryen_js_and_wasm()

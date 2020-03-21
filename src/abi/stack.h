@@ -88,12 +88,12 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     local, builder.makeGlobalGet(stackPointer->name, PointerType)));
   // TODO: add stack max check
   Expression* added;
-  if (PointerType == i32) {
+  if (PointerType == Type::i32) {
     added = builder.makeBinary(AddInt32,
                                builder.makeLocalGet(local, PointerType),
                                builder.makeConst(Literal(int32_t(size))));
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unhandled PointerType");
   }
   block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
   auto makeStackRestore = [&]() {
@@ -104,7 +104,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   FindAllPointers<Return> finder(func->body);
   for (auto** ptr : finder.list) {
     auto* ret = (*ptr)->cast<Return>();
-    if (ret->value && ret->value->type != unreachable) {
+    if (ret->value && ret->value->type != Type::unreachable) {
       // handle the returned value
       auto* block = builder.makeBlock();
       auto temp = builder.addVar(func, ret->value->type);
@@ -120,18 +120,18 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     }
   }
   // add stack restores to the body
-  if (func->body->type == none) {
+  if (func->body->type == Type::none) {
     block->list.push_back(func->body);
     block->list.push_back(makeStackRestore());
-  } else if (func->body->type == unreachable) {
+  } else if (func->body->type == Type::unreachable) {
     block->list.push_back(func->body);
     // no need to restore the old stack value, we're gone anyhow
   } else {
     // save the return value
-    auto temp = builder.addVar(func, func->result);
+    auto temp = builder.addVar(func, func->sig.results);
     block->list.push_back(builder.makeLocalSet(temp, func->body));
     block->list.push_back(makeStackRestore());
-    block->list.push_back(builder.makeLocalGet(temp, func->result));
+    block->list.push_back(builder.makeLocalGet(temp, func->sig.results));
   }
   block->finalize();
   func->body = block;

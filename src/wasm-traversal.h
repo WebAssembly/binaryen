@@ -72,6 +72,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitDrop(Drop* curr) { return ReturnType(); }
   ReturnType visitReturn(Return* curr) { return ReturnType(); }
   ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitRefNull(RefNull* curr) { return ReturnType(); }
+  ReturnType visitRefIsNull(RefIsNull* curr) { return ReturnType(); }
+  ReturnType visitRefFunc(RefFunc* curr) { return ReturnType(); }
   ReturnType visitTry(Try* curr) { return ReturnType(); }
   ReturnType visitThrow(Throw* curr) { return ReturnType(); }
   ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
@@ -80,8 +83,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
   ReturnType visitPush(Push* curr) { return ReturnType(); }
   ReturnType visitPop(Pop* curr) { return ReturnType(); }
+  ReturnType visitTupleMake(TupleMake* curr) { return ReturnType(); }
+  ReturnType visitTupleExtract(TupleExtract* curr) { return ReturnType(); }
   // Module-level visitors
-  ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
@@ -168,6 +172,12 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Return);
       case Expression::Id::HostId:
         DELEGATE(Host);
+      case Expression::Id::RefNullId:
+        DELEGATE(RefNull);
+      case Expression::Id::RefIsNullId:
+        DELEGATE(RefIsNull);
+      case Expression::Id::RefFuncId:
+        DELEGATE(RefFunc);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -184,9 +194,13 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Push);
       case Expression::Id::PopId:
         DELEGATE(Pop);
+      case Expression::Id::TupleMakeId:
+        DELEGATE(TupleMake);
+      case Expression::Id::TupleExtractId:
+        DELEGATE(TupleExtract);
       case Expression::Id::InvalidId:
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
 
 #undef DELEGATE
@@ -204,7 +218,7 @@ struct OverriddenVisitor {
       &SubType::visit##CLASS_TO_VISIT !=                                       \
         &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT,        \
       "Derived class must implement visit" #CLASS_TO_VISIT);                   \
-    WASM_UNREACHABLE();                                                        \
+    WASM_UNREACHABLE("Derived class must implement visit" #CLASS_TO_VISIT);    \
   }
 
   UNIMPLEMENTED(Block);
@@ -242,6 +256,9 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Drop);
   UNIMPLEMENTED(Return);
   UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(RefNull);
+  UNIMPLEMENTED(RefIsNull);
+  UNIMPLEMENTED(RefFunc);
   UNIMPLEMENTED(Try);
   UNIMPLEMENTED(Throw);
   UNIMPLEMENTED(Rethrow);
@@ -250,7 +267,8 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Unreachable);
   UNIMPLEMENTED(Push);
   UNIMPLEMENTED(Pop);
-  UNIMPLEMENTED(FunctionType);
+  UNIMPLEMENTED(TupleMake);
+  UNIMPLEMENTED(TupleExtract);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
@@ -339,6 +357,12 @@ struct OverriddenVisitor {
         DELEGATE(Return);
       case Expression::Id::HostId:
         DELEGATE(Host);
+      case Expression::Id::RefNullId:
+        DELEGATE(RefNull);
+      case Expression::Id::RefIsNullId:
+        DELEGATE(RefIsNull);
+      case Expression::Id::RefFuncId:
+        DELEGATE(RefFunc);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -355,9 +379,13 @@ struct OverriddenVisitor {
         DELEGATE(Push);
       case Expression::Id::PopId:
         DELEGATE(Pop);
+      case Expression::Id::TupleMakeId:
+        DELEGATE(TupleMake);
+      case Expression::Id::TupleExtractId:
+        DELEGATE(TupleExtract);
       case Expression::Id::InvalidId:
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
 
 #undef DELEGATE
@@ -478,6 +506,15 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitHost(Host* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
+  ReturnType visitRefNull(RefNull* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefIsNull(RefIsNull* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefFunc(RefFunc* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
   ReturnType visitTry(Try* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
@@ -500,6 +537,12 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitPop(Pop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitTupleMake(TupleMake* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitTupleExtract(TupleExtract* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
 };
@@ -603,9 +646,6 @@ struct Walker : public VisitorType {
   void doWalkModule(Module* module) {
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
-    for (auto& curr : module->functionTypes) {
-      self->visitFunctionType(curr.get());
-    }
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());
     }
@@ -783,6 +823,15 @@ struct Walker : public VisitorType {
   static void doVisitHost(SubType* self, Expression** currp) {
     self->visitHost((*currp)->cast<Host>());
   }
+  static void doVisitRefNull(SubType* self, Expression** currp) {
+    self->visitRefNull((*currp)->cast<RefNull>());
+  }
+  static void doVisitRefIsNull(SubType* self, Expression** currp) {
+    self->visitRefIsNull((*currp)->cast<RefIsNull>());
+  }
+  static void doVisitRefFunc(SubType* self, Expression** currp) {
+    self->visitRefFunc((*currp)->cast<RefFunc>());
+  }
   static void doVisitTry(SubType* self, Expression** currp) {
     self->visitTry((*currp)->cast<Try>());
   }
@@ -806,6 +855,12 @@ struct Walker : public VisitorType {
   }
   static void doVisitPop(SubType* self, Expression** currp) {
     self->visitPop((*currp)->cast<Pop>());
+  }
+  static void doVisitTupleMake(SubType* self, Expression** currp) {
+    self->visitTupleMake((*currp)->cast<TupleMake>());
+  }
+  static void doVisitTupleExtract(SubType* self, Expression** currp) {
+    self->visitTupleExtract((*currp)->cast<TupleExtract>());
   }
 
   void setModule(Module* module) { currModule = module; }
@@ -1041,6 +1096,19 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         }
         break;
       }
+      case Expression::Id::RefNullId: {
+        self->pushTask(SubType::doVisitRefNull, currp);
+        break;
+      }
+      case Expression::Id::RefIsNullId: {
+        self->pushTask(SubType::doVisitRefIsNull, currp);
+        self->pushTask(SubType::scan, &curr->cast<RefIsNull>()->value);
+        break;
+      }
+      case Expression::Id::RefFuncId: {
+        self->pushTask(SubType::doVisitRefFunc, currp);
+        break;
+      }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
@@ -1082,8 +1150,21 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitPop, currp);
         break;
       }
+      case Expression::Id::TupleMakeId: {
+        self->pushTask(SubType::doVisitTupleMake, currp);
+        auto& operands = curr->cast<TupleMake>()->operands;
+        for (int i = int(operands.size()) - 1; i >= 0; --i) {
+          self->pushTask(SubType::scan, &operands[i]);
+        }
+        break;
+      }
+      case Expression::Id::TupleExtractId: {
+        self->pushTask(SubType::doVisitTupleExtract, currp);
+        self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
+        break;
+      }
       case Expression::Id::NumExpressionIds:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
   }
 };
@@ -1104,7 +1185,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   Expression* findBreakTarget(Name name) {
     assert(!controlFlowStack.empty());
     Index i = controlFlowStack.size() - 1;
-    while (1) {
+    while (true) {
       auto* curr = controlFlowStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
         if (name == block->name) {
@@ -1115,8 +1196,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        // an if, ignorable
-        assert(curr->template is<If>());
+        // an if or try, ignorable
+        assert(curr->template is<If>() || curr->template is<Try>());
       }
       if (i == 0) {
         return nullptr;
@@ -1141,7 +1222,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
-      case Expression::Id::LoopId: {
+      case Expression::Id::LoopId:
+      case Expression::Id::TryId: {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
@@ -1153,7 +1235,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
-      case Expression::Id::LoopId: {
+      case Expression::Id::LoopId:
+      case Expression::Id::TryId: {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }
@@ -1174,7 +1257,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
   Expression* findBreakTarget(Name name) {
     assert(!expressionStack.empty());
     Index i = expressionStack.size() - 1;
-    while (1) {
+    while (true) {
       auto* curr = expressionStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
         if (name == block->name) {
@@ -1184,8 +1267,6 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
         if (name == loop->name) {
           return curr;
         }
-      } else {
-        WASM_UNREACHABLE();
       }
       if (i == 0) {
         return nullptr;

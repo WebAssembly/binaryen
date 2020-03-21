@@ -1,9 +1,16 @@
+#!/usr/bin/env bash
+
 set -e
-echo "travis-test build"
-emconfigure cmake -DCMAKE_BUILD_TYPE=Release
+
+echo "travis-test build:wasm"
+emcmake cmake -DCMAKE_BUILD_TYPE=Release
+emmake make -j4 binaryen_wasm
+echo "travis-test test:wasm"
+python3 -m scripts.test.binaryenjs wasm
+echo "travis-test done:wasm"
+
+echo "travis-test build:js"
 emmake make -j4 binaryen_js
-mkdir out
-cp bin/binaryen_js.js out/binaryen.js
-echo "travis-test test"
-python3 -m scripts.test.binaryenjs
-echo "travis-test yay!"
+echo "travis-test test:js"
+python3 -m scripts.test.binaryenjs js
+echo "travis-test done:js"

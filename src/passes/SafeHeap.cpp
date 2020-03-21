@@ -23,7 +23,6 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
-#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
@@ -72,7 +71,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter* create() override { return new AccessInstrumenter; }
 
   void visitLoad(Load* curr) {
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -86,7 +85,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -97,7 +96,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
                          builder.makeConst(Literal(int32_t(curr->offset))),
                          curr->value,
                        },
-                       none));
+                       Type::none));
   }
 };
 
@@ -137,9 +136,7 @@ struct SafeHeap : public Pass {
       import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
       import->module = ENV;
       import->base = GET_SBRK_PTR_IMPORT;
-      auto* functionType = ensureFunctionType("i", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::i32);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
@@ -149,9 +146,7 @@ struct SafeHeap : public Pass {
       import->name = segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
@@ -161,9 +156,7 @@ struct SafeHeap : public Pass {
       import->name = alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
   }
@@ -176,15 +169,16 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
-    for (auto type : {i32, i64, f32, f64, v128}) {
-      if (type == v128 && !features.hasSIMD()) {
+    for (Type type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
+      if (type == Type::v128 && !features.hasSIMD()) {
         continue;
       }
       load.type = type;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type) || (type == f32 && bytes != 4) ||
-            (type == f64 && bytes != 8) || (type == v128 && bytes != 16)) {
+        if (bytes > type.getByteSize() || (type == Type::f32 && bytes != 4) ||
+            (type == Type::f64 && bytes != 8) ||
+            (type == Type::v128 && bytes != 16)) {
           continue;
         }
         for (auto signed_ : {true, false}) {
@@ -211,18 +205,19 @@ struct SafeHeap : public Pass {
     }
     // store funcs
     Store store;
-    for (auto valueType : {i32, i64, f32, f64, v128}) {
-      if (valueType == v128 && !features.hasSIMD()) {
+    for (Type valueType :
+         {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
+      if (valueType == Type::v128 && !features.hasSIMD()) {
         continue;
       }
       store.valueType = valueType;
-      store.type = none;
+      store.type = Type::none;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
-        if (bytes > getTypeSize(valueType) ||
-            (valueType == f32 && bytes != 4) ||
-            (valueType == f64 && bytes != 8) ||
-            (valueType == v128 && bytes != 16)) {
+        if (bytes > valueType.getByteSize() ||
+            (valueType == Type::f32 && bytes != 4) ||
+            (valueType == Type::f64 && bytes != 8) ||
+            (valueType == Type::v128 && bytes != 16)) {
           continue;
         }
         for (Index align : {1, 2, 4, 8, 16}) {
@@ -251,16 +246,16 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32); // pointer
-    func->params.push_back(i32); // offset
-    func->vars.push_back(i32);   // pointer + offset
-    func->result = style.type;
+    // pointer, offset
+    func->sig = Signature({Type::i32, Type::i32}, style.type);
+    func->vars.push_back(Type::i32); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(
-        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
+      builder.makeBinary(AddInt32,
+                         builder.makeLocalGet(0, Type::i32),
+                         builder.makeLocalGet(1, Type::i32))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.type, builder, 2, style.bytes));
     // check proper alignment
@@ -270,7 +265,7 @@ struct SafeHeap : public Pass {
     // do the load
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
-    load->ptr = builder.makeLocalGet(2, i32);
+    load->ptr = builder.makeLocalGet(2, Type::i32);
     Expression* last = load;
     if (load->isAtomic && load->signed_) {
       // atomic loads cannot be signed, manually sign it
@@ -291,17 +286,16 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32);             // pointer
-    func->params.push_back(i32);             // offset
-    func->params.push_back(style.valueType); // value
-    func->vars.push_back(i32);               // pointer + offset
-    func->result = none;
+    // pointer, offset, value
+    func->sig = Signature({Type::i32, Type::i32, style.valueType}, Type::none);
+    func->vars.push_back(Type::i32); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
-      builder.makeBinary(
-        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
+      builder.makeBinary(AddInt32,
+                         builder.makeLocalGet(0, Type::i32),
+                         builder.makeLocalGet(1, Type::i32))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
       makeBoundsCheck(style.valueType, builder, 3, style.bytes));
@@ -312,10 +306,10 @@ struct SafeHeap : public Pass {
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
-    store->ptr = builder.makeLocalGet(3, i32);
+    store->ptr = builder.makeLocalGet(3, Type::i32);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
-    block->finalize(none);
+    block->finalize(Type::none);
     func->body = block;
     module->addFunction(func);
   }
@@ -323,9 +317,9 @@ struct SafeHeap : public Pass {
   Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
     return builder.makeIf(
       builder.makeBinary(AndInt32,
-                         builder.makeLocalGet(local, i32),
+                         builder.makeLocalGet(local, Type::i32),
                          builder.makeConst(Literal(int32_t(align - 1)))),
-      builder.makeCall(alignfault, {}, none));
+      builder.makeCall(alignfault, {}, Type::none));
   }
 
   Expression*
@@ -334,30 +328,30 @@ struct SafeHeap : public Pass {
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
-      brkLocation =
-        builder.makeCall(sbrk, {builder.makeConst(Literal(int32_t(0)))}, i32);
+      brkLocation = builder.makeCall(
+        sbrk, {builder.makeConst(Literal(int32_t(0)))}, Type::i32);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
-        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, i32);
+        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, Type::i32);
       } else {
-        sbrkPtr = builder.makeCall(getSbrkPtr, {}, i32);
+        sbrkPtr = builder.makeCall(getSbrkPtr, {}, Type::i32);
       }
-      brkLocation = builder.makeLoad(4, false, 0, 4, sbrkPtr, i32);
+      brkLocation = builder.makeLoad(4, false, 0, 4, sbrkPtr, Type::i32);
     }
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(upperOp,
-                           builder.makeLocalGet(local, i32),
+                           builder.makeLocalGet(local, Type::i32),
                            builder.makeConst(Literal(int32_t(upperBound)))),
         builder.makeBinary(
           GtUInt32,
           builder.makeBinary(AddInt32,
-                             builder.makeLocalGet(local, i32),
+                             builder.makeLocalGet(local, Type::i32),
                              builder.makeConst(Literal(int32_t(bytes)))),
           brkLocation)),
-      builder.makeCall(segfault, {}, none));
+      builder.makeCall(segfault, {}, Type::none));
   }
 };
 

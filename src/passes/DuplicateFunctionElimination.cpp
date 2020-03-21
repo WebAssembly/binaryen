@@ -89,14 +89,8 @@ struct DuplicateFunctionElimination : public Pass {
       // perform replacements
       if (replacements.size() > 0) {
         // remove the duplicates
-        auto& v = module->functions;
-        v.erase(std::remove_if(v.begin(),
-                               v.end(),
-                               [&](const std::unique_ptr<Function>& curr) {
-                                 return duplicates.count(curr->name) > 0;
-                               }),
-                v.end());
-        module->updateMaps();
+        module->removeFunctions(
+          [&](Function* func) { return duplicates.count(func->name) > 0; });
         OptUtils::replaceFunctions(runner, *module, replacements);
       } else {
         break;

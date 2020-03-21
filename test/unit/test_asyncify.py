@@ -10,9 +10,9 @@ class AsyncifyTest(utils.BinaryenTestCase):
     def test_asyncify_js(self):
         def test(args):
             print(args)
-            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-sleep.wast'), '--asyncify', '-o', 'a.wasm'])
-            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-coroutine.wast'), '--asyncify', '-o', 'b.wasm'])
-            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wast'), '--asyncify', '-o', 'c.wasm'])
+            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-sleep.wat'), '--asyncify', '-o', 'a.wasm'])
+            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-coroutine.wat'), '--asyncify', '-o', 'b.wasm'])
+            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wat'), '--asyncify', '-o', 'c.wasm'])
             print('  file size: %d' % os.path.getsize('a.wasm'))
             shared.run_process([shared.NODEJS, self.input_path('asyncify.js')])
 
@@ -24,11 +24,20 @@ class AsyncifyTest(utils.BinaryenTestCase):
         test(['-Os', '-g'])
 
     def test_asyncify_pure_wasm(self):
-        shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '-o', 'a.wasm'])
-        shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wast'])
-        output = shared.run_process(shared.WASM_SHELL + ['a.wast'], capture_output=True).stdout
-        with open(self.input_path('asyncify-pure.txt'), 'r') as f:
-            self.assertEqual(f.read(), output)
+        def test(input_file):
+            shared.run_process(shared.WASM_OPT + [input_file, '--asyncify', '-o', 'a.wasm'])
+            shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
+            output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
+            with open(self.input_path('asyncify-pure.txt'), 'r') as f:
+                self.assertEqual(f.read(), output)
+
+        # test wat input
+        wat = self.input_path('asyncify-pure.wat')
+        test(wat)
+
+        # test wasm input
+        shared.run_process(shared.WASM_AS + [wat, '-o', 'a.wasm'])
+        test('a.wasm')
 
     def test_asyncify_list_bad(self):
         for arg, warning in [
@@ -45,7 +54,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             ('--pass-arg=asyncify-whitelist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
         ]:
             print(arg, warning)
-            err = shared.run_process(shared.WASM_OPT + ['-q', self.input_path('asyncify-pure.wast'), '--asyncify', arg], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.strip()
+            err = shared.run_process(shared.WASM_OPT + ['-q', self.input_path('asyncify-pure.wat'), '--asyncify', arg], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.strip()
             if warning:
                 self.assertIn('warning', err)
                 self.assertIn(warning, err)
@@ -53,13 +62,13 @@ class AsyncifyTest(utils.BinaryenTestCase):
                 self.assertNotIn('warning', err)
 
     def test_asyncify_blacklist_and_whitelist(self):
-        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
         self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
         self.assertIn('It makes no sense to use both a blacklist and a whitelist with asyncify', proc.stdout)
 
     def test_asyncify_imports(self):
         def test(args):
-            return shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-sleep.wast'), '--asyncify', '--print'] + args, stdout=subprocess.PIPE).stdout
+            return shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-sleep.wat'), '--asyncify', '--print'] + args, stdout=subprocess.PIPE).stdout
 
         normal = test(['--pass-arg=asyncify-imports@env.sleep'])
         temp = tempfile.NamedTemporaryFile().name

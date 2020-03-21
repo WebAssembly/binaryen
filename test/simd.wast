@@ -424,6 +424,11 @@
    (local.get $2)
   )
  )
+ (func $i8x16.abs (param $0 v128) (result v128)
+  (i8x16.abs
+   (local.get $0)
+  )
+ )
  (func $i8x16.neg (param $0 v128) (result v128)
   (i8x16.neg
    (local.get $0)
@@ -436,6 +441,11 @@
  )
  (func $i8x16.all_true (param $0 v128) (result i32)
   (i8x16.all_true
+   (local.get $0)
+  )
+ )
+ (func $i8x16.bitmask (param $0 v128) (result i32)
+  (i8x16.bitmask
    (local.get $0)
   )
  )
@@ -523,6 +533,17 @@
    (local.get $1)
   )
  )
+ (func $i8x16.avgr_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.avgr_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.abs (param $0 v128) (result v128)
+  (i16x8.abs
+   (local.get $0)
+  )
+ )
  (func $i16x8.neg (param $0 v128) (result v128)
   (i16x8.neg
    (local.get $0)
@@ -535,6 +556,11 @@
  )
  (func $i16x8.all_true (param $0 v128) (result i32)
   (i16x8.all_true
+   (local.get $0)
+  )
+ )
+ (func $i16x8.bitmask (param $0 v128) (result i32)
+  (i16x8.bitmask
    (local.get $0)
   )
  )
@@ -622,6 +648,17 @@
    (local.get $1)
   )
  )
+ (func $i16x8.avgr_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.avgr_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.abs (param $0 v128) (result v128)
+  (i32x4.abs
+   (local.get $0)
+  )
+ )
  (func $i32x4.neg (param $0 v128) (result v128)
   (i32x4.neg
    (local.get $0)
@@ -634,6 +671,11 @@
  )
  (func $i32x4.all_true (param $0 v128) (result i32)
   (i32x4.all_true
+   (local.get $0)
+  )
+ )
+ (func $i32x4.bitmask (param $0 v128) (result i32)
+  (i32x4.bitmask
    (local.get $0)
   )
  )

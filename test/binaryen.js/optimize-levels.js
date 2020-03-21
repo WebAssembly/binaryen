@@ -1,7 +1,3 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
 var wast = `
 (module
  (type $i (func (param i32) (result i32)))
@@ -18,15 +14,16 @@ var wast = `
  )
 )
 `;
+
 console.log("=== input wast ===" + wast);
 
 function printOptions() {
-  console.log("optimizeLevel=" + Binaryen.getOptimizeLevel());
-  console.log("shrinkLevel=" + Binaryen.getShrinkLevel());
+  console.log("optimizeLevel=" + binaryen.getOptimizeLevel());
+  console.log("shrinkLevel=" + binaryen.getShrinkLevel());
 }
 
 // Use defaults (should be equal to -Os below)
-var module = Binaryen.parseText(wast);
+var module = binaryen.parseText(wast);
 
 console.log("=== unoptimized ===");
 assert(module.validate());
@@ -40,10 +37,10 @@ console.log(module.emitText());
 module.dispose();
 
 // Use -O0 (should remove the block)
-module = Binaryen.parseText(wast);
+module = binaryen.parseText(wast);
 
-Binaryen.setOptimizeLevel(0);
-Binaryen.setShrinkLevel(0);
+binaryen.setOptimizeLevel(0);
+binaryen.setShrinkLevel(0);
 module.optimize();
 console.log("=== optimized with -O0 ===");
 printOptions();
@@ -52,10 +49,10 @@ console.log(module.emitText());
 module.dispose();
 
 // Use -Os (should remove the block and convert to a select)
-module = Binaryen.parseText(wast);
+module = binaryen.parseText(wast);
 
-Binaryen.setOptimizeLevel(2);
-Binaryen.setShrinkLevel(1);
+binaryen.setOptimizeLevel(2);
+binaryen.setShrinkLevel(1);
 module.optimize();
 console.log("=== optimized with -Os ===");
 printOptions();

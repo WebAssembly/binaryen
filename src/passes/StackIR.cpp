@@ -88,7 +88,7 @@ private:
           // We can remove this.
           removeAt(i);
         }
-      } else if (inst->type == unreachable) {
+      } else if (inst->type == Type::unreachable) {
         inUnreachableCode = true;
       }
     }
@@ -221,7 +221,7 @@ private:
           // This is an actual regular value on the value stack.
           values.push_back(null);
         }
-      } else if (inst->origin->is<LocalSet>() && inst->type == none) {
+      } else if (inst->origin->is<LocalSet>() && inst->type == Type::none) {
         // This set is potentially optimizable later, add to stack.
         values.push_back(i);
       }
@@ -238,7 +238,7 @@ private:
         continue;
       }
       if (auto* block = inst->origin->dynCast<Block>()) {
-        if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+        if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
           inst = nullptr;
         }

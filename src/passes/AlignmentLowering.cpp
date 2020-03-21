@@ -32,26 +32,31 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     Builder builder(*getModule());
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       replaceCurrent(curr->ptr);
       return;
     }
-    assert(curr->type == i32); // TODO: i64, f32, f64
-    auto temp = builder.addVar(getFunction(), i32);
+    assert(curr->type == Type::i32); // TODO: i64, f32, f64
+    auto temp = builder.addVar(getFunction(), Type::i32);
     Expression* ret;
     if (curr->bytes == 2) {
       ret = builder.makeBinary(
         OrInt32,
-        builder.makeLoad(
-          1, false, curr->offset, 1, builder.makeLocalGet(temp, i32), i32),
-        builder.makeBinary(ShlInt32,
-                           builder.makeLoad(1,
-                                            false,
-                                            curr->offset + 1,
-                                            1,
-                                            builder.makeLocalGet(temp, i32),
-                                            i32),
-                           builder.makeConst(Literal(int32_t(8)))));
+        builder.makeLoad(1,
+                         false,
+                         curr->offset,
+                         1,
+                         builder.makeLocalGet(temp, Type::i32),
+                         Type::i32),
+        builder.makeBinary(
+          ShlInt32,
+          builder.makeLoad(1,
+                           false,
+                           curr->offset + 1,
+                           1,
+                           builder.makeLocalGet(temp, Type::i32),
+                           Type::i32),
+          builder.makeConst(Literal(int32_t(8)))));
       if (curr->signed_) {
         ret = Bits::makeSignExt(ret, 2, *getModule());
       }
@@ -61,52 +66,64 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           OrInt32,
           builder.makeBinary(
             OrInt32,
-            builder.makeLoad(
-              1, false, curr->offset, 1, builder.makeLocalGet(temp, i32), i32),
-            builder.makeBinary(ShlInt32,
-                               builder.makeLoad(1,
-                                                false,
-                                                curr->offset + 1,
-                                                1,
-                                                builder.makeLocalGet(temp, i32),
-                                                i32),
-                               builder.makeConst(Literal(int32_t(8))))),
+            builder.makeLoad(1,
+                             false,
+                             curr->offset,
+                             1,
+                             builder.makeLocalGet(temp, Type::i32),
+                             Type::i32),
+            builder.makeBinary(
+              ShlInt32,
+              builder.makeLoad(1,
+                               false,
+                               curr->offset + 1,
+                               1,
+                               builder.makeLocalGet(temp, Type::i32),
+                               Type::i32),
+              builder.makeConst(Literal(int32_t(8))))),
           builder.makeBinary(
             OrInt32,
-            builder.makeBinary(ShlInt32,
-                               builder.makeLoad(1,
-                                                false,
-                                                curr->offset + 2,
-                                                1,
-                                                builder.makeLocalGet(temp, i32),
-                                                i32),
-                               builder.makeConst(Literal(int32_t(16)))),
-            builder.makeBinary(ShlInt32,
-                               builder.makeLoad(1,
-                                                false,
-                                                curr->offset + 3,
-                                                1,
-                                                builder.makeLocalGet(temp, i32),
-                                                i32),
-                               builder.makeConst(Literal(int32_t(24))))));
+            builder.makeBinary(
+              ShlInt32,
+              builder.makeLoad(1,
+                               false,
+                               curr->offset + 2,
+                               1,
+                               builder.makeLocalGet(temp, Type::i32),
+                               Type::i32),
+              builder.makeConst(Literal(int32_t(16)))),
+            builder.makeBinary(
+              ShlInt32,
+              builder.makeLoad(1,
+                               false,
+                               curr->offset + 3,
+                               1,
+                               builder.makeLocalGet(temp, Type::i32),
+                               Type::i32),
+              builder.makeConst(Literal(int32_t(24))))));
       } else if (curr->align == 2) {
         ret = builder.makeBinary(
           OrInt32,
-          builder.makeLoad(
-            2, false, curr->offset, 2, builder.makeLocalGet(temp, i32), i32),
-          builder.makeBinary(ShlInt32,
-                             builder.makeLoad(2,
-                                              false,
-                                              curr->offset + 2,
-                                              2,
-                                              builder.makeLocalGet(temp, i32),
-                                              i32),
-                             builder.makeConst(Literal(int32_t(16)))));
+          builder.makeLoad(2,
+                           false,
+                           curr->offset,
+                           2,
+                           builder.makeLocalGet(temp, Type::i32),
+                           Type::i32),
+          builder.makeBinary(
+            ShlInt32,
+            builder.makeLoad(2,
+                             false,
+                             curr->offset + 2,
+                             2,
+                             builder.makeLocalGet(temp, Type::i32),
+                             Type::i32),
+            builder.makeConst(Literal(int32_t(16)))));
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid alignment");
       }
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid size");
     }
     replaceCurrent(
       builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret}));
@@ -117,14 +134,14 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     Builder builder(*getModule());
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
       return;
     }
-    assert(curr->value->type == i32); // TODO: i64, f32, f64
-    auto tempPtr = builder.addVar(getFunction(), i32);
-    auto tempValue = builder.addVar(getFunction(), i32);
+    assert(curr->value->type == Type::i32); // TODO: i64, f32, f64
+    auto tempPtr = builder.addVar(getFunction(), Type::i32);
+    auto tempValue = builder.addVar(getFunction(), Type::i32);
     auto* block =
       builder.makeBlock({builder.makeLocalSet(tempPtr, curr->ptr),
                          builder.makeLocalSet(tempValue, curr->value)});
@@ -133,76 +150,76 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         builder.makeStore(1,
                           curr->offset,
                           1,
-                          builder.makeLocalGet(tempPtr, i32),
-                          builder.makeLocalGet(tempValue, i32),
-                          i32));
+                          builder.makeLocalGet(tempPtr, Type::i32),
+                          builder.makeLocalGet(tempValue, Type::i32),
+                          Type::i32));
       block->list.push_back(builder.makeStore(
         1,
         curr->offset + 1,
         1,
-        builder.makeLocalGet(tempPtr, i32),
+        builder.makeLocalGet(tempPtr, Type::i32),
         builder.makeBinary(ShrUInt32,
-                           builder.makeLocalGet(tempValue, i32),
+                           builder.makeLocalGet(tempValue, Type::i32),
                            builder.makeConst(Literal(int32_t(8)))),
-        i32));
+        Type::i32));
     } else if (curr->bytes == 4) {
       if (curr->align == 1) {
         block->list.push_back(
           builder.makeStore(1,
                             curr->offset,
                             1,
-                            builder.makeLocalGet(tempPtr, i32),
-                            builder.makeLocalGet(tempValue, i32),
-                            i32));
+                            builder.makeLocalGet(tempPtr, Type::i32),
+                            builder.makeLocalGet(tempValue, Type::i32),
+                            Type::i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 1,
           1,
-          builder.makeLocalGet(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, Type::i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, i32),
+                             builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(Literal(int32_t(8)))),
-          i32));
+          Type::i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 2,
           1,
-          builder.makeLocalGet(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, Type::i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, i32),
+                             builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(Literal(int32_t(16)))),
-          i32));
+          Type::i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 3,
           1,
-          builder.makeLocalGet(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, Type::i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, i32),
+                             builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(Literal(int32_t(24)))),
-          i32));
+          Type::i32));
       } else if (curr->align == 2) {
         block->list.push_back(
           builder.makeStore(2,
                             curr->offset,
                             2,
-                            builder.makeLocalGet(tempPtr, i32),
-                            builder.makeLocalGet(tempValue, i32),
-                            i32));
+                            builder.makeLocalGet(tempPtr, Type::i32),
+                            builder.makeLocalGet(tempValue, Type::i32),
+                            Type::i32));
         block->list.push_back(builder.makeStore(
           2,
           curr->offset + 2,
           2,
-          builder.makeLocalGet(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, Type::i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, i32),
+                             builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(Literal(int32_t(16)))),
-          i32));
+          Type::i32));
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid alignment");
       }
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid size");
     }
     block->finalize();
     replaceCurrent(block);

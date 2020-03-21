@@ -38,25 +38,6 @@ struct HashedExpression {
     : expr(other.expr), hash(other.hash) {}
 };
 
-struct ExpressionHasher {
-  HashType operator()(const HashedExpression value) const { return value.hash; }
-};
-
-struct ExpressionComparer {
-  bool operator()(const HashedExpression a, const HashedExpression b) const {
-    if (a.hash != b.hash) {
-      return false;
-    }
-    return ExpressionAnalyzer::equal(a.expr, b.expr);
-  }
-};
-
-template<typename T>
-class HashedExpressionMap
-  : public std::
-      unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
-};
-
 // A pass that hashes all functions
 
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
@@ -82,18 +63,11 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
 
   static HashType hashFunction(Function* func) {
     HashType ret = 0;
-    ret = rehash(ret, (HashType)func->getNumParams());
-    for (auto type : func->params) {
-      ret = rehash(ret, (HashType)type);
-    }
-    ret = rehash(ret, (HashType)func->getNumVars());
+    ret = rehash(ret, (HashType)func->sig.params.getID());
+    ret = rehash(ret, (HashType)func->sig.results.getID());
     for (auto type : func->vars) {
-      ret = rehash(ret, (HashType)type);
+      ret = rehash(ret, (HashType)type.getID());
     }
-    ret = rehash(ret, (HashType)func->result);
-    ret = rehash(ret,
-                 HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type)
-                                          : HashType(0)));
     ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
     return ret;
   }

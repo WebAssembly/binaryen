@@ -294,21 +294,21 @@ struct DAE : public Pass {
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
           if (auto* c = operand->dynCast<Const>()) {
-            if (value.type == none) {
+            if (value.type == Type::none) {
               // This is the first value seen.
               value = c->value;
             } else if (value != c->value) {
               // Not identical, give up
-              value.type = none;
+              value.type = Type::none;
               break;
             }
           } else {
             // Not a constant, give up
-            value.type = none;
+            value.type = Type::none;
             break;
           }
         }
-        if (value.type != none) {
+        if (value.type != Type::none) {
           // Success! We can just apply the constant in the function, which
           // makes the parameter value unused, which lets us remove it later.
           Builder builder(*module);
@@ -341,7 +341,8 @@ struct DAE : public Pass {
           bool canRemove =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, operand).hasSideEffects();
+              return EffectAnalyzer(runner->options, module->features, operand)
+                .hasSideEffects();
             });
           if (canRemove) {
             // Wonderful, nothing stands in our way! Do it.
@@ -362,7 +363,7 @@ struct DAE : public Pass {
     // once to remove a param, once to drop the return value).
     if (changed.empty()) {
       for (auto& func : module->functions) {
-        if (func->result == none) {
+        if (func->sig.results == Type::none) {
           continue;
         }
         auto name = func->name;
@@ -403,15 +404,15 @@ private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
 
   void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
-    // Clear the type, which is no longer accurate.
-    func->type = Name();
     // It's cumbersome to adjust local names - TODO don't clear them?
     Builder::clearLocalNames(func);
     // Remove the parameter from the function. We must add a new local
     // for uses of the parameter, but cannot make it use the same index
     // (in general).
-    auto type = func->getLocalType(i);
-    func->params.erase(func->params.begin() + i);
+    std::vector<Type> params = func->sig.params.expand();
+    auto type = params[i];
+    params.erase(params.begin() + i);
+    func->sig.params = Type(params);
     Index newIndex = Builder::addVar(func, type);
     // Update local operations.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -439,9 +440,7 @@ private:
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
-    // Clear the type, which is no longer accurate.
-    func->type = Name();
-    func->result = none;
+    func->sig.results = Type::none;
     Builder builder(*module);
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
@@ -468,8 +467,8 @@ private:
       Expression** location = iter->second;
       *location = call;
       // Update the call's type.
-      if (call->type != unreachable) {
-        call->type = none;
+      if (call->type != Type::unreachable) {
+        call->type = Type::none;
       }
     }
   }

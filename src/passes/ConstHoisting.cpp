@@ -77,29 +77,31 @@ private:
     }
     // measure the size of the constant
     Index size = 0;
-    switch (value.type) {
-      case i32: {
+    switch (value.type.getSingle()) {
+      case Type::i32: {
         size = getWrittenSize(S32LEB(value.geti32()));
         break;
       }
-      case i64: {
+      case Type::i64: {
         size = getWrittenSize(S64LEB(value.geti64()));
         break;
       }
-      case f32:
-      case f64: {
-        size = getTypeSize(value.type);
+      case Type::f32:
+      case Type::f64: {
+        size = value.type.getByteSize();
         break;
       }
-      case v128:     // v128 not implemented yet
-      case anyref:   // anyref cannot have literals
-      case exnref: { // exnref cannot have literals
+        // not implemented yet
+      case Type::v128:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref: {
         return false;
       }
-      case none:
-      case unreachable: {
-        WASM_UNREACHABLE();
-      }
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use

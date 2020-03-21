@@ -82,10 +82,14 @@ struct DeadCodeElimination
   }
 
   // if a child exists and is unreachable, we can replace ourselves with it
-  bool isDead(Expression* child) { return child && child->type == unreachable; }
+  bool isDead(Expression* child) {
+    return child && child->type == Type::unreachable;
+  }
 
   // a similar check, assumes the child exists
-  bool isUnreachable(Expression* child) { return child->type == unreachable; }
+  bool isUnreachable(Expression* child) {
+    return child->type == Type::unreachable;
+  }
 
   // things that stop control flow
 
@@ -170,7 +174,7 @@ struct DeadCodeElimination
     if (!reachable && list.size() > 1) {
       // to do here: nothing to remove after it)
       for (Index i = 0; i < list.size() - 1; i++) {
-        if (list[i]->type == unreachable) {
+        if (list[i]->type == Type::unreachable) {
           list.resize(i + 1);
           break;
         }
@@ -195,7 +199,7 @@ struct DeadCodeElimination
       reachableBreaks.erase(curr->name);
     }
     if (isUnreachable(curr->body) &&
-        !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
+        !BranchUtils::BranchSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -347,6 +351,12 @@ struct DeadCodeElimination
           DELEGATE(Push);
         case Expression::Id::PopId:
           DELEGATE(Pop);
+        case Expression::Id::RefNullId:
+          DELEGATE(RefNull);
+        case Expression::Id::RefIsNullId:
+          DELEGATE(RefIsNull);
+        case Expression::Id::RefFuncId:
+          DELEGATE(RefFunc);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:
@@ -355,10 +365,14 @@ struct DeadCodeElimination
           DELEGATE(Rethrow);
         case Expression::Id::BrOnExnId:
           DELEGATE(BrOnExn);
+        case Expression::Id::TupleMakeId:
+          DELEGATE(TupleMake);
+        case Expression::Id::TupleExtractId:
+          DELEGATE(TupleExtract);
         case Expression::Id::InvalidId:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
       }
 #undef DELEGATE
       return;
@@ -387,7 +401,7 @@ struct DeadCodeElimination
 
   // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->type == unreachable) {
+    if (toDrop->type == Type::unreachable) {
       return toDrop;
     }
     return Builder(*getModule()).makeDrop(toDrop);

@@ -98,29 +98,31 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base == GLOBAL) {
-        switch (import->type) {
-          case i32:
+      if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
+        switch (import->type.getSingle()) {
+          case Type::i32:
             globals[import->name] = Literal(int32_t(666));
             break;
-          case i64:
+          case Type::i64:
             globals[import->name] = Literal(int64_t(666));
             break;
-          case f32:
+          case Type::f32:
             globals[import->name] = Literal(float(666.6));
             break;
-          case f64:
+          case Type::f64:
             globals[import->name] = Literal(double(666.6));
             break;
-          case v128:
+          case Type::v128:
             assert(false && "v128 not implemented yet");
-          case anyref:
-            assert(false && "anyref not implemented yet");
-          case exnref:
-            assert(false && "exnref not implemented yet");
-          case none:
-          case unreachable:
-            WASM_UNREACHABLE();
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
+            globals[import->name] = Literal::makeNullref();
+            break;
+          case Type::none:
+          case Type::unreachable:
+            WASM_UNREACHABLE("unexpected type");
         }
       }
     });
@@ -132,12 +134,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
-    if (import->module == SPECTEST && import->base == PRINT) {
+  Literals callImport(Function* import, LiteralList& arguments) override {
+    if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
       }
-      return Literal();
+      return {};
     } else if (import->module == ENV && import->base == EXIT) {
       // XXX hack for torture tests
       std::cout << "exit()\n";
@@ -147,10 +149,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literal callTable(Index index,
-                    LiteralList& arguments,
-                    Type result,
-                    ModuleInstance& instance) override {
+  Literals callTable(Index index,
+                     Signature sig,
+                     LiteralList& arguments,
+                     Type results,
+                     ModuleInstance& instance) override {
     if (index >= table.size()) {
       trap("callTable overflow");
     }
@@ -158,15 +161,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (func->params.size() != arguments.size()) {
+    if (sig != func->sig) {
+      trap("callIndirect: function signatures don't match");
+    }
+    const std::vector<Type>& params = func->sig.params.expand();
+    if (params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < func->params.size(); i++) {
-      if (func->params[i] != arguments[i].type) {
+    for (size_t i = 0; i < params.size(); i++) {
+      if (!Type::isSubType(arguments[i].type, params[i])) {
         trap("callIndirect: bad argument type");
       }
     }
-    if (func->result != result) {
+    if (func->sig.results != results) {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {

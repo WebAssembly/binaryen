@@ -179,6 +179,14 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
+  auto isSignedBitwise = [](Ref node) {
+    if (node->isArray() && !node->empty() && node[0] == BINARY) {
+      auto op = node[1];
+      return op == OR || op == AND || op == XOR || op == RSHIFT || op == LSHIFT;
+    }
+    return false;
+  };
+
   auto isUnary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX &&
            node[1] == op;
@@ -275,9 +283,9 @@ static void optimizeJS(Ref ast) {
       // x | 0 going into a bitwise op => skip the | 0
       node[2] = removeOrZero(node[2]);
       node[3] = removeOrZero(node[3]);
-      // x | 0 | 0  =>  x | 0
+      // (x | 0 or similar) | 0  =>  (x | 0 or similar)
       if (isOrZero(node)) {
-        if (isBitwise(node[2])) {
+        if (isSignedBitwise(node[2])) {
           replaceInPlace(node, node[2]);
         }
       }
@@ -565,7 +573,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
-    if (actual->type == none) {
+    if (actual->type == Type::none) {
       body = wasmBuilder.blockify(actual,
                                   wasmBuilder.makeConst(Literal(uint32_t(1))));
     } else {
@@ -575,26 +583,26 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType) {
-      case i32:
+    switch (resType.getSingle()) {
+      case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
 
-      case i64:
+      case Type::i64:
         body = wasmBuilder.makeCall(
           "i64Equal",
           {actual,
-           wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32),
+           wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, Type::i32),
            expected},
-          i32);
+          Type::i32);
         break;
 
-      case f32: {
-        body = wasmBuilder.makeCall("f32Equal", {actual, expected}, i32);
+      case Type::f32: {
+        body = wasmBuilder.makeCall("f32Equal", {actual, expected}, Type::i32);
         break;
       }
-      case f64: {
-        body = wasmBuilder.makeCall("f64Equal", {actual, expected}, i32);
+      case Type::f64: {
+        body = wasmBuilder.makeCall("f64Equal", {actual, expected}, Type::i32);
         break;
       }
 
@@ -623,7 +631,7 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
                                               Name testFuncName,
                                               Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
-  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
+  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, Type::i32);
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
@@ -809,7 +817,7 @@ void AssertionEmitter::emit() {
 int main(int argc, const char* argv[]) {
   Wasm2JSBuilder::Flags flags;
   OptimizationOptions options("wasm2js",
-                              "Transform .wasm/.wast files to asm.js");
+                              "Transform .wasm/.wat files to asm.js");
   options
     .add("--output",
          "-o",
@@ -873,7 +881,7 @@ int main(int argc, const char* argv[]) {
 
   try {
     // If the input filename ends in `.wasm`, then parse it in binary form,
-    // otherwise assume it's a `*.wast` file and go from there.
+    // otherwise assume it's a `*.wat` file and go from there.
     //
     // Note that we're not using the built-in `ModuleReader` which will also do
     // similar logic here because when testing JS files we use the
@@ -882,13 +890,10 @@ int main(int argc, const char* argv[]) {
     // is defined.
     if (binaryInput) {
       ModuleReader reader;
-      reader.setDebug(options.debug);
       reader.read(input, wasm, "");
     } else {
-      auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                              Flags::Text,
-                                              options.debug ? Flags::Debug
-                                                            : Flags::Release));
+      auto input(
+        read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }
@@ -918,9 +923,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
   }
-  Output output(options.extra["output"],
-                Flags::Text,
-                options.debug ? Flags::Debug : Flags::Release);
+  Output output(options.extra["output"], Flags::Text);
   if (!binaryInput && options.extra["asserts"] == "1") {
     AssertionEmitter(*root, *sexprBuilder, output, flags, options).emit();
   } else {

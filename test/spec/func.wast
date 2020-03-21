@@ -30,11 +30,27 @@
 
   (func (result i32) (unreachable))
 
+  (type $sig-1 (func))
+  (type $sig-2 (func (result i32)))
+  (type $sig-3 (func (param $x i32)))
+  (type $sig-4 (func (param i32 f64 i32) (result i32)))
+
+  (func (export "type-use-1") (type $sig-1))
+  (func (export "type-use-2") (type $sig-2) (i32.const 0))
+  (func (export "type-use-3") (type $sig-3))
+  (func (export "type-use-4") (type $sig-4) (i32.const 0))
+  (func (export "type-use-5") (type $sig-2) (result i32) (i32.const 0))
+  (func (export "type-use-6") (type $sig-3) (param i32))
+  (func (export "type-use-7")
+    (type $sig-4) (param i32) (param f64 i32) (result i32) (i32.const 0)
+  )
+
   (func (type $sig))
+  (func (type $forward))  ;; forward reference
 
   (func $complex
     (param i32 f32) (param $x i64) (param) (param i32)
-    (result i32)
+    (result) (result i32) (result)
     (local f32) (local $y i32) (local i64 i32) (local) (local f64 i32)
     (unreachable) (unreachable)
   )
@@ -44,6 +60,7 @@
     (unreachable) (unreachable)
   )
 
+  (type $forward (func))
 
   ;; Typing of locals
 
@@ -97,7 +114,7 @@
   (func (export "value-f64") (result f64) (f64.const 77.77))
   (func (export "value-block-void") (block (call $dummy) (call $dummy)))
   (func (export "value-block-i32") (result i32)
-    (block i32 (call $dummy) (i32.const 77))
+    (block (result i32) (call $dummy) (i32.const 77))
   )
 
   (func (export "return-empty") (return))
@@ -106,7 +123,7 @@
   (func (export "return-f32") (result f32) (return (f32.const 78.7)))
   (func (export "return-f64") (result f64) (return (f64.const 78.78)))
   (func (export "return-block-i32") (result i32)
-    (return (block i32 (call $dummy) (i32.const 77)))
+    (return (block (result i32) (call $dummy) (i32.const 77)))
   )
 
   (func (export "break-empty") (br 0))
@@ -115,7 +132,7 @@
   (func (export "break-f32") (result f32) (br 0 (f32.const 79.9)))
   (func (export "break-f64") (result f64) (br 0 (f64.const 79.79)))
   (func (export "break-block-i32") (result i32)
-    (br 0 (block i32 (call $dummy) (i32.const 77)))
+    (br 0 (block (result i32) (call $dummy) (i32.const 77)))
   )
 
   (func (export "break-br_if-empty") (param i32)
@@ -136,7 +153,9 @@
   )
   (func (export "break-br_table-nested-num") (param i32) (result i32)
     (i32.add
-      (block i32 (br_table 0 1 0 (i32.const 50) (local.get 0)) (i32.const 51))
+      (block (result i32)
+        (br_table 0 1 0 (i32.const 50) (local.get 0)) (i32.const 51)
+      )
       (i32.const 2)
     )
   )
@@ -147,59 +166,20 @@
   (func (export "init-local-i64") (result i64) (local i64) (local.get 0))
   (func (export "init-local-f32") (result f32) (local f32) (local.get 0))
   (func (export "init-local-f64") (result f64) (local f64) (local.get 0))
+)
 
-
-  ;; Desugaring of implicit type signature
-  (func $empty-sig-1)  ;; should be assigned type $sig
-  (func $complex-sig-1 (param f64 i64 f64 i64 f64 i64 f32 i32))
-  (func $empty-sig-2)  ;; should be assigned type $sig
-  (func $complex-sig-2 (param f64 i64 f64 i64 f64 i64 f32 i32))
-  (func $complex-sig-3 (param f64 i64 f64 i64 f64 i64 f32 i32))
-
-  (type $empty-sig-duplicate (func))
-  (type $complex-sig-duplicate (func (param f64 i64 f64 i64 f64 i64 f32 i32)))
-  (table funcref
-    (elem
-      $complex-sig-3 $empty-sig-2 $complex-sig-1 $complex-sig-3 $empty-sig-1
-    )
-  )
-
-  (func (export "signature-explicit-reused")
-    (call_indirect (type $sig) (i32.const 1))
-    (call_indirect (type $sig) (i32.const 4))
-  )
-
-  (func (export "signature-implicit-reused")
-    ;; The implicit index 16 in this test depends on the function and
-    ;; type definitions, and may need adapting if they change.
-    (call_indirect (type 16)
-      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
-      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
-      (i32.const 0)
-    )
-    (call_indirect (type 16)
-      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
-      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
-      (i32.const 2)
-    )
-    (call_indirect (type 16)
-      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
-      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
-      (i32.const 3)
-    )
-  )
-
-  (func (export "signature-explicit-duplicate")
-    (call_indirect (type $empty-sig-duplicate) (i32.const 1))
-  )
-
-  (func (export "signature-implicit-duplicate")
-    (call_indirect (type $complex-sig-duplicate)
-      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
-      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
-      (i32.const 0)
-    )
-  )
+(assert_return (invoke "type-use-1"))
+(assert_return (invoke "type-use-2") (i32.const 0))
+(assert_return (invoke "type-use-3" (i32.const 1)))
+(assert_return
+  (invoke "type-use-4" (i32.const 1) (f64.const 1) (i32.const 1))
+  (i32.const 0)
+)
+(assert_return (invoke "type-use-5") (i32.const 0))
+(assert_return (invoke "type-use-6" (i32.const 1)))
+(assert_return
+  (invoke "type-use-7" (i32.const 1) (f64.const 1) (i32.const 1))
+  (i32.const 0)
 )
 
 (assert_return (invoke "local-first-i32") (i32.const 0))
@@ -303,10 +283,176 @@
 (assert_return (invoke "init-local-f32") (f32.const 0))
 (assert_return (invoke "init-local-f64") (f64.const 0))
 
+
+;; Expansion of inline function types
+
+(module
+  (func $f (result f64) (f64.const 0))  ;; adds implicit type definition
+  (func $g (param i32))                 ;; reuses explicit type definition
+  (type $t (func (param i32)))
+
+  (func $i32->void (type 0))                ;; (param i32)
+  (func $void->f64 (type 1) (f64.const 0))  ;; (result f64)
+  (func $check
+    (call $i32->void (i32.const 0))
+    (drop (call $void->f64))
+  )
+)
+
+(assert_invalid
+  (module
+    (func $f (result f64) (f64.const 0))  ;; adds implicit type definition
+    (func $g (param i32))                 ;; reuses explicit type definition
+    (func $h (result f64) (f64.const 1))  ;; reuses implicit type definition
+    (type $t (func (param i32)))
+
+    (func (type 2))  ;; does not exist
+  )
+  "unknown type"
+)
+
+
+(module
+  (type $sig (func))
+
+  (func $empty-sig-1)  ;; should be assigned type $sig
+  (func $complex-sig-1 (param f64 i64 f64 i64 f64 i64 f32 i32))
+  (func $empty-sig-2)  ;; should be assigned type $sig
+  (func $complex-sig-2 (param f64 i64 f64 i64 f64 i64 f32 i32))
+  (func $complex-sig-3 (param f64 i64 f64 i64 f64 i64 f32 i32))
+  (func $complex-sig-4 (param i64 i64 f64 i64 f64 i64 f32 i32))
+  (func $complex-sig-5 (param i64 i64 f64 i64 f64 i64 f32 i32))
+
+  (type $empty-sig-duplicate (func))
+  (type $complex-sig-duplicate (func (param i64 i64 f64 i64 f64 i64 f32 i32)))
+  (table funcref
+    (elem
+      $complex-sig-3 $empty-sig-2 $complex-sig-1 $complex-sig-3 $empty-sig-1
+      $complex-sig-4 $complex-sig-5
+    )
+  )
+
+  (func (export "signature-explicit-reused")
+    (call_indirect (type $sig) (i32.const 1))
+    (call_indirect (type $sig) (i32.const 4))
+  )
+
+  (func (export "signature-implicit-reused")
+    ;; The implicit index 3 in this test depends on the function and
+    ;; type definitions, and may need adapting if they change.
+    (call_indirect (type 3)
+      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
+      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
+      (i32.const 0)
+    )
+    (call_indirect (type 3)
+      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
+      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
+      (i32.const 2)
+    )
+    (call_indirect (type 3)
+      (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
+      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
+      (i32.const 3)
+    )
+  )
+
+  (func (export "signature-explicit-duplicate")
+    (call_indirect (type $empty-sig-duplicate) (i32.const 1))
+  )
+
+  (func (export "signature-implicit-duplicate")
+    (call_indirect (type $complex-sig-duplicate)
+      (i64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
+      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
+      (i32.const 5)
+    )
+    (call_indirect (type $complex-sig-duplicate)
+      (i64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
+      (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
+      (i32.const 6)
+    )
+  )
+)
+
 (assert_return (invoke "signature-explicit-reused"))
 (assert_return (invoke "signature-implicit-reused"))
 (assert_return (invoke "signature-explicit-duplicate"))
 (assert_return (invoke "signature-implicit-duplicate"))
+
+
+;; Malformed type use
+
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (type $sig) (result i32) (param i32) (i32.const 0))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (param i32) (type $sig) (result i32) (i32.const 0))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (param i32) (result i32) (type $sig) (i32.const 0))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (result i32) (type $sig) (param i32) (i32.const 0))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (result i32) (param i32) (type $sig) (i32.const 0))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(func (result i32) (param i32) (i32.const 0))"
+  )
+  "unexpected token"
+)
+
+(assert_malformed
+  (module quote
+    "(type $sig (func))"
+    "(func (type $sig) (result i32) (i32.const 0))"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (type $sig) (result i32) (i32.const 0))"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(func (type $sig) (param i32) (i32.const 0))"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32 i32) (result i32)))"
+    "(func (type $sig) (param i32) (result i32) (unreachable))"
+  )
+  "inline function type"
+)
 
 
 ;; Invalid typing of locals
@@ -392,33 +538,6 @@
   "type mismatch"
 )
 
-(; TODO(stack): Should these become legal?
-(assert_invalid
-  (module (func $type-value-void-vs-num-after-return (result i32)
-    (return (i32.const 1)) (nop)
-  ))
-  "type mismatch"
-)
-(assert_invalid
-  (module (func $type-value-num-vs-num-after-return (result i32)
-    (return (i32.const 1)) (f32.const 0)
-  ))
-  "type mismatch"
-)
-(assert_invalid
-  (module (func $type-value-void-vs-num-after-break (result i32)
-    (br 0 (i32.const 1)) (nop)
-  ))
-  "type mismatch"
-)
-(assert_invalid
-  (module (func $type-value-num-vs-num-after-break (result i32)
-    (br 0 (i32.const 1)) (f32.const 0)
-  ))
-  "arity mismatch"
-)
-;)
-
 (assert_invalid
   (module (func $type-return-last-empty-vs-num (result i32)
     (return)
@@ -462,14 +581,6 @@
   ))
   "type mismatch"
 )
-(; TODO(stack): Should this become legal?
-(assert_invalid
-  (module (func $type-return-second-num-vs-num (result i32)
-    (return (i32.const 1)) (return (f64.const 1))
-  ))
-  "type mismatch"
-)
-;)
 
 (assert_invalid
   (module (func $type-break-last-void-vs-num (result i32)
@@ -502,15 +613,6 @@
   "type mismatch"
 )
 
-(; TODO(stack): soft failure
-(assert_invalid
-  (module (func $type-break-second-num-vs-num (result i32)
-    (br 0 (i32.const 1)) (br 0 (f64.const 1))
-  ))
-  "type mismatch"
-)
-;)
-
 (assert_invalid
   (module (func $type-break-nested-empty-vs-num (result i32)
     (block (br 1)) (br 0 (i32.const 1))
@@ -530,3 +632,30 @@
   "type mismatch"
 )
 
+
+;; Syntax errors
+
+(assert_malformed
+  (module quote "(func (nop) (local i32))")
+  "unexpected token"
+)
+(assert_malformed
+  (module quote "(func (nop) (param i32))")
+  "unexpected token"
+)
+(assert_malformed
+  (module quote "(func (nop) (result i32))")
+  "unexpected token"
+)
+(assert_malformed
+  (module quote "(func (local i32) (param i32))")
+  "unexpected token"
+)
+(assert_malformed
+  (module quote "(func (local i32) (result i32) (local.get 0))")
+  "unexpected token"
+)
+(assert_malformed
+  (module quote "(func (result i32) (param i32) (local.get 0))")
+  "unexpected token"
+)

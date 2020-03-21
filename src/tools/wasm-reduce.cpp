@@ -462,7 +462,7 @@ struct Reducer
 
   void visitExpression(Expression* curr) {
     // type-based reductions
-    if (curr->type == none) {
+    if (curr->type == Type::none) {
       if (tryToReduceCurrentToNop()) {
         return;
       }
@@ -471,14 +471,14 @@ struct Reducer
         return;
       }
     } else {
-      assert(curr->type == unreachable);
+      assert(curr->type == Type::unreachable);
       if (tryToReduceCurrentToUnreachable()) {
         return;
       }
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
-      if (iff->type == none) {
+      if (iff->type == Type::none) {
         // perhaps we need just the condition?
         if (tryToReplaceCurrent(builder->makeDrop(iff->condition))) {
           return;
@@ -517,7 +517,7 @@ struct Reducer
       // replace a singleton
       auto& list = block->list;
       if (list.size() == 1 &&
-          !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+          !BranchUtils::BranchSeeker::has(block, block->name)) {
         if (tryToReplaceCurrent(block->list[0])) {
           return;
         }
@@ -549,14 +549,14 @@ struct Reducer
       return; // nothing more to do
     } else if (auto* loop = curr->dynCast<Loop>()) {
       if (shouldTryToReduce() &&
-          !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+          !BranchUtils::BranchSeeker::has(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (child->type.isConcrete() && curr->type == none) {
+      if (child->type.isConcrete() && curr->type == Type::none) {
         if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
         }
@@ -566,117 +566,127 @@ struct Reducer
         }
       }
     }
-    // If that didn't work, try to replace with a child + a unary conversion
-    if (curr->type.isConcrete() &&
-        !curr->is<Unary>()) { // but not if it's already unary
+    // If that didn't work, try to replace with a child + a unary conversion,
+    // but not if it's already unary
+    if (curr->type.isSingle() && !curr->is<Unary>()) {
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!child->type.isConcrete()) {
+        if (!child->type.isSingle()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
-        switch (curr->type) {
-          case i32: {
-            switch (child->type) {
-              case i32:
-                WASM_UNREACHABLE();
-              case i64:
+        switch (curr->type.getSingle()) {
+          case Type::i32: {
+            switch (child->type.getSingle()) {
+              case Type::i32:
+                WASM_UNREACHABLE("invalid type");
+              case Type::i64:
                 fixed = builder->makeUnary(WrapInt64, child);
                 break;
-              case f32:
+              case Type::f32:
                 fixed = builder->makeUnary(TruncSFloat32ToInt32, child);
                 break;
-              case f64:
+              case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
-              case v128:
-              case anyref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
-                WASM_UNREACHABLE();
+              case Type::none:
+              case Type::unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case i64: {
-            switch (child->type) {
-              case i32:
+          case Type::i64: {
+            switch (child->type.getSingle()) {
+              case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
-              case i64:
-                WASM_UNREACHABLE();
-              case f32:
+              case Type::i64:
+                WASM_UNREACHABLE("invalid type");
+              case Type::f32:
                 fixed = builder->makeUnary(TruncSFloat32ToInt64, child);
                 break;
-              case f64:
+              case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
-              case v128:
-              case anyref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
-                WASM_UNREACHABLE();
+              case Type::none:
+              case Type::unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case f32: {
-            switch (child->type) {
-              case i32:
+          case Type::f32: {
+            switch (child->type.getSingle()) {
+              case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat32, child);
                 break;
-              case i64:
+              case Type::i64:
                 fixed = builder->makeUnary(ConvertSInt64ToFloat32, child);
                 break;
-              case f32:
-                WASM_UNREACHABLE();
-              case f64:
+              case Type::f32:
+                WASM_UNREACHABLE("unexpected type");
+              case Type::f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
-              case v128:
-              case anyref:
-              case exnref:
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
-                WASM_UNREACHABLE();
+              case Type::none:
+              case Type::unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case f64: {
-            switch (child->type) {
-              case i32:
+          case Type::f64: {
+            switch (child->type.getSingle()) {
+              case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat64, child);
                 break;
-              case i64:
+              case Type::i64:
                 fixed = builder->makeUnary(ConvertSInt64ToFloat64, child);
                 break;
-              case f32:
+              case Type::f32:
                 fixed = builder->makeUnary(PromoteFloat32, child);
                 break;
-              case f64:
-                WASM_UNREACHABLE();
-              case v128:
-              case anyref:
-              case exnref:
+              case Type::f64:
+                WASM_UNREACHABLE("unexpected type");
+              case Type::v128:
+              case Type::funcref:
+              case Type::anyref:
+              case Type::nullref:
+              case Type::exnref:
                 continue; // not implemented yet
-              case none:
-              case unreachable:
-                WASM_UNREACHABLE();
+              case Type::none:
+              case Type::unreachable:
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
-          case v128:
-          case anyref:
-          case exnref:
+          case Type::v128:
+          case Type::funcref:
+          case Type::anyref:
+          case Type::nullref:
+          case Type::exnref:
             continue; // not implemented yet
-          case none:
-          case unreachable:
-            WASM_UNREACHABLE();
+          case Type::none:
+          case Type::unreachable:
+            WASM_UNREACHABLE("unexpected type");
         }
         assert(fixed->type == curr->type);
         if (tryToReplaceCurrent(fixed)) {
@@ -866,17 +876,15 @@ struct Reducer
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcType = func->type;
-        auto funcResult = func->result;
+        auto funcSig = func->sig;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
-          if (!(child->type.isConcrete() || child->type == none)) {
+          if (!(child->type.isConcrete() || child->type == Type::none)) {
             continue; // not something a function can return
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->type = Name();
-          func->result = child->type;
+          func->sig.results = child->type;
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -885,8 +893,7 @@ struct Reducer
             break;
           }
           // Undo.
-          func->type = funcType;
-          func->result = funcResult;
+          func->sig = funcSig;
           func->body = funcBody;
         }
       }
@@ -1002,6 +1009,15 @@ struct Reducer
       return false;
     }
     // try to replace with a trivial value
+    if (curr->type.isRef()) {
+      RefNull* n = builder->makeRefNull();
+      return tryToReplaceCurrent(n);
+    }
+    if (curr->type.isMulti()) {
+      Expression* n =
+        builder->makeConstantExpression(Literal::makeZero(curr->type));
+      return tryToReplaceCurrent(n);
+    }
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) {
       return true;

@@ -5,17 +5,20 @@ from . import utils
 
 
 class FeatureValidationTest(utils.BinaryenTestCase):
-    def check_feature(self, module, error, flag):
+    def check_feature(self, module, error, flag, const_flags=[]):
         p = shared.run_process(shared.WASM_OPT +
-                               ['--mvp-features', '--print', '-o', os.devnull],
+                               ['--mvp-features', '--print', '-o', os.devnull] +
+                               const_flags,
                                input=module, check=False, capture_output=True)
         self.assertIn(error, p.stderr)
-        self.assertIn('Fatal: error in validating input', p.stderr)
+        self.assertIn('Fatal: error validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
-        p = shared.run_process(shared.WASM_OPT +
-                               ['--mvp-features', flag, '--print', '-o',
-                                os.devnull],
-                               input=module, check=False, capture_output=True)
+        p = shared.run_process(
+            shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
+            const_flags + [flag],
+            input=module,
+            check=False,
+            capture_output=True)
         self.assertEqual(p.returncode, 0)
 
     def check_simd(self, module, error):
@@ -28,13 +31,19 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
-        self.check_feature(module, error, '--enable-exception-handling')
+        # Exception handling implies reference types
+        self.check_feature(module, error, '--enable-exception-handling',
+                           ['--enable-reference-types'])
 
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')
 
     def check_reference_types(self, module, error):
         self.check_feature(module, error, '--enable-reference-types')
+
+    def check_multivalue(self, module, error):
+        self.check_feature(module, error, '--enable-multivalue',
+                           ['--enable-exception-handling'])
 
     def test_v128_signature(self):
         module = '''
@@ -190,6 +199,56 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_exception_handling(module, 'Module has events')
 
+    def test_multivalue_import(self):
+        module = '''
+        (module
+         (import "env" "foo" (func $foo (result i32 i64)))
+        )
+        '''
+        self.check_multivalue(module, 'Imported multivalue function ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_function(self):
+        module = '''
+        (module
+         (func $foo (result i32 i64)
+          (tuple.make
+           (i32.const 42)
+           (i64.const 42)
+          )
+         )
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue function results ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_event(self):
+        module = '''
+        (module
+         (event $foo (attr 0) (param i32 i64))
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue event type ' +
+                              '(multivalue is not enabled)')
+
+    def test_multivalue_block(self):
+        module = '''
+        (module
+         (func $foo
+          (drop
+           (block (result i32 i64)
+            (tuple.make
+             (i32.const 42)
+             (i64.const 42)
+            )
+           )
+          )
+         )
+        )
+        '''
+        self.check_multivalue(module, 'Multivalue block type ' +
+                              '(multivalue is not enabled)')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
@@ -270,7 +329,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertIn('all used features should be allowed', p.stderr)
 
     def test_explicit_detect_features(self):
-        self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'],
+        self.check_features('signext_target_feature.wasm', ['simd', 'sign-ext'],
                             opts=['-mvp', '--detect-features', '--enable-simd'])
 
     def test_emit_all_features(self):
@@ -286,12 +345,13 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertEqual(p2.returncode, 0)
         self.assertEqual([
             '--enable-threads',
-            '--enable-bulk-memory',
-            '--enable-exception-handling',
             '--enable-mutable-globals',
             '--enable-nontrapping-float-to-int',
-            '--enable-sign-ext',
             '--enable-simd',
+            '--enable-bulk-memory',
+            '--enable-sign-ext',
+            '--enable-exception-handling',
             '--enable-tail-call',
-            '--enable-reference-types'
+            '--enable-reference-types',
+            '--enable-multivalue'
         ], p2.stdout.split())

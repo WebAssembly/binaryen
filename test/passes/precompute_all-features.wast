@@ -48,6 +48,22 @@
         (i32.const 1)
       )
     )
+    (drop
+     (tuple.make
+      (tuple.extract 0
+       (tuple.make
+        (i32.const 42)
+        (i32.const 0)
+       )
+      )
+      (tuple.extract 1
+       (tuple.make
+        (i64.const 0)
+        (i64.const 42)
+       )
+      )
+     )
+    )
     (loop $in
       (br $in)
     )
@@ -343,5 +359,26 @@
     (i32.const 0)
     (i32.const 12)
    )
+  )
+  (func $tuple-precompute (result i32 i64)
+   (tuple.make
+    (tuple.extract 0
+     (tuple.make
+      (i32.const 42)
+      (i32.const 0)
+     )
+    )
+    (tuple.extract 1
+     (tuple.make
+      (i64.const 0)
+      (i64.const 42)
+     )
+    )
+   )
+  )
+
+  ;; Check if Precompute pass does not crash on reference types
+  (func $reftype-test (result nullref)
+    (ref.null)
   )
 )

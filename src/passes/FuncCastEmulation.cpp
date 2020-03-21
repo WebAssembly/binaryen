@@ -44,42 +44,40 @@ static const int NUM_PARAMS = 16;
 // Converts a value to the ABI type of i64.
 static Expression* toABI(Expression* value, Module* module) {
   Builder builder(*module);
-  switch (value->type) {
-    case i32: {
+  switch (value->type.getSingle()) {
+    case Type::i32: {
       value = builder.makeUnary(ExtendUInt32, value);
       break;
     }
-    case i64: {
+    case Type::i64: {
       // already good
       break;
     }
-    case f32: {
+    case Type::f32: {
       value = builder.makeUnary(ExtendUInt32,
                                 builder.makeUnary(ReinterpretFloat32, value));
       break;
     }
-    case f64: {
+    case Type::f64: {
       value = builder.makeUnary(ReinterpretFloat64, value);
       break;
     }
-    case v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case Type::v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: {
-      assert(false && "anyref cannot be converted to i64");
-      WASM_UNREACHABLE();
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
-    case exnref: {
-      assert(false && "exnref cannot be converted to i64");
-      WASM_UNREACHABLE();
-    }
-    case none: {
+    case Type::none: {
       // the value is none, but we need a value here
-      value = builder.makeSequence(value, LiteralUtils::makeZero(i64, *module));
+      value =
+        builder.makeSequence(value, LiteralUtils::makeZero(Type::i64, *module));
       break;
     }
-    case unreachable: {
+    case Type::unreachable: {
       // can leave it, the call isn't taken anyhow
       break;
     }
@@ -90,40 +88,37 @@ static Expression* toABI(Expression* value, Module* module) {
 // Converts a value from the ABI type of i64 to the expected type
 static Expression* fromABI(Expression* value, Type type, Module* module) {
   Builder builder(*module);
-  switch (type) {
-    case i32: {
+  switch (type.getSingle()) {
+    case Type::i32: {
       value = builder.makeUnary(WrapInt64, value);
       break;
     }
-    case i64: {
+    case Type::i64: {
       // already good
       break;
     }
-    case f32: {
+    case Type::f32: {
       value = builder.makeUnary(ReinterpretInt32,
                                 builder.makeUnary(WrapInt64, value));
       break;
     }
-    case f64: {
+    case Type::f64: {
       value = builder.makeUnary(ReinterpretInt64, value);
       break;
     }
-    case v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+    case Type::v128: {
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case anyref: {
-      assert(false && "anyref cannot be converted from i64");
-      WASM_UNREACHABLE();
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref: {
+      WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
-    case exnref: {
-      assert(false && "exnref cannot be converted from i64");
-      WASM_UNREACHABLE();
-    }
-    case none: {
+    case Type::none: {
       value = builder.makeDrop(value);
     }
-    case unreachable: {
+    case Type::unreachable: {
       // can leave it, the call isn't taken anyhow
       break;
     }
@@ -137,7 +132,7 @@ struct ParallelFuncCastEmulation
 
   Pass* create() override { return new ParallelFuncCastEmulation(ABIType); }
 
-  ParallelFuncCastEmulation(Name ABIType) : ABIType(ABIType) {}
+  ParallelFuncCastEmulation(Signature ABIType) : ABIType(ABIType) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->operands.size() > NUM_PARAMS) {
@@ -149,30 +144,27 @@ struct ParallelFuncCastEmulation
     }
     // Add extra operands as needed.
     while (curr->operands.size() < NUM_PARAMS) {
-      curr->operands.push_back(LiteralUtils::makeZero(i64, *getModule()));
+      curr->operands.push_back(LiteralUtils::makeZero(Type::i64, *getModule()));
     }
     // Set the new types
-    curr->fullType = ABIType;
+    curr->sig = ABIType;
     auto oldType = curr->type;
-    curr->type = i64;
+    curr->type = Type::i64;
     curr->finalize(); // may be unreachable
     // Fix up return value
     replaceCurrent(fromABI(curr, oldType, getModule()));
   }
 
 private:
-  // the name of a type for a call with the right params and return
-  Name ABIType;
+  // The signature of a call with the right params and return
+  Signature ABIType;
 };
 
 struct FuncCastEmulation : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // we just need the one ABI function type for all indirect calls
-    std::string sig = "j";
-    for (Index i = 0; i < NUM_PARAMS; i++) {
-      sig += 'j';
-    }
-    ABIType = ensureFunctionType(sig, module)->name;
+    Signature ABIType(Type(std::vector<Type>(NUM_PARAMS, Type::i64)),
+                      Type::i64);
     // Add a way for JS to call into the table (as our i64 ABI means an i64
     // is returned when there is a return value, which JS engines will fail on),
     // using dynCalls
@@ -197,9 +189,6 @@ struct FuncCastEmulation : public Pass {
   }
 
 private:
-  // the name of a type for a call with the right params and return
-  Name ABIType;
-
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name, Module* module) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
@@ -209,25 +198,24 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    std::vector<Type>& params = func->params;
-    Type type = func->result;
+    const std::vector<Type>& params = func->sig.params.expand();
+    Type type = func->sig.results;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
       callOperands.push_back(
-        fromABI(builder.makeLocalGet(i, i64), params[i], module));
+        fromABI(builder.makeLocalGet(i, Type::i64), params[i], module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
     for (Index i = 0; i < NUM_PARAMS; i++) {
-      thunkParams.push_back(i64);
+      thunkParams.push_back(Type::i64);
     }
-    auto* thunkFunc = builder.makeFunction(thunk,
-                                           std::move(thunkParams),
-                                           i64,
-                                           {}, // no vars
-                                           toABI(call, module));
-    thunkFunc->type = ABIType;
+    auto* thunkFunc =
+      builder.makeFunction(thunk,
+                           Signature(Type(thunkParams), Type::i64),
+                           {}, // no vars
+                           toABI(call, module));
     module->addFunction(thunkFunc);
     return thunk;
   }

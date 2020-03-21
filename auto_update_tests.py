@@ -73,7 +73,7 @@ def update_asm_js_tests():
 
 def update_wasm_opt_tests():
     print('\n[ checking wasm-opt -o notation... ]\n')
-    wast = os.path.join(shared.options.binaryen_test, 'hello_world.wast')
+    wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
     support.run_command(cmd)
     open(wast, 'w').write(open('a.wast').read())
@@ -100,14 +100,17 @@ def update_wasm_opt_tests():
         binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
-        if passname.isdigit():
-            passname = open(os.path.join(shared.options.binaryen_test, 'passes', passname + '.passes')).read().strip()
-        opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
+        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
+        if os.path.exists(passes_file):
+            passname = open(passes_file).read().strip()
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast', '--print']
+            cmd = shared.WASM_OPT + opts + ['split.wast']
+            if 'noprint' not in t:
+                cmd.append('--print')
             actual += support.run_command(cmd)
         with open(os.path.join(shared.options.binaryen_test, 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o:
             o.write(actual)
@@ -197,7 +200,7 @@ def update_example_tests():
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libdir, '-pthread']
         print('build: ', ' '.join(extra))
         if src.endswith('.cpp'):
-            extra += ['-std=c++11']
+            extra += ['-std=c++14']
         print(os.getcwd())
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using rpath
@@ -206,7 +209,7 @@ def update_example_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [os.environ.get('CXX') or 'g++', '-std=c++11'] + cmd
+        cmd = [os.environ.get('CXX') or 'g++', '-std=c++14'] + cmd
         try:
             print('link: ', ' '.join(cmd))
             subprocess.check_call(cmd)
@@ -251,10 +254,8 @@ def update_binaryen_js_tests():
         print(basename)
         f = open('a.js', 'w')
         f.write(open(shared.BINARYEN_JS).read())
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
         test_src = open(s).read()
-        f.write(test_src)
+        f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
         if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
             cmd = [shared.MOZJS or shared.NODEJS, 'a.js']
@@ -274,7 +275,7 @@ def update_ctor_eval_tests():
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
-        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
+        cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wast', '-S', '--ctors', ctors]
         support.run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.out'
@@ -333,10 +334,10 @@ TEST_SUITES = OrderedDict([
     ('wasm-metadce', update_metadce_tests),
     ('wasm-reduce', update_reduce_tests),
     ('spec', update_spec_tests),
-    ('binaryenjs', update_binaryen_js_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binfmt', update_bin_fmt_tests),
+    ('binaryenjs', update_binaryen_js_tests),
 ])
 
 

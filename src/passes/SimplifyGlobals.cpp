@@ -37,6 +37,7 @@
 #include <atomic>
 
 #include "ir/effects.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -106,8 +107,9 @@ struct ConstantGlobalApplier
 
   void visitExpression(Expression* curr) {
     if (auto* set = curr->dynCast<GlobalSet>()) {
-      if (auto* c = set->value->dynCast<Const>()) {
-        currConstantGlobals[set->name] = c->value;
+      if (Properties::isConstantExpression(set->value)) {
+        currConstantGlobals[set->name] =
+          getSingleLiteralFromConstExpression(set->value);
       } else {
         currConstantGlobals.erase(set->name);
       }
@@ -116,7 +118,7 @@ struct ConstantGlobalApplier
       // Check if the global is known to be constant all the time.
       if (constantGlobals->count(get->name)) {
         auto* global = getModule()->getGlobal(get->name);
-        assert(global->init->is<Const>());
+        assert(Properties::isConstantExpression(global->init));
         replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
         replaced = true;
         return;
@@ -125,13 +127,13 @@ struct ConstantGlobalApplier
       auto iter = currConstantGlobals.find(get->name);
       if (iter != currConstantGlobals.end()) {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeConst(iter->second));
+        replaceCurrent(builder.makeConstantExpression(iter->second));
         replaced = true;
       }
       return;
     }
     // Otherwise, invalidate if we need to.
-    EffectAnalyzer effects(getPassOptions());
+    EffectAnalyzer effects(getPassOptions(), getModule()->features);
     effects.visit(curr);
     assert(effects.globalsWritten.empty()); // handled above
     if (effects.calls) {
@@ -249,13 +251,14 @@ struct SimplifyGlobals : public Pass {
     std::map<Name, Literal> constantGlobals;
     for (auto& global : module->globals) {
       if (!global->imported()) {
-        if (auto* c = global->init->dynCast<Const>()) {
-          constantGlobals[global->name] = c->value;
+        if (Properties::isConstantExpression(global->init)) {
+          constantGlobals[global->name] =
+            getSingleLiteralFromConstExpression(global->init);
         } else if (auto* get = global->init->dynCast<GlobalGet>()) {
           auto iter = constantGlobals.find(get->name);
           if (iter != constantGlobals.end()) {
             Builder builder(*module);
-            global->init = builder.makeConst(iter->second);
+            global->init = builder.makeConstantExpression(iter->second);
           }
         }
       }
@@ -268,7 +271,7 @@ struct SimplifyGlobals : public Pass {
     NameSet constantGlobals;
     for (auto& global : module->globals) {
       if (!global->mutable_ && !global->imported() &&
-          global->init->is<Const>()) {
+          Properties::isConstantExpression(global->init)) {
         constantGlobals.insert(global->name);
       }
     }

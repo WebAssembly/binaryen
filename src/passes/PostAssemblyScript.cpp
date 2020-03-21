@@ -88,8 +88,8 @@ struct AliasGraph : LocalGraph {
 // consider a full retain pattern, which must also set a local.
 static bool isRetainCall(Call* expr) {
   // __retain(...)
-  return expr->target == RETAIN && expr->type == i32 &&
-         expr->operands.size() == 1 && expr->operands[0]->type == i32;
+  return expr->target == RETAIN && expr->type == Type::i32 &&
+         expr->operands.size() == 1 && expr->operands[0]->type == Type::i32;
 }
 
 // Tests if a local.set is considered to be a full retain pattern.
@@ -101,6 +101,7 @@ static bool isRetain(LocalSet* expr) {
   return false;
 }
 
+#ifndef NDEBUG
 // Tests if the given location is that of a full retain pattern.
 static bool isRetainLocation(Expression** expr) {
   if (expr != nullptr) {
@@ -110,13 +111,14 @@ static bool isRetainLocation(Expression** expr) {
   }
   return false;
 }
+#endif
 
 // Tests if the given call calls release. Note that this differs from what we
 // consider a full release pattern, which must also get a local.
 static bool isReleaseCall(Call* expr) {
   // __release(...)
-  return expr->target == RELEASE && expr->type == none &&
-         expr->operands.size() == 1 && expr->operands[0]->type == i32;
+  return expr->target == RELEASE && expr->type == Type::none &&
+         expr->operands.size() == 1 && expr->operands[0]->type == Type::i32;
 }
 
 // Tests if the given location is that of a full release pattern. Note that
@@ -136,7 +138,7 @@ static bool isReleaseLocation(Expression** expr) {
 // Tests if the given call calls any allocation function.
 static bool isAllocCall(Call* expr) {
   return (expr->target == ALLOC || expr->target == ALLOCARRAY) &&
-         expr->type == i32;
+         expr->type == Type::i32;
 }
 
 // A pass that eliminates redundant retain and release calls.

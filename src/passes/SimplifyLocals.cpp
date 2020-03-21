@@ -78,8 +78,10 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item, PassOptions& passOptions)
-      : item(item), effects(passOptions, *item) {}
+    SinkableInfo(Expression** item,
+                 PassOptions& passOptions,
+                 FeatureSet features)
+      : item(item), effects(passOptions, features, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -256,7 +258,7 @@ struct SimplifyLocals
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
-        set->setTee(true);
+        set->makeTee(this->getFunction()->getLocalType(set->index));
       }
       // reuse the local.get that is dying
       *found->second.item = curr;
@@ -271,7 +273,7 @@ struct SimplifyLocals
     auto* set = curr->value->dynCast<LocalSet>();
     if (set) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       this->replaceCurrent(set);
     }
   }
@@ -298,7 +300,7 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -384,7 +386,8 @@ struct SimplifyLocals
       }
     }
 
-    EffectAnalyzer effects(self->getPassOptions());
+    FeatureSet features = self->getModule()->features;
+    EffectAnalyzer effects(self->getPassOptions(), features);
     if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
@@ -392,8 +395,8 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(
-        std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
+      self->sinkables.emplace(std::make_pair(
+        index, SinkableInfo(currp, self->getPassOptions(), features)));
     }
 
     if (!allowNesting) {
@@ -421,7 +424,7 @@ struct SimplifyLocals
   void optimizeLoopReturn(Loop* loop) {
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
-    if (loop->type != none) {
+    if (loop->type != Type::none) {
       return;
     }
     if (sinkables.empty()) {
@@ -442,7 +445,7 @@ struct SimplifyLocals
     block->list[block->list.size() - 1] = set->value;
     *item = builder.makeNop();
     block->finalize();
-    assert(block->type != none);
+    assert(block->type != Type::none);
     loop->finalize();
     set->value = loop;
     set->finalize();
@@ -504,6 +507,7 @@ struct SimplifyLocals
     //   )
     //  )
     // so we must check for that.
+    FeatureSet features = this->getModule()->features;
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
@@ -520,8 +524,9 @@ struct SimplifyLocals
             // itself, there is any risk
             Nop nop;
             *breakLocalSetPointer = &nop;
-            EffectAnalyzer condition(this->getPassOptions(), br->condition);
-            EffectAnalyzer value(this->getPassOptions(), set);
+            EffectAnalyzer condition(
+              this->getPassOptions(), features, br->condition);
+            EffectAnalyzer value(this->getPassOptions(), features, set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
@@ -546,7 +551,6 @@ struct SimplifyLocals
     auto* blockLocalSetPointer = sinkables.at(sharedIndex).item;
     auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
-    block->type = value->type;
     ExpressionManipulator::nop(*blockLocalSetPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
@@ -559,7 +563,7 @@ struct SimplifyLocals
       auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
-        set->setTee(true);
+        set->makeTee(this->getFunction()->getLocalType(set->index));
         *breakLocalSetPointer =
           this->getModule()->allocator.template alloc<Nop>();
         // in addition, as this is a conditional br that now has a value, it now
@@ -577,6 +581,7 @@ struct SimplifyLocals
     this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
+    block->finalize();
   }
 
   // optimize local.sets from both sides of an if into a return value
@@ -584,7 +589,7 @@ struct SimplifyLocals
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
-    if (iff->type != none) {
+    if (iff->type != Type::none) {
       return;
     }
     // We now have the sinkables from both sides of the if, and can look
@@ -606,14 +611,16 @@ struct SimplifyLocals
     Sinkables& ifFalse = sinkables;
     Index goodIndex = -1;
     bool found = false;
-    if (iff->ifTrue->type == unreachable) {
-      assert(iff->ifFalse->type != unreachable); // since the if type is none
+    if (iff->ifTrue->type == Type::unreachable) {
+      // since the if type is none
+      assert(iff->ifFalse->type != Type::unreachable);
       if (!ifFalse.empty()) {
         goodIndex = ifFalse.begin()->first;
         found = true;
       }
-    } else if (iff->ifFalse->type == unreachable) {
-      assert(iff->ifTrue->type != unreachable); // since the if type is none
+    } else if (iff->ifFalse->type == Type::unreachable) {
+      // since the if type is none
+      assert(iff->ifTrue->type != Type::unreachable);
       if (!ifTrue.empty()) {
         goodIndex = ifTrue.begin()->first;
         found = true;
@@ -636,7 +643,7 @@ struct SimplifyLocals
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
-    if (iff->ifTrue->type != unreachable) {
+    if (iff->ifTrue->type != Type::unreachable) {
       if (!ifTrueBlock || ifTrueBlock->name.is() ||
           ifTrueBlock->list.size() == 0 ||
           !ifTrueBlock->list.back()->is<Nop>()) {
@@ -645,7 +652,7 @@ struct SimplifyLocals
       }
     }
     auto* ifFalseBlock = iff->ifFalse->dynCast<Block>();
-    if (iff->ifFalse->type != unreachable) {
+    if (iff->ifFalse->type != Type::unreachable) {
       if (!ifFalseBlock || ifFalseBlock->name.is() ||
           ifFalseBlock->list.size() == 0 ||
           !ifFalseBlock->list.back()->is<Nop>()) {
@@ -654,24 +661,24 @@ struct SimplifyLocals
       }
     }
     // all set, go
-    if (iff->ifTrue->type != unreachable) {
+    if (iff->ifTrue->type != Type::unreachable) {
       auto* ifTrueItem = ifTrue.at(goodIndex).item;
       ifTrueBlock->list[ifTrueBlock->list.size() - 1] =
         (*ifTrueItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifTrueItem);
       ifTrueBlock->finalize();
-      assert(ifTrueBlock->type != none);
+      assert(ifTrueBlock->type != Type::none);
     }
-    if (iff->ifFalse->type != unreachable) {
+    if (iff->ifFalse->type != Type::unreachable) {
       auto* ifFalseItem = ifFalse.at(goodIndex).item;
       ifFalseBlock->list[ifFalseBlock->list.size() - 1] =
         (*ifFalseItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifFalseItem);
       ifFalseBlock->finalize();
-      assert(ifFalseBlock->type != none);
+      assert(ifFalseBlock->type != Type::none);
     }
     iff->finalize(); // update type
-    assert(iff->type != none);
+    assert(iff->type != Type::none);
     // finally, create a local.set on the iff itself
     auto* newLocalSet =
       Builder(*this->getModule()).makeLocalSet(goodIndex, iff);
@@ -703,7 +710,7 @@ struct SimplifyLocals
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
     // If this if is unreachable code, we have nothing to do.
-    if (iff->type != none || iff->ifTrue->type != none) {
+    if (iff->type != Type::none || iff->ifTrue->type != Type::none) {
       return;
     }
     // Anything sinkable is good for us.
@@ -726,13 +733,14 @@ struct SimplifyLocals
     ifTrueBlock->list[ifTrueBlock->list.size() - 1] = set->value;
     *item = builder.makeNop();
     ifTrueBlock->finalize();
-    assert(ifTrueBlock->type != none);
+    assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(set->index, set->value->type);
+    iff->ifFalse = builder.makeLocalGet(
+      set->index, this->getFunction()->getLocalType(set->index));
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
-    assert(iff->type != none);
+    assert(iff->type != Type::none);
     // Finally, reuse the local.set on the iff itself.
     set->value = iff;
     set->finalize();
@@ -914,6 +922,7 @@ struct SimplifyLocals
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
+        Function* func = this->getFunction();
         while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
@@ -928,7 +937,8 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
-          } else {
+          } else if (func->getLocalType(curr->index) ==
+                     func->getLocalType(get->index)) {
             // There is a new equivalence now.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
@@ -989,7 +999,9 @@ struct SimplifyLocals
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
+    UnneededSetRemover setRemover(
+      getCounter, func, this->getPassOptions(), this->getModule()->features);
+    setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;
   }

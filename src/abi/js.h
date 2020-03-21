@@ -52,31 +52,29 @@ extern cashew::IString SCRATCH_STORE_F64;
 inline void
 ensureScratchMemoryHelpers(Module* wasm,
                            cashew::IString specific = cashew::IString()) {
-  auto ensureImport =
-    [&](Name name, const std::vector<Type> params, Type result) {
-      if (wasm->getFunctionOrNull(name)) {
-        return;
-      }
-      if (specific.is() && name != specific) {
-        return;
-      }
-      auto func = make_unique<Function>();
-      func->name = name;
-      func->params = params;
-      func->result = result;
-      func->module = ENV;
-      func->base = name;
-      wasm->addFunction(std::move(func));
-    };
+  auto ensureImport = [&](Name name, Type params, Type results) {
+    if (wasm->getFunctionOrNull(name)) {
+      return;
+    }
+    if (specific.is() && name != specific) {
+      return;
+    }
+    auto func = make_unique<Function>();
+    func->name = name;
+    func->sig = Signature(params, results);
+    func->module = ENV;
+    func->base = name;
+    wasm->addFunction(std::move(func));
+  };
 
-  ensureImport(SCRATCH_LOAD_I32, {i32}, i32);
-  ensureImport(SCRATCH_STORE_I32, {i32, i32}, none);
-  ensureImport(SCRATCH_LOAD_I64, {}, i64);
-  ensureImport(SCRATCH_STORE_I64, {i64}, none);
-  ensureImport(SCRATCH_LOAD_F32, {}, f32);
-  ensureImport(SCRATCH_STORE_F32, {f32}, none);
-  ensureImport(SCRATCH_LOAD_F64, {}, f64);
-  ensureImport(SCRATCH_STORE_F64, {f64}, none);
+  ensureImport(SCRATCH_LOAD_I32, {Type::i32}, Type::i32);
+  ensureImport(SCRATCH_STORE_I32, {Type::i32, Type::i32}, Type::none);
+  ensureImport(SCRATCH_LOAD_I64, {}, Type::i64);
+  ensureImport(SCRATCH_STORE_I64, {Type::i64}, Type::none);
+  ensureImport(SCRATCH_LOAD_F32, {}, Type::f32);
+  ensureImport(SCRATCH_STORE_F32, {Type::f32}, Type::none);
+  ensureImport(SCRATCH_LOAD_F64, {}, Type::f64);
+  ensureImport(SCRATCH_STORE_F64, {Type::f64}, Type::none);
 }
 
 inline bool isScratchMemoryHelper(cashew::IString name) {

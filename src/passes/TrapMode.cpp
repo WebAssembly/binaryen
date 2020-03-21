@@ -22,7 +22,6 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/function-type-utils.h"
 #include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
@@ -100,7 +99,7 @@ bool isTruncOpSigned(UnaryOp op) {
 Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   BinaryOp op = curr->op;
   Type type = curr->type;
-  bool isI64 = type == i64;
+  bool isI64 = type == Type::i64;
   Builder builder(wasm);
   Expression* result = builder.makeBinary(
     op, builder.makeLocalGet(0, type), builder.makeLocalGet(1, type));
@@ -125,9 +124,7 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   }
   auto func = new Function;
   func->name = getBinaryFuncName(curr);
-  func->params.push_back(type);
-  func->params.push_back(type);
-  func->result = type;
+  func->sig = Signature({type, type}, type);
   func->body =
     builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
                    builder.makeConst(zeroLit),
@@ -148,7 +145,7 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
   Type type = curr->value->type;
   Type retType = curr->type;
   UnaryOp truncOp = curr->op;
-  bool isF64 = type == f64;
+  bool isF64 = type == Type::f64;
 
   Builder builder(wasm);
 
@@ -183,13 +180,12 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
       makeClampLimitLiterals<uint64_t, double>(iMin, fMin, fMax);
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
 
   auto func = new Function;
   func->name = getUnaryFuncName(curr);
-  func->params.push_back(type);
-  func->result = retType;
+  func->sig = Signature(type, retType);
   func->body = builder.makeUnary(truncOp, builder.makeLocalGet(0, type));
   // too small XXX this is different than asm.js, which does frem. here we
   // clamp, which is much simpler/faster, and similar to native builds
@@ -240,14 +236,12 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer& trappingFunctions) {
     return;
   }
 
-  Module& wasm = trappingFunctions.getModule();
-  auto import = new Function; // f64-to-int = asm2wasm.f64-to-int;
+  // f64-to-int = asm2wasm.f64-to-int;
+  auto import = new Function;
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  auto* functionType = ensureFunctionType("id", &wasm);
-  import->type = functionType->name;
-  FunctionTypeUtils::fillFunction(import, functionType);
+  import->sig = Signature(Type::f64, Type::i32);
   trappingFunctions.addImport(import);
 }
 
@@ -282,12 +276,12 @@ Expression* makeTrappingUnary(Unary* curr,
   // slow ffi If i64, there is no "JS" way to handle this, as no i64s in JS, so
   // always clamp if we don't allow traps asm.js doesn't have unsigned
   // f64-to-int, so just use the signed one.
-  if (curr->type != i64 && mode == TrapMode::JS) {
+  if (curr->type != Type::i64 && mode == TrapMode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we
     // must emulate that
     ensureF64ToI64JSImport(trappingFunctions);
     Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
-    return builder.makeCall(F64_TO_INT, {f64Value}, i32);
+    return builder.makeCall(F64_TO_INT, {f64Value}, Type::i32);
   }
 
   ensureUnaryFunc(curr, wasm, trappingFunctions);

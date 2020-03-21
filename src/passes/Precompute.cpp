@@ -47,7 +47,7 @@ static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 // helpful to avoid platform differences in native stack sizes.
 static const Index MAX_DEPTH = 50;
 
-typedef std::unordered_map<LocalGet*, Literal> GetValues;
+typedef std::unordered_map<LocalGet*, Literals> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed.
@@ -89,9 +89,9 @@ public:
   Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
-      auto value = iter->second;
-      if (value.isConcrete()) {
-        return Flow(value);
+      auto values = iter->second;
+      if (values.isConcrete()) {
+        return Flow(std::move(values));
       }
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
@@ -177,7 +177,7 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (curr->is<Const>() || curr->is<Nop>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations
@@ -188,7 +188,7 @@ struct Precompute
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.value.type.isVector()) {
+    if (flow.getType().hasVector()) {
       return;
     }
     if (flow.breaking()) {
@@ -199,23 +199,24 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          if (flow.value.type != none) {
+          if (flow.values.isConcrete()) {
             // reuse a const value if there is one
-            if (ret->value) {
+            if (ret->value && flow.values.size() == 1) {
               if (auto* value = ret->value->dynCast<Const>()) {
-                value->value = flow.value;
+                value->value = flow.getSingleValue();
                 value->finalize();
                 return;
               }
             }
-            ret->value = Builder(*getModule()).makeConst(flow.value);
+            ret->value = flow.getConstExpression(*getModule());
           } else {
             ret->value = nullptr;
           }
         } else {
           Builder builder(*getModule());
           replaceCurrent(builder.makeReturn(
-            flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+            flow.values.isConcrete() ? flow.getConstExpression(*getModule())
+                                     : nullptr));
         }
         return;
       }
@@ -224,17 +225,17 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        if (flow.value.type != none) {
+        if (flow.values.isConcrete()) {
           // reuse a const value if there is one
-          if (br->value) {
+          if (br->value && flow.values.size() == 1) {
             if (auto* value = br->value->dynCast<Const>()) {
-              value->value = flow.value;
+              value->value = flow.getSingleValue();
               value->finalize();
               br->finalize();
               return;
             }
           }
-          br->value = Builder(*getModule()).makeConst(flow.value);
+          br->value = flow.getConstExpression(*getModule());
         } else {
           br->value = nullptr;
         }
@@ -243,13 +244,14 @@ struct Precompute
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(
           flow.breakTo,
-          flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+          flow.values.isConcrete() ? flow.getConstExpression(*getModule())
+                                   : nullptr));
       }
       return;
     }
     // this was precomputed
-    if (flow.value.type.isConcrete()) {
-      replaceCurrent(Builder(*getModule()).makeConst(flow.value));
+    if (flow.values.isConcrete()) {
+      replaceCurrent(flow.getConstExpression(*getModule()));
       worked = true;
     } else {
       ExpressionManipulator::nop(curr);
@@ -281,14 +283,14 @@ private:
   //  (local.tee (i32.const 1))
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
-  Literal precomputeValue(Expression* curr) {
+  Literals precomputeValue(Expression* curr) {
     // Note that we set replaceExpression to false, as we just care about
     // the value here.
     Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (flow.breaking()) {
-      return Literal();
+      return {};
     }
-    return flow.value;
+    return flow.values;
   }
 
   // Propagates values around. Returns whether we propagated.
@@ -309,7 +311,7 @@ private:
       work.insert(curr);
     }
     // the constant value, or none if not a constant
-    std::unordered_map<LocalSet*, Literal> setValues;
+    std::unordered_map<LocalSet*, Literals> setValues;
     // propagate constant values
     while (!work.empty()) {
       auto iter = work.begin();
@@ -322,55 +324,56 @@ private:
         if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
-        auto value = setValues[set] =
-          precomputeValue(Properties::getFallthrough(set->value));
-        if (value.isConcrete()) {
+        auto values = setValues[set] =
+          precomputeValue(Properties::getFallthrough(
+            set->value, getPassOptions(), getModule()->features));
+        if (values.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
         }
       } else {
         auto* get = curr->cast<LocalGet>();
-        if (getValues[get].isConcrete()) {
+        if (getValues[get].size() >= 1) {
           continue; // already known constant
         }
         // for this get to have constant value, all sets must agree
-        Literal value;
+        Literals values;
         bool first = true;
         for (auto* set : localGraph.getSetses[get]) {
-          Literal curr;
+          Literals curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
               curr = Literal::makeZero(getFunction()->getLocalType(get->index));
             } else {
               // it's a param, so it's hopeless
-              value = Literal();
+              values = {};
               break;
             }
           } else {
             curr = setValues[set];
           }
-          if (curr.isNull()) {
+          if (curr.isNone()) {
             // not a constant, give up
-            value = Literal();
+            values = {};
             break;
           }
           // we found a concrete value. compare with the current one
           if (first) {
-            value = curr; // this is the first
+            values = curr; // this is the first
             first = false;
           } else {
-            if (value != curr) {
+            if (values != curr) {
               // not the same, give up
-              value = Literal();
+              values = {};
               break;
             }
           }
         }
         // we may have found a value
-        if (value.isConcrete()) {
+        if (values.isConcrete()) {
           // we did!
-          getValues[get] = value;
+          getValues[get] = values;
           for (auto* set : localGraph.getInfluences[get]) {
             work.insert(set);
           }

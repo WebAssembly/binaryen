@@ -40,8 +40,6 @@ FUZZ_OPTS = []
 
 INPUT_SIZE_LIMIT = 150 * 1024
 
-LOG_LIMIT = 125
-
 
 # utilities
 
@@ -59,12 +57,12 @@ def random_size():
 
 
 def run(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.check_output(cmd)
 
 
 def run_unchecked(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
 
 
@@ -228,7 +226,7 @@ class CompareVMs(TestCaseHandler):
                 break
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
@@ -294,7 +292,7 @@ class Wasm2JS(TestCaseHandler):
         return out
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
 
 
 class Asyncify(TestCaseHandler):
@@ -339,7 +337,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types']])
 
 
 # The global list of all test case handlers
@@ -358,7 +356,9 @@ def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
 
-    run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('a.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -429,7 +429,9 @@ def test_one(random_input, opts):
                 print('')
 
     # created a second wasm for handlers that want to look at pairs.
-    run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('b.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)
@@ -496,6 +498,7 @@ opt_choices = [
     ["--reorder-functions"],
     ["--reorder-locals"],
     ["--flatten", "--rereloop"],
+    ["--roundtrip"],
     ["--rse"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
@@ -536,7 +539,7 @@ if not NANS:
 # possible feature options that are sometimes passed to the tools. this
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
-POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wast'), '-all']).replace('--enable', '--disable').strip().split('\n')
+POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wat'), '-all']).replace('--enable', '--disable').strip().split('\n')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':

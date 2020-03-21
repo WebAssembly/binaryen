@@ -54,9 +54,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   //  * The result may be used or unused.
   //  * The type may or may not matter (a drop can drop anything, for example).
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
+    FeatureSet features = getModule()->features;
     auto type = curr->type;
     // An unreachable node must not be changed.
-    if (type == unreachable) {
+    if (type == Type::unreachable) {
       return curr;
     }
     // We iterate on possible replacements. If a replacement changes the type,
@@ -79,9 +80,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           return curr; // not always needed, but handled in visitLoop()
         case Expression::Id::DropId:
           return curr; // not always needed, but handled in visitDrop()
+        case Expression::Id::TryId:
+          return curr; // not always needed, but handled in visitTry()
 
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
+        case Expression::Id::BrOnExnId:
         case Expression::Id::CallId:
         case Expression::Id::CallIndirectId:
         case Expression::Id::LocalSetId:
@@ -97,8 +101,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // side effects (the load itself may trap, if we are not ignoring such
           // things)
           auto* load = curr->cast<Load>();
-          if (!resultUsed &&
-              !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
+          if (!resultUsed && !EffectAnalyzer(getPassOptions(), features, curr)
+                                .hasSideEffects()) {
             if (!typeMatters || load->ptr->type == type) {
               return load->ptr;
             }
@@ -124,12 +128,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // side effects, as well as the node itself, as some unaries and
           // binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
-            EffectAnalyzer tester(getPassOptions());
+            EffectAnalyzer tester(getPassOptions(), features);
             tester.visitUnary(unary);
             if (tester.hasSideEffects()) {
               return curr;
             }
-            if (EffectAnalyzer(getPassOptions(), unary->value)
+            if (EffectAnalyzer(getPassOptions(), features, unary->value)
                   .hasSideEffects()) {
               curr = unary->value;
               continue;
@@ -137,14 +141,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
-            EffectAnalyzer tester(getPassOptions());
+            EffectAnalyzer tester(getPassOptions(), features);
             tester.visitBinary(binary);
             if (tester.hasSideEffects()) {
               return curr;
             }
-            if (EffectAnalyzer(getPassOptions(), binary->left)
+            if (EffectAnalyzer(getPassOptions(), features, binary->left)
                   .hasSideEffects()) {
-              if (EffectAnalyzer(getPassOptions(), binary->right)
+              if (EffectAnalyzer(getPassOptions(), features, binary->right)
                     .hasSideEffects()) {
                 return curr; // leave them
               } else {
@@ -152,7 +156,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                 continue;
               }
             } else {
-              if (EffectAnalyzer(getPassOptions(), binary->right)
+              if (EffectAnalyzer(getPassOptions(), features, binary->right)
                     .hasSideEffects()) {
                 curr = binary->right;
                 continue;
@@ -164,13 +168,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             // TODO: if two have side effects, we could replace the select with
             // say an add?
             auto* select = curr->cast<Select>();
-            if (EffectAnalyzer(getPassOptions(), select->ifTrue)
+            if (EffectAnalyzer(getPassOptions(), features, select->ifTrue)
                   .hasSideEffects()) {
-              if (EffectAnalyzer(getPassOptions(), select->ifFalse)
+              if (EffectAnalyzer(getPassOptions(), features, select->ifFalse)
                     .hasSideEffects()) {
                 return curr; // leave them
               } else {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   return curr; // leave them
                 } else {
@@ -179,9 +184,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                 }
               }
             } else {
-              if (EffectAnalyzer(getPassOptions(), select->ifFalse)
+              if (EffectAnalyzer(getPassOptions(), features, select->ifFalse)
                     .hasSideEffects()) {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   return curr; // leave them
                 } else {
@@ -189,7 +195,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                   continue;
                 }
               } else {
-                if (EffectAnalyzer(getPassOptions(), select->condition)
+                if (EffectAnalyzer(
+                      getPassOptions(), features, select->condition)
                       .hasSideEffects()) {
                   curr = select->condition;
                   continue;
@@ -226,7 +233,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // example, code-folding can merge out identical zeros at the end of
           // if arms).
           optimized = LiteralUtils::makeZero(child->type, *getModule());
-        } else if (child->type == unreachable) {
+        } else if (child->type == Type::unreachable) {
           // Don't try to optimize out an unreachable child (dce can do that
           // properly).
           optimized = child;
@@ -245,7 +252,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           list[z] = nullptr;
         }
         // if this is unreachable, the rest is dead code
-        if (list[z - skip]->type == unreachable && z < size - 1) {
+        if (list[z - skip]->type == Type::unreachable && z < size - 1) {
           for (Index i = z - skip + 1; i < list.size(); i++) {
             auto* remove = list[i];
             if (remove) {
@@ -292,7 +299,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
     // if the condition is unreachable, just return it
-    if (curr->condition->type == unreachable) {
+    if (curr->condition->type == Type::unreachable) {
       typeUpdater.noteRecursiveRemoval(curr->ifTrue);
       if (curr->ifFalse) {
         typeUpdater.noteRecursiveRemoval(curr->ifFalse);
@@ -346,7 +353,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // a drop of a tee is a set
     if (auto* set = curr->value->dynCast<LocalSet>()) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       replaceCurrent(set);
       return;
     }
@@ -364,17 +371,16 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           bool canPop = true;
           if (block->name.is()) {
             BranchUtils::BranchSeeker seeker(block->name);
-            seeker.named = true;
             Expression* temp = block;
             seeker.walk(temp);
-            if (seeker.found && seeker.valueType != none) {
+            if (seeker.found && seeker.valueType != Type::none) {
               canPop = false;
             }
           }
           if (canPop) {
             block->list.back() = last;
             block->list.pop_back();
-            block->type = none;
+            block->type = Type::none;
             // we don't need the drop anymore, let's see what we have left in
             // the block
             if (block->list.size() > 1) {
@@ -395,30 +401,42 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable && iff->ifFalse->type.isConcrete()) {
+      if (iff->ifTrue->type == Type::unreachable &&
+          iff->ifFalse->type.isConcrete()) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
-        iff->type = none;
+        iff->type = Type::none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable &&
+      } else if (iff->ifFalse->type == Type::unreachable &&
                  iff->ifTrue->type.isConcrete()) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
-        iff->type = none;
+        iff->type = Type::none;
         replaceCurrent(iff);
       }
     }
   }
 
+  void visitTry(Try* curr) {
+    // If try's body does not throw, the whole try-catch can be replaced with
+    // the try's body.
+    if (!EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+           .throws) {
+      replaceCurrent(curr->body);
+    }
+  }
+
   void visitFunction(Function* curr) {
-    auto* optimized = optimize(curr->body, curr->result != none, true);
+    auto* optimized =
+      optimize(curr->body, curr->sig.results != Type::none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->result == none &&
-        !EffectAnalyzer(getPassOptions(), curr->body).hasSideEffects()) {
+    if (curr->sig.results == Type::none &&
+        !EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+           .hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
   }

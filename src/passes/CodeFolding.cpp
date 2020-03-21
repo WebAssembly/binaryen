@@ -59,6 +59,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -154,6 +155,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     unoptimizables.insert(curr->default_);
   }
 
+  void visitBrOnExn(BrOnExn* curr) { unoptimizables.insert(curr->name); }
+
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
     if (!controlFlowStack.empty()) {
@@ -201,7 +204,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     // see if there is a fallthrough
     bool hasFallthrough = true;
     for (auto* child : curr->list) {
-      if (child->type == unreachable) {
+      if (child->type == Type::unreachable) {
         hasFallthrough = false;
       }
     }
@@ -299,6 +302,14 @@ private:
                             std::back_inserter(intersection));
       if (intersection.size() > 0) {
         // anything exiting that is in all targets is something bad
+        return false;
+      }
+      // Currently pop instructions are only used for exnref.pop, which is a
+      // pseudo instruction following a catch. We check if the current
+      // expression has a pop child. This can be overly conservative, because
+      // this can also exclude whole try-catches that contain a pop within them.
+      if (getModule()->features.hasExceptionHandling() &&
+          !FindAll<Pop>(item).list.empty()) {
         return false;
       }
     }
@@ -569,7 +580,9 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(), newItem)
+                                if (EffectAnalyzer(getPassOptions(),
+                                                   getModule()->features,
+                                                   newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }
@@ -685,12 +698,12 @@ private:
     auto* old = getFunction()->body;
     auto* inner = builder.makeBlock();
     inner->name = innerName;
-    if (old->type == unreachable) {
+    if (old->type == Type::unreachable) {
       // the old body is not flowed out of anyhow, so just put it there
       inner->list.push_back(old);
     } else {
       // otherwise, we must not flow out to the merged code
-      if (old->type == none) {
+      if (old->type == Type::none) {
         inner->list.push_back(old);
         inner->list.push_back(builder.makeReturn());
       } else {
@@ -703,7 +716,7 @@ private:
         if (toplevel) {
           toplevel->finalize();
         }
-        if (old->type != unreachable) {
+        if (old->type != Type::unreachable) {
           inner->list.push_back(builder.makeReturn(old));
         } else {
           inner->list.push_back(old);
@@ -718,7 +731,7 @@ private:
       mergeable.pop_back();
     }
     // ensure the replacement has the same type, so the outside is not surprised
-    outer->finalize(getFunction()->result);
+    outer->finalize(getFunction()->sig.results);
     getFunction()->body = outer;
     return true;
   }

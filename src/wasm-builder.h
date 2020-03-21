@@ -27,7 +27,7 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
-  NameType() : name(nullptr), type(none) {}
+  NameType() : name(nullptr), type(Type::none) {}
   NameType(Name name, Type type) : name(name), type(type) {}
 };
 
@@ -43,15 +43,13 @@ public:
   // make* functions, other globals
 
   Function* makeFunction(Name name,
-                         std::vector<Type>&& params,
-                         Type resultType,
+                         Signature sig,
                          std::vector<Type>&& vars,
                          Expression* body = nullptr) {
     auto* func = new Function;
     func->name = name;
-    func->result = resultType;
+    func->sig = sig;
     func->body = body;
-    func->params.swap(params);
     func->vars.swap(vars);
     return func;
   }
@@ -63,14 +61,15 @@ public:
                          Expression* body = nullptr) {
     auto* func = new Function;
     func->name = name;
-    func->result = resultType;
     func->body = body;
+    std::vector<Type> paramVec;
     for (auto& param : params) {
-      func->params.push_back(param.type);
+      paramVec.push_back(param.type);
       Index index = func->localNames.size();
       func->localIndices[param.name] = index;
       func->localNames[index] = param.name;
     }
+    func->sig = Signature(Type(paramVec), resultType);
     for (auto& var : vars) {
       func->vars.push_back(var.type);
       Index index = func->localNames.size();
@@ -109,6 +108,12 @@ public:
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
     ret->finalize();
+    return ret;
+  }
+  Block* makeBlock(const std::vector<Expression*>& items, Type type) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize(type);
     return ret;
   }
   Block* makeBlock(const ExpressionList& items) {
@@ -165,6 +170,13 @@ public:
     ret->finalize();
     return ret;
   }
+  Loop* makeLoop(Name name, Expression* body, Type type) {
+    auto* ret = allocator.alloc<Loop>();
+    ret->name = name;
+    ret->body = body;
+    ret->finalize(type);
+    return ret;
+  }
   Break* makeBreak(Name name,
                    Expression* value = nullptr,
                    Expression* condition = nullptr) {
@@ -210,27 +222,19 @@ public:
     call->finalize();
     return call;
   }
-  CallIndirect* makeCallIndirect(FunctionType* type,
-                                 Expression* target,
+  CallIndirect* makeCallIndirect(Expression* target,
                                  const std::vector<Expression*>& args,
-                                 bool isReturn = false) {
-    return makeCallIndirect(type->name, target, args, type->result, isReturn);
-  }
-  CallIndirect* makeCallIndirect(Name fullType,
-                                 Expression* target,
-                                 const std::vector<Expression*>& args,
-                                 Type type,
+                                 Signature sig,
                                  bool isReturn = false) {
     auto* call = allocator.alloc<CallIndirect>();
-    call->fullType = fullType;
-    call->type = type;
+    call->sig = sig;
+    call->type = sig.results;
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;
     call->finalize();
     return call;
   }
-  // FunctionType
   LocalGet* makeLocalGet(Index index, Type type) {
     auto* ret = allocator.alloc<LocalGet>();
     ret->index = index;
@@ -241,14 +245,15 @@ public:
     auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
+    ret->makeSet();
     ret->finalize();
     return ret;
   }
-  LocalSet* makeLocalTee(Index index, Expression* value) {
+  LocalSet* makeLocalTee(Index index, Expression* value, Type type) {
     auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
-    ret->setTee(true);
+    ret->makeTee(type);
     return ret;
   }
   GlobalGet* makeGlobalGet(Name name, Type type) {
@@ -467,6 +472,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
+    assert(value.type.isNumber());
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
@@ -496,6 +502,17 @@ public:
     ret->finalize();
     return ret;
   }
+  Select* makeSelect(Expression* condition,
+                     Expression* ifTrue,
+                     Expression* ifFalse,
+                     Type type) {
+    auto* ret = allocator.alloc<Select>();
+    ret->condition = condition;
+    ret->ifTrue = ifTrue;
+    ret->ifFalse = ifFalse;
+    ret->finalize(type);
+    return ret;
+  }
   Return* makeReturn(Expression* value = nullptr) {
     auto* ret = allocator.alloc<Return>();
     ret->value = value;
@@ -507,6 +524,23 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  RefNull* makeRefNull() {
+    auto* ret = allocator.alloc<RefNull>();
+    ret->finalize();
+    return ret;
+  }
+  RefIsNull* makeRefIsNull(Expression* value) {
+    auto* ret = allocator.alloc<RefIsNull>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  RefFunc* makeRefFunc(Name func) {
+    auto* ret = allocator.alloc<RefFunc>();
+    ret->func = func;
     ret->finalize();
     return ret;
   }
@@ -567,6 +601,19 @@ public:
     ret->finalize();
     return ret;
   }
+  template<typename ListType> TupleMake* makeTupleMake(ListType&& operands) {
+    auto* ret = allocator.alloc<TupleMake>();
+    ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  TupleExtract* makeTupleExtract(Expression* tuple, Index index) {
+    auto* ret = allocator.alloc<TupleExtract>();
+    ret->tuple = tuple;
+    ret->index = index;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 
@@ -577,14 +624,46 @@ public:
     return ret;
   }
 
+  // Make a constant expression. This might be a wasm Const, or something
+  // else of constant value like ref.null.
+  Expression* makeConstantExpression(Literal value) {
+    switch (value.type.getSingle()) {
+      case Type::nullref:
+        return makeRefNull();
+      case Type::funcref:
+        if (value.getFunc()[0] != 0) {
+          return makeRefFunc(value.getFunc());
+        }
+        return makeRefNull();
+      default:
+        assert(value.type.isNumber());
+        return makeConst(value);
+    }
+  }
+
+  Expression* makeConstantExpression(Literals values) {
+    assert(values.size() > 0);
+    if (values.size() == 1) {
+      return makeConstantExpression(values[0]);
+    } else {
+      std::vector<Expression*> consts;
+      for (auto value : values) {
+        consts.push_back(makeConstantExpression(value));
+      }
+      return makeTupleMake(consts);
+    }
+  }
+
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 
   static Index addParam(Function* func, Name name, Type type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
-    assert(func->localIndices.size() == func->params.size());
+    assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    func->params.push_back(type);
+    std::vector<Type> params = func->sig.params.expand();
+    params.push_back(type);
+    func->sig.params = Type(params);
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
@@ -613,7 +692,7 @@ public:
   }
 
   static void clearLocals(Function* func) {
-    func->params.clear();
+    func->sig.params = Type::none;
     func->vars.clear();
     clearLocalNames(func);
   }
@@ -669,6 +748,13 @@ public:
     return block;
   }
 
+  Block* makeSequence(Expression* left, Expression* right, Type type) {
+    auto* block = makeBlock(left);
+    block->list.push_back(right);
+    block->finalize(type);
+    return block;
+  }
+
   // Grab a slice out of a block, replacing it with nops, and returning
   // either another block with the contents (if more than 1) or a single
   // expression
@@ -713,37 +799,39 @@ public:
   // minimal contents. as a replacement, this may reuse the
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
+    if (curr->type.isMulti()) {
+      return makeConstantExpression(Literal::makeZero(curr->type));
+    }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type) {
-      case i32:
+    switch (curr->type.getSingle()) {
+      case Type::i32:
         value = Literal(int32_t(0));
         break;
-      case i64:
+      case Type::i64:
         value = Literal(int64_t(0));
         break;
-      case f32:
+      case Type::f32:
         value = Literal(float(0));
         break;
-      case f64:
+      case Type::f64:
         value = Literal(double(0));
         break;
-      case v128: {
+      case Type::v128: {
         std::array<uint8_t, 16> bytes;
         bytes.fill(0);
         value = Literal(bytes.data());
         break;
       }
-      case anyref:
-        // TODO Implement and return nullref
-        assert(false && "anyref not implemented yet");
-      case exnref:
-        // TODO Implement and return nullref
-        assert(false && "exnref not implemented yet");
-      case none:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+        return ExpressionManipulator::refNull(curr);
+      case Type::none:
         return ExpressionManipulator::nop(curr);
-      case unreachable:
-        return ExpressionManipulator::convert<T, Unreachable>(curr);
+      case Type::unreachable:
+        return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);
   }

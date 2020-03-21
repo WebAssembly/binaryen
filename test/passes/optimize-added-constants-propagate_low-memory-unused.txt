@@ -1,9 +1,9 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 1 1)
- (func $consts (; 0 ;) (type $FUNCSIG$v)
+ (func $consts (; 0 ;)
   (drop
    (i32.load
     (i32.const 0)
@@ -59,7 +59,7 @@
    (i32.const 1)
   )
  )
- (func $offsets (; 1 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $offsets (; 1 ;) (param $x i32)
   (drop
    (i32.load offset=1
     (local.get $x)
@@ -97,7 +97,7 @@
    )
   )
  )
- (func $load-off-2 (; 2 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $load-off-2 (; 2 ;) (param $0 i32) (result i32)
   (i32.store
    (i32.const 6)
    (local.get $0)
@@ -168,7 +168,7 @@
    (local.get $0)
   )
  )
- (func $offset-constant (; 3 ;) (type $FUNCSIG$v)
+ (func $offset-constant (; 3 ;)
   (drop
    (i32.load
     (i32.const 10)
@@ -205,7 +205,7 @@
    )
   )
  )
- (func $offset-propagate-param (; 4 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $offset-propagate-param (; 4 ;) (param $x i32)
   (local $y i32)
   (nop)
   (drop
@@ -214,7 +214,7 @@
    )
   )
  )
- (func $offset-propagate (; 5 ;) (type $FUNCSIG$v)
+ (func $offset-propagate (; 5 ;)
   (local $x i32)
   (local $y i32)
   (nop)
@@ -224,7 +224,7 @@
    )
   )
  )
- (func $offset-propagate2 (; 6 ;) (type $FUNCSIG$v)
+ (func $offset-propagate2 (; 6 ;)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -242,7 +242,7 @@
    )
   )
  )
- (func $offset-propagate3 (; 7 ;) (type $FUNCSIG$v)
+ (func $offset-propagate3 (; 7 ;)
   (local $x i32)
   (local $y i32)
   (nop)
@@ -252,7 +252,7 @@
    )
   )
  )
- (func $offset-propagate4 (; 8 ;) (type $FUNCSIG$v)
+ (func $offset-propagate4 (; 8 ;)
   (local $x i32)
   (local $y i32)
   (local.set $y
@@ -265,7 +265,7 @@
    )
   )
  )
- (func $offset-propagate5 (; 9 ;) (type $FUNCSIG$vi) (param $z i32)
+ (func $offset-propagate5 (; 9 ;) (param $z i32)
   (local $x i32)
   (local $y i32)
   (local $3 i32)
@@ -287,7 +287,7 @@
    )
   )
  )
- (func $offset-propagate6 (; 10 ;) (type $FUNCSIG$vi) (param $z i32)
+ (func $offset-propagate6 (; 10 ;) (param $z i32)
   (local $x i32)
   (local $y i32)
   (local $3 i32)
@@ -309,7 +309,7 @@
    )
   )
  )
- (func $offset-propagate7 (; 11 ;) (type $FUNCSIG$vi) (param $z i32)
+ (func $offset-propagate7 (; 11 ;) (param $z i32)
   (local $x i32)
   (local $y i32)
   (local.set $y
@@ -336,7 +336,7 @@
    )
   )
  )
- (func $offset-realistic (; 12 ;) (type $FUNCSIG$vi) (param $ptr i32)
+ (func $offset-realistic (; 12 ;) (param $ptr i32)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -375,7 +375,7 @@
    )
   )
  )
- (func $multiadd (; 13 ;) (type $FUNCSIG$vi) (param $sp i32)
+ (func $multiadd (; 13 ;) (param $sp i32)
   (local $$vararg_buffer i32)
   (local $$vararg_ptr1 i32)
   (nop)
@@ -385,7 +385,7 @@
    (i32.const 1)
   )
  )
- (func $multiadd-extraUse (; 14 ;) (type $FUNCSIG$vi) (param $sp i32)
+ (func $multiadd-extraUse (; 14 ;) (param $sp i32)
   (local $$vararg_buffer i32)
   (local $$vararg_ptr1 i32)
   (local.set $$vararg_buffer

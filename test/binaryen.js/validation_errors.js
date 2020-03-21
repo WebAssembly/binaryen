@@ -1,10 +1,9 @@
 (function() {
-  var mod = new Binaryen.Module();
-  var funcType = mod.addFunctionType("v", Binaryen.void, []);
-  var func = mod.addFunction("test", funcType, [],
+  var mod = new binaryen.Module();
+  var func = mod.addFunction("test", binaryen.none, binaryen.none, [],
     mod.block("", [
       mod.drop(
-        mod.global.get("missing", Binaryen.i32)
+        mod.global.get("missing", binaryen.i32)
       )
     ])
   );
@@ -13,16 +12,14 @@
 })();
 
 (function() {
-  var mod = new Binaryen.Module();
-  var funcType = mod.addFunctionType("v", Binaryen.void, []);
-  var func = mod.addFunction("test", funcType, [],
+  var mod = new binaryen.Module();
+  var func = mod.addFunction("test", binaryen.none, binaryen.none, [],
     mod.block("", [
       mod.drop(
-        mod.local.get(0, Binaryen.i32)
+        mod.local.get(0, binaryen.i32)
       )
     ])
   );
   mod.addFunctionExport("test", "test", func);
   console.log(mod.validate())
 })();
-

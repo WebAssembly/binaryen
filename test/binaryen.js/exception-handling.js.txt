@@ -1,7 +1,8 @@
 (module
- (type $v (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
- (func $test (; 0 ;) (type $v)
+ (func $test (; 0 ;)
   (local $0 exnref)
   (try
    (throw $e
@@ -25,7 +26,7 @@
  )
 )
 
-getExpressionInfo(throw) = {"id":41,"type":1,"event":"e"}
-getExpressionInfo(br_on_exn) = {"id":43,"type":8,"name":"l","event":"e"}
-getExpressionInfo(rethrow) = {"id":42,"type":1}
-getExpressionInfo(try) = {"id":40,"type":0}
+getExpressionInfo(throw) = {"id":44,"type":1,"event":"e"}
+getExpressionInfo(br_on_exn) = {"id":46,"type":10,"name":"l","event":"e"}
+getExpressionInfo(rethrow) = {"id":45,"type":1}
+getExpressionInfo(try) = {"id":43,"type":0}

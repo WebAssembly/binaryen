@@ -16,6 +16,7 @@
 
 #include "support/command-line.h"
 #include "config.h"
+#include "support/debug.h"
 
 using namespace wasm;
 
@@ -57,7 +58,7 @@ Options::Options(const std::string& command, const std::string& description)
       "Output version information and exit",
       Arguments::Zero,
       [command](Options*, const std::string&) {
-        std::cout << command << " " << BINARYEN_VERSION_INFO << "\n";
+        std::cout << command << " version " << PROJECT_VERSION << "\n";
         exit(0);
       });
   add("--help",
@@ -91,8 +92,11 @@ Options::Options(const std::string& command, const std::string& description)
   add("--debug",
       "-d",
       "Print debug information to stderr",
-      Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { debug = true; });
+      Arguments::Optional,
+      [&](Options* o, const std::string& arguments) {
+        debug = true;
+        setDebugEnabled(arguments.c_str());
+      });
 }
 
 Options::~Options() {}

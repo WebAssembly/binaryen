@@ -111,6 +111,8 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
+  std::vector<Signature> signatures;
+  std::unordered_map<std::string, size_t> signatureIndices;
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
@@ -141,8 +143,8 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
-  Name getFunctionTypeName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
@@ -159,7 +161,9 @@ private:
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
   Type stringToLaneType(const char* str);
-  bool isType(cashew::IString str) { return stringToType(str, true) != none; }
+  bool isType(cashew::IString str) {
+    return stringToType(str, true) != Type::none;
+  }
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
@@ -223,30 +227,30 @@ private:
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
+  Expression* makeRefNull(Element& s);
+  Expression* makeRefIsNull(Element& s);
+  Expression* makeRefFunc(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeCatch(Element& s, Type type);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
   Expression* makeBrOnExn(Element& s);
+  Expression* makeTupleMake(Element& s);
+  Expression* makeTupleExtract(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
-  Type parseResult(Element& s);
-  FunctionType* parseTypeRef(Element& s);
+  std::vector<Type> parseResults(Element& s);
+  Signature parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      FunctionType*& functionType,
-                      std::vector<NameType>& namedParams,
-                      Type& result);
-  size_t parseTypeUse(Element& s,
-                      size_t startPos,
-                      FunctionType*& functionType,
-                      std::vector<Type>& params,
-                      Type& result);
-  size_t parseTypeUse(Element& s, size_t startPos, FunctionType*& functionType);
+                      Signature& functionSignature,
+                      std::vector<NameType>& namedParams);
+  size_t
+  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

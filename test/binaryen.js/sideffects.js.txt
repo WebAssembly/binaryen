@@ -1,0 +1,13 @@
+SideEffects.None=0
+SideEffects.Branches=1
+SideEffects.Calls=2
+SideEffects.ReadsLocal=4
+SideEffects.WritesLocal=8
+SideEffects.ReadsGlobal=16
+SideEffects.WritesGlobal=32
+SideEffects.ReadsMemory=64
+SideEffects.WritesMemory=128
+SideEffects.ImplicitTrap=256
+SideEffects.IsAtomic=512
+SideEffects.Throws=1024
+SideEffects.Any=2047

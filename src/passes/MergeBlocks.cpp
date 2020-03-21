@@ -101,7 +101,8 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
         brIfs++;
       }
       // if the value has side effects, we can't remove it
-      if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
+      if (EffectAnalyzer(passOptions, getModule()->features, curr->value)
+            .hasSideEffects()) {
         foundProblem = true;
       }
     }
@@ -148,7 +149,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
     if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
       auto* value = curr->value;
-      if (value->type == unreachable) {
+      if (value->type == Type::unreachable) {
         // the break isn't even reached
         replaceCurrent(value);
         return;
@@ -172,7 +173,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
 
 static bool hasUnreachableChild(Block* block) {
   for (auto* test : block->list) {
-    if (test->type == unreachable) {
+    if (test->type == Type::unreachable) {
       return true;
     }
   }
@@ -184,7 +185,7 @@ static bool hasDeadCode(Block* block) {
   auto& list = block->list;
   auto size = list.size();
   for (size_t i = 1; i < size; i++) {
-    if (list[i - 1]->type == unreachable) {
+    if (list[i - 1]->type == Type::unreachable) {
       return true;
     }
   }
@@ -224,6 +225,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
               Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us
               ProblemFinder finder(passOptions);
+              finder.setModule(module);
               finder.origin = childBlock->name;
               finder.walk(expression);
               if (finder.found()) {
@@ -287,7 +289,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -300,7 +302,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = loop->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = 0;
             keepEnd = std::max(Index(j + 1), keepEnd);
@@ -418,17 +420,18 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     if (!child) {
       return outer;
     }
+    FeatureSet features = getModule()->features;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure
       // no problems there
-      EffectAnalyzer childEffects(getPassOptions(), child);
+      EffectAnalyzer childEffects(getPassOptions(), features, child);
       if (dependency1 && *dependency1 &&
-          EffectAnalyzer(getPassOptions(), *dependency1)
+          EffectAnalyzer(getPassOptions(), features, *dependency1)
             .invalidates(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
-          EffectAnalyzer(getPassOptions(), *dependency2)
+          EffectAnalyzer(getPassOptions(), features, *dependency2)
             .invalidates(childEffects)) {
         return outer;
       }
@@ -437,13 +440,13 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       if (!block->name.is() && block->list.size() >= 2) {
         // if we move around unreachable code, type changes could occur. avoid
         // that, as anyhow it means we should have run dce before getting here
-        if (curr->type == none && hasUnreachableChild(block)) {
+        if (curr->type == Type::none && hasUnreachableChild(block)) {
           // moving the block to the outside would replace a none with an
           // unreachable
           return outer;
         }
         auto* back = block->list.back();
-        if (back->type == unreachable) {
+        if (back->type == Type::unreachable) {
           // curr is not reachable, dce could remove it; don't try anything
           // fancy here
           return outer;
@@ -495,16 +498,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
                        Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
+    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, first).hasSideEffects()) {
       return;
     }
     outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, second).hasSideEffects()) {
       return;
     }
     outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, third).hasSideEffects()) {
       return;
     }
     optimize(curr, third, outer);
@@ -529,7 +533,8 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+      if (EffectAnalyzer(
+            getPassOptions(), getModule()->features, curr->operands[i])
             .hasSideEffects()) {
         return;
       }
@@ -541,15 +546,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitCall(Call* curr) { handleCall(curr); }
 
   void visitCallIndirect(CallIndirect* curr) {
+    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), features, curr->operands[i])
             .hasSideEffects()) {
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, curr->target)
+          .hasSideEffects()) {
       return;
     }
     optimize(curr, curr->target, outer);

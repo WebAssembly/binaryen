@@ -35,19 +35,20 @@ namespace wasm {
 // not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
-                              PassOptions& options) {
+                              PassOptions& options,
+                              FeatureSet features) {
   // if the if isn't even reached, this is all dead code anyhow
-  if (ifCondition->type == unreachable) {
+  if (ifCondition->type == Type::unreachable) {
     return false;
   }
   if (!brValue) {
     return true;
   }
-  EffectAnalyzer value(options, brValue);
+  EffectAnalyzer value(options, features, brValue);
   if (value.hasSideEffects()) {
     return false;
   }
-  return !EffectAnalyzer(options, ifCondition).invalidates(value);
+  return !EffectAnalyzer(options, features, ifCondition).invalidates(value);
 }
 
 // Check if it is not worth it to run code unconditionally. This
@@ -104,7 +105,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       flows.push_back(currp);
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
-      if (iff->condition->type == unreachable) {
+      if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         self->stopFlow();
         return;
@@ -118,7 +119,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // there is no way to emit a proper type for one arm being
         // none and the other flowing a value; and there is no way
         // to flow a value from a none.
-        if (iff->ifTrue->type == none || iff->ifFalse->type == none) {
+        if (iff->ifTrue->type == Type::none ||
+            iff->ifFalse->type == Type::none) {
           self->removeValueFlow(ifTrueFlows);
           self->stopValueFlow();
         }
@@ -166,7 +168,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // invalid to represent as such.
       auto size = list.size();
       for (Index i = 0; i < size; i++) {
-        if (i != size - 1 && list[i]->type == unreachable) {
+        if (i != size - 1 && list[i]->type == Type::unreachable) {
           // No value flows out of this block.
           self->stopValueFlow();
           break;
@@ -283,28 +285,31 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         // great, we are in that case, optimize
         Builder builder(*getModule());
-        auto temp = builder.addVar(getFunction(), i32);
+        auto temp = builder.addVar(getFunction(), Type::i32);
         Expression* z;
         replaceCurrent(
           z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition),
-            builder.makeIf(builder.makeBinary(EqInt32,
-                                              builder.makeLocalGet(temp, i32),
-                                              builder.makeConst(Literal(int32_t(
-                                                curr->targets.size() - 1)))),
-                           builder.makeBreak(curr->targets.back()),
-                           builder.makeBreak(curr->default_)),
+            builder.makeLocalTee(temp, curr->condition, Type::i32),
+            builder.makeIf(
+              builder.makeBinary(
+                EqInt32,
+                builder.makeLocalGet(temp, Type::i32),
+                builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))),
+              builder.makeBreak(curr->targets.back()),
+              builder.makeBreak(curr->default_)),
             builder.makeBreak(curr->targets.front())));
       }
     }
   }
 
   void visitIf(If* curr) {
+    FeatureSet features = getModule()->features;
     if (!curr->ifFalse) {
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
-        if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
+        if (canTurnIfIntoBrIf(
+              curr->condition, br->value, getPassOptions(), features)) {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
@@ -316,16 +321,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // zero (also 3 bytes). The size is unchanged, but the select may
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
+            // Multivalue selects are not supported
+            if (br->value && br->value->type.isMulti()) {
+              return;
+            }
             // If running the br's condition unconditionally is too expensive,
             // give up.
-            auto* zero = LiteralUtils::makeZero(i32, *getModule());
+            auto* zero = LiteralUtils::makeZero(Type::i32, *getModule());
             if (tooCostlyToRunUnconditionally(
                   getPassOptions(), br->condition, zero)) {
               return;
             }
             // Of course we can't do this if the br's condition has side
             // effects, as we would then execute those unconditionally.
-            if (EffectAnalyzer(getPassOptions(), br->condition)
+            if (EffectAnalyzer(getPassOptions(), features, br->condition)
                   .hasSideEffects()) {
               return;
             }
@@ -353,7 +362,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     auto* iff = (*currp)->dynCast<If>();
 
     if (iff) {
-      if (iff->condition->type == unreachable) {
+      if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         return;
       }
@@ -424,7 +433,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!iff->ifFalse) {
           // we need the ifTrue to break, so it cannot reach the code we want to
           // move
-          if (iff->ifTrue->type == unreachable) {
+          if (iff->ifTrue->type == Type::unreachable) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
             iff->finalize();
             block->finalize();
@@ -468,13 +477,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return block;
           };
 
-          if (iff->ifTrue->type == unreachable) {
+          if (iff->ifTrue->type == Type::unreachable) {
             iff->ifFalse = blockifyMerge(
               iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
-          } else if (iff->ifFalse->type == unreachable) {
+          } else if (iff->ifFalse->type == Type::unreachable) {
             iff->ifTrue = blockifyMerge(
               iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
@@ -504,8 +513,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //  (b) this br_if is the only branch to that block (so the block
             //      will vanish)
             if (brIf->name == block->name &&
-                BranchUtils::BranchSeeker::countNamed(block, block->name) ==
-                  1) {
+                BranchUtils::BranchSeeker::count(block, block->name) == 1) {
               // note that we could drop the last element here, it is a br we
               // know for sure is removable, but telling stealSlice to steal all
               // to the end is more efficient, it can just truncate.
@@ -520,7 +528,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         return false;
       }
       // if there is control flow, we must stop looking
-      if (EffectAnalyzer(getPassOptions(), curr).branches) {
+      if (EffectAnalyzer(getPassOptions(), getModule()->features, curr)
+            .transfersControlFlow()) {
         return false;
       }
       if (i == 0) {
@@ -566,16 +575,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             worked = true;
           } else if (auto* iff = curr->list[0]->dynCast<If>()) {
             // The label can't be used in the condition.
-            if (BranchUtils::BranchSeeker::countNamed(iff->condition,
-                                                      curr->name) == 0) {
+            if (BranchUtils::BranchSeeker::count(iff->condition, curr->name) ==
+                0) {
               // We can move the block into either arm, if there are no uses in
               // the other.
               Expression** target = nullptr;
-              if (!iff->ifFalse || BranchUtils::BranchSeeker::countNamed(
+              if (!iff->ifFalse || BranchUtils::BranchSeeker::count(
                                      iff->ifFalse, curr->name) == 0) {
                 target = &iff->ifTrue;
-              } else if (BranchUtils::BranchSeeker::countNamed(
-                           iff->ifTrue, curr->name) == 0) {
+              } else if (BranchUtils::BranchSeeker::count(iff->ifTrue,
+                                                          curr->name) == 0) {
                 target = &iff->ifFalse;
               }
               if (target) {
@@ -743,6 +752,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         //   the if is dead
         // * note that we do this at the end, because un-conditionalizing can
         //   interfere with optimizeLoop()ing.
+        FeatureSet features = getModule()->features;
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
@@ -754,7 +764,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition &&
               canTurnIfIntoBrIf(
-                iff->condition, ifTrueBreak->value, passOptions)) {
+                iff->condition, ifTrueBreak->value, passOptions, features)) {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
@@ -767,7 +777,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
           if (ifFalseBreak && !ifFalseBreak->condition &&
               canTurnIfIntoBrIf(
-                iff->condition, ifFalseBreak->value, passOptions)) {
+                iff->condition, ifFalseBreak->value, passOptions, features)) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
@@ -782,7 +792,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* br1 = list[i]->dynCast<Break>();
             // avoid unreachable brs, as they are dead code anyhow, and after
             // merging them the outer scope could need type changes
-            if (!br1 || !br1->condition || br1->type == unreachable) {
+            if (!br1 || !br1->condition || br1->type == Type::unreachable) {
               continue;
             }
             assert(!br1->value);
@@ -793,10 +803,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             assert(!br2->value); // same target as previous, which has no value
             // a br_if and then a br[_if] with the same target right after it
             if (br2->condition) {
-              if (shrink && br2->type != unreachable) {
+              if (shrink && br2->type != Type::unreachable) {
                 // Join adjacent br_ifs to the same target, making one br_if
                 // with a "selectified" condition that executes both.
-                if (!EffectAnalyzer(passOptions, br2->condition)
+                if (!EffectAnalyzer(passOptions, features, br2->condition)
                        .hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
@@ -873,8 +883,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // type is unreachable that means it is not actually reached, which we
           // can ignore.
           if (br && br->condition && br->name == curr->name &&
-              br->type != unreachable) {
-            if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
+              br->type != Type::unreachable) {
+            if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
@@ -887,8 +897,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 // If the items we move around have side effects, we can't do
                 // this.
                 // TODO: we could use a select, in some cases..?
-                if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
-                    !EffectAnalyzer(passOptions, br->condition)
+                FeatureSet features = getModule()->features;
+                if (!EffectAnalyzer(passOptions, features, br->value)
+                       .hasSideEffects() &&
+                    !EffectAnalyzer(passOptions, features, br->condition)
                        .hasSideEffects()) {
                   ExpressionManipulator::nop(list[0]);
                   Builder builder(*getModule());
@@ -910,8 +922,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse || !iff->ifTrue->type.isConcrete() ||
-            !iff->ifFalse->type.isConcrete()) {
+        if (!iff->ifFalse || !iff->ifTrue->type.isSingle() ||
+            !iff->ifFalse->type.isSingle()) {
           return nullptr;
         }
         // This is always helpful for code size, but can be a tradeoff with
@@ -922,11 +934,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         // Check if side effects allow this.
-        EffectAnalyzer condition(passOptions, iff->condition);
+        FeatureSet features = getModule()->features;
+        EffectAnalyzer condition(passOptions, features, iff->condition);
         if (!condition.hasSideEffects()) {
-          EffectAnalyzer ifTrue(passOptions, iff->ifTrue);
+          EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
           if (!ifTrue.hasSideEffects()) {
-            EffectAnalyzer ifFalse(passOptions, iff->ifFalse);
+            EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
             if (!ifFalse.hasSideEffects()) {
               return Builder(*getModule())
                 .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
@@ -978,7 +991,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         auto tryToOptimize =
           [&](Expression* one, Expression* two, bool flipCondition) {
-            if (one->type == unreachable && two->type != unreachable) {
+            if (one->type == Type::unreachable &&
+                two->type != Type::unreachable) {
               if (auto* br = one->dynCast<Break>()) {
                 if (ExpressionAnalyzer::isSimple(br)) {
                   // Wonderful, do it!
@@ -1075,7 +1089,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         iff->finalize();
         Expression* replacement = iff;
         if (tee) {
-          set->setTee(false);
+          set->makeSet();
           // We need a block too.
           replacement = builder.makeSequence(iff,
                                              get // reuse the get
@@ -1131,7 +1145,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br->condition || br->value) {
             return nullptr;
           }
-          if (br->type != none) {
+          if (br->type != Type::none) {
             // no value, so can be unreachable or none. ignore unreachable ones,
             // dce will clean it up
             return nullptr;
@@ -1182,7 +1196,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
-          if (EffectAnalyzer(passOptions, conditionValue).hasSideEffects()) {
+          if (EffectAnalyzer(passOptions, getModule()->features, conditionValue)
+                .hasSideEffects()) {
             start++;
             continue;
           }

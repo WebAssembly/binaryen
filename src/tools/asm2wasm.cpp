@@ -199,10 +199,8 @@ int main(int argc, const char* argv[]) {
   // debug info is disabled if a map file is not specified with wasm binary
   pre.debugInfo =
     options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
-  auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                          Flags::Text,
-                                          options.debug ? Flags::Debug
-                                                        : Flags::Release));
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
   char* start = pre.process(input.data());
 
   if (options.debug) {
@@ -224,13 +222,12 @@ int main(int argc, const char* argv[]) {
   const auto& memInit = options.extra.find("mem init");
   if (memInit != options.extra.end()) {
     auto filename = memInit->second.c_str();
-    auto data(read_file<std::vector<char>>(
-      filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
+    auto data(read_file<std::vector<char>>(filename, Flags::Binary));
     // create the memory segment
     Expression* init;
     const auto& memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, i32);
+      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, Type::i32);
     } else {
       init = Builder(wasm).makeConst(
         Literal(int32_t(atoi(memBase->second.c_str()))));
@@ -251,15 +248,6 @@ int main(int argc, const char* argv[]) {
                            options.runningDefaultOptimizationPasses(),
                            wasmOnly);
   asm2wasm.processAsm(asmjs);
-
-  // finalize the imported mem init
-  if (memInit != options.extra.end()) {
-    if (options.runningDefaultOptimizationPasses()) {
-      PassRunner runner(&wasm);
-      runner.add("memory-packing");
-      runner.run();
-    }
-  }
 
   // Set the max memory size, if requested
   const auto& memMax = options.extra.find("mem max");
@@ -293,7 +281,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << "emitting..." << std::endl;
   }
   ModuleWriter writer;
-  writer.setDebug(options.debug);
   writer.setDebugInfo(options.passOptions.debugInfo);
   writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);

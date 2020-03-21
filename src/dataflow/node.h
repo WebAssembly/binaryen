@@ -163,9 +163,9 @@ struct Node {
       case Zext:
         return getValue(0)->getWasmType();
       case Bad:
-        return unreachable;
+        return wasm::Type::unreachable;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid node type");
     }
   }
 

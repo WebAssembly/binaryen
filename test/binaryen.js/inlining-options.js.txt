@@ -1,0 +1,28 @@
+// beginning a Binaryen API trace
+#include <math.h>
+#include <map>
+#include "binaryen-c.h"
+int main() {
+  std::map<size_t, BinaryenExpressionRef> expressions;
+  std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenEventRef> events;
+  std::map<size_t, BinaryenExportRef> exports;
+  std::map<size_t, RelooperBlockRef> relooperBlocks;
+  BinaryenModuleRef the_module = NULL;
+  RelooperRef the_relooper = NULL;
+  BinaryenGetAlwaysInlineMaxSize();
+// alwaysInlineMaxSize=2
+  BinaryenSetAlwaysInlineMaxSize(11);
+  BinaryenGetAlwaysInlineMaxSize();
+  BinaryenGetFlexibleInlineMaxSize();
+// flexibleInlineMaxSize=20
+  BinaryenSetFlexibleInlineMaxSize(22);
+  BinaryenGetFlexibleInlineMaxSize();
+  BinaryenGetOneCallerInlineMaxSize();
+// oneCallerInlineMaxSize=15
+  BinaryenSetOneCallerInlineMaxSize(33);
+  BinaryenGetOneCallerInlineMaxSize();
+  return 0;
+}
+// ending a Binaryen API trace

@@ -35,15 +35,16 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
 
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
-      if (curr->value->type == unreachable) {
+      if (curr->value->type == Type::unreachable) {
         // we don't reach the tee, just remove it
         replaceCurrent(curr->value);
       } else {
         // a normal tee. replace with set and get
         Builder builder(*getModule());
-        replaceCurrent(builder.makeSequence(
-          curr, builder.makeLocalGet(curr->index, curr->value->type)));
-        curr->setTee(false);
+        LocalGet* get = builder.makeLocalGet(
+          curr->index, getFunction()->getLocalType(curr->index));
+        replaceCurrent(builder.makeSequence(curr, get));
+        curr->makeSet();
       }
     }
   }

@@ -29,6 +29,7 @@
 #include "shell-interface.h"
 #include "spec-wrapper.h"
 #include "support/command-line.h"
+#include "support/debug.h"
 #include "support/file.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
@@ -37,10 +38,12 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
+#define DEBUG_TYPE "opt"
+
 using namespace wasm;
 
 // runs a command and returns its output TODO: portability, return code checking
-std::string runCommand(std::string command) {
+static std::string runCommand(std::string command) {
 #ifdef __linux__
   std::string output;
   const int MAX_BUFFER = 1024;
@@ -54,6 +57,15 @@ std::string runCommand(std::string command) {
 #else
   Fatal() << "TODO: portability for wasm-opt runCommand";
 #endif
+}
+
+static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
+  for (auto& pass : passes) {
+    if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
+      return true;
+    }
+  }
+  return false;
 }
 
 //
@@ -203,25 +215,37 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
 
-  if (options.debug) {
-    std::cerr << "reading...\n";
-  }
+  BYN_TRACE("reading...\n");
+
+  auto exitOnInvalidWasm = [&](const char* message) {
+    // If the user asked to print the module, print it even if invalid,
+    // as otherwise there is no way to print the broken module (the pass
+    // to print would not be reached).
+    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
+        options.passes.end()) {
+      WasmPrinter::printModule(&wasm);
+    }
+    Fatal() << message;
+  };
 
   if (!translateToFuzz) {
     ModuleReader reader;
-    reader.setDebug(options.debug);
+    // Enable DWARF parsing if we were asked for debug info, and were not
+    // asked to remove it.
+    reader.setDWARF(options.passOptions.debugInfo &&
+                    !willRemoveDebugInfo(options.passes));
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing input";
+      Fatal() << "error parsing wasm";
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing wasm source map";
+      Fatal() << "error parsing wasm source map";
     } catch (std::bad_alloc&) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+      Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
     }
 
@@ -229,8 +253,7 @@ int main(int argc, const char* argv[]) {
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
-        Fatal() << "error in validating input";
+        exitOnInvalidWasm("error validating input");
       }
     }
   } else {
@@ -247,8 +270,7 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
-        std::cerr << "translate-to-fuzz must always generate a valid module";
-        abort();
+        Fatal() << "error after translate-to-fuzz";
       }
     }
   }
@@ -282,12 +304,8 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug) {
-      std::cerr << "writing binary before opts, for extra fuzz command..."
-                << std::endl;
-    }
+    BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
     ModuleWriter writer;
-    writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
     writer.write(wasm, options.extra["output"]);
@@ -299,21 +317,20 @@ int main(int argc, const char* argv[]) {
   Module other;
 
   if (fuzzExecAfter && fuzzBinary) {
-    BufferWithRandomAccess buffer(false);
+    BufferWithRandomAccess buffer;
     // write the binary
-    WasmBinaryWriter writer(&wasm, buffer, false);
+    WasmBinaryWriter writer(&wasm, buffer);
     writer.write();
     // read the binary
     auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(other, input, false);
+    WasmBinaryBuilder parser(other, input);
     parser.read();
     options.applyFeatures(other);
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(other);
       if (!valid) {
-        WasmPrinter::printModule(&other);
+        Fatal() << "fuzz-binary must always generate a valid module";
       }
-      assert(valid);
     }
     curr = &other;
   }
@@ -323,17 +340,14 @@ int main(int argc, const char* argv[]) {
       std::cerr << "warning: no passes specified, not doing any work\n";
     }
   } else {
-    if (options.debug) {
-      std::cerr << "running passes...\n";
-    }
+    BYN_TRACE("running passes...\n");
     auto runPasses = [&]() {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
         bool valid = WasmValidator().validate(*curr);
         if (!valid) {
-          WasmPrinter::printModule(&*curr);
+          exitOnInvalidWasm("error after opts");
         }
-        assert(valid);
       }
     };
     runPasses();
@@ -348,10 +362,7 @@ int main(int argc, const char* argv[]) {
       };
       auto lastSize = getSize();
       while (1) {
-        if (options.debug) {
-          std::cerr << "running iteration for convergence (" << lastSize
-                    << ")...\n";
-        }
+        BYN_TRACE("running iteration for convergence (" << lastSize << ")..\n");
         runPasses();
         auto currSize = getSize();
         if (currSize >= lastSize) {
@@ -373,11 +384,8 @@ int main(int argc, const char* argv[]) {
     return 0;
   }
 
-  if (options.debug) {
-    std::cerr << "writing..." << std::endl;
-  }
+  BYN_TRACE("writing...\n");
   ModuleWriter writer;
-  writer.setDebug(options.debug);
   writer.setBinary(emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo);
   if (outputSourceMapFilename.size()) {

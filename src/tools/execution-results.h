@@ -32,7 +32,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, LiteralList& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
@@ -42,7 +42,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       }
       std::cout << "]\n";
     }
-    return Literal();
+    return {};
   }
 };
 
@@ -51,7 +51,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
-  std::map<Name, Literal> results;
+  std::map<Name, Literals> results;
   Loggings loggings;
 
   // get results of execution
@@ -67,13 +67,22 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->result != none) {
+        if (func->sig.results != Type::none) {
           // this has a result
-          results[exp->name] = run(func, wasm, instance);
+          Literals ret = run(func, wasm, instance);
+          // We cannot compare funcrefs by name because function names can
+          // change (after duplicate function elimination or roundtripping)
+          // while the function contents are still the same
+          for (Literal& val : ret) {
+            if (val.type == Type::funcref) {
+              val = Literal::makeFuncref(Name("funcref"));
+            }
+          }
+          results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
-          if (results[exp->name].type.isConcrete()) {
+          if (ret.size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => "
-                      << results[exp->name] << '\n';
+                      << ret << '\n';
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
@@ -100,35 +109,35 @@ struct ExecutionResults {
       auto name = iter.first;
       if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
-        abort();
+        return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name] != other.results[name]) {
         std::cout << "not identical!\n";
-        abort();
+        return false;
       }
     }
     if (loggings != other.loggings) {
       std::cout << "logging not identical!\n";
-      abort();
+      return false;
     }
     return true;
   }
 
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
-  Literal run(Function* func, Module& wasm) {
+  Literals run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
-      return Literal();
+      return {};
     }
   }
 
-  Literal run(Function* func, Module& wasm, ModuleInstance& instance) {
+  Literals run(Function* func, Module& wasm, ModuleInstance& instance) {
     try {
       LiteralList arguments;
       // init hang support, if present
@@ -136,13 +145,13 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (Type param : func->params) {
+      for (Type param : func->sig.params.expand()) {
         // zeros in arguments TODO: more?
-        arguments.push_back(Literal(param));
+        arguments.push_back(Literal::makeSingleZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      return Literal();
+      return {};
     }
   }
 };

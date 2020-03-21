@@ -157,7 +157,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return ret;
   }
 
-  Node* makeZero(wasm::Type type) { return makeConst(Literal::makeZero(type)); }
+  Node* makeZero(wasm::Type type) {
+    return makeConst(Literal::makeSingleZero(type));
+  }
 
   // Add a new node to our list of owned nodes.
   Node* addNode(Node* node) {
@@ -198,6 +200,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Visiting.
 
   Node* visitExpression(Expression* curr) {
+    // TODO Exception handling instruction support
+
     // Control flow and get/set etc. are special. Aside from them, we just need
     // to do something very generic.
     if (auto* block = curr->dynCast<Block>()) {
@@ -278,6 +282,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return &bad;
   }
   Node* doVisitLoop(Loop* curr) {
+    auto* oldParent = parent;
+    expressionParentMap[curr] = oldParent;
+    parent = curr;
     // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
     // our traces to represent a value that differs across loop iterations.
     // For example,
@@ -547,7 +554,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
             opposite = LeUInt64;
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
         auto* ret =
           visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
@@ -652,9 +659,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Merge local state for multiple control flow paths, creating phis as needed.
   void merge(std::vector<FlowState>& states, Locals& out) {
     // We should only receive reachable states.
+#ifndef NDEBUG
     for (auto& state : states) {
       assert(!isInUnreachable(state.locals));
     }
+#endif
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
@@ -781,7 +790,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // variable value.
       return Builder(*module).makeCall(FAKE_CALL, {}, node->wasmType);
     } else {
-      WASM_UNREACHABLE(); // TODO
+      WASM_UNREACHABLE("unexpected node type"); // TODO
     }
   }
 

@@ -55,47 +55,51 @@ struct Bits {
   // gets the number of effective shifts a shift operation does. In
   // wasm, only 5 bits matter for 32-bit shifts, and 6 for 64.
   static Index getEffectiveShifts(Index amount, Type type) {
-    if (type == i32) {
+    if (type == Type::i32) {
       return amount & 31;
-    } else if (type == i64) {
+    } else if (type == Type::i64) {
       return amount & 63;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 
   static Index getEffectiveShifts(Expression* expr) {
     auto* amount = expr->cast<Const>();
-    if (amount->type == i32) {
-      return getEffectiveShifts(amount->value.geti32(), i32);
-    } else if (amount->type == i64) {
-      return getEffectiveShifts(amount->value.geti64(), i64);
+    if (amount->type == Type::i32) {
+      return getEffectiveShifts(amount->value.geti32(), Type::i32);
+    } else if (amount->type == Type::i64) {
+      return getEffectiveShifts(amount->value.geti64(), Type::i64);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 
   static Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
-    if (value->type == i32) {
+    if (value->type == Type::i32) {
       if (bytes == 1 || bytes == 2) {
         auto shifts = bytes == 1 ? 24 : 16;
         Builder builder(wasm);
         return builder.makeBinary(
           ShrSInt32,
           builder.makeBinary(
-            ShlInt32, value, LiteralUtils::makeFromInt32(shifts, i32, wasm)),
-          LiteralUtils::makeFromInt32(shifts, i32, wasm));
+            ShlInt32,
+            value,
+            LiteralUtils::makeFromInt32(shifts, Type::i32, wasm)),
+          LiteralUtils::makeFromInt32(shifts, Type::i32, wasm));
       }
       assert(bytes == 4);
       return value; // nothing to do
     } else {
-      assert(value->type == i64);
+      assert(value->type == Type::i64);
       if (bytes == 1 || bytes == 2 || bytes == 4) {
         auto shifts = bytes == 1 ? 56 : (bytes == 2 ? 48 : 32);
         Builder builder(wasm);
         return builder.makeBinary(
           ShrSInt64,
           builder.makeBinary(
-            ShlInt64, value, LiteralUtils::makeFromInt32(shifts, i64, wasm)),
-          LiteralUtils::makeFromInt32(shifts, i64, wasm));
+            ShlInt64,
+            value,
+            LiteralUtils::makeFromInt32(shifts, Type::i64, wasm)),
+          LiteralUtils::makeFromInt32(shifts, Type::i64, wasm));
       }
       assert(bytes == 8);
       return value; // nothing to do

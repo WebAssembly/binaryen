@@ -56,6 +56,7 @@
 #define wasm_ir_flat_h
 
 #include "ir/iteration.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -63,26 +64,22 @@ namespace wasm {
 
 namespace Flat {
 
-inline bool isControlFlowStructure(Expression* curr) {
-  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
-}
-
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
     : public PostWalker<VerifyFlatness,
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
-      if (isControlFlowStructure(curr)) {
+      if (Properties::isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (curr->is<LocalSet>()) {
         verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<LocalGet>() ||
-                   child->is<Unreachable>(),
-                 "instructions must only have const, local.get, or unreachable "
-                 "as children");
+          verify(Properties::isConstantExpression(child) ||
+                   child->is<LocalGet>() || child->is<Unreachable>(),
+                 "instructions must only have constant expressions, local.get, "
+                 "or unreachable as children");
         }
       }
     }

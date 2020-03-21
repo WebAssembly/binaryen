@@ -156,15 +156,21 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AbsVecI8x16,
   NegVecI8x16,
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,
   AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
   NegVecI32x4,
   AnyTrueVecI32x4,
   AllTrueVecI32x4,
+  BitmaskVecI32x4,
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
@@ -365,6 +371,7 @@ enum BinaryOp {
   MinUVecI8x16,
   MaxSVecI8x16,
   MaxUVecI8x16,
+  AvgrUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -376,6 +383,7 @@ enum BinaryOp {
   MinUVecI16x8,
   MaxSVecI16x8,
   MaxUVecI16x8,
+  AvgrUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -529,16 +537,21 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    RefNullId,
+    RefIsNullId,
+    RefFuncId,
     TryId,
     ThrowId,
     RethrowId,
     BrOnExnId,
+    TupleMakeId,
+    TupleExtractId,
     NumExpressionIds
   };
   Id _id;
 
   // the type of the expression: its *output*, not necessarily its input(s)
-  Type type = none;
+  Type type = Type::none;
 
   Expression(Id id) : _id(id) {}
 
@@ -566,6 +579,9 @@ public:
 };
 
 const char* getExpressionName(Expression* curr);
+
+Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -648,7 +664,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() { type = unreachable; }
+  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
 
   Name name;
   Expression* value;
@@ -659,7 +675,9 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) { type = unreachable; }
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
+  }
 
   ArenaVector<Name> targets;
   Name default_;
@@ -680,27 +698,11 @@ public:
   void finalize();
 };
 
-class FunctionType {
-public:
-  Name name;
-  Type result = none;
-  std::vector<Type> params;
-
-  FunctionType() = default;
-
-  bool structuralComparison(FunctionType& b);
-  bool structuralComparison(const std::vector<Type>& params, Type result);
-
-  bool operator==(FunctionType& b);
-  bool operator!=(FunctionType& b);
-};
-
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
+  Signature sig;
   ExpressionList operands;
-  Name fullType;
   Expression* target;
   bool isReturn = false;
 
@@ -725,8 +727,9 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee();
-  void setTee(bool is);
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
@@ -1021,6 +1024,7 @@ public:
   Expression* condition;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -1035,7 +1039,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() { type = unreachable; }
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
@@ -1054,7 +1058,7 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() { type = unreachable; }
+  Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
@@ -1081,6 +1085,32 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
+};
+
+class RefNull : public SpecificExpression<Expression::RefNullId> {
+public:
+  RefNull() = default;
+  RefNull(MixedArena& allocator) {}
+
+  void finalize();
+};
+
+class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+public:
+  RefIsNull(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class RefFunc : public SpecificExpression<Expression::RefFuncId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Name func;
+
+  void finalize();
 };
 
 class Try : public SpecificExpression<Expression::TryId> {
@@ -1115,7 +1145,7 @@ public:
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
-  BrOnExn() { type = unreachable; }
+  BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
   Name name;
@@ -1124,6 +1154,25 @@ public:
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
   Type sent;
+
+  void finalize();
+};
+
+class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
+public:
+  TupleMake(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
+public:
+  TupleExtract(MixedArena& allocator) {}
+
+  Expression* tuple;
+  Index index;
 
   void finalize();
 };
@@ -1137,20 +1186,79 @@ struct Importable {
   bool imported() { return module.is(); }
 };
 
+class Function;
+
+// Represents an offset into a wasm binary file. This is used for debug info.
+// For now, assume this is 32 bits as that's the size limit of wasm files
+// anyhow.
+using BinaryLocation = uint32_t;
+
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  struct Span {
+    BinaryLocation start = 0, end = 0;
+  };
+
+  // Track the range of addresses an expressions appears at. This is the
+  // contiguous range that all instructions have - control flow instructions
+  // have additional opcodes later (like an end for a block or loop), see
+  // just after this.
+  std::unordered_map<Expression*, Span> expressions;
+
+  // Track the extra delimiter positions that some instructions, in particular
+  // control flow, have, like 'end' for loop and block. We keep these in a
+  // separate map because they are rare and we optimize for the storage space
+  // for the common type of instruction which just needs a Span. We implement
+  // this as a simple struct with two elements (as two extra elements is the
+  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
+  // second value may be 0, indicating it is not used.
+  struct DelimiterLocations : public std::array<BinaryLocation, 2> {
+    DelimiterLocations() {
+      // Ensure zero-initialization.
+      for (auto& item : *this) {
+        item = 0;
+      }
+    }
+  };
+
+  enum DelimiterId {
+    // All control flow structures have an end, so use index 0 for that.
+    End = 0,
+    // Use index 1 for all other current things.
+    Else = 1,
+    Catch = 1,
+    Invalid = -1
+  };
+  std::unordered_map<Expression*, DelimiterLocations> delimiters;
+
+  // DWARF debug info can refer to multiple interesting positions in a function.
+  struct FunctionLocations {
+    // The very start of the function, where the binary has a size LEB.
+    BinaryLocation start = 0;
+    // The area where we declare locals, which is right after the size LEB.
+    BinaryLocation declarations = 0;
+    // The end, which is one past the final "end" instruction byte.
+    BinaryLocation end = 0;
+  };
+
+  std::unordered_map<Function*, FunctionLocations> functions;
+};
+
 // Forward declarations of Stack IR, as functions can contain it, see
 // the stackIR property.
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
 // IR). See wasm-stack.h.
 class StackInst;
-typedef std::vector<StackInst*> StackIR;
+
+using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
   Name name;
-  Type result = none;
-  std::vector<Type> params; // function locals are
+  Signature sig;
   std::vector<Type> vars;   // params plus vars
-  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;
@@ -1169,8 +1277,9 @@ public:
   std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
+  // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
-    uint32_t fileIndex, lineNumber, columnNumber;
+    BinaryLocation fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
              columnNumber == other.columnNumber;
@@ -1189,6 +1298,12 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
+
+  // General debugging info support: track instructions and the function itself.
+  std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
+  std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
+    delimiterLocations;
+  BinaryLocations::FunctionLocations funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1258,6 +1373,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1301,6 +1423,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {
@@ -1334,7 +1464,6 @@ class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
   // maybe for iterating; use add*() and the get() functions)
-  std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
@@ -1345,6 +1474,8 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
 
   // `features` are the features allowed to be used in this module and should be
@@ -1359,7 +1490,6 @@ public:
 private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
-  std::map<Name, FunctionType*> functionTypesMap;
   // exports map is by the *exported* name, which is unique
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
@@ -1369,32 +1499,37 @@ private:
 public:
   Module() = default;
 
-  FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
-  FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
 
-  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
-  Function* addFunction(std::unique_ptr<Function> curr);
   Global* addGlobal(Global* curr);
   Event* addEvent(Event* curr);
 
+  Export* addExport(std::unique_ptr<Export> curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(std::unique_ptr<Global> curr);
+  Event* addEvent(std::unique_ptr<Event> curr);
+
   void addStart(const Name& s);
 
-  void removeFunctionType(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
+
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeEvents(std::function<bool(Event*)> pred);
 
   void updateMaps();
 

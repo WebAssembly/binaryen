@@ -58,7 +58,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
                             curr->type);
     }
     Expression* visitLoop(Loop* curr) {
-      return builder.makeLoop(curr->name, copy(curr->body));
+      return builder.makeLoop(curr->name, copy(curr->body), curr->type);
     }
     Expression* visitBreak(Break* curr) {
       return builder.makeBreak(
@@ -79,19 +79,19 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return ret;
     }
     Expression* visitCallIndirect(CallIndirect* curr) {
-      auto* ret = builder.makeCallIndirect(
-        curr->fullType, copy(curr->target), {}, curr->type, curr->isReturn);
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        ret->operands.push_back(copy(curr->operands[i]));
+      std::vector<Expression*> copiedOps;
+      for (auto op : curr->operands) {
+        copiedOps.push_back(copy(op));
       }
-      return ret;
+      return builder.makeCallIndirect(
+        copy(curr->target), copiedOps, curr->sig, curr->isReturn);
     }
     Expression* visitLocalGet(LocalGet* curr) {
       return builder.makeLocalGet(curr->index, curr->type);
     }
     Expression* visitLocalSet(LocalSet* curr) {
       if (curr->isTee()) {
-        return builder.makeLocalTee(curr->index, copy(curr->value));
+        return builder.makeLocalTee(curr->index, copy(curr->value), curr->type);
       } else {
         return builder.makeLocalSet(curr->index, copy(curr->value));
       }
@@ -208,8 +208,10 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeBinary(curr->op, copy(curr->left), copy(curr->right));
     }
     Expression* visitSelect(Select* curr) {
-      return builder.makeSelect(
-        copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse));
+      return builder.makeSelect(copy(curr->condition),
+                                copy(curr->ifTrue),
+                                copy(curr->ifFalse),
+                                curr->type);
     }
     Expression* visitDrop(Drop* curr) {
       return builder.makeDrop(copy(curr->value));
@@ -225,6 +227,13 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       auto* ret =
         builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
       return ret;
+    }
+    Expression* visitRefNull(RefNull* curr) { return builder.makeRefNull(); }
+    Expression* visitRefIsNull(RefIsNull* curr) {
+      return builder.makeRefIsNull(copy(curr->value));
+    }
+    Expression* visitRefFunc(RefFunc* curr) {
+      return builder.makeRefFunc(curr->func);
     }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(
@@ -252,6 +261,16 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makePush(copy(curr->value));
     }
     Expression* visitPop(Pop* curr) { return builder.makePop(curr->type); }
+    Expression* visitTupleMake(TupleMake* curr) {
+      std::vector<Expression*> operands;
+      for (auto* op : curr->operands) {
+        operands.push_back(copy(op));
+      }
+      return builder.makeTupleMake(std::move(operands));
+    }
+    Expression* visitTupleExtract(TupleExtract* curr) {
+      return builder.makeTupleExtract(copy(curr->tuple), curr->index);
+    }
   };
 
   Copier copier(wasm, custom);

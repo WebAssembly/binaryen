@@ -19,6 +19,7 @@
 
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -63,11 +64,8 @@ struct BinaryIndexes {
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;
-  ret->result = func->result;
-  ret->params = func->params;
+  ret->sig = func->sig;
   ret->vars = func->vars;
-  // start with no named type; the names in the other module may differ
-  ret->type = Name();
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
@@ -105,12 +103,9 @@ inline Event* copyEvent(Event* event, Module& out) {
   return ret;
 }
 
-inline void copyModule(Module& in, Module& out) {
-  // we use names throughout, not raw points, so simple copying is fine
+inline void copyModule(const Module& in, Module& out) {
+  // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
-  for (auto& curr : in.functionTypes) {
-    out.addFunctionType(make_unique<FunctionType>(*curr));
-  }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));
   }
@@ -136,6 +131,20 @@ inline void copyModule(Module& in, Module& out) {
   out.debugInfoFileNames = in.debugInfoFileNames;
 }
 
+inline void clearModule(Module& wasm) {
+  wasm.exports.clear();
+  wasm.functions.clear();
+  wasm.globals.clear();
+  wasm.events.clear();
+  wasm.table.clear();
+  wasm.memory.clear();
+  wasm.start = Name();
+  wasm.userSections.clear();
+  wasm.debugInfoFileNames.clear();
+  wasm.updateMaps();
+  wasm.allocator.clear();
+}
+
 // Renaming
 
 // Rename functions along with all their uses.
@@ -146,7 +155,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second));
+      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
       F->name = pair.second;
     }
   }
@@ -333,6 +342,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   struct FunctionInfo {
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
+    bool hasIndirectCall = false;
   };
 
   typedef std::map<Function*, T> Map;
@@ -352,6 +362,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
         void visitCall(Call* curr) {
           info.callsTo.insert(module->getFunction(curr->target));
+        }
+
+        void visitCallIndirect(CallIndirect* curr) {
+          info.hasIndirectCall = true;
         }
 
       private:
@@ -374,14 +388,20 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 
+  enum IndirectCalls { IgnoreIndirectCalls, IndirectCallsHaveProperty };
+
   // Propagate a property from a function to those that call it.
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&)> addProperty) {
+                     std::function<void(T&)> addProperty,
+                     IndirectCalls indirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (hasProperty(map[func.get()])) {
+      if (hasProperty(map[func.get()]) ||
+          (indirectCalls == IndirectCallsHaveProperty &&
+           map[func.get()].hasIndirectCall)) {
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }
@@ -398,6 +418,73 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 };
+
+// Helper function for collecting the type signatures used in a module
+//
+// Used when emitting or printing a module to give signatures canonical
+// indices. Signatures are sorted in order of decreasing frequency to minize the
+// size of their collective encoding. Both a vector mapping indices to
+// signatures and a map mapping signatures to indices are produced.
+inline void
+collectSignatures(Module& wasm,
+                  std::vector<Signature>& signatures,
+                  std::unordered_map<Signature, Index>& sigIndices) {
+  using Counts = std::unordered_map<Signature, size_t>;
+
+  // Collect the signature use counts for a single function
+  auto updateCounts = [&](Function* func, Counts& counts) {
+    if (func->imported()) {
+      return;
+    }
+    struct TypeCounter
+      : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
+      Counts& counts;
+
+      TypeCounter(Counts& counts) : counts(counts) {}
+      void visitExpression(Expression* curr) {
+        if (auto* call = curr->dynCast<CallIndirect>()) {
+          counts[call->sig]++;
+        } else if (Properties::isControlFlowStructure(curr)) {
+          // TODO: Allow control flow to have input types as well
+          if (curr->type.isMulti()) {
+            counts[Signature(Type::none, curr->type)]++;
+          }
+        }
+      }
+    };
+    TypeCounter(counts).walk(func->body);
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
+
+  // Collect all the counts.
+  Counts counts;
+  for (auto& curr : wasm.functions) {
+    counts[curr->sig]++;
+  }
+  for (auto& curr : wasm.events) {
+    counts[curr->sig]++;
+  }
+  for (auto& pair : analysis.map) {
+    Counts& functionCounts = pair.second;
+    for (auto& innerPair : functionCounts) {
+      counts[innerPair.first] += innerPair.second;
+    }
+  }
+  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
+                                                   counts.end());
+  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+    // order by frequency then simplicity
+    if (a.second != b.second) {
+      return a.second > b.second;
+    }
+    return a.first < b.first;
+  });
+  for (Index i = 0; i < sorted.size(); ++i) {
+    sigIndices[sorted[i].first] = i;
+    signatures.push_back(sorted[i].first);
+  }
+}
 
 } // namespace ModuleUtils
 

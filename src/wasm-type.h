@@ -36,11 +36,17 @@ public:
     f32,
     f64,
     v128,
+    funcref,
     anyref,
+    nullref,
     exnref,
-    _last_value_type,
   };
 
+private:
+  // Not in the enum because we don't want to have to have a case for it
+  static constexpr uint32_t last_value_type = exnref;
+
+public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
@@ -58,13 +64,34 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  bool isSingle() const { return id >= i32 && id < _last_value_type; }
-  bool isMulti() const { return id >= _last_value_type; }
-  bool isConcrete() const { return id >= i32; }
-  bool isInteger() const { return id == i32 || id == i64; }
-  bool isFloat() const { return id == f32 || id == f64; }
-  bool isVector() const { return id == v128; };
-  bool isRef() const { return id == anyref || id == exnref; }
+  constexpr bool isSingle() const { return id >= i32 && id <= last_value_type; }
+  constexpr bool isMulti() const { return id > last_value_type; }
+  constexpr bool isConcrete() const { return id >= i32; }
+  constexpr bool isInteger() const { return id == i32 || id == i64; }
+  constexpr bool isFloat() const { return id == f32 || id == f64; }
+  constexpr bool isVector() const { return id == v128; };
+  constexpr bool isNumber() const { return id >= i32 && id <= v128; }
+  constexpr bool isRef() const { return id >= funcref && id <= exnref; }
+
+private:
+  template<bool (Type::*pred)() const> bool hasPredicate() {
+    for (auto t : expand()) {
+      if ((t.*pred)()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+public:
+  bool hasVector() { return hasPredicate<&Type::isVector>(); }
+  bool hasRef() { return hasPredicate<&Type::isRef>(); }
+
+  constexpr uint32_t getID() const { return id; }
+  constexpr ValueType getSingle() const {
+    assert(!isMulti() && "Unexpected multivalue type");
+    return static_cast<ValueType>(id);
+  }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
@@ -77,8 +104,37 @@ public:
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
 
-  // Allows for using Types in switch statements
-  constexpr operator uint32_t() const { return id; }
+  // Returns the type size in bytes. Only single types are supported.
+  unsigned getByteSize() const;
+
+  // Reinterpret an integer type to a float type with the same size and vice
+  // versa. Only single integer and float types are supported.
+  Type reinterpret() const;
+
+  // Returns the feature set required to use this type.
+  FeatureSet getFeatures() const;
+
+  // Returns a number type based on its size in bytes and whether it is a float
+  // type.
+  static Type get(unsigned byteSize, bool float_);
+
+  // Returns true if left is a subtype of right. Subtype includes itself.
+  static bool isSubType(Type left, Type right);
+
+  // Computes the least upper bound from the type lattice.
+  // If one of the type is unreachable, the other type becomes the result. If
+  // the common supertype does not exist, returns none, a poison value.
+  static Type getLeastUpperBound(Type a, Type b);
+
+  // Computes the least upper bound for all types in the given list.
+  template<typename T> static Type mergeTypes(const T& types) {
+    Type type = Type::unreachable;
+    for (auto other : types) {
+      type = Type::getLeastUpperBound(type, other);
+    }
+    return type;
+  }
+
   std::string toString() const;
 };
 
@@ -99,7 +155,7 @@ struct ResultType {
 struct Signature {
   Type params;
   Type results;
-  Signature() = default;
+  Signature() : params(Type::none), results(Type::none) {}
   Signature(Type params, Type results) : params(params), results(results) {}
   bool operator==(const Signature& other) const {
     return params == other.params && results == other.results;
@@ -112,21 +168,6 @@ std::ostream& operator<<(std::ostream& os, Type t);
 std::ostream& operator<<(std::ostream& os, ParamType t);
 std::ostream& operator<<(std::ostream& os, ResultType t);
 std::ostream& operator<<(std::ostream& os, Signature t);
-
-constexpr Type none = Type::none;
-constexpr Type i32 = Type::i32;
-constexpr Type i64 = Type::i64;
-constexpr Type f32 = Type::f32;
-constexpr Type f64 = Type::f64;
-constexpr Type v128 = Type::v128;
-constexpr Type anyref = Type::anyref;
-constexpr Type exnref = Type::exnref;
-constexpr Type unreachable = Type::unreachable;
-
-unsigned getTypeSize(Type type);
-FeatureSet getFeatures(Type type);
-Type getType(unsigned size, bool float_);
-Type reinterpretType(Type type);
 
 } // namespace wasm
 

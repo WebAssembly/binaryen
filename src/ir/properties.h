@@ -18,6 +18,8 @@
 #define wasm_ir_properties_h
 
 #include "ir/bits.h"
+#include "ir/effects.h"
+#include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -57,6 +59,11 @@ inline bool isSymmetric(Binary* binary) {
   }
 }
 
+inline bool isControlFlowStructure(Expression* curr) {
+  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
+         curr->is<Try>();
+}
+
 // Check if an expression is a control flow construct with a name,
 // which implies it may have breaks to it.
 inline bool isNamedControlFlow(Expression* curr) {
@@ -66,6 +73,47 @@ inline bool isNamedControlFlow(Expression* curr) {
     return loop->name.is();
   }
   return false;
+}
+
+inline bool isConstantExpression(const Expression* curr) {
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return true;
+  }
+  if (auto* tuple = curr->dynCast<TupleMake>()) {
+    for (auto* op : tuple->operands) {
+      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+inline Literal getSingleLiteral(const Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    return c->value;
+  } else if (curr->is<RefNull>()) {
+    return Literal(Type::nullref);
+  } else if (auto* c = curr->dynCast<RefFunc>()) {
+    return Literal(c->func);
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
+}
+
+inline Literals getLiterals(const Expression* curr) {
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return {getSingleLiteral(curr)};
+  } else if (auto* tuple = curr->dynCast<TupleMake>()) {
+    Literals literals;
+    for (auto* op : tuple->operands) {
+      literals.push_back(getSingleLiteral(op));
+    }
+    return literals;
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
 }
 
 // Check if an expression is a sign-extend, and if so, returns the value
@@ -153,35 +201,41 @@ inline Index getZeroExtBits(Expression* curr) {
 
 // Returns a falling-through value, that is, it looks through a local.tee
 // and other operations that receive a value and let it flow through them.
-inline Expression* getFallthrough(Expression* curr) {
+inline Expression* getFallthrough(Expression* curr,
+                                  const PassOptions& passOptions,
+                                  FeatureSet features) {
   // If the current node is unreachable, there is no value
   // falling through.
-  if (curr->type == unreachable) {
+  if (curr->type == Type::unreachable) {
     return curr;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value);
+      return getFallthrough(set->value, passOptions, features);
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back());
+      return getFallthrough(block->list.back(), passOptions, features);
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body);
+    return getFallthrough(loop->body, passOptions, features);
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
-      if (iff->ifTrue->type == unreachable) {
-        return getFallthrough(iff->ifFalse);
-      } else if (iff->ifFalse->type == unreachable) {
-        return getFallthrough(iff->ifTrue);
+      if (iff->ifTrue->type == Type::unreachable) {
+        return getFallthrough(iff->ifFalse, passOptions, features);
+      } else if (iff->ifFalse->type == Type::unreachable) {
+        return getFallthrough(iff->ifTrue, passOptions, features);
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value);
+      return getFallthrough(br->value, passOptions, features);
+    }
+  } else if (auto* tryy = curr->dynCast<Try>()) {
+    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
+      return getFallthrough(tryy->body, passOptions, features);
     }
   }
   return curr;

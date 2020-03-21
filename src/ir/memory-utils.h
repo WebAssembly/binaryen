@@ -120,7 +120,6 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // check if we have too many dynamic data segments, which we can do nothing
   // about
-  auto num = numConstant + numDynamic;
   if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
     return false;
   }
@@ -128,7 +127,8 @@ inline bool ensureLimitedSegments(Module& module) {
   // we'll merge constant segments if we must
   if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
     numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
-    num = numConstant + numDynamic;
+    auto num = numConstant + numDynamic;
+    WASM_UNUSED(num);
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 
@@ -174,7 +174,7 @@ inline bool ensureLimitedSegments(Module& module) {
     // create the segment and add in all the data
     auto* c = module.allocator.alloc<Const>();
     c->value = Literal(int32_t(start));
-    c->type = i32;
+    c->type = Type::i32;
 
     Memory::Segment combined(c);
     for (Index j = i; j < memory.segments.size(); j++) {

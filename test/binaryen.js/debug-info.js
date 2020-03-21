@@ -1,7 +1,3 @@
-function assert(x) {
-  if (!x) throw 'error!';
-}
-
 var wast = `
 (module
  (type $v (func))
@@ -13,35 +9,35 @@ var wast = `
 
 // Use defaults (should not emit debug info)
 console.log("=== default ===");
-console.log("debugInfo=" + Binaryen.getDebugInfo());
-var module = Binaryen.parseText(wast);
+console.log("debugInfo=" + binaryen.getDebugInfo());
+var module = binaryen.parseText(wast);
 var binary = module.emitBinary();
 module.dispose();
-module = Binaryen.readBinary(binary);
+module = binaryen.readBinary(binary);
 console.log(module.emitText());
 assert(module.validate());
 module.dispose();
 
 // With debug info
 console.log("=== with debug info ===");
-Binaryen.setDebugInfo(true);
-console.log("debugInfo=" + Binaryen.getDebugInfo());
-module = Binaryen.parseText(wast);
+binaryen.setDebugInfo(true);
+console.log("debugInfo=" + binaryen.getDebugInfo());
+module = binaryen.parseText(wast);
 binary = module.emitBinary();
 module.dispose();
-module = Binaryen.readBinary(binary);
+module = binaryen.readBinary(binary);
 console.log(module.emitText());
 assert(module.validate());
 module.dispose();
 
 // Without debug info
 console.log("=== without debug info ===");
-Binaryen.setDebugInfo(false);
-console.log("debugInfo=" + Binaryen.getDebugInfo());
-module = Binaryen.parseText(wast);
+binaryen.setDebugInfo(false);
+console.log("debugInfo=" + binaryen.getDebugInfo());
+module = binaryen.parseText(wast);
 binary = module.emitBinary();
 module.dispose();
-module = Binaryen.readBinary(binary);
+module = binaryen.readBinary(binary);
 console.log(module.emitText());
 assert(module.validate());
 module.dispose();

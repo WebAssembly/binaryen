@@ -193,17 +193,17 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // fill in fake values for everything else, which is dangerous to use
     ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = Literal::makeZero(defined->type);
+        globals[defined->name] = Literal::makeSingleZero(defined->type);
       }
     });
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = Literal::makeZero(import->type);
+        globals[import->name] = Literal::makeSingleZero(import->type);
       }
     });
   }
 
-  Literal callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
@@ -214,10 +214,11 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
-  Literal callTable(Index index,
-                    LiteralList& arguments,
-                    Type result,
-                    EvallingModuleInstance& instance) override {
+  Literals callTable(Index index,
+                     Signature sig,
+                     LiteralList& arguments,
+                     Type result,
+                     EvallingModuleInstance& instance) override {
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
     for (auto& segment : wasm->table.segments) {
@@ -231,7 +232,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       } else if (segment.offset->is<GlobalGet>()) {
         start = 0;
       } else {
-        WASM_UNREACHABLE(); // wasm spec only allows const and global.get there
+        // wasm spec only allows const and global.get there
+        WASM_UNREACHABLE("invalid expr type");
       }
       auto end = start + segment.data.size();
       if (start <= index && index < end) {
@@ -239,6 +241,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
         // if this is one of our functions, we can call it; if it was imported,
         // fail
         auto* func = wasm->getFunction(name);
+        if (func->sig != sig) {
+          throw FailToEvalException(
+            std::string("callTable signature mismatch: ") + name.str);
+        }
         if (!func->imported()) {
           return instance.callFunctionInternal(name, arguments);
         } else {
@@ -433,10 +439,7 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(
-    read_file<std::string>(options.extra["infile"],
-                           Flags::Text,
-                           options.debug ? Flags::Debug : Flags::Release));
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
 
@@ -445,8 +448,6 @@ int main(int argc, const char* argv[]) {
       std::cerr << "reading...\n";
     }
     ModuleReader reader;
-    reader.setDebug(options.debug);
-
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
@@ -488,7 +489,6 @@ int main(int argc, const char* argv[]) {
       std::cerr << "writing..." << std::endl;
     }
     ModuleWriter writer;
-    writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);

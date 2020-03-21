@@ -53,13 +53,13 @@ Name ANY_EXPR = "any.expr";
 template<typename LocalInfoProvider>
 Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   if (auto* const_ = curr->dynCast<Const>()) {
-    switch (curr->type) {
-      case i32:
+    switch (curr->type.getSingle()) {
+      case Type::i32:
         return 32 - const_->value.countLeadingZeroes().geti32();
-      case i64:
+      case Type::i64:
         return 64 - const_->value.countLeadingZeroes().geti64();
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
   } else if (auto* binary = curr->dynCast<Binary>()) {
     switch (binary->op) {
@@ -178,15 +178,15 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       return 8 * load->bytes;
     }
   }
-  switch (curr->type) {
-    case i32:
+  switch (curr->type.getSingle()) {
+    case Type::i32:
       return 32;
-    case i64:
+    case Type::i64:
       return 64;
-    case unreachable:
+    case Type::unreachable:
       return 64; // not interesting, but don't crash
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
 }
 
@@ -200,8 +200,11 @@ struct LocalInfo {
 
 struct LocalScanner : PostWalker<LocalScanner> {
   std::vector<LocalInfo>& localInfo;
+  const PassOptions& passOptions;
 
-  LocalScanner(std::vector<LocalInfo>& localInfo) : localInfo(localInfo) {}
+  LocalScanner(std::vector<LocalInfo>& localInfo,
+               const PassOptions& passOptions)
+    : localInfo(localInfo), passOptions(passOptions) {}
 
   void doWalkFunction(Function* func) {
     // prepare
@@ -232,11 +235,12 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     auto type = getFunction()->getLocalType(curr->index);
-    if (type != i32 && type != i64) {
+    if (type != Type::i32 && type != Type::i64) {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(curr->value);
+    auto* value = Properties::getFallthrough(
+      curr->value, passOptions, getModule()->features);
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -260,10 +264,10 @@ struct LocalScanner : PostWalker<LocalScanner> {
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
-    switch (type) {
-      case i32:
+    switch (type.getSingle()) {
+      case Type::i32:
         return 32;
-      case i64:
+      case Type::i64:
         return 64;
       default:
         return -1;
@@ -289,7 +293,8 @@ struct OptimizeInstructions
   void doWalkFunction(Function* func) {
     // first, scan locals
     {
-      LocalScanner scanner(localInfo);
+      LocalScanner scanner(localInfo, getPassOptions());
+      scanner.setModule(getModule());
       scanner.walkFunction(func);
     }
     // main walk
@@ -330,11 +335,12 @@ struct OptimizeInstructions
   // Optimizations that don't yet fit in the pattern DSL, but could be
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
+    FeatureSet features = getModule()->features;
     // if this contains dead code, don't bother trying to optimize it, the type
     // might change (if might not be unreachable if just one arm is, for
     // example). this optimization pass focuses on actually executing code. the
     // only exceptions are control flow changes
-    if (curr->type == unreachable && !curr->is<Break>() &&
+    if (curr->type == Type::unreachable && !curr->is<Break>() &&
         !curr->is<Switch>() && !curr->is<If>()) {
       return nullptr;
     }
@@ -346,7 +352,9 @@ struct OptimizeInstructions
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
         if (extraShifts == 0) {
-          if (auto* load = Properties::getFallthrough(ext)->dynCast<Load>()) {
+          if (auto* load =
+                Properties::getFallthrough(ext, getPassOptions(), features)
+                  ->dynCast<Load>()) {
             // pattern match a load of 8 bits and a sign extend using a shl of
             // 24 then shr_s of 24 as well, etc.
             if (LoadUtils::canBeSigned(load) &&
@@ -472,7 +480,7 @@ struct OptimizeInstructions
             if (auto* subZero = sub->left->dynCast<Const>()) {
               if (subZero->value.geti32() == 0) {
                 if (EffectAnalyzer::canReorder(
-                      getPassOptions(), sub->right, binary->right)) {
+                      getPassOptions(), features, sub->right, binary->right)) {
                   sub->left = binary->right;
                   return sub;
                 }
@@ -567,7 +575,7 @@ struct OptimizeInstructions
           }
         }
         // math operations on a constant power of 2 right side can be optimized
-        if (right->type == i32) {
+        if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
           if (IsPowerOf2(c)) {
             if (binary->op == MulInt32) {
@@ -630,7 +638,8 @@ struct OptimizeInstructions
       }
       // finally, try more expensive operations on the binary in
       // the case that they have no side effects
-      if (!EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+      if (!EffectAnalyzer(getPassOptions(), features, binary->left)
+             .hasSideEffects()) {
         if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
           return optimizeBinaryWithEqualEffectlessChildren(binary);
         }
@@ -744,26 +753,27 @@ struct OptimizeInstructions
             std::swap(iff->ifTrue, iff->ifFalse);
           }
         }
-        if (iff->condition->type != unreachable &&
+        if (iff->condition->type != Type::unreachable &&
             ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the
           // condition, do that
           auto needCondition =
-            EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
-          auto typeIsIdentical = iff->ifTrue->type == iff->type;
-          if (typeIsIdentical && !needCondition) {
+            EffectAnalyzer(getPassOptions(), features, iff->condition)
+              .hasSideEffects();
+          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
+          if (isSubType && !needCondition) {
             return iff->ifTrue;
           } else {
             Builder builder(*getModule());
-            if (typeIsIdentical) {
+            if (isSubType) {
               return builder.makeSequence(builder.makeDrop(iff->condition),
                                           iff->ifTrue);
             } else {
               // the types diff. as the condition is reachable, that means the
               // if must be concrete while the arm is not
               assert(iff->type.isConcrete() &&
-                     iff->ifTrue->type == unreachable);
+                     iff->ifTrue->type == Type::unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
               if (needCondition) {
@@ -781,8 +791,8 @@ struct OptimizeInstructions
       auto* condition = select->condition->dynCast<Unary>();
       if (condition && condition->op == EqZInt32) {
         // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), select->ifFalse);
+        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
         if (!ifTrue.invalidates(ifFalse)) {
           select->condition = condition->value;
           std::swap(select->ifTrue, select->ifFalse);
@@ -792,7 +802,7 @@ struct OptimizeInstructions
         // constant condition, we can just pick the right side (barring side
         // effects)
         if (c->value.getInteger()) {
-          if (!EffectAnalyzer(getPassOptions(), select->ifFalse)
+          if (!EffectAnalyzer(getPassOptions(), features, select->ifFalse)
                  .hasSideEffects()) {
             return select->ifTrue;
           } else {
@@ -800,7 +810,7 @@ struct OptimizeInstructions
             // local, which is bad
           }
         } else {
-          if (!EffectAnalyzer(getPassOptions(), select->ifTrue)
+          if (!EffectAnalyzer(getPassOptions(), features, select->ifTrue)
                  .hasSideEffects()) {
             return select->ifFalse;
           } else {
@@ -812,7 +822,7 @@ struct OptimizeInstructions
       }
       if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
         // sides are identical, fold
-        EffectAnalyzer value(getPassOptions(), select->ifTrue);
+        EffectAnalyzer value(getPassOptions(), features, select->ifTrue);
         if (value.hasSideEffects()) {
           // at best we don't need the condition, but need to execute the value
           // twice. a block is larger than a select by 2 bytes, and
@@ -820,7 +830,8 @@ struct OptimizeInstructions
           // so it's not clear this is worth it, TODO
         } else {
           // value has no side effects
-          EffectAnalyzer condition(getPassOptions(), select->condition);
+          EffectAnalyzer condition(
+            getPassOptions(), features, select->condition);
           if (!condition.hasSideEffects()) {
             return select->ifTrue;
           } else {
@@ -847,7 +858,7 @@ struct OptimizeInstructions
       if (auto* binary = store->value->dynCast<Binary>()) {
         if (binary->op == AndInt32) {
           if (auto* right = binary->right->dynCast<Const>()) {
-            if (right->type == i32) {
+            if (right->type == Type::i32) {
               auto mask = right->value.geti32();
               if ((store->bytes == 1 && mask == 0xff) ||
                   (store->bytes == 2 && mask == 0xffff)) {
@@ -866,7 +877,7 @@ struct OptimizeInstructions
       } else if (auto* unary = store->value->dynCast<Unary>()) {
         if (unary->op == WrapInt64) {
           // instead of wrapping to 32, just store some of the bits in the i64
-          store->valueType = i64;
+          store->valueType = Type::i64;
           store->value = unary->value;
         }
       }
@@ -887,14 +898,15 @@ private:
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
     assert(Properties::isSymmetric(binary));
+    FeatureSet features = getModule()->features;
     auto swap = [&]() {
       assert(EffectAnalyzer::canReorder(
-        getPassOptions(), binary->left, binary->right));
+        getPassOptions(), features, binary->left, binary->right));
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
       if (EffectAnalyzer::canReorder(
-            getPassOptions(), binary->left, binary->right)) {
+            getPassOptions(), features, binary->left, binary->right)) {
         swap();
       }
     };
@@ -968,17 +980,22 @@ private:
         return makeZeroExt(ext, Properties::getSignExtBits(binary));
       }
     } else if (auto* block = boolean->dynCast<Block>()) {
-      if (block->type == i32 && block->list.size() > 0) {
+      if (block->type == Type::i32 && block->list.size() > 0) {
         block->list.back() = optimizeBoolean(block->list.back());
       }
     } else if (auto* iff = boolean->dynCast<If>()) {
-      if (iff->type == i32) {
+      if (iff->type == Type::i32) {
         iff->ifTrue = optimizeBoolean(iff->ifTrue);
         iff->ifFalse = optimizeBoolean(iff->ifFalse);
       }
     } else if (auto* select = boolean->dynCast<Select>()) {
       select->ifTrue = optimizeBoolean(select->ifTrue);
       select->ifFalse = optimizeBoolean(select->ifFalse);
+    } else if (auto* tryy = boolean->dynCast<Try>()) {
+      if (tryy->type == Type::i32) {
+        tryy->body = optimizeBoolean(tryy->body);
+        tryy->catchBody = optimizeBoolean(tryy->catchBody);
+      }
     }
     // TODO: recurse into br values?
     return boolean;
@@ -1064,6 +1081,7 @@ private:
       ZeroRemover(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBinary(Binary* curr) {
+        FeatureSet features = getModule()->features;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
         if (curr->op == AddInt32) {
@@ -1086,7 +1104,8 @@ private:
           // shift has side effects
           if (((left && left->value.geti32() == 0) ||
                (right && Bits::getEffectiveShifts(right) == 0)) &&
-              !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+              !EffectAnalyzer(passOptions, features, curr->right)
+                 .hasSideEffects()) {
             replaceCurrent(curr->left);
             return;
           }
@@ -1094,12 +1113,14 @@ private:
           // multiplying by zero is a zero, unless the other side has side
           // effects
           if (left && left->value.geti32() == 0 &&
-              !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+              !EffectAnalyzer(passOptions, features, curr->right)
+                 .hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
           if (right && right->value.geti32() == 0 &&
-              !EffectAnalyzer(passOptions, curr->left).hasSideEffects()) {
+              !EffectAnalyzer(passOptions, features, curr->left)
+                 .hasSideEffects()) {
             replaceCurrent(right);
             return;
           }
@@ -1107,7 +1128,9 @@ private:
       }
     };
     Expression* walked = binary;
-    ZeroRemover(getPassOptions()).walk(walked);
+    ZeroRemover remover(getPassOptions());
+    remover.setModule(getModule());
+    remover.walk(walked);
     if (constant == 0) {
       return walked; // nothing more to do
     }
@@ -1142,8 +1165,9 @@ private:
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) {
       return nullptr;
     }
-    auto leftEffects = EffectAnalyzer(getPassOptions(), left);
-    auto rightEffects = EffectAnalyzer(getPassOptions(), right);
+    FeatureSet features = getModule()->features;
+    auto leftEffects = EffectAnalyzer(getPassOptions(), features, left);
+    auto rightEffects = EffectAnalyzer(getPassOptions(), features, right);
     auto leftHasSideEffects = leftEffects.hasSideEffects();
     auto rightHasSideEffects = rightEffects.hasSideEffects();
     if (leftHasSideEffects && rightHasSideEffects) {
@@ -1189,13 +1213,16 @@ private:
   //   (x > y) | (x == y)    ==>    x >= y
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
+    FeatureSet features = getModule()->features;
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
-            !EffectAnalyzer(getPassOptions(), left->left).hasSideEffects() &&
-            !EffectAnalyzer(getPassOptions(), left->right).hasSideEffects()) {
+            !EffectAnalyzer(getPassOptions(), features, left->left)
+               .hasSideEffects() &&
+            !EffectAnalyzer(getPassOptions(), features, left->right)
+               .hasSideEffects()) {
           switch (left->op) {
             //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
@@ -1296,6 +1323,7 @@ private:
   // is a constant
   // TODO: templatize on type?
   Expression* optimizeWithConstantOnRight(Binary* binary) {
+    FeatureSet features = getModule()->features;
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
     if (type.isInteger()) {
@@ -1309,7 +1337,7 @@ private:
           return binary->left;
         } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
                     binary->op == Abstract::getBinary(type, Abstract::And)) &&
-                   !EffectAnalyzer(getPassOptions(), binary->left)
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           return binary->right;
         } else if (binary->op == EqInt64) {
@@ -1323,7 +1351,7 @@ private:
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
           return binary->left;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
-                   !EffectAnalyzer(getPassOptions(), binary->left)
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           return binary->right;
         }
@@ -1381,7 +1409,9 @@ private:
         if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
-            !EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
+            !EffectAnalyzer(
+               getPassOptions(), getModule()->features, binary->right)
+               .hasSideEffects()) {
           return binary->left;
         }
       }
@@ -1469,7 +1499,7 @@ private:
       case LtUInt32:
       case GtSInt32:
       case GtUInt32:
-        return LiteralUtils::makeZero(i32, *getModule());
+        return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
       case AndInt64:
@@ -1485,7 +1515,7 @@ private:
       case LeUInt64:
       case GeSInt64:
       case GeUInt64:
-        return LiteralUtils::makeFromInt32(1, i32, *getModule());
+        return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
     }

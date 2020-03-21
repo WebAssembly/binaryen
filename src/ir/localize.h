@@ -36,7 +36,7 @@ struct Localizer {
       index = set->index;
     } else {
       index = Builder::addVar(func, expr->type);
-      expr = Builder(*wasm).makeLocalTee(index, expr);
+      expr = Builder(*wasm).makeLocalTee(index, expr, expr->type);
     }
   }
 };

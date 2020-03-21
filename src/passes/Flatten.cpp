@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -61,12 +62,19 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    if (Flat::isControlFlowStructure(curr)) {
+    // Nothing to do for constants, nop, and unreachable
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
+        curr->is<Unreachable>()) {
+      return;
+    }
+
+    if (Properties::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
       // no one should have given us preludes, they are on the children
       assert(preludes.find(curr) == preludes.end());
+
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -97,7 +105,7 @@ struct Flatten
           if (last->type.isConcrete()) {
             last = builder.makeLocalSet(temp, last);
           }
-          block->finalize(none);
+          block->finalize(Type::none);
           // and we leave just a get of the value
           auto* rep = builder.makeLocalGet(temp, type);
           replaceCurrent(rep);
@@ -105,7 +113,8 @@ struct Flatten
           ourPreludes.push_back(block);
         }
         // the block now has no return value, and may have become unreachable
-        block->finalize(none);
+        block->finalize(Type::none);
+
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
         auto* rep = getPreludesWithExpression(iff->condition, iff);
@@ -138,6 +147,7 @@ struct Flatten
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
+
       } else if (auto* loop = curr->dynCast<Loop>()) {
         // remove a loop value
         Expression* rep = loop;
@@ -150,58 +160,93 @@ struct Flatten
           rep = builder.makeLocalGet(temp, type);
           // the whole if is now a prelude
           ourPreludes.push_back(loop);
-          loop->type = none;
+          loop->type = Type::none;
         }
         loop->body = getPreludesWithExpression(originalBody, loop->body);
         loop->finalize();
         replaceCurrent(rep);
+
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expr type");
       }
+
     } else {
       // for anything else, there may be existing preludes
       auto iter = preludes.find(curr);
       if (iter != preludes.end()) {
         ourPreludes.swap(iter->second);
       }
+
       // special handling
       if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
           // we disallow local.tee
-          if (set->value->type == unreachable) {
+          if (set->value->type == Type::unreachable) {
             replaceCurrent(set->value); // trivial, no set happens
           } else {
             // use a set in a prelude + a get
-            set->setTee(false);
+            set->makeSet();
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
+            Type localType = getFunction()->getLocalType(set->index);
+            replaceCurrent(builder.makeLocalGet(set->index, localType));
           }
         }
+
       } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
           if (type.isConcrete()) {
             // we are sending a value. use a local instead
-            Index temp = getTempForBreakTarget(br->name, type);
+            Type blockType = findBreakTarget(br->name)->type;
+            Index temp = getTempForBreakTarget(br->name, blockType);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
+
+            // br_if leaves a value on the stack if not taken, which later can
+            // be the last element of the enclosing innermost block and flow
+            // out. The local we created using 'getTempForBreakTarget' returns
+            // the return type of the block this branch is targetting, which may
+            // not be the same with the innermost block's return type. For
+            // example,
+            // (block $any (result anyref)
+            //   (block (result nullref)
+            //     (local.tee $0
+            //       (br_if $any
+            //         (ref.null)
+            //         (i32.const 0)
+            //       )
+            //     )
+            //   )
+            // )
+            // In this case we need two locals to store (ref.null); one with
+            // anyref type that's for the target block ($label0) and one more
+            // with nullref type in case for flowing out. Here we create the
+            // second 'flowing out' local in case two block's types are
+            // different.
+            if (type != blockType) {
+              temp = builder.addVar(getFunction(), type);
+              ourPreludes.push_back(builder.makeLocalSet(
+                temp, ExpressionManipulator::copy(br->value, *getModule())));
+            }
+
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
               if (br->type.isConcrete()) {
                 replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
-                assert(br->type == unreachable);
+                assert(br->type == Type::unreachable);
                 replaceCurrent(builder.makeUnreachable());
               }
             }
             br->value = nullptr;
             br->finalize();
           } else {
-            assert(type == unreachable);
+            assert(type == Type::unreachable);
             // we don't need the br at all
             replaceCurrent(br->value);
           }
         }
+
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
@@ -219,39 +264,34 @@ struct Flatten
             sw->value = nullptr;
             sw->finalize();
           } else {
-            assert(type == unreachable);
+            assert(type == Type::unreachable);
             // we don't need the br at all
             replaceCurrent(sw->value);
           }
         }
       }
     }
+    // TODO Handle br_on_exn
+
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    // move everything to the prelude, if we need to: anything but constants
-    if (!curr->is<Const>()) {
-      if (curr->type == unreachable) {
-        ourPreludes.push_back(curr);
-        replaceCurrent(builder.makeUnreachable());
-      } else if (curr->type == none) {
-        if (!curr->is<Nop>()) {
-          ourPreludes.push_back(curr);
-          replaceCurrent(builder.makeNop());
-        }
-      } else {
-        // use a local
-        auto type = curr->type;
-        Index temp = builder.addVar(getFunction(), type);
-        ourPreludes.push_back(builder.makeLocalSet(temp, curr));
-        replaceCurrent(builder.makeLocalGet(temp, type));
-      }
+    if (curr->type == Type::unreachable) {
+      ourPreludes.push_back(curr);
+      replaceCurrent(builder.makeUnreachable());
+    } else if (curr->type.isConcrete()) {
+      // use a local
+      auto type = curr->type;
+      Index temp = builder.addVar(getFunction(), type);
+      ourPreludes.push_back(builder.makeLocalSet(temp, curr));
+      replaceCurrent(builder.makeLocalGet(temp, type));
     }
+
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !Flat::isControlFlowStructure(parent)) {
+      if (parent && !Properties::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);
