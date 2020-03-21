@@ -242,8 +242,7 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-Function*
-EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
+Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   BYN_TRACE("generateAssignGOTEntriesFunction\n");
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
