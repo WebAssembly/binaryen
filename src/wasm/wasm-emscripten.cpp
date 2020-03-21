@@ -243,7 +243,7 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
 Function*
-EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
+EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   BYN_TRACE("generateAssignGOTEntriesFunction\n");
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
@@ -291,7 +291,7 @@ EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule) {
     if (ex) {
       assert(ex->kind == ExternalKind::Function);
       f = wasm.getFunction(ex->value);
-      if (!isSideModule) {
+      if (!sideModule) {
         // This is exported, so must be one of the functions implemented here.
         // Simply add it to the table, and use that index. The loader will
         // know to reuse that index for other modules so they all share the

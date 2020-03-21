@@ -50,7 +50,7 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool DWARF = false;
-  bool isSideModule = false;
+  bool sideModule = false;
   bool legalizeJavaScriptFFI = true;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
@@ -100,8 +100,8 @@ int main(int argc, const char* argv[]) {
          "",
          "Input is an emscripten side module",
          Options::Arguments::Zero,
-         [&isSideModule](Options* o, const std::string& argument) {
-           isSideModule = true;
+         [&sideModule](Options* o, const std::string& argument) {
+           sideModule = true;
          })
     .add("--input-source-map",
          "-ism",
@@ -191,7 +191,7 @@ int main(int argc, const char* argv[]) {
 
   uint32_t dataSize = 0;
 
-  if (!isSideModule) {
+  if (!sideModule) {
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
@@ -215,6 +215,7 @@ int main(int argc, const char* argv[]) {
 
   EmscriptenGlueGenerator generator(wasm);
   generator.setStandalone(standaloneWasm);
+  generator.setSideModule(sideModule);
 
   generator.fixInvokeFunctionNames();
 
@@ -232,11 +233,11 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
-  if (checkStackOverflow && !isSideModule) {
+  if (checkStackOverflow && !sideModule) {
     generator.enforceStackLimit();
   }
 
-  if (isSideModule) {
+  if (sideModule) {
     BYN_TRACE("finalizing as side module\n");
     generator.replaceStackPointerGlobal();
     generator.generatePostInstantiateFunction();
@@ -247,7 +248,7 @@ int main(int argc, const char* argv[]) {
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
     if (Function* F =
-          generator.generateAssignGOTEntriesFunction(false /*isSideModule*/)) {
+          generator.generateAssignGOTEntriesFunction()) {
       auto* ex = new Export();
       ex->value = F->name;
       ex->name = F->name;

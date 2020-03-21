@@ -32,10 +32,11 @@ public:
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
+  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
-  Function* generateAssignGOTEntriesFunction(bool isSideModule);
+  Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
