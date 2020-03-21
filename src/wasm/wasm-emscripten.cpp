@@ -295,6 +295,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         // Simply add it to the table, and use that index. The loader will
         // know to reuse that index for other modules so they all share the
         // same index and function pointer equality works.
+        // We may be able to do something for side modules as well, however,
+        // that would require at least updating the dylink section.
         if (f->imported()) {
           Fatal() << "GOT.func entry export but not implemented: " << g->base;
         }
