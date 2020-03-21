@@ -4053,6 +4053,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NotVec128;
       break;
+    case BinaryConsts::I8x16Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecI8x16;
+      break;
     case BinaryConsts::I8x16Neg:
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI8x16;
@@ -4064,6 +4068,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::I8x16AllTrue:
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI8x16;
+      break;
+    case BinaryConsts::I8x16Bitmask:
+      curr = allocator.alloc<Unary>();
+      curr->op = BitmaskVecI8x16;
+      break;
+    case BinaryConsts::I16x8Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecI16x8;
       break;
     case BinaryConsts::I16x8Neg:
       curr = allocator.alloc<Unary>();
@@ -4077,6 +4089,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI16x8;
       break;
+    case BinaryConsts::I16x8Bitmask:
+      curr = allocator.alloc<Unary>();
+      curr->op = BitmaskVecI16x8;
+      break;
+    case BinaryConsts::I32x4Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecI32x4;
+      break;
     case BinaryConsts::I32x4Neg:
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI32x4;
@@ -4088,6 +4108,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4AllTrue:
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI32x4;
+      break;
+    case BinaryConsts::I32x4Bitmask:
+      curr = allocator.alloc<Unary>();
+      curr->op = BitmaskVecI32x4;
       break;
     case BinaryConsts::I64x2Neg:
       curr = allocator.alloc<Unary>();
