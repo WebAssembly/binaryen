@@ -352,7 +352,7 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
     POST_INSTANTIATE, std::vector<NameType>{}, Type::none, {});
   wasm.addFunction(post_instantiate);
 
-  if (Function* F = generateAssignGOTEntriesFunction(true /*isSideModule*/)) {
+  if (Function* F = generateAssignGOTEntriesFunction()) {
     // call __assign_got_enties from post_instantiate
     Expression* call = builder.makeCall(F->name, {}, Type::none);
     post_instantiate->body = builder.blockify(post_instantiate->body, call);
