@@ -2232,10 +2232,9 @@ public:
 // anything that can't be evaluated down to a constant.
 class ContextAwareExpressionRunner
   : public ExpressionRunner<ContextAwareExpressionRunner> {
-  Module* module;
 
 public:
-  // map of `local.get`s to their respective values.
+  // Map of `local.get`s to their respective values.
   typedef std::unordered_map<LocalGet*, Literals> GetValues;
 
   // Whether we are trying to precompute down to an expression (which we can
@@ -2253,170 +2252,86 @@ public:
     REPLACE
   };
 
-  // Special name indicating a flow not evaluating to a constant
-  const Name NONCONSTANT_FLOW = "Binaryen|nonconstant";
+  // Special break target indicating a flow not evaluating to a constant
+  static const Name NONCONSTANT_FLOW;
 
   // Special exception indicating a flow not evaluating to a constant
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
 
+  ContextAwareExpressionRunner(Module* module,
+                               Mode mode,
+                               Index maxDepth,
+                               GetValues* getValues = nullptr);
+
+  virtual ~ContextAwareExpressionRunner();
+  // ^ Necessary because we `delete` the instance in binaryen-c.cpp in
+  //   ExpressionRunnerRunAndDispose.
+
+  // Gets the module this runner belongs to.
+  Module* getModule();
+
+  // Sets a known local value to use. Returns `true` if the value is actually
+  // constant.
+  bool setLocalValue(Index index, Literals& values);
+
+  // Sets a known local value to use. Order matters if expressions have side
+  // effects. Returns `true` if the expression actually evaluates to a constant.
+  bool setLocalValue(Index index, Expression* expr);
+
+  // Sets a known global value to use. Returns `true` if the value is actually
+  // constant.
+  bool setGlobalValue(Name name, Literals& values);
+
+  // Sets a known global value to use. Order matters if expressions have side
+  // effects. Returns `true` if the expression actually evaluates to a constant.
+  bool setGlobalValue(Name name, Expression* expr);
+
+  Flow visitLoop(Loop* curr);
+  Flow visitCall(Call* curr);
+  Flow visitCallIndirect(CallIndirect* curr);
+  Flow visitLocalGet(LocalGet* curr);
+  Flow visitLocalSet(LocalSet* curr);
+  Flow visitGlobalGet(GlobalGet* curr);
+  Flow visitGlobalSet(GlobalSet* curr);
+  Flow visitLoad(Load* curr);
+  Flow visitStore(Store* curr);
+  Flow visitAtomicRMW(AtomicRMW* curr);
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr);
+  Flow visitAtomicWait(AtomicWait* curr);
+  Flow visitAtomicNotify(AtomicNotify* curr);
+  Flow visitSIMDLoad(SIMDLoad* curr);
+  Flow visitMemoryInit(MemoryInit* curr);
+  Flow visitDataDrop(DataDrop* curr);
+  Flow visitMemoryCopy(MemoryCopy* curr);
+  Flow visitMemoryFill(MemoryFill* curr);
+  Flow visitHost(Host* curr);
+  Flow visitTry(Try* curr);
+  Flow visitThrow(Throw* curr);
+  Flow visitRethrow(Rethrow* curr);
+  Flow visitBrOnExn(BrOnExn* curr);
+  Flow visitPush(Push* curr);
+  Flow visitPop(Pop* curr);
+  void trap(const char* why) override;
+
 private:
+  // Module this runner belongs to.
+  Module* module;
+
   // Map of local indexes to values set in the context of this runner
   std::unordered_map<Index, Literals> localValues;
+
   // Map of global names to values set in the context of this runner
   std::unordered_map<Name, Literals> globalValues;
+
   // Optional reference to a map of gets to constant values, for example where a
   // pass did already compute these. Not applicable in C-API usage and possibly
   // large, hence a reference to the respective map (must not be mutated).
   GetValues* getValues;
+
   // Whether we are just evaluating or also going to replace the expression
   // afterwards.
   Mode mode;
-
-public:
-  ContextAwareExpressionRunner(Module* module,
-                               Mode mode,
-                               Index maxDepth,
-                               GetValues* getValues = nullptr)
-    : ExpressionRunner<ContextAwareExpressionRunner>(maxDepth), module(module),
-      getValues(getValues), mode(mode) {}
-
-  virtual ~ContextAwareExpressionRunner() {}
-
-  Module* getModule() { return module; }
-
-  // Sets a known local value to use. Returns `true` if the value is actually
-  // constant.
-  bool setLocalValue(Index index, Literals& values) {
-    if (values.isConcrete()) {
-      localValues[index] = values;
-      return true;
-    }
-    localValues.erase(index);
-    return false;
-  }
-
-  // Sets a known local value to use. Order matters if expressions have side
-  // effects. Returns `true` if the expression actually evaluates to a constant.
-  bool setLocalValue(Index index, Expression* expr) {
-    auto setFlow = visit(expr);
-    if (!setFlow.breaking()) {
-      return setLocalValue(index, setFlow.values);
-    }
-    return false;
-  }
-
-  // Sets a known global value to use. Returns `true` if the value is actually
-  // constant.
-  bool setGlobalValue(Name name, Literals& values) {
-    if (values.isConcrete()) {
-      globalValues[name] = values;
-      return true;
-    }
-    globalValues.erase(name);
-    return false;
-  }
-
-  // Sets a known global value to use. Order matters if expressions have side
-  // effects. Returns `true` if the expression actually evaluates to a constant.
-  bool setGlobalValue(Name name, Expression* expr) {
-    auto setFlow = visit(expr);
-    if (!setFlow.breaking()) {
-      return setGlobalValue(name, setFlow.values);
-    }
-    return false;
-  }
-
-  Flow visitLoop(Loop* curr) {
-    // loops might be infinite, so must be careful
-    // but we can't tell if non-infinite, since we don't have state, so loops
-    // are just impossible to optimize for now
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitCall(Call* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitCallIndirect(CallIndirect* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitLocalGet(LocalGet* curr) {
-    // Check if a constant value has been set in the context of this runner.
-    auto iter = localValues.find(curr->index);
-    if (iter != localValues.end()) {
-      return Flow(std::move(iter->second));
-    }
-    // If not the case, see if the calling pass did compute the value of this
-    // specific `local.get` in an earlier step already. This is a fallback
-    // targeting the precompute pass specifically, which already did this work,
-    // but is not applicable when the runner is used via the C-API for example.
-    if (getValues != nullptr) {
-      auto iter = getValues->find(curr);
-      if (iter != getValues->end()) {
-        auto values = iter->second;
-        if (values.isConcrete()) {
-          return Flow(std::move(values));
-        }
-      }
-    }
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitLocalSet(LocalSet* curr) {
-    if (mode == Mode::EVALUATE) {
-      // If we are evaluating and not replacing the expression, see if there is
-      // a value flowing through a tee.
-      if (curr->type.isConcrete()) {
-        assert(curr->isTee());
-        return visit(curr->value);
-      }
-      // Otherwise remember the constant value set, if any, for subsequent gets.
-      if (setLocalValue(curr->index, curr->value)) {
-        return Flow();
-      }
-    }
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitGlobalGet(GlobalGet* curr) {
-    auto* global = module->getGlobal(curr->name);
-    // Check if the global has an immutable value anyway
-    if (!global->imported() && !global->mutable_) {
-      return visit(global->init);
-    }
-    // Check if a constant value has been set in the context of this runner.
-    auto iter = globalValues.find(curr->name);
-    if (iter != globalValues.end()) {
-      return Flow(std::move(iter->second));
-    }
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitGlobalSet(GlobalSet* curr) {
-    if (mode == Mode::EVALUATE) {
-      // If we are evaluating and not replacing the expression, remember the
-      // constant value set, if any, for subsequent gets.
-      assert(module->getGlobal(curr->name)->mutable_);
-      if (setGlobalValue(curr->name, curr->value)) {
-        return Flow();
-      }
-    }
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitLoad(Load* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStore(Store* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitDataDrop(DataDrop* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitHost(Host* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitTry(Try* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitThrow(Throw* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitRethrow(Rethrow* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitPush(Push* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitPop(Pop* curr) { return Flow(NONCONSTANT_FLOW); }
-
-  void trap(const char* why) override { throw NonconstantException(); }
 };
 
 } // namespace wasm
