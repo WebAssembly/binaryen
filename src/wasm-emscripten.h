@@ -73,6 +73,7 @@ private:
   Address stackPointerOffset;
   bool useStackPointerGlobal;
   bool standalone;
+  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
