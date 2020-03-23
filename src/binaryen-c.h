@@ -1645,8 +1645,8 @@ BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplace();
 // traversal in function-parallel scenarios.
 BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluateDeterministic();
 
-// Like ExpressionRunnerModeReplaceDeterministic, excluding potentially
-// non-deterministic traversal in function-parallel scenarios.
+// Like ExpressionRunnerModeReplace, excluding potentially non-deterministic
+// traversal in function-parallel scenarios.
 BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplaceDeterministic();
 
 // Creates an ExpressionRunner instance
