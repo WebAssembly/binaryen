@@ -342,7 +342,7 @@ public:
   }
 
   Name getGetter(Type type) { return typeToGetters.at(type); }
-  Name getSetter(Type type) { return typeToGetters.at(type); }
+  Name getSetter(Type type) { return typeToSetters.at(type); }
 
   Function* getGetter(Name name) {
     if (getterToTypes.count(name)) {
