@@ -305,7 +305,7 @@ const auto STACK_ALIGN = 4;
 // ignored by the Asyncify instrumentation, so we don't want to use a local.
 // What we do is replace the local used to receive a call's result with a
 // fake call to stash it, then do a fake call to receive it afterwards. (We
-// can't do it in two steps so that if we are async, we only do the first and
+// do it in two steps so that if we are async, we only do the first and
 // not the second, i.e., we don't store to the target local if not running
 // normally).
 class FakeCallHelper {
