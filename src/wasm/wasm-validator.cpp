@@ -1689,6 +1689,9 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
     case NotVec128:
+    case AbsVecI8x16:
+    case AbsVecI16x8:
+    case AbsVecI32x4:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -1720,17 +1723,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
     case AnyTrueVecI8x16:
-    case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
-    case AllTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
+    case AllTrueVecI8x16:
+    case AllTrueVecI16x8:
+    case AllTrueVecI32x4:
     case AllTrueVecI64x2:
-      shouldBeEqual(curr->type,
-                    Type(Type::i32),
-                    curr,
-                    "expected boolean reduction to have i32 type");
+    case BitmaskVecI8x16:
+    case BitmaskVecI16x8:
+    case BitmaskVecI32x4:
+      shouldBeEqual(curr->type, Type(Type::i32), curr, "expected i32 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
@@ -1914,9 +1917,10 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
     }
     types.push_back(op->type);
   }
-  shouldBeTrue(Type(types) == curr->type,
-               curr,
-               "Type of tuple.make does not match types of its operands");
+  shouldBeSubType(Type(types),
+                  curr->type,
+                  curr,
+                  "Type of tuple.make does not match types of its operands");
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
@@ -1926,13 +1930,15 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
       curr,
       "If tuple.extract has an unreachable operand, it must be unreachable");
   } else {
-    shouldBeTrue(curr->index < curr->tuple->type.size(),
-                 curr,
-                 "tuple.extract index out of bounds");
-    shouldBeTrue(
-      curr->type == curr->tuple->type.expand()[curr->index],
-      curr,
-      "tuple.extract type does not match the type of the extracted element");
+    bool inBounds = curr->index < curr->tuple->type.size();
+    shouldBeTrue(inBounds, curr, "tuple.extract index out of bounds");
+    if (inBounds) {
+      shouldBeSubType(
+        curr->tuple->type.expand()[curr->index],
+        curr->type,
+        curr,
+        "tuple.extract type does not match the type of the extracted element");
+    }
   }
 }
 

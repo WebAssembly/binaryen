@@ -330,9 +330,11 @@ public:
   Literal orV128(const Literal& other) const;
   Literal xorV128(const Literal& other) const;
   Literal bitselectV128(const Literal& left, const Literal& right) const;
+  Literal absI8x16() const;
   Literal negI8x16() const;
   Literal anyTrueI8x16() const;
   Literal allTrueI8x16() const;
+  Literal bitmaskI8x16() const;
   Literal shlI8x16(const Literal& other) const;
   Literal shrSI8x16(const Literal& other) const;
   Literal shrUI8x16(const Literal& other) const;
@@ -348,9 +350,11 @@ public:
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
   Literal avgrUI8x16(const Literal& other) const;
+  Literal absI16x8() const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
   Literal allTrueI16x8() const;
+  Literal bitmaskI16x8() const;
   Literal shlI16x8(const Literal& other) const;
   Literal shrSI16x8(const Literal& other) const;
   Literal shrUI16x8(const Literal& other) const;
@@ -366,9 +370,11 @@ public:
   Literal maxSI16x8(const Literal& other) const;
   Literal maxUI16x8(const Literal& other) const;
   Literal avgrUI16x8(const Literal& other) const;
+  Literal absI32x4() const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
   Literal allTrueI32x4() const;
+  Literal bitmaskI32x4() const;
   Literal shlI32x4(const Literal& other) const;
   Literal shrSI32x4(const Literal& other) const;
   Literal shrUI32x4(const Literal& other) const;

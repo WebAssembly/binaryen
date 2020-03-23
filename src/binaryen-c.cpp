@@ -790,9 +790,11 @@ BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
 BinaryenOp BinaryenAndNotVec128(void) { return AndNotVec128; }
 BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
+BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
 BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
 BinaryenOp BinaryenAnyTrueVecI8x16(void) { return AnyTrueVecI8x16; }
 BinaryenOp BinaryenAllTrueVecI8x16(void) { return AllTrueVecI8x16; }
+BinaryenOp BinaryenBitmaskVecI8x16(void) { return BitmaskVecI8x16; }
 BinaryenOp BinaryenShlVecI8x16(void) { return ShlVecI8x16; }
 BinaryenOp BinaryenShrSVecI8x16(void) { return ShrSVecI8x16; }
 BinaryenOp BinaryenShrUVecI8x16(void) { return ShrUVecI8x16; }
@@ -808,9 +810,11 @@ BinaryenOp BinaryenMinUVecI8x16(void) { return MinUVecI8x16; }
 BinaryenOp BinaryenMaxSVecI8x16(void) { return MaxSVecI8x16; }
 BinaryenOp BinaryenMaxUVecI8x16(void) { return MaxUVecI8x16; }
 BinaryenOp BinaryenAvgrUVecI8x16(void) { return AvgrUVecI8x16; }
+BinaryenOp BinaryenAbsVecI16x8(void) { return AbsVecI16x8; }
 BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
 BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
 BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
+BinaryenOp BinaryenBitmaskVecI16x8(void) { return BitmaskVecI16x8; }
 BinaryenOp BinaryenShlVecI16x8(void) { return ShlVecI16x8; }
 BinaryenOp BinaryenShrSVecI16x8(void) { return ShrSVecI16x8; }
 BinaryenOp BinaryenShrUVecI16x8(void) { return ShrUVecI16x8; }
@@ -826,9 +830,11 @@ BinaryenOp BinaryenMinUVecI16x8(void) { return MinUVecI16x8; }
 BinaryenOp BinaryenMaxSVecI16x8(void) { return MaxSVecI16x8; }
 BinaryenOp BinaryenMaxUVecI16x8(void) { return MaxUVecI16x8; }
 BinaryenOp BinaryenAvgrUVecI16x8(void) { return AvgrUVecI16x8; }
+BinaryenOp BinaryenAbsVecI32x4(void) { return AbsVecI32x4; }
 BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
 BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
 BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
+BinaryenOp BinaryenBitmaskVecI32x4(void) { return BitmaskVecI32x4; }
 BinaryenOp BinaryenShlVecI32x4(void) { return ShlVecI32x4; }
 BinaryenOp BinaryenShrSVecI32x4(void) { return ShrSVecI32x4; }
 BinaryenOp BinaryenShrUVecI32x4(void) { return ShrUVecI32x4; }
