@@ -315,7 +315,7 @@ public:
   FakeCallHelper(Module& module) : module(module) {
     Builder builder(module);
     std::string prefix = "__asyncify_fake_call";
-    for (auto type : { Type::i32, Type::i64, Type::f32, Type::f64 }) {
+    for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64}) {
       auto typedPrefix = prefix + '_' + Type(type).toString() + '_';
       auto setter = typedPrefix + "set";
       setterToTypes[setter] = type;
@@ -914,8 +914,10 @@ private:
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
       auto type = set->value->type;
-      curr = builder->makeCall(analyzer->fakeCalls.getSetter(type), {set->value}, type);
-      set->value = builder->makeCall(analyzer->fakeCalls.getGetter(type), {}, type);
+      curr = builder->makeCall(
+        analyzer->fakeCalls.getSetter(type), {set->value}, type);
+      set->value =
+        builder->makeCall(analyzer->fakeCalls.getGetter(type), {}, type);
     }
     // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
