@@ -111,18 +111,17 @@ jobs:
       compiler: clang
       python: 2.7
       language: node_js
-      sudo: required
-      services:
-        - docker
-      before_install:
-        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten-upstream bash
+      install:
+        - mkdir "$HOME/emsdk" &&
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$HOME/emsdk" &&
+          $HOME/emsdk/emsdk update-tags &&
+          $HOME/emsdk/emsdk install tot &&
+          $HOME/emsdk/emsdk activate tot
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too.
-        - bash -c 'while sleep 300; do echo ""; done' & PID=$!
-        - docker exec -it emscripten bash ./travis-emcc-tests.sh
-        - kill $PID
-        # printing something every 5 minutes prevents Travis from timing out.
+        - source "$HOME/emsdk/emsdk_env.sh &&
+          ./travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
