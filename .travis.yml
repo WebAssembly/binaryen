@@ -112,15 +112,15 @@ jobs:
       python: 2.7
       language: node_js
       install:
-        - mkdir "$HOME/emsdk" &&
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$HOME/emsdk" &&
+        - mkdir $HOME/emsdk &&
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk &&
           $HOME/emsdk/emsdk update-tags &&
           $HOME/emsdk/emsdk install tot &&
           $HOME/emsdk/emsdk activate tot
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too.
-        - source "$HOME/emsdk/emsdk_env.sh &&
+        - source $HOME/emsdk/emsdk_env.sh &&
           ./travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
