@@ -316,13 +316,13 @@ public:
     Builder builder(module);
     std::string prefix = "__asyncify_fake_call";
     for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64}) {
-      auto typedPrefix = prefix + '_' + Type(type).toString() + '_';
-      auto setter = typedPrefix + "set";
+      auto typedPrefix = prefix + '_' + Type(type).toString();
+      auto setter = typedPrefix + "_set";
       setterToTypes[setter] = type;
       typeToSetters[type] = setter;
       module.addFunction(builder.makeFunction(
         setter, Signature(type, Type::none), {}, builder.makeUnreachable()));
-      auto getter = typedPrefix + "get";
+      auto getter = typedPrefix + "_get";
       getterToTypes[getter] = type;
       typeToGetters[type] = getter;
       module.addFunction(builder.makeFunction(
