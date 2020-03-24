@@ -478,12 +478,11 @@ function initializeConstants() {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
 
-  // ExpressionRunner modes
-  Module['ExpressionRunner']['Mode'] = {
-    'Evaluate': Module['_ExpressionRunnerModeEvaluate'](),
-    'Replace': Module['_ExpressionRunnerModeReplace'](),
-    'EvaluateDeterministic': Module['_ExpressionRunnerModeEvaluateDeterministic'](),
-    'ReplaceDeterministic': Module['_ExpressionRunnerModeReplaceDeterministic']()
+  // ExpressionRunner flags
+  Module['ExpressionRunner']['Flags'] = {
+    'Default': Module['_ExpressionRunnerFlagsDefault'](),
+    'Replace': Module['_ExpressionRunnerFlagsReplace'](),
+    'Parallel': Module['_ExpressionRunnerFlagsParallel']()
   };
 }
 
@@ -2399,9 +2398,10 @@ Module['Relooper'] = function(module) {
 };
 
 // 'ExpressionRunner' interface
-Module['ExpressionRunner'] = function(module, mode, maxDepth) {
-  if (typeof maxDepth === "undefined") maxDepth = 50; // default used by precompute
-  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], mode, maxDepth);
+Module['ExpressionRunner'] = function(module, flags, maxDepth) {
+  if (typeof flags === 'undefined') flags = Module['ExpressionRunner']['Flags']['Default'];
+  if (typeof maxDepth === 'undefined') maxDepth = 50; // default used by precompute
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth);
   this['ptr'] = runner;
 
   this['setLocalValue'] = function(index, valueExpr) {

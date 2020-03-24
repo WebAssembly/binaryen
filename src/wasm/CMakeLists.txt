@@ -6,7 +6,6 @@ set(wasm_SOURCES
   wasm-emscripten.cpp
   wasm-debug.cpp
   wasm-interpreter.cpp
-  wasm-interpreter-ContextAwareExpressionRunner.cpp
   wasm-io.cpp
   wasm-s-parser.cpp
   wasm-stack.cpp

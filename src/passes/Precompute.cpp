@@ -40,7 +40,8 @@
 namespace wasm {
 
 using GetValues = ContextAwareExpressionRunner::GetValues;
-using Mode = ContextAwareExpressionRunner::Mode;
+using FlagValues = ContextAwareExpressionRunner::FlagValues;
+using Flags = ContextAwareExpressionRunner::Flags;
 using NonconstantException = ContextAwareExpressionRunner::NonconstantException;
 
 // Limit evaluation depth for 2 reasons: first, it is highly unlikely
@@ -173,12 +174,13 @@ struct Precompute
 
 private:
   // Precompute an expression, returning a flow, which may be a constant
-  // (that we can replace the expression with if replaceExpression is set).
+  // (that we can replace the expression with if the REPLACE flag is set).
   Flow precomputeExpression(Expression* curr,
-                            Mode mode = Mode::REPLACE_DETERMINISTIC) {
+                            Flags flags = FlagValues::REPLACE |
+                                          FlagValues::PARALLEL) {
     try {
       return ContextAwareExpressionRunner(
-               getModule(), mode, MAX_DEPTH, &getValues)
+               getModule(), flags, MAX_DEPTH, &getValues)
         .visit(curr);
     } catch (NonconstantException&) {
       return Flow(ContextAwareExpressionRunner::NONCONSTANT_FLOW);
@@ -195,7 +197,7 @@ private:
   Literals precomputeValue(Expression* curr) {
     // Note that we do not intent to replace the expression, as we just care
     // about the value here.
-    Flow flow = precomputeExpression(curr, Mode::EVALUATE_DETERMINISTIC);
+    Flow flow = precomputeExpression(curr, FlagValues::PARALLEL);
     if (flow.breaking()) {
       return {};
     }

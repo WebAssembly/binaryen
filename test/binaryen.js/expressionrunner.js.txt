@@ -1,7 +1,6 @@
-// Mode.Evaluate = 0
-// Mode.Replace = 1
-// Mode.EvaluateDeterministic = 2
-// Mode.ReplaceDeterministic = 3
+// ExpressionRunner.Flags.Default = 0
+// ExpressionRunner.Flags.Replace = 1
+// ExpressionRunner.Flags.Parallel = 2
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>

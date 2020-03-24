@@ -2237,7 +2237,7 @@ public:
 
 // Evaluates an expression given its surrounding context. Errors if we hit
 // anything that can't be evaluated down to a constant.
-class ContextAwareExpressionRunner
+class ContextAwareExpressionRunner final
   : public ExpressionRunner<ContextAwareExpressionRunner> {
 
 public:
@@ -2250,20 +2250,24 @@ public:
   // only do so when it has no side effects. When we don't care about
   // replacing the expression, we just want to know if it will contain a known
   // constant.
-  enum Mode {
-    // Just evaluate the expression, so we can ignore some side effects like
-    // those of a `local.tee`, but not others like traps.
-    EVALUATE,
+  enum FlagValues {
+    // Just evaluate the expression by default, where we can ignore some side
+    // effects like those of a `local.tee`, but not others like traps.
+    DEFAULT = 0,
     // We are going to replace the expression afterwards, so side effects
     // including those of `local.tee`s for example must be retained.
-    REPLACE,
-    // Like EVALUATE, excluding potentially non-deterministic traversal in
-    // function-parallel scenarios.
-    EVALUATE_DETERMINISTIC,
-    // Like REPLACE, excluding potentially non-deterministic traversal in
-    // function-parallel scenarios.
-    REPLACE_DETERMINISTIC
+    REPLACE = 1 << 0,
+    // We are going to execute the runner in a function-parallel scenario, so we
+    // cannot perform traversal of nodes that might become modified
+    // non-deterministically, like function calls, where the called function
+    // might or might not have been optimized already to something we can
+    // traverse successfully.
+    PARALLEL = 1 << 1
   };
+  // Flags indicating special requirements, for example whether we are just
+  // evaluating (default), also going to replace the expression afterwards or
+  // executing in a function-parallel scenario. See FlagValues.
+  typedef uint32_t Flags;
 
   // Special break target indicating a flow not evaluating to a constant
   static const Name NONCONSTANT_FLOW;
@@ -2273,13 +2277,9 @@ public:
   }; // TODO: use a flow with a special name, as this is likely very slow
 
   ContextAwareExpressionRunner(Module* module,
-                               Mode mode,
+                               Flags flags,
                                Index maxDepth,
                                GetValues* getValues = nullptr);
-
-  virtual ~ContextAwareExpressionRunner();
-  // ^ Necessary because we `delete` the instance in binaryen-c.cpp in
-  //   ExpressionRunnerRunAndDispose.
 
   // Gets the module this runner belongs to.
   Module* getModule();
@@ -2342,15 +2342,10 @@ private:
   // large, hence a reference to the respective map (must not be mutated).
   GetValues* getValues;
 
-  // Whether we are just evaluating or also going to replace the expression
-  // afterwards.
-  Mode mode;
-
-  // Whether `mode` is any of the `EVALUATE` modes.
-  bool isEvaluate();
-
-  // Whether `mode` is any of the `DETERMINISTIC` modes.
-  bool isDeterministic();
+  // Flags indicating special requirements, for example whether we are just
+  // evaluating (default), also going to replace the expression afterwards or
+  // executing in a function-parallel scenario.
+  Flags flags;
 };
 
 } // namespace wasm

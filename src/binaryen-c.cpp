@@ -4816,32 +4816,28 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= ExpressionRunner =========
 //
 
-ExpressionRunnerMode ExpressionRunnerModeEvaluate() {
-  return ContextAwareExpressionRunner::Mode::EVALUATE;
+ExpressionRunnerFlags ExpressionRunnerFlagsDefault() {
+  return ContextAwareExpressionRunner::FlagValues::DEFAULT;
 }
 
-ExpressionRunnerMode ExpressionRunnerModeReplace() {
-  return ContextAwareExpressionRunner::Mode::REPLACE;
+ExpressionRunnerFlags ExpressionRunnerFlagsReplace() {
+  return ContextAwareExpressionRunner::FlagValues::REPLACE;
 }
 
-ExpressionRunnerMode ExpressionRunnerModeEvaluateDeterministic() {
-  return ContextAwareExpressionRunner::Mode::EVALUATE_DETERMINISTIC;
-}
-
-ExpressionRunnerMode ExpressionRunnerModeReplaceDeterministic() {
-  return ContextAwareExpressionRunner::Mode::REPLACE_DETERMINISTIC;
+ExpressionRunnerFlags ExpressionRunnerFlagsParallel() {
+  return ContextAwareExpressionRunner::FlagValues::PARALLEL;
 }
 
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
-                                           ExpressionRunnerMode mode,
+                                           ExpressionRunnerFlags flags,
                                            BinaryenIndex maxDepth) {
   if (tracing) {
-    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << mode
+    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << flags
               << ", " << maxDepth << ");\n";
   }
   auto* wasm = (Module*)module;
-  return ExpressionRunnerRef(new ContextAwareExpressionRunner(
-    wasm, ContextAwareExpressionRunner::Mode(mode), maxDepth));
+  return ExpressionRunnerRef(
+    new ContextAwareExpressionRunner(wasm, flags, maxDepth));
 }
 
 int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,

@@ -1631,27 +1631,28 @@ typedef class wasm::ContextAwareExpressionRunner* ExpressionRunnerRef;
 typedef struct ContextAwareExpressionRunner* ExpressionRunnerRef;
 #endif
 
-typedef uint32_t ExpressionRunnerMode;
+typedef uint32_t ExpressionRunnerFlags;
 
 // Just evaluate the expression, so we can ignore some side effects like those
 // of a `local.tee`, but not others like traps.
-BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluate();
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsDefault();
 
 // We are going to replace the expression afterwards, so side effects including
 // those of `local.tee`s for example must be retained.
-BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplace();
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsReplace();
 
-// Like ExpressionRunnerModeEvaluate, excluding potentially non-deterministic
-// traversal in function-parallel scenarios.
-BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeEvaluateDeterministic();
-
-// Like ExpressionRunnerModeReplace, excluding potentially non-deterministic
-// traversal in function-parallel scenarios.
-BINARYEN_API ExpressionRunnerMode ExpressionRunnerModeReplaceDeterministic();
+// We are going to execute the runner in a function-parallel scenario, so we
+// cannot perform traversal of nodes that might become modified
+// non-deterministically, like function calls, where the called function might
+// or might not have been optimized already to something we can traverse
+// successfully.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsParallel();
 
 // Creates an ExpressionRunner instance
-BINARYEN_API ExpressionRunnerRef ExpressionRunnerCreate(
-  BinaryenModuleRef module, ExpressionRunnerMode mode, BinaryenIndex maxDepth);
+BINARYEN_API ExpressionRunnerRef
+ExpressionRunnerCreate(BinaryenModuleRef module,
+                       ExpressionRunnerFlags flags,
+                       BinaryenIndex maxDepth);
 
 // Sets a known local value to use. Order matters if expressions have side
 // effects. Returns `true` if the expression actually evaluates to a constant.
