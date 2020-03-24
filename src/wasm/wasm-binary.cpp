@@ -50,8 +50,8 @@ void WasmBinaryWriter::write() {
   writeFunctionSignatures();
   writeFunctionTableDeclaration();
   writeMemory();
-  writeGlobals();
   writeEvents();
+  writeGlobals();
   writeExports();
   writeStart();
   writeTableElements();
