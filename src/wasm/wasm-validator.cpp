@@ -1906,6 +1906,9 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
 }
 
 void FunctionValidator::visitTupleMake(TupleMake* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
   std::vector<Type> types;
   for (auto* op : curr->operands) {
     if (op->type == Type::unreachable) {
@@ -1924,6 +1927,9 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
   if (curr->tuple->type == Type::unreachable) {
     shouldBeTrue(
       curr->type == Type::unreachable,
