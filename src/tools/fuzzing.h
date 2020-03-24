@@ -918,12 +918,13 @@ private:
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
-      options.add(FeatureSet::MVP,
-                  &Self::makeUnary,
-                  &Self::makeBinary,
-                  &Self::makeSelect,
-                  &Self::makeGlobalGet,
-                  &Self::makeTupleExtract);
+      options
+        .add(FeatureSet::MVP,
+             &Self::makeUnary,
+             &Self::makeBinary,
+             &Self::makeSelect,
+             &Self::makeGlobalGet)
+        .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
     if (type.isSingle() && !type.isRef()) {
       options.add(FeatureSet::MVP, &Self::makeLoad);
@@ -936,7 +937,7 @@ private:
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     }
     if (type.isMulti()) {
-      options.add(FeatureSet::MVP, &Self::makeTupleMake);
+      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
     return (this->*pick(options))(type);
   }
@@ -1340,6 +1341,7 @@ private:
   }
 
   Expression* makeTupleMake(Type type) {
+    assert(wasm.features.hasMultivalue());
     assert(type.isMulti());
     std::vector<Expression*> elements;
     for (auto t : type.expand()) {
@@ -1349,6 +1351,7 @@ private:
   }
 
   Expression* makeTupleExtract(Type type) {
+    assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tuple = getTupleType();
     const std::vector<Type>& elements = tuple.expand();
@@ -2757,7 +2760,7 @@ private:
   }
 
   Type getConcreteType() {
-    if (oneIn(3)) {
+    if (wasm.features.hasMultivalue() && oneIn(3)) {
       return getTupleType();
     } else {
       return getSingleConcreteType();
@@ -2767,10 +2770,8 @@ private:
   Type getControlFlowType() {
     if (oneIn(5)) {
       return Type::none;
-    } else if (wasm.features.hasMultivalue()) {
-      return getConcreteType();
     } else {
-      return getSingleConcreteType();
+      return getConcreteType();
     }
   }
 

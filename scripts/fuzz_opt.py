@@ -226,7 +226,7 @@ class CompareVMs(TestCaseHandler):
                 break
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
@@ -337,7 +337,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue']])
 
 
 # The global list of all test case handlers
@@ -540,6 +540,7 @@ if not NANS:
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wat'), '-all']).replace('--enable', '--disable').strip().split('\n')
+POSSIBLE_FEATURE_OPTS.remove('--disable-multivalue')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
