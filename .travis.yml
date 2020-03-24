@@ -112,11 +112,15 @@ jobs:
       python: 2.7
       language: node_js
       install:
+        - mkdir $HOME/cmake &&
+          wget -qO- https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz | tar -xzC $HOME/cmake --strip-components 1 &&
+          export PATH=$HOME/cmake:$PATH
         - mkdir $HOME/emsdk &&
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk &&
           $HOME/emsdk/emsdk update-tags &&
           $HOME/emsdk/emsdk install tot &&
-          $HOME/emsdk/emsdk activate tot
+          $HOME/emsdk/emsdk activate tot &&
+          export PATH=$HOME/emsdk:$PATH
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too.
