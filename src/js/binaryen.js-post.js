@@ -95,6 +95,8 @@ function initializeConstants() {
     'Throw',
     'Rethrow',
     'BrOnExn',
+    'TupleMake',
+    'TupleExtract',
     'Push',
     'Pop'
   ].forEach(function(name) {
@@ -2091,6 +2093,17 @@ function wrapModule(module, self) {
     return Module['_BinaryenPush'](module, value);
   };
 
+  self['tuple'] = {
+    'make': function(elements) {
+      return preserveStack(function() {
+        return Module['_BinaryenTupleMake'](module, i32sToStack(elements), elements.length);
+      });
+    },
+    'extract': function(tuple, index) {
+      return Module['_BinaryenTupleExtract'](module, tuple, index);
+    }
+  };
+
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
     return preserveStack(function() {
@@ -2789,6 +2802,19 @@ Module['getExpressionInfo'] = function(expr) {
         'name': UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr)),
         'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
         'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
+      };
+    case Module['TupleMakeId']:
+      return {
+        'id': id,
+        'type': type,
+        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperand'])
+      };
+    case Module['TupleExtractId']:
+      return {
+        'id': id,
+        'type': type,
+        'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
+        'index': Module['_BinaryenTupleExtractGetIndex'](expr)
       };
     case Module['PushId']:
       return {

@@ -1705,6 +1705,24 @@
        )
       )
       (atomic.fence)
+      (drop
+       (tuple.make
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+       )
+      )
+      (drop
+       (tuple.extract 2
+        (tuple.make
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
       (push
        (i32.pop)
       )

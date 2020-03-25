@@ -264,6 +264,31 @@ void traceExpression(BinaryenExpressionRef expr,
   }
 }
 
+template<typename F>
+void traceWithExpressionArray(const char* name,
+                              BinaryenExpressionRef* exprs,
+                              BinaryenIndex numExprs,
+                              F body) {
+  std::cout << "  {\n";
+  std::cout << "    BinaryenExpressionRef " << name << "[] = { ";
+  for (BinaryenIndex i = 0; i < numExprs; i++) {
+    if (i > 0) {
+      std::cout << ", ";
+    }
+    if (i % 6 == 5) {
+      std::cout << "\n       "; // don't create hugely long lines
+    }
+    std::cout << "expressions[" << expressions[exprs[i]] << "]";
+  }
+  if (numExprs == 0) {
+    // ensure the array is not empty, otherwise a compiler error on VS
+    std::cout << "0";
+  }
+  std::cout << " };\n  ";
+  body();
+  std::cout << "  }\n";
+}
+
 extern "C" {
 
 //
@@ -428,6 +453,12 @@ BinaryenExpressionId BinaryenRethrowId(void) {
 }
 BinaryenExpressionId BinaryenBrOnExnId(void) {
   return Expression::Id::BrOnExnId;
+}
+BinaryenExpressionId BinaryenTupleMakeId(void) {
+  return Expression::Id::TupleMakeId;
+}
+BinaryenExpressionId BinaryenTupleExtractId(void) {
+  return Expression::Id::TupleExtractId;
 }
 BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
@@ -981,25 +1012,10 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
   }
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef children[] = { ";
-    for (BinaryenIndex i = 0; i < numChildren; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      if (i % 6 == 5) {
-        std::cout << "\n       "; // don't create hugely long lines
-      }
-      std::cout << "expressions[" << expressions[children[i]] << "]";
-    }
-    if (numChildren == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(
-      ret, "BinaryenBlock", StringLit(name), "children", numChildren, type);
-    std::cout << "  }\n";
+    traceWithExpressionArray("children", children, numChildren, [&]() {
+      traceExpression(
+        ret, "BinaryenBlock", StringLit(name), "children", numChildren, type);
+    });
   }
 
   return static_cast<Expression*>(ret);
@@ -1095,26 +1111,14 @@ static BinaryenExpressionRef makeBinaryenCall(BinaryenModuleRef module,
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef operands[] = { ";
-    for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
-    }
-    if (numOperands == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(ret,
-                    (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
-                    StringLit(target),
-                    "operands",
-                    numOperands,
-                    returnType);
-    std::cout << "  }\n";
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(ret,
+                      (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
+                      StringLit(target),
+                      "operands",
+                      numOperands,
+                      returnType);
+    });
   }
 
   ret->target = target;
@@ -1717,6 +1721,35 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
+
+BinaryenExpressionRef BinaryenTupleMake(BinaryenModuleRef module,
+                                        BinaryenExpressionRef* operands,
+                                        BinaryenIndex numOperands) {
+  std::vector<Expression*> ops;
+  ops.resize(numOperands);
+  for (size_t i = 0; i < numOperands; ++i) {
+    ops[i] = (Expression*)operands[i];
+  }
+  auto* ret = Builder(*(Module*)module).makeTupleMake(ops);
+  if (tracing) {
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(ret, "BinaryenTupleMake", "operands", numOperands);
+    });
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenTupleExtract(BinaryenModuleRef module,
+                                           BinaryenExpressionRef tuple,
+                                           BinaryenIndex index) {
+  auto* ret =
+    Builder(*(Module*)module).makeTupleExtract((Expression*)tuple, index);
+  if (tracing) {
+    traceExpression(ret, "BinaryenTupleExtract", tuple, index);
+  }
+  return ret;
+}
+
 BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                    BinaryenExpressionRef value) {
   auto* ret = Builder(*(Module*)module).makePush((Expression*)value);
@@ -1781,22 +1814,10 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeThrow(event, args);
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef operands[] = { ";
-    for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
-    }
-    if (numOperands == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(
-      ret, "BinaryenThrow", StringLit(event), "operands", numOperands);
-    std::cout << "  }\n";
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(
+        ret, "BinaryenThrow", StringLit(event), "operands", numOperands);
+    });
   }
   return static_cast<Expression*>(ret);
 }
@@ -3017,17 +3038,6 @@ BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->size;
 }
-// Push
-BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
-  if (tracing) {
-    std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
-              << "]);\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Push>());
-  return static_cast<Push*>(expression)->value;
-}
 // RefIsNull
 BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -3145,6 +3155,60 @@ BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOnExn>());
   return static_cast<BrOnExn*>(expression)->exnref;
+}
+// TupleMake
+BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleMakeGetNumOperands(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  return static_cast<TupleMake*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr,
+                                                  BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleMakeGetOperand(expressions["
+              << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  return static_cast<TupleMake*>(expression)->operands[index];
+}
+// TupleExtract
+BinaryenExpressionRef BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleExtractGetTuple(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  return static_cast<TupleExtract*>(expression)->tuple;
+}
+BinaryenIndex BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleExtractGetIndex(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  return static_cast<TupleExtract*>(expression)->index;
+}
+// Push
+BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Push>());
+  return static_cast<Push*>(expression)->value;
 }
 
 // Functions
