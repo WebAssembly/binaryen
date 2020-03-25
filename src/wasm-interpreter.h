@@ -2235,10 +2235,10 @@ public:
     : ModuleInstanceBase(wasm, externalInterface) {}
 };
 
-// Evaluates an expression given its surrounding context. Errors if we hit
-// anything that can't be evaluated down to a constant.
-class ContextAwareExpressionRunner final
-  : public ExpressionRunner<ContextAwareExpressionRunner> {
+// Evaluates an expression linearly, optionally given its surrounding context.
+// Errors if we hit anything that can't be evaluated down to a constant.
+class LinearExpressionRunner final
+  : public ExpressionRunner<LinearExpressionRunner> {
 
 public:
   // Map of `local.get`s to their respective values.
@@ -2251,53 +2251,64 @@ public:
   // replacing the expression, we just want to know if it will contain a known
   // constant.
   enum FlagValues {
-    // Just evaluate the expression by default, where we can ignore some side
-    // effects like those of a `local.tee`, but not others like traps.
+    // By default, just evaluate the expression, i.e. all we want to know is
+    // whether it computes down to a concrete value, where it is not necessary
+    // to preserve side effects like those of a `local.tee`.
     DEFAULT = 0,
-    // We are going to replace the expression afterwards, so side effects
-    // including those of `local.tee`s for example must be retained.
-    REPLACE = 1 << 0,
-    // We are going to execute the runner in a function-parallel scenario, so we
-    // cannot perform traversal of nodes that might become modified
-    // non-deterministically, like function calls, where the called function
-    // might or might not have been optimized already to something we can
-    // traverse successfully.
-    PARALLEL = 1 << 1
+    // Be very careful to preserve any side effects, like those of a
+    // `local.tee`, for example when we are going to replace the expression
+    // afterwards.
+    PRESERVE_SIDEEFFECTS = 1 << 0,
+    // Traverse through function calls, attempting to compute their concrete
+    // value. Must not be used in function-parallel scenarios, where the called
+    // function might or might not have been optimized already to something we
+    // can traverse successfully, in turn leading to non-deterministic behavior.
+    TRAVERSE_CALLS = 1 << 1
   };
   // Flags indicating special requirements, for example whether we are just
   // evaluating (default), also going to replace the expression afterwards or
   // executing in a function-parallel scenario. See FlagValues.
   typedef uint32_t Flags;
 
-  // Special break target indicating a flow not evaluating to a constant
+  // Limit evaluation depth for 2 reasons: first, it is highly unlikely
+  // that we can do anything useful when precomputing a hugely nested expression
+  // (we should succed at smaller parts of it first). Second, a low limit is
+  // helpful to avoid platform differences in native stack sizes.
+  static const Index DEFAULT_MAX_DEPTH = 50;
+
+  // Special break target indicating a flow not evaluating to a concrete value.
   static const Name NONCONSTANT_FLOW;
 
   // Special exception indicating a flow not evaluating to a constant
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
 
-  ContextAwareExpressionRunner(Module* module,
-                               Flags flags,
-                               Index maxDepth,
-                               GetValues* getValues = nullptr);
+  LinearExpressionRunner(Module* module,
+                         Flags flags = FlagValues::DEFAULT,
+                         Index maxDepth = DEFAULT_MAX_DEPTH);
 
   // Gets the module this runner belongs to.
   Module* getModule();
 
-  // Sets a known local value to use. Returns `true` if the value is actually
-  // constant.
+  // Sets the optional reference to a map of gets to constant values.
+  void setGetValues(GetValues* values);
+
+  // Sets a known local value to use. Returns `true` if the value is concrete
+  // (i.e. not none or unreachable).
   bool setLocalValue(Index index, Literals& values);
 
   // Sets a known local value to use. Order matters if expressions have side
-  // effects. Returns `true` if the expression actually evaluates to a constant.
+  // effects. Returns `true` if the value is concrete (i.e. not none or
+  // unreachable).
   bool setLocalValue(Index index, Expression* expr);
 
-  // Sets a known global value to use. Returns `true` if the value is actually
-  // constant.
+  // Sets a known global value to use. Returns `true` if the value is concrete
+  // (i.e. not none or unreachable).
   bool setGlobalValue(Name name, Literals& values);
 
   // Sets a known global value to use. Order matters if expressions have side
-  // effects. Returns `true` if the expression actually evaluates to a constant.
+  // effects. Returns `true` if the value is concrete (i.e. not none or
+  // unreachable).
   bool setGlobalValue(Name name, Expression* expr);
 
   Flow visitLoop(Loop* curr);
@@ -2340,11 +2351,9 @@ private:
   // Optional reference to a map of gets to constant values, for example where a
   // pass did already compute these. Not applicable in C-API usage and possibly
   // large, hence a reference to the respective map (must not be mutated).
-  GetValues* getValues;
+  GetValues* getValues = nullptr;
 
-  // Flags indicating special requirements, for example whether we are just
-  // evaluating (default), also going to replace the expression afterwards or
-  // executing in a function-parallel scenario.
+  // Flags indicating special requirements. See FlagValues.
   Flags flags;
 };
 

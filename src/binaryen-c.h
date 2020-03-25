@@ -1633,20 +1633,23 @@ typedef struct ContextAwareExpressionRunner* ExpressionRunnerRef;
 
 typedef uint32_t ExpressionRunnerFlags;
 
-// Just evaluate the expression, so we can ignore some side effects like those
-// of a `local.tee`, but not others like traps.
+// Default maximum evaluation depth.
+BINARYEN_API BinaryenIndex ExpressionRunnerDefaultMaxDepth();
+
+// By default, just evaluate the expression, i.e. all we want to know is whether
+// it computes down to a concrete value, where it is not necessary to preserve
+// side effects like those of a `local.tee`.
 BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsDefault();
 
-// We are going to replace the expression afterwards, so side effects including
-// those of `local.tee`s for example must be retained.
-BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsReplace();
+// Be very careful to preserve any side effects, like those of a `local.tee`,
+// for example when we are going to replace the expression afterwards.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects();
 
-// We are going to execute the runner in a function-parallel scenario, so we
-// cannot perform traversal of nodes that might become modified
-// non-deterministically, like function calls, where the called function might
-// or might not have been optimized already to something we can traverse
-// successfully.
-BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsParallel();
+// Traverse through function calls, attempting to compute their concrete value.
+// Must not be used in function-parallel scenarios, where the called function
+// might or might not have been optimized already to something we can traverse
+// successfully, in turn leading to non-deterministic behavior.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
 
 // Creates an ExpressionRunner instance
 BINARYEN_API ExpressionRunnerRef

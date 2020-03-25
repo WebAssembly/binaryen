@@ -4816,16 +4816,20 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= ExpressionRunner =========
 //
 
+BinaryenIndex ExpressionRunnerDefaultMaxDepth() {
+  return LinearExpressionRunner::DEFAULT_MAX_DEPTH;
+}
+
 ExpressionRunnerFlags ExpressionRunnerFlagsDefault() {
-  return ContextAwareExpressionRunner::FlagValues::DEFAULT;
+  return LinearExpressionRunner::FlagValues::DEFAULT;
 }
 
-ExpressionRunnerFlags ExpressionRunnerFlagsReplace() {
-  return ContextAwareExpressionRunner::FlagValues::REPLACE;
+ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects() {
+  return LinearExpressionRunner::FlagValues::PRESERVE_SIDEEFFECTS;
 }
 
-ExpressionRunnerFlags ExpressionRunnerFlagsParallel() {
-  return ContextAwareExpressionRunner::FlagValues::PARALLEL;
+ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls() {
+  return LinearExpressionRunner::FlagValues::TRAVERSE_CALLS;
 }
 
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
@@ -4836,8 +4840,7 @@ ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
               << ", " << maxDepth << ");\n";
   }
   auto* wasm = (Module*)module;
-  return ExpressionRunnerRef(
-    new ContextAwareExpressionRunner(wasm, flags, maxDepth));
+  return ExpressionRunnerRef(new LinearExpressionRunner(wasm, flags, maxDepth));
 }
 
 int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
@@ -4848,7 +4851,7 @@ int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
               << ", expressions[" << expressions[value] << "]);\n";
   }
 
-  auto* R = (ContextAwareExpressionRunner*)runner;
+  auto* R = (LinearExpressionRunner*)runner;
   return R->setLocalValue(index, value);
 }
 
@@ -4861,21 +4864,21 @@ int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
     std::cout << ", expressions[" << expressions[value] << "]);\n";
   }
 
-  auto* R = (ContextAwareExpressionRunner*)runner;
+  auto* R = (LinearExpressionRunner*)runner;
   return R->setGlobalValue(name, value);
 }
 
 BinaryenExpressionRef
 ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
                               BinaryenExpressionRef expr) {
-  auto* R = (ContextAwareExpressionRunner*)runner;
+  auto* R = (LinearExpressionRunner*)runner;
   Expression* ret = nullptr;
   try {
     auto flow = R->visit(expr);
     if (!flow.breaking() && !flow.values.empty()) {
       ret = flow.getConstExpression(*R->getModule());
     }
-  } catch (ContextAwareExpressionRunner::NonconstantException&) {
+  } catch (LinearExpressionRunner::NonconstantException&) {
   }
 
   if (tracing) {

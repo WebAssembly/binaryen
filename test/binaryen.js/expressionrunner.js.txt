@@ -1,6 +1,7 @@
+// ExpressionRunner.DEFAULT_MAX_DEPTH = 50
 // ExpressionRunner.Flags.Default = 0
-// ExpressionRunner.Flags.Replace = 1
-// ExpressionRunner.Flags.Parallel = 2
+// ExpressionRunner.Flags.PreserveSideeffects = 1
+// ExpressionRunner.Flags.TraverseCalls = 2
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
@@ -93,7 +94,7 @@ int main() {
   BinaryenExpressionGetId(expressions[41]);
   BinaryenExpressionGetType(expressions[41]);
   BinaryenConstGetValueI32(expressions[41]);
-  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 2, 50);
   {
     BinaryenType t0[] = {2, 2};
     BinaryenTypeCreate(t0, 2); // 11
@@ -121,7 +122,7 @@ int main() {
   BinaryenExpressionGetId(expressions[51]);
   BinaryenExpressionGetType(expressions[51]);
   BinaryenConstGetValueI32(expressions[51]);
-  the_runner = ExpressionRunnerCreate(the_module, 2, 50);
+  the_runner = ExpressionRunnerCreate(the_module, 0, 50);
   expressions[52] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[53] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
   expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(4));

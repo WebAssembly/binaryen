@@ -39,16 +39,10 @@
 
 namespace wasm {
 
-using GetValues = ContextAwareExpressionRunner::GetValues;
-using FlagValues = ContextAwareExpressionRunner::FlagValues;
-using Flags = ContextAwareExpressionRunner::Flags;
-using NonconstantException = ContextAwareExpressionRunner::NonconstantException;
-
-// Limit evaluation depth for 2 reasons: first, it is highly unlikely
-// that we can do anything useful to precompute a hugely nested expression
-// (we should succed at smaller parts of it first). Second, a low limit is
-// helpful to avoid platform differences in native stack sizes.
-static const Index MAX_DEPTH = 50;
+using FlagValues = LinearExpressionRunner::FlagValues;
+using Flags = LinearExpressionRunner::Flags;
+using NonconstantException = LinearExpressionRunner::NonconstantException;
+using GetValues = LinearExpressionRunner::GetValues;
 
 struct Precompute
   : public WalkerPass<
@@ -101,7 +95,7 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == ContextAwareExpressionRunner::NONCONSTANT_FLOW) {
+      if (flow.breakTo == LinearExpressionRunner::NONCONSTANT_FLOW) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -174,16 +168,16 @@ struct Precompute
 
 private:
   // Precompute an expression, returning a flow, which may be a constant
-  // (that we can replace the expression with if the REPLACE flag is set).
+  // (that we can replace the expression with if the PRESERVE_SIDEEFFECTS flag
+  // is set).
   Flow precomputeExpression(Expression* curr,
-                            Flags flags = FlagValues::REPLACE |
-                                          FlagValues::PARALLEL) {
+                            Flags flags = FlagValues::PRESERVE_SIDEEFFECTS) {
     try {
-      return ContextAwareExpressionRunner(
-               getModule(), flags, MAX_DEPTH, &getValues)
-        .visit(curr);
+      LinearExpressionRunner runner(getModule(), flags);
+      runner.setGetValues(&getValues);
+      return runner.visit(curr);
     } catch (NonconstantException&) {
-      return Flow(ContextAwareExpressionRunner::NONCONSTANT_FLOW);
+      return Flow(LinearExpressionRunner::NONCONSTANT_FLOW);
     }
   }
 
@@ -195,9 +189,9 @@ private:
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
   Literals precomputeValue(Expression* curr) {
-    // Note that we do not intent to replace the expression, as we just care
-    // about the value here.
-    Flow flow = precomputeExpression(curr, FlagValues::PARALLEL);
+    // Note that we do not set PRESERVE_SIDEEFFECTS, as we just care about the
+    // value here.
+    Flow flow = precomputeExpression(curr, FlagValues::DEFAULT);
     if (flow.breaking()) {
       return {};
     }

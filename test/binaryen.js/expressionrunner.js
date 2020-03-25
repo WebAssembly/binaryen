@@ -1,7 +1,9 @@
+console.log("// ExpressionRunner.DEFAULT_MAX_DEPTH = " + binaryen.ExpressionRunner.DEFAULT_MAX_DEPTH);
+
 var Flags = binaryen.ExpressionRunner.Flags;
 console.log("// ExpressionRunner.Flags.Default = " + Flags.Default);
-console.log("// ExpressionRunner.Flags.Replace = " + Flags.Replace);
-console.log("// ExpressionRunner.Flags.Parallel = " + Flags.Parallel);
+console.log("// ExpressionRunner.Flags.PreserveSideeffects = " + Flags.PreserveSideeffects);
+console.log("// ExpressionRunner.Flags.TraverseCalls = " + Flags.TraverseCalls);
 
 binaryen.setAPITracing(true);
 
@@ -59,8 +61,8 @@ expr = runner.runAndDispose(
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":5}');
 
-// Should keep all side-effects if we are going to replace the expression
-runner = new binaryen.ExpressionRunner(module, Flags.Replace);
+// Should preserve any side-effects if explicitly requested
+runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
 expr = runner.runAndDispose(
   module.i32.add(
     module.local.tee(0, module.i32.const(4), binaryen.i32),
@@ -86,7 +88,7 @@ expr = runner.runAndDispose(
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":6}');
 
 // Should pick up explicitly preset values
-runner = new binaryen.ExpressionRunner(module, Flags.Replace);
+runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
 assert(runner.setLocalValue(0, module.i32.const(3)));
 assert(runner.setGlobalValue("aGlobal", module.i32.const(4)));
 expr = runner.runAndDispose(
@@ -97,8 +99,8 @@ expr = runner.runAndDispose(
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":7}');
 
-// Should traverse into simple functions
-runner = new binaryen.ExpressionRunner(module);
+// Should traverse into (simple) functions if requested
+runner = new binaryen.ExpressionRunner(module, Flags.TraverseCalls);
 module.addFunction("add", binaryen.createType([ binaryen.i32, binaryen.i32 ]), binaryen.i32, [],
   module.block(null, [
     module.i32.add(
@@ -118,8 +120,8 @@ expr = runner.runAndDispose(
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":8}');
 
-// Should not attempt to traverse into functions if required to be deterministic
-runner = new binaryen.ExpressionRunner(module, Flags.Parallel);
+// Should not attempt to traverse into functions if not explicitly set
+runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.i32.add(
     module.i32.const(1),
