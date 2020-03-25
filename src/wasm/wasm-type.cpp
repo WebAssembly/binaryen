@@ -198,7 +198,11 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   FeatureSet feats = FeatureSet::MVP;
-  for (Type t : expand()) {
+  const auto& elements = expand();
+  if (elements.size() > 1) {
+    feats = FeatureSet::Multivalue;
+  }
+  for (Type t : elements) {
     switch (t.getSingle()) {
       case Type::v128:
         feats |= FeatureSet::SIMD;
