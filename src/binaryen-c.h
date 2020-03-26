@@ -167,6 +167,8 @@ BINARYEN_API BinaryenExpressionId BinaryenTryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenThrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPushId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
 
@@ -831,6 +833,12 @@ BinaryenBrOnExn(BinaryenModuleRef module,
                 const char* name,
                 const char* eventName,
                 BinaryenExpressionRef exnref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleMake(BinaryenModuleRef module,
+                  BinaryenExpressionRef* operands,
+                  BinaryenIndex numOperands);
+BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
+  BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                                 BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
@@ -1077,6 +1085,16 @@ BINARYEN_API const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr);
 BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
+
+BINARYEN_API BinaryenIndex
+BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenIndex
+BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenPushGetValue(BinaryenExpressionRef expr);
