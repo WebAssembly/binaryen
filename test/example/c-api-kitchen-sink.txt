@@ -1788,7 +1788,7 @@ int main() {
        expressions[805], expressions[806], expressions[807], expressions[809], expressions[811], expressions[813], 
        expressions[815], expressions[817], expressions[819], expressions[821], expressions[823], expressions[825], 
        expressions[827], expressions[829], expressions[831], expressions[832], expressions[833] };
-    expressions[834] = BinaryenBlock(the_module, "the-value", children, 316, 0);
+    expressions[834] = BinaryenBlock(the_module, "the-value", children, 316, BinaryenTypeAuto());
   }
   expressions[835] = BinaryenDrop(the_module, expressions[834]);
   {
