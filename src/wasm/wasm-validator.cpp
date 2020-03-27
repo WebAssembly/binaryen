@@ -1906,6 +1906,9 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
 }
 
 void FunctionValidator::visitTupleMake(TupleMake* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
   std::vector<Type> types;
   for (auto* op : curr->operands) {
     if (op->type == Type::unreachable) {
@@ -1917,25 +1920,31 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
     }
     types.push_back(op->type);
   }
-  shouldBeTrue(Type(types) == curr->type,
-               curr,
-               "Type of tuple.make does not match types of its operands");
+  shouldBeSubType(Type(types),
+                  curr->type,
+                  curr,
+                  "Type of tuple.make does not match types of its operands");
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
   if (curr->tuple->type == Type::unreachable) {
     shouldBeTrue(
       curr->type == Type::unreachable,
       curr,
       "If tuple.extract has an unreachable operand, it must be unreachable");
   } else {
-    shouldBeTrue(curr->index < curr->tuple->type.size(),
-                 curr,
-                 "tuple.extract index out of bounds");
-    shouldBeTrue(
-      curr->type == curr->tuple->type.expand()[curr->index],
-      curr,
-      "tuple.extract type does not match the type of the extracted element");
+    bool inBounds = curr->index < curr->tuple->type.size();
+    shouldBeTrue(inBounds, curr, "tuple.extract index out of bounds");
+    if (inBounds) {
+      shouldBeSubType(
+        curr->tuple->type.expand()[curr->index],
+        curr->type,
+        curr,
+        "tuple.extract type does not match the type of the extracted element");
+    }
   }
 }
 
