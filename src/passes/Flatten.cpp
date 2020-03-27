@@ -23,8 +23,8 @@
 #include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
-#include <support/unsupported.h>
 #include <pass.h>
+#include <support/unsupported.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 

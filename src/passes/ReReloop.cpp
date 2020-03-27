@@ -285,7 +285,7 @@ struct ReReloop final : public Pass {
       ReturnTask::handle(*this, ret);
     } else if (auto* un = curr->dynCast<Unreachable>()) {
       UnreachableTask::handle(*this, un);
-   } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
                curr->is<BrOnExn>()) {
       throw UnsupportedException(
         "ReReloop does not support EH instructions yet");
