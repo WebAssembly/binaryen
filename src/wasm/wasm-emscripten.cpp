@@ -298,7 +298,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         // We may be able to do something for side modules as well, however,
         // that would require at least updating the dylink section.
         if (f->imported()) {
-          Fatal() << "GOT.func entry export but not implemented: " << g->base;
+          Fatal() << "GOT.func entry is both imported and exported: " << g->base;
         }
         auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
         auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
