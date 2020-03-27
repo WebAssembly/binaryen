@@ -173,7 +173,7 @@ std::ostream& operator<<(std::ostream& os, Signature t);
 
 template<> class std::hash<wasm::Type> {
 public:
-  size_t operator()(const wasm::Type& sig) const;
+  size_t operator()(const wasm::Type& type) const;
 };
 
 template<> class std::hash<wasm::Signature> {

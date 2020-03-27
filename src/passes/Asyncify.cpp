@@ -315,7 +315,7 @@ public:
   FakeCallHelper(Module& module) : module(module) {
     Builder builder(module);
     std::string prefix = "__asyncify_fake_call";
-    for (auto type : ModuleUtils::getLocalTypes(module)) {
+    for (auto type : collectTypes()) {
       auto typedPrefix = prefix + '_' + Type(type).toString();
       auto setter = typedPrefix + "_set";
       setterToTypes[setter] = type;
@@ -360,6 +360,35 @@ public:
 private:
   std::map<Type, Name> typeToSetters, typeToGetters;
   std::map<Name, Type> getterToTypes, setterToTypes;
+
+  // Collect the types returned from all calls for which call support getter and
+  // setter intrinsics may need to be generated.
+  using Types = std::unordered_set<Type>;
+  Types collectTypes() {
+    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+      module, [&](Function* func, Types& types) {
+        if (!func->body) {
+          return;
+        }
+        struct TypeCollector : PostWalker<TypeCollector> {
+          Types& types;
+          TypeCollector(Types& types) : types(types) {}
+          void visitCall(Call* curr) { types.insert(curr->type); }
+          void visitCallIndirect(CallIndirect* curr) {
+            types.insert(curr->type);
+          }
+        };
+        TypeCollector(types).walk(func->body);
+      });
+    Types types;
+    for (auto& pair : analysis.map) {
+      Types& functionTypes = pair.second;
+      for (auto t : functionTypes) {
+        types.insert(t);
+      }
+    }
+    return types;
+  }
 };
 
 class PatternMatcher {

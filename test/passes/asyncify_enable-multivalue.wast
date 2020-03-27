@@ -155,3 +155,21 @@
 ;; empty module, in particular with no memory
 (module
 )
+;; module with a call result type that does not exist as a local
+(module
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+ (func $0 (; 1 ;) (param $0 i32) (param $1 f64) (param $2 i32) (param $3 i64) (result f32)
+  (call $fimport$0
+   (i32.const 0)
+  )
+  (f32.const 1462441600)
+ )
+ (func $1 (; 2 ;) (param $0 i32) (param $1 f64) (param $2 i32) (param $3 i32) (param $4 i32) (result f32)
+  (call $0
+   (i32.const 0)
+   (f64.const 1)
+   (i32.const 1)
+   (i64.const 1)
+  )
+ )
+)
