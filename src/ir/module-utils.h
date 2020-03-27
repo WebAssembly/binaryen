@@ -486,6 +486,25 @@ collectSignatures(Module& wasm,
   }
 }
 
+// Calculate the set of local var and param types used in a module
+inline std::unordered_set<Type> getLocalTypes(Module& wasm) {
+  using Types = std::unordered_set<Type>;
+  ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+    wasm, [&](Function* func, Types& types) {
+      for (Index i = 0, e = func->getNumLocals(); i < e; ++i) {
+        types.insert(func->getLocalType(i));
+      }
+    });
+  Types types;
+  for (auto& pair : analysis.map) {
+    Types& functionTypes = pair.second;
+    for (auto t : functionTypes) {
+      types.insert(t);
+    }
+  }
+  return types;
+}
+
 } // namespace ModuleUtils
 
 } // namespace wasm

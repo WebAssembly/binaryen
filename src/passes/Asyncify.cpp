@@ -315,7 +315,7 @@ public:
   FakeCallHelper(Module& module) : module(module) {
     Builder builder(module);
     std::string prefix = "__asyncify_fake_call";
-    for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64}) {
+    for (auto type : ModuleUtils::getLocalTypes(module)) {
       auto typedPrefix = prefix + '_' + Type(type).toString();
       auto setter = typedPrefix + "_set";
       setterToTypes[setter] = type;

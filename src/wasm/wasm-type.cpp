@@ -35,6 +35,10 @@ public:
   }
 };
 
+size_t std::hash<wasm::Type>::operator()(const wasm::Type& type) const {
+  return std::hash<uint32_t>{}(type.getID());
+}
+
 size_t std::hash<wasm::Signature>::
 operator()(const wasm::Signature& sig) const {
   return std::hash<uint64_t>{}(uint64_t(sig.params.getID()) << 32 |

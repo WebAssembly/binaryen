@@ -1258,7 +1258,7 @@ class Function : public Importable {
 public:
   Name name;
   Signature sig;
-  std::vector<Type> vars;   // params plus vars
+  std::vector<Type> vars;
 
   // The body of the function
   Expression* body = nullptr;
