@@ -23,6 +23,7 @@
 #include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
+#include <support/unsupported.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -66,6 +67,12 @@ struct Flatten
     if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
         curr->is<Unreachable>()) {
       return;
+    }
+
+    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+        curr->is<BrOnExn>()) {
+      throw UnsupportedException(
+        "Flatten does not support EH instructions yet");
     }
 
     if (Properties::isControlFlowStructure(curr)) {
