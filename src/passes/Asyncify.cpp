@@ -345,16 +345,32 @@ public:
   Name getSetter(Type type) { return typeToSetters.at(type); }
 
   Function* getGetter(Name name) {
-    if (getterToTypes.count(name)) {
+    if (getterToTypes.find(name) != getterToTypes.end()) {
       return module.getFunction(name);
     }
     return nullptr;
   }
   Function* getSetter(Name name) {
-    if (setterToTypes.count(name)) {
+    if (setterToTypes.find(name) != setterToTypes.end()) {
       return module.getFunction(name);
     }
     return nullptr;
+  }
+
+  Type getGetterType(Name name) {
+    auto it = getterToTypes.find(name);
+    if (it != getterToTypes.end()) {
+      return it->second;
+    }
+    return Type::none;
+  }
+
+  Type getSetterType(Name name) {
+    auto it = setterToTypes.find(name);
+    if (it != setterToTypes.end()) {
+      return it->second;
+    }
+    return Type::none;
   }
 
 private:
@@ -943,8 +959,12 @@ private:
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
       auto type = set->value->type;
+      auto* setterVal = set->value;
+      if (type.isMulti()) {
+        setterVal = builder->makeTupleExtract(setterVal, 0);
+      }
       curr = builder->makeCall(
-        analyzer->fakeCalls.getSetter(type), {set->value}, type);
+        analyzer->fakeCalls.getSetter(type), {setterVal}, Type::none);
       set->value =
         builder->makeCall(analyzer->fakeCalls.getGetter(type), {}, type);
     }
@@ -1061,14 +1081,18 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
 
   void visitCall(Call* curr) {
     // Check if this is one of our fake calls.
-    if (analyzer->fakeCalls.getSetter(curr->target)) {
+    Type setterType = analyzer->fakeCalls.getSetterType(curr->target);
+    if (setterType != Type::none) {
       assert(curr->operands.size() == 1);
-      auto type = curr->operands[0]->type;
+      auto* value = curr->operands[0];
+      if (setterType.isMulti()) {
+        value = value->cast<TupleExtract>()->tuple;
+      }
       replaceCurrent(
-        builder->makeLocalSet(getFakeCallLocal(type), curr->operands[0]));
+        builder->makeLocalSet(getFakeCallLocal(setterType), value));
       return;
     }
-    if (analyzer->fakeCalls.getGetter(curr->target)) {
+    if (analyzer->fakeCalls.getGetterType(curr->target) != Type::none) {
       auto type = curr->type;
       replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
       return;
