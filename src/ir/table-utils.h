@@ -23,6 +23,8 @@
 
 namespace wasm {
 
+namespace TableUtils {
+
 struct FlatTable {
   std::vector<Name> names;
   bool valid;
@@ -47,8 +49,6 @@ struct FlatTable {
     }
   }
 };
-
-namespace TableUtils {
 
 // Ensure one table segment exists. This adds the table if necessary, then
 // adds a segment if we need one.
