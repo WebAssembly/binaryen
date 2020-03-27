@@ -169,7 +169,8 @@ struct PostEmscripten : public Pass {
       std::map<Function*, Info>& map;
       TableUtils::FlatTable& flatTable;
 
-      OptimizeInvokes(std::map<Function*, Info>& map, TableUtils::FlatTable& flatTable)
+      OptimizeInvokes(std::map<Function*, Info>& map,
+                      TableUtils::FlatTable& flatTable)
         : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {
