@@ -29,7 +29,6 @@
 #include "ir/abstract.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
-#include "support/unsupported.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -233,8 +232,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitDrop(drop);
     } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
                curr->is<BrOnExn>()) {
-      throw UnsupportedException(
-        "DataFlow does not support EH instructions yet");
+      Fatal() << "DataFlow does not support EH instructions yet";
     } else {
       return doVisitGeneric(curr);
     }

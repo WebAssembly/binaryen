@@ -24,7 +24,6 @@
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
-#include <support/unsupported.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -71,8 +70,7 @@ struct Flatten
 
     if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
         curr->is<BrOnExn>()) {
-      throw UnsupportedException(
-        "Flatten does not support EH instructions yet");
+      Fatal() << "Flatten does not support EH instructions yet";
     }
 
     if (Properties::isControlFlowStructure(curr)) {

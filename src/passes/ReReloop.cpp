@@ -27,7 +27,6 @@
 #include "ir/flat.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/unsupported.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -287,8 +286,7 @@ struct ReReloop final : public Pass {
       UnreachableTask::handle(*this, un);
     } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
                curr->is<BrOnExn>()) {
-      throw UnsupportedException(
-        "ReReloop does not support EH instructions yet");
+      Fatal() << "ReReloop does not support EH instructions yet";
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
