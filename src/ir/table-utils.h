@@ -17,10 +17,13 @@
 #ifndef wasm_ir_table_h
 #define wasm_ir_table_h
 
+#include "ir/literal-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
+
+namespace TableUtils {
 
 struct FlatTable {
   std::vector<Name> names;
@@ -46,6 +49,46 @@ struct FlatTable {
     }
   }
 };
+
+// Ensure one table segment exists. This adds the table if necessary, then
+// adds a segment if we need one.
+inline Table::Segment& ensureTableWithOneSegment(Table& table, Module& wasm) {
+  table.exists = true;
+  if (table.segments.size() == 0) {
+    table.segments.resize(1);
+    table.segments[0].offset = LiteralUtils::makeZero(Type::i32, wasm);
+  }
+  if (table.segments.size() != 1) {
+    Fatal() << "can't ensure 1 segment";
+  }
+  return table.segments[0];
+}
+
+// Appends a name to the table. This assumes the table has 0 or 1 segments,
+// as with 2 or more it's ambiguous what we should do (use a hole in the middle
+// or not).
+inline Index append(Table& table, Name name, Module& wasm) {
+  auto& segment = ensureTableWithOneSegment(table, wasm);
+  table.segments[0];
+  auto tableIndex = segment.data.size();
+  segment.data.push_back(name);
+  table.initial = table.initial + 1;
+  return tableIndex;
+}
+
+// Checks if a function is already in the table. Returns that index if so,
+// otherwise appends it.
+inline Index getOrAppend(Table& table, Name name, Module& wasm) {
+  auto& segment = ensureTableWithOneSegment(table, wasm);
+  for (Index i = 0; i < segment.data.size(); i++) {
+    if (segment.data[i] == name) {
+      return i;
+    }
+  }
+  return append(table, name, wasm);
+}
+
+} // namespace TableUtils
 
 } // namespace wasm
 

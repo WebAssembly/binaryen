@@ -530,7 +530,7 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
-  FlatTable flat(wasm->table);
+  TableUtils::FlatTable flat(wasm->table);
   if (flat.valid && !wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);

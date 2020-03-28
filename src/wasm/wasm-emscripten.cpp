@@ -22,7 +22,9 @@
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/manipulation.h"
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"
@@ -214,12 +216,12 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
-  // Then see if its already imported
+  // See if its already imported.
   ImportInfo info(*module);
-  if (Function* f = info.getImportedFunction(ENV, name)) {
+  if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
   }
-  // Failing that create a new function import.
+  // Failing that create a new import.
   auto import = new Function;
   import->name = name;
   import->module = ENV;
@@ -277,6 +279,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     block->list.push_back(globalSet);
   }
 
+  ImportInfo importInfo(wasm);
+
   for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
@@ -286,20 +290,43 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     if (ex) {
       assert(ex->kind == ExternalKind::Function);
       f = wasm.getFunction(ex->value);
-    } else {
-      ImportInfo info(wasm);
-      f = info.getImportedFunction(ENV, g->base);
-      if (!f) {
-        Fatal() << "GOT.func entry with no import/export: " << g->base;
+      if (!sideModule) {
+        // This is exported, so must be one of the functions implemented here.
+        // Simply add it to the table, and use that index. The loader will
+        // know to reuse that index for other modules so they all share the
+        // same index and function pointer equality works.
+        // We may be able to do something for side modules as well, however,
+        // that would require at least updating the dylink section.
+        if (f->imported()) {
+          Fatal() << "GOT.func entry is both imported and exported: "
+                  << g->base;
+        }
+        auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
+        auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+        // The base relative to which we are computed is the offset of the
+        // singleton segment.
+        auto* getBase =
+          ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
+        auto* add = builder.makeBinary(AddInt32, getBase, c);
+        auto* globalSet = builder.makeGlobalSet(g->name, add);
+        block->list.push_back(globalSet);
+        continue;
       }
+      // Otherwise, this is a side module, and fall through to join the case
+      // of an import.
+    } else {
+      // This is imported. Create an fp$ import to get the function table index.
+      f = importInfo.getImportedFunction(ENV, g->base);
     }
-
+    if (!f) {
+      Fatal() << "GOT.func entry with no import/export: " << g->base;
+    }
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, Type::i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    auto* call = builder.makeCall(getter, {}, Type::i32);
+    auto* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
 

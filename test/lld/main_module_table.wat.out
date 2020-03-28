@@ -1,0 +1,106 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "__stack_pointer" (global $sp_import i32))
+ (table $0 1 funcref)
+ (elem (i32.const 0) $__stdio_write)
+ (global $gimport$9 (mut i32) (i32.const 0))
+ (global $global i32 (i32.const 42))
+ (global $sp (mut i32) (global.get $sp_import))
+ (export "__stdio_write" (func $__stdio_write))
+ (export "__data_end" (global $global))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (export "__assign_got_enties" (func $__assign_got_enties))
+ (export "dynCall_v" (func $dynCall_v))
+ (func $__stdio_write (; 0 ;)
+  (nop)
+ )
+ (func $stackSave (; 1 ;) (result i32)
+  (global.get $sp)
+ )
+ (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (global.set $sp
+   (local.tee $1
+    (i32.and
+     (i32.sub
+      (global.get $sp)
+      (local.get $0)
+     )
+     (i32.const -16)
+    )
+   )
+  )
+  (local.get $1)
+ )
+ (func $stackRestore (; 3 ;) (param $0 i32)
+  (global.set $sp
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (; 4 ;) (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+ (func $__assign_got_enties (; 5 ;)
+  (global.set $gimport$9
+   (i32.add
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+ (func $dynCall_v (; 6 ;) (param $fptr i32)
+  (call_indirect (type $none_=>_none)
+   (local.get $fptr)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 4294966770,
+  "tableSize": 1,
+  "initializers": [
+    "__assign_got_enties"
+  ],
+  "declares": [
+  ],
+  "externs": [
+    "___stack_pointer"
+  ],
+  "implementedFunctions": [
+    "___stdio_write",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory",
+    "___assign_got_enties",
+    "_dynCall_v"
+  ],
+  "exports": [
+    "__stdio_write",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory",
+    "__assign_got_enties",
+    "dynCall_v"
+  ],
+  "namedGlobals": {
+    "__data_end" : "42"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 0
+}
+-- END METADATA --
+;)

@@ -135,7 +135,7 @@ struct PostEmscripten : public Pass {
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
-    FlatTable flatTable(module->table);
+    TableUtils::FlatTable flatTable(module->table);
     if (!flatTable.valid) {
       return;
     }
@@ -167,9 +167,10 @@ struct PostEmscripten : public Pass {
       Pass* create() override { return new OptimizeInvokes(map, flatTable); }
 
       std::map<Function*, Info>& map;
-      FlatTable& flatTable;
+      TableUtils::FlatTable& flatTable;
 
-      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable)
+      OptimizeInvokes(std::map<Function*, Info>& map,
+                      TableUtils::FlatTable& flatTable)
         : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {
