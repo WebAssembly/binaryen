@@ -68,6 +68,11 @@ struct Flatten
       return;
     }
 
+    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+        curr->is<BrOnExn>()) {
+      Fatal() << "Flatten does not support EH instructions yet";
+    }
+
     if (Properties::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
