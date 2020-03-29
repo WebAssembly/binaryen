@@ -1,9 +1,9 @@
 (module
  (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
@@ -20,8 +20,6 @@
  (import "env" "setTempRet0" (func $fimport$10 (param i32)))
  (import "env" "free" (func $fimport$11 (param i32)))
  (import "env" "emscripten_longjmp" (func $fimport$12 (param i32 i32)))
- (import "env" "g$__THREW__" (func $g$__THREW__ (result i32)))
- (import "env" "g$__threwValue" (func $g$__threwValue (result i32)))
  (import "env" "fp$emscripten_longjmp$vii" (func $fp$emscripten_longjmp$vii (result i32)))
  (global $gimport$13 (mut i32) (i32.const 0))
  (global $gimport$14 (mut i32) (i32.const 0))
@@ -33,13 +31,13 @@
  (export "__threwValue" (global $global$1))
  (export "dynCall_vii" (func $dynCall_vii))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $0 (; 11 ;)
+ (func $0 (; 9 ;)
   (call $1)
  )
- (func $1 (; 12 ;)
+ (func $1 (; 10 ;)
   (nop)
  )
- (func $2 (; 13 ;)
+ (func $2 (; 11 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -142,23 +140,29 @@
   )
   (unreachable)
  )
- (func $dynCall_vii (; 14 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
+ (func $dynCall_vii (; 12 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
    (local.get $1)
    (local.get $fptr)
   )
  )
- (func $__post_instantiate (; 15 ;)
+ (func $__post_instantiate (; 13 ;)
   (call $__assign_got_enties)
   (call $0)
  )
- (func $__assign_got_enties (; 16 ;)
+ (func $__assign_got_enties (; 14 ;)
   (global.set $gimport$13
-   (call $g$__THREW__)
+   (i32.add
+    (global.get $gimport$2)
+    (global.get $global$0)
+   )
   )
   (global.set $gimport$15
-   (call $g$__threwValue)
+   (i32.add
+    (global.get $gimport$2)
+    (global.get $global$1)
+   )
   )
   (global.set $gimport$14
    (call $fp$emscripten_longjmp$vii)
@@ -178,8 +182,6 @@
     "setTempRet0",
     "free",
     "emscripten_longjmp",
-    "g$__THREW__",
-    "g$__threwValue",
     "fp$emscripten_longjmp$vii"
   ],
   "externs": [
