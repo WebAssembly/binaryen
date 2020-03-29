@@ -82,6 +82,7 @@ void WasmBinaryWriter::write() {
 
   writeLateUserSections();
   writeFeaturesSection();
+  writeDylinkSection();
 
   finishUp();
 }
@@ -707,6 +708,24 @@ void WasmBinaryWriter::writeFeaturesSection() {
   finishSection(start);
 }
 
+void WasmBinaryWriter::writeDylinkSection() {
+  if (!wasm->dylinkSection) {
+    return;
+  }
+
+  auto start = startSection(BinaryConsts::User);
+  writeInlineString(BinaryConsts::UserSections::Dylink);
+  o << U32LEB(wasm.dylinkSection.memorySize);
+  o << U32LEB(wasm.dylinkSection.memoryAlignment);
+  o << U32LEB(wasm.dylinkSection.tableSize);
+  o << U32LEB(wasm.dylinkSection.tableAlignment);
+  o << U32LEB(wasm.dylinkSection.neededDynlibs.size());
+  for (auto& neededDynlib : wasm.dylinkSection.neededDynlibs) {
+    writeInlineString(neededDynlib);
+  }
+  finishSection(start);
+}
+
 void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
   if (loc == lastDebugLocation) {
     return;
@@ -963,6 +982,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     readNames(payloadLen);
   } else if (sectionName.equals(BinaryConsts::UserSections::TargetFeatures)) {
     readFeatures(payloadLen);
+  } else if (sectionName.equals(BinaryConsts::UserSections::Dylink)) {
+    readDylink(payloadLen);
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
@@ -2122,8 +2143,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
   wasm.features = FeatureSet::MVP;
 
   auto sectionPos = pos;
-  size_t num_feats = getU32LEB();
-  for (size_t i = 0; i < num_feats; ++i) {
+  size_t numFeatures = getU32LEB();
+  for (size_t i = 0; i < numFeatures; ++i) {
     uint8_t prefix = getInt8();
     if (prefix != BinaryConsts::FeatureUsed) {
       if (prefix == BinaryConsts::FeatureRequired) {
@@ -2166,6 +2187,30 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       }
     }
   }
+  if (pos != sectionPos + payloadLen) {
+    throwError("bad features section size");
+  }
+}
+
+void WasmBinaryBuilder::readDylink(size_t payloadLen) {
+  if (wasm.dylinkSection) {
+    wasm.dylinkSection = make_unique<DylinkSection>();
+  }
+  wasm.hasFeaturesSection = true;
+  wasm.features = FeatureSet::MVP;
+
+  auto sectionPos = pos;
+
+  wasm.dylinkSection.memorySize = getU32LEB();
+  wasm.dylinkSection.memoryAlignment = getU32LEB();
+  wasm.dylinkSection.tableSize = getU32LEB();
+  wasm.dylinkSection.tableAlignment = getU32LEB();
+
+  size_t numNeededDynlibs = getU32LEB();
+  for (size_t i = 0; i < numNeededDynlibs; ++i) {
+    wasm.dylinkSection.neededDynlibs.push_back(getInlineString());
+  }
+
   if (pos != sectionPos + payloadLen) {
     throwError("bad features section size");
   }

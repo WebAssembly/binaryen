@@ -364,6 +364,7 @@ extern const char* Dylink;
 extern const char* Linking;
 extern const char* Producers;
 extern const char* TargetFeatures;
+extern const char* Dylink;
 
 extern const char* AtomicsFeature;
 extern const char* BulkMemoryFeature;
@@ -1015,6 +1016,7 @@ public:
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
+  void writeDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1257,6 +1259,7 @@ public:
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
+  void readDylink(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
