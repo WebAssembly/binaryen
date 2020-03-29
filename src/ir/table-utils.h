@@ -73,6 +73,9 @@ inline Index append(Table& table, Name name, Module& wasm) {
   auto tableIndex = segment.data.size();
   segment.data.push_back(name);
   table.initial = table.initial + 1;
+  if (wasm.dylinkSection) {
+    wasm.dylinkSection->tableSize++;
+  }
   return tableIndex;
 }
 
