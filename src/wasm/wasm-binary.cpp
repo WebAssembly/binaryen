@@ -715,13 +715,13 @@ void WasmBinaryWriter::writeDylinkSection() {
 
   auto start = startSection(BinaryConsts::User);
   writeInlineString(BinaryConsts::UserSections::Dylink);
-  o << U32LEB(wasm.dylinkSection.memorySize);
-  o << U32LEB(wasm.dylinkSection.memoryAlignment);
-  o << U32LEB(wasm.dylinkSection.tableSize);
-  o << U32LEB(wasm.dylinkSection.tableAlignment);
-  o << U32LEB(wasm.dylinkSection.neededDynlibs.size());
-  for (auto& neededDynlib : wasm.dylinkSection.neededDynlibs) {
-    writeInlineString(neededDynlib);
+  o << U32LEB(wasm->dylinkSection->memorySize);
+  o << U32LEB(wasm->dylinkSection->memoryAlignment);
+  o << U32LEB(wasm->dylinkSection->tableSize);
+  o << U32LEB(wasm->dylinkSection->tableAlignment);
+  o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
+  for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
+    writeInlineString(neededDynlib.c_str());
   }
   finishSection(start);
 }
@@ -2193,22 +2193,18 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
 }
 
 void WasmBinaryBuilder::readDylink(size_t payloadLen) {
-  if (wasm.dylinkSection) {
-    wasm.dylinkSection = make_unique<DylinkSection>();
-  }
-  wasm.hasFeaturesSection = true;
-  wasm.features = FeatureSet::MVP;
+  wasm.dylinkSection = make_unique<DylinkSection>();
 
   auto sectionPos = pos;
 
-  wasm.dylinkSection.memorySize = getU32LEB();
-  wasm.dylinkSection.memoryAlignment = getU32LEB();
-  wasm.dylinkSection.tableSize = getU32LEB();
-  wasm.dylinkSection.tableAlignment = getU32LEB();
+  wasm.dylinkSection->memorySize = getU32LEB();
+  wasm.dylinkSection->memoryAlignment = getU32LEB();
+  wasm.dylinkSection->tableSize = getU32LEB();
+  wasm.dylinkSection->tableAlignment = getU32LEB();
 
   size_t numNeededDynlibs = getU32LEB();
   for (size_t i = 0; i < numNeededDynlibs; ++i) {
-    wasm.dylinkSection.neededDynlibs.push_back(getInlineString());
+    wasm.dylinkSection->neededDynlibs.push_back(getInlineString());
   }
 
   if (pos != sectionPos + payloadLen) {

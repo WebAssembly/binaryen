@@ -33,7 +33,6 @@ const char* Dylink = "dylink";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";
-const char* Dylink = "dylink";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";
 const char* ExceptionHandlingFeature = "exception-handling";

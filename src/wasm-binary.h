@@ -364,7 +364,6 @@ extern const char* Dylink;
 extern const char* Linking;
 extern const char* Producers;
 extern const char* TargetFeatures;
-extern const char* Dylink;
 
 extern const char* AtomicsFeature;
 extern const char* BulkMemoryFeature;
