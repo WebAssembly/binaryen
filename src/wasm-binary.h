@@ -1011,7 +1011,6 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();

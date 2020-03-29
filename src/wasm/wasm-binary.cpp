@@ -38,7 +38,7 @@ void WasmBinaryWriter::prepare() {
 void WasmBinaryWriter::write() {
   writeHeader();
 
-  writeEarlyUserSections();
+  writeDylinkSection();
 
   initializeDebugInfo();
   if (sourceMap) {
@@ -82,7 +82,6 @@ void WasmBinaryWriter::write() {
 
   writeLateUserSections();
   writeFeaturesSection();
-  writeDylinkSection();
 
   finishUp();
 }
@@ -631,16 +630,6 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
     lastOffset = offset;
   }
   *sourceMap << "\"}";
-}
-
-void WasmBinaryWriter::writeEarlyUserSections() {
-  // The dylink section must be the first in the module, per
-  // the spec, to allow simple parsing by loaders.
-  for (auto& section : wasm->userSections) {
-    if (section.name == BinaryConsts::UserSections::Dylink) {
-      writeUserSection(section);
-    }
-  }
 }
 
 void WasmBinaryWriter::writeLateUserSections() {
