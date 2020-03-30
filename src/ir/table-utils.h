@@ -67,15 +67,25 @@ inline Table::Segment& ensureTableWithOneSegment(Table& table, Module& wasm) {
 // Appends a name to the table. This assumes the table has 0 or 1 segments,
 // as with 2 or more it's ambiguous what we should do (use a hole in the middle
 // or not).
+// This works on code from wasm-ld, but on arbitrary code it may not be valid
+// in the presence of a dynamic linking section. Specifically, we assume the
+// module has a single table segment, and that the dylink section indicates
+// we can validly append to that segment, see the check below.
 inline Index append(Table& table, Name name, Module& wasm) {
   auto& segment = ensureTableWithOneSegment(table, wasm);
-  table.segments[0];
   auto tableIndex = segment.data.size();
-  segment.data.push_back(name);
-  table.initial = table.initial + 1;
   if (wasm.dylinkSection) {
+    if (segment.data.size() != wasm.dylinkSection->tableSize) {
+      Fatal() << "Appending to the table in a module with a dylink section "
+                 "that has tableSize which indicates it wants to reserve more "
+                 "table space than the actual table elements in the module. "
+                 "We don't know how to correctly update the dylink section in "
+                 "that case.";
+    }
     wasm.dylinkSection->tableSize++;
   }
+  segment.data.push_back(name);
+  table.initial = table.initial + 1;
   return tableIndex;
 }
 
