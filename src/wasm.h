@@ -1437,7 +1437,7 @@ class Global : public Importable {
 public:
   Name name;
   Type type;
-  Expression* init;
+  Expression* init = nullptr;
   bool mutable_ = false;
 };
 

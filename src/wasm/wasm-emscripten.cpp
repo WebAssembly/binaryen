@@ -217,6 +217,7 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
   // See if its already imported.
+  // FIXME: O(N)
   ImportInfo info(*module);
   if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
@@ -228,6 +229,24 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
   import->base = name;
   import->sig = sig;
   module->addFunction(import);
+  return import;
+}
+
+static Global*
+ensureGlobalImport(Module* module, Name name, Type type) {
+  // See if its already imported.
+  // FIXME: O(N)
+  ImportInfo info(*module);
+  if (auto* g = info.getImportedGlobal(ENV, name)) {
+    return g;
+  }
+  // Failing that create a new import.
+  auto import = new Global;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  import->type = type;
+  module->addGlobal(import);
   return import;
 }
 
@@ -281,6 +300,9 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
 
   ImportInfo importInfo(wasm);
 
+  // We may have to add things to the table.
+  Global* tableBase = nullptr;
+
   for (Global* g : gotFuncEntries) {
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
@@ -300,9 +322,18 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
       auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       // The base relative to which we are computed is the offset of the
-      // singleton segment.
-      auto* getBase =
-        ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
+      // singleton segment, which we must ensure exists
+      if (!tableBase) {
+        tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
+      }
+      if (!wasm.table.exists) {
+        wasm.table.exists = true;
+      }
+      if (wasm.table.segments.empty()) {
+        wasm.table.segments.resize(1);
+        wasm.table.segments[0].offset = builder.makeGlobalGet(tableBase->name, Type::i32);
+      }
+      auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
       auto* add = builder.makeBinary(AddInt32, getBase, c);
       auto* globalSet = builder.makeGlobalSet(g->name, add);
       block->list.push_back(globalSet);
