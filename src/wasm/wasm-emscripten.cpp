@@ -232,8 +232,7 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
   return import;
 }
 
-static Global*
-ensureGlobalImport(Module* module, Name name, Type type) {
+static Global* ensureGlobalImport(Module* module, Name name, Type type) {
   // See if its already imported.
   // FIXME: O(N)
   ImportInfo info(*module);
@@ -316,8 +315,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       // know to reuse that index for other modules so they all share the
       // same index and function pointer equality works.
       if (f->imported()) {
-        Fatal() << "GOT.func entry is both imported and exported: "
-                << g->base;
+        Fatal() << "GOT.func entry is both imported and exported: " << g->base;
       }
       auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
       auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
@@ -331,7 +329,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       }
       if (wasm.table.segments.empty()) {
         wasm.table.segments.resize(1);
-        wasm.table.segments[0].offset = builder.makeGlobalGet(tableBase->name, Type::i32);
+        wasm.table.segments[0].offset =
+          builder.makeGlobalGet(tableBase->name, Type::i32);
       }
       auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
       auto* add = builder.makeBinary(AddInt32, getBase, c);
