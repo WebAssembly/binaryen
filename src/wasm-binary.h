@@ -1011,10 +1011,10 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
+  void writeDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1257,6 +1257,7 @@ public:
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
+  void readDylink(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }

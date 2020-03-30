@@ -2340,6 +2340,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "\")" << maybeNewLine;
     }
   }
+  void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
+    doIndent(o, indent) << ";; dylink section\n";
+    doIndent(o, indent) << ";;   memorysize: " << dylinkSection->memorySize
+                        << '\n';
+    doIndent(o, indent) << ";;   memoryalignment: "
+                        << dylinkSection->memoryAlignment << '\n';
+    doIndent(o, indent) << ";;   tablesize: " << dylinkSection->tableSize
+                        << '\n';
+    doIndent(o, indent) << ";;   tablealignment: "
+                        << dylinkSection->tableAlignment << '\n';
+    for (auto& neededDynlib : dylinkSection->neededDynlibs) {
+      doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
+    }
+  }
   void visitModule(Module* curr) {
     currModule = curr;
     o << '(';
@@ -2388,6 +2402,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     ModuleUtils::iterDefinedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
+    if (curr->dylinkSection) {
+      printDylinkSection(curr->dylinkSection);
+    }
     for (auto& section : curr->userSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
