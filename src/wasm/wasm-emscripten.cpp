@@ -317,8 +317,6 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       if (f->imported()) {
         Fatal() << "GOT.func entry is both imported and exported: " << g->base;
       }
-      auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
-      auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       // The base relative to which we are computed is the offset of the
       // singleton segment, which we must ensure exists
       if (!tableBase) {
@@ -332,6 +330,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         wasm.table.segments[0].offset =
           builder.makeGlobalGet(tableBase->name, Type::i32);
       }
+      auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
+      auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
       auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
       auto* add = builder.makeBinary(AddInt32, getBase, c);
       auto* globalSet = builder.makeGlobalSet(g->name, add);
