@@ -35,8 +35,8 @@ namespace ModuleUtils {
 // just use them directly).
 struct BinaryIndexes {
   std::unordered_map<Name, Index> functionIndexes;
-  std::unordered_map<Name, Index> globalIndexes;
   std::unordered_map<Name, Index> eventIndexes;
+  std::unordered_map<Name, Index> globalIndexes;
 
   BinaryIndexes(Module& wasm) {
     auto addIndexes = [&](auto& source, auto& indexes) {
@@ -56,8 +56,23 @@ struct BinaryIndexes {
       }
     };
     addIndexes(wasm.functions, functionIndexes);
-    addIndexes(wasm.globals, globalIndexes);
     addIndexes(wasm.events, eventIndexes);
+
+    Index globalCount = 0;
+    auto addGlobal = [&](auto* curr) {
+      globalIndexes[curr->name] = globalCount;
+      globalCount += curr->type.size();
+    };
+    for (auto& curr : wasm.globals) {
+      if (curr->imported()) {
+        addGlobal(curr.get());
+      }
+    }
+    for (auto& curr : wasm.globals) {
+      if (!curr->imported()) {
+        addGlobal(curr.get());
+      }
+    }
   }
 };
 

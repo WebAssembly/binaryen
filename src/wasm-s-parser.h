@@ -160,6 +160,7 @@ private:
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
+  Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
     return stringToType(str, true) != Type::none;

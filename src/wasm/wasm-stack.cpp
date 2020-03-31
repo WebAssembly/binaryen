@@ -114,13 +114,18 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
-  o << int8_t(BinaryConsts::GlobalGet)
-    << U32LEB(parent.getGlobalIndex(curr->name));
+  Index index = parent.getGlobalIndex(curr->name);
+  for (Index i = 0, e = curr->type.size(); i < e; ++i) {
+    o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + i);
+  }
 }
 
 void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
-  o << int8_t(BinaryConsts::GlobalSet)
-    << U32LEB(parent.getGlobalIndex(curr->name));
+  Index index = parent.getGlobalIndex(curr->name);
+  Type type = parent.getModule()->getGlobal(curr->name)->type;
+  for (int i = type.size() - 1; i >= 0; --i) {
+    o << int8_t(BinaryConsts::GlobalSet) << U32LEB(index + i);
+  }
 }
 
 void BinaryInstWriter::visitLoad(Load* curr) {
