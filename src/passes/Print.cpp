@@ -59,12 +59,12 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 
 // Unlike the default format, tuple types in s-expressions should not have
 // commas.
-struct VarType {
+struct SExprType {
   Type type;
-  VarType(Type type) : type(type){};
+  SExprType(Type type) : type(type){};
 };
 
-static std::ostream& operator<<(std::ostream& o, const VarType& localType) {
+static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
   if (type.isMulti()) {
     const std::vector<Type>& types = type.expand();
@@ -2072,9 +2072,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
-      o << "(mut " << VarType(curr->type) << ')';
+      o << "(mut " << SExprType(curr->type) << ')';
     } else {
-      o << VarType(curr->type);
+      o << SExprType(curr->type);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2155,7 +2155,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << VarType(curr->getLocalType(i)) << ')';
+        << ' ' << SExprType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
