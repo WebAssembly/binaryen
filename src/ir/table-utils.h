@@ -50,16 +50,9 @@ struct FlatTable {
   }
 };
 
-// Ensure one table segment exists. This adds the table if necessary, then
-// adds a segment if we need one.
-inline Table::Segment& ensureTableWithOneSegment(Table& table, Module& wasm) {
-  table.exists = true;
-  if (table.segments.size() == 0) {
-    table.segments.resize(1);
-    table.segments[0].offset = LiteralUtils::makeZero(Type::i32, wasm);
-  }
+inline Table::Segment& getSingletonSegment(Table& table, Module& wasm) {
   if (table.segments.size() != 1) {
-    Fatal() << "can't ensure 1 segment";
+    Fatal() << "Table doesn't have a singleton segment.";
   }
   return table.segments[0];
 }
@@ -72,7 +65,7 @@ inline Table::Segment& ensureTableWithOneSegment(Table& table, Module& wasm) {
 // module has a single table segment, and that the dylink section indicates
 // we can validly append to that segment, see the check below.
 inline Index append(Table& table, Name name, Module& wasm) {
-  auto& segment = ensureTableWithOneSegment(table, wasm);
+  auto& segment = getSingletonSegment(table, wasm);
   auto tableIndex = segment.data.size();
   if (wasm.dylinkSection) {
     if (segment.data.size() != wasm.dylinkSection->tableSize) {
@@ -92,7 +85,7 @@ inline Index append(Table& table, Name name, Module& wasm) {
 // Checks if a function is already in the table. Returns that index if so,
 // otherwise appends it.
 inline Index getOrAppend(Table& table, Name name, Module& wasm) {
-  auto& segment = ensureTableWithOneSegment(table, wasm);
+  auto& segment = getSingletonSegment(table, wasm);
   for (Index i = 0; i < segment.data.size(); i++) {
     if (segment.data[i] == name) {
       return i;

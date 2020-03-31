@@ -22,7 +22,6 @@
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
-#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "shared-constants.h"
@@ -217,6 +216,7 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
   // See if its already imported.
+  // FIXME: O(N)
   ImportInfo info(*module);
   if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
@@ -228,6 +228,23 @@ ensureFunctionImport(Module* module, Name name, Signature sig) {
   import->base = name;
   import->sig = sig;
   module->addFunction(import);
+  return import;
+}
+
+static Global* ensureGlobalImport(Module* module, Name name, Type type) {
+  // See if its already imported.
+  // FIXME: O(N)
+  ImportInfo info(*module);
+  if (auto* g = info.getImportedGlobal(ENV, name)) {
+    return g;
+  }
+  // Failing that create a new import.
+  auto import = new Global;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  import->type = type;
+  module->addGlobal(import);
   return import;
 }
 
@@ -281,43 +298,47 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
 
   ImportInfo importInfo(wasm);
 
+  // We may have to add things to the table.
+  Global* tableBase = nullptr;
+
   for (Global* g : gotFuncEntries) {
-    Function* f = nullptr;
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
     if (ex) {
       assert(ex->kind == ExternalKind::Function);
-      f = wasm.getFunction(ex->value);
-      if (!sideModule) {
-        // This is exported, so must be one of the functions implemented here.
-        // Simply add it to the table, and use that index. The loader will
-        // know to reuse that index for other modules so they all share the
-        // same index and function pointer equality works.
-        // We may be able to do something for side modules as well, however,
-        // that would require at least updating the dylink section.
-        if (f->imported()) {
-          Fatal() << "GOT.func entry is both imported and exported: "
-                  << g->base;
-        }
-        auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
-        auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
-        // The base relative to which we are computed is the offset of the
-        // singleton segment.
-        auto* getBase =
-          ExpressionManipulator::copy(wasm.table.segments[0].offset, wasm);
-        auto* add = builder.makeBinary(AddInt32, getBase, c);
-        auto* globalSet = builder.makeGlobalSet(g->name, add);
-        block->list.push_back(globalSet);
-        continue;
+      auto* f = wasm.getFunction(ex->value);
+      // This is exported, so must be one of the functions implemented here.
+      // Simply add it to the table, and use that index. The loader will
+      // know to reuse that index for other modules so they all share the
+      // same index and function pointer equality works.
+      if (f->imported()) {
+        Fatal() << "GOT.func entry is both imported and exported: " << g->base;
       }
-      // Otherwise, this is a side module, and fall through to join the case
-      // of an import.
-    } else {
-      // This is imported. Create an fp$ import to get the function table index.
-      f = importInfo.getImportedFunction(ENV, g->base);
+      // The base relative to which we are computed is the offset of the
+      // singleton segment, which we must ensure exists
+      if (!tableBase) {
+        tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
+      }
+      if (!wasm.table.exists) {
+        wasm.table.exists = true;
+      }
+      if (wasm.table.segments.empty()) {
+        wasm.table.segments.resize(1);
+        wasm.table.segments[0].offset =
+          builder.makeGlobalGet(tableBase->name, Type::i32);
+      }
+      auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
+      auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+      auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
+      auto* add = builder.makeBinary(AddInt32, getBase, c);
+      auto* globalSet = builder.makeGlobalSet(g->name, add);
+      block->list.push_back(globalSet);
+      continue;
     }
+    // This is imported. Create an fp$ import to get the function table index.
+    auto* f = importInfo.getImportedFunction(ENV, g->base);
     if (!f) {
       Fatal() << "GOT.func entry with no import/export: " << g->base;
     }

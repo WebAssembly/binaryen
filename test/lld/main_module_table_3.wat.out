@@ -6,6 +6,7 @@
  (import "env" "table" (table $0 2 funcref))
  (elem (i32.const 0) $__stdio_write)
  (import "env" "__stack_pointer" (global $sp_import i32))
+ (import "env" "__table_base" (global $__table_base i32))
  (global $gimport$9 (mut i32) (i32.const 0))
  (global $global i32 (i32.const 42))
  (global $sp (mut i32) (global.get $sp_import))
@@ -51,7 +52,7 @@
  (func $__assign_got_enties (; 5 ;)
   (global.set $gimport$9
    (i32.add
-    (i32.const 0)
+    (global.get $__table_base)
     (i32.const 0)
    )
   )
@@ -73,7 +74,8 @@
   "declares": [
   ],
   "externs": [
-    "___stack_pointer"
+    "___stack_pointer",
+    "___table_base"
   ],
   "implementedFunctions": [
     "___stdio_write",
