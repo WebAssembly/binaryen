@@ -58,6 +58,10 @@ struct BinaryIndexes {
     addIndexes(wasm.functions, functionIndexes);
     addIndexes(wasm.events, eventIndexes);
 
+    // Globals may have tuple types in the IR, in which case they lower to
+    // multiple globals, one for each tuple element, in the binary. Tuple
+    // globals therefore occupy multiple binary indices, and we have to take
+    // that into account when calculating indices.
     Index globalCount = 0;
     auto addGlobal = [&](auto* curr) {
       globalIndexes[curr->name] = globalCount;
