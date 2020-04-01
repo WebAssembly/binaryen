@@ -300,6 +300,13 @@ const auto STACK_ALIGN = 4;
 
 // A helper class for managing fake global names. Creates the globals and
 // provides mappings for using them.
+// Fake globals are used to stash and then use return values from calls. We need
+// to store them somewhere that is valid Binaryen IR, but also will be ignored
+// by the Asyncify instrumentation, so we don't want to use a local. What we do
+// is replace the local used to receive a call's result with a fake global.set
+// to stash it, then do a fake global.get to receive it afterwards. (We do it in
+// two steps so that if we are async, we only do the first and not the second,
+// i.e., we don't store to the target local if not running normally).
 class FakeGlobalHelper {
   Module& module;
 
