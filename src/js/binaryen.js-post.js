@@ -486,8 +486,7 @@ function initializeConstants() {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
 
-  // ExpressionRunner constants
-  Module['ExpressionRunner']['DEFAULT_MAX_DEPTH'] = Module['_ExpressionRunnerDefaultMaxDepth']();
+  // ExpressionRunner flags
   Module['ExpressionRunner']['Flags'] = {
     'Default': Module['_ExpressionRunnerFlagsDefault'](),
     'PreserveSideeffects': Module['_ExpressionRunnerFlagsPreserveSideeffects'](),
@@ -2436,10 +2435,8 @@ Module['Relooper'] = function(module) {
 };
 
 // 'ExpressionRunner' interface
-Module['ExpressionRunner'] = function(module, flags, maxDepth) {
-  if (typeof flags === 'undefined') flags = Module['ExpressionRunner']['Flags']['Default'];
-  if (typeof maxDepth === 'undefined') maxDepth = Module['ExpressionRunner']['DEFAULT_MAX_DEPTH'];
-  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth);
+Module['ExpressionRunner'] = function(module, flags, maxDepth, maxLoopIterations) {
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth, maxLoopIterations);
   this['ptr'] = runner;
 
   this['setLocalValue'] = function(index, valueExpr) {

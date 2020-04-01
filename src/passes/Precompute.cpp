@@ -39,10 +39,55 @@
 
 namespace wasm {
 
-using FlagValues = LinearExpressionRunner::FlagValues;
-using Flags = LinearExpressionRunner::Flags;
-using NonconstantException = LinearExpressionRunner::NonconstantException;
-using GetValues = LinearExpressionRunner::GetValues;
+// Limit evaluation depth for 2 reasons: first, it is highly unlikely
+// that we can do anything useful to precompute a hugely nested expression
+// (we should succed at smaller parts of it first). Second, a low limit is
+// helpful to avoid platform differences in native stack sizes.
+static const Index MAX_DEPTH = 50;
+
+// Limit loop iterations since loops might be infinite.
+static const Index MAX_LOOP_ITERATIONS = 3;
+
+typedef std::unordered_map<LocalGet*, Literals> GetValues;
+
+// Precomputes an expression. Errors if we hit anything that can't be
+// precomputed.
+class PrecomputingExpressionRunner
+  : public ExpressionRunner<PrecomputingExpressionRunner> {
+
+  // map gets to constant values, if they are known to be constant
+  GetValues& getValues;
+
+public:
+  PrecomputingExpressionRunner(Module* module_,
+                               GetValues& getValues,
+                               bool replaceExpression)
+    : ExpressionRunner<PrecomputingExpressionRunner>(
+        replaceExpression ? FlagValues::PRESERVE_SIDEEFFECTS
+                          : FlagValues::DEFAULT),
+      getValues(getValues) {
+    module = module_;
+    maxDepth = MAX_DEPTH;
+    maxLoopIterations = MAX_LOOP_ITERATIONS;
+  }
+
+  struct NonconstantException {
+  }; // TODO: use a flow with a special name, as this is likely very slow
+
+  Flow visitLocalGet(LocalGet* curr) {
+    // Prefer known get values computed during the pass
+    auto iter = getValues.find(curr);
+    if (iter != getValues.end()) {
+      auto values = iter->second;
+      if (values.isConcrete()) {
+        return Flow(std::move(values));
+      }
+    }
+    return ExpressionRunner<PrecomputingExpressionRunner>::visitLocalGet(curr);
+  }
+
+  void trap(const char* why) override { throw NonconstantException(); }
+};
 
 struct Precompute
   : public WalkerPass<
@@ -95,7 +140,7 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == LinearExpressionRunner::NONCONSTANT_FLOW) {
+      if (flow.breakTo == NONCONSTANT_FLOW) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -168,16 +213,14 @@ struct Precompute
 
 private:
   // Precompute an expression, returning a flow, which may be a constant
-  // (that we can replace the expression with if the PRESERVE_SIDEEFFECTS flag
-  // is set).
-  Flow precomputeExpression(Expression* curr,
-                            Flags flags = FlagValues::PRESERVE_SIDEEFFECTS) {
+  // (that we can replace the expression with if replaceExpression is set).
+  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      LinearExpressionRunner runner(getModule(), flags);
-      runner.setGetValues(&getValues);
-      return runner.visit(curr);
-    } catch (NonconstantException&) {
-      return Flow(LinearExpressionRunner::NONCONSTANT_FLOW);
+      return PrecomputingExpressionRunner(
+               getModule(), getValues, replaceExpression)
+        .visit(curr);
+    } catch (PrecomputingExpressionRunner::NonconstantException&) {
+      return Flow(NONCONSTANT_FLOW);
     }
   }
 
@@ -189,9 +232,9 @@ private:
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
   Literals precomputeValue(Expression* curr) {
-    // Note that we do not set PRESERVE_SIDEEFFECTS, as we just care about the
-    // value here.
-    Flow flow = precomputeExpression(curr, FlagValues::DEFAULT);
+    // Note that we set replaceExpression to false, as we just care about
+    // the value here.
+    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (flow.breaking()) {
       return {};
     }

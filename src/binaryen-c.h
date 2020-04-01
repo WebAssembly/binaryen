@@ -1648,17 +1648,14 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
 
 #ifdef __cplusplus
 namespace wasm {
-class ContextAwareExpressionRunner;
+class CExpressionRunner;
 } // namespace wasm
-typedef class wasm::ContextAwareExpressionRunner* ExpressionRunnerRef;
+typedef class wasm::CExpressionRunner* ExpressionRunnerRef;
 #else
-typedef struct ContextAwareExpressionRunner* ExpressionRunnerRef;
+typedef struct CExpressionRunner* ExpressionRunnerRef;
 #endif
 
 typedef uint32_t ExpressionRunnerFlags;
-
-// Default maximum evaluation depth.
-BINARYEN_API BinaryenIndex ExpressionRunnerDefaultMaxDepth();
 
 // By default, just evaluate the expression, i.e. all we want to know is whether
 // it computes down to a concrete value, where it is not necessary to preserve
@@ -1679,7 +1676,8 @@ BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
 BINARYEN_API ExpressionRunnerRef
 ExpressionRunnerCreate(BinaryenModuleRef module,
                        ExpressionRunnerFlags flags,
-                       BinaryenIndex maxDepth);
+                       BinaryenIndex maxDepth,
+                       BinaryenIndex maxLoopIterations);
 
 // Sets a known local value to use. Order matters if expressions have side
 // effects. Returns `true` if the expression actually evaluates to a constant.

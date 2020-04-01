@@ -4886,31 +4886,29 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= ExpressionRunner =========
 //
 
-BinaryenIndex ExpressionRunnerDefaultMaxDepth() {
-  return LinearExpressionRunner::DEFAULT_MAX_DEPTH;
-}
-
 ExpressionRunnerFlags ExpressionRunnerFlagsDefault() {
-  return LinearExpressionRunner::FlagValues::DEFAULT;
+  return CExpressionRunner::FlagValues::DEFAULT;
 }
 
 ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects() {
-  return LinearExpressionRunner::FlagValues::PRESERVE_SIDEEFFECTS;
+  return CExpressionRunner::FlagValues::PRESERVE_SIDEEFFECTS;
 }
 
 ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls() {
-  return LinearExpressionRunner::FlagValues::TRAVERSE_CALLS;
+  return CExpressionRunner::FlagValues::TRAVERSE_CALLS;
 }
 
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
                                            ExpressionRunnerFlags flags,
-                                           BinaryenIndex maxDepth) {
+                                           BinaryenIndex maxDepth,
+                                           BinaryenIndex maxLoopIterations) {
   if (tracing) {
     std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << flags
-              << ", " << maxDepth << ");\n";
+              << ", " << maxDepth << ", " << maxLoopIterations << ");\n";
   }
   auto* wasm = (Module*)module;
-  return ExpressionRunnerRef(new LinearExpressionRunner(wasm, flags, maxDepth));
+  return ExpressionRunnerRef(
+    new CExpressionRunner(wasm, flags, maxDepth, maxLoopIterations));
 }
 
 int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
@@ -4921,7 +4919,7 @@ int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
               << ", expressions[" << expressions[value] << "]);\n";
   }
 
-  auto* R = (LinearExpressionRunner*)runner;
+  auto* R = (CExpressionRunner*)runner;
   return R->setLocalValue(index, value);
 }
 
@@ -4934,21 +4932,21 @@ int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
     std::cout << ", expressions[" << expressions[value] << "]);\n";
   }
 
-  auto* R = (LinearExpressionRunner*)runner;
+  auto* R = (CExpressionRunner*)runner;
   return R->setGlobalValue(name, value);
 }
 
 BinaryenExpressionRef
 ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
                               BinaryenExpressionRef expr) {
-  auto* R = (LinearExpressionRunner*)runner;
+  auto* R = (CExpressionRunner*)runner;
   Expression* ret = nullptr;
   try {
     auto flow = R->visit(expr);
     if (!flow.breaking() && !flow.values.empty()) {
       ret = flow.getConstExpression(*R->getModule());
     }
-  } catch (LinearExpressionRunner::NonconstantException&) {
+  } catch (CExpressionRunner::NonconstantException&) {
   }
 
   if (tracing) {

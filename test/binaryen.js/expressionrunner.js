@@ -1,5 +1,3 @@
-console.log("// ExpressionRunner.DEFAULT_MAX_DEPTH = " + binaryen.ExpressionRunner.DEFAULT_MAX_DEPTH);
-
 var Flags = binaryen.ExpressionRunner.Flags;
 console.log("// ExpressionRunner.Flags.Default = " + Flags.Default);
 console.log("// ExpressionRunner.Flags.PreserveSideeffects = " + Flags.PreserveSideeffects);
@@ -129,6 +127,24 @@ expr = runner.runAndDispose(
       module.i32.const(3),
       module.i32.const(4)
     ], binaryen.i32)
+  )
+);
+assert(expr === 0);
+
+// Should stop on maxDepth
+runner = new binaryen.ExpressionRunner(module, Flags.Default, 1);
+expr = runner.runAndDispose(
+  module.block(null,
+    module.i32.const(1),
+  binaryen.i32)
+);
+assert(expr === 0);
+
+// Should not loop infinitely
+runner = new binaryen.ExpressionRunner(module, Flags.Default, 50, 3);
+expr = runner.runAndDispose(
+  module.loop("theLoop",
+    module.br("theLoop")
   )
 );
 assert(expr === 0);
