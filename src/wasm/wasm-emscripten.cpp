@@ -306,13 +306,13 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     // Note that we don't search for the function by name since its internal
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
-    if (ex) {
+    // If this is exported then it must be one of the functions implemented
+    // here, and if this is a main module, then we can simply place the function
+    // in the table: the loader will see it there and resolve all other uses
+    // to this one.
+    if (ex && !sideModule) {
       assert(ex->kind == ExternalKind::Function);
       auto* f = wasm.getFunction(ex->value);
-      // This is exported, so must be one of the functions implemented here.
-      // Simply add it to the table, and use that index. The loader will
-      // know to reuse that index for other modules so they all share the
-      // same index and function pointer equality works.
       if (f->imported()) {
         Fatal() << "GOT.func entry is both imported and exported: " << g->base;
       }
@@ -337,7 +337,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       block->list.push_back(globalSet);
       continue;
     }
-    // This is imported. Create an fp$ import to get the function table index.
+    // This is imported or in a side module. Create an fp$ import to get the
+    // function table index from the dynamic loader.
     auto* f = importInfo.getImportedFunction(ENV, g->base);
     if (!f) {
       Fatal() << "GOT.func entry with no import/export: " << g->base;
