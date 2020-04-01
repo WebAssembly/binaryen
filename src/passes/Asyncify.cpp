@@ -300,11 +300,11 @@ const auto STACK_ALIGN = 4;
 
 // A helper class for managing fake global names. Creates the globals and
 // provides mappings for using them.
-class GlobalHelper {
+class FakeGlobalHelper {
   Module& module;
 
 public:
-  GlobalHelper(Module& module) : module(module) {
+  FakeGlobalHelper(Module& module) : module(module) {
     map[Type::i32] = "asyncify_fake_call_global_i32";
     map[Type::i64] = "asyncify_fake_call_global_i64";
     map[Type::f32] = "asyncify_fake_call_global_f32";
@@ -319,7 +319,7 @@ public:
     }
   }
 
-  ~GlobalHelper() {
+  ~FakeGlobalHelper() {
     for (auto& pair : map) {
       auto name = pair.second;
       module.removeGlobal(name);
@@ -440,7 +440,7 @@ public:
                  const String::Split& whitelistInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module), asserts(asserts) {
+      fakeGlobals(module), asserts(asserts) {
 
     PatternMatcher blacklist("black", module, blacklistInput);
     PatternMatcher whitelist("white", module, whitelistInput);
@@ -646,7 +646,7 @@ public:
     return walker.canChangeState;
   }
 
-  GlobalHelper globals;
+  FakeGlobalHelper fakeGlobals;
   bool asserts;
 };
 
@@ -892,7 +892,7 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto name = analyzer->globals.getName(set->value->type);
+      auto name = analyzer->fakeGlobals.getName(set->value->type);
       curr = builder->makeGlobalSet(name, set->value);
       set->value = builder->makeGlobalGet(name, set->value->type);
     }
@@ -1028,7 +1028,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(
         builder->makeLocalSet(getFakeCallLocal(type), curr->value));
@@ -1036,7 +1036,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
