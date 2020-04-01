@@ -230,6 +230,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitUnreachable(unreachable);
     } else if (auto* drop = curr->dynCast<Drop>()) {
       return doVisitDrop(drop);
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+               curr->is<BrOnExn>()) {
+      Fatal() << "DataFlow does not support EH instructions yet";
     } else {
       return doVisitGeneric(curr);
     }

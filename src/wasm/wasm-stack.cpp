@@ -899,6 +899,9 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NotVec128:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not);
       break;
+    case AbsVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Abs);
+      break;
     case NegVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg);
       break;
@@ -909,6 +912,13 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case AllTrueVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I8x16AllTrue);
+      break;
+    case BitmaskVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16Bitmask);
+      break;
+    case AbsVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Abs);
       break;
     case NegVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg);
@@ -921,6 +931,13 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I16x8AllTrue);
       break;
+    case BitmaskVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8Bitmask);
+      break;
+    case AbsVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Abs);
+      break;
     case NegVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg);
       break;
@@ -931,6 +948,10 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case AllTrueVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4AllTrue);
+      break;
+    case BitmaskVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4Bitmask);
       break;
     case NegVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg);

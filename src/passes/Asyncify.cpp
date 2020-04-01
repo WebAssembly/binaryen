@@ -298,47 +298,68 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
 
 const auto STACK_ALIGN = 4;
 
-// A helper class for managing fake global names. Creates the globals and
+// A helper class for managing fake call names. Creates the targets and
 // provides mappings for using them.
-class GlobalHelper {
+// Fake calls are used to stash and then use return values from calls. We
+// need to store them somewhere that is valid Binaryen IR, but also will be
+// ignored by the Asyncify instrumentation, so we don't want to use a local.
+// What we do is replace the local used to receive a call's result with a
+// fake call to stash it, then do a fake call to receive it afterwards. (We
+// do it in two steps so that if we are async, we only do the first and
+// not the second, i.e., we don't store to the target local if not running
+// normally).
+class FakeCallHelper {
   Module& module;
 
 public:
-  GlobalHelper(Module& module) : module(module) {
-    map[Type::i32] = "asyncify_fake_call_global_i32";
-    map[Type::i64] = "asyncify_fake_call_global_i64";
-    map[Type::f32] = "asyncify_fake_call_global_f32";
-    map[Type::f64] = "asyncify_fake_call_global_f64";
+  FakeCallHelper(Module& module) : module(module) {
     Builder builder(module);
-    for (auto& pair : map) {
-      auto type = pair.first;
-      auto name = pair.second;
-      rev[name] = type;
-      module.addGlobal(builder.makeGlobal(
-        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+    std::string prefix = "__asyncify_fake_call";
+    for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64}) {
+      auto typedPrefix = prefix + '_' + Type(type).toString();
+      auto setter = typedPrefix + "_set";
+      setterToTypes[setter] = type;
+      typeToSetters[type] = setter;
+      module.addFunction(builder.makeFunction(
+        setter, Signature(type, Type::none), {}, builder.makeUnreachable()));
+      auto getter = typedPrefix + "_get";
+      getterToTypes[getter] = type;
+      typeToGetters[type] = getter;
+      module.addFunction(builder.makeFunction(
+        getter, Signature(Type::none, type), {}, builder.makeNop()));
     }
   }
 
-  ~GlobalHelper() {
-    for (auto& pair : map) {
+  ~FakeCallHelper() {
+    for (auto& pair : typeToSetters) {
       auto name = pair.second;
-      module.removeGlobal(name);
+      module.removeFunction(name);
+    }
+    for (auto& pair : typeToGetters) {
+      auto name = pair.second;
+      module.removeFunction(name);
     }
   }
 
-  Name getName(Type type) { return map.at(type); }
+  Name getGetter(Type type) { return typeToGetters.at(type); }
+  Name getSetter(Type type) { return typeToSetters.at(type); }
 
-  Type getTypeOrNone(Name name) {
-    auto iter = rev.find(name);
-    if (iter != rev.end()) {
-      return iter->second;
+  Function* getGetter(Name name) {
+    if (getterToTypes.count(name)) {
+      return module.getFunction(name);
     }
-    return Type::none;
+    return nullptr;
+  }
+  Function* getSetter(Name name) {
+    if (setterToTypes.count(name)) {
+      return module.getFunction(name);
+    }
+    return nullptr;
   }
 
 private:
-  std::map<Type, Name> map;
-  std::map<Name, Type> rev;
+  std::map<Type, Name> typeToSetters, typeToGetters;
+  std::map<Name, Type> getterToTypes, setterToTypes;
 };
 
 class PatternMatcher {
@@ -440,7 +461,7 @@ public:
                  const String::Split& whitelistInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module), asserts(asserts) {
+      fakeCalls(module), asserts(asserts) {
 
     PatternMatcher blacklist("black", module, blacklistInput);
     PatternMatcher whitelist("white", module, whitelistInput);
@@ -646,7 +667,7 @@ public:
     return walker.canChangeState;
   }
 
-  GlobalHelper globals;
+  FakeCallHelper fakeCalls;
   bool asserts;
 };
 
@@ -892,9 +913,11 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto name = analyzer->globals.getName(set->value->type);
-      curr = builder->makeGlobalSet(name, set->value);
-      set->value = builder->makeGlobalGet(name, set->value->type);
+      auto type = set->value->type;
+      curr = builder->makeCall(
+        analyzer->fakeCalls.getSetter(type), {set->value}, type);
+      set->value =
+        builder->makeCall(analyzer->fakeCalls.getGetter(type), {}, type);
     }
     // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
@@ -1008,37 +1031,39 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void visitCall(Call* curr) {
+    // Check if this is one of our fake calls.
+    if (analyzer->fakeCalls.getSetter(curr->target)) {
+      assert(curr->operands.size() == 1);
+      auto type = curr->operands[0]->type;
+      replaceCurrent(
+        builder->makeLocalSet(getFakeCallLocal(type), curr->operands[0]));
+      return;
+    }
+    if (analyzer->fakeCalls.getGetter(curr->target)) {
+      auto type = curr->type;
+      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
+      return;
+    }
     // Replace calls to the fake intrinsics.
     if (curr->target == ASYNCIFY_UNWIND) {
       replaceCurrent(builder->makeBreak(ASYNCIFY_UNWIND, curr->operands[0]));
-    } else if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
+      return;
+    }
+    if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
       replaceCurrent(builder->makeSequence(
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
           builder->makeLoad(
             4, false, 0, 4, builder->makeGetStackPos(), Type::i32))));
-    } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
+      return;
+    }
+    if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
         builder->makeLocalGet(rewindIndex, Type::i32),
         builder->makeConst(
           Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
-    }
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
-    if (type != Type::none) {
-      replaceCurrent(
-        builder->makeLocalSet(getFakeCallLocal(type), curr->value));
-    }
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
-    if (type != Type::none) {
-      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
   }
 
@@ -1115,9 +1140,7 @@ private:
     auto* func = getFunction();
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      total += size;
+      total += func->getLocalType(i).getByteSize();
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1126,19 +1149,31 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(builder->makeLocalSet(
-        i,
-        builder->makeLoad(size,
-                          true,
-                          offset,
-                          STACK_ALIGN,
-                          builder->makeLocalGet(tempIndex, Type::i32),
-                          type)));
-      offset += size;
+      const auto& types = func->getLocalType(i).expand();
+      SmallVector<Expression*, 1> loads;
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        loads.push_back(
+          builder->makeLoad(size,
+                            true,
+                            offset,
+                            STACK_ALIGN,
+                            builder->makeLocalGet(tempIndex, Type::i32),
+                            type));
+        offset += size;
+      }
+      Expression* load;
+      if (loads.size() == 1) {
+        load = loads[0];
+      } else if (types.size() > 1) {
+        load = builder->makeTupleMake(std::move(loads));
+      } else {
+        WASM_UNREACHABLE("Unexpected empty type");
+      }
+      block->list.push_back(builder->makeLocalSet(i, load));
     }
     block->finalize();
     return block;
@@ -1155,18 +1190,26 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(
-        builder->makeStore(size,
-                           offset,
-                           STACK_ALIGN,
-                           builder->makeLocalGet(tempIndex, Type::i32),
-                           builder->makeLocalGet(i, type),
-                           type));
-      offset += size;
+      auto localType = func->getLocalType(i);
+      const auto& types = localType.expand();
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        Expression* localGet = builder->makeLocalGet(i, localType);
+        if (types.size() > 1) {
+          localGet = builder->makeTupleExtract(localGet, j);
+        }
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        block->list.push_back(
+          builder->makeStore(size,
+                             offset,
+                             STACK_ALIGN,
+                             builder->makeLocalGet(tempIndex, Type::i32),
+                             localGet,
+                             type));
+        offset += size;
+      }
     }
     block->list.push_back(builder->makeIncStackPos(offset));
     block->finalize();

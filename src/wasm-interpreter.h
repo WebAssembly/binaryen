@@ -70,7 +70,7 @@ public:
   Expression* getConstExpression(Module& module) {
     assert(values.size() > 0);
     Builder builder(module);
-    return builder.makeConstExpression(values);
+    return builder.makeConstantExpression(values);
   }
 
   bool breaking() { return breakTo.is(); }
@@ -442,24 +442,36 @@ public:
         return value.splatF64x2();
       case NotVec128:
         return value.notV128();
+      case AbsVecI8x16:
+        return value.absI8x16();
       case NegVecI8x16:
         return value.negI8x16();
       case AnyTrueVecI8x16:
         return value.anyTrueI8x16();
       case AllTrueVecI8x16:
         return value.allTrueI8x16();
+      case BitmaskVecI8x16:
+        return value.bitmaskI8x16();
+      case AbsVecI16x8:
+        return value.absI16x8();
       case NegVecI16x8:
         return value.negI16x8();
       case AnyTrueVecI16x8:
         return value.anyTrueI16x8();
       case AllTrueVecI16x8:
         return value.allTrueI16x8();
+      case BitmaskVecI16x8:
+        return value.bitmaskI16x8();
+      case AbsVecI32x4:
+        return value.absI32x4();
       case NegVecI32x4:
         return value.negI32x4();
       case AnyTrueVecI32x4:
         return value.anyTrueI32x4();
       case AllTrueVecI32x4:
         return value.allTrueI32x4();
+      case BitmaskVecI32x4:
+        return value.bitmaskI32x4();
       case NegVecI64x2:
         return value.negI64x2();
       case AnyTrueVecI64x2:

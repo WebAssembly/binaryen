@@ -127,7 +127,7 @@ struct ConstantGlobalApplier
       auto iter = currConstantGlobals.find(get->name);
       if (iter != currConstantGlobals.end()) {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeConstExpression(iter->second));
+        replaceCurrent(builder.makeConstantExpression(iter->second));
         replaced = true;
       }
       return;
@@ -258,7 +258,7 @@ struct SimplifyGlobals : public Pass {
           auto iter = constantGlobals.find(get->name);
           if (iter != constantGlobals.end()) {
             Builder builder(*module);
-            global->init = builder.makeConstExpression(iter->second);
+            global->init = builder.makeConstantExpression(iter->second);
           }
         }
       }

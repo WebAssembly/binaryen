@@ -95,6 +95,8 @@ function initializeConstants() {
     'Throw',
     'Rethrow',
     'BrOnExn',
+    'TupleMake',
+    'TupleExtract',
     'Push',
     'Pop'
   ].forEach(function(name) {
@@ -344,9 +346,11 @@ function initializeConstants() {
     'XorVec128',
     'AndNotVec128',
     'BitselectVec128',
+    'AbsVecI8x16',
     'NegVecI8x16',
     'AnyTrueVecI8x16',
     'AllTrueVecI8x16',
+    'BitmaskVecI8x16',
     'ShlVecI8x16',
     'ShrSVecI8x16',
     'ShrUVecI8x16',
@@ -362,9 +366,11 @@ function initializeConstants() {
     'MaxSVecI8x16',
     'MaxUVecI8x16',
     'AvgrUVecI8x16',
+    'AbsVecI16x8',
     'NegVecI16x8',
     'AnyTrueVecI16x8',
     'AllTrueVecI16x8',
+    'BitmaskVecI16x8',
     'ShlVecI16x8',
     'ShrSVecI16x8',
     'ShrUVecI16x8',
@@ -381,9 +387,11 @@ function initializeConstants() {
     'MaxUVecI16x8',
     'AvgrUVecI16x8',
     'DotSVecI16x8ToVecI32x4',
+    'AbsVecI32x4',
     'NegVecI32x4',
     'AnyTrueVecI32x4',
     'AllTrueVecI32x4',
+    'BitmaskVecI32x4',
     'ShlVecI32x4',
     'ShrSVecI32x4',
     'ShrUVecI32x4',
@@ -1474,6 +1482,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI8x16'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI8x16'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI8x16'], value);
     },
@@ -1482,6 +1493,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI8x16'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI8x16'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI8x16'], vec, shift);
@@ -1579,6 +1593,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI16x8'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI16x8'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI16x8'], value);
     },
@@ -1587,6 +1604,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI16x8'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI16x8'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI16x8'], vec, shift);
@@ -1699,6 +1719,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI32x4'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI32x4'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI32x4'], value);
     },
@@ -1707,6 +1730,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI32x4'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI32x4'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI32x4'], vec, shift);
@@ -2073,6 +2099,17 @@ function wrapModule(module, self) {
   };
   self['push'] = function(value) {
     return Module['_BinaryenPush'](module, value);
+  };
+
+  self['tuple'] = {
+    'make': function(elements) {
+      return preserveStack(function() {
+        return Module['_BinaryenTupleMake'](module, i32sToStack(elements), elements.length);
+      });
+    },
+    'extract': function(tuple, index) {
+      return Module['_BinaryenTupleExtract'](module, tuple, index);
+    }
   };
 
   // 'Module' operations
@@ -2793,6 +2830,19 @@ Module['getExpressionInfo'] = function(expr) {
         'name': UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr)),
         'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
         'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
+      };
+    case Module['TupleMakeId']:
+      return {
+        'id': id,
+        'type': type,
+        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperand'])
+      };
+    case Module['TupleExtractId']:
+      return {
+        'id': id,
+        'type': type,
+        'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
+        'index': Module['_BinaryenTupleExtractGetIndex'](expr)
       };
     case Module['PushId']:
       return {

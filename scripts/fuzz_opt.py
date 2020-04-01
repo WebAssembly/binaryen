@@ -356,7 +356,9 @@ def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
 
-    run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('a.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -427,7 +429,9 @@ def test_one(random_input, opts):
                 print('')
 
     # created a second wasm for handlers that want to look at pairs.
-    run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('b.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)

@@ -111,16 +111,21 @@ jobs:
       compiler: clang
       python: 2.7
       language: node_js
-      sudo: required
-      services:
-        - docker
-      before_install:
-        # TODO: Emscripten upstream produces a broken build in CI environments only :(
-        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten-fastcomp bash
+      install:
+        - mkdir $HOME/cmake &&
+          wget -qO- https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz | tar -xzC $HOME/cmake --strip-components 1 &&
+          export PATH=$HOME/cmake/bin:$PATH
+        - mkdir $HOME/emsdk &&
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk &&
+          $HOME/emsdk/emsdk update-tags &&
+          $HOME/emsdk/emsdk install tot &&
+          $HOME/emsdk/emsdk activate tot &&
+          export PATH=$HOME/emsdk:$PATH
       script:
         # run binaryen.js tests before and after building, so we see if the bundled
-        # version is good too
-        - docker exec -it emscripten bash ./travis-emcc-tests.sh
+        # version is good too.
+        - source $HOME/emsdk/emsdk_env.sh &&
+          ./travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.

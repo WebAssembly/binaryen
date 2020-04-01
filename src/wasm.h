@@ -156,15 +156,21 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AbsVecI8x16,
   NegVecI8x16,
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,
   AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
   NegVecI32x4,
   AnyTrueVecI32x4,
   AllTrueVecI32x4,
+  BitmaskVecI32x4,
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
@@ -1431,7 +1437,7 @@ class Global : public Importable {
 public:
   Name name;
   Type type;
-  Expression* init;
+  Expression* init = nullptr;
   bool mutable_ = false;
 };
 
@@ -1454,6 +1460,13 @@ public:
   std::vector<char> data;
 };
 
+// The optional "dylink" section is used in dynamic linking.
+class DylinkSection {
+public:
+  Index memorySize, memoryAlignment, tableSize, tableAlignment;
+  std::vector<Name> neededDynlibs;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
@@ -1468,6 +1481,9 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Optional user section IR representation.
+  std::unique_ptr<DylinkSection> dylinkSection;
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;

@@ -752,9 +752,11 @@ enum ASTNodes {
   V128Xor = 0x4f,
   V128AndNot = 0xd8,
   V128Bitselect = 0x50,
+  I8x16Abs = 0xe1,
   I8x16Neg = 0x51,
   I8x16AnyTrue = 0x52,
   I8x16AllTrue = 0x53,
+  I8x16Bitmask = 0xe4,
   I8x16Shl = 0x54,
   I8x16ShrS = 0x55,
   I8x16ShrU = 0x56,
@@ -770,9 +772,11 @@ enum ASTNodes {
   I8x16MaxS = 0x60,
   I8x16MaxU = 0x61,
   I8x16AvgrU = 0xd9,
+  I16x8Abs = 0xe2,
   I16x8Neg = 0x62,
   I16x8AnyTrue = 0x63,
   I16x8AllTrue = 0x64,
+  I16x8Bitmask = 0xe5,
   I16x8Shl = 0x65,
   I16x8ShrS = 0x66,
   I16x8ShrU = 0x67,
@@ -788,9 +792,11 @@ enum ASTNodes {
   I16x8MaxS = 0x71,
   I16x8MaxU = 0x72,
   I16x8AvgrU = 0xda,
+  I32x4Abs = 0xe3,
   I32x4Neg = 0x73,
   I32x4AnyTrue = 0x74,
   I32x4AllTrue = 0x75,
+  I32x4Bitmask = 0xe6,
   I32x4Shl = 0x76,
   I32x4ShrS = 0x77,
   I32x4ShrU = 0x78,
@@ -1005,10 +1011,10 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
+  void writeDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1251,6 +1257,7 @@ public:
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
+  void readDylink(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }

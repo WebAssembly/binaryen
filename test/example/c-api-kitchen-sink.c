@@ -272,6 +272,14 @@ void test_core() {
   BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4b[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
+  BinaryenExpressionRef tupleElements4a[] = {makeInt32(module, 13),
+                                             makeInt64(module, 37),
+                                             makeFloat32(module, 1.3f),
+                                             makeFloat64(module, 3.7)};
+  BinaryenExpressionRef tupleElements4b[] = {makeInt32(module, 13),
+                                             makeInt64(module, 37),
+                                             makeFloat32(module, 1.3f),
+                                             makeFloat64(module, 3.7)};
 
   BinaryenType iIfF_[4] = {BinaryenTypeInt32(),
                            BinaryenTypeInt64(),
@@ -392,15 +400,21 @@ void test_core() {
     makeUnary(module, BinaryenSplatVecF32x4(), f32),
     makeUnary(module, BinaryenSplatVecF64x2(), f64),
     makeUnary(module, BinaryenNotVec128(), v128),
+    makeUnary(module, BinaryenAbsVecI8x16(), v128),
     makeUnary(module, BinaryenNegVecI8x16(), v128),
     makeUnary(module, BinaryenAnyTrueVecI8x16(), v128),
     makeUnary(module, BinaryenAllTrueVecI8x16(), v128),
+    makeUnary(module, BinaryenBitmaskVecI8x16(), v128),
+    makeUnary(module, BinaryenAbsVecI16x8(), v128),
     makeUnary(module, BinaryenNegVecI16x8(), v128),
     makeUnary(module, BinaryenAnyTrueVecI16x8(), v128),
     makeUnary(module, BinaryenAllTrueVecI16x8(), v128),
+    makeUnary(module, BinaryenBitmaskVecI16x8(), v128),
+    makeUnary(module, BinaryenAbsVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI32x4(), v128),
     makeUnary(module, BinaryenAnyTrueVecI32x4(), v128),
     makeUnary(module, BinaryenAllTrueVecI32x4(), v128),
+    makeUnary(module, BinaryenBitmaskVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI64x2(), v128),
     makeUnary(module, BinaryenAnyTrueVecI64x2(), v128),
     makeUnary(module, BinaryenAllTrueVecI64x2(), v128),
@@ -708,6 +722,10 @@ void test_core() {
       BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())),
     BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6)),
     BinaryenAtomicFence(module),
+    // Tuples
+    BinaryenTupleMake(module, tupleElements4a, 4),
+    BinaryenTupleExtract(
+      module, BinaryenTupleMake(module, tupleElements4b, 4), 2),
     // Push and pop
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt32())),
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt64())),
@@ -729,11 +747,17 @@ void test_core() {
   BinaryenExpressionPrint(valueList[3]); // test printing a standalone expression
 
   // Make the main body of the function. and one block with a return value, one without
-  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef), -1);
+  BinaryenExpressionRef value =
+    BinaryenBlock(module,
+                  "the-value",
+                  valueList,
+                  sizeof(valueList) / sizeof(BinaryenExpressionRef),
+                  BinaryenTypeAuto());
   BinaryenExpressionRef droppedValue = BinaryenDrop(module, value);
   BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &droppedValue, 1, -1);
   BinaryenExpressionRef bodyList[] = { nothing, makeInt32(module, 42) };
-  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2, -1);
+  BinaryenExpressionRef body =
+    BinaryenBlock(module, "the-body", bodyList, 2, BinaryenTypeAuto());
 
   // Create the function
   BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExnref()};

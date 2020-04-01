@@ -717,6 +717,9 @@ struct PrintExpressionContents
       case NotVec128:
         o << "v128.not";
         break;
+      case AbsVecI8x16:
+        o << "i8x16.abs";
+        break;
       case NegVecI8x16:
         o << "i8x16.neg";
         break;
@@ -725,6 +728,12 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI8x16:
         o << "i8x16.all_true";
+        break;
+      case BitmaskVecI8x16:
+        o << "i8x16.bitmask";
+        break;
+      case AbsVecI16x8:
+        o << "i16x8.abs";
         break;
       case NegVecI16x8:
         o << "i16x8.neg";
@@ -735,6 +744,12 @@ struct PrintExpressionContents
       case AllTrueVecI16x8:
         o << "i16x8.all_true";
         break;
+      case BitmaskVecI16x8:
+        o << "i16x8.bitmask";
+        break;
+      case AbsVecI32x4:
+        o << "i32x4.abs";
+        break;
       case NegVecI32x4:
         o << "i32x4.neg";
         break;
@@ -743,6 +758,9 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI32x4:
         o << "i32x4.all_true";
+        break;
+      case BitmaskVecI32x4:
+        o << "i32x4.bitmask";
         break;
       case NegVecI64x2:
         o << "i64x2.neg";
@@ -2322,6 +2340,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "\")" << maybeNewLine;
     }
   }
+  void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
+    doIndent(o, indent) << ";; dylink section\n";
+    doIndent(o, indent) << ";;   memorysize: " << dylinkSection->memorySize
+                        << '\n';
+    doIndent(o, indent) << ";;   memoryalignment: "
+                        << dylinkSection->memoryAlignment << '\n';
+    doIndent(o, indent) << ";;   tablesize: " << dylinkSection->tableSize
+                        << '\n';
+    doIndent(o, indent) << ";;   tablealignment: "
+                        << dylinkSection->tableAlignment << '\n';
+    for (auto& neededDynlib : dylinkSection->neededDynlibs) {
+      doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
+    }
+  }
   void visitModule(Module* curr) {
     currModule = curr;
     o << '(';
@@ -2370,6 +2402,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     ModuleUtils::iterDefinedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
+    if (curr->dylinkSection) {
+      printDylinkSection(curr->dylinkSection);
+    }
     for (auto& section : curr->userSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "

@@ -281,6 +281,11 @@
        )
       )
       (drop
+       (i8x16.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i8x16.neg
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -292,6 +297,16 @@
       )
       (drop
        (i8x16.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.bitmask
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -311,6 +326,16 @@
        )
       )
       (drop
+       (i16x8.bitmask
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.neg
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -322,6 +347,11 @@
       )
       (drop
        (i32x4.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.bitmask
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -1675,6 +1705,24 @@
        )
       )
       (atomic.fence)
+      (drop
+       (tuple.make
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+       )
+      )
+      (drop
+       (tuple.extract 2
+        (tuple.make
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
       (push
        (i32.pop)
       )

@@ -466,7 +466,11 @@ file_names[  1]:
    (local.get $0)
   )
  )
- ;; custom section "dylink", size 5
+ ;; dylink section
+ ;;   memorysize: 0
+ ;;   memoryalignment: 0
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section ".debug_info", size 130
  ;; custom section ".debug_abbrev", size 100
  ;; custom section ".debug_line", size 145

@@ -228,15 +228,21 @@ function test_core() {
     module.f32x4.splat(module.f32.const(42.0)),
     module.f64x2.splat(module.f64.const(42.0)),
     module.v128.not(module.v128.const(v128_bytes)),
+    module.i8x16.abs(module.v128.const(v128_bytes)),
     module.i8x16.neg(module.v128.const(v128_bytes)),
     module.i8x16.any_true(module.v128.const(v128_bytes)),
     module.i8x16.all_true(module.v128.const(v128_bytes)),
+    module.i8x16.bitmask(module.v128.const(v128_bytes)),
+    module.i16x8.abs(module.v128.const(v128_bytes)),
     module.i16x8.neg(module.v128.const(v128_bytes)),
     module.i16x8.any_true(module.v128.const(v128_bytes)),
     module.i16x8.all_true(module.v128.const(v128_bytes)),
+    module.i16x8.bitmask(module.v128.const(v128_bytes)),
+    module.i32x4.abs(module.v128.const(v128_bytes)),
     module.i32x4.neg(module.v128.const(v128_bytes)),
     module.i32x4.any_true(module.v128.const(v128_bytes)),
     module.i32x4.all_true(module.v128.const(v128_bytes)),
+    module.i32x4.bitmask(module.v128.const(v128_bytes)),
     module.i64x2.neg(module.v128.const(v128_bytes)),
     module.i64x2.any_true(module.v128.const(v128_bytes)),
     module.i64x2.all_true(module.v128.const(v128_bytes)),
@@ -525,6 +531,16 @@ function test_core() {
     ),
     module.atomic.fence(),
 
+    // Tuples
+    module.tuple.make(
+      [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ]
+    ),
+    module.tuple.extract(
+      module.tuple.make(
+        [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ]
+      ), 2
+    ),
+
     // Push and pop
     module.push(module.i32.pop()),
     module.push(module.i64.pop()),
@@ -548,6 +564,12 @@ function test_core() {
   console.log("getExpressionInfo(i64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i64.const(6, 7))));
   console.log("getExpressionInfo(f32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f32.const(8.5))));
   console.log("getExpressionInfo(f64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f64.const(9.5))));
+  var elements = binaryen.getExpressionInfo(
+    module.tuple.make([ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ])
+  ).operands;
+  for (var i = 0; i < elements.length; i++) {
+    console.log("getExpressionInfo(tuple[" + i + "])=" + JSON.stringify(binaryen.getExpressionInfo(elements[i])));
+  }
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);

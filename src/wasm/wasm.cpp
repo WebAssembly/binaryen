@@ -737,6 +737,9 @@ void Unary::finalize() {
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:
+    case AbsVecI8x16:
+    case AbsVecI16x8:
+    case AbsVecI32x4:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -766,13 +769,16 @@ void Unary::finalize() {
       type = Type::v128;
       break;
     case AnyTrueVecI8x16:
-    case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
-    case AllTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
+    case AllTrueVecI8x16:
+    case AllTrueVecI16x8:
+    case AllTrueVecI32x4:
     case AllTrueVecI64x2:
+    case BitmaskVecI8x16:
+    case BitmaskVecI16x8:
+    case BitmaskVecI32x4:
       type = Type::i32;
       break;
 
