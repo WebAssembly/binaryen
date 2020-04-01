@@ -341,7 +341,10 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     // function table index from the dynamic loader.
     auto* f = importInfo.getImportedFunction(ENV, g->base);
     if (!f) {
-      Fatal() << "GOT.func entry with no import/export: " << g->base;
+      if (!ex) {
+        Fatal() << "GOT.func entry with no import/export: " << g->base;
+      }
+      f = wasm.getFunction(ex->value);
     }
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
