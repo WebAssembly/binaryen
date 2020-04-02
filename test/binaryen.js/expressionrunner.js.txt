@@ -110,38 +110,42 @@ int main() {
     functions[0] = BinaryenAddFunction(the_module, "add", 11, 2, varTypes, 0, expressions[45]);
   }
   expressions[46] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[47] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[48] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  ExpressionRunnerSetLocalValue(the_runner, 0, expressions[46]);
+  expressions[47] = BinaryenLocalGet(the_module, 0, 2);
+  expressions[48] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[49] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
   {
-    BinaryenExpressionRef operands[] = { expressions[47], expressions[48] };
-    expressions[49] = BinaryenCall(the_module, "add", operands, 2, 2);
+    BinaryenExpressionRef operands[] = { expressions[48], expressions[49] };
+    expressions[50] = BinaryenCall(the_module, "add", operands, 2, 2);
   }
-  expressions[50] = BinaryenBinary(the_module, 0, expressions[46], expressions[49]);
-  expressions[51] = ExpressionRunnerRunAndDispose(the_runner, expressions[50]);
-  BinaryenExpressionGetId(expressions[51]);
-  BinaryenExpressionGetType(expressions[51]);
-  BinaryenConstGetValueI32(expressions[51]);
+  expressions[51] = BinaryenBinary(the_module, 0, expressions[47], expressions[50]);
+  expressions[52] = BinaryenLocalGet(the_module, 0, 2);
+  expressions[53] = BinaryenBinary(the_module, 0, expressions[51], expressions[52]);
+  expressions[54] = ExpressionRunnerRunAndDispose(the_runner, expressions[53]);
+  BinaryenExpressionGetId(expressions[54]);
+  BinaryenExpressionGetType(expressions[54]);
+  BinaryenConstGetValueI32(expressions[54]);
   the_runner = ExpressionRunnerCreate(the_module, 0, 0, 0);
-  expressions[52] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[53] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  expressions[55] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[56] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[57] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
   {
-    BinaryenExpressionRef operands[] = { expressions[53], expressions[54] };
-    expressions[55] = BinaryenCall(the_module, "add", operands, 2, 2);
+    BinaryenExpressionRef operands[] = { expressions[56], expressions[57] };
+    expressions[58] = BinaryenCall(the_module, "add", operands, 2, 2);
   }
-  expressions[56] = BinaryenBinary(the_module, 0, expressions[52], expressions[55]);
-  ExpressionRunnerRunAndDispose(the_runner, expressions[56]);
+  expressions[59] = BinaryenBinary(the_module, 0, expressions[55], expressions[58]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[59]);
   the_runner = ExpressionRunnerCreate(the_module, 0, 1, 0);
-  expressions[57] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[60] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[58] = BinaryenBlock(the_module, NULL, children, 0, 2);
+    expressions[61] = BinaryenBlock(the_module, NULL, children, 0, 2);
   }
-  ExpressionRunnerRunAndDispose(the_runner, expressions[58]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[61]);
   the_runner = ExpressionRunnerCreate(the_module, 0, 50, 3);
-  expressions[59] = BinaryenBreak(the_module, "theLoop", expressions[0], expressions[0]);
-  expressions[60] = BinaryenLoop(the_module, "theLoop", expressions[59]);
-  ExpressionRunnerRunAndDispose(the_runner, expressions[60]);
+  expressions[62] = BinaryenBreak(the_module, "theLoop", expressions[0], expressions[0]);
+  expressions[63] = BinaryenLoop(the_module, "theLoop", expressions[62]);
+  ExpressionRunnerRunAndDispose(the_runner, expressions[63]);
   return 0;
 }
 // ending a Binaryen API trace

@@ -1323,20 +1323,17 @@ public:
         if (func->sig.results.isConcrete()) {
           auto numOperands = curr->operands.size();
           assert(numOperands == func->getNumParams());
-          ExpressionRunner<SubType> runner(flags);
-          runner.module = module;
-          runner.maxDepth = maxDepth;
-          runner.maxLoopIterations = maxLoopIterations;
-          runner.depth = depth + 1;
-          runner.globalValues = globalValues;
+          auto prevLocalValues = localValues;
+          localValues.clear();
           for (Index i = 0; i < numOperands; ++i) {
             auto argFlow = visit(curr->operands[i]);
             if (!argFlow.breaking()) {
               assert(argFlow.values.isConcrete());
-              runner.localValues[i] = std::move(argFlow.values);
+              localValues[i] = std::move(argFlow.values);
             }
           }
-          auto retFlow = runner.visit(func->body);
+          auto retFlow = visit(func->body);
+          localValues = std::move(prevLocalValues);
           if (retFlow.breakTo == RETURN_FLOW) {
             return Flow(std::move(retFlow.values));
           } else if (!retFlow.breaking()) {

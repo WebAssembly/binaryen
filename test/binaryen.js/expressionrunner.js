@@ -107,13 +107,17 @@ module.addFunction("add", binaryen.createType([ binaryen.i32, binaryen.i32 ]), b
     )
   ], binaryen.i32)
 );
+assert(runner.setLocalValue(0, module.i32.const(1)));
 expr = runner.runAndDispose(
   module.i32.add(
-    module.i32.const(1),
-    module.call("add", [
-      module.i32.const(3),
-      module.i32.const(4)
-    ], binaryen.i32)
+    module.i32.add(
+      module.local.get(0, binaryen.i32),
+      module.call("add", [
+        module.i32.const(2),
+        module.i32.const(4)
+      ], binaryen.i32)
+    ),
+    module.local.get(0, binaryen.i32)
   )
 );
 assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":8}');
