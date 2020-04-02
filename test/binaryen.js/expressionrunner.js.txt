@@ -138,8 +138,8 @@ int main() {
   the_runner = ExpressionRunnerCreate(the_module, 0, 1, 0);
   expressions[60] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   {
-    BinaryenExpressionRef children[] = { 0 };
-    expressions[61] = BinaryenBlock(the_module, NULL, children, 0, 2);
+    BinaryenExpressionRef children[] = { expressions[60] };
+    expressions[61] = BinaryenBlock(the_module, NULL, children, 1, 2);
   }
   ExpressionRunnerRunAndDispose(the_runner, expressions[61]);
   the_runner = ExpressionRunnerCreate(the_module, 0, 50, 3);

@@ -191,10 +191,7 @@ public:
     // value. Must not be used in function-parallel scenarios, where the called
     // function might or might not have been optimized already to something we
     // can traverse successfully, in turn leading to non-deterministic behavior.
-    TRAVERSE_CALLS = 1 << 1,
-    // Trap instead of aborting if we hit an invalid expression. Useful where
-    // we are only interested in valid expressions before validation.
-    TRAP_ON_INVALID = 1 << 2,
+    TRAVERSE_CALLS = 1 << 1
   };
 
   // Flags indicating special requirements, for example whether we are just
@@ -245,24 +242,21 @@ public:
 
   Flow visit(Expression* curr) {
     depth++;
-    if (maxDepth > 0 && depth > maxDepth) {
+    if (maxDepth != 0 && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
-        if (!Type::isSubType(type, curr->type)) {
-          if (flags & FlagValues::TRAP_ON_INVALID) {
-            trap("unexpected type");
-          }
 #if 1 // def WASM_INTERPRETER_DEBUG
+        if (!Type::isSubType(type, curr->type)) {
           std::cerr << "expected " << curr->type << ", seeing " << type
                     << " from\n"
                     << curr << '\n';
-#endif
-          assert(false);
         }
+#endif
+        assert(Type::isSubType(type, curr->type));
       }
     }
     depth--;
@@ -329,7 +323,7 @@ public:
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
         if (flow.breakTo == curr->name) {
-          if (maxLoopIterations > 0 && ++loopCount >= maxLoopIterations) {
+          if (maxLoopIterations != 0 && ++loopCount >= maxLoopIterations) {
             return Flow(NONCONSTANT_FLOW);
           }
           continue; // lol
@@ -2476,7 +2470,7 @@ public:
                     CExpressionRunner::Flags flags,
                     Index maxDepth_,
                     Index maxLoopIterations_)
-    : ExpressionRunner<CExpressionRunner>(flags | FlagValues::TRAP_ON_INVALID) {
+    : ExpressionRunner<CExpressionRunner>(flags) {
     module = module_;
     maxDepth = maxDepth_;
     maxLoopIterations = maxLoopIterations_;

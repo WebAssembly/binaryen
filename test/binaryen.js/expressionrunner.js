@@ -138,9 +138,9 @@ assert(expr === 0);
 // Should stop on maxDepth
 runner = new binaryen.ExpressionRunner(module, Flags.Default, 1);
 expr = runner.runAndDispose(
-  module.block(null,
+  module.block(null, [
     module.i32.const(1),
-  binaryen.i32)
+  ], binaryen.i32)
 );
 assert(expr === 0);
 
