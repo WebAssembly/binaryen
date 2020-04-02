@@ -125,7 +125,7 @@ void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
 void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
   // Emit a global.set for each element if this is a tuple global
   Index index = parent.getGlobalIndex(curr->name);
-  size_t numValues = parent.getModule()->getGlobal(curr->name)->type.getSize();
+  size_t numValues = parent.getModule()->getGlobal(curr->name)->type.size();
   for (int i = numValues - 1; i >= 0; --i) {
     o << int8_t(BinaryConsts::GlobalSet) << U32LEB(index + i);
   }
