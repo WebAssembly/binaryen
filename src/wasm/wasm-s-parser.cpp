@@ -546,12 +546,7 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
         throw ParseException(
           "params may not have tuple types", s[i]->line, s[i]->col);
       }
-      auto& tuple = s[i]->list();
-      std::vector<Type> types;
-      for (size_t j = 0; j < s[i]->size(); ++j) {
-        types.push_back(stringToType(tuple[j]->str()));
-      }
-      type = Type(types);
+      type = elementToType(*s[i]);
     }
     namedParams.emplace_back(name, type);
   }
@@ -884,6 +879,18 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::none;
   }
   throw ParseException(std::string("invalid wasm type: ") + str);
+}
+
+Type SExpressionWasmBuilder::elementToType(Element& s) {
+  if (s.isStr()) {
+    return stringToType(s.str(), false, false);
+  }
+  auto& tuple = s.list();
+  std::vector<Type> types;
+  for (size_t i = 0; i < s.size(); ++i) {
+    types.push_back(stringToType(tuple[i]->str()));
+  }
+  return Type(types);
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
@@ -2278,7 +2285,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   bool exported = false;
   Name importModule, importBase;
   while (i < s.size() && s[i]->isList()) {
-    auto& inner = *s[i];
+    auto& inner = *s[i++];
     if (elementStartsWith(inner, EXPORT)) {
       auto ex = make_unique<Export>();
       ex->name = inner[1]->str();
@@ -2289,16 +2296,15 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
       }
       wasm.addExport(ex.release());
       exported = true;
-      i++;
     } else if (elementStartsWith(inner, IMPORT)) {
       importModule = inner[1]->str();
       importBase = inner[2]->str();
-      i++;
     } else if (elementStartsWith(inner, MUT)) {
       mutable_ = true;
-      type = stringToType(inner[1]->str());
-      i++;
+      type = elementToType(*inner[1]);
+      break;
     } else {
+      type = elementToType(inner);
       break;
     }
   }
