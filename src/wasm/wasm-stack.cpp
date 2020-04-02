@@ -114,16 +114,19 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
+  // Emit a global.get for each element if this is a tuple global
   Index index = parent.getGlobalIndex(curr->name);
-  for (Index i = 0, e = curr->type.size(); i < e; ++i) {
+  size_t numValues = curr->type.size();
+  for (Index i = 0; i < numValues; ++i) {
     o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + i);
   }
 }
 
 void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
+  // Emit a global.set for each element if this is a tuple global
   Index index = parent.getGlobalIndex(curr->name);
-  Type type = parent.getModule()->getGlobal(curr->name)->type;
-  for (int i = type.size() - 1; i >= 0; --i) {
+  size_t numValues = parent.getModule()->getGlobal(curr->name)->type.getSize();
+  for (int i = numValues - 1; i >= 0; --i) {
     o << int8_t(BinaryConsts::GlobalSet) << U32LEB(index + i);
   }
 }

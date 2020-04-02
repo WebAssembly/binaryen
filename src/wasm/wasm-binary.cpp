@@ -376,6 +376,8 @@ void WasmBinaryWriter::writeGlobals() {
   }
   BYN_TRACE("== writeglobals\n");
   auto start = startSection(BinaryConsts::Section::Global);
+  // Count and emit the total number of globals after tuple globals have been
+  // expanded into their constituent parts.
   Index num = 0;
   ModuleUtils::iterDefinedGlobals(
     *wasm, [&num](Global* global) { num += global->type.size(); });
