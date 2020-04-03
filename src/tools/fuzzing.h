@@ -428,7 +428,8 @@ private:
       Type type = getConcreteType();
       std::vector<Type> params;
       params.push_back(type);
-      Index numValues = upToSquared(MAX_PARAMS - 1);
+      Index numValues =
+        wasm.features.hasMultivalue() ? upTo(1) : upToSquared(MAX_PARAMS - 1);
       for (Index i = 0; i < numValues + 1; i++) {
         params.push_back(getConcreteType());
       }
