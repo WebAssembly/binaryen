@@ -171,23 +171,24 @@ public:
   // executing in a function-parallel scenario. See FlagValues.
   typedef uint32_t Flags;
 
+  // Indicates no limit of maxDepth or maxLoopIterations.
+  static const Index NO_LIMIT = 0;
+
 protected:
-  // Flags indicating special requirements. See FlagValues.
-  Flags flags;
-
-  // Maximum depth before giving up. Defaults to 0 for no limit.
-  Index maxDepth;
-  Index depth = 0;
-
-  // Maximum loop iterations before giving up on a loop. Defaults to 0 for no
-  // limit. A maximum of 1 essentially attempts to interpret a loop as a block,
-  // giving up as soon as it loops, which is always safe to do.
-  Index maxLoopIterations;
-
   // Optional module context to search for globals and called functions. NULL if
   // we are not interested in any context or if the subclass uses an alternative
   // mechanism, like RuntimeExpressionRunner does.
-  Module* module;
+  Module* module = nullptr;
+
+  // Flags indicating special requirements. See FlagValues.
+  Flags flags = FlagValues::DEFAULT;
+
+  // Maximum depth before giving up.
+  Index maxDepth = NO_LIMIT;
+  Index depth = 0;
+
+  // Maximum iterations before giving up on a loop.
+  Index maxLoopIterations = NO_LIMIT;
 
   // Map remembering concrete local values set in the context of this flow.
   std::unordered_map<Index, Literals> localValues;
@@ -210,17 +211,14 @@ protected:
   }
 
 public:
-  ExpressionRunner(Flags flags = FlagValues::DEFAULT,
-                   Index maxDepth = 0,
-                   Index maxLoopIterations = 0)
-    : ExpressionRunner(nullptr, flags, maxDepth, maxLoopIterations) {}
-
+  ExpressionRunner() {}
+  ExpressionRunner(Index maxDepth) : maxDepth(maxDepth) {}
   ExpressionRunner(Module* module,
-                   Flags flags = FlagValues::DEFAULT,
-                   Index maxDepth = 0,
-                   Index maxLoopIterations = 0)
-    : flags(flags), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations),
-      module(module) {}
+                   Flags flags,
+                   Index maxDepth,
+                   Index maxLoopIterations)
+    : module(module), flags(flags), maxDepth(maxDepth),
+      maxLoopIterations(maxLoopIterations) {}
 
   // Gets the module this runner is operating on.
   Module* getModule() { return module; }
@@ -239,7 +237,7 @@ public:
 
   Flow visit(Expression* curr) {
     depth++;
-    if (maxDepth != 0 && depth > maxDepth) {
+    if (maxDepth != NO_LIMIT && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -320,7 +318,8 @@ public:
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
         if (flow.breakTo == curr->name) {
-          if (maxLoopIterations != 0 && ++loopCount >= maxLoopIterations) {
+          if (maxLoopIterations != NO_LIMIT &&
+              ++loopCount >= maxLoopIterations) {
             return Flow(NONCONSTANT_FLOW);
           }
           continue; // lol
@@ -1259,12 +1258,12 @@ public:
     if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
       // If we are evaluating and not replacing the expression, see if there is
       // a value flowing through a tee.
+      auto setFlow = visit(curr->value);
       if (curr->type.isConcrete()) {
         assert(curr->isTee());
-        return visit(curr->value);
+        return setFlow;
       }
       // Otherwise remember the constant value set, if any, for subsequent gets.
-      auto setFlow = visit(curr->value);
       if (!setFlow.breaking()) {
         setLocalValue(curr->index, setFlow.values);
         return Flow();
@@ -1813,9 +1812,8 @@ private:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(
-          RuntimeExpressionRunner::FlagValues::DEFAULT, maxDepth),
-        instance(instance), scope(scope) {}
+      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
+        scope(scope) {}
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
