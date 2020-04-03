@@ -429,8 +429,8 @@ private:
       std::vector<Type> params;
       params.push_back(type);
       Index numValues =
-        wasm.features.hasMultivalue() ? upTo(1) : upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues + 1; i++) {
+        wasm.features.hasMultivalue() ? upToSquared(MAX_PARAMS) : upTo(2);
+      for (Index i = 0; i < numValues; i++) {
         params.push_back(getConcreteType());
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
