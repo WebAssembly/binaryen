@@ -39,15 +39,6 @@
 
 namespace wasm {
 
-// Limit evaluation depth for 2 reasons: first, it is highly unlikely
-// that we can do anything useful to precompute a hugely nested expression
-// (we should succed at smaller parts of it first). Second, a low limit is
-// helpful to avoid platform differences in native stack sizes.
-static const Index MAX_DEPTH = 50;
-
-// Limit loop iterations since loops might be infinite.
-static const Index MAX_LOOP_ITERATIONS = 3;
-
 typedef std::unordered_map<LocalGet*, Literals> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
@@ -55,27 +46,38 @@ typedef std::unordered_map<LocalGet*, Literals> GetValues;
 class PrecomputingExpressionRunner
   : public ExpressionRunner<PrecomputingExpressionRunner> {
 
-  // map gets to constant values, if they are known to be constant
+  // Concrete values of gets computed during the pass, which the runner does not
+  // know about since it only records values of sets it visits.
   GetValues& getValues;
 
+  // Limit evaluation depth for 2 reasons: first, it is highly unlikely
+  // that we can do anything useful to precompute a hugely nested expression
+  // (we should succed at smaller parts of it first). Second, a low limit is
+  // helpful to avoid platform differences in native stack sizes.
+  static const Index MAX_DEPTH = 50;
+
+  // Limit loop iterations since loops might be infinite. Since we are going to
+  // replace the expression and must preserve side effects, we limit this to the
+  // very first iteration because a side effect would be necessary to achieve
+  // more than one iteration before becoming concrete.
+  static const Index MAX_LOOP_ITERATIONS = 1;
+
 public:
-  PrecomputingExpressionRunner(Module* module_,
+  PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
                                bool replaceExpression)
     : ExpressionRunner<PrecomputingExpressionRunner>(
+        module,
         replaceExpression ? FlagValues::PRESERVE_SIDEEFFECTS
-                          : FlagValues::DEFAULT),
-      getValues(getValues) {
-    module = module_;
-    maxDepth = MAX_DEPTH;
-    maxLoopIterations = MAX_LOOP_ITERATIONS;
-  }
+                          : FlagValues::DEFAULT,
+        MAX_DEPTH,
+        MAX_LOOP_ITERATIONS),
+      getValues(getValues) {}
 
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
 
   Flow visitLocalGet(LocalGet* curr) {
-    // Prefer known get values computed during the pass
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto values = iter->second;

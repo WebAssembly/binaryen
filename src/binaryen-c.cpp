@@ -4920,7 +4920,12 @@ int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
   }
 
   auto* R = (CExpressionRunner*)runner;
-  return R->setLocalValue(index, value);
+  auto setFlow = R->visit(value);
+  if (!setFlow.breaking()) {
+    R->setLocalValue(index, setFlow.values);
+    return 1;
+  }
+  return 0;
 }
 
 int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
@@ -4933,7 +4938,12 @@ int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
   }
 
   auto* R = (CExpressionRunner*)runner;
-  return R->setGlobalValue(name, value);
+  auto setFlow = R->visit(value);
+  if (!setFlow.breaking()) {
+    R->setGlobalValue(name, setFlow.values);
+    return 1;
+  }
+  return 0;
 }
 
 BinaryenExpressionRef

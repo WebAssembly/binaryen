@@ -149,34 +149,6 @@ public:
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
-protected:
-  Index maxDepth = 0; // = no limit
-
-  Index maxLoopIterations = 0; // = no limit
-
-  Index depth = 0;
-
-  Module* module = nullptr;
-
-  std::unordered_map<Index, Literals> localValues;
-
-  std::unordered_map<Name, Literals> globalValues;
-
-  Flow generateArguments(const ExpressionList& operands,
-                         LiteralList& arguments) {
-    NOTE_ENTER_("generateArguments");
-    arguments.reserve(operands.size());
-    for (auto expression : operands) {
-      Flow flow = this->visit(expression);
-      if (flow.breaking()) {
-        return flow;
-      }
-      NOTE_EVAL1(flow.values);
-      arguments.push_back(flow.getSingleValue());
-    }
-    return Flow();
-  }
-
 public:
   enum FlagValues {
     // By default, just evaluate the expression, i.e. all we want to know is
@@ -199,9 +171,56 @@ public:
   // executing in a function-parallel scenario. See FlagValues.
   typedef uint32_t Flags;
 
+protected:
+  // Flags indicating special requirements. See FlagValues.
   Flags flags;
 
-  ExpressionRunner(Flags flags = FlagValues::DEFAULT) : flags(flags) {}
+  // Maximum depth before giving up. Defaults to 0 for no limit.
+  Index maxDepth;
+  Index depth = 0;
+
+  // Maximum loop iterations before giving up on a loop. Defaults to 0 for no
+  // limit. A maximum of 1 essentially attempts to interpret a loop as a block,
+  // giving up as soon as it loops, which is always safe to do.
+  Index maxLoopIterations;
+
+  // Optional module context to search for globals and called functions. NULL if
+  // we are not interested in any context or if the subclass uses an alternative
+  // mechanism, like RuntimeExpressionRunner does.
+  Module* module;
+
+  // Map remembering concrete local values set in the context of this flow.
+  std::unordered_map<Index, Literals> localValues;
+  // Map remembering concrete global values set in the context of this flow.
+  std::unordered_map<Name, Literals> globalValues;
+
+  Flow generateArguments(const ExpressionList& operands,
+                         LiteralList& arguments) {
+    NOTE_ENTER_("generateArguments");
+    arguments.reserve(operands.size());
+    for (auto expression : operands) {
+      Flow flow = this->visit(expression);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow.values);
+      arguments.push_back(flow.getSingleValue());
+    }
+    return Flow();
+  }
+
+public:
+  ExpressionRunner(Flags flags = FlagValues::DEFAULT,
+                   Index maxDepth = 0,
+                   Index maxLoopIterations = 0)
+    : ExpressionRunner(nullptr, flags, maxDepth, maxLoopIterations) {}
+
+  ExpressionRunner(Module* module,
+                   Flags flags = FlagValues::DEFAULT,
+                   Index maxDepth = 0,
+                   Index maxLoopIterations = 0)
+    : flags(flags), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations),
+      module(module) {}
 
   // Gets the module this runner is operating on.
   Module* getModule() { return module; }
@@ -212,32 +231,10 @@ public:
     localValues[index] = values;
   }
 
-  // Sets a known local value to use. Order matters if expressions have side
-  // effects. Returns `true` if a concrete value can be computed.
-  bool setLocalValue(Index index, Expression* expr) {
-    auto setFlow = visit(expr);
-    if (!setFlow.breaking()) {
-      setLocalValue(index, setFlow.values);
-      return true;
-    }
-    return false;
-  }
-
   // Sets a known global value to use.
   void setGlobalValue(Name name, Literals& values) {
     assert(values.isConcrete());
     globalValues[name] = values;
-  }
-
-  // Sets a known global value to use. Order matters if expressions have side
-  // effects. Returns `true` if a concrete value can be computed.
-  bool setGlobalValue(Name name, Expression* expr) {
-    auto setFlow = visit(expr);
-    if (!setFlow.breaking()) {
-      setGlobalValue(name, setFlow.values);
-      return true;
-    }
-    return false;
   }
 
   Flow visit(Expression* curr) {
@@ -1267,7 +1264,9 @@ public:
         return visit(curr->value);
       }
       // Otherwise remember the constant value set, if any, for subsequent gets.
-      if (setLocalValue(curr->index, curr->value)) {
+      auto setFlow = visit(curr->value);
+      if (!setFlow.breaking()) {
+        setLocalValue(curr->index, setFlow.values);
         return Flow();
       }
     }
@@ -1298,7 +1297,9 @@ public:
       // constant value set, if any, for subsequent gets.
       auto* global = module->getGlobal(curr->name);
       assert(global->mutable_);
-      if (setGlobalValue(curr->name, curr->value)) {
+      auto setFlow = visit(curr->value);
+      if (!setFlow.breaking()) {
+        setGlobalValue(curr->name, setFlow.values);
         return Flow();
       }
     }
@@ -1812,8 +1813,9 @@ private:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
-        scope(scope) {}
+      : ExpressionRunner<RuntimeExpressionRunner>(
+          RuntimeExpressionRunner::FlagValues::DEFAULT, maxDepth),
+        instance(instance), scope(scope) {}
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
@@ -2466,15 +2468,12 @@ public:
 // Expression runner exposed by the C-API
 class CExpressionRunner final : public ExpressionRunner<CExpressionRunner> {
 public:
-  CExpressionRunner(Module* module_,
+  CExpressionRunner(Module* module,
                     CExpressionRunner::Flags flags,
-                    Index maxDepth_,
-                    Index maxLoopIterations_)
-    : ExpressionRunner<CExpressionRunner>(flags) {
-    module = module_;
-    maxDepth = maxDepth_;
-    maxLoopIterations = maxLoopIterations_;
-  }
+                    Index maxDepth,
+                    Index maxLoopIterations)
+    : ExpressionRunner<CExpressionRunner>(
+        module, flags, maxDepth, maxLoopIterations) {}
 
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
