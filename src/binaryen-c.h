@@ -1671,7 +1671,8 @@ BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects();
 
 // Traverse through function calls, attempting to compute their concrete value.
 // Must not be used in function-parallel scenarios, where the called function
-// might be concurrently modified, leading to undefined behavior.
+// might be concurrently modified, leading to undefined behavior. Traversing
+// another function reuses all of this runner's flags.
 BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
 
 // Creates an ExpressionRunner instance
