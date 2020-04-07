@@ -9,9 +9,9 @@ int main() {
   std::map<size_t, BinaryenEventRef> events;
   std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
+  std::map<size_t, ExpressionRunnerRef> expressionRunners;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
-  ExpressionRunnerRef the_runner = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   BinaryenAddEvent(the_module, "a-event", 0, 2, 0);
@@ -5461,6 +5461,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
   events.clear();
   exports.clear();
   relooperBlocks.clear();
+  expressionRunners.clear();
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   BinaryenAddFunctionImport(the_module, "check", "module", "check", 2, 0);
@@ -6390,6 +6391,7 @@ optimized:
   events.clear();
   exports.clear();
   relooperBlocks.clear();
+  expressionRunners.clear();
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1

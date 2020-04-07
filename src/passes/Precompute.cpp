@@ -74,9 +74,6 @@ public:
         MAX_LOOP_ITERATIONS),
       getValues(getValues) {}
 
-  struct NonconstantException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
   Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {

@@ -155,14 +155,15 @@ public:
     // whether it computes down to a concrete value, where it is not necessary
     // to preserve side effects like those of a `local.tee`.
     DEFAULT = 0,
-    // Be very careful to preserve any side effects, like those of a
-    // `local.tee`, for example when we are going to replace the expression
-    // afterwards.
+    // Be very careful to preserve any side effects. For example, if we are
+    // intending to replace the expression with a constant afterwards, even if
+    // we can technically evaluate down to a constant, we still cannot replace
+    // the expression if it also sets a local, which must be preserved in this
+    // scenario so subsequent code keeps functioning.
     PRESERVE_SIDEEFFECTS = 1 << 0,
     // Traverse through function calls, attempting to compute their concrete
     // value. Must not be used in function-parallel scenarios, where the called
-    // function might or might not have been optimized already to something we
-    // can traverse successfully, in turn leading to non-deterministic behavior.
+    // function might be concurrently modified, leading to undefined behavior.
     TRAVERSE_CALLS = 1 << 1
   };
 
@@ -219,6 +220,9 @@ public:
                    Index maxLoopIterations)
     : module(module), flags(flags), maxDepth(maxDepth),
       maxLoopIterations(maxLoopIterations) {}
+
+  struct NonconstantException {
+  }; // TODO: use a flow with a special name, as this is likely very slow
 
   // Gets the module this runner is operating on.
   Module* getModule() { return module; }
@@ -1256,16 +1260,16 @@ public:
     NOTE_ENTER("LocalSet");
     NOTE_EVAL1(curr->index);
     if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
-      // If we are evaluating and not replacing the expression, see if there is
-      // a value flowing through a tee.
+      // If we are evaluating and not replacing the expression, remember the
+      // constant value set, if any, and see if there is a value flowing through
+      // a tee.
       auto setFlow = visit(curr->value);
-      if (curr->type.isConcrete()) {
-        assert(curr->isTee());
-        return setFlow;
-      }
-      // Otherwise remember the constant value set, if any, for subsequent gets.
       if (!setFlow.breaking()) {
         setLocalValue(curr->index, setFlow.values);
+        if (curr->type.isConcrete()) {
+          assert(curr->isTee());
+          return setFlow;
+        }
         return Flow();
       }
     }
@@ -2461,22 +2465,6 @@ class ModuleInstance
 public:
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface)
     : ModuleInstanceBase(wasm, externalInterface) {}
-};
-
-// Expression runner exposed by the C-API
-class CExpressionRunner final : public ExpressionRunner<CExpressionRunner> {
-public:
-  CExpressionRunner(Module* module,
-                    CExpressionRunner::Flags flags,
-                    Index maxDepth,
-                    Index maxLoopIterations)
-    : ExpressionRunner<CExpressionRunner>(
-        module, flags, maxDepth, maxLoopIterations) {}
-
-  struct NonconstantException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
-  void trap(const char* why) override { throw NonconstantException(); }
 };
 
 } // namespace wasm

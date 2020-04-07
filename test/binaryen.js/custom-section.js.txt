@@ -9,9 +9,9 @@ int main() {
   std::map<size_t, BinaryenEventRef> events;
   std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
+  std::map<size_t, ExpressionRunnerRef> expressionRunners;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
-  ExpressionRunnerRef the_runner = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   {

@@ -5,6 +5,15 @@ console.log("// ExpressionRunner.Flags.TraverseCalls = " + Flags.TraverseCalls);
 
 binaryen.setAPITracing(true);
 
+function assertDeepEqual(x, y) {
+  if (typeof x === "object") {
+    for (var i in x) assertDeepEqual(x[i], y[i]);
+    for (i in y) assertDeepEqual(x[i], y[i]);
+  } else {
+    assert(x === y);
+  }
+}
+
 var module = new binaryen.Module();
 module.addGlobal("aGlobal", binaryen.i32, true, module.i32.const(0));
 
@@ -16,7 +25,14 @@ var expr = runner.runAndDispose(
     module.i32.const(2)
   )
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":3}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 3
+  }
+);
 
 // Should traverse control structures
 runner = new binaryen.ExpressionRunner(module);
@@ -30,7 +46,14 @@ expr = runner.runAndDispose(
     )
   ),
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":4}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 4
+  }
+);
 
 // Should be unable to evaluate a local if not explicitly specified
 runner = new binaryen.ExpressionRunner(module);
@@ -57,7 +80,14 @@ expr = runner.runAndDispose(
     module.i32.const(1)
   )
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":5}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 5
+  }
+);
 
 // Should preserve any side-effects if explicitly requested
 runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
@@ -83,7 +113,14 @@ expr = runner.runAndDispose(
     ], binaryen.i32)
   )
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":6}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 6
+  }
+);
 
 // Should pick up explicitly preset values
 runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
@@ -95,7 +132,14 @@ expr = runner.runAndDispose(
     module.global.get("aGlobal", binaryen.i32)
   )
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":7}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 7
+  }
+);
 
 // Should traverse into (simple) functions if requested
 runner = new binaryen.ExpressionRunner(module, Flags.TraverseCalls);
@@ -120,7 +164,14 @@ expr = runner.runAndDispose(
     module.local.get(0, binaryen.i32)
   )
 );
-assert(JSON.stringify(binaryen.getExpressionInfo(expr)) === '{"id":14,"type":2,"value":8}');
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 8
+  }
+);
 
 // Should not attempt to traverse into functions if not explicitly set
 runner = new binaryen.ExpressionRunner(module);
@@ -153,4 +204,5 @@ expr = runner.runAndDispose(
 );
 assert(expr === 0);
 
+module.dispose();
 binaryen.setAPITracing(false);

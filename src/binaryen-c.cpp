@@ -134,11 +134,32 @@ std::map<BinaryenGlobalRef, size_t> globals;
 std::map<BinaryenEventRef, size_t> events;
 std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
+std::map<ExpressionRunnerRef, size_t> expressionRunners;
 
 size_t noteExpression(BinaryenExpressionRef expression) {
   auto id = expressions.size();
   assert(expressions.find(expression) == expressions.end());
   expressions[expression] = id;
+  return id;
+}
+
+// We would normally use the size of `expressionRunners` as the next index, but
+// since we are going to delete runners the same address can become reused,
+// which would result in unpredictable sizes (indexes) due to undefined
+// behavior. Use a sequential id instead.
+static size_t nextExpressionRunnerId = 0;
+
+// Even though unlikely, it is possible that we are trying to use an id that is
+// still in use after wrapping around, which we must prevent.
+std::unordered_set<size_t> usedExpressionRunnerIds;
+
+size_t noteExpressionRunner(ExpressionRunnerRef runner) {
+  size_t id;
+  do {
+    id = nextExpressionRunnerId++;
+  } while (usedExpressionRunnerIds.find(id) != usedExpressionRunnerIds.end());
+  expressionRunners[runner] = id;
+  usedExpressionRunnerIds.insert(id);
   return id;
 }
 
@@ -540,6 +561,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  events.clear();\n";
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
+    std::cout << "  expressionRunners.clear();\n";
     expressions.clear();
     functions.clear();
     globals.clear();
@@ -4886,6 +4908,22 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= ExpressionRunner =========
 //
 
+namespace wasm {
+
+class CExpressionRunner final : public ExpressionRunner<CExpressionRunner> {
+public:
+  CExpressionRunner(Module* module,
+                    CExpressionRunner::Flags flags,
+                    Index maxDepth,
+                    Index maxLoopIterations)
+    : ExpressionRunner<CExpressionRunner>(
+        module, flags, maxDepth, maxLoopIterations) {}
+
+  void trap(const char* why) override { throw NonconstantException(); }
+};
+
+} // namespace wasm
+
 ExpressionRunnerFlags ExpressionRunnerFlagsDefault() {
   return CExpressionRunner::FlagValues::DEFAULT;
 }
@@ -4902,21 +4940,25 @@ ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
                                            ExpressionRunnerFlags flags,
                                            BinaryenIndex maxDepth,
                                            BinaryenIndex maxLoopIterations) {
-  if (tracing) {
-    std::cout << "  the_runner = ExpressionRunnerCreate(the_module, " << flags
-              << ", " << maxDepth << ", " << maxLoopIterations << ");\n";
-  }
   auto* wasm = (Module*)module;
-  return ExpressionRunnerRef(
+  auto* runner = ExpressionRunnerRef(
     new CExpressionRunner(wasm, flags, maxDepth, maxLoopIterations));
+  if (tracing) {
+    auto id = noteExpressionRunner(runner);
+    std::cout << "  expressionRunners[" << id
+              << "] = ExpressionRunnerCreate(the_module, " << flags << ", "
+              << maxDepth << ", " << maxLoopIterations << ");\n";
+  }
+  return runner;
 }
 
 int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
                                   BinaryenIndex index,
                                   BinaryenExpressionRef value) {
   if (tracing) {
-    std::cout << "  ExpressionRunnerSetLocalValue(the_runner, " << index
-              << ", expressions[" << expressions[value] << "]);\n";
+    std::cout << "  ExpressionRunnerSetLocalValue(expressionRunners["
+              << expressionRunners[runner] << "], " << index << ", expressions["
+              << expressions[value] << "]);\n";
   }
 
   auto* R = (CExpressionRunner*)runner;
@@ -4932,7 +4974,8 @@ int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
                                    const char* name,
                                    BinaryenExpressionRef value) {
   if (tracing) {
-    std::cout << "  ExpressionRunnerSetGlobalValue(the_runner, ";
+    std::cout << "  ExpressionRunnerSetGlobalValue(expressionRunners["
+              << expressionRunners[runner] << "], ";
     traceNameOrNULL(name);
     std::cout << ", expressions[" << expressions[value] << "]);\n";
   }
@@ -4966,8 +5009,10 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
     } else {
       std::cout << "  ";
     }
-    std::cout << "ExpressionRunnerRunAndDispose(the_runner, expressions["
-              << expressions[expr] << "]);\n";
+    auto id = expressionRunners[runner];
+    std::cout << "ExpressionRunnerRunAndDispose(expressionRunners[" << id
+              << "], expressions[" << expressions[expr] << "]);\n";
+    usedExpressionRunnerIds.erase(id);
   }
 
   delete R;
@@ -4993,9 +5038,9 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenEventRef> events;\n"
                  "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
+                 "  std::map<size_t, ExpressionRunnerRef> expressionRunners;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
-                 "  RelooperRef the_relooper = NULL;\n"
-                 "  ExpressionRunnerRef the_runner = NULL;\n";
+                 "  RelooperRef the_relooper = NULL;\n";
   } else {
     std::cout << "  return 0;\n";
     std::cout << "}\n";

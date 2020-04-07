@@ -1662,14 +1662,16 @@ typedef uint32_t ExpressionRunnerFlags;
 // side effects like those of a `local.tee`.
 BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsDefault();
 
-// Be very careful to preserve any side effects, like those of a `local.tee`,
-// for example when we are going to replace the expression afterwards.
+// Be very careful to preserve any side effects. For example, if we are
+// intending to replace the expression with a constant afterwards, even if we
+// can technically evaluate down to a constant, we still cannot replace the
+// expression if it also sets a local, which must be preserved in this scenario
+// so subsequent code keeps functioning.
 BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects();
 
 // Traverse through function calls, attempting to compute their concrete value.
 // Must not be used in function-parallel scenarios, where the called function
-// might or might not have been optimized already to something we can traverse
-// successfully, in turn leading to non-deterministic behavior.
+// might be concurrently modified, leading to undefined behavior.
 BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
 
 // Creates an ExpressionRunner instance
@@ -1680,13 +1682,17 @@ ExpressionRunnerCreate(BinaryenModuleRef module,
                        BinaryenIndex maxLoopIterations);
 
 // Sets a known local value to use. Order matters if expressions have side
-// effects. Returns `true` if the expression actually evaluates to a constant.
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
 BINARYEN_API int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
                                                BinaryenIndex index,
                                                BinaryenExpressionRef value);
 
 // Sets a known global value to use. Order matters if expressions have side
-// effects. Returns `true` if the expression actually evaluates to a constant.
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
 BINARYEN_API int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
                                                 const char* name,
                                                 BinaryenExpressionRef value);
