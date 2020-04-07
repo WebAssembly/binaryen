@@ -52,6 +52,7 @@ int main(int argc, const char* argv[]) {
   bool DWARF = false;
   bool sideModule = false;
   bool legalizeJavaScriptFFI = true;
+  bool bigInt = false;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
@@ -117,6 +118,15 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&legalizeJavaScriptFFI](Options* o, const std::string&) {
            legalizeJavaScriptFFI = false;
+         })
+    .add("--bigint",
+         "-bi",
+         "Assume JS will use wasm/JS BigInt integration, so wasm i64s will "
+         "turn into JS BigInts, and there is no need for any legalization at "
+         "all (not even minimal legalization of dynCalls)",
+         Options::Arguments::Zero,
+         [&bigInt](Options* o, const std::string&) {
+           bigInt = true;
          })
     .add("--output-source-map",
          "-osm",
@@ -272,8 +282,8 @@ int main(int argc, const char* argv[]) {
     generator.generateDynCallThunks();
   }
 
-  // Legalize the wasm.
-  {
+  // Legalize the wasm, if BigInts don't make that moot.
+  if (!bigInt) {
     BYN_TRACE("legalizing types\n");
     PassRunner passRunner(&wasm);
     passRunner.setOptions(options.passOptions);
