@@ -125,9 +125,7 @@ int main(int argc, const char* argv[]) {
          "turn into JS BigInts, and there is no need for any legalization at "
          "all (not even minimal legalization of dynCalls)",
          Options::Arguments::Zero,
-         [&bigInt](Options* o, const std::string&) {
-           bigInt = true;
-         })
+         [&bigInt](Options* o, const std::string&) { bigInt = true; })
     .add("--output-source-map",
          "-osm",
          "Emit source map to the specified file",
