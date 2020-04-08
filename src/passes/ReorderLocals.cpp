@@ -37,8 +37,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   // local index => times it is used
   std::vector<Index> counts;
   // local index => how many locals we saw before this one, before a use of
-  // this one appeared. that is, one local has 0, another has 1, and so forth,
-  // in the order in which we saw the first uses of them.
+  // this one appeared. that is, one local has 1, another has 2, and so forth,
+  // in the order in which we saw the first uses of them (we use "0" to mark
+  // locals we have not yet seen).
   std::vector<Index> firstUses;
   Index firstUseIndex = 1;
 
