@@ -1,6 +1,7 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i64 (func (result i64)))
  (event $e0 (attr 0) (param i32))
  (func $eh (; 0 ;)
   (local $exn exnref)
@@ -18,10 +19,14 @@
    drop
   end
  )
+ (func $drop_unreachable_block (; 1 ;) (result i64)
+  unreachable
+ )
 )
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i64 (func (result i64)))
  (event $e0 (attr 0) (param i32))
  (func $eh (; 0 ;) (; has Stack IR ;)
   (local $exn exnref)
@@ -44,5 +49,13 @@
     )
    )
   )
+ )
+ (func $drop_unreachable_block (; 1 ;) (; has Stack IR ;) (result i64)
+  (drop
+   (block $label$1 (result i32)
+    (unreachable)
+   )
+  )
+  (i64.const 1)
  )
 )

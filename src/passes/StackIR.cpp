@@ -18,6 +18,7 @@
 // Operations on Stack IR.
 //
 
+#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 #include "pass.h"
@@ -49,12 +50,14 @@ Pass* createGenerateStackIRPass() { return new GenerateStackIR(); }
 
 class StackIROptimizer {
   Function* func;
+  Module* module;
   PassOptions& passOptions;
   StackIR& insts;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+  StackIROptimizer(Function* func, Module* module, PassOptions& passOptions)
+    : func(func), module(module), passOptions(passOptions),
+      insts(*func->stackIR.get()) {
     assert(func->stackIR);
   }
 
@@ -64,7 +67,11 @@ public:
     //        so for now run it only when really optimizing
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
       local2Stack();
+      // Ensure dce() runs before dropDrops(), so it can ignore unreachable
+      // code.
+      dce();
     }
+    dropDrops();
     removeUnneededBlocks();
     dce();
   }
@@ -228,6 +235,63 @@ private:
     }
   }
 
+  // Get rid of unnecessary push/drop pairs: if something is pushed on the stack
+  // only to be dropped, and it has no side effects, then we don't need it.
+  void dropDrops() {
+    // Track the wasm value stack. We track by index so that we can modify.
+    std::vector<Index> valueStack;
+    for (Index i = 0; i < insts.size(); i++) {
+      auto* inst = insts[i];
+      if (!inst) {
+        continue;
+      }
+      if (inst->op == StackInst::Basic && inst->origin->is<Drop>()) {
+        // The value on the top of the stack is being dropped, do we need it? If
+        // it consumes more than 1 value then we'd need to add more drops to get
+        // rid of it, which might not be worth it.
+        // TODO: the case of 2 seems optimizable, by replacing the old value
+        //       with a drop.
+        assert(!valueStack.empty());
+        auto droppedIndex = valueStack.back();
+        valueStack.pop_back();
+        auto* droppedInst = insts[droppedIndex];
+        // TODO: handle drops of control flow elements like blocks, which show
+        //       up as multiple insts.
+        if (droppedInst && !isControlFlow(droppedInst)) {
+          auto consumedByDropped = getNumConsumedValues(droppedInst);
+          if (consumedByDropped < 2) {
+            EffectAnalyzer effects(passOptions, module->features);
+            effects.visit(droppedInst->origin);
+            if (!effects.hasSideEffects()) {
+              // Great, we don't need to push it in the first place!
+              insts[droppedIndex] = nullptr;
+              // If it dropped one value, keep the drop for that value;
+              // otherwise remove the drop too.
+              if (consumedByDropped == 0) {
+                insts[i] = nullptr;
+              }
+            }
+          }
+        }
+        continue;
+      }
+      auto consumed = getNumConsumedValues(inst);
+      // TODO: currently we run dce before this, but if we didn't, we'd need
+      //       to handle unreachable code here - it's ok to pop multiple values
+      //       there even if the stack is at size 0.
+      while (consumed > 0) {
+        assert(!valueStack.empty());
+        valueStack.pop_back();
+        consumed--;
+      }
+      // Push a value on the stack if there is one (note the convention in stack
+      // IR where the end of a block etc. represents the value).
+      if (inst->type.isConcrete() && isEnd(inst)) {
+        valueStack.push_back(i);
+      }
+    }
+  }
+
   // There may be unnecessary blocks we can remove: blocks
   // without branches to them are always ok to remove.
   // TODO: a branch to a block in an if body can become
@@ -292,6 +356,16 @@ private:
 
   bool isControlFlow(StackInst* inst) { return inst->op != StackInst::Basic; }
 
+  // The beginning of an instruction: either the beginning of a control flow,
+  // or a basic instruction in which case this is also the end.
+  bool isBegin(StackInst* inst) {
+    return inst->op == StackInst::Basic || isControlFlowBegin(inst);
+  }
+
+  bool isEnd(StackInst* inst) {
+    return inst->op == StackInst::Basic || isControlFlowEnd(inst);
+  }
+
   // Remove the instruction at index i. If the instruction
   // is control flow, and so has been expanded to multiple
   // instructions, remove them as well.
@@ -337,7 +411,7 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
     if (!func->stackIR) {
       return;
     }
-    StackIROptimizer(func, getPassOptions()).run();
+    StackIROptimizer(func, getModule(), getPassOptions()).run();
   }
 };
 

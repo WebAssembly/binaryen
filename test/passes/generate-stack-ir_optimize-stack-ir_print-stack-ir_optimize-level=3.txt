@@ -133,11 +133,7 @@
  )
  (func $seq (; 9 ;)
   (local $J f64)
-  f64.const 0.1
-  drop
   f64.const 5.1
-  f64.const 3.2
-  drop
   f64.const 4.2
   f64.sub
   local.set $J
@@ -228,17 +224,6 @@
   (local $y f32)
   (local $z f64)
   local.get $z
-  f32.demote_f64
-  drop
-  local.get $y
-  drop
-  f32.const 5
-  drop
-  f32.const 0
-  drop
-  f32.const 5
-  drop
-  f32.const 0
   drop
  )
  (func $negZero (; 15 ;) (result f64)
@@ -304,16 +289,12 @@
  )
  (func $block_and_after (; 22 ;) (result i32)
   block $waka
-   i32.const 1
-   drop
    br $waka
   end
   i32.const 0
  )
  (func $loop-roundtrip (; 23 ;) (param $0 f64) (result f64)
   loop $loop-in1 (result f64)
-   local.get $0
-   drop
    local.get $0
   end
  )
@@ -330,14 +311,10 @@
   return
  )
  (func $unreachable-block (; 27 ;) (result i32)
-  i32.const 1
-  drop
   i32.const 2
   return
  )
  (func $unreachable-block-toplevel (; 28 ;) (result i32)
-  i32.const 1
-  drop
   i32.const 2
   return
  )
@@ -351,8 +328,6 @@
  )
  (func $unreachable-block-with-br (; 31 ;) (result i32)
   block $block
-   i32.const 1
-   drop
    br $block
   end
   i32.const 1
