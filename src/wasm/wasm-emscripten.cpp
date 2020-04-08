@@ -288,8 +288,35 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   Block* block = builder.makeBlock();
   assignFunc->body = block;
 
+  bool hasSingleMemorySegment =
+    wasm.memory.exists && wasm.memory.segments.size() == 1;
+
   for (Global* g : gotMemEntries) {
-    Name getter(std::string("g$") + g->base.c_str());
+    // If this global is defined in this module, we export its address relative
+    // to the relocatable memory. If we are in a main module, we can just use
+    // that location (since if other modules have this symbol too, we will "win"
+    // as we are loaded first). Otherwise, import a g$ getter.
+    // Note that this depends on memory having a single segment, so we know the
+    // offset, and that the export is a global.
+    auto base = g->base;
+    if (hasSingleMemorySegment && !sideModule) {
+      if (auto* ex = wasm.getExportOrNull(base)) {
+        if (ex->kind == ExternalKind::Global) {
+          // The base relative to which we are computed is the offset of the
+          // singleton segment.
+          auto* relativeBase =
+            ExpressionManipulator::copy(wasm.memory.segments[0].offset, wasm);
+
+          auto* offset =
+            builder.makeGlobalGet(ex->value, wasm.getGlobal(ex->value)->type);
+          auto* add = builder.makeBinary(AddInt32, relativeBase, offset);
+          GlobalSet* globalSet = builder.makeGlobalSet(g->name, add);
+          block->list.push_back(globalSet);
+          continue;
+        }
+      }
+    }
+    Name getter(std::string("g$") + base.c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
