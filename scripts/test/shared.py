@@ -170,7 +170,6 @@ NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
 NODEJS = os.getenv('NODE', which('nodejs') or which('node'))
 MOZJS = which('mozjs') or which('spidermonkey')
 V8 = which('v8') or which('d8')
-EMCC = which('emcc')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
@@ -259,16 +258,6 @@ except (OSError, subprocess.CalledProcessError):
 if MOZJS is None:
     warn('no mozjs found (did not check native wasm support nor asm.js'
          ' validation)')
-
-try:
-    if EMCC is not None:
-        subprocess.check_call([EMCC, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-except (OSError, subprocess.CalledProcessError):
-    EMCC = None
-if EMCC is None:
-    warn('no emcc found (did not check emscripten/binaryen integration)')
 
 
 # utilities
