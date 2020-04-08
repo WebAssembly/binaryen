@@ -237,8 +237,6 @@ V8_OPTS = [
     '--experimental-wasm-return-call'
 ]
 
-has_vanilla_llvm = False
-
 # external tools
 
 try:
@@ -270,17 +268,7 @@ try:
 except (OSError, subprocess.CalledProcessError):
     EMCC = None
 if EMCC is None:
-    warn('no emcc found (did not check non-vanilla emscripten/binaryen'
-         ' integration)')
-
-has_vanilla_emcc = False
-try:
-    subprocess.check_call(
-        [os.path.join(options.binaryen_test, 'emscripten', 'emcc'), '--version'],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    has_vanilla_emcc = True
-except (OSError, subprocess.CalledProcessError):
-    pass
+    warn('no emcc found (did not check emscripten/binaryen integration)')
 
 
 # utilities
@@ -392,9 +380,6 @@ def get_tests(test_dir, extensions=[]):
 
 if not options.interpreter:
     warn('no interpreter provided (did not test spec interpreter validation)')
-
-if not has_vanilla_emcc:
-    warn('no functional emcc submodule found')
 
 
 if not options.spec_tests:
