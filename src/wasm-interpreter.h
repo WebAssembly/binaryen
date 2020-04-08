@@ -1432,7 +1432,7 @@ public:
       globals[global->name] =
         ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(global->init)
-          .getSingleValue();
+          .values;
     });
 
     // initialize the rest of the external interface
@@ -1457,10 +1457,10 @@ public:
     return callFunction(export_->value, arguments);
   }
 
-  Literal callExport(Name name) { return callExport(name, LiteralList()); }
+  Literals callExport(Name name) { return callExport(name, LiteralList()); }
 
   // get an exported global
-  Literal getExport(Name name) {
+  Literals getExport(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_) {
       externalInterface->trap("getExport external not found");
@@ -1677,7 +1677,7 @@ private:
       }
       NOTE_EVAL1(name);
       NOTE_EVAL1(flow.getSingleValue());
-      instance.globals[name] = flow.getSingleValue();
+      instance.globals[name] = flow.values;
       return Flow();
     }
 
@@ -2232,7 +2232,7 @@ protected:
 };
 
 // The default ModuleInstance uses a trivial global manager
-using TrivialGlobalManager = std::map<Name, Literal>;
+using TrivialGlobalManager = std::map<Name, Literals>;
 class ModuleInstance
   : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
 public:

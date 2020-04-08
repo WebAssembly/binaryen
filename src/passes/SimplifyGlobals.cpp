@@ -109,7 +109,7 @@ struct ConstantGlobalApplier
     if (auto* set = curr->dynCast<GlobalSet>()) {
       if (Properties::isConstantExpression(set->value)) {
         currConstantGlobals[set->name] =
-          getSingleLiteralFromConstExpression(set->value);
+          getLiteralsFromConstExpression(set->value);
       } else {
         currConstantGlobals.erase(set->name);
       }
@@ -160,7 +160,7 @@ private:
   bool replaced = false;
 
   // The globals currently constant in the linear trace.
-  std::map<Name, Literal> currConstantGlobals;
+  std::map<Name, Literals> currConstantGlobals;
 };
 
 } // anonymous namespace
@@ -248,12 +248,12 @@ struct SimplifyGlobals : public Pass {
   void propagateConstantsToGlobals() {
     // Go over the list of globals in order, which is the order of
     // initialization as well, tracking their constant values.
-    std::map<Name, Literal> constantGlobals;
+    std::map<Name, Literals> constantGlobals;
     for (auto& global : module->globals) {
       if (!global->imported()) {
         if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
-            getSingleLiteralFromConstExpression(global->init);
+            getLiteralsFromConstExpression(global->init);
         } else if (auto* get = global->init->dynCast<GlobalGet>()) {
           auto iter = constantGlobals.find(get->name);
           if (iter != constantGlobals.end()) {

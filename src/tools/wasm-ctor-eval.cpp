@@ -48,7 +48,7 @@ struct FailToEvalException {
 // We do not have access to imported globals
 class EvallingGlobalManager {
   // values of globals
-  std::map<Name, Literal> globals;
+  std::map<Name, Literals> globals;
 
   // globals that are dangerous to modify in the module
   std::set<Name> dangerousGlobals;
@@ -70,7 +70,7 @@ public:
     return !(*this == other);
   }
 
-  Literal& operator[](Name name) {
+  Literals& operator[](Name name) {
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
@@ -87,11 +87,11 @@ public:
 
   struct Iterator {
     Name first;
-    Literal second;
+    Literals second;
     bool found;
 
     Iterator() : found(false) {}
-    Iterator(Name name, Literal value)
+    Iterator(Name name, Literals value)
       : first(name), second(value), found(true) {}
 
     bool operator==(const Iterator& other) {
@@ -177,28 +177,28 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // fill usable values for stack imports, and globals initialized to them
     ImportInfo imports(wasm_);
     if (auto* stackTop = imports.getImportedGlobal(ENV, STACKTOP)) {
-      globals[stackTop->name] = Literal(int32_t(STACK_START));
+      globals[stackTop->name] = {Literal(int32_t(STACK_START))};
       if (auto* stackTop =
             GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACKTOP)) {
-        globals[stackTop->name] = Literal(int32_t(STACK_START));
+        globals[stackTop->name] = {Literal(int32_t(STACK_START))};
       }
     }
     if (auto* stackMax = imports.getImportedGlobal(ENV, STACK_MAX)) {
-      globals[stackMax->name] = Literal(int32_t(STACK_START));
+      globals[stackMax->name] = {Literal(int32_t(STACK_START))};
       if (auto* stackMax =
             GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACK_MAX)) {
-        globals[stackMax->name] = Literal(int32_t(STACK_START));
+        globals[stackMax->name] = {Literal(int32_t(STACK_START))};
       }
     }
     // fill in fake values for everything else, which is dangerous to use
     ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = Literal::makeSingleZero(defined->type);
+        globals[defined->name] = Literal::makeZero(defined->type);
       }
     });
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = Literal::makeSingleZero(import->type);
+        globals[import->name] = Literal::makeZero(import->type);
       }
     });
   }

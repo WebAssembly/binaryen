@@ -95,22 +95,22 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     table.resize(wasm.table.initial);
   }
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
+  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
         switch (import->type.getSingle()) {
           case Type::i32:
-            globals[import->name] = Literal(int32_t(666));
+            globals[import->name] = {Literal(int32_t(666))};
             break;
           case Type::i64:
-            globals[import->name] = Literal(int64_t(666));
+            globals[import->name] = {Literal(int64_t(666))};
             break;
           case Type::f32:
-            globals[import->name] = Literal(float(666.6));
+            globals[import->name] = {Literal(float(666.6))};
             break;
           case Type::f64:
-            globals[import->name] = Literal(double(666.6));
+            globals[import->name] = {Literal(double(666.6))};
             break;
           case Type::v128:
             assert(false && "v128 not implemented yet");
@@ -118,7 +118,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case Type::anyref:
           case Type::nullref:
           case Type::exnref:
-            globals[import->name] = Literal::makeNullref();
+            globals[import->name] = {Literal::makeNullref()};
             break;
           case Type::none:
           case Type::unreachable:
