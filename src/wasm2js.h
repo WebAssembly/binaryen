@@ -307,7 +307,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       // some local simplification helps.
       if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
         runner.add("simplify-locals-nonesting");
-        runner.add("reorder-locals");
         runner.add("precompute-propagate");
         // Avoiding reinterpretation is helped by propagation. We also run
         // it later down as default optimizations help as well.
