@@ -34,12 +34,25 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   Pass* create() override { return new ReorderLocals; }
 
-  std::map<Index, Index> counts; // local => times it is used
-  // local => index in the list of which local is first seen
-  std::map<Index, Index> firstUses;
+  // local index => times it is used
+  std::vector<Index> counts;
+  // local index => how many locals we saw before this one, before a use of
+  // this one appeared. that is, one local has 0, another has 1, and so forth,
+  // in the order in which we saw the first uses of them.
+  std::vector<Index> firstUses;
+  Index firstUseIndex = 0;
 
-  void visitFunction(Function* curr) {
+  static const Index UNSEEN = -1;
+
+  void doWalkFunction(Function* curr) {
     Index num = curr->getNumLocals();
+    counts.resize(num);
+    std::fill(counts.begin(), counts.end(), 0);
+    firstUses.resize(num);
+    std::fill(firstUses.begin(), firstUses.end(), UNSEEN);
+    // Gather information about local usages.
+    walk(curr->body);
+    // Use the information about local usages.
     std::vector<Index> newToOld;
     for (size_t i = 0; i < num; i++) {
       newToOld.push_back(i);
@@ -128,15 +141,15 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   void visitLocalGet(LocalGet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == UNSEEN) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == UNSEEN) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 };
