@@ -326,6 +326,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     if (options.optimizeLevel > 0) {
       runner.add("remove-unused-names");
       runner.add("merge-blocks");
+      runner.add("reorder-locals");
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
