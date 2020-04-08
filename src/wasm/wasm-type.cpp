@@ -92,7 +92,7 @@ void Type::init(const std::vector<Type>& types) {
   }
 #endif
 
-  if (types.size() >= unknownSize) {
+  if (types.size() >= UNKNOWN_SIZE) {
     WASM_UNREACHABLE("Type too large");
   }
   _size = types.size();
@@ -120,7 +120,7 @@ void Type::init(const std::vector<Type>& types) {
     if (lookup()) {
       return;
     }
-    if (typeLists.size() >= (1 << (32 - sizeBits))) {
+    if (typeLists.size() >= (1 << (ID_BITS))) {
       WASM_UNREACHABLE("Too many types!");
     }
     id = typeLists.size();
@@ -134,14 +134,14 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 Type::Type(const std::vector<Type>& types) { init(types); }
 
 size_t Type::size() {
-  if (_size == unknownSize) {
+  if (_size == UNKNOWN_SIZE) {
     _size = expand().size();
   }
   return _size;
 }
 
 size_t Type::size() const {
-  if (_size == unknownSize) {
+  if (_size == UNKNOWN_SIZE) {
     return expand().size();
   }
   return _size;
