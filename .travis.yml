@@ -125,7 +125,7 @@ jobs:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too.
         - source $HOME/emsdk/emsdk_env.sh &&
-          ./travis-emcc-tests.sh
+          ./scripts/travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
