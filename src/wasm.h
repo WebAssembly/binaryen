@@ -1257,8 +1257,8 @@ using StackIR = std::vector<StackInst*>;
 class Function : public Importable {
 public:
   Name name;
-  Signature sig;
-  std::vector<Type> vars;   // params plus vars
+  Signature sig; // parameters and return value
+  std::vector<Type> vars; // non-param locals
 
   // The body of the function
   Expression* body = nullptr;
