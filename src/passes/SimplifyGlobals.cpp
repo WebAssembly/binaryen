@@ -51,6 +51,7 @@ struct GlobalInfo {
   bool imported = false;
   bool exported = false;
   std::atomic<bool> written;
+  std::atomic<bool> read;
 };
 
 using GlobalInfoMap = std::map<Name, GlobalInfo>;
@@ -63,6 +64,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
   void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written = true; }
+
+  void visitGlobalGet(GlobalGet* curr) { (*infos)[curr->name].read = true; }
 
 private:
   GlobalInfoMap* infos;
@@ -163,6 +166,22 @@ private:
   std::map<Name, Literals> currConstantGlobals;
 };
 
+struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
+  GlobalSetRemover(NameSet *toRemove) : toRemove(toRemove) {}
+
+  bool isFunctionParallel() override { return true; }
+
+  GlobalSetRemover* create() override { return new GlobalSetRemover(toRemove); }
+
+  void visitGlobalSet(GlobalSet* curr) {
+    if (toRemove->count(curr->name) != 0)
+      ExpressionManipulator::nop(curr);
+  }
+
+private:
+  NameSet *toRemove;
+};
+
 } // anonymous namespace
 
 struct SimplifyGlobals : public Pass {
@@ -179,6 +198,8 @@ struct SimplifyGlobals : public Pass {
     module = module_;
 
     analyze();
+
+    removeWritesToUnreadGlobals();
 
     preferEarlierImports();
 
@@ -209,6 +230,23 @@ struct SimplifyGlobals : public Pass {
         global->mutable_ = false;
       }
     }
+  }
+
+  void removeWritesToUnreadGlobals() {
+    // Globals that are not exports and not read from can be eliminated
+    // (even if they are written to).
+    NameSet unreadGlobals;
+    for (auto& global : module->globals) {
+      auto& info = map[global->name];
+      if (!info.imported && !info.exported && !info.read) {
+        unreadGlobals.insert(global->name);
+        // We can now mark this global as immutable, and un-written, since we
+        // are about to remove all the `.set` operations on it.
+        global->mutable_ = false;
+        info.written = false;
+      }
+    }
+    GlobalSetRemover(&unreadGlobals).run(runner, module);
   }
 
   void preferEarlierImports() {
