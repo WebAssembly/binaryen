@@ -992,11 +992,11 @@ Index Function::getLocalIndex(Name name) {
 Index Function::getVarIndexBase() { return sig.params.size(); }
 
 Type Function::getLocalType(Index index) {
-  const std::vector<Type>& params = sig.params.expand();
-  if (index < params.size()) {
-    return params[index];
+  auto numParams = sig.params.size();
+  if (index < numParams) {
+    return sig.params.expand()[index];
   } else if (isVar(index)) {
-    return vars[index - params.size()];
+    return vars[index - numParams];
   } else {
     WASM_UNREACHABLE("invalid local index");
   }
