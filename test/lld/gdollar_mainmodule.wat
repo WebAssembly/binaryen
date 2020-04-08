@@ -4,7 +4,7 @@
  (type $2 (func (result i32)))
  (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
+ (data (global.get $gimport$3) "")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$2 (mut i32)))
  (import "env" "__memory_base" (global $gimport$3 i32))
