@@ -1,7 +1,7 @@
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
@@ -10,17 +10,15 @@
  (import "env" "__stack_pointer" (global $gimport$2_import i32))
  (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "__table_base" (global $gimport$4 i32))
- (import "env" "g$_ZN20__tester_sig_builderI19__tester_type_tupleIJEEE6bufferE" (func $g$_ZN20__tester_sig_builderI19__tester_type_tupleIJEEE6bufferE (result i32)))
- (import "env" "g$_ZN20__tester_sig_builderI19__tester_type_tupleIJiEEE6bufferE" (func $g$_ZN20__tester_sig_builderI19__tester_type_tupleIJiEEE6bufferE (result i32)))
+ (import "env" "g$someglobal1" (func $g$someglobal1 (result i32)))
+ (import "env" "g$someglobal3" (func $g$someglobal3 (result i32)))
  (global $gimport$6 (mut i32) (i32.const 0))
  (global $gimport$7 (mut i32) (i32.const 0))
  (global $gimport$8 (mut i32) (i32.const 0))
  (global $global$1 i32 (i32.const 54))
  (global $global$2 i32 (i32.const 0))
  (global $gimport$2 (mut i32) (global.get $gimport$2_import))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
- (export "__original_main" (func $__original_main))
- (export "_ZN20__tester_sig_builderI19__tester_type_tupleIJiiEEE6bufferE" (global $global$1))
+ (export "someglobal2" (global $global$1))
  (export "main" (func $main))
  (export "__data_end" (global $global$2))
  (export "stackSave" (func $stackSave))
@@ -28,22 +26,13 @@
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
- (func $__wasm_call_ctors (; 2 ;)
-  (call $__wasm_apply_relocs)
- )
- (func $__wasm_apply_relocs (; 3 ;)
-  (nop)
- )
- (func $__original_main (; 4 ;) (result i32)
+ (func $main (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $main (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call $__original_main)
- )
- (func $stackSave (; 6 ;) (result i32)
+ (func $stackSave (; 3 ;) (result i32)
   (global.get $gimport$2)
  )
- (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $gimport$2
    (local.tee $1
@@ -58,19 +47,19 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 8 ;) (param $0 i32)
+ (func $stackRestore (; 5 ;) (param $0 i32)
   (global.set $gimport$2
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 9 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (; 6 ;) (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
  )
- (func $__assign_got_enties (; 10 ;)
+ (func $__assign_got_enties (; 7 ;)
   (global.set $gimport$6
-   (call $g$_ZN20__tester_sig_builderI19__tester_type_tupleIJEEE6bufferE)
+   (call $g$someglobal1)
   )
   (global.set $gimport$7
    (i32.add
@@ -79,7 +68,7 @@
    )
   )
   (global.set $gimport$8
-   (call $g$_ZN20__tester_sig_builderI19__tester_type_tupleIJiEEE6bufferE)
+   (call $g$someglobal3)
   )
  )
 )
@@ -89,12 +78,11 @@
   "staticBump": 4294966728,
   "tableSize": 0,
   "initializers": [
-    "__assign_got_enties",
-    "__wasm_call_ctors"
+    "__assign_got_enties"
   ],
   "declares": [
-    "g$_ZN20__tester_sig_builderI19__tester_type_tupleIJEEE6bufferE",
-    "g$_ZN20__tester_sig_builderI19__tester_type_tupleIJiEEE6bufferE"
+    "g$someglobal1",
+    "g$someglobal3"
   ],
   "externs": [
     "___stack_pointer",
@@ -102,8 +90,6 @@
     "___table_base"
   ],
   "implementedFunctions": [
-    "___wasm_call_ctors",
-    "___original_main",
     "_main",
     "_stackSave",
     "_stackAlloc",
@@ -112,8 +98,6 @@
     "___assign_got_enties"
   ],
   "exports": [
-    "__wasm_call_ctors",
-    "__original_main",
     "main",
     "stackSave",
     "stackAlloc",
@@ -122,14 +106,14 @@
     "__assign_got_enties"
   ],
   "namedGlobals": {
-    "_ZN20__tester_sig_builderI19__tester_type_tupleIJiiEEE6bufferE" : "54",
+    "someglobal2" : "54",
     "__data_end" : "0"
   },
   "invokeFuncs": [
   ],
   "features": [
   ],
-  "mainReadsParams": 0
+  "mainReadsParams": 1
 }
 -- END METADATA --
 ;)
