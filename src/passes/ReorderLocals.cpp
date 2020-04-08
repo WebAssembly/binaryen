@@ -40,16 +40,16 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   // this one appeared. that is, one local has 0, another has 1, and so forth,
   // in the order in which we saw the first uses of them.
   std::vector<Index> firstUses;
-  Index firstUseIndex = 0;
+  Index firstUseIndex = 1;
 
-  static const Index UNSEEN = -1;
+  enum { Unseen = 0 };
 
   void doWalkFunction(Function* curr) {
     Index num = curr->getNumLocals();
     counts.resize(num);
     std::fill(counts.begin(), counts.end(), 0);
     firstUses.resize(num);
-    std::fill(firstUses.begin(), firstUses.end(), UNSEEN);
+    std::fill(firstUses.begin(), firstUses.end(), Unseen);
     // Gather information about local usages.
     walk(curr->body);
     // Use the information about local usages.
@@ -141,14 +141,14 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   void visitLocalGet(LocalGet* curr) {
     counts[curr->index]++;
-    if (firstUses[curr->index] == UNSEEN) {
+    if (firstUses[curr->index] == Unseen) {
       firstUses[curr->index] = firstUseIndex++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     counts[curr->index]++;
-    if (firstUses[curr->index] == UNSEEN) {
+    if (firstUses[curr->index] == Unseen) {
       firstUses[curr->index] = firstUseIndex++;
     }
   }
