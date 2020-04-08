@@ -72,6 +72,38 @@ def do_test_binaryen_js_with(which):
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 
 
+def update_binaryen_js_tests():
+    if not (shared.MOZJS or shared.NODEJS):
+        print('no vm to run binaryen.js tests')
+        return
+
+    if not os.path.exists(shared.BINARYEN_JS):
+        print('no binaryen.js build to test')
+        return
+
+    print('\n[ checking binaryen.js testcases... ]\n')
+    node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
+    for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
+        basename = os.path.basename(s)
+        print(basename)
+        f = open('a.js', 'w')
+        f.write(open(shared.BINARYEN_JS).read())
+        test_src = open(s).read()
+        f.write(support.js_test_wrap().replace('%TEST%', test_src))
+        f.close()
+        if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
+            cmd = [shared.MOZJS or shared.NODEJS, 'a.js']
+            if 'fatal' not in basename:
+                out = support.run_command(cmd, stderr=subprocess.STDOUT)
+            else:
+                # expect an error - the specific error code will depend on the vm
+                out = support.run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
+            with open(s + '.txt', 'w') as o:
+                o.write(out)
+        else:
+            print('Skipping ' + basename + ' because WebAssembly might not be supported')
+
+
 def test_binaryen_js():
     do_test_binaryen_js_with(shared.BINARYEN_JS)
 
