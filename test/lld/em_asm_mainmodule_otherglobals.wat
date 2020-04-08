@@ -26,62 +26,6 @@
  (func $__wasm_apply_relocs (; 2 ;) (type $1)
  )
  (func $__original_main (; 3 ;) (type $2) (result i32)
-  (local $0 i32)
-  (local $1 i32)
-  (global.set $gimport$2
-   (local.tee $0
-    (i32.sub
-     (global.get $gimport$2)
-     (i32.const 32)
-    )
-   )
-  )
-  (drop
-   (call $emscripten_asm_const_int
-    (i32.add
-     (local.tee $1
-      (global.get $gimport$3)
-     )
-     (i32.const 0)
-    )
-    (global.get $gimport$6)
-    (i32.const 0)
-   )
-  )
-  (i64.store offset=16
-   (local.get $0)
-   (i64.const 115964117005)
-  )
-  (i32.store
-   (local.get $0)
-   (call $emscripten_asm_const_int
-    (i32.add
-     (local.get $1)
-     (i32.const 34)
-    )
-    (global.get $gimport$7)
-    (i32.add
-     (local.get $0)
-     (i32.const 16)
-    )
-   )
-  )
-  (drop
-   (call $emscripten_asm_const_int
-    (i32.add
-     (local.get $1)
-     (i32.const 57)
-    )
-    (global.get $gimport$8)
-    (local.get $0)
-   )
-  )
-  (global.set $gimport$2
-   (i32.add
-    (local.get $0)
-    (i32.const 32)
-   )
-  )
   (i32.const 0)
  )
  (func $main (; 4 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
