@@ -24,7 +24,11 @@
 namespace wasm {
 
 class Type {
-  uint32_t id;
+  // enough for the limit of 1000 function arguments
+  static constexpr unsigned SIZE_BITS = 10;
+  static constexpr unsigned ID_BITS = 32 - SIZE_BITS;
+  unsigned id : ID_BITS;
+  unsigned _size : SIZE_BITS;
   void init(const std::vector<Type>&);
 
 public:
@@ -50,10 +54,10 @@ public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
-  constexpr Type(ValueType id) : id(id){};
+  constexpr Type(ValueType id) : id(id), _size(id == none ? 0 : 1){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
-  constexpr explicit Type(uint32_t id) : id(id){};
+  explicit Type(uint32_t id);
 
   // Construct from lists of elementary types
   Type(std::initializer_list<Type> types);

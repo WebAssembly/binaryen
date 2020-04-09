@@ -92,6 +92,11 @@ void Type::init(const std::vector<Type>& types) {
   }
 #endif
 
+  if (types.size() >= (1 << SIZE_BITS)) {
+    WASM_UNREACHABLE("Type too large");
+  }
+  _size = types.size();
+
   auto lookup = [&]() {
     auto indexIt = indices.find(types);
     if (indexIt != indices.end()) {
@@ -115,6 +120,9 @@ void Type::init(const std::vector<Type>& types) {
     if (lookup()) {
       return;
     }
+    if (typeLists.size() >= (1 << ID_BITS)) {
+      WASM_UNREACHABLE("Too many types!");
+    }
     id = typeLists.size();
     typeLists.push_back(std::make_unique<std::vector<Type>>(types));
     indices[types] = id;
@@ -125,7 +133,15 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
 
-size_t Type::size() const { return expand().size(); }
+Type::Type(uint32_t _id) {
+  id = _id;
+  {
+    std::shared_lock<std::shared_timed_mutex> lock(mutex);
+    _size = typeLists[id]->size();
+  }
+}
+
+size_t Type::size() const { return _size; }
 
 const std::vector<Type>& Type::expand() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex);
@@ -146,28 +162,34 @@ bool Type::operator<(const Type& other) const {
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
-  unsigned size = 0;
-  for (auto t : expand()) {
+  auto getSingleByteSize = [](Type t) {
     switch (t.getSingle()) {
       case Type::i32:
       case Type::f32:
-        size += 4;
-        break;
+        return 4;
       case Type::i64:
       case Type::f64:
-        size += 8;
-        break;
+        return 8;
       case Type::v128:
-        size += 16;
-        break;
+        return 16;
       case Type::funcref:
       case Type::anyref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
-        WASM_UNREACHABLE("invalid type");
+        break;
     }
+    WASM_UNREACHABLE("invalid type");
+  };
+
+  if (isSingle()) {
+    return getSingleByteSize(*this);
+  }
+
+  unsigned size = 0;
+  for (auto t : expand()) {
+    size += getSingleByteSize(t);
   }
   return size;
 }
@@ -197,25 +219,26 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  FeatureSet feats = FeatureSet::MVP;
-  const auto& elements = expand();
-  if (elements.size() > 1) {
-    feats = FeatureSet::Multivalue;
-  }
-  for (Type t : elements) {
+  auto getSingleFeatures = [](Type t) {
     switch (t.getSingle()) {
       case Type::v128:
-        feats |= FeatureSet::SIMD;
-        break;
+        return FeatureSet::SIMD;
       case Type::anyref:
-        feats |= FeatureSet::ReferenceTypes;
-        break;
+        return FeatureSet::ReferenceTypes;
       case Type::exnref:
-        feats |= FeatureSet::ExceptionHandling;
-        break;
+        return FeatureSet::ExceptionHandling;
       default:
-        break;
+        return FeatureSet::MVP;
     }
+  };
+
+  if (isSingle()) {
+    return getSingleFeatures(*this);
+  }
+
+  FeatureSet feats = FeatureSet::Multivalue;
+  for (Type t : expand()) {
+    feats |= getSingleFeatures(t);
   }
   return feats;
 }
