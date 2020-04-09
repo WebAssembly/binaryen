@@ -69,9 +69,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      it can read a wasm text file if it contains only s-expressions.
    * Binaryen uses Stack IR to optimize "stacky" code (that can't be
      represented in structured form).
-   * In rare cases stacky code must be represented in Binaryen IR as well, like
-     popping a value in an exception catch. To support that Binaryen IR has
-     `push` and `pop` instructions.
+   * When stacky code must be represented in Binaryen IR, such as with
+     multivalue instructions and blocks, it is represented with tuple types that
+     do not exist in the WebAssembly language. In addition to multivalue
+     instructions, locals and globals can also have tuple types in Binaryen IR
+     but not in WebAssembly.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
