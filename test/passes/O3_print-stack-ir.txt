@@ -1,7 +1,7 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))
- (func $stacky-help (; 0 ;) (param $0 i32) (result i32)
+ (func $stacky-help (param $0 i32) (result i32)
   i32.const 0
   call $stacky-help
   i32.const 1
@@ -16,7 +16,7 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))
- (func $stacky-help (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $stacky-help (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.add
    (call $stacky-help
     (i32.const 0)

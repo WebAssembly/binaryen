@@ -1,32 +1,32 @@
 (module
  (type $none_=>_none (func))
- (func $a (; 0 ;)
+ (func $a
   (if
    (i32.const 1)
    (unreachable)
   )
  )
- (func $b (; 1 ;)
-  (if
-   (i32.const 1)
-   (unreachable)
-   (unreachable)
-  )
- )
- (func $a-block (; 2 ;)
-  (if
-   (i32.const 1)
-   (unreachable)
-  )
- )
- (func $b-block (; 3 ;)
+ (func $b
   (if
    (i32.const 1)
    (unreachable)
    (unreachable)
   )
  )
- (func $a-prepost (; 4 ;)
+ (func $a-block
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $b-block
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $a-prepost
   (nop)
   (if
    (i32.const 1)
@@ -34,7 +34,7 @@
   )
   (nop)
  )
- (func $b-prepost (; 5 ;)
+ (func $b-prepost
   (nop)
   (if
    (i32.const 1)
@@ -42,7 +42,7 @@
    (unreachable)
   )
  )
- (func $a-block-prepost (; 6 ;)
+ (func $a-block-prepost
   (nop)
   (block $label$1
    (if
@@ -52,7 +52,7 @@
   )
   (nop)
  )
- (func $b-block-prepost (; 7 ;)
+ (func $b-block-prepost
   (nop)
   (block $label$1
    (if
@@ -62,7 +62,7 @@
    )
   )
  )
- (func $recurse (; 8 ;)
+ (func $recurse
   (nop)
   (block $label$1
    (nop)
@@ -70,7 +70,7 @@
   )
   (nop)
  )
- (func $recurse-b (; 9 ;)
+ (func $recurse-b
   (block $label$1
    (nop)
    (block $label$2

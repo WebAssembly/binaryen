@@ -4,7 +4,7 @@
  (data (global.get $__memory_base) "threads.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (export "test" (func $test))
- (func $test (; 0 ;) (; has Stack IR ;)
+ (func $test (; has Stack IR ;)
   (local $0 i32)
   (drop
    (i32.atomic.load

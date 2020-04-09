@@ -26,18 +26,18 @@
  (export "main" (func $main))
  (export "__dso_handle" (global $global$1))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $__wasm_call_ctors (; 5 ;)
+ (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 6 ;)
+ (func $__wasm_apply_relocs
  )
- (func $waka_func_mine\28int\29 (; 7 ;) (param $0 i32) (result i32)
+ (func $waka_func_mine\28int\29 (param $0 i32) (result i32)
   (i32.add
    (local.get $0)
    (i32.const 1)
   )
  )
- (func $__original_main (; 8 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -61,14 +61,14 @@
    )
   )
  )
- (func $main (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__post_instantiate (; 10 ;)
+ (func $__post_instantiate
   (call $__assign_got_enties)
   (call $__wasm_call_ctors)
  )
- (func $__assign_got_enties (; 11 ;)
+ (func $__assign_got_enties
   (global.set $gimport$8
    (call $g$waka_mine)
   )

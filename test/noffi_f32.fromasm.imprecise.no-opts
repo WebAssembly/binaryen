@@ -8,7 +8,7 @@
  (import "env" "_importf" (func $importf (param f32) (result f32)))
  (export "main" (func $main))
  (export "exportf" (func $exportf))
- (func $exportf (; 1 ;) (param $a f32) (result f32)
+ (func $exportf (param $a f32) (result f32)
   (return
    (f32.add
     (local.get $a)
@@ -16,7 +16,7 @@
    )
   )
  )
- (func $main (; 2 ;) (result i32)
+ (func $main (result i32)
   (drop
    (call $importf
     (f32.const 3.4000000953674316)

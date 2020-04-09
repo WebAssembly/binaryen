@@ -18,13 +18,13 @@
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
  (export "dynCall_v" (func $dynCall_v))
- (func $__stdio_write (; 0 ;)
+ (func $__stdio_write
   (nop)
  )
- (func $stackSave (; 1 ;) (result i32)
+ (func $stackSave (result i32)
   (global.get $sp)
  )
- (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $sp
    (local.tee $1
@@ -39,17 +39,17 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 3 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   (global.set $sp
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 4 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
  )
- (func $__assign_got_enties (; 5 ;)
+ (func $__assign_got_enties
   (global.set $gimport$9
    (i32.add
     (global.get $tb)
@@ -57,7 +57,7 @@
    )
   )
  )
- (func $dynCall_v (; 6 ;) (param $fptr i32)
+ (func $dynCall_v (param $fptr i32)
   (call_indirect (type $none_=>_none)
    (local.get $fptr)
   )

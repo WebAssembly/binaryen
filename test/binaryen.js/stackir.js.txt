@@ -1,3 +1,4 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 === input wast ===
 (module
  (type $i (func (param i32) (result i32)))
@@ -21,7 +22,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 0)
  (export "test" (func $test))
- (func $test (; 0 ;) (param $0 i32) (result i32)
+ (func $test (param $0 i32) (result i32)
   block $block0 (result i32)
    local.get $0
    if (result i32)
@@ -38,7 +39,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 0)
  (export "test" (func $test))
- (func $test (; 0 ;) (param $0 i32) (result i32)
+ (func $test (param $0 i32) (result i32)
   local.get $0
   if (result i32)
    local.get $0

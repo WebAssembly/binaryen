@@ -23,16 +23,16 @@
  (export "main" (func $3))
  (export "__dso_handle" (global $global$5))
  (export "__post_instantiate" (func $4))
- (func $0 (; 4 ;)
+ (func $0
   (nop)
  )
- (func $1 (; 5 ;) (param $0 i32) (result i32)
+ (func $1 (param $0 i32) (result i32)
   (i32.add
    (local.get $0)
    (i32.const 1)
   )
  )
- (func $2 (; 6 ;) (result i32)
+ (func $2 (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $3 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $3 (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -64,7 +64,7 @@
    )
   )
  )
- (func $4 (; 8 ;)
+ (func $4
   (global.set $global$2
    (call $fimport$0)
   )

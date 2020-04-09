@@ -1858,7 +1858,7 @@ int main() {
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
- (func "$kitchen()sinker" (; 1 ;) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 exnref)
   (block $the-body (result i32)
@@ -3604,7 +3604,7 @@ int main() {
    (i32.const 42)
   )
  )
- (func $starter (; 2 ;)
+ (func $starter
   (nop)
  )
 )
@@ -4064,13 +4064,13 @@ raw:
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (func $just-one-block (; 1 ;)
+ (func $just-one-block
   (local $0 i32)
   (call $check
    (i32.const 1337)
   )
  )
- (func $two-blocks (; 2 ;)
+ (func $two-blocks
   (local $0 i32)
   (block
    (call $check
@@ -4081,7 +4081,7 @@ raw:
    )
   )
  )
- (func $two-blocks-plus-code (; 3 ;)
+ (func $two-blocks-plus-code
   (local $0 i32)
   (block
    (block
@@ -4097,7 +4097,7 @@ raw:
    )
   )
  )
- (func $loop (; 4 ;)
+ (func $loop
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -4113,7 +4113,7 @@ raw:
    )
   )
  )
- (func $loop-plus-code (; 5 ;)
+ (func $loop-plus-code
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -4137,7 +4137,7 @@ raw:
    )
   )
  )
- (func $split (; 6 ;)
+ (func $split
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -4156,7 +4156,7 @@ raw:
    )
   )
  )
- (func $split-plus-code (; 7 ;)
+ (func $split-plus-code
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -4185,7 +4185,7 @@ raw:
    )
   )
  )
- (func $if (; 8 ;)
+ (func $if
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -4210,7 +4210,7 @@ raw:
    )
   )
  )
- (func $if-plus-code (; 9 ;)
+ (func $if-plus-code
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -4248,7 +4248,7 @@ raw:
    )
   )
  )
- (func $if-else (; 10 ;)
+ (func $if-else
   (local $0 i32)
   (block $block$4$break
    (call $check
@@ -4280,7 +4280,7 @@ raw:
    )
   )
  )
- (func $loop-tail (; 11 ;)
+ (func $loop-tail
   (local $0 i32)
   (block $block$3$break
    (loop $shape$0$continue
@@ -4305,7 +4305,7 @@ raw:
    )
   )
  )
- (func $nontrivial-loop-plus-phi-to-head (; 12 ;)
+ (func $nontrivial-loop-plus-phi-to-head
   (local $0 i32)
   (block $block$2$break
    (call $check
@@ -4392,7 +4392,7 @@ raw:
    )
   )
  )
- (func $switch (; 13 ;)
+ (func $switch
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -4436,7 +4436,7 @@ raw:
    (br $switch$1$leave)
   )
  )
- (func $duffs-device (; 14 ;)
+ (func $duffs-device
   (local $0 i32)
   (local $1 i32)
   (local $2 i64)
@@ -4511,7 +4511,7 @@ raw:
    )
   )
  )
- (func $return (; 15 ;) (result i32)
+ (func $return (result i32)
   (local $0 i32)
   (block
    (call $check
@@ -4608,7 +4608,7 @@ BinaryenFeatureAll: 1023
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
- (func "$kitchen()sinker" (; 1 ;) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 exnref)
   (block $the-body (result i32)
@@ -6354,14 +6354,14 @@ BinaryenFeatureAll: 1023
    (i32.const 42)
   )
  )
- (func $starter (; 2 ;)
+ (func $starter
   (nop)
  )
 )
 (module
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i64 (func (result i64)))
- (func $unreachable-fn (; 0 ;) (result i32)
+ (func $unreachable-fn (result i32)
   (call_indirect (type $none_=>_i64)
    (unreachable)
   )
@@ -6373,13 +6373,13 @@ raw:
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (func $just-one-block (; 1 ;)
+ (func $just-one-block
   (local $0 i32)
   (call $check
    (i32.const 1337)
   )
  )
- (func $two-blocks (; 2 ;)
+ (func $two-blocks
   (local $0 i32)
   (block
    (call $check
@@ -6390,7 +6390,7 @@ raw:
    )
   )
  )
- (func $two-blocks-plus-code (; 3 ;)
+ (func $two-blocks-plus-code
   (local $0 i32)
   (block
    (block
@@ -6406,7 +6406,7 @@ raw:
    )
   )
  )
- (func $loop (; 4 ;)
+ (func $loop
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -6422,7 +6422,7 @@ raw:
    )
   )
  )
- (func $loop-plus-code (; 5 ;)
+ (func $loop-plus-code
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -6446,7 +6446,7 @@ raw:
    )
   )
  )
- (func $split (; 6 ;)
+ (func $split
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -6465,7 +6465,7 @@ raw:
    )
   )
  )
- (func $split-plus-code (; 7 ;)
+ (func $split-plus-code
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -6494,7 +6494,7 @@ raw:
    )
   )
  )
- (func $if (; 8 ;)
+ (func $if
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -6519,7 +6519,7 @@ raw:
    )
   )
  )
- (func $if-plus-code (; 9 ;)
+ (func $if-plus-code
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -6557,7 +6557,7 @@ raw:
    )
   )
  )
- (func $if-else (; 10 ;)
+ (func $if-else
   (local $0 i32)
   (block $block$4$break
    (call $check
@@ -6589,7 +6589,7 @@ raw:
    )
   )
  )
- (func $loop-tail (; 11 ;)
+ (func $loop-tail
   (local $0 i32)
   (block $block$3$break
    (loop $shape$0$continue
@@ -6614,7 +6614,7 @@ raw:
    )
   )
  )
- (func $nontrivial-loop-plus-phi-to-head (; 12 ;)
+ (func $nontrivial-loop-plus-phi-to-head
   (local $0 i32)
   (block $block$2$break
    (call $check
@@ -6701,7 +6701,7 @@ raw:
    )
   )
  )
- (func $switch (; 13 ;)
+ (func $switch
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -6745,7 +6745,7 @@ raw:
    (br $switch$1$leave)
   )
  )
- (func $duffs-device (; 14 ;)
+ (func $duffs-device
   (local $0 i32)
   (local $1 i32)
   (local $2 i64)
@@ -6820,7 +6820,7 @@ raw:
    )
   )
  )
- (func $return (; 15 ;) (result i32)
+ (func $return (result i32)
   (local $0 i32)
   (block
    (call $check
@@ -6838,7 +6838,7 @@ optimized:
 module loaded from binary form:
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -6848,7 +6848,7 @@ module loaded from binary form:
 module s-expr printed (in memory):
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -6859,7 +6859,7 @@ module s-expr printed (in memory):
 module s-expr printed (in memory, caller-owned):
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -6872,7 +6872,7 @@ module s-expr printed (in memory, caller-owned):
  (type $i32_=>_none (func (param i32)))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
- (func $starter (; 1 ;)
+ (func $starter
   (call $print-i32
    (i32.const 1234)
   )
@@ -6881,7 +6881,7 @@ module s-expr printed (in memory, caller-owned):
 1234 : i32
 (module
  (type $none_=>_none (func))
- (func $func (; 0 ;)
+ (func $func
   (local $0 i32)
   (local.set $0
    (i64.const 1234)
@@ -6901,13 +6901,13 @@ validation: 0
  (export "export1" (func $fn1))
  (export "export2" (func $fn2))
  (export "mem" (memory $0))
- (func $fn0 (; 0 ;)
+ (func $fn0
   (nop)
  )
- (func $fn1 (; 1 ;)
+ (func $fn1
   (nop)
  )
- (func $fn2 (; 2 ;)
+ (func $fn2
   (nop)
  )
 )

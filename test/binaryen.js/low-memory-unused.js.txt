@@ -1,3 +1,4 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 === input wast ===
 (module
  (memory $0 1)
@@ -17,7 +18,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 1)
  (export "test" (func $test))
- (func $test (; 0 ;) (param $0 i32) (result i32)
+ (func $test (param $0 i32) (result i32)
   (i32.load
    (i32.add
     (local.get $0)
@@ -32,7 +33,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 1)
  (export "test" (func $test))
- (func $test (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $test (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.load
    (i32.add
     (local.get $0)
@@ -66,7 +67,7 @@ int main() {
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 1)
  (export "test" (func $test))
- (func $test (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $test (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.load offset=128
    (local.get $0)
   )

@@ -2,10 +2,10 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
- (func $dummy (; 0 ;)
+ (func $dummy
   (nop)
  )
- (func $getFallthrough (; 1 ;)
+ (func $getFallthrough
   (local $x0 i32)
   (local $x1 i32)
   (local $x2 i32)

@@ -18,7 +18,7 @@
  (data (i32.const 4035) "nice skip here")
  (data (i32.const 4066) "another\00but no")
  (import "env" "memoryBase" (global $memoryBase i32))
- (func $nonzero-size-init-of-active-will-trap (; 0 ;)
+ (func $nonzero-size-init-of-active-will-trap
   (block
    (drop
     (i32.const 42)
@@ -33,7 +33,7 @@
   )
   (nop)
  )
- (func $nonzero-offset-init-of-active-will-trap (; 1 ;)
+ (func $nonzero-offset-init-of-active-will-trap
   (block
    (drop
     (i32.const 42)
@@ -48,7 +48,7 @@
   )
   (nop)
  )
- (func $zero-offset-size-init-of-active-may-trap (; 2 ;)
+ (func $zero-offset-size-init-of-active-may-trap
   (if
    (i32.gt_u
     (i32.const 42)
@@ -85,7 +85,7 @@
  (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
- (func $zeroes-at-start (; 0 ;)
+ (func $zeroes-at-start
   (block
    (if
     (global.get $__mem_segment_drop_state_0)
@@ -109,7 +109,7 @@
    (data.drop 0)
   )
  )
- (func $zeroes-at-start-not-split (; 1 ;)
+ (func $zeroes-at-start-not-split
   (memory.init 1
    (i32.const 0)
    (i32.const 0)
@@ -132,7 +132,7 @@
   )
   (data.drop 1)
  )
- (func $few-zeroes-at-start (; 2 ;)
+ (func $few-zeroes-at-start
   (memory.init 2
    (i32.const 0)
    (i32.const 0)
@@ -140,7 +140,7 @@
   )
   (data.drop 2)
  )
- (func $zeroes-at-end (; 3 ;)
+ (func $zeroes-at-end
   (block
    (memory.init 3
     (i32.const 0)
@@ -155,7 +155,7 @@
   )
   (data.drop 3)
  )
- (func $zeroes-at-end-not-split (; 4 ;)
+ (func $zeroes-at-end-not-split
   (memory.init 4
    (i32.const 0)
    (i32.const 0)
@@ -178,7 +178,7 @@
   )
   (data.drop 4)
  )
- (func $few-zeroes-at-end (; 5 ;)
+ (func $few-zeroes-at-end
   (memory.init 5
    (i32.const 0)
    (i32.const 0)
@@ -186,7 +186,7 @@
   )
   (data.drop 5)
  )
- (func $zeroes-in-middle (; 6 ;)
+ (func $zeroes-in-middle
   (block
    (memory.init 6
     (i32.const 0)
@@ -209,7 +209,7 @@
    (data.drop 7)
   )
  )
- (func $zeroes-in-middle-not-split (; 7 ;)
+ (func $zeroes-in-middle-not-split
   (memory.init 8
    (i32.const 0)
    (i32.const 0)
@@ -222,7 +222,7 @@
   )
   (data.drop 8)
  )
- (func $few-zeroes-in-middle (; 8 ;)
+ (func $few-zeroes-in-middle
   (memory.init 9
    (i32.const 0)
    (i32.const 0)
@@ -230,7 +230,7 @@
   )
   (data.drop 9)
  )
- (func $multiple-spans-of-zeroes (; 9 ;)
+ (func $multiple-spans-of-zeroes
   (block
    (memory.init 10
     (i32.const 0)
@@ -264,7 +264,7 @@
    (data.drop 12)
   )
  )
- (func $even-more-zeroes (; 10 ;)
+ (func $even-more-zeroes
   (block
    (if
     (global.get $__mem_segment_drop_state_1)
@@ -315,7 +315,7 @@
    (data.drop 15)
   )
  )
- (func $only-zeroes (; 11 ;)
+ (func $only-zeroes
   (block
    (if
     (global.get $__mem_segment_drop_state_2)
@@ -331,7 +331,7 @@
    (i32.const 1)
   )
  )
- (func $no-zeroes (; 12 ;)
+ (func $no-zeroes
   (memory.init 16
    (i32.const 0)
    (i32.const 0)
@@ -339,7 +339,7 @@
   )
   (data.drop 16)
  )
- (func $empty (; 13 ;)
+ (func $empty
   (if
    (i32.gt_u
     (i32.const 13)
@@ -352,11 +352,11 @@
   )
   (nop)
  )
- (func $only-dropped (; 14 ;)
+ (func $only-dropped
   (nop)
   (nop)
  )
- (func $only-dropped-zeroes (; 15 ;)
+ (func $only-dropped-zeroes
   (nop)
   (nop)
  )
@@ -405,7 +405,7 @@
  (global $__mem_segment_drop_state_5 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_6 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_7 (mut i32) (i32.const 0))
- (func $nonconst-dest (; 0 ;)
+ (func $nonconst-dest
   (local $0 i32)
   (block
    (local.set $0
@@ -478,7 +478,7 @@
    (data.drop 2)
   )
  )
- (func $nonconst-offset (; 1 ;)
+ (func $nonconst-offset
   (memory.init 3
    (i32.const 0)
    (global.get $param)
@@ -486,7 +486,7 @@
   )
   (data.drop 3)
  )
- (func $nonconst-size (; 2 ;)
+ (func $nonconst-size
   (memory.init 4
    (i32.const 0)
    (i32.const 0)
@@ -494,7 +494,7 @@
   )
   (data.drop 4)
  )
- (func $partial-skip-start (; 3 ;)
+ (func $partial-skip-start
   (block
    (if
     (global.get $__mem_segment_drop_state_1)
@@ -545,7 +545,7 @@
    (data.drop 7)
   )
  )
- (func $full-skip-start (; 4 ;)
+ (func $full-skip-start
   (block
    (memory.init 8
     (i32.const 0)
@@ -584,7 +584,7 @@
    (data.drop 10)
   )
  )
- (func $partial-skip-end (; 5 ;)
+ (func $partial-skip-end
   (block
    (if
     (global.get $__mem_segment_drop_state_2)
@@ -635,7 +635,7 @@
    (data.drop 13)
   )
  )
- (func $full-skip-end (; 6 ;)
+ (func $full-skip-end
   (block
    (if
     (global.get $__mem_segment_drop_state_3)
@@ -681,7 +681,7 @@
    (data.drop 16)
   )
  )
- (func $slice-zeroes (; 7 ;)
+ (func $slice-zeroes
   (block
    (if
     (global.get $__mem_segment_drop_state_4)
@@ -702,7 +702,7 @@
    (data.drop 19)
   )
  )
- (func $slice-nonzeroes (; 8 ;)
+ (func $slice-nonzeroes
   (memory.init 20
    (i32.const 0)
    (i32.const 1)
@@ -714,7 +714,7 @@
    (data.drop 22)
   )
  )
- (func $zero-size (; 9 ;)
+ (func $zero-size
   (if
    (i32.or
     (i32.gt_u
@@ -737,7 +737,7 @@
    (data.drop 25)
   )
  )
- (func $zero-size-undropped (; 10 ;)
+ (func $zero-size-undropped
   (if
    (i32.or
     (i32.gt_u
@@ -752,7 +752,7 @@
    (unreachable)
   )
  )
- (func $out-of-bounds-offset (; 11 ;)
+ (func $out-of-bounds-offset
   (block
    (drop
     (i32.const 0)
@@ -767,7 +767,7 @@
   )
   (nop)
  )
- (func $zero-size-out-of-bounds-offset (; 12 ;)
+ (func $zero-size-out-of-bounds-offset
   (block
    (drop
     (i32.const 0)
@@ -782,7 +782,7 @@
   )
   (nop)
  )
- (func $out-of-bounds-size (; 13 ;)
+ (func $out-of-bounds-size
   (block
    (drop
     (i32.const 0)
@@ -797,7 +797,7 @@
   )
   (nop)
  )
- (func $zero-size-at-bounds-offset (; 14 ;)
+ (func $zero-size-at-bounds-offset
   (if
    (i32.or
     (i32.gt_u
@@ -838,7 +838,7 @@
  (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
- (func $zero-length-init-zeroes (; 0 ;)
+ (func $zero-length-init-zeroes
   (if
    (i32.or
     (i32.gt_u
@@ -861,7 +861,7 @@
    (data.drop 2)
   )
  )
- (func $zero-length-init-nonzeroes (; 1 ;)
+ (func $zero-length-init-nonzeroes
   (if
    (i32.or
     (i32.gt_u
@@ -884,7 +884,7 @@
    (data.drop 5)
   )
  )
- (func $zero-length-init-zeroes-2 (; 2 ;)
+ (func $zero-length-init-zeroes-2
   (if
    (i32.or
     (i32.gt_u
@@ -906,7 +906,7 @@
    (data.drop 7)
   )
  )
- (func $zero-length-init-nonzeroes-2 (; 3 ;)
+ (func $zero-length-init-nonzeroes-2
   (if
    (i32.or
     (i32.gt_u
@@ -995,7 +995,7 @@
  (data passive "a")
  (data passive "a")
  (data passive "a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a")
- (func $init-lots (; 0 ;)
+ (func $init-lots
   (block
    (memory.init 0
     (i32.const 0)
