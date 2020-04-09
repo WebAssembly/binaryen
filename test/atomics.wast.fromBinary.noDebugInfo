@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (memory $0 (shared 23 256))
- (func $0 (; 0 ;)
+ (func $0
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -68,7 +68,7 @@
    (local.get $1)
   )
  )
- (func $1 (; 1 ;)
+ (func $1
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -102,7 +102,7 @@
    )
   )
  )
- (func $2 (; 2 ;)
+ (func $2
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -134,7 +134,7 @@
    )
   )
  )
- (func $3 (; 3 ;)
+ (func $3
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -178,7 +178,7 @@
    )
   )
  )
- (func $4 (; 4 ;)
+ (func $4
   (atomic.fence)
  )
 )

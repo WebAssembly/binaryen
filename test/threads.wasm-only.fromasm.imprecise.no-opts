@@ -10,7 +10,7 @@
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "test64" (func $legalstub$test64))
- (func $test64 (; 1 ;) (result i64)
+ (func $test64 (result i64)
   (local $x i64)
   (local $y i64)
   (local $z i32)
@@ -73,7 +73,7 @@
    (local.get $x)
   )
  )
- (func $legalstub$test64 (; 2 ;) (result i32)
+ (func $legalstub$test64 (result i32)
   (local $0 i64)
   (local.set $0
    (call $test64)

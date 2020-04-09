@@ -4,7 +4,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (event $e (attr 0) (param))
- (func $ifs (; 0 ;)
+ (func $ifs
   (if
    (i32.const 0)
    (nop)
@@ -45,7 +45,7 @@
    )
   )
  )
- (func $ifs-blocks (; 1 ;)
+ (func $ifs-blocks
   (block
    (drop
     (i32.const 0)
@@ -89,7 +89,7 @@
    )
   )
  )
- (func $ifs-blocks-big (; 2 ;)
+ (func $ifs-blocks-big
   (block
    (drop
     (i32.const 0)
@@ -168,7 +168,7 @@
    )
   )
  )
- (func $ifs-blocks-long (; 3 ;)
+ (func $ifs-blocks-long
   (block
    (if
     (i32.const 1)
@@ -238,7 +238,7 @@
    )
   )
  )
- (func $if-worth-it-i-dunno (; 4 ;)
+ (func $if-worth-it-i-dunno
   (block $folding-inner0
    (block
     (if
@@ -412,7 +412,7 @@
   (unreachable)
   (unreachable)
  )
- (func $no-grandparent (; 5 ;)
+ (func $no-grandparent
   (if
    (i32.const 9999)
    (block
@@ -437,7 +437,7 @@
    )
   )
  )
- (func $yes-grandparent (; 6 ;)
+ (func $yes-grandparent
   (block
    (if
     (i32.const 9999)
@@ -462,7 +462,7 @@
    (unreachable)
   )
  )
- (func $ifs-named-block (; 7 ;) (param $x i32) (param $y i32) (result i32)
+ (func $ifs-named-block (param $x i32) (param $y i32) (result i32)
   (block $out
    (block $out2
     (block
@@ -547,7 +547,7 @@
    (i32.const 20)
   )
  )
- (func $block (; 8 ;)
+ (func $block
   (block $x
    (if
     (i32.const 0)
@@ -566,7 +566,7 @@
    (i32.const 2)
   )
  )
- (func $block2 (; 9 ;)
+ (func $block2
   (block $x
    (if
     (i32.const 0)
@@ -601,7 +601,7 @@
    (br $x)
   )
  )
- (func $block3 (; 10 ;)
+ (func $block3
   (block $x
    (if
     (i32.const 0)
@@ -642,7 +642,7 @@
    (i32.const 2)
   )
  )
- (func $mixture (; 11 ;)
+ (func $mixture
   (block $out
    (block
     (drop
@@ -721,7 +721,7 @@
    (nop)
   )
  )
- (func $block-corners (; 12 ;)
+ (func $block-corners
   (block
    (block $x
     (if
@@ -880,7 +880,7 @@
    )
   )
  )
- (func $terminating (; 13 ;)
+ (func $terminating
   (block $folding-inner0
    (block
     (if
@@ -911,7 +911,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-unreachable (; 14 ;)
+ (func $terminating-unreachable
   (block $folding-inner0
    (block
     (if
@@ -942,7 +942,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-value (; 15 ;) (result i32)
+ (func $terminating-value (result i32)
   (block $folding-inner0
    (return
     (block (result i32)
@@ -975,7 +975,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-just-2 (; 16 ;)
+ (func $terminating-just-2
   (block $folding-inner0
    (block
     (if
@@ -1022,7 +1022,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-shortness (; 17 ;)
+ (func $terminating-shortness
   (block $folding-inner1
    (block
     (block $folding-inner0
@@ -1063,7 +1063,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-multiple-separate (; 18 ;)
+ (func $terminating-multiple-separate
   (block $folding-inner1
    (block
     (block $folding-inner0
@@ -1120,7 +1120,7 @@
   )
   (unreachable)
  )
- (func $terminating-just-worth-it (; 19 ;)
+ (func $terminating-just-worth-it
   (block $folding-inner0
    (block
     (if
@@ -1143,7 +1143,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-not-worth-it (; 20 ;)
+ (func $terminating-not-worth-it
   (if
    (i32.const 1)
    (block
@@ -1169,7 +1169,7 @@
    )
   )
  )
- (func $terminating-return (; 21 ;)
+ (func $terminating-return
   (block $folding-inner0
    (block
     (if
@@ -1200,7 +1200,7 @@
   (nop)
   (return)
  )
- (func $terminating-return-value (; 22 ;) (result i32)
+ (func $terminating-return-value (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1240,7 +1240,7 @@
    )
   )
  )
- (func $terminating-fallthrough-value (; 23 ;) (result i32)
+ (func $terminating-fallthrough-value (result i32)
   (block $folding-inner0
    (return
     (block (result i32)
@@ -1280,7 +1280,7 @@
    )
   )
  )
- (func $big-return (; 24 ;) (result i32)
+ (func $big-return (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1317,7 +1317,7 @@
    )
   )
  )
- (func $return-mix (; 25 ;) (result i32)
+ (func $return-mix (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1355,10 +1355,10 @@
    )
   )
  )
- (func $just-unreachable (; 26 ;)
+ (func $just-unreachable
   (unreachable)
  )
- (func $just-return (; 27 ;) (result i32)
+ (func $just-return (result i32)
   (return
    (i32.add
     (i32.const 1)
@@ -1366,7 +1366,7 @@
    )
   )
  )
- (func $drop-if-with-value-but-unreachable (; 28 ;)
+ (func $drop-if-with-value-but-unreachable
   (if
    (i32.const 0)
    (nop)
@@ -1412,7 +1412,7 @@
    )
   )
  )
- (func $nested-control-flow (; 29 ;)
+ (func $nested-control-flow
   (block $out
    (block
     (block $x
@@ -1442,7 +1442,7 @@
    )
   )
  )
- (func $nested-control-flow-dangerous (; 30 ;)
+ (func $nested-control-flow-dangerous
   (block $folding-inner0
    (block $out
     (block
@@ -1486,7 +1486,7 @@
   )
   (return)
  )
- (func $nested-control-flow-dangerous-but-ok (; 31 ;)
+ (func $nested-control-flow-dangerous-but-ok
   (block $folding-inner0
    (block
     (block $middle
@@ -1541,7 +1541,7 @@
   )
   (return)
  )
- (func $nested-control-flow-dangerous-but-ok-b (; 32 ;)
+ (func $nested-control-flow-dangerous-but-ok-b
   (block $out
    (block $middle
     (block
@@ -1607,7 +1607,7 @@
    (i32.const 4)
   )
  )
- (func $nested-control-flow-dangerous-but-ok-c (; 33 ;)
+ (func $nested-control-flow-dangerous-but-ok-c
   (block $x
    (block
     (block $out
@@ -1644,7 +1644,7 @@
    (i32.const 5)
   )
  )
- (func $nested-control-flow-dangerous-but-ok-d (; 34 ;)
+ (func $nested-control-flow-dangerous-but-ok-d
   (block
    (block $out
     (block
@@ -1679,7 +1679,7 @@
    (i32.const 3)
   )
  )
- (func $if-suffix (; 35 ;) (param $x i32) (result i32)
+ (func $if-suffix (param $x i32) (result i32)
   (block
    (if
     (local.get $x)
@@ -1709,7 +1709,7 @@
    (i32.const 2)
   )
  )
- (func $exnref_pop_test (; 36 ;)
+ (func $exnref_pop_test
   (local $exn exnref)
   (block $folding-inner0
    (try
@@ -1742,7 +1742,7 @@
   )
   (unreachable)
  )
- (func $br_on_exn_target_block (; 37 ;)
+ (func $br_on_exn_target_block
   (local $exn exnref)
   (block $x
    (if

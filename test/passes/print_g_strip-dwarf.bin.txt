@@ -14,10 +14,10 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
   (nop)
  )
- (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (if
    (i32.ne
     (i32.rem_s
@@ -57,10 +57,10 @@
   )
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (result i32)
+ (func $stackSave (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   (global.set $global$0
    (local.tee $0
     (i32.and
@@ -74,12 +74,12 @@
   )
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
+ (func $__growWasmMemory (param $0 i32) (result i32)
   (memory.grow
    (local.get $0)
   )
@@ -105,10 +105,10 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
   (nop)
  )
- (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (if
    (i32.ne
     (i32.rem_s
@@ -148,10 +148,10 @@
   )
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (result i32)
+ (func $stackSave (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   (global.set $global$0
    (local.tee $0
     (i32.and
@@ -165,12 +165,12 @@
   )
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
+ (func $__growWasmMemory (param $0 i32) (result i32)
   (memory.grow
    (local.get $0)
   )

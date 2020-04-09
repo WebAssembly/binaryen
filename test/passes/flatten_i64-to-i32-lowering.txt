@@ -5,7 +5,7 @@
  (import "env" "func" (func $import (result i64)))
  (memory $0 1 1)
  (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
- (func $defined (; 1 ;) (result i32)
+ (func $defined (result i32)
   (local $0 i32)
   (local $0$hi i32)
   (local $i64toi32_i32$0 i32)
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $unreachable-select-i64 (; 2 ;) (result i32)
+ (func $unreachable-select-i64 (result i32)
   (local $i64toi32_i32$0 i32)
   (block
    (drop
@@ -99,7 +99,7 @@
   )
   (unreachable)
  )
- (func $unreachable-select-i64-b (; 3 ;) (result i32)
+ (func $unreachable-select-i64-b (result i32)
   (local $i64toi32_i32$0 i32)
   (block
    (unreachable)
@@ -117,7 +117,7 @@
   )
   (unreachable)
  )
- (func $unreachable-select-i64-c (; 4 ;) (result i32)
+ (func $unreachable-select-i64-c (result i32)
   (local $i64toi32_i32$0 i32)
   (local $i64toi32_i32$1 i32)
   (block
@@ -141,7 +141,7 @@
   )
   (unreachable)
  )
- (func $mem (; 5 ;)
+ (func $mem
   (local $0 i32)
   (local $0$hi i32)
   (local $1 i32)
@@ -412,10 +412,10 @@
  (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
  (export "exp" (func $1))
  (export "unreach" (func $2))
- (func $call (; 0 ;) (param $0 i32) (param $0$hi i32)
+ (func $call (param $0 i32) (param $0$hi i32)
   (nop)
  )
- (func $1 (; 1 ;)
+ (func $1
   (local $0 i32)
   (local $0$hi i32)
   (local $i64toi32_i32$0 i32)
@@ -455,7 +455,7 @@
    )
   )
  )
- (func $2 (; 2 ;)
+ (func $2
   (local $0 i32)
   (local $0$hi i32)
   (local $1 i32)
@@ -501,10 +501,10 @@
  (global $g$hi (mut i32) (global.get $f$hi))
  (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
  (export "exp" (func $1))
- (func $call (; 0 ;) (param $0 i32) (param $0$hi i32)
+ (func $call (param $0 i32) (param $0$hi i32)
   (nop)
  )
- (func $1 (; 1 ;)
+ (func $1
   (local $0 i32)
   (local $0$hi i32)
   (local $i64toi32_i32$0 i32)

@@ -16,7 +16,7 @@
  (export "imported" (func $legalstub$imported))
  (export "imported_again" (func $legalstub$imported))
  (export "other" (func $legalstub$other))
- (func $func (; 6 ;) (result i64)
+ (func $func (result i64)
   (drop
    (call $legalfunc$imported)
   )
@@ -27,7 +27,7 @@
   )
   (unreachable)
  )
- (func $ref-func-test (; 7 ;)
+ (func $ref-func-test
   (drop
    (call $legalfunc$ref-func-arg)
   )
@@ -35,7 +35,7 @@
    (ref.func $ref-func-arg)
   )
  )
- (func $legalstub$func (; 8 ;) (result i32)
+ (func $legalstub$func (result i32)
   (local $0 i64)
   (local.set $0
    (call $func)
@@ -52,7 +52,7 @@
    (local.get $0)
   )
  )
- (func $legalstub$imported (; 9 ;) (result i32)
+ (func $legalstub$imported (result i32)
   (local $0 i64)
   (local.set $0
    (call $legalfunc$imported)
@@ -69,7 +69,7 @@
    (local.get $0)
   )
  )
- (func $legalstub$other (; 10 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+ (func $legalstub$other (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
   (call $legalfunc$other
    (local.get $0)
    (i64.or
@@ -96,7 +96,7 @@
    )
   )
  )
- (func $legalfunc$imported (; 11 ;) (result i64)
+ (func $legalfunc$imported (result i64)
   (i64.or
    (i64.extend_i32_u
     (call $legalimport$imported)
@@ -109,7 +109,7 @@
    )
   )
  )
- (func $legalfunc$other (; 12 ;) (param $0 i32) (param $1 i64) (param $2 i64)
+ (func $legalfunc$other (param $0 i32) (param $1 i64) (param $2 i64)
   (call $legalimport$other
    (local.get $0)
    (i32.wrap_i64
@@ -132,7 +132,7 @@
    )
   )
  )
- (func $legalfunc$ref-func-arg (; 13 ;) (result i64)
+ (func $legalfunc$ref-func-arg (result i64)
   (i64.or
    (i64.extend_i32_u
     (call $legalimport$ref-func-arg)

@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;)
+ (func $eh
   (local $exn exnref)
   try
    i32.const 0
@@ -23,7 +23,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;) (; has Stack IR ;)
+ (func $eh (; has Stack IR ;)
   (local $exn exnref)
   (try
    (throw $e0

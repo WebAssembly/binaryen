@@ -10,7 +10,7 @@
  (data (i32.const 0) "passive")
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (func $x (; 0 ;) (param $x i32)
+ (func $x (param $x i32)
   (call $x
    (i32.const 2300)
   )
@@ -92,7 +92,7 @@
    (i32.const 0)
   )
  )
- (func $ret (; 1 ;) (result i32)
+ (func $ret (result i32)
   (if
    (call $ret)
    (return
@@ -107,13 +107,13 @@
   )
   (i32.const 1)
  )
- (func $noret (; 2 ;)
+ (func $noret
   (if
    (call $ret)
    (return)
   )
  )
- (func $refinalize-br-condition-unreachable (; 3 ;)
+ (func $refinalize-br-condition-unreachable
   (block $label$1
    (drop
     (br_if $label$1
@@ -122,7 +122,7 @@
    )
   )
  )
- (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (; 4 ;)
+ (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky
   (drop
    (block $label$1 (result i32)
     (drop
@@ -137,7 +137,7 @@
    )
   )
  )
- (func $reuse-br-value (; 5 ;) (result f64)
+ (func $reuse-br-value (result f64)
   (block $label$0 (result f64)
    (i32.store8
     (i32.const 1919623207)
@@ -164,7 +164,7 @@
    (f64.const 4776014875438170098655851e156)
   )
  )
- (func $refinalize-two-breaks-one-unreachable (; 6 ;)
+ (func $refinalize-two-breaks-one-unreachable
   (drop
    (block $label$0 (result i64)
     (block
@@ -187,7 +187,7 @@
    )
   )
  )
- (func $one-break-value-and-it-is-unreachable (; 7 ;) (result f64)
+ (func $one-break-value-and-it-is-unreachable (result f64)
   (local $var$0 i32)
   (block $label$6
    (block
@@ -198,16 +198,16 @@
    )
   )
  )
- (func $global-notprecomputable (; 8 ;) (result i32)
+ (func $global-notprecomputable (result i32)
   (i32.add
    (i32.const 1)
    (global.get $global-mut)
   )
  )
- (func $global-precomputable (; 9 ;) (result i32)
+ (func $global-precomputable (result i32)
   (i32.const 2)
  )
- (func $global-partiallyprecomputable (; 10 ;) (result i32)
+ (func $global-partiallyprecomputable (result i32)
   (i32.sub
    (i32.add
     (i32.const 1)
@@ -216,49 +216,49 @@
    (i32.const 2)
   )
  )
- (func $no-simd-precompute (; 11 ;) (result v128)
+ (func $no-simd-precompute (result v128)
   (i32x4.splat
    (i32.const 0)
   )
  )
- (func $no-simd-precompute-if (; 12 ;) (result v128)
+ (func $no-simd-precompute-if (result v128)
   (return
    (i32x4.splat
     (i32.const 0)
    )
   )
  )
- (func $no-memory-init-precompute (; 13 ;)
+ (func $no-memory-init-precompute
   (memory.init 0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $no-data-drop-precompute (; 14 ;)
+ (func $no-data-drop-precompute
   (data.drop 0)
  )
- (func $no-memory-copy-precompute (; 15 ;)
+ (func $no-memory-copy-precompute
   (memory.copy
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $no-memory-fill-precompute (; 16 ;)
+ (func $no-memory-fill-precompute
   (memory.fill
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $tuple-precompute (; 17 ;) (result i32 i64)
+ (func $tuple-precompute (result i32 i64)
   (tuple.make
    (i32.const 42)
    (i64.const 42)
   )
  )
- (func $reftype-test (; 18 ;) (result nullref)
+ (func $reftype-test (result nullref)
   (ref.null)
  )
 )

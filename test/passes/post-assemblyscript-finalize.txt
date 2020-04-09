@@ -6,33 +6,33 @@
  (import "rt" "retain" (func $~lib/rt/pure/__retain (param i32) (result i32)))
  (import "rt" "release" (func $~lib/rt/pure/__release (param i32)))
  (import "rt" "alloc" (func $~lib/rt/tlsf/__alloc (param i32 i32) (result i32)))
- (func $eliminates.unnecessaryAllocation (; 3 ;)
+ (func $eliminates.unnecessaryAllocation
   (nop)
  )
- (func $eliminates.unnecessaryPair (; 4 ;) (param $0 i32)
+ (func $eliminates.unnecessaryPair (param $0 i32)
   (drop
    (local.get $0)
   )
  )
- (func $eliminates.unnecessaryStaticPair (; 5 ;)
+ (func $eliminates.unnecessaryStaticPair
   (nop)
  )
- (func $eliminates.unnecessaryStaticRetain (; 6 ;)
+ (func $eliminates.unnecessaryStaticRetain
   (drop
    (i32.const 272)
   )
  )
- (func $eliminates.unnecessaryStaticRelease (; 7 ;)
+ (func $eliminates.unnecessaryStaticRelease
   (nop)
  )
- (func $keeps.dynamicRetain (; 8 ;) (param $0 i32)
+ (func $keeps.dynamicRetain (param $0 i32)
   (local.set $0
    (call $~lib/rt/pure/__retain
     (local.get $0)
    )
   )
  )
- (func $keeps.dynamicRelease (; 9 ;) (param $0 i32)
+ (func $keeps.dynamicRelease (param $0 i32)
   (call $~lib/rt/pure/__release
    (local.get $0)
   )

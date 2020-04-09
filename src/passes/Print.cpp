@@ -1455,8 +1455,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Function::DebugLocation lastPrintedLocation;
   bool debugInfo;
 
-  std::unordered_map<Name, Index> functionIndexes;
-
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
     if (!full) {
@@ -2124,14 +2122,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (currModule && !minify) {
-      // emit the function index in a comment
-      if (functionIndexes.empty()) {
-        ModuleUtils::BinaryIndexes indexes(*currModule);
-        functionIndexes = std::move(indexes.functionIndexes);
-      }
-      o << " (; " << functionIndexes[curr->name] << " ;)";
-    }
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }

@@ -58,7 +58,7 @@
  (export "func_23" (func $func_23))
  (export "func_24" (func $func_24))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
- (func $hashMemory (; 7 ;) (result i32)
+ (func $hashMemory (result i32)
   (local $0 i32)
   (local.set $0
    (i32.const 5381)
@@ -289,7 +289,7 @@
   )
   (local.get $0)
  )
- (func $func_8 (; 8 ;) (result anyref)
+ (func $func_8 (result anyref)
   (block
    (if
     (i32.eqz
@@ -308,7 +308,7 @@
   )
   (ref.null)
  )
- (func $func_9 (; 9 ;) (result i64)
+ (func $func_9 (result i64)
   (local $0 v128)
   (local $1 f64)
   (block
@@ -334,7 +334,7 @@
    (i64.const 18014398509481984)
   )
  )
- (func $func_9_invoker (; 10 ;)
+ (func $func_9_invoker
   (drop
    (call $func_9)
   )
@@ -342,7 +342,7 @@
    (call $hashMemory)
   )
  )
- (func $func_11 (; 11 ;) (param $0 f64) (result v128)
+ (func $func_11 (param $0 f64) (result v128)
   (local $1 nullref)
   (local $2 f32)
   (local $3 funcref)
@@ -365,7 +365,7 @@
   )
   (v128.const i32x4 0x00020000 0x00000000 0xfffffff3 0xffffffff)
  )
- (func $func_11_invoker (; 12 ;)
+ (func $func_11_invoker
   (drop
    (call $func_11
     (f64.const -1.1754943508222875e-38)
@@ -388,7 +388,7 @@
    )
   )
  )
- (func $func_13 (; 13 ;) (param $0 i64) (param $1 exnref) (param $2 f32) (param $3 funcref) (param $4 exnref)
+ (func $func_13 (param $0 i64) (param $1 exnref) (param $2 f32) (param $3 funcref) (param $4 exnref)
   (local $5 v128)
   (block
    (if
@@ -620,7 +620,7 @@
    )
   )
  )
- (func $func_13_invoker (; 14 ;)
+ (func $func_13_invoker
   (call $func_13
    (i64.const -9223372036854775808)
    (ref.null)
@@ -629,7 +629,7 @@
    (ref.null)
   )
  )
- (func $func_15 (; 15 ;) (result f64)
+ (func $func_15 (result f64)
   (block
    (if
     (i32.eqz
@@ -648,7 +648,7 @@
   )
   (f64.const 0)
  )
- (func $func_16 (; 16 ;) (param $0 f64) (param $1 exnref) (result v128)
+ (func $func_16 (param $0 f64) (param $1 exnref) (result v128)
   (block
    (if
     (i32.eqz
@@ -667,7 +667,7 @@
   )
   (v128.const i32x4 0x00000000 0x00000000 0x444b4141 0x40434a4a)
  )
- (func $func_17 (; 17 ;) (param $0 f64) (param $1 exnref) (result anyref)
+ (func $func_17 (param $0 f64) (param $1 exnref) (result anyref)
   (local $2 nullref)
   (block
    (if
@@ -693,7 +693,7 @@
    (ref.null)
   )
  )
- (func $func_18 (; 18 ;) (result i64)
+ (func $func_18 (result i64)
   (block
    (if
     (i32.eqz
@@ -730,7 +730,7 @@
    (i64.const 6509766706562358106)
   )
  )
- (func $func_19 (; 19 ;) (result i64)
+ (func $func_19 (result i64)
   (local $0 anyref)
   (local $1 funcref)
   (local $2 f64)
@@ -757,7 +757,7 @@
    )
   )
  )
- (func $func_20 (; 20 ;) (result f64)
+ (func $func_20 (result f64)
   (local $0 v128)
   (local $1 f32)
   (local $2 v128)
@@ -789,7 +789,7 @@
   )
   (f64.const 1.6293189712507804e-52)
  )
- (func $func_21 (; 21 ;) (result nullref)
+ (func $func_21 (result nullref)
   (block
    (if
     (i32.eqz
@@ -813,7 +813,7 @@
    )
   )
  )
- (func $func_21_invoker (; 22 ;)
+ (func $func_21_invoker
   (drop
    (call $func_21)
   )
@@ -833,7 +833,7 @@
    (call $hashMemory)
   )
  )
- (func $func_23 (; 23 ;) (param $0 nullref) (param $1 funcref) (param $2 nullref) (param $3 exnref) (result anyref)
+ (func $func_23 (param $0 nullref) (param $1 funcref) (param $2 nullref) (param $3 exnref) (result anyref)
   (local $4 exnref)
   (local $5 i32)
   (local $6 i32)
@@ -865,7 +865,7 @@
   )
   (ref.null)
  )
- (func $func_24 (; 24 ;) (param $0 f32) (result exnref)
+ (func $func_24 (param $0 f32) (result exnref)
   (block
    (if
     (i32.eqz
@@ -981,12 +981,12 @@
    )
   )
  )
- (func $hangLimitInitializer (; 25 ;)
+ (func $hangLimitInitializer
   (global.set $hangLimit
    (i32.const 10)
   )
  )
- (func $deNan32 (; 26 ;) (param $0 f32) (result f32)
+ (func $deNan32 (param $0 f32) (result f32)
   (if (result f32)
    (f32.eq
     (local.get $0)
@@ -996,7 +996,7 @@
    (f32.const 0)
   )
  )
- (func $deNan64 (; 27 ;) (param $0 f64) (result f64)
+ (func $deNan64 (param $0 f64) (result f64)
   (if (result f64)
    (f64.eq
     (local.get $0)

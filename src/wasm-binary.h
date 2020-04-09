@@ -951,6 +951,58 @@ inline S32LEB binaryType(Type type) {
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
+  // Computes the indexes in a wasm binary, i.e., with function imports
+  // and function implementations sharing a single index space, etc.,
+  // and with the imports first (the Module's functions and globals
+  // arrays are not assumed to be in a particular order, so we can't
+  // just use them directly).
+  struct BinaryIndexes {
+    std::unordered_map<Name, Index> functionIndexes;
+    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> globalIndexes;
+
+    BinaryIndexes(Module& wasm) {
+      auto addIndexes = [&](auto& source, auto& indexes) {
+        auto addIndex = [&](auto* curr) {
+          auto index = indexes.size();
+          indexes[curr->name] = index;
+        };
+        for (auto& curr : source) {
+          if (curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+        for (auto& curr : source) {
+          if (!curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+      };
+      addIndexes(wasm.functions, functionIndexes);
+      addIndexes(wasm.events, eventIndexes);
+
+      // Globals may have tuple types in the IR, in which case they lower to
+      // multiple globals, one for each tuple element, in the binary. Tuple
+      // globals therefore occupy multiple binary indices, and we have to take
+      // that into account when calculating indices.
+      Index globalCount = 0;
+      auto addGlobal = [&](auto* curr) {
+        globalIndexes[curr->name] = globalCount;
+        globalCount += curr->type.size();
+      };
+      for (auto& curr : wasm.globals) {
+        if (curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+      for (auto& curr : wasm.globals) {
+        if (!curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+    }
+  };
+
 public:
   WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
     : wasm(input), o(o), indexes(*input) {
@@ -1050,7 +1102,7 @@ public:
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
-  ModuleUtils::BinaryIndexes indexes;
+  BinaryIndexes indexes;
   std::unordered_map<Signature, Index> typeIndices;
   std::vector<Signature> types;
 

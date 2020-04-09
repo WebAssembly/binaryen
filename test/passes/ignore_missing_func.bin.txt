@@ -12,9 +12,9 @@
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
  )
- (func $used\28int\29 (; 1 ;) (param $0 i32) (result i32)
+ (func $used\28int\29 (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -126,7 +126,7 @@
    (local.get $10)
   )
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -237,7 +237,7 @@
    (local.get $8)
   )
  )
- (func $main (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   ;; code offset: 0xce
   (local.set $2
@@ -835,9 +835,9 @@ file_names[  1]:
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
  )
- (func $used\28int\29 (; 1 ;) (param $0 i32) (result i32)
+ (func $used\28int\29 (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -949,7 +949,7 @@ file_names[  1]:
    (local.get $10)
   )
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -1060,7 +1060,7 @@ file_names[  1]:
    (local.get $8)
   )
  )
- (func $main (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   ;; code offset: 0xb3
   (local.set $2
