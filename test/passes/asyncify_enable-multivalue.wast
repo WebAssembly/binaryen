@@ -55,6 +55,7 @@
   (import "env" "import" (func $import))
   (import "env" "import2" (func $import2 (result i32)))
   (import "env" "import3" (func $import3 (param i32)))
+  (import "env" "import-mv" (func $import-mv (result i32 i64)))
   (func $calls-import
     (call $import)
   )
@@ -108,6 +109,10 @@
       (return (i32.const 2))
     )
     (return (i32.const 3))
+  )
+  (func $calls-mv
+    (local $x (i32 i64))
+    (local.set $x (call $import-mv))
   )
   (func $calls-loop (param $x i32)
     (loop $l

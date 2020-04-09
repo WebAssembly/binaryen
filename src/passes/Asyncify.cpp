@@ -312,17 +312,15 @@ class FakeGlobalHelper {
 
 public:
   FakeGlobalHelper(Module& module) : module(module) {
-    map[Type::i32] = "asyncify_fake_call_global_i32";
-    map[Type::i64] = "asyncify_fake_call_global_i64";
-    map[Type::f32] = "asyncify_fake_call_global_f32";
-    map[Type::f64] = "asyncify_fake_call_global_f64";
     Builder builder(module);
-    for (auto& pair : map) {
-      auto type = pair.first;
-      auto name = pair.second;
-      rev[name] = type;
+    std::string prefix = "asyncify_fake_call_global_";
+    for (auto type : collectTypes()) {
+      auto global = prefix + Type(type).toString();
+      // TODO: rename map and rev
+      map[type] = global;
+      rev[global] = type;
       module.addGlobal(builder.makeGlobal(
-        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
     }
   }
 
@@ -346,6 +344,41 @@ public:
 private:
   std::map<Type, Name> map;
   std::map<Name, Type> rev;
+
+  // Collect the types returned from all calls for which call support globals
+  // may need to be generated.
+  using Types = std::unordered_set<Type>;
+  Types collectTypes() {
+    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+      module, [&](Function* func, Types& types) {
+        if (!func->body) {
+          return;
+        }
+        struct TypeCollector : PostWalker<TypeCollector> {
+          Types& types;
+          TypeCollector(Types& types) : types(types) {}
+          void visitCall(Call* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+        };
+        TypeCollector(types).walk(func->body);
+      });
+    Types types;
+    for (auto& pair : analysis.map) {
+      Types& functionTypes = pair.second;
+      for (auto t : functionTypes) {
+        types.insert(t);
+      }
+    }
+    return types;
+  }
 };
 
 class PatternMatcher {
