@@ -167,19 +167,20 @@ private:
 };
 
 struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
-  GlobalSetRemover(NameSet *toRemove) : toRemove(toRemove) {}
+  GlobalSetRemover(NameSet* toRemove) : toRemove(toRemove) {}
 
   bool isFunctionParallel() override { return true; }
 
   GlobalSetRemover* create() override { return new GlobalSetRemover(toRemove); }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (toRemove->count(curr->name) != 0)
+    if (toRemove->count(curr->name) != 0) {
       ExpressionManipulator::nop(curr);
+    }
   }
 
 private:
-  NameSet *toRemove;
+  NameSet* toRemove;
 };
 
 } // anonymous namespace
