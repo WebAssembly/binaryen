@@ -1,4 +1,3 @@
-atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 (module
  (type $none_=>_none (func))
  (func $func

@@ -1,4 +1,3 @@
-atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 GetEvent is equal: true
 getEventInfo={"name":"a-event","module":"","base":"","attribute":0,"params":2,"results":0}
 (module
