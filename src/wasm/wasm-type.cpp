@@ -120,7 +120,7 @@ void Type::init(const std::vector<Type>& types) {
     if (lookup()) {
       return;
     }
-    if (typeLists.size() >= (1 << (ID_BITS))) {
+    if (typeLists.size() >= (1 << ID_BITS)) {
       WASM_UNREACHABLE("Too many types!");
     }
     id = typeLists.size();
