@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # Copyright 2016 WebAssembly Community Group participants
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +14,6 @@
 
 import os
 import subprocess
-import sys
 
 from . import shared
 from . import support
@@ -110,17 +107,3 @@ def test_binaryen_js():
 
 def test_binaryen_wasm():
     do_test_binaryen_js_with(shared.BINARYEN_WASM)
-
-
-def test_binaryen_js_and_wasm():
-    test_binaryen_js()
-    test_binaryen_wasm()
-
-
-if __name__ == "__main__":
-    if sys.argv[1] == "js":
-        test_binaryen_js()
-    elif sys.argv[1] == "wasm":
-        test_binaryen_wasm()
-    else:
-        test_binaryen_js_and_wasm()
