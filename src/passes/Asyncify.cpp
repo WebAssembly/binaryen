@@ -316,7 +316,6 @@ public:
     std::string prefix = "asyncify_fake_call_global_";
     for (auto type : collectTypes()) {
       auto global = prefix + Type(type).toString();
-      // TODO: rename map and rev
       map[type] = global;
       rev[global] = type;
       module.addGlobal(builder.makeGlobal(
