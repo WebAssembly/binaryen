@@ -141,9 +141,7 @@ Type::Type(uint32_t _id) {
   }
 }
 
-size_t Type::size() const {
-  return _size;
-}
+size_t Type::size() const { return _size; }
 
 const std::vector<Type>& Type::expand() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex);
