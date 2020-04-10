@@ -167,20 +167,35 @@ private:
 };
 
 struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
-  GlobalSetRemover(NameSet* toRemove) : toRemove(toRemove) {}
+  GlobalSetRemover(const NameSet* toRemove, bool optimize)
+    : toRemove(toRemove), optimize(optimize) {}
 
   bool isFunctionParallel() override { return true; }
 
-  GlobalSetRemover* create() override { return new GlobalSetRemover(toRemove); }
+  GlobalSetRemover* create() override {
+    return new GlobalSetRemover(toRemove, optimize);
+  }
 
   void visitGlobalSet(GlobalSet* curr) {
     if (toRemove->count(curr->name) != 0) {
       ExpressionManipulator::nop(curr);
+      nopped = true;
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (nopped && optimize) {
+      PassRunner runner(getModule(), getPassRunner()->options);
+      runner.setIsNested(true);
+      runner.addDefaultFunctionOptimizationPasses();
+      runner.runOnFunction(curr);
     }
   }
 
 private:
-  NameSet* toRemove;
+  const NameSet* toRemove;
+  bool optimize;
+  bool nopped = false;
 };
 
 } // anonymous namespace
@@ -247,7 +262,7 @@ struct SimplifyGlobals : public Pass {
         info.written = false;
       }
     }
-    GlobalSetRemover(&unreadGlobals).run(runner, module);
+    GlobalSetRemover(&unreadGlobals, optimize).run(runner, module);
   }
 
   void preferEarlierImports() {

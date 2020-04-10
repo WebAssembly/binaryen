@@ -483,7 +483,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     add("simplify-globals");
   }
-  add("vacuum"); // simplify-globals can generate extra nops
   add("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
   add("directize");
