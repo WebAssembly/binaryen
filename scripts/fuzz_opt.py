@@ -344,14 +344,12 @@ class Wasm2JS(TestCaseHandler):
         compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
 
     def run(self, wasm):
-        # TODO: wasm2js does not handle nans precisely, and does not
-        # handle oob loads etc. with traps, should we use
-        #     FUZZ_OPTS += ['--no-fuzz-nans']
-        #     FUZZ_OPTS += ['--no-fuzz-oob']
-        # ?
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
-        if random.random() < 0.5:
+        # avoid optimizations if we have nans, as we don't handle them with
+        # full precision and optimizations can change things
+        # TODO: OOB too?    FUZZ_OPTS += ['--no-fuzz-oob']
+        if not NANS and random.random() < 0.5:
             cmd += ['-O']
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
