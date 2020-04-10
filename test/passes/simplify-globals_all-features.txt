@@ -39,11 +39,9 @@
 (module
  (type $none_=>_none (func))
  (import "env" "global-1" (global $g1 i32))
- (global $g2 (mut i32) (global.get $g1))
+ (global $g2 i32 (global.get $g1))
  (func $foo
-  (global.set $g2
-   (unreachable)
-  )
+  (nop)
  )
 )
 (module
@@ -180,7 +178,7 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
- (global $g2 (mut i32) (i32.const 1))
+ (global $g2 i32 (i32.const 1))
  (func $no (param $x i32) (result i32)
   (global.set $g1
    (i32.const 100)
@@ -205,9 +203,7 @@
   (global.set $g1
    (i32.const 100)
   )
-  (global.set $g2
-   (local.get $x)
-  )
+  (nop)
   (i32.const 100)
  )
 )
@@ -228,5 +224,12 @@
   (drop
    (ref.null)
   )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (global $write-only i32 (i32.const 1))
+ (func $foo
+  (nop)
  )
 )

@@ -14,7 +14,6 @@
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "STACKTOP" (global $r$asm2wasm$import i32))
- (import "env" "STACK_MAX" (global $s$asm2wasm$import i32))
  (import "env" "abort" (func $ja (param i32)))
  (import "env" "_pthread_cleanup_pop" (func $oa (param i32)))
  (import "env" "___lock" (func $pa (param i32)))
@@ -28,9 +27,7 @@
  (import "env" "___unlock" (func $xa (param i32)))
  (import "env" "___syscall146" (func $ya (param i32 i32) (result i32)))
  (global $r (mut i32) (global.get $r$asm2wasm$import))
- (global $s (mut i32) (global.get $s$asm2wasm$import))
  (global $v (mut i32) (i32.const 0))
- (global $w (mut i32) (i32.const 0))
  (global $K (mut i32) (i32.const 0))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "_free" (func $fb))
@@ -9012,13 +9009,8 @@
    (i32.eqz
     (global.get $v)
    )
-   (block
-    (global.set $v
-     (local.get $0)
-    )
-    (global.set $w
-     (local.get $1)
-    )
+   (global.set $v
+    (local.get $0)
    )
   )
  )
@@ -9053,9 +9045,6 @@
  (func $Ha (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (global.set $r
    (local.get $0)
-  )
-  (global.set $s
-   (local.get $1)
   )
  )
  (func $nb (; has Stack IR ;) (param $0 i32) (result i32)
