@@ -112,6 +112,7 @@ def randomize_fuzz_settings():
 IGNORE = '[binaryen-fuzzer-ignore]'
 
 
+# compare two strings, strictly
 def compare(x, y, context):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
@@ -119,6 +120,39 @@ def compare(x, y, context):
             x, y,
             message
         ))
+
+
+# compare between vms, which may slightly change how numbers are printed
+def compare_between_vms(x, y, context):
+    x_lines = x.splitlines()
+    y_lines = y.splitlines()
+    if len(x_lines) != len(y_lines):
+        return compare(x, y, context)
+
+    num = len(x_lines)
+    for i in range(num):
+        x_line = x_lines[i]
+        y_line = y_lines[i]
+        if x_line != y_line:
+            print("WAKA", x_line)
+            print("WAKA", y_line)
+            # this is different, but maybe it's a vm difference we can ignore
+            LEI_LOGGING = 'LoggingExternalInterface logging'
+            if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
+                x_val = x_line[len(LEI_LOGGING) + 1:-1]
+                y_val = y_line[len(LEI_LOGGING) + 1:-1]
+                print("SHAKA", x_val, y_val)
+                x_val += 'waka'
+                print('x val', x_val)
+                print('y val', y_val)
+                if eval(x_val) == eval(y_val):
+                    continue
+
+            # this failed to compare. print a custom diff of the relevant lines
+            context = 3
+            start = max(i - context, 0)
+            end = min(i + context, num)
+            return compare('\n'.join(x_lines[start:end]), '\n'.join(y_lines[start:end]), context)
 
 
 def fix_output(out):
@@ -133,8 +167,14 @@ def fix_output(out):
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
 
+    print('AN OUT')
+    print(out)
+    print('WAS OUT')
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
+    print('2AN OUT')
+    print(out)
+    print('2WAS OUT')
 
     # exceptions may differ when optimizing, but an exception should occur. so ignore their types
     # also js engines print them out slightly differently
@@ -245,7 +285,7 @@ class CompareVMs(TestCaseHandler):
         if not NANS and LEGALIZE:
             first = results[0]
             for i in range(len(results)):
-                compare(first, results[i], 'CompareVMs between VMs: ' + self.vms[0].name + ' and ' + self.vms[i].name)
+                compare_between_vms(first, results[i], 'CompareVMs between VMs: ' + self.vms[0].name + ' and ' + self.vms[i].name)
 
         return results
 
