@@ -53,7 +53,7 @@ static std::string generateJSWrapper(Module& wasm) {
          "    case 'f32':\n"
          "    case 'f64': {\n"
          "      if (x == 0 && (1 / x) < 0) ret += '-';\n"
-         "      ret += BigInt(x).toString();\n"
+         "      ret += Number(x).toString();\n"
          "      break;\n"
          "    }\n"
          "    default: throw 'what?';\n"
