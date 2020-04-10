@@ -261,8 +261,8 @@ class VM:
 class CompareVMs(TestCaseHandler):
     def __init__(self):
         self.vms = [
-            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               allows_nans=True),
-            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), allows_nans=False),
+            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               allows_nans=True), # noqa
+            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), allows_nans=False), # noqa
             # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
             # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
             # run(['../spec/interpreter/wasm', wasm])
@@ -379,12 +379,12 @@ class Asyncify(TestCaseHandler):
         after = fix_output(run_d8(after_wasm))
 
         try:
-          compare(before, after, 'Asyncify (before/after)')
-        except:
-          # if we failed to just compare the builds before asyncify even runs,
-          # then it may use NaNs or be sensitive to legalization; ignore it
-          print('ignoring due to pre-asyncify difference')
-          return
+            compare(before, after, 'Asyncify (before/after)')
+        except Exception:
+            # if we failed to just compare the builds before asyncify even runs,
+            # then it may use NaNs or be sensitive to legalization; ignore it
+            print('ignoring due to pre-asyncify difference')
+            return
 
         # TODO: also something that actually does async sleeps in the code, say
         # on the logging commands?
