@@ -138,8 +138,11 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 Type::Type(const std::vector<Type>& types) { init(types); }
 
 Type::Type(uint32_t _id) {
-  id = _id;
-  {
+  if (_id <= last_value_type) {
+    *this = Type(static_cast<ValueType>(_id));
+  } else {
+    id = _id;
+    // Unknown complex type; look up the size
     std::shared_lock<std::shared_timed_mutex> lock(mutex);
     _size = typeLists[id]->size();
   }
