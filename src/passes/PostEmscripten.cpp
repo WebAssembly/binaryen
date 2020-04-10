@@ -80,6 +80,9 @@ struct PostEmscripten : public Pass {
       runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");
     if (sbrkPtrStr != "") {
       auto sbrkPtr = std::stoi(sbrkPtrStr);
+      if (sbrkPtr == 0 || sbrkPtr == -1) {
+        Fatal() << "Invalid value for emscripten-sbrk-ptr";
+      }
       ImportInfo imports(*module);
       auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
       if (func) {
