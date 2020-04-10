@@ -252,17 +252,17 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, allows_nans):
+    def __init__(self, name, run, deterministic_nans):
         self.name = name
         self.run = run
-        self.allows_nans = allows_nans
+        self.deterministic_nans = deterministic_nans
 
 
 class CompareVMs(TestCaseHandler):
     def __init__(self):
         self.vms = [
-            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               allows_nans=True), # noqa
-            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), allows_nans=False), # noqa
+            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               deterministic_nans=True), # noqa
+            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), deterministic_nans=False), # noqa
             # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
             # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
             # run(['../spec/interpreter/wasm', wasm])
@@ -297,7 +297,7 @@ class CompareVMs(TestCaseHandler):
     def compare_vs(self, before, after):
         for i in range(len(before)):
             vm = self.vms[i]
-            if vm.allows_nans:
+            if vm.deterministic_nans:
                 compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
