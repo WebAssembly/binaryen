@@ -42,7 +42,6 @@
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (global $STACK_MAX (mut i32) (global.get $STACK_MAX$asm2wasm$import))
  (global $__THREW__ (mut i32) (i32.const 0))
- (global $threwValue (mut i32) (i32.const 0))
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "_i64Subtract" (func $_i64Subtract))
  (export "_free" (func $_free))
@@ -121,9 +120,7 @@
     (global.set $__THREW__
      (local.get $0)
     )
-    (global.set $threwValue
-     (local.get $1)
-    )
+    (nop)
    )
   )
  )
