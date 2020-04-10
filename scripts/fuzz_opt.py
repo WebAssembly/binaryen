@@ -122,6 +122,18 @@ def compare(x, y, context):
         ))
 
 
+# numbers are "close enough" if they just differ in printing, as different
+# vms may print at different precision levels and verbosity
+def numbers_are_close_enough(x, y):
+    print("SHAKA", x, y)
+    print('x val', x)
+    print('y val', y)
+    x = eval(x)
+    y = eval(y)
+    # compare as both integers and floats, as they may be i64s or f32s/f64s
+    return x == y or float(x) == float(y)
+
+
 # compare between vms, which may slightly change how numbers are printed
 def compare_between_vms(x, y, context):
     x_lines = x.splitlines()
@@ -137,21 +149,23 @@ def compare_between_vms(x, y, context):
             print("WAKA", x_line)
             print("WAKA", y_line)
             # this is different, but maybe it's a vm difference we can ignore
-            LEI_LOGGING = 'LoggingExternalInterface logging'
+            LEI_LOGGING = '[LoggingExternalInterface logging'
             if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
                 x_val = x_line[len(LEI_LOGGING) + 1:-1]
                 y_val = y_line[len(LEI_LOGGING) + 1:-1]
-                print("SHAKA", x_val, y_val)
-                x_val += 'waka'
-                print('x val', x_val)
-                print('y val', y_val)
-                if eval(x_val) == eval(y_val):
+                if numbers_are_close_enough(x_val, y_val):
+                    continue
+            NOTE_RESULT = '[fuzz-exec] note result'
+            if x_line.startswith(NOTE_RESULT) and y_line.startswith(NOTE_RESULT):
+                x_val = x_line.split(' ')[-1]
+                y_val = y_line.split(' ')[-1]
+                if numbers_are_close_enough(x_val, y_val):
                     continue
 
             # this failed to compare. print a custom diff of the relevant lines
-            context = 3
-            start = max(i - context, 0)
-            end = min(i + context, num)
+            MARGIN = 3
+            start = max(i - MARGIN, 0)
+            end = min(i + MARGIN, num)
             return compare('\n'.join(x_lines[start:end]), '\n'.join(y_lines[start:end]), context)
 
 
@@ -166,16 +180,8 @@ def fix_output(out):
             x = str(float(x))
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
-
-    print('AN OUT')
-    print(out)
-    print('WAS OUT')
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
-    print('2AN OUT')
-    print(out)
-    print('2WAS OUT')
-
     # exceptions may differ when optimizing, but an exception should occur. so ignore their types
     # also js engines print them out slightly differently
     return '\n'.join(map(lambda x: '     *exception*' if 'exception' in x else x, out.splitlines()))
