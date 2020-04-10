@@ -8983,11 +8983,8 @@
    (i32.eqz
     (global.get $v)
    )
-   (block
-    (global.set $v
-     (local.get $0)
-    )
-    (nop)
+   (global.set $v
+    (local.get $0)
    )
   )
  )
@@ -9019,7 +9016,6 @@
   (global.set $r
    (local.get $0)
   )
-  (nop)
  )
  (func $nb (; has Stack IR ;) (param $0 i32) (result i32)
   (call $ja

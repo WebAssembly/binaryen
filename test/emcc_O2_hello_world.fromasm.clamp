@@ -8969,11 +8969,8 @@
    (i32.eqz
     (global.get $__THREW__)
    )
-   (block
-    (global.set $__THREW__
-     (local.get $0)
-    )
-    (nop)
+   (global.set $__THREW__
+    (local.get $0)
    )
   )
  )
@@ -8997,7 +8994,6 @@
   (global.set $STACKTOP
    (local.get $0)
   )
-  (nop)
  )
  (func $dynCall_vi (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_=>_none)

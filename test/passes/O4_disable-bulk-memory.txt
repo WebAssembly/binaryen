@@ -2,7 +2,6 @@
  (type $none_=>_none (func))
  (export "func_59_invoker" (func $0))
  (func $0 (; has Stack IR ;)
-  (nop)
   (unreachable)
  )
 )

@@ -115,11 +115,8 @@
    (i32.eqz
     (global.get $__THREW__)
    )
-   (block
-    (global.set $__THREW__
-     (local.get $0)
-    )
-    (nop)
+   (global.set $__THREW__
+    (local.get $0)
    )
   )
  )
