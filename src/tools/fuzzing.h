@@ -425,9 +425,7 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = getConcreteType();
       std::vector<Type> params;
-      params.push_back(type);
       Index numValues =
         wasm.features.hasMultivalue() ? upToSquared(MAX_PARAMS) : upTo(2);
       for (Index i = 0; i < numValues; i++) {
