@@ -24,11 +24,7 @@
 namespace wasm {
 
 class Type {
-  // enough for the limit of 1000 function arguments
-  static constexpr unsigned SIZE_BITS = 10;
-  static constexpr unsigned ID_BITS = 32 - SIZE_BITS;
-  unsigned id : ID_BITS;
-  unsigned _size : SIZE_BITS;
+  uintptr_t id;
   void init(const std::vector<Type>&);
 
 public:
@@ -44,20 +40,16 @@ public:
     anyref,
     nullref,
     exnref,
+    _last_value_type = exnref
   };
 
-private:
-  // Not in the enum because we don't want to have to have a case for it
-  static constexpr uint32_t last_value_type = exnref;
-
-public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
-  constexpr Type(ValueType id) : id(id), _size(id == none ? 0 : 1){};
+  constexpr Type(ValueType id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
-  explicit Type(uint32_t id);
+  explicit Type(uint64_t id) : id(id){};
 
   // Construct from lists of elementary types
   Type(std::initializer_list<Type> types);
@@ -68,8 +60,10 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  constexpr bool isSingle() const { return id >= i32 && id <= last_value_type; }
-  constexpr bool isMulti() const { return id > last_value_type; }
+  constexpr bool isSingle() const {
+    return id >= i32 && id <= _last_value_type;
+  }
+  constexpr bool isMulti() const { return id > _last_value_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
@@ -91,7 +85,7 @@ public:
   bool hasVector() { return hasPredicate<&Type::isVector>(); }
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
-  constexpr uint32_t getID() const { return id; }
+  constexpr uint64_t getID() const { return id; }
   constexpr ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");
     return static_cast<ValueType>(id);
