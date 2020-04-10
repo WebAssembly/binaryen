@@ -205,7 +205,25 @@ class TestCaseHandler:
 
 
 # Run VMs and compare results
+
+class VM:
+    def __init__(self, name, run, allows_nans):
+        self.name = name
+        self.run = run
+        self.allows_nans = allows_nans
+
+
 class CompareVMs(TestCaseHandler):
+    def __init__(self):
+        self.vms = [
+            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               allows_nans=True),
+            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), allows_nans=False),
+            # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
+            # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
+            # run(['../spec/interpreter/wasm', wasm])
+            # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', wasm, '-e', open(prefix + 'wat').read()]))]
+        ]
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'] + FEATURE_OPTS)
@@ -215,15 +233,8 @@ class CompareVMs(TestCaseHandler):
 
     def run_vms(self, js, wasm):
         results = []
-        results.append(fix_output(run_bynterp(wasm, ['--fuzz-exec-before'])))
-        results.append(fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm])))
-
-        # append to add results from VMs
-        # results += [fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]))]
-        # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
-        # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
-        # run(['../spec/interpreter/wasm', wasm])
-        # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', wasm, '-e', open(prefix + 'wat').read()]))]
+        for vm in self.vms:
+            results.append(fix_output(vm.run(js, wasm)))
 
         if len(results) == 0:
             results = [0]
@@ -234,16 +245,15 @@ class CompareVMs(TestCaseHandler):
         if not NANS and LEGALIZE:
             first = results[0]
             for i in range(len(results)):
-                compare(first, results[i], 'CompareVMs at ' + str(i))
+                compare(first, results[i], 'CompareVMs between VMs: ' + self.vms[0].name + ' and ' + self.vms[i].name)
 
         return results
 
     def compare_vs(self, before, after):
         for i in range(len(before)):
-            compare(before[i], after[i], 'CompareVMs at ' + str(i))
-            # with nans, we can only compare the binaryen interpreter to itself
-            if NANS:
-                break
+            vm = self.vms[i]
+            if vm.allows_nans:
+                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
