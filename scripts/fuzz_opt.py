@@ -125,13 +125,14 @@ def compare(x, y, context):
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
-    print("SHAKA", x, y)
-    print('x val', x)
-    print('y val', y)
-    x = eval(x)
-    y = eval(y)
-    # compare as both integers and floats, as they may be i64s or f32s/f64s
-    return x == y or float(x) == float(y)
+    try:
+        x = eval(x)
+        y = eval(y)
+        # compare as both integers and floats, as they may be i64s or f32s/f64s
+        return x == y or float(x) == float(y)
+    except Exception as e:
+        print('failed to check if numbers are close enough:', e)
+        return False
 
 
 # compare between vms, which may slightly change how numbers are printed
@@ -146,8 +147,6 @@ def compare_between_vms(x, y, context):
         x_line = x_lines[i]
         y_line = y_lines[i]
         if x_line != y_line:
-            print("WAKA", x_line)
-            print("WAKA", y_line)
             # this is different, but maybe it's a vm difference we can ignore
             LEI_LOGGING = '[LoggingExternalInterface logging'
             if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
