@@ -35,6 +35,10 @@ public:
   }
 };
 
+size_t std::hash<wasm::Type>::operator()(const wasm::Type& type) const {
+  return std::hash<uint32_t>{}(type.getID());
+}
+
 size_t std::hash<wasm::Signature>::
 operator()(const wasm::Signature& sig) const {
   return std::hash<uint64_t>{}(uint64_t(sig.params.getID()) << 32 |
@@ -92,6 +96,11 @@ void Type::init(const std::vector<Type>& types) {
   }
 #endif
 
+  if (types.size() >= (1 << SIZE_BITS)) {
+    WASM_UNREACHABLE("Type too large");
+  }
+  _size = types.size();
+
   auto lookup = [&]() {
     auto indexIt = indices.find(types);
     if (indexIt != indices.end()) {
@@ -115,6 +124,9 @@ void Type::init(const std::vector<Type>& types) {
     if (lookup()) {
       return;
     }
+    if (typeLists.size() >= (1 << ID_BITS)) {
+      WASM_UNREACHABLE("Too many types!");
+    }
     id = typeLists.size();
     typeLists.push_back(std::make_unique<std::vector<Type>>(types));
     indices[types] = id;
@@ -125,7 +137,18 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
 
-size_t Type::size() const { return expand().size(); }
+Type::Type(uint32_t _id) {
+  if (_id <= last_value_type) {
+    *this = Type(static_cast<ValueType>(_id));
+  } else {
+    id = _id;
+    // Unknown complex type; look up the size
+    std::shared_lock<std::shared_timed_mutex> lock(mutex);
+    _size = typeLists[id]->size();
+  }
+}
+
+size_t Type::size() const { return _size; }
 
 const std::vector<Type>& Type::expand() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex);
@@ -145,28 +168,37 @@ bool Type::operator<(const Type& other) const {
 }
 
 unsigned Type::getByteSize() const {
-  assert(isSingle() && "getByteSize does not works with single types");
-  Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
-    case Type::i32:
-      return 4;
-    case Type::i64:
-      return 8;
-    case Type::f32:
-      return 4;
-    case Type::f64:
-      return 8;
-    case Type::v128:
-      return 16;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
+  // TODO: alignment?
+  auto getSingleByteSize = [](Type t) {
+    switch (t.getSingle()) {
+      case Type::i32:
+      case Type::f32:
+        return 4;
+      case Type::i64:
+      case Type::f64:
+        return 8;
+      case Type::v128:
+        return 16;
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
+        break;
+    }
+    WASM_UNREACHABLE("invalid type");
+  };
+
+  if (isSingle()) {
+    return getSingleByteSize(*this);
   }
-  WASM_UNREACHABLE("invalid type");
+
+  unsigned size = 0;
+  for (auto t : expand()) {
+    size += getSingleByteSize(t);
+  }
+  return size;
 }
 
 Type Type::reinterpret() const {
@@ -194,21 +226,26 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  FeatureSet feats = FeatureSet::MVP;
-  for (Type t : expand()) {
+  auto getSingleFeatures = [](Type t) {
     switch (t.getSingle()) {
       case Type::v128:
-        feats |= FeatureSet::SIMD;
-        break;
+        return FeatureSet::SIMD;
       case Type::anyref:
-        feats |= FeatureSet::ReferenceTypes;
-        break;
+        return FeatureSet::ReferenceTypes;
       case Type::exnref:
-        feats |= FeatureSet::ExceptionHandling;
-        break;
+        return FeatureSet::ExceptionHandling;
       default:
-        break;
+        return FeatureSet::MVP;
     }
+  };
+
+  if (isSingle()) {
+    return getSingleFeatures(*this);
+  }
+
+  FeatureSet feats = FeatureSet::Multivalue;
+  for (Type t : expand()) {
+    feats |= getSingleFeatures(t);
   }
   return feats;
 }
@@ -229,7 +266,7 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::Type::isSubType(Type left, Type right) {
+bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
@@ -237,10 +274,23 @@ bool Type::Type::isSubType(Type left, Type right) {
       (right == Type::anyref || left == Type::nullref)) {
     return true;
   }
+  if (left.isMulti() && right.isMulti()) {
+    const auto& leftElems = left.expand();
+    const auto& rightElems = right.expand();
+    if (leftElems.size() != rightElems.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < leftElems.size(); ++i) {
+      if (!isSubType(leftElems[i], rightElems[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
   return false;
 }
 
-Type Type::Type::getLeastUpperBound(Type a, Type b) {
+Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
   }
@@ -250,8 +300,24 @@ Type Type::Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::unreachable) {
     return a;
   }
+  if (a.size() != b.size()) {
+    return Type::none; // a poison value that must not be consumed
+  }
+  if (a.isMulti()) {
+    std::vector<Type> types;
+    types.resize(a.size());
+    const auto& as = a.expand();
+    const auto& bs = b.expand();
+    for (size_t i = 0; i < types.size(); ++i) {
+      types[i] = getLeastUpperBound(as[i], bs[i]);
+      if (types[i] == Type::none) {
+        return Type::none;
+      }
+    }
+    return Type(types);
+  }
   if (!a.isRef() || !b.isRef()) {
-    return none; // a poison value that must not be consumed
+    return Type::none;
   }
   if (a == Type::nullref) {
     return b;

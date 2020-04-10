@@ -57,6 +57,28 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
+// Unlike the default format, tuple types in s-expressions should not have
+// commas.
+struct SExprType {
+  Type type;
+  SExprType(Type type) : type(type){};
+};
+
+static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
+  Type type = localType.type;
+  if (type.isMulti()) {
+    const std::vector<Type>& types = type.expand();
+    o << '(' << types[0];
+    for (size_t i = 1; i < types.size(); ++i) {
+      o << ' ' << types[i];
+    }
+    o << ')';
+    return o;
+  }
+  o << type;
+  return o;
+}
+
 // Wrapper for printing signature names
 struct SigName {
   Signature sig;
@@ -695,6 +717,9 @@ struct PrintExpressionContents
       case NotVec128:
         o << "v128.not";
         break;
+      case AbsVecI8x16:
+        o << "i8x16.abs";
+        break;
       case NegVecI8x16:
         o << "i8x16.neg";
         break;
@@ -703,6 +728,12 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI8x16:
         o << "i8x16.all_true";
+        break;
+      case BitmaskVecI8x16:
+        o << "i8x16.bitmask";
+        break;
+      case AbsVecI16x8:
+        o << "i16x8.abs";
         break;
       case NegVecI16x8:
         o << "i16x8.neg";
@@ -713,6 +744,12 @@ struct PrintExpressionContents
       case AllTrueVecI16x8:
         o << "i16x8.all_true";
         break;
+      case BitmaskVecI16x8:
+        o << "i16x8.bitmask";
+        break;
+      case AbsVecI32x4:
+        o << "i32x4.abs";
+        break;
       case NegVecI32x4:
         o << "i32x4.neg";
         break;
@@ -721,6 +758,9 @@ struct PrintExpressionContents
         break;
       case AllTrueVecI32x4:
         o << "i32x4.all_true";
+        break;
+      case BitmaskVecI32x4:
+        o << "i32x4.bitmask";
         break;
       case NegVecI64x2:
         o << "i64x2.neg";
@@ -1387,6 +1427,11 @@ struct PrintExpressionContents
     o << ".pop";
     restoreNormalColor(o);
   }
+  void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
+  void visitTupleExtract(TupleExtract* curr) {
+    printMedium(o, "tuple.extract ");
+    o << curr->index;
+  }
 };
 
 // Prints an expression in s-expr format, including both the
@@ -1409,8 +1454,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
   bool debugInfo;
-
-  std::unordered_map<Name, Index> functionIndexes;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
@@ -1440,11 +1483,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       // show a binary position, if there is one
       if (debugInfo) {
-        auto iter = currFunction->binaryLocations.find(curr);
-        if (iter != currFunction->binaryLocations.end()) {
+        auto iter = currFunction->expressionLocations.find(curr);
+        if (iter != currFunction->expressionLocations.end()) {
           Colors::grey(o);
-          o << ";; code offset: 0x" << std::hex << iter->second << std::dec
-            << '\n';
+          o << ";; code offset: 0x" << std::hex << iter->second.start
+            << std::dec << '\n';
           restoreNormalColor(o);
           doIndent(o, indent);
         }
@@ -1955,6 +1998,22 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
+  void visitTupleMake(TupleMake* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    decIndent();
+  }
+  void visitTupleExtract(TupleExtract* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->tuple);
+    decIndent();
+  }
   // Module-level visitors
   void handleSignature(Signature curr, Name* funcName = nullptr) {
     o << "(func";
@@ -2011,9 +2070,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
-      o << "(mut " << curr->type << ')';
+      o << "(mut " << SExprType(curr->type) << ')';
     } else {
-      o << curr->type;
+      o << SExprType(curr->type);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2063,14 +2122,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (currModule && !minify) {
-      // emit the function index in a comment
-      if (functionIndexes.empty()) {
-        ModuleUtils::BinaryIndexes indexes(*currModule);
-        functionIndexes = std::move(indexes.functionIndexes);
-      }
-      o << " (; " << functionIndexes[curr->name] << " ;)";
-    }
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
@@ -2093,7 +2144,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMinor(o, "local ");
-      printLocal(i, currFunction, o) << ' ' << curr->getLocalType(i) << ')';
+      printLocal(i, currFunction, o)
+        << ' ' << SExprType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
@@ -2278,6 +2330,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "\")" << maybeNewLine;
     }
   }
+  void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
+    doIndent(o, indent) << ";; dylink section\n";
+    doIndent(o, indent) << ";;   memorysize: " << dylinkSection->memorySize
+                        << '\n';
+    doIndent(o, indent) << ";;   memoryalignment: "
+                        << dylinkSection->memoryAlignment << '\n';
+    doIndent(o, indent) << ";;   tablesize: " << dylinkSection->tableSize
+                        << '\n';
+    doIndent(o, indent) << ";;   tablealignment: "
+                        << dylinkSection->tableAlignment << '\n';
+    for (auto& neededDynlib : dylinkSection->neededDynlibs) {
+      doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
+    }
+  }
   void visitModule(Module* curr) {
     currModule = curr;
     o << '(';
@@ -2326,6 +2392,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     ModuleUtils::iterDefinedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
+    if (curr->dylinkSection) {
+      printDylinkSection(curr->dylinkSection);
+    }
     for (auto& section : curr->userSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "

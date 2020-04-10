@@ -7,7 +7,7 @@
  (import "env" "an-imported-table-func" (func $imported_table_func))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "stackAlloc" (func $stackAlloc))
- (func $stackAlloc (; 2 ;)
+ (func $stackAlloc
   (drop
    (global.get $STACKTOP)
   )

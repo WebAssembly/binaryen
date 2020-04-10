@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 90)
+project(binaryen LANGUAGES C CXX VERSION 91)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -22,9 +22,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
                GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(${GIT_VERSION_RESULT})
-    message(FATAL_ERROR "Error running git describe to determine version")
+    message(WARNING "Error running git describe to determine version")
   else()
-    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
+    set(PROJECT_VERSION "${PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 
@@ -185,7 +185,7 @@ else()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_link_flag("-Wl,--stack,8388608")
-  else()
+  elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
   endif()
   add_debug_compile_flag("-O0")
@@ -225,10 +225,12 @@ if(EMSCRIPTEN)
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
-if(UNIX AND
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
-    CMAKE_GENERATOR STREQUAL "Ninja")
-  add_compile_flag("-fcolor-diagnostics")
+if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_flag("-fdiagnostics-color=always")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_flag("-fcolor-diagnostics")
+  endif()
 endif()
 
 # Static libraries
@@ -383,7 +385,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
-  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
@@ -405,7 +407,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
@@ -414,9 +416,6 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-  # always emit as 'binaryen.js'
-  set_target_properties(binaryen_wasm binaryen_js PROPERTIES OUTPUT_NAME "binaryen")
 endif()
 
 # Testing

@@ -1,0 +1,708 @@
+DWARF debug info
+================
+
+Contains section .debug_info (429 bytes)
+Contains section .debug_loc (199 bytes)
+Contains section .debug_ranges (24 bytes)
+Contains section .debug_abbrev (337 bytes)
+Contains section .debug_line (438 bytes)
+Contains section .debug_str (364 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_location	DW_FORM_exprloc
+
+[3] DW_TAG_structure_type	DW_CHILDREN_yes
+	DW_AT_calling_convention	DW_FORM_data1
+	DW_AT_name	DW_FORM_strp
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+
+[4] DW_TAG_member	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_data_member_location	DW_FORM_data1
+	DW_AT_accessibility	DW_FORM_data1
+
+[5] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_declaration	DW_FORM_flag_present
+	DW_AT_external	DW_FORM_flag_present
+
+[6] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_artificial	DW_FORM_flag_present
+
+[7] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_linkage_name	DW_FORM_strp
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_declaration	DW_FORM_flag_present
+	DW_AT_external	DW_FORM_flag_present
+
+[8] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+
+[9] DW_TAG_enumeration_type	DW_CHILDREN_yes
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_byte_size	DW_FORM_data1
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+
+[10] DW_TAG_enumerator	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_const_value	DW_FORM_udata
+
+[11] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+[12] DW_TAG_pointer_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+
+[13] DW_TAG_namespace	DW_CHILDREN_yes
+	DW_AT_name	DW_FORM_strp
+
+[14] DW_TAG_typedef	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+
+[15] DW_TAG_unspecified_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+
+[16] DW_TAG_imported_declaration	DW_CHILDREN_no
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_import	DW_FORM_ref4
+
+[17] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_specification	DW_FORM_ref4
+	DW_AT_inline	DW_FORM_data1
+	DW_AT_object_pointer	DW_FORM_ref4
+
+[18] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_artificial	DW_FORM_flag_present
+
+[19] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[20] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[21] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[22] DW_TAG_lexical_block	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[23] DW_TAG_inlined_subroutine	DW_CHILDREN_yes
+	DW_AT_abstract_origin	DW_FORM_ref4
+	DW_AT_ranges	DW_FORM_sec_offset
+	DW_AT_call_file	DW_FORM_data1
+	DW_AT_call_line	DW_FORM_data1
+	DW_AT_call_column	DW_FORM_data1
+
+[24] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_abstract_origin	DW_FORM_ref4
+
+[25] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_abstract_origin	DW_FORM_ref4
+
+[26] DW_TAG_inlined_subroutine	DW_CHILDREN_yes
+	DW_AT_abstract_origin	DW_FORM_ref4
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_call_file	DW_FORM_data1
+	DW_AT_call_line	DW_FORM_data1
+	DW_AT_call_column	DW_FORM_data1
+
+[27] DW_TAG_GNU_call_site	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x000001a9 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x000001ad)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 11.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project d6fe253653b7e760f94ca21d0a7ebbfeeee28777)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000c1] = "/tmp/emscripten_test_wasm3_2u9tontv")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000006)
+              DW_AT_high_pc [DW_FORM_data4]	(0x000000a6)
+
+0x00000026:   DW_TAG_variable [2]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e5] = "rng1")
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0037 => {0x00000037} "Random")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(23)
+                DW_AT_location [DW_FORM_exprloc]	(DW_OP_addr 0x638)
+
+0x00000037:   DW_TAG_structure_type [3] *
+                DW_AT_calling_convention [DW_FORM_data1]	(DW_CC_pass_by_value)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000fc] = "Random")
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(9)
+
+0x00000040:     DW_TAG_member [4]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ea] = "last")
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0095 => {0x00000095} "unsigned int")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(22)
+                  DW_AT_data_member_location [DW_FORM_data1]	(0x00)
+                  DW_AT_accessibility [DW_FORM_data1]	(DW_ACCESS_protected)
+
+0x0000004d:     DW_TAG_subprogram [5] *
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000fc] = "Random")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(15)
+                  DW_AT_declaration [DW_FORM_flag_present]	(true)
+                  DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000054:       DW_TAG_formal_parameter [6]  
+                    DW_AT_type [DW_FORM_ref4]	(cu + 0x009c => {0x0000009c} "Random*")
+                    DW_AT_artificial [DW_FORM_flag_present]	(true)
+
+0x00000059:       NULL
+
+0x0000005a:     DW_TAG_subprogram [7] *
+                  DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x00000103] = "_ZN6Random3getEf")
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000114] = "get")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(16)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a1 => {0x000000a1} "float")
+                  DW_AT_declaration [DW_FORM_flag_present]	(true)
+                  DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000069:       DW_TAG_formal_parameter [6]  
+                    DW_AT_type [DW_FORM_ref4]	(cu + 0x009c => {0x0000009c} "Random*")
+                    DW_AT_artificial [DW_FORM_flag_present]	(true)
+
+0x0000006e:       DW_TAG_formal_parameter [8]  
+                    DW_AT_type [DW_FORM_ref4]	(cu + 0x00a1 => {0x000000a1} "float")
+
+0x00000073:       NULL
+
+0x00000074:     DW_TAG_enumeration_type [9] *
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0095 => {0x00000095} "unsigned int")
+                  DW_AT_byte_size [DW_FORM_data1]	(0x04)
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(10)
+
+0x0000007c:       DW_TAG_enumerator [10]  
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000011e] = "IM")
+                    DW_AT_const_value [DW_FORM_udata]	(139968)
+
+0x00000084:       DW_TAG_enumerator [10]  
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000121] = "IA")
+                    DW_AT_const_value [DW_FORM_udata]	(3877)
+
+0x0000008b:       DW_TAG_enumerator [10]  
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000124] = "IC")
+                    DW_AT_const_value [DW_FORM_udata]	(29573)
+
+0x00000093:       NULL
+
+0x00000094:     NULL
+
+0x00000095:   DW_TAG_base_type [11]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ef] = "unsigned int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_unsigned)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x0000009c:   DW_TAG_pointer_type [12]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0037 => {0x00000037} "Random")
+
+0x000000a1:   DW_TAG_base_type [11]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000118] = "float")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_float)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x000000a8:   DW_TAG_namespace [13] *
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000127] = "std")
+
+0x000000ad:     DW_TAG_typedef [14]  
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00b9 => {0x000000b9} "decltype(nullptr)")
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000013d] = "nullptr_t")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/system/include/libcxx/__nullptr")
+                  DW_AT_decl_line [DW_FORM_data1]	(57)
+
+0x000000b8:     NULL
+
+0x000000b9:   DW_TAG_unspecified_type [15]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000012b] = "decltype(nullptr)")
+
+0x000000be:   DW_TAG_imported_declaration [16]  
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/system/include/libcxx/stddef.h")
+                DW_AT_decl_line [DW_FORM_data1]	(52)
+                DW_AT_import [DW_FORM_ref4]	(cu + 0x00ad => {0x000000ad})
+
+0x000000c5:   DW_TAG_subprogram [17] *
+                DW_AT_specification [DW_FORM_ref4]	(cu + 0x005a => {0x0000005a} "_ZN6Random3getEf")
+                DW_AT_inline [DW_FORM_data1]	(DW_INL_inlined)
+                DW_AT_object_pointer [DW_FORM_ref4]	(cu + 0x00cf => {0x000000cf})
+
+0x000000cf:     DW_TAG_formal_parameter [18]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000147] = "this")
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00e4 => {0x000000e4} "Random*")
+                  DW_AT_artificial [DW_FORM_flag_present]	(true)
+
+0x000000d8:     DW_TAG_formal_parameter [19]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000014c] = "max")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(16)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a1 => {0x000000a1} "float")
+
+0x000000e3:     NULL
+
+0x000000e4:   DW_TAG_pointer_type [12]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0037 => {0x00000037} "Random")
+
+0x000000e9:   DW_TAG_subprogram [20] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000006)
+                DW_AT_high_pc [DW_FORM_data4]	(0x000000a6)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000150] = "main")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(24)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x01a5 => {0x000001a5} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000101:     DW_TAG_variable [21]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0x00000018,  0x00000020): DW_OP_constu 0x2a, DW_OP_stack_value
+                     [0x00000007,  0x00000007): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000159] = "rng2")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(25)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0037 => {0x00000037} "Random")
+
+0x00000110:     DW_TAG_variable [21]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000023: 
+                     [0x00000018,  0x00000020): DW_OP_consts +0, DW_OP_stack_value
+                     [0x00000085,  0x00000092): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000015e] = "count")
+                  DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(26)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x01a5 => {0x000001a5} "int")
+
+0x0000011f:     DW_TAG_lexical_block [22] *
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000026)
+                  DW_AT_high_pc [DW_FORM_data4]	(0xffffffda)
+
+0x00000128:       DW_TAG_variable [21]  
+                    DW_AT_location [DW_FORM_sec_offset]	(0x00000046: 
+                       [0x00000018,  0x00000020): DW_OP_consts +0, DW_OP_stack_value
+                       [0x00000007,  0x00000007): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
+                    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000164] = "i")
+                    DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                    DW_AT_decl_line [DW_FORM_data1]	(27)
+                    DW_AT_type [DW_FORM_ref4]	(cu + 0x01a5 => {0x000001a5} "int")
+
+0x00000137:       DW_TAG_lexical_block [22] *
+                    DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000026)
+                    DW_AT_high_pc [DW_FORM_data4]	(0x0000005f)
+
+0x00000140:         DW_TAG_variable [21]  
+                      DW_AT_location [DW_FORM_sec_offset]	(0x0000009b: 
+                         [0x00000007,  0x00000007): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value)
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000166] = "x2")
+                      DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                      DW_AT_decl_line [DW_FORM_data1]	(29)
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x00a1 => {0x000000a1} "float")
+
+0x0000014f:         DW_TAG_variable [21]  
+                      DW_AT_location [DW_FORM_sec_offset]	(0x000000b1: 
+                         [0x00000007,  0x00000007): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
+                      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000169] = "x1")
+                      DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                      DW_AT_decl_line [DW_FORM_data1]	(28)
+                      DW_AT_type [DW_FORM_ref4]	(cu + 0x00a1 => {0x000000a1} "float")
+
+0x0000015e:         DW_TAG_inlined_subroutine [23] *
+                      DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00c5 => {0x000000c5} "_ZN6Random3getEf")
+                      DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
+                         [0x00000006, 0x00000007)
+                         [0x00000061, 0x0000006a))
+                      DW_AT_call_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                      DW_AT_call_line [DW_FORM_data1]	(28)
+                      DW_AT_call_column [DW_FORM_data1]	(0x15)
+
+0x0000016a:           DW_TAG_formal_parameter [24]  
+                        DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00cf => {0x000000cf} "this")
+
+0x0000016f:           DW_TAG_formal_parameter [25]  
+                        DW_AT_location [DW_FORM_sec_offset]	(0x00000069: 
+                           [0x00000022,  0x00000092): DW_OP_constu 0x3f800000, DW_OP_stack_value)
+                        DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00d8 => {0x000000d8} "max")
+
+0x00000178:           NULL
+
+0x00000179:         DW_TAG_inlined_subroutine [26] *
+                      DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00c5 => {0x000000c5} "_ZN6Random3getEf")
+                      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000040)
+                      DW_AT_high_pc [DW_FORM_data4]	(0x00000019)
+                      DW_AT_call_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm3_2u9tontv/src.cpp")
+                      DW_AT_call_line [DW_FORM_data1]	(29)
+                      DW_AT_call_column [DW_FORM_data1]	(0x15)
+
+0x00000189:           DW_TAG_formal_parameter [24]  
+                        DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00cf => {0x000000cf} "this")
+
+0x0000018e:           DW_TAG_formal_parameter [25]  
+                        DW_AT_location [DW_FORM_sec_offset]	(0x00000082: 
+                           [0x00000007,  0x00000007): DW_OP_constu 0x3f800000, DW_OP_stack_value)
+                        DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x00d8 => {0x000000d8} "max")
+
+0x00000197:           NULL
+
+0x00000198:         NULL
+
+0x00000199:       NULL
+
+0x0000019a:     DW_TAG_GNU_call_site [27]  
+                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000007a)
+
+0x0000019f:     DW_TAG_GNU_call_site [27]  
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000000000a1)
+
+0x000001a4:     NULL
+
+0x000001a5:   DW_TAG_base_type [11]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000155] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x000001ac:   NULL
+
+.debug_loc contents:
+0x00000000: 
+            [0x00000012,  0x0000001a): DW_OP_constu 0x2a, DW_OP_stack_value
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+
+0x00000023: 
+            [0x00000012,  0x0000001a): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000007f,  0x0000008c): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
+
+0x00000046: 
+            [0x00000012,  0x0000001a): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
+
+0x00000069: 
+            [0x0000001c,  0x0000008c): DW_OP_constu 0x3f800000, DW_OP_stack_value
+
+0x00000082: 
+            [0x00000001,  0x00000001): DW_OP_constu 0x3f800000, DW_OP_stack_value
+
+0x0000009b: 
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value
+
+0x000000b1: 
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x000001b2
+         version: 4
+ prologue_length: 0x0000007b
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  1] = "/usr/local/google/home/azakai/Dev/emscripten/system/include/libcxx"
+file_names[  1]:
+           name: "src.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  2]:
+           name: "__nullptr"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+file_names[  3]:
+           name: "stddef.h"
+      dir_index: 1
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000085: 00 DW_LNE_set_address (0x0000000000000006)
+0x0000008c: 03 DW_LNS_advance_line (24)
+0x0000008e: 01 DW_LNS_copy
+            0x0000000000000006     24      0      1   0             0  is_stmt
+
+
+0x0000008f: 00 DW_LNE_set_address (0x0000000000000026)
+0x00000096: 03 DW_LNS_advance_line (17)
+0x00000098: 05 DW_LNS_set_column (13)
+0x0000009a: 0a DW_LNS_set_prologue_end
+0x0000009b: 01 DW_LNS_copy
+            0x0000000000000026     17     13      1   0             0  is_stmt prologue_end
+
+
+0x0000009c: 00 DW_LNE_set_address (0x000000000000002d)
+0x000000a3: 05 DW_LNS_set_column (18)
+0x000000a5: 06 DW_LNS_negate_stmt
+0x000000a6: 01 DW_LNS_copy
+            0x000000000000002d     17     18      1   0             0 
+
+
+0x000000a7: 00 DW_LNE_set_address (0x0000000000000032)
+0x000000ae: 05 DW_LNS_set_column (23)
+0x000000b0: 01 DW_LNS_copy
+            0x0000000000000032     17     23      1   0             0 
+
+
+0x000000b1: 00 DW_LNE_set_address (0x0000000000000037)
+0x000000b8: 05 DW_LNS_set_column (29)
+0x000000ba: 01 DW_LNS_copy
+            0x0000000000000037     17     29      1   0             0 
+
+
+0x000000bb: 00 DW_LNE_set_address (0x0000000000000038)
+0x000000c2: 05 DW_LNS_set_column (10)
+0x000000c4: 01 DW_LNS_copy
+            0x0000000000000038     17     10      1   0             0 
+
+
+0x000000c5: 00 DW_LNE_set_address (0x000000000000003e)
+0x000000cc: 03 DW_LNS_advance_line (30)
+0x000000ce: 05 DW_LNS_set_column (5)
+0x000000d0: 06 DW_LNS_negate_stmt
+0x000000d1: 01 DW_LNS_copy
+            0x000000000000003e     30      5      1   0             0  is_stmt
+
+
+0x000000d2: 00 DW_LNE_set_address (0x0000000000000040)
+0x000000d9: 03 DW_LNS_advance_line (17)
+0x000000db: 05 DW_LNS_set_column (18)
+0x000000dd: 01 DW_LNS_copy
+            0x0000000000000040     17     18      1   0             0  is_stmt
+
+
+0x000000de: 00 DW_LNE_set_address (0x000000000000004a)
+0x000000e5: 05 DW_LNS_set_column (23)
+0x000000e7: 06 DW_LNS_negate_stmt
+0x000000e8: 01 DW_LNS_copy
+            0x000000000000004a     17     23      1   0             0 
+
+
+0x000000e9: 00 DW_LNE_set_address (0x000000000000004f)
+0x000000f0: 05 DW_LNS_set_column (29)
+0x000000f2: 01 DW_LNS_copy
+            0x000000000000004f     17     29      1   0             0 
+
+
+0x000000f3: 00 DW_LNE_set_address (0x0000000000000050)
+0x000000fa: 03 DW_LNS_advance_line (18)
+0x000000fc: 05 DW_LNS_set_column (18)
+0x000000fe: 06 DW_LNS_negate_stmt
+0x000000ff: 01 DW_LNS_copy
+            0x0000000000000050     18     18      1   0             0  is_stmt
+
+
+0x00000100: 00 DW_LNE_set_address (0x0000000000000058)
+0x00000107: 05 DW_LNS_set_column (23)
+0x00000109: 06 DW_LNS_negate_stmt
+0x0000010a: 01 DW_LNS_copy
+            0x0000000000000058     18     23      1   0             0 
+
+
+0x0000010b: 00 DW_LNE_set_address (0x0000000000000059)
+0x00000112: 03 DW_LNS_advance_line (30)
+0x00000114: 05 DW_LNS_set_column (28)
+0x00000116: 06 DW_LNS_negate_stmt
+0x00000117: 01 DW_LNS_copy
+            0x0000000000000059     30     28      1   0             0  is_stmt
+
+
+0x00000118: 00 DW_LNE_set_address (0x000000000000005c)
+0x0000011f: 05 DW_LNS_set_column (5)
+0x00000121: 06 DW_LNS_negate_stmt
+0x00000122: 01 DW_LNS_copy
+            0x000000000000005c     30      5      1   0             0 
+
+
+0x00000123: 00 DW_LNE_set_address (0x0000000000000061)
+0x0000012a: 03 DW_LNS_advance_line (18)
+0x0000012c: 05 DW_LNS_set_column (18)
+0x0000012e: 06 DW_LNS_negate_stmt
+0x0000012f: 01 DW_LNS_copy
+            0x0000000000000061     18     18      1   0             0  is_stmt
+
+
+0x00000130: 00 DW_LNE_set_address (0x0000000000000069)
+0x00000137: 05 DW_LNS_set_column (23)
+0x00000139: 06 DW_LNS_negate_stmt
+0x0000013a: 01 DW_LNS_copy
+            0x0000000000000069     18     23      1   0             0 
+
+
+0x0000013b: 00 DW_LNE_set_address (0x000000000000006a)
+0x00000142: 03 DW_LNS_advance_line (30)
+0x00000144: 05 DW_LNS_set_column (24)
+0x00000146: 06 DW_LNS_negate_stmt
+0x00000147: 01 DW_LNS_copy
+            0x000000000000006a     30     24      1   0             0  is_stmt
+
+
+0x00000148: 00 DW_LNE_set_address (0x000000000000006d)
+0x0000014f: 05 DW_LNS_set_column (5)
+0x00000151: 06 DW_LNS_negate_stmt
+0x00000152: 01 DW_LNS_copy
+            0x000000000000006d     30      5      1   0             0 
+
+
+0x00000153: 00 DW_LNE_set_address (0x000000000000007b)
+0x0000015a: 03 DW_LNS_advance_line (31)
+0x0000015c: 05 DW_LNS_set_column (9)
+0x0000015e: 06 DW_LNS_negate_stmt
+0x0000015f: 01 DW_LNS_copy
+            0x000000000000007b     31      9      1   0             0  is_stmt
+
+
+0x00000160: 00 DW_LNE_set_address (0x000000000000007d)
+0x00000167: 05 DW_LNS_set_column (12)
+0x00000169: 06 DW_LNS_negate_stmt
+0x0000016a: 01 DW_LNS_copy
+            0x000000000000007d     31     12      1   0             0 
+
+
+0x0000016b: 00 DW_LNE_set_address (0x0000000000000082)
+0x00000172: 05 DW_LNS_set_column (9)
+0x00000174: 01 DW_LNS_copy
+            0x0000000000000082     31      9      1   0             0 
+
+
+0x00000175: 00 DW_LNE_set_address (0x0000000000000085)
+0x0000017c: 03 DW_LNS_advance_line (27)
+0x0000017e: 05 DW_LNS_set_column (29)
+0x00000180: 06 DW_LNS_negate_stmt
+0x00000181: 01 DW_LNS_copy
+            0x0000000000000085     27     29      1   0             0  is_stmt
+
+
+0x00000182: 00 DW_LNE_set_address (0x000000000000008f)
+0x00000189: 05 DW_LNS_set_column (21)
+0x0000018b: 06 DW_LNS_negate_stmt
+0x0000018c: 01 DW_LNS_copy
+            0x000000000000008f     27     21      1   0             0 
+
+
+0x0000018d: 00 DW_LNE_set_address (0x0000000000000090)
+0x00000194: 05 DW_LNS_set_column (3)
+0x00000196: 01 DW_LNS_copy
+            0x0000000000000090     27      3      1   0             0 
+
+
+0x00000197: 00 DW_LNE_set_address (0x0000000000000093)
+0x0000019e: 03 DW_LNS_advance_line (33)
+0x000001a0: 06 DW_LNS_negate_stmt
+0x000001a1: 01 DW_LNS_copy
+            0x0000000000000093     33      3      1   0             0  is_stmt
+
+
+0x000001a2: 00 DW_LNE_set_address (0x00000000000000a2)
+0x000001a9: 03 DW_LNS_advance_line (34)
+0x000001ab: 01 DW_LNS_copy
+            0x00000000000000a2     34      3      1   0             0  is_stmt
+
+
+0x000001ac: 00 DW_LNE_set_address (0x00000000000000ac)
+0x000001b3: 00 DW_LNE_end_sequence
+            0x00000000000000ac     34      3      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 11.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project d6fe253653b7e760f94ca21d0a7ebbfeeee28777)"
+0x00000095: "/tmp/emscripten_test_wasm3_2u9tontv/src.cpp"
+0x000000c1: "/tmp/emscripten_test_wasm3_2u9tontv"
+0x000000e5: "rng1"
+0x000000ea: "last"
+0x000000ef: "unsigned int"
+0x000000fc: "Random"
+0x00000103: "_ZN6Random3getEf"
+0x00000114: "get"
+0x00000118: "float"
+0x0000011e: "IM"
+0x00000121: "IA"
+0x00000124: "IC"
+0x00000127: "std"
+0x0000012b: "decltype(nullptr)"
+0x0000013d: "nullptr_t"
+0x00000147: "this"
+0x0000014c: "max"
+0x00000150: "main"
+0x00000155: "int"
+0x00000159: "rng2"
+0x0000015e: "count"
+0x00000164: "i"
+0x00000166: "x2"
+0x00000169: "x1"
+
+.debug_ranges contents:
+00000000 00000000 00000001
+00000000 0000005b 00000064
+00000000 <End of list>

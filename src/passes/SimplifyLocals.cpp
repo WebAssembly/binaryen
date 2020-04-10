@@ -78,8 +78,10 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item, PassOptions& passOptions)
-      : item(item), effects(passOptions, *item) {}
+    SinkableInfo(Expression** item,
+                 PassOptions& passOptions,
+                 FeatureSet features)
+      : item(item), effects(passOptions, features, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -298,7 +300,7 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -384,7 +386,8 @@ struct SimplifyLocals
       }
     }
 
-    EffectAnalyzer effects(self->getPassOptions());
+    FeatureSet features = self->getModule()->features;
+    EffectAnalyzer effects(self->getPassOptions(), features);
     if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
@@ -392,8 +395,8 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(
-        std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
+      self->sinkables.emplace(std::make_pair(
+        index, SinkableInfo(currp, self->getPassOptions(), features)));
     }
 
     if (!allowNesting) {
@@ -504,6 +507,7 @@ struct SimplifyLocals
     //   )
     //  )
     // so we must check for that.
+    FeatureSet features = this->getModule()->features;
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
@@ -520,8 +524,9 @@ struct SimplifyLocals
             // itself, there is any risk
             Nop nop;
             *breakLocalSetPointer = &nop;
-            EffectAnalyzer condition(this->getPassOptions(), br->condition);
-            EffectAnalyzer value(this->getPassOptions(), set);
+            EffectAnalyzer condition(
+              this->getPassOptions(), features, br->condition);
+            EffectAnalyzer value(this->getPassOptions(), features, set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
@@ -994,7 +999,9 @@ struct SimplifyLocals
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
+    UnneededSetRemover setRemover(
+      getCounter, func, this->getPassOptions(), this->getModule()->features);
+    setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;
   }

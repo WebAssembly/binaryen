@@ -319,6 +319,8 @@ public:
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -386,6 +388,11 @@ void FunctionValidator::noteLabelName(Name name) {
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
+  if (!getModule()->features.hasMultivalue()) {
+    shouldBeTrue(!curr->type.isMulti(),
+                 curr,
+                 "Multivalue block type (multivalue is not enabled)");
+  }
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
     noteLabelName(curr->name);
@@ -1682,6 +1689,9 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
     case NotVec128:
+    case AbsVecI8x16:
+    case AbsVecI16x8:
+    case AbsVecI32x4:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -1713,17 +1723,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
     case AnyTrueVecI8x16:
-    case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
-    case AllTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
+    case AllTrueVecI8x16:
+    case AllTrueVecI16x8:
+    case AllTrueVecI32x4:
     case AllTrueVecI64x2:
-      shouldBeEqual(curr->type,
-                    Type(Type::i32),
-                    curr,
-                    "expected boolean reduction to have i32 type");
+    case BitmaskVecI8x16:
+    case BitmaskVecI16x8:
+    case BitmaskVecI32x4:
+      shouldBeEqual(curr->type, Type(Type::i32), curr, "expected i32 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
@@ -1744,6 +1754,14 @@ void FunctionValidator::visitSelect(Select* curr) {
                  curr->condition->type == Type::i32,
                curr,
                "select condition must be valid");
+  if (curr->ifTrue->type != Type::unreachable) {
+    shouldBeTrue(
+      curr->ifTrue->type.isSingle(), curr, "select value may not be a tuple");
+  }
+  if (curr->ifFalse->type != Type::unreachable) {
+    shouldBeTrue(
+      curr->ifFalse->type.isSingle(), curr, "select value may not be a tuple");
+  }
   if (curr->type != Type::unreachable) {
     shouldBeTrue(Type::isSubType(curr->ifTrue->type, curr->type),
                  curr,
@@ -1887,10 +1905,55 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   }
 }
 
+void FunctionValidator::visitTupleMake(TupleMake* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
+  std::vector<Type> types;
+  for (auto* op : curr->operands) {
+    if (op->type == Type::unreachable) {
+      shouldBeTrue(
+        curr->type == Type::unreachable,
+        curr,
+        "If tuple.make has an unreachable operand, it must be unreachable");
+      return;
+    }
+    types.push_back(op->type);
+  }
+  shouldBeSubType(Type(types),
+                  curr->type,
+                  curr,
+                  "Type of tuple.make does not match types of its operands");
+}
+
+void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
+  shouldBeTrue(getModule()->features.hasMultivalue(),
+               curr,
+               "Tuples are not allowed unless multivalue is enabled");
+  if (curr->tuple->type == Type::unreachable) {
+    shouldBeTrue(
+      curr->type == Type::unreachable,
+      curr,
+      "If tuple.extract has an unreachable operand, it must be unreachable");
+  } else {
+    bool inBounds = curr->index < curr->tuple->type.size();
+    shouldBeTrue(inBounds, curr, "tuple.extract index out of bounds");
+    if (inBounds) {
+      shouldBeSubType(
+        curr->tuple->type.expand()[curr->index],
+        curr->type,
+        curr,
+        "tuple.extract type does not match the type of the extracted element");
+    }
+  }
+}
+
 void FunctionValidator::visitFunction(Function* curr) {
-  shouldBeTrue(!curr->sig.results.isMulti(),
-               curr->body,
-               "Multivalue functions not allowed yet");
+  if (curr->sig.results.isMulti()) {
+    shouldBeTrue(getModule()->features.hasMultivalue(),
+                 curr->body,
+                 "Multivalue function results (multivalue is not enabled)");
+  }
   FeatureSet features;
   for (auto type : curr->sig.params.expand()) {
     features |= type.getFeatures();
@@ -2053,6 +2116,12 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
+    if (curr->sig.results.isMulti()) {
+      info.shouldBeTrue(module.features.hasMultivalue(),
+                        curr->name,
+                        "Imported multivalue function "
+                        "(multivalue is not enabled)");
+    }
     if (info.validateWeb) {
       for (Type param : curr->sig.params.expand()) {
         info.shouldBeUnequal(param,
@@ -2068,12 +2137,14 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
     }
   });
-  if (!module.features.hasMutableGlobals()) {
-    ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
+  ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
+    if (!module.features.hasMutableGlobals()) {
       info.shouldBeFalse(
         curr->mutable_, curr->name, "Imported global cannot be mutable");
-    });
-  }
+    }
+    info.shouldBeTrue(
+      curr->type.isSingle(), curr->name, "Imported global cannot be tuple");
+  });
 }
 
 static void validateExports(Module& module, ValidationInfo& info) {
@@ -2095,11 +2166,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
                                "Exported function must not have i64 results");
         }
       }
-    } else if (curr->kind == ExternalKind::Global &&
-               !module.features.hasMutableGlobals()) {
+    } else if (curr->kind == ExternalKind::Global) {
       if (Global* g = module.getGlobalOrNull(curr->value)) {
-        info.shouldBeFalse(
-          g->mutable_, g->name, "Exported global cannot be mutable");
+        if (!module.features.hasMutableGlobals()) {
+          info.shouldBeFalse(
+            g->mutable_, g->name, "Exported global cannot be mutable");
+        }
+        info.shouldBeTrue(
+          g->type.isSingle(), g->name, "Exported global cannot be tuple");
       }
     }
   }
@@ -2252,6 +2326,11 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                        Type(Type::none),
                        curr->name,
                        "Event type's result type should be none");
+    if (curr->sig.params.isMulti()) {
+      info.shouldBeTrue(module.features.hasMultivalue(),
+                        curr->name,
+                        "Multivalue event type (multivalue is not enabled)");
+    }
     for (auto type : curr->sig.params.expand()) {
       info.shouldBeTrue(type.isConcrete(),
                         curr->name,

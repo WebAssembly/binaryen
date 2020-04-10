@@ -457,7 +457,7 @@ private:
   void allocateGlobal(IString name, Type type, Literal value = Literal()) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     if (value.type == Type::none) {
-      value = Literal::makeZero(type);
+      value = Literal::makeSingleZero(type);
     }
     mappedGlobals.emplace(name, MappedGlobal(type));
     wasm.addGlobal(builder.makeGlobal(
@@ -1363,6 +1363,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
+    // Now that we have a full module, do memory packing optimizations
+    {
+      PassRunner passRunner(&wasm, passOptions);
+      passRunner.options.lowMemoryUnused = true;
+      passRunner.add("memory-packing");
+      passRunner.run();
+    }
     // if we added any helper functions (like non-trapping i32-div, etc.), then
     // those have not been optimized (the optimizing builder has just been fed
     // the asm.js functions). Optimize those now. Typically there are very few,
@@ -3244,6 +3251,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         (bytes == 1 && ptr->isArray(BINARY) && ptr[1] == OR &&
          ptr[3]->isNumber() && ptr[3]->getInteger() == 0)) {
       return process(ptr[2]);
+    }
+    // If there is no shift at all, process the variable directly
+    // E.g. the address variable "$4" in Atomics_compareExchange(HEAP8, $4, $7,
+    // $8);
+    if (ptr->isString()) {
+      return process(ptr);
     }
     // Otherwise do the same as processUnshifted.
     return processUnshifted(ptr, bytes);

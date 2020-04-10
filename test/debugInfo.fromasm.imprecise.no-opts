@@ -14,7 +14,7 @@
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
  (export "inlineInto" (func $inlineInto))
- (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
+ (func $add (param $x i32) (param $y i32) (result i32)
   ;;@ tests/hello_world.c:5:0
   (local.set $x
    (local.get $x)
@@ -34,7 +34,7 @@
    )
   )
  )
- (func $ret (; 1 ;) (param $x i32) (result i32)
+ (func $ret (param $x i32) (result i32)
   ;;@ return.cpp:50:0
   (local.set $x
    (i32.shl
@@ -50,7 +50,7 @@
    )
   )
  )
- (func $opts (; 2 ;) (param $x i32) (param $y i32) (result i32)
+ (func $opts (param $x i32) (param $y i32) (result i32)
   ;;@ even-opted.cpp:1:0
   (local.set $x
    (i32.add
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $fib (; 3 ;) (param $$0 i32) (result i32)
+ (func $fib (param $$0 i32) (result i32)
   (local $$$0$lcssa i32)
   (local $$$01518 i32)
   (local $$$01518$phi i32)
@@ -177,7 +177,7 @@
    (local.get $$$0$lcssa)
   )
  )
- (func $switch_reach (; 4 ;) (param $$p i32) (result i32)
+ (func $switch_reach (param $$p i32) (result i32)
   (local $$0 i32)
   (local $$call i32)
   (local $$magic i32)
@@ -274,11 +274,11 @@
    (local.get $$rc$0)
   )
  )
- (func $nofile (; 5 ;)
+ (func $nofile
   ;;@ (unknown):1337:0
   (call $nofile)
  )
- (func $inlineMe (; 6 ;) (param $x i32) (param $y i32) (result i32)
+ (func $inlineMe (param $x i32) (param $y i32) (result i32)
   ;;@ inline_me.c:120:0
   (local.set $x
    (i32.add
@@ -305,7 +305,7 @@
    (local.get $x)
   )
  )
- (func $inlineInto (; 7 ;) (param $x i32) (param $y i32) (result i32)
+ (func $inlineInto (param $x i32) (param $y i32) (result i32)
   ;;@ inline_me.c:125:0
   (return
    (call $inlineMe

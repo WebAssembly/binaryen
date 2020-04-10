@@ -79,6 +79,7 @@ struct ToolOptions : public Options {
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
       .addFeature(FeatureSet::ReferenceTypes, "reference types")
+      .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",

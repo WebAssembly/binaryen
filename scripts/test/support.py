@@ -189,10 +189,12 @@ def node_has_webassembly(cmd):
     return run_command(cmd) == 'object'
 
 
-def node_test_glue():
-    # running concatenated files (a.js) in node interferes with module loading
-    # because the concatenated file expects a 'var Binaryen' but binaryen.js
-    # assigned to module.exports. this is correct behavior but tests then need
-    # a workaround:
-    return ('if (typeof module === "object" && typeof exports === "object")\n'
-            '    Binaryen = module.exports;\n')
+def js_test_wrap():
+    # common wrapper code for JS tests, waiting for binaryen.js to become ready
+    # and providing common utility used by all tests:
+    return '''
+        binaryen.ready.then(function() {
+            function assert(x) { if (!x) throw Error('Test assertion failed'); }
+            %TEST%
+        });
+    '''

@@ -157,7 +157,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return ret;
   }
 
-  Node* makeZero(wasm::Type type) { return makeConst(Literal::makeZero(type)); }
+  Node* makeZero(wasm::Type type) {
+    return makeConst(Literal::makeSingleZero(type));
+  }
 
   // Add a new node to our list of owned nodes.
   Node* addNode(Node* node) {
@@ -198,6 +200,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Visiting.
 
   Node* visitExpression(Expression* curr) {
+    // TODO Exception handling instruction support
+
     // Control flow and get/set etc. are special. Aside from them, we just need
     // to do something very generic.
     if (auto* block = curr->dynCast<Block>()) {
@@ -226,6 +230,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitUnreachable(unreachable);
     } else if (auto* drop = curr->dynCast<Drop>()) {
       return doVisitDrop(drop);
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+               curr->is<BrOnExn>()) {
+      Fatal() << "DataFlow does not support EH instructions yet";
     } else {
       return doVisitGeneric(curr);
     }

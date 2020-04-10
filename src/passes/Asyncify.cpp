@@ -127,7 +127,7 @@
 // proper place, and the end to the proper end based on how much memory
 // you reserved. Note that asyncify will grow the stack up.
 //
-// The pass will also create four functions that let you control unwinding
+// The pass will also create five functions that let you control unwinding
 // and rewinding:
 //
 //  * asyncify_start_unwind(data : i32): call this to start unwinding the
@@ -149,6 +149,12 @@
 //
 //  * asyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
+//
+//  * asyncify_get_state(): call this to get the current value of the
+//    internal "__asyncify_state" variable as described above.
+//    It can be used to distinguish between unwinding/rewinding and normal
+//    calls, so that you know when to start an asynchronous operation and
+//    when to propagate results back.
 //
 // These four functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
@@ -269,6 +275,7 @@ namespace wasm {
 namespace {
 
 static const Name ASYNCIFY_STATE = "__asyncify_state";
+static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
 static const Name ASYNCIFY_DATA = "__asyncify_data";
 static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
 static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
@@ -293,26 +300,30 @@ const auto STACK_ALIGN = 4;
 
 // A helper class for managing fake global names. Creates the globals and
 // provides mappings for using them.
-class GlobalHelper {
+// Fake globals are used to stash and then use return values from calls. We need
+// to store them somewhere that is valid Binaryen IR, but also will be ignored
+// by the Asyncify instrumentation, so we don't want to use a local. What we do
+// is replace the local used to receive a call's result with a fake global.set
+// to stash it, then do a fake global.get to receive it afterwards. (We do it in
+// two steps so that if we are async, we only do the first and not the second,
+// i.e., we don't store to the target local if not running normally).
+class FakeGlobalHelper {
   Module& module;
 
 public:
-  GlobalHelper(Module& module) : module(module) {
-    map[Type::i32] = "asyncify_fake_call_global_i32";
-    map[Type::i64] = "asyncify_fake_call_global_i64";
-    map[Type::f32] = "asyncify_fake_call_global_f32";
-    map[Type::f64] = "asyncify_fake_call_global_f64";
+  FakeGlobalHelper(Module& module) : module(module) {
     Builder builder(module);
-    for (auto& pair : map) {
-      auto type = pair.first;
-      auto name = pair.second;
-      rev[name] = type;
+    std::string prefix = "asyncify_fake_call_global_";
+    for (auto type : collectTypes()) {
+      auto global = prefix + Type(type).toString();
+      map[type] = global;
+      rev[global] = type;
       module.addGlobal(builder.makeGlobal(
-        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
     }
   }
 
-  ~GlobalHelper() {
+  ~FakeGlobalHelper() {
     for (auto& pair : map) {
       auto name = pair.second;
       module.removeGlobal(name);
@@ -332,6 +343,41 @@ public:
 private:
   std::map<Type, Name> map;
   std::map<Name, Type> rev;
+
+  // Collect the types returned from all calls for which call support globals
+  // may need to be generated.
+  using Types = std::unordered_set<Type>;
+  Types collectTypes() {
+    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+      module, [&](Function* func, Types& types) {
+        if (!func->body) {
+          return;
+        }
+        struct TypeCollector : PostWalker<TypeCollector> {
+          Types& types;
+          TypeCollector(Types& types) : types(types) {}
+          void visitCall(Call* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+        };
+        TypeCollector(types).walk(func->body);
+      });
+    Types types;
+    for (auto& pair : analysis.map) {
+      Types& functionTypes = pair.second;
+      for (auto t : functionTypes) {
+        types.insert(t);
+      }
+    }
+    return types;
+  }
 };
 
 class PatternMatcher {
@@ -433,10 +479,31 @@ public:
                  const String::Split& whitelistInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module), asserts(asserts) {
+      fakeGlobals(module), asserts(asserts) {
 
     PatternMatcher blacklist("black", module, blacklistInput);
     PatternMatcher whitelist("white", module, whitelistInput);
+
+    // Rename the asyncify imports so their internal name matches the
+    // convention. This makes replacing them with the implementations
+    // later easier.
+    std::map<Name, Name> renamings;
+    for (auto& func : module.functions) {
+      if (func->module == ASYNCIFY) {
+        if (func->base == START_UNWIND) {
+          renamings[func->name] = ASYNCIFY_START_UNWIND;
+        } else if (func->base == STOP_UNWIND) {
+          renamings[func->name] = ASYNCIFY_STOP_UNWIND;
+        } else if (func->base == START_REWIND) {
+          renamings[func->name] = ASYNCIFY_START_REWIND;
+        } else if (func->base == STOP_REWIND) {
+          renamings[func->name] = ASYNCIFY_STOP_REWIND;
+        } else {
+          Fatal() << "call to unidenfied asyncify import: " << func->base;
+        }
+      }
+    }
+    ModuleUtils::renameFunctions(module, renamings);
 
     // Scan to see which functions can directly change the state.
     // Also handle the asyncify imports, removing them (as we will implement
@@ -456,30 +523,33 @@ public:
           return;
         }
         struct Walker : PostWalker<Walker> {
+          Info& info;
+          Module& module;
+          bool canIndirectChangeState;
+
+          Walker(Info& info, Module& module, bool canIndirectChangeState)
+            : info(info), module(module),
+              canIndirectChangeState(canIndirectChangeState) {}
+
           void visitCall(Call* curr) {
             if (curr->isReturn) {
               Fatal() << "tail calls not yet supported in asyncify";
             }
-            auto* target = module->getFunction(curr->target);
+            auto* target = module.getFunction(curr->target);
             if (target->imported() && target->module == ASYNCIFY) {
               // Redirect the imports to the functions we'll add later.
               if (target->base == START_UNWIND) {
-                curr->target = ASYNCIFY_START_UNWIND;
-                info->canChangeState = true;
-                info->isTopMostRuntime = true;
+                info.canChangeState = true;
+                info.isTopMostRuntime = true;
               } else if (target->base == STOP_UNWIND) {
-                curr->target = ASYNCIFY_STOP_UNWIND;
-                info->isBottomMostRuntime = true;
+                info.isBottomMostRuntime = true;
               } else if (target->base == START_REWIND) {
-                curr->target = ASYNCIFY_START_REWIND;
-                info->isBottomMostRuntime = true;
+                info.isBottomMostRuntime = true;
               } else if (target->base == STOP_REWIND) {
-                curr->target = ASYNCIFY_STOP_REWIND;
-                info->canChangeState = true;
-                info->isTopMostRuntime = true;
+                info.canChangeState = true;
+                info.isTopMostRuntime = true;
               } else {
-                Fatal() << "call to unidenfied asyncify import: "
-                        << target->base;
+                WASM_UNREACHABLE("call to unidenfied asyncify import");
               }
             }
           }
@@ -488,20 +558,12 @@ public:
               Fatal() << "tail calls not yet supported in asyncify";
             }
             if (canIndirectChangeState) {
-              info->canChangeState = true;
+              info.canChangeState = true;
             }
             // TODO optimize the other case, at least by type
           }
-          Info* info;
-          Module* module;
-          ModuleAnalyzer* analyzer;
-          bool canIndirectChangeState;
         };
-        Walker walker;
-        walker.info = &info;
-        walker.module = &module;
-        walker.analyzer = this;
-        walker.canIndirectChangeState = canIndirectChangeState;
+        Walker walker(info, module, canIndirectChangeState);
         walker.walk(func->body);
 
         if (info.isBottomMostRuntime) {
@@ -549,7 +611,8 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inBlacklist;
                           },
-                          [](Info& info) { info.canChangeState = true; });
+                          [](Info& info) { info.canChangeState = true; },
+                          scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
 
@@ -622,7 +685,7 @@ public:
     return walker.canChangeState;
   }
 
-  GlobalHelper globals;
+  FakeGlobalHelper fakeGlobals;
   bool asserts;
 };
 
@@ -868,7 +931,7 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto name = analyzer->globals.getName(set->value->type);
+      auto name = analyzer->fakeGlobals.getName(set->value->type);
       curr = builder->makeGlobalSet(name, set->value);
       set->value = builder->makeGlobalGet(name, set->value->type);
     }
@@ -1004,7 +1067,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(
         builder->makeLocalSet(getFakeCallLocal(type), curr->value));
@@ -1012,7 +1075,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
@@ -1091,9 +1154,7 @@ private:
     auto* func = getFunction();
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      total += size;
+      total += func->getLocalType(i).getByteSize();
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1102,19 +1163,31 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(builder->makeLocalSet(
-        i,
-        builder->makeLoad(size,
-                          true,
-                          offset,
-                          STACK_ALIGN,
-                          builder->makeLocalGet(tempIndex, Type::i32),
-                          type)));
-      offset += size;
+      const auto& types = func->getLocalType(i).expand();
+      SmallVector<Expression*, 1> loads;
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        loads.push_back(
+          builder->makeLoad(size,
+                            true,
+                            offset,
+                            STACK_ALIGN,
+                            builder->makeLocalGet(tempIndex, Type::i32),
+                            type));
+        offset += size;
+      }
+      Expression* load;
+      if (loads.size() == 1) {
+        load = loads[0];
+      } else if (types.size() > 1) {
+        load = builder->makeTupleMake(std::move(loads));
+      } else {
+        WASM_UNREACHABLE("Unexpected empty type");
+      }
+      block->list.push_back(builder->makeLocalSet(i, load));
     }
     block->finalize();
     return block;
@@ -1131,18 +1204,26 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
-      auto type = func->getLocalType(i);
-      auto size = type.getByteSize();
-      assert(size % STACK_ALIGN == 0);
-      // TODO: higher alignment?
-      block->list.push_back(
-        builder->makeStore(size,
-                           offset,
-                           STACK_ALIGN,
-                           builder->makeLocalGet(tempIndex, Type::i32),
-                           builder->makeLocalGet(i, type),
-                           type));
-      offset += size;
+      auto localType = func->getLocalType(i);
+      const auto& types = localType.expand();
+      for (Index j = 0; j < types.size(); j++) {
+        auto type = types[j];
+        auto size = type.getByteSize();
+        Expression* localGet = builder->makeLocalGet(i, localType);
+        if (types.size() > 1) {
+          localGet = builder->makeTupleExtract(localGet, j);
+        }
+        assert(size % STACK_ALIGN == 0);
+        // TODO: higher alignment?
+        block->list.push_back(
+          builder->makeStore(size,
+                             offset,
+                             STACK_ALIGN,
+                             builder->makeLocalGet(tempIndex, Type::i32),
+                             localGet,
+                             type));
+        offset += size;
+      }
     }
     block->list.push_back(builder->makeIncStackPos(offset));
     block->finalize();
@@ -1335,6 +1416,14 @@ private:
     makeFunction(ASYNCIFY_STOP_UNWIND, false, State::Normal);
     makeFunction(ASYNCIFY_START_REWIND, true, State::Rewinding);
     makeFunction(ASYNCIFY_STOP_REWIND, false, State::Normal);
+
+    module->addFunction(
+      builder.makeFunction(ASYNCIFY_GET_STATE,
+                           Signature(Type::none, Type::i32),
+                           {},
+                           builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
+    module->addExport(builder.makeExport(
+      ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
 };
 

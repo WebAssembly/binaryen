@@ -64,17 +64,12 @@ namespace wasm {
 
 namespace Flat {
 
-inline bool isControlFlowStructure(Expression* curr) {
-  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
-         curr->is<Try>();
-}
-
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
     : public PostWalker<VerifyFlatness,
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
-      if (isControlFlowStructure(curr)) {
+      if (Properties::isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (curr->is<LocalSet>()) {

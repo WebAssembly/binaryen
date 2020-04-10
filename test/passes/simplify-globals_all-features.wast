@@ -139,3 +139,10 @@
     (drop (global.get $g3))
   )
 )
+;; Global is used by `set` but never `get` can be eliminated.
+(module
+  (global $write-only (mut i32) (i32.const 1))
+  (func $foo
+    (global.set $write-only (i32.const 2))
+  )
+)

@@ -81,7 +81,7 @@
  (export "dynCall_ii" (func $dynCall_ii))
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_vi" (func $dynCall_vi))
- (func $_malloc (; 15 ;) (param $i1 i32) (result i32)
+ (func $_malloc (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -7062,7 +7062,7 @@
    (local.get $i13)
   )
  )
- (func $_free (; 16 ;) (param $i1 i32)
+ (func $_free (param $i1 i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -9244,7 +9244,7 @@
   )
   (return)
  )
- (func $___stdio_write (; 17 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $___stdio_write (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (local $i5 i32)
   (local $i6 i32)
@@ -9709,7 +9709,7 @@
    (local.get $i24)
   )
  )
- (func $___fwritex (; 18 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $___fwritex (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (local $i5 i32)
   (local $i6 i32)
@@ -9978,7 +9978,7 @@
    (local.get $i8)
   )
  )
- (func $_fflush (; 19 ;) (param $i1 i32) (result i32)
+ (func $_fflush (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -10171,7 +10171,7 @@
    (local.get $i2)
   )
  )
- (func $_strlen (; 20 ;) (param $i1 i32) (result i32)
+ (func $_strlen (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -10370,7 +10370,7 @@
    )
   )
  )
- (func $___overflow (; 21 ;) (param $i1 i32) (param $i2 i32) (result i32)
+ (func $___overflow (param $i1 i32) (param $i2 i32) (result i32)
   (local $i3 i32)
   (local $i4 i32)
   (local $i5 i32)
@@ -10547,7 +10547,7 @@
    (local.get $i10)
   )
  )
- (func $___fflush_unlocked (; 22 ;) (param $i1 i32) (result i32)
+ (func $___fflush_unlocked (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -10692,7 +10692,7 @@
    (local.get $i4)
   )
  )
- (func $_memcpy (; 23 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $_memcpy (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (if
    (i32.ge_s
@@ -10856,10 +10856,10 @@
    (local.get $i4)
   )
  )
- (func $runPostSets (; 24 ;)
+ (func $runPostSets
   (nop)
  )
- (func $_memset (; 25 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $_memset (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (local $i5 i32)
   (local $i6 i32)
@@ -11019,7 +11019,7 @@
    )
   )
  )
- (func $_puts (; 26 ;) (param $i1 i32) (result i32)
+ (func $_puts (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -11145,7 +11145,7 @@
    )
   )
  )
- (func $___stdio_seek (; 27 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $___stdio_seek (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (local $i5 i32)
   (local $i6 i32)
@@ -11237,7 +11237,7 @@
    (local.get $i7)
   )
  )
- (func $___towrite (; 28 ;) (param $i1 i32) (result i32)
+ (func $___towrite (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local $i4 i32)
@@ -11347,7 +11347,7 @@
    (local.get $i4)
   )
  )
- (func $i32u-div (; 29 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $1)
@@ -11359,7 +11359,7 @@
    )
   )
  )
- (func $_fwrite (; 30 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
+ (func $_fwrite (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
   (local $i5 i32)
   (local $i6 i32)
   (local $i7 i32)
@@ -11439,7 +11439,7 @@
    (local.get $i9)
   )
  )
- (func $___stdout_write (; 31 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $___stdout_write (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (local $i4 i32)
   (local $i5 i32)
   (local.set $i4
@@ -11535,7 +11535,7 @@
    (local.get $i5)
   )
  )
- (func $copyTempDouble (; 32 ;) (param $i1 i32)
+ (func $copyTempDouble (param $i1 i32)
   (i32.store8
    (global.get $tempDoublePtr)
    (i32.load8_s
@@ -11627,7 +11627,7 @@
    )
   )
  )
- (func $___stdio_close (; 33 ;) (param $i1 i32) (result i32)
+ (func $___stdio_close (param $i1 i32) (result i32)
   (local $i2 i32)
   (local $i3 i32)
   (local.set $i2
@@ -11666,7 +11666,7 @@
    (local.get $i1)
   )
  )
- (func $copyTempFloat (; 34 ;) (param $i1 i32)
+ (func $copyTempFloat (param $i1 i32)
   (i32.store8
    (global.get $tempDoublePtr)
    (i32.load8_s
@@ -11710,7 +11710,7 @@
    )
   )
  )
- (func $___syscall_ret (; 35 ;) (param $i1 i32) (result i32)
+ (func $___syscall_ret (param $i1 i32) (result i32)
   (local $i2 i32)
   (if
    (i32.gt_u
@@ -11737,7 +11737,7 @@
    (local.get $i2)
   )
  )
- (func $dynCall_iiii (; 36 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
+ (func $dynCall_iiii (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
   (return
    (call_indirect (type $i32_i32_i32_=>_i32)
     (local.get $i2)
@@ -11753,7 +11753,7 @@
    )
   )
  )
- (func $stackAlloc (; 37 ;) (param $i1 i32) (result i32)
+ (func $stackAlloc (param $i1 i32) (result i32)
   (local $i2 i32)
   (local.set $i2
    (global.get $STACKTOP)
@@ -11777,7 +11777,7 @@
    (local.get $i2)
   )
  )
- (func $___errno_location (; 38 ;) (result i32)
+ (func $___errno_location (result i32)
   (local $i1 i32)
   (if
    (i32.eqz
@@ -11801,7 +11801,7 @@
    (local.get $i1)
   )
  )
- (func $setThrew (; 39 ;) (param $i1 i32) (param $i2 i32)
+ (func $setThrew (param $i1 i32) (param $i2 i32)
   (if
    (i32.eqz
     (global.get $__THREW__)
@@ -11816,7 +11816,7 @@
    )
   )
  )
- (func $_fputs (; 40 ;) (param $i1 i32) (param $i2 i32) (result i32)
+ (func $_fputs (param $i1 i32) (param $i2 i32) (result i32)
   (return
    (i32.add
     (call $_fwrite
@@ -11831,7 +11831,7 @@
    )
   )
  )
- (func $dynCall_ii (; 41 ;) (param $i1 i32) (param $i2 i32) (result i32)
+ (func $dynCall_ii (param $i1 i32) (param $i2 i32) (result i32)
   (return
    (call_indirect (type $i32_=>_i32)
     (local.get $i2)
@@ -11845,7 +11845,7 @@
    )
   )
  )
- (func $_cleanup_418 (; 42 ;) (param $i1 i32)
+ (func $_cleanup_418 (param $i1 i32)
   (if
    (i32.eqz
     (i32.load
@@ -11861,7 +11861,7 @@
   )
   (return)
  )
- (func $establishStackSpace (; 43 ;) (param $i1 i32) (param $i2 i32)
+ (func $establishStackSpace (param $i1 i32) (param $i2 i32)
   (global.set $STACKTOP
    (local.get $i1)
   )
@@ -11869,7 +11869,7 @@
    (local.get $i2)
   )
  )
- (func $dynCall_vi (; 44 ;) (param $i1 i32) (param $i2 i32)
+ (func $dynCall_vi (param $i1 i32) (param $i2 i32)
   (call_indirect (type $i32_=>_none)
    (local.get $i2)
    (i32.add
@@ -11881,7 +11881,7 @@
    )
   )
  )
- (func $b1 (; 45 ;) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+ (func $b1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   (call $abort
    (i32.const 1)
   )
@@ -11889,17 +11889,17 @@
    (i32.const 0)
   )
  )
- (func $stackRestore (; 46 ;) (param $i1 i32)
+ (func $stackRestore (param $i1 i32)
   (global.set $STACKTOP
    (local.get $i1)
   )
  )
- (func $setTempRet0 (; 47 ;) (param $i1 i32)
+ (func $setTempRet0 (param $i1 i32)
   (global.set $tempRet0
    (local.get $i1)
   )
  )
- (func $b0 (; 48 ;) (param $i1 i32) (result i32)
+ (func $b0 (param $i1 i32) (result i32)
   (call $abort
    (i32.const 0)
   )
@@ -11907,20 +11907,20 @@
    (i32.const 0)
   )
  )
- (func $___unlockfile (; 49 ;) (param $i1 i32)
+ (func $___unlockfile (param $i1 i32)
   (return)
  )
- (func $___lockfile (; 50 ;) (param $i1 i32) (result i32)
+ (func $___lockfile (param $i1 i32) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $getTempRet0 (; 51 ;) (result i32)
+ (func $getTempRet0 (result i32)
   (return
    (global.get $tempRet0)
   )
  )
- (func $_main (; 52 ;) (result i32)
+ (func $_main (result i32)
   (drop
    (call $_puts
     (i32.const 672)
@@ -11930,12 +11930,12 @@
    (i32.const 0)
   )
  )
- (func $stackSave (; 53 ;) (result i32)
+ (func $stackSave (result i32)
   (return
    (global.get $STACKTOP)
   )
  )
- (func $b2 (; 54 ;) (param $i1 i32)
+ (func $b2 (param $i1 i32)
   (call $abort
    (i32.const 2)
   )

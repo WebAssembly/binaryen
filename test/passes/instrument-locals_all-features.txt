@@ -24,7 +24,7 @@
  (import "env" "set_nullref" (func $set_nullref (param i32 i32 nullref) (result nullref)))
  (import "env" "get_exnref" (func $get_exnref (param i32 i32 exnref) (result exnref)))
  (import "env" "set_exnref" (func $set_exnref (param i32 i32 exnref) (result exnref)))
- (func $test (; 16 ;)
+ (func $test
   (local $x i32)
   (local $y i64)
   (local $z f32)

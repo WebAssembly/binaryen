@@ -6,7 +6,7 @@
  (memory $0 1 1)
  (export "mem" (memory $0))
  (start $main)
- (func $check (; 1 ;) (result i32)
+ (func $check (result i32)
   (if
    (i32.eq
     (i32.load
@@ -41,7 +41,7 @@
    )
   )
  )
- (func $main (; 2 ;)
+ (func $main
   (local $0 i32)
   (local $1 i32)
   (i32.store
@@ -275,7 +275,7 @@
  (memory $0 1 1)
  (export "mem" (memory $0))
  (start $main)
- (func $check (; 1 ;) (; has Stack IR ;) (result i32)
+ (func $check (; has Stack IR ;) (result i32)
   (if
    (i32.eq
     (i32.load
@@ -310,7 +310,7 @@
    )
   )
  )
- (func $main (; 2 ;) (; has Stack IR ;)
+ (func $main (; has Stack IR ;)
   (local $0 i32)
   (i32.store
    (i32.const 8)

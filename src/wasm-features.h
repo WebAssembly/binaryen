@@ -35,7 +35,8 @@ struct FeatureSet {
     ExceptionHandling = 1 << 6,
     TailCall = 1 << 7,
     ReferenceTypes = 1 << 8,
-    All = (1 << 9) - 1
+    Multivalue = 1 << 9,
+    All = (1 << 10) - 1
   };
 
   static std::string toString(Feature f) {
@@ -58,6 +59,8 @@ struct FeatureSet {
         return "tail-call";
       case ReferenceTypes:
         return "reference-types";
+      case Multivalue:
+        return "multivalue";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -80,6 +83,7 @@ struct FeatureSet {
   }
   bool hasTailCall() const { return (features & TailCall) != 0; }
   bool hasReferenceTypes() const { return (features & ReferenceTypes) != 0; }
+  bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
@@ -95,6 +99,7 @@ struct FeatureSet {
   void setExceptionHandling(bool v = true) { set(ExceptionHandling, v); }
   void setTailCall(bool v = true) { set(TailCall, v); }
   void setReferenceTypes(bool v = true) { set(ReferenceTypes, v); }
+  void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }
@@ -103,32 +108,10 @@ struct FeatureSet {
   }
 
   template<typename F> void iterFeatures(F f) {
-    if (hasAtomics()) {
-      f(Atomics);
-    }
-    if (hasBulkMemory()) {
-      f(BulkMemory);
-    }
-    if (hasExceptionHandling()) {
-      f(ExceptionHandling);
-    }
-    if (hasMutableGlobals()) {
-      f(MutableGlobals);
-    }
-    if (hasTruncSat()) {
-      f(TruncSat);
-    }
-    if (hasSignExt()) {
-      f(SignExt);
-    }
-    if (hasSIMD()) {
-      f(SIMD);
-    }
-    if (hasTailCall()) {
-      f(TailCall);
-    }
-    if (hasReferenceTypes()) {
-      f(ReferenceTypes);
+    for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
+      if (has(feature)) {
+        f(static_cast<Feature>(feature));
+      }
     }
   }
 

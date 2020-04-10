@@ -676,6 +676,9 @@ switch (op[0]) {
         switch (op[6]) {
           case 'a': {
             switch (op[7]) {
+              case 'b':
+                if (strcmp(op, "i16x8.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI16x8); }
+                goto parse_error;
               case 'd': {
                 switch (op[9]) {
                   case '\0':
@@ -707,6 +710,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'b':
+            if (strcmp(op, "i16x8.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI16x8); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -1395,6 +1401,9 @@ switch (op[0]) {
             switch (op[6]) {
               case 'a': {
                 switch (op[7]) {
+                  case 'b':
+                    if (strcmp(op, "i32x4.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI32x4); }
+                    goto parse_error;
                   case 'd':
                     if (strcmp(op, "i32x4.add") == 0) { return makeBinary(s, BinaryOp::AddVecI32x4); }
                     goto parse_error;
@@ -1407,6 +1416,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'b':
+                if (strcmp(op, "i32x4.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI32x4); }
+                goto parse_error;
               case 'd':
                 if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
                 goto parse_error;
@@ -2222,6 +2234,9 @@ switch (op[0]) {
         switch (op[6]) {
           case 'a': {
             switch (op[7]) {
+              case 'b':
+                if (strcmp(op, "i8x16.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI8x16); }
+                goto parse_error;
               case 'd': {
                 switch (op[9]) {
                   case '\0':
@@ -2253,6 +2268,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'b':
+            if (strcmp(op, "i8x16.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI8x16); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -2562,6 +2580,17 @@ switch (op[0]) {
       case 'r':
         if (strcmp(op, "try") == 0) { return makeTry(s); }
         goto parse_error;
+      case 'u': {
+        switch (op[6]) {
+          case 'e':
+            if (strcmp(op, "tuple.extract") == 0) { return makeTupleExtract(s); }
+            goto parse_error;
+          case 'm':
+            if (strcmp(op, "tuple.make") == 0) { return makeTupleMake(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }

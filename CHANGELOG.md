@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v91
+---
+
+- `BinaryenExpressionGetSideEffects` (C API) and `getSideEffects` (JS API) now
+  takes an additional `features` parameter.
 - Reference type support is added. Supported instructions are `ref.null`,
   `ref.is_null`, `ref.func`, and typed `select`. Table instructions are not
   supported yet. For typed `select`, C/JS API can take an additional 'type'
@@ -44,6 +49,10 @@ v90
   Unlike the JS variant, the Wasm variant requires asynchronously awaiting the
   Wasm blob's instantiation and initialization before being usable, using the
   `binaryen.ready` promise, e.g. `binaryen.ready.then(() => ...)`.
+- Binaryen.js now uses `binaryen` (was `Binaryen`) as its global name to align
+  with the npm package.
+- Binaryen.js: The result of `getMemorySegmentInfoByIndex` now has the same
+  structure as the respective inputs on creation (`byteOffset` -> `offset`).
 
 v88
 ---

@@ -24,7 +24,11 @@
 namespace wasm {
 
 class Type {
-  uint32_t id;
+  // enough for the limit of 1000 function arguments
+  static constexpr unsigned SIZE_BITS = 10;
+  static constexpr unsigned ID_BITS = 32 - SIZE_BITS;
+  unsigned id : ID_BITS;
+  unsigned _size : SIZE_BITS;
   void init(const std::vector<Type>&);
 
 public:
@@ -50,10 +54,10 @@ public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
-  constexpr Type(ValueType id) : id(id){};
+  constexpr Type(ValueType id) : id(id), _size(id == none ? 0 : 1){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
-  constexpr explicit Type(uint32_t id) : id(id){};
+  explicit Type(uint32_t id);
 
   // Construct from lists of elementary types
   Type(std::initializer_list<Type> types);
@@ -72,6 +76,21 @@ public:
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   constexpr bool isRef() const { return id >= funcref && id <= exnref; }
+
+private:
+  template<bool (Type::*pred)() const> bool hasPredicate() {
+    for (auto t : expand()) {
+      if ((t.*pred)()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+public:
+  bool hasVector() { return hasPredicate<&Type::isVector>(); }
+  bool hasRef() { return hasPredicate<&Type::isRef>(); }
+
   constexpr uint32_t getID() const { return id; }
   constexpr ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");
@@ -155,6 +174,11 @@ std::ostream& operator<<(std::ostream& os, ResultType t);
 std::ostream& operator<<(std::ostream& os, Signature t);
 
 } // namespace wasm
+
+template<> class std::hash<wasm::Type> {
+public:
+  size_t operator()(const wasm::Type& type) const;
+};
 
 template<> class std::hash<wasm::Signature> {
 public:

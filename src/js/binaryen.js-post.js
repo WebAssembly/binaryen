@@ -95,6 +95,8 @@ function initializeConstants() {
     'Throw',
     'Rethrow',
     'BrOnExn',
+    'TupleMake',
+    'TupleExtract',
     'Push',
     'Pop'
   ].forEach(function(name) {
@@ -124,6 +126,7 @@ function initializeConstants() {
     'ExceptionHandling',
     'TailCall',
     'ReferenceTypes',
+    'Multivalue',
     'All'
   ].forEach(function(name) {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -343,9 +346,11 @@ function initializeConstants() {
     'XorVec128',
     'AndNotVec128',
     'BitselectVec128',
+    'AbsVecI8x16',
     'NegVecI8x16',
     'AnyTrueVecI8x16',
     'AllTrueVecI8x16',
+    'BitmaskVecI8x16',
     'ShlVecI8x16',
     'ShrSVecI8x16',
     'ShrUVecI8x16',
@@ -361,9 +366,11 @@ function initializeConstants() {
     'MaxSVecI8x16',
     'MaxUVecI8x16',
     'AvgrUVecI8x16',
+    'AbsVecI16x8',
     'NegVecI16x8',
     'AnyTrueVecI16x8',
     'AllTrueVecI16x8',
+    'BitmaskVecI16x8',
     'ShlVecI16x8',
     'ShrSVecI16x8',
     'ShrUVecI16x8',
@@ -380,9 +387,11 @@ function initializeConstants() {
     'MaxUVecI16x8',
     'AvgrUVecI16x8',
     'DotSVecI16x8ToVecI32x4',
+    'AbsVecI32x4',
     'NegVecI32x4',
     'AnyTrueVecI32x4',
     'AllTrueVecI32x4',
+    'BitmaskVecI32x4',
     'ShlVecI32x4',
     'ShrSVecI32x4',
     'ShrUVecI32x4',
@@ -456,6 +465,25 @@ function initializeConstants() {
     'SwizzleVec8x16',
   ].forEach(function(name) {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
+  });
+
+  // Expression side effects
+  Module['SideEffects'] = {};
+  [ 'None',
+    'Branches',
+    'Calls',
+    'ReadsLocal',
+    'WritesLocal',
+    'ReadsGlobal',
+    'WritesGlobal',
+    'ReadsMemory',
+    'WritesMemory',
+    'ImplicitTrap',
+    'IsAtomic',
+    'Throws',
+    'Any'
+  ].forEach(function(name) {
+    Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
 }
 
@@ -1446,6 +1474,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI8x16'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI8x16'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI8x16'], value);
     },
@@ -1454,6 +1485,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI8x16'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI8x16'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI8x16'], vec, shift);
@@ -1551,6 +1585,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI16x8'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI16x8'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI16x8'], value);
     },
@@ -1559,6 +1596,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI16x8'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI16x8'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI16x8'], vec, shift);
@@ -1671,6 +1711,9 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI32x4'], left, right);
     },
+    'abs': function(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI32x4'], value);
+    },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI32x4'], value);
     },
@@ -1679,6 +1722,9 @@ function wrapModule(module, self) {
     },
     'all_true': function(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI32x4'], value);
+    },
+    'bitmask': function(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI32x4'], value);
     },
     'shl': function(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI32x4'], vec, shift);
@@ -2047,6 +2093,17 @@ function wrapModule(module, self) {
     return Module['_BinaryenPush'](module, value);
   };
 
+  self['tuple'] = {
+    'make': function(elements) {
+      return preserveStack(function() {
+        return Module['_BinaryenTupleMake'](module, i32sToStack(elements), elements.length);
+      });
+    },
+    'extract': function(tuple, index) {
+      return Module['_BinaryenTupleExtract'](module, tuple, index);
+    }
+  };
+
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
     return preserveStack(function() {
@@ -2158,6 +2215,23 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getFunctionTable'] = function() {
+    return {
+      'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
+      'segments': (function() {
+        var arr = [];
+        for (var i = 0, numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module); i !== numSegments; ++i) {
+          var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
+          for (var j = 0, segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i); j !== segmentLength; ++j) {
+            var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
+            seg['names'].push(UTF8ToString(ptr));
+          }
+          arr.push(seg);
+        }
+        return arr;
+      })()
+    };
+  };
   self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
@@ -2194,7 +2268,7 @@ function wrapModule(module, self) {
   }
   self['getMemorySegmentInfoByIndex'] = function(id) {
     return {
-      'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
       'data': (function(){
         var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
         var ptr = _malloc(size);
@@ -2203,7 +2277,8 @@ function wrapModule(module, self) {
         res.set(new Uint8Array(buffer, ptr, size));
         _free(ptr);
         return res.buffer;
-      })()
+      })(),
+      'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
   }
   self['setStart'] = function(start) {
@@ -2491,7 +2566,7 @@ Module['getExpressionInfo'] = function(expr) {
             var tempBuffer = stackAlloc(16);
             Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
             value = new Array(16);
-            for (var i = 0 ; i < 16; i++) {
+            for (var i = 0; i < 16; i++) {
               value[i] = HEAPU8[tempBuffer + i];
             }
           });
@@ -2619,7 +2694,7 @@ Module['getExpressionInfo'] = function(expr) {
         var tempBuffer = stackAlloc(16);
         Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
         var mask = new Array(16);
-        for (var i = 0 ; i < 16; i++) {
+        for (var i = 0; i < 16; i++) {
           mask[i] = HEAPU8[tempBuffer + i];
         }
         return {
@@ -2728,6 +2803,19 @@ Module['getExpressionInfo'] = function(expr) {
         'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
         'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
       };
+    case Module['TupleMakeId']:
+      return {
+        'id': id,
+        'type': type,
+        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperand'])
+      };
+    case Module['TupleExtractId']:
+      return {
+        'id': id,
+        'type': type,
+        'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
+        'index': Module['_BinaryenTupleExtractGetIndex'](expr)
+      };
     case Module['PushId']:
       return {
         'id': id,
@@ -2737,6 +2825,11 @@ Module['getExpressionInfo'] = function(expr) {
     default:
       throw Error('unexpected id: ' + id);
   }
+};
+
+// Gets the side effects of the specified expression
+Module['getSideEffects'] = function(expr, features) {
+  return Module['_BinaryenExpressionGetSideEffects'](expr, features);
 };
 
 Module['createType'] = function(types) {
@@ -2848,7 +2941,7 @@ Module['getOptimizeLevel'] = function() {
 
 // Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 Module['setOptimizeLevel'] = function(level) {
-  return Module['_BinaryenSetOptimizeLevel'](level);
+  Module['_BinaryenSetOptimizeLevel'](level);
 };
 
 // Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
@@ -2858,7 +2951,7 @@ Module['getShrinkLevel'] = function() {
 
 // Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
 Module['setShrinkLevel'] = function(level) {
-  return Module['_BinaryenSetShrinkLevel'](level);
+  Module['_BinaryenSetShrinkLevel'](level);
 };
 
 // Gets whether generating debug information is currently enabled or not.
@@ -2868,7 +2961,69 @@ Module['getDebugInfo'] = function() {
 
 // Enables or disables debug information in emitted binaries.
 Module['setDebugInfo'] = function(on) {
-  return Module['_BinaryenSetDebugInfo'](on);
+  Module['_BinaryenSetDebugInfo'](on);
+};
+
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+Module['getLowMemoryUnused'] = function() {
+  return Boolean(Module['_BinaryenGetLowMemoryUnused']());
+};
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing.
+Module['setLowMemoryUnused'] = function(on) {
+  Module['_BinaryenSetLowMemoryUnused'](on);
+};
+
+// Gets the value of the specified arbitrary pass argument.
+Module['getPassArgument'] = function(key) {
+  return preserveStack(function() {
+    var ret = Module['_BinaryenGetPassArgument'](strToStack(key));
+    return ret !== 0 ? UTF8ToString(ret) : null;
+  });
+};
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL.
+Module['setPassArgument'] = function (key, value) {
+  preserveStack(function () {
+    Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value));
+  });
+};
+
+// Clears all arbitrary pass arguments.
+Module['clearPassArguments'] = function() {
+  Module['_BinaryenClearPassArguments']();
+};
+
+// Gets the function size at which we always inline.
+Module['getAlwaysInlineMaxSize'] = function() {
+  return Module['_BinaryenGetAlwaysInlineMaxSize']();
+};
+
+// Sets the function size at which we always inline.
+Module['setAlwaysInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetAlwaysInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when functions are lightweight.
+Module['getFlexibleInlineMaxSize'] = function() {
+  return Module['_BinaryenGetFlexibleInlineMaxSize']();
+};
+
+// Sets the function size which we inline when functions are lightweight.
+Module['setFlexibleInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetFlexibleInlineMaxSize'](size);
+};
+
+// Gets the function size which we inline when there is only one caller.
+Module['getOneCallerInlineMaxSize'] = function() {
+  return Module['_BinaryenGetOneCallerInlineMaxSize']();
+};
+
+// Sets the function size which we inline when there is only one caller.
+Module['setOneCallerInlineMaxSize'] = function(size) {
+  Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
 // Enables or disables C-API tracing

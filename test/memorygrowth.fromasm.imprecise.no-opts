@@ -80,12 +80,12 @@
  (export "dynCall_ii" (func $kb))
  (export "dynCall_iiii" (func $lb))
  (export "dynCall_vi" (func $mb))
- (func $__growWasmMemory (; 12 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
  )
- (func $eb (; 13 ;) (param $a i32) (result i32)
+ (func $eb (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -7101,7 +7101,7 @@
    (local.get $p)
   )
  )
- (func $fb (; 14 ;) (param $a i32)
+ (func $fb (param $a i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -9293,7 +9293,7 @@
   )
   (return)
  )
- (func $Ra (; 15 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $Ra (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (local $e i32)
   (local $f i32)
@@ -9758,7 +9758,7 @@
    (local.get $z)
   )
  )
- (func $Wa (; 16 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $Wa (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (local $e i32)
   (local $f i32)
@@ -10027,7 +10027,7 @@
    (local.get $h)
   )
  )
- (func $Za (; 17 ;) (param $a i32) (result i32)
+ (func $Za (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -10226,7 +10226,7 @@
    )
   )
  )
- (func $_a (; 18 ;) (param $a i32) (result i32)
+ (func $_a (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -10421,7 +10421,7 @@
    (local.get $h)
   )
  )
- (func $ab (; 19 ;) (param $a i32) (param $b i32) (result i32)
+ (func $ab (param $a i32) (param $b i32) (result i32)
   (local $c i32)
   (local $d i32)
   (local $e i32)
@@ -10597,7 +10597,7 @@
    (local.get $m)
   )
  )
- (func $$a (; 20 ;) (param $a i32) (result i32)
+ (func $$a (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -10752,7 +10752,7 @@
    (local.get $d)
   )
  )
- (func $jb (; 21 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $jb (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (if
    (i32.ge_s
@@ -10916,10 +10916,10 @@
    (local.get $d)
   )
  )
- (func $gb (; 22 ;)
+ (func $gb
   (nop)
  )
- (func $hb (; 23 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $hb (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (local $e i32)
   (local $f i32)
@@ -11079,7 +11079,7 @@
    )
   )
  )
- (func $db (; 24 ;) (param $a i32) (result i32)
+ (func $db (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -11202,7 +11202,7 @@
    )
   )
  )
- (func $Xa (; 25 ;) (param $a i32) (result i32)
+ (func $Xa (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local $d i32)
@@ -11312,7 +11312,7 @@
    (local.get $d)
   )
  )
- (func $bb (; 26 ;) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
+ (func $bb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
   (local $e i32)
   (local $f i32)
   (local $g i32)
@@ -11392,7 +11392,7 @@
    (local.get $i)
   )
  )
- (func $Ua (; 27 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $Ua (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (local $e i32)
   (local $f i32)
@@ -11484,7 +11484,7 @@
    (local.get $g)
   )
  )
- (func $Va (; 28 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $Va (param $a i32) (param $b i32) (param $c i32) (result i32)
   (local $d i32)
   (local $e i32)
   (local.set $d
@@ -11571,7 +11571,7 @@
    (local.get $e)
   )
  )
- (func $Ka (; 29 ;) (param $a i32)
+ (func $Ka (param $a i32)
   (i32.store8
    (global.get $t)
    (i32.load8_s
@@ -11663,7 +11663,7 @@
    )
   )
  )
- (func $Oa (; 30 ;) (param $a i32) (result i32)
+ (func $Oa (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (local.set $b
@@ -11702,7 +11702,7 @@
    (local.get $a)
   )
  )
- (func $Pa (; 31 ;) (param $a i32) (result i32)
+ (func $Pa (param $a i32) (result i32)
   (local $b i32)
   (local $c i32)
   (if
@@ -11733,7 +11733,7 @@
    (local.get $c)
   )
  )
- (func $Ja (; 32 ;) (param $a i32)
+ (func $Ja (param $a i32)
   (i32.store8
    (global.get $t)
    (i32.load8_s
@@ -11777,7 +11777,7 @@
    )
   )
  )
- (func $Qa (; 33 ;) (result i32)
+ (func $Qa (result i32)
   (local $a i32)
   (local $b i32)
   (if
@@ -11807,7 +11807,7 @@
    (local.get $a)
   )
  )
- (func $lb (; 34 ;) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
+ (func $lb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
   (return
    (call_indirect (type $i32_i32_i32_=>_i32)
     (local.get $b)
@@ -11823,7 +11823,7 @@
    )
   )
  )
- (func $Ea (; 35 ;) (param $a i32) (result i32)
+ (func $Ea (param $a i32) (result i32)
   (local $b i32)
   (local.set $b
    (global.get $r)
@@ -11847,7 +11847,7 @@
    (local.get $b)
   )
  )
- (func $cb (; 36 ;) (param $a i32) (param $b i32) (result i32)
+ (func $cb (param $a i32) (param $b i32) (result i32)
   (return
    (i32.add
     (call $bb
@@ -11862,7 +11862,7 @@
    )
   )
  )
- (func $ob (; 37 ;) (param $a i32) (param $b i32) (param $c i32) (result i32)
+ (func $ob (param $a i32) (param $b i32) (param $c i32) (result i32)
   (call $ja
    (i32.const 1)
   )
@@ -11870,7 +11870,7 @@
    (i32.const 0)
   )
  )
- (func $Ia (; 38 ;) (param $a i32) (param $b i32)
+ (func $Ia (param $a i32) (param $b i32)
   (if
    (i32.eqz
     (global.get $v)
@@ -11885,7 +11885,7 @@
    )
   )
  )
- (func $kb (; 39 ;) (param $a i32) (param $b i32) (result i32)
+ (func $kb (param $a i32) (param $b i32) (result i32)
   (return
    (call_indirect (type $i32_=>_i32)
     (local.get $b)
@@ -11899,7 +11899,7 @@
    )
   )
  )
- (func $Sa (; 40 ;) (param $a i32)
+ (func $Sa (param $a i32)
   (if
    (i32.eqz
     (i32.load
@@ -11915,7 +11915,7 @@
   )
   (return)
  )
- (func $mb (; 41 ;) (param $a i32) (param $b i32)
+ (func $mb (param $a i32) (param $b i32)
   (call_indirect (type $i32_=>_none)
    (local.get $b)
    (i32.add
@@ -11927,7 +11927,7 @@
    )
   )
  )
- (func $Ha (; 42 ;) (param $a i32) (param $b i32)
+ (func $Ha (param $a i32) (param $b i32)
   (global.set $r
    (local.get $a)
   )
@@ -11935,7 +11935,7 @@
    (local.get $b)
   )
  )
- (func $nb (; 43 ;) (param $a i32) (result i32)
+ (func $nb (param $a i32) (result i32)
   (call $ja
    (i32.const 0)
   )
@@ -11943,7 +11943,7 @@
    (i32.const 0)
   )
  )
- (func $Na (; 44 ;) (result i32)
+ (func $Na (result i32)
   (drop
    (call $db
     (i32.const 1144)
@@ -11953,40 +11953,40 @@
    (i32.const 0)
   )
  )
- (func $Ya (; 45 ;) (param $a i32) (result i32)
+ (func $Ya (param $a i32) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $Ta (; 46 ;) (param $a i32)
+ (func $Ta (param $a i32)
   (return)
  )
- (func $pb (; 47 ;) (param $a i32)
+ (func $pb (param $a i32)
   (call $ja
    (i32.const 2)
   )
  )
- (func $La (; 48 ;) (param $a i32)
+ (func $La (param $a i32)
   (global.set $K
    (local.get $a)
   )
  )
- (func $Ga (; 49 ;) (param $a i32)
+ (func $Ga (param $a i32)
   (global.set $r
    (local.get $a)
   )
  )
- (func $Ma (; 50 ;) (result i32)
+ (func $Ma (result i32)
   (return
    (global.get $K)
   )
  )
- (func $Fa (; 51 ;) (result i32)
+ (func $Fa (result i32)
   (return
    (global.get $r)
   )
  )
- (func $ib (; 52 ;) (result i32)
+ (func $ib (result i32)
   (return
    (i32.const 0)
   )

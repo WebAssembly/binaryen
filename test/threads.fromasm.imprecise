@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (import "env" "memory" (memory $memory (shared 256 256)))
  (export "test" (func $test))
- (func $test (; 0 ;) (; has Stack IR ;)
+ (func $test (; has Stack IR ;)
   (local $0 i32)
   (drop
    (i32.atomic.load

@@ -1,0 +1,75 @@
+=== input wast ===
+(module
+ (memory $0 1)
+ (export "test" (func $test))
+ (func $test (param $0 i32) (result i32)
+  (i32.load
+    (i32.add
+      (local.get $0)
+      (i32.const 128)
+    )
+  )
+ )
+)
+
+=== unoptimized ===
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $0 1)
+ (export "test" (func $test))
+ (func $test (param $0 i32) (result i32)
+  (i32.load
+   (i32.add
+    (local.get $0)
+    (i32.const 128)
+   )
+  )
+ )
+)
+
+=== optimized, lowMemoryUnused=false ===
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $0 1)
+ (export "test" (func $test))
+ (func $test (; has Stack IR ;) (param $0 i32) (result i32)
+  (i32.load
+   (i32.add
+    (local.get $0)
+    (i32.const 128)
+   )
+  )
+ )
+)
+
+// beginning a Binaryen API trace
+#include <math.h>
+#include <map>
+#include "binaryen-c.h"
+int main() {
+  std::map<size_t, BinaryenExpressionRef> expressions;
+  std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenEventRef> events;
+  std::map<size_t, BinaryenExportRef> exports;
+  std::map<size_t, RelooperBlockRef> relooperBlocks;
+  BinaryenModuleRef the_module = NULL;
+  RelooperRef the_relooper = NULL;
+  BinaryenSetLowMemoryUnused(1);
+  BinaryenGetLowMemoryUnused();
+  return 0;
+}
+// ending a Binaryen API trace
+
+=== optimized, lowMemoryUnused=true ===
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $0 1)
+ (export "test" (func $test))
+ (func $test (; has Stack IR ;) (param $0 i32) (result i32)
+  (i32.load offset=128
+   (local.get $0)
+  )
+ )
+)
+

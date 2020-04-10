@@ -43,6 +43,14 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
         }
         Y.AbbrevDecls.push_back(Abbrv);
       }
+      // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate
+      // DeclSets from each other, and to null-terminate the entire list
+      // (LLVM works with or without this, but other decoders may error, see
+      //  https://bugs.llvm.org/show_bug.cgi?id=44511).
+      DWARFYAML::Abbrev Abbrv;
+      Abbrv.Code = 0;
+      Abbrv.Tag = dwarf::Tag(0);
+      Y.AbbrevDecls.push_back(Abbrv);
     }
   }
 }
@@ -102,6 +110,34 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
     range.End = 0;
     range.SectionIndex = -1;
     Y.Ranges.push_back(range);
+  }
+}
+
+void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
+  uint8_t savedAddressByteSize = 4;
+  DWARFDataExtractor locsData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getLocSection(),
+                              DCtx.isLittleEndian(), savedAddressByteSize);
+  uint64_t offset = 0;
+  DWARFDebugLoc locList;
+  while (locsData.isValidOffset(offset)) {
+    auto list = locList.parseOneLocationList(locsData, &offset);
+    if (!list) {
+      errs() << "debug_loc error\n";
+      break;
+    }
+    for (auto& entry : list.get().Entries) {
+      DWARFYAML::Loc loc;
+      loc.Start = entry.Begin;
+      loc.End = entry.End;
+      for (auto x : entry.Loc) {
+        loc.Location.push_back(x);
+      }
+      Y.Locs.push_back(loc);
+    }
+    DWARFYAML::Loc loc;
+    loc.Start = 0;
+    loc.End = 0;
+    Y.Locs.push_back(loc);
   }
 }
 
@@ -207,11 +243,16 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             case dwarf::DW_FORM_data2:
             case dwarf::DW_FORM_data4:
             case dwarf::DW_FORM_data8:
-            case dwarf::DW_FORM_sdata:
             case dwarf::DW_FORM_udata:
             case dwarf::DW_FORM_ref_sup4:
             case dwarf::DW_FORM_ref_sup8:
               if (auto Val = FormValue.getValue().getAsUnsignedConstant())
+                NewValue.Value = Val.getValue();
+              break;
+            // XXX BINARYEN: sdata is signed, and FormValue won't return it as
+            //               unsigned (it returns an empty value).
+            case dwarf::DW_FORM_sdata:
+              if (auto Val = FormValue.getValue().getAsSignedConstant())
                 NewValue.Value = Val.getValue();
               break;
             case dwarf::DW_FORM_string:
@@ -380,6 +421,7 @@ std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   dumpDebugStrings(DCtx, Y);
   dumpDebugARanges(DCtx, Y);
   dumpDebugRanges(DCtx, Y); // XXX BINARYEN
+  dumpDebugLoc(DCtx, Y); // XXX BINARYEN
   dumpDebugPubSections(DCtx, Y);
   dumpDebugInfo(DCtx, Y);
   dumpDebugLines(DCtx, Y);

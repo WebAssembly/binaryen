@@ -264,6 +264,31 @@ void traceExpression(BinaryenExpressionRef expr,
   }
 }
 
+template<typename F>
+void traceWithExpressionArray(const char* name,
+                              BinaryenExpressionRef* exprs,
+                              BinaryenIndex numExprs,
+                              F body) {
+  std::cout << "  {\n";
+  std::cout << "    BinaryenExpressionRef " << name << "[] = { ";
+  for (BinaryenIndex i = 0; i < numExprs; i++) {
+    if (i > 0) {
+      std::cout << ", ";
+    }
+    if (i % 6 == 5) {
+      std::cout << "\n       "; // don't create hugely long lines
+    }
+    std::cout << "expressions[" << expressions[exprs[i]] << "]";
+  }
+  if (numExprs == 0) {
+    // ensure the array is not empty, otherwise a compiler error on VS
+    std::cout << "0";
+  }
+  std::cout << " };\n  ";
+  body();
+  std::cout << "  }\n";
+}
+
 extern "C" {
 
 //
@@ -429,6 +454,12 @@ BinaryenExpressionId BinaryenRethrowId(void) {
 BinaryenExpressionId BinaryenBrOnExnId(void) {
   return Expression::Id::BrOnExnId;
 }
+BinaryenExpressionId BinaryenTupleMakeId(void) {
+  return Expression::Id::TupleMakeId;
+}
+BinaryenExpressionId BinaryenTupleExtractId(void) {
+  return Expression::Id::TupleExtractId;
+}
 BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
 
@@ -481,6 +512,9 @@ BinaryenFeatures BinaryenFeatureTailCall(void) {
 }
 BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::ReferenceTypes);
+}
+BinaryenFeatures BinaryenFeatureMultivalue(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -787,9 +821,11 @@ BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
 BinaryenOp BinaryenAndNotVec128(void) { return AndNotVec128; }
 BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
+BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
 BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
 BinaryenOp BinaryenAnyTrueVecI8x16(void) { return AnyTrueVecI8x16; }
 BinaryenOp BinaryenAllTrueVecI8x16(void) { return AllTrueVecI8x16; }
+BinaryenOp BinaryenBitmaskVecI8x16(void) { return BitmaskVecI8x16; }
 BinaryenOp BinaryenShlVecI8x16(void) { return ShlVecI8x16; }
 BinaryenOp BinaryenShrSVecI8x16(void) { return ShrSVecI8x16; }
 BinaryenOp BinaryenShrUVecI8x16(void) { return ShrUVecI8x16; }
@@ -805,9 +841,11 @@ BinaryenOp BinaryenMinUVecI8x16(void) { return MinUVecI8x16; }
 BinaryenOp BinaryenMaxSVecI8x16(void) { return MaxSVecI8x16; }
 BinaryenOp BinaryenMaxUVecI8x16(void) { return MaxUVecI8x16; }
 BinaryenOp BinaryenAvgrUVecI8x16(void) { return AvgrUVecI8x16; }
+BinaryenOp BinaryenAbsVecI16x8(void) { return AbsVecI16x8; }
 BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
 BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
 BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
+BinaryenOp BinaryenBitmaskVecI16x8(void) { return BitmaskVecI16x8; }
 BinaryenOp BinaryenShlVecI16x8(void) { return ShlVecI16x8; }
 BinaryenOp BinaryenShrSVecI16x8(void) { return ShrSVecI16x8; }
 BinaryenOp BinaryenShrUVecI16x8(void) { return ShrUVecI16x8; }
@@ -823,9 +861,11 @@ BinaryenOp BinaryenMinUVecI16x8(void) { return MinUVecI16x8; }
 BinaryenOp BinaryenMaxSVecI16x8(void) { return MaxSVecI16x8; }
 BinaryenOp BinaryenMaxUVecI16x8(void) { return MaxUVecI16x8; }
 BinaryenOp BinaryenAvgrUVecI16x8(void) { return AvgrUVecI16x8; }
+BinaryenOp BinaryenAbsVecI32x4(void) { return AbsVecI32x4; }
 BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
 BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
 BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
+BinaryenOp BinaryenBitmaskVecI32x4(void) { return BitmaskVecI32x4; }
 BinaryenOp BinaryenShlVecI32x4(void) { return ShlVecI32x4; }
 BinaryenOp BinaryenShrSVecI32x4(void) { return ShrSVecI32x4; }
 BinaryenOp BinaryenShrUVecI32x4(void) { return ShrUVecI32x4; }
@@ -972,25 +1012,10 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
   }
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef children[] = { ";
-    for (BinaryenIndex i = 0; i < numChildren; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      if (i % 6 == 5) {
-        std::cout << "\n       "; // don't create hugely long lines
-      }
-      std::cout << "expressions[" << expressions[children[i]] << "]";
-    }
-    if (numChildren == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(
-      ret, "BinaryenBlock", StringLit(name), "children", numChildren, type);
-    std::cout << "  }\n";
+    traceWithExpressionArray("children", children, numChildren, [&]() {
+      traceExpression(
+        ret, "BinaryenBlock", StringLit(name), "children", numChildren, type);
+    });
   }
 
   return static_cast<Expression*>(ret);
@@ -1086,26 +1111,14 @@ static BinaryenExpressionRef makeBinaryenCall(BinaryenModuleRef module,
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef operands[] = { ";
-    for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
-    }
-    if (numOperands == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(ret,
-                    (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
-                    StringLit(target),
-                    "operands",
-                    numOperands,
-                    returnType);
-    std::cout << "  }\n";
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(ret,
+                      (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
+                      StringLit(target),
+                      "operands",
+                      numOperands,
+                      returnType);
+    });
   }
 
   ret->target = target;
@@ -1708,6 +1721,35 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
+
+BinaryenExpressionRef BinaryenTupleMake(BinaryenModuleRef module,
+                                        BinaryenExpressionRef* operands,
+                                        BinaryenIndex numOperands) {
+  std::vector<Expression*> ops;
+  ops.resize(numOperands);
+  for (size_t i = 0; i < numOperands; ++i) {
+    ops[i] = (Expression*)operands[i];
+  }
+  auto* ret = Builder(*(Module*)module).makeTupleMake(ops);
+  if (tracing) {
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(ret, "BinaryenTupleMake", "operands", numOperands);
+    });
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenTupleExtract(BinaryenModuleRef module,
+                                           BinaryenExpressionRef tuple,
+                                           BinaryenIndex index) {
+  auto* ret =
+    Builder(*(Module*)module).makeTupleExtract((Expression*)tuple, index);
+  if (tracing) {
+    traceExpression(ret, "BinaryenTupleExtract", tuple, index);
+  }
+  return ret;
+}
+
 BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                    BinaryenExpressionRef value) {
   auto* ret = Builder(*(Module*)module).makePush((Expression*)value);
@@ -1772,22 +1814,10 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeThrow(event, args);
 
   if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef operands[] = { ";
-    for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
-    }
-    if (numOperands == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n  ";
-    traceExpression(
-      ret, "BinaryenThrow", StringLit(event), "operands", numOperands);
-    std::cout << "  }\n";
+    traceWithExpressionArray("operands", operands, numOperands, [&]() {
+      traceExpression(
+        ret, "BinaryenThrow", StringLit(event), "operands", numOperands);
+    });
   }
   return static_cast<Expression*>(ret);
 }
@@ -3008,17 +3038,6 @@ BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->size;
 }
-// Push
-BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
-  if (tracing) {
-    std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
-              << "]);\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Push>());
-  return static_cast<Push*>(expression)->value;
-}
 // RefIsNull
 BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -3136,6 +3155,60 @@ BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOnExn>());
   return static_cast<BrOnExn*>(expression)->exnref;
+}
+// TupleMake
+BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleMakeGetNumOperands(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  return static_cast<TupleMake*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr,
+                                                  BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleMakeGetOperand(expressions["
+              << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  return static_cast<TupleMake*>(expression)->operands[index];
+}
+// TupleExtract
+BinaryenExpressionRef BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleExtractGetTuple(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  return static_cast<TupleExtract*>(expression)->tuple;
+}
+BinaryenIndex BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTupleExtractGetIndex(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  return static_cast<TupleExtract*>(expression)->index;
+}
+// Push
+BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Push>());
+  return static_cast<Push*>(expression)->value;
 }
 
 // Functions
@@ -3561,6 +3634,65 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   wasm->table.segments.push_back(segment);
 }
 
+int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenIsFunctionTableImported(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.imported();
+}
+BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumFunctionTableSegments(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.segments.size();
+}
+BinaryenExpressionRef
+BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
+                                      BinaryenIndex segmentId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentOffset(the_module, "
+              << segmentId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[segmentId].offset;
+}
+BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
+                                                    BinaryenIndex segmentId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentLength(the_module, "
+              << segmentId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[segmentId].data.size();
+}
+const char* BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
+                                                BinaryenIndex segmentId,
+                                                BinaryenIndex dataId) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentData(the_module, "
+              << segmentId << ", " << dataId << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= segmentId ||
+      wasm->table.segments[segmentId].data.size() <= dataId) {
+    Fatal() << "invalid function table segment or data id.";
+  }
+  return wasm->table.segments[segmentId].data[dataId].c_str();
+}
+
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,
@@ -3721,6 +3853,20 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   }
   const Memory::Segment& segment = wasm->memory.segments[id];
   return segment.data.size();
+}
+int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                    BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetMemorySegmentPassive(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Memory::Segment& segment = wasm->memory.segments[id];
+  return segment.isPassive;
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
@@ -3884,6 +4030,112 @@ void BinaryenSetDebugInfo(int on) {
   }
 
   globalPassOptions.debugInfo = on != 0;
+}
+
+int BinaryenGetLowMemoryUnused(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetLowMemoryUnused();\n";
+  }
+
+  return globalPassOptions.lowMemoryUnused;
+}
+
+void BinaryenSetLowMemoryUnused(int on) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLowMemoryUnused(" << on << ");\n";
+  }
+
+  globalPassOptions.lowMemoryUnused = on != 0;
+}
+
+const char* BinaryenGetPassArgument(const char* key) {
+  if (tracing) {
+    std::cout << "  BinaryenGetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  auto& args = globalPassOptions.arguments;
+  auto it = args.find(key);
+  if (it == args.end()) {
+    return nullptr;
+  }
+  // internalize the string so it remains valid while the module is
+  return Name(it->second).c_str();
+}
+
+void BinaryenSetPassArgument(const char* key, const char* value) {
+  if (tracing) {
+    std::cout << "  BinaryenSetPassArgument(";
+    traceNameOrNULL(key);
+    std::cout << ", ";
+    traceNameOrNULL(value);
+    std::cout << ");\n";
+  }
+
+  assert(key);
+  if (value) {
+    globalPassOptions.arguments[key] = value;
+  } else {
+    globalPassOptions.arguments.erase(key);
+  }
+}
+
+void BinaryenClearPassArguments(void) {
+  if (tracing) {
+    std::cout << "  BinaryenClearPassArguments();\n";
+  }
+
+  globalPassOptions.arguments.clear();
+}
+
+BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetAlwaysInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.alwaysInlineMaxSize;
+}
+
+void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetAlwaysInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.alwaysInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFlexibleInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.flexibleInlineMaxSize;
+}
+
+void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetFlexibleInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.flexibleInlineMaxSize = size;
+}
+
+BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void) {
+  if (tracing) {
+    std::cout << "  BinaryenGetOneCallerInlineMaxSize();\n";
+  }
+
+  return globalPassOptions.inlining.oneCallerInlineMaxSize;
+}
+
+void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
+  if (tracing) {
+    std::cout << "  BinaryenSetOneCallerInlineMaxSize(" << size << ");\n";
+  }
+
+  globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
@@ -4446,6 +4698,70 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
   customSection.name = name;
   customSection.data = std::vector<char>(contents, contents + contentsSize);
   wasm->userSections.push_back(customSection);
+}
+
+//
+// ========= Effect analyzer =========
+//
+
+BinaryenSideEffects BinaryenSideEffectNone(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::None);
+}
+BinaryenSideEffects BinaryenSideEffectBranches(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::Branches);
+}
+BinaryenSideEffects BinaryenSideEffectCalls(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Calls);
+}
+BinaryenSideEffects BinaryenSideEffectReadsLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsLocal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesLocal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesLocal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectWritesGlobal(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesGlobal);
+}
+BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsMemory);
+}
+BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ImplicitTrap);
+}
+BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::IsAtomic);
+}
+BinaryenSideEffects BinaryenSideEffectThrows(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Throws);
+}
+BinaryenSideEffects BinaryenSideEffectAny(void) {
+  return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
+}
+
+BinaryenSideEffects
+BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                 BinaryenFeatures features) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetSideEffects(expressions["
+              << expressions[expr] << "], " << features << ");\n";
+  }
+  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+    .getSideEffects();
 }
 
 //

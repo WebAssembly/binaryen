@@ -69,9 +69,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      it can read a wasm text file if it contains only s-expressions.
    * Binaryen uses Stack IR to optimize "stacky" code (that can't be
      represented in structured form).
-   * In rare cases stacky code must be represented in Binaryen IR as well, like
-     popping a value in an exception catch. To support that Binaryen IR has
-     `push` and `pop` instructions.
+   * When stacky code must be represented in Binaryen IR, such as with
+     multivalue instructions and blocks, it is represented with tuple types that
+     do not exist in the WebAssembly language. In addition to multivalue
+     instructions, locals and globals can also have tuple types in Binaryen IR
+     but not in WebAssembly.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -180,12 +182,14 @@ Usage instructions for each are below.
 ```
 cmake . && make
 ```
-Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`
 
-* A C++11 compiler is required.
-* The JavaScript components can be built using `build-js.sh`, see notes inside. Normally this is not needed as builds are provided in this repo already.
+A C++14 compiler is required. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
 
-If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)), for more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
+Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
+
+```
+emcmake cmake . && emmake make binaryen_js
+```
 
 ### Visual C++
 

@@ -360,7 +360,8 @@ private:
   void cleanUpAfterPropagation() {
     // Remove sets that no longer have uses. This allows further propagation by
     // letting us see the accurate amount of uses of each set.
-    UnneededSetRemover remover(getFunction(), getPassOptions());
+    UnneededSetRemover remover(
+      getFunction(), getPassOptions(), getModule()->features);
   }
 
   std::map<LocalSet*, Index> helperIndexes;

@@ -156,15 +156,21 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AbsVecI8x16,
   NegVecI8x16,
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,
   AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
   NegVecI32x4,
   AnyTrueVecI32x4,
   AllTrueVecI32x4,
+  BitmaskVecI32x4,
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
@@ -538,6 +544,8 @@ public:
     ThrowId,
     RethrowId,
     BrOnExnId,
+    TupleMakeId,
+    TupleExtractId,
     NumExpressionIds
   };
   Id _id;
@@ -572,7 +580,8 @@ public:
 
 const char* getExpressionName(Expression* curr);
 
-Literal getLiteralFromConstExpression(Expression* curr);
+Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -1149,6 +1158,25 @@ public:
   void finalize();
 };
 
+class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
+public:
+  TupleMake(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
+public:
+  TupleExtract(MixedArena& allocator) {}
+
+  Expression* tuple;
+  Index index;
+
+  void finalize();
+};
+
 // Globals
 
 struct Importable {
@@ -1156,6 +1184,66 @@ struct Importable {
   Name module, base;
 
   bool imported() { return module.is(); }
+};
+
+class Function;
+
+// Represents an offset into a wasm binary file. This is used for debug info.
+// For now, assume this is 32 bits as that's the size limit of wasm files
+// anyhow.
+using BinaryLocation = uint32_t;
+
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  struct Span {
+    BinaryLocation start = 0, end = 0;
+  };
+
+  // Track the range of addresses an expressions appears at. This is the
+  // contiguous range that all instructions have - control flow instructions
+  // have additional opcodes later (like an end for a block or loop), see
+  // just after this.
+  std::unordered_map<Expression*, Span> expressions;
+
+  // Track the extra delimiter positions that some instructions, in particular
+  // control flow, have, like 'end' for loop and block. We keep these in a
+  // separate map because they are rare and we optimize for the storage space
+  // for the common type of instruction which just needs a Span. We implement
+  // this as a simple struct with two elements (as two extra elements is the
+  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
+  // second value may be 0, indicating it is not used.
+  struct DelimiterLocations : public std::array<BinaryLocation, 2> {
+    DelimiterLocations() {
+      // Ensure zero-initialization.
+      for (auto& item : *this) {
+        item = 0;
+      }
+    }
+  };
+
+  enum DelimiterId {
+    // All control flow structures have an end, so use index 0 for that.
+    End = 0,
+    // Use index 1 for all other current things.
+    Else = 1,
+    Catch = 1,
+    Invalid = -1
+  };
+  std::unordered_map<Expression*, DelimiterLocations> delimiters;
+
+  // DWARF debug info can refer to multiple interesting positions in a function.
+  struct FunctionLocations {
+    // The very start of the function, where the binary has a size LEB.
+    BinaryLocation start = 0;
+    // The area where we declare locals, which is right after the size LEB.
+    BinaryLocation declarations = 0;
+    // The end, which is one past the final "end" instruction byte.
+    BinaryLocation end = 0;
+  };
+
+  std::unordered_map<Function*, FunctionLocations> functions;
 };
 
 // Forward declarations of Stack IR, as functions can contain it, see
@@ -1166,13 +1254,11 @@ class StackInst;
 
 using StackIR = std::vector<StackInst*>;
 
-using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
-
 class Function : public Importable {
 public:
   Name name;
-  Signature sig;
-  std::vector<Type> vars;   // params plus vars
+  Signature sig;          // parameters and return value
+  std::vector<Type> vars; // non-param locals
 
   // The body of the function
   Expression* body = nullptr;
@@ -1193,7 +1279,7 @@ public:
 
   // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
-    uint32_t fileIndex, lineNumber, columnNumber;
+    BinaryLocation fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
              columnNumber == other.columnNumber;
@@ -1213,9 +1299,11 @@ public:
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
 
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section.
-  BinaryLocationsMap binaryLocations;
+  // General debugging info support: track instructions and the function itself.
+  std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
+  std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
+    delimiterLocations;
+  BinaryLocations::FunctionLocations funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1349,7 +1437,7 @@ class Global : public Importable {
 public:
   Name name;
   Type type;
-  Expression* init;
+  Expression* init = nullptr;
   bool mutable_ = false;
 };
 
@@ -1372,6 +1460,13 @@ public:
   std::vector<char> data;
 };
 
+// The optional "dylink" section is used in dynamic linking.
+class DylinkSection {
+public:
+  Index memorySize, memoryAlignment, tableSize, tableAlignment;
+  std::vector<Name> neededDynlibs;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
@@ -1386,6 +1481,9 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Optional user section IR representation.
+  std::unique_ptr<DylinkSection> dylinkSection;
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;

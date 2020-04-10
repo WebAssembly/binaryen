@@ -19,6 +19,7 @@
 
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -26,39 +27,6 @@
 namespace wasm {
 
 namespace ModuleUtils {
-
-// Computes the indexes in a wasm binary, i.e., with function imports
-// and function implementations sharing a single index space, etc.,
-// and with the imports first (the Module's functions and globals
-// arrays are not assumed to be in a particular order, so we can't
-// just use them directly).
-struct BinaryIndexes {
-  std::unordered_map<Name, Index> functionIndexes;
-  std::unordered_map<Name, Index> globalIndexes;
-  std::unordered_map<Name, Index> eventIndexes;
-
-  BinaryIndexes(Module& wasm) {
-    auto addIndexes = [&](auto& source, auto& indexes) {
-      auto addIndex = [&](auto* curr) {
-        auto index = indexes.size();
-        indexes[curr->name] = index;
-      };
-      for (auto& curr : source) {
-        if (curr->imported()) {
-          addIndex(curr.get());
-        }
-      }
-      for (auto& curr : source) {
-        if (!curr->imported()) {
-          addIndex(curr.get());
-        }
-      }
-    };
-    addIndexes(wasm.functions, functionIndexes);
-    addIndexes(wasm.globals, globalIndexes);
-    addIndexes(wasm.events, eventIndexes);
-  }
-};
 
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
@@ -141,6 +109,7 @@ inline void clearModule(Module& wasm) {
   wasm.userSections.clear();
   wasm.debugInfoFileNames.clear();
   wasm.updateMaps();
+  wasm.allocator.clear();
 }
 
 // Renaming
@@ -153,7 +122,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second));
+      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
       F->name = pair.second;
     }
   }
@@ -340,6 +309,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   struct FunctionInfo {
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
+    bool hasIndirectCall = false;
   };
 
   typedef std::map<Function*, T> Map;
@@ -359,6 +329,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
         void visitCall(Call* curr) {
           info.callsTo.insert(module->getFunction(curr->target));
+        }
+
+        void visitCallIndirect(CallIndirect* curr) {
+          info.hasIndirectCall = true;
         }
 
       private:
@@ -381,14 +355,20 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 
+  enum IndirectCalls { IgnoreIndirectCalls, IndirectCallsHaveProperty };
+
   // Propagate a property from a function to those that call it.
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&)> addProperty) {
+                     std::function<void(T&)> addProperty,
+                     IndirectCalls indirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (hasProperty(map[func.get()])) {
+      if (hasProperty(map[func.get()]) ||
+          (indirectCalls == IndirectCallsHaveProperty &&
+           map[func.get()].hasIndirectCall)) {
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }
@@ -406,7 +386,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting the type signature used in a module
+// Helper function for collecting the type signatures used in a module
 //
 // Used when emitting or printing a module to give signatures canonical
 // indices. Signatures are sorted in order of decreasing frequency to minize the
@@ -423,12 +403,21 @@ collectSignatures(Module& wasm,
     if (func->imported()) {
       return;
     }
-    struct TypeCounter : PostWalker<TypeCounter> {
+    struct TypeCounter
+      : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
       Counts& counts;
 
       TypeCounter(Counts& counts) : counts(counts) {}
-
-      void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
+      void visitExpression(Expression* curr) {
+        if (auto* call = curr->dynCast<CallIndirect>()) {
+          counts[call->sig]++;
+        } else if (Properties::isControlFlowStructure(curr)) {
+          // TODO: Allow control flow to have input types as well
+          if (curr->type.isMulti()) {
+            counts[Signature(Type::none, curr->type)]++;
+          }
+        }
+      }
     };
     TypeCounter(counts).walk(func->body);
   };

@@ -39,15 +39,6 @@ INPUT_SIZE_LIMIT = 11 * 1024
 
 LOG_LIMIT = 125 * 1024
 
-
-# fuzz settings
-
-
-FUZZ_OPTS = None
-NANS = None
-LEGALIZE = None
-
-
 # utilities
 
 
@@ -64,12 +55,12 @@ def random_size():
 
 
 def run(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.check_output(cmd)
 
 
 def run_unchecked(cmd):
-    print(' '.join(cmd)[:LOG_LIMIT])
+    print(' '.join(cmd))
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
 
 
@@ -95,6 +86,11 @@ def randomize_feature_opts():
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
     print('feature opts:', ' '.join(FEATURE_OPTS))
+
+
+FUZZ_OPTS = None
+NANS = None
+LEGALIZE = None
 
 
 def randomize_fuzz_settings():
@@ -388,7 +384,9 @@ def test_one(random_input, opts):
     randomize_feature_opts()
     randomize_fuzz_settings()
 
-    run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('a.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -459,7 +457,9 @@ def test_one(random_input, opts):
                 print('')
 
     # created a second wasm for handlers that want to look at pairs.
-    run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+    printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+    with open('b.printed.wast', 'w') as f:
+        f.write(printed)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)

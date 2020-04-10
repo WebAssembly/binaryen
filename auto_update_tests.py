@@ -20,10 +20,12 @@ import subprocess
 import sys
 from collections import OrderedDict
 
+from scripts.test import binaryenjs
 from scripts.test import lld
 from scripts.test import shared
 from scripts.test import support
 from scripts.test import wasm2js
+from scripts.test import wasm_opt
 
 
 def update_asm_js_tests():
@@ -69,77 +71,6 @@ def update_asm_js_tests():
                 if 'debugInfo' in basename:
                     cmd += ['--source-map', os.path.join(shared.options.binaryen_test, wasm + '.map'), '-o', 'a.wasm']
                     support.run_command(cmd)
-
-
-def update_wasm_opt_tests():
-    print('\n[ checking wasm-opt -o notation... ]\n')
-    wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
-    cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
-    support.run_command(cmd)
-    open(wast, 'w').write(open('a.wast').read())
-
-    print('\n[ checking wasm-opt parsing & printing... ]\n')
-    for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
-        print('..', os.path.basename(t))
-        wasm = t.replace('.wast', '')
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        print('    ', ' '.join(cmd))
-        actual = subprocess.check_output(cmd)
-        print(cmd, actual)
-        with open(wasm + '.txt', 'wb') as o:
-            o.write(actual)
-        cmd = shared.WASM_OPT + [t, '--print-minified', '-all']
-        print('    ', ' '.join(cmd))
-        actual = subprocess.check_output(cmd)
-        with open(wasm + '.minified.txt', 'wb') as o:
-            o.write(actual)
-
-    print('\n[ checking wasm-opt passes... ]\n')
-    for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
-        print('..', os.path.basename(t))
-        binary = t.endswith('.wasm')
-        base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
-        passname = base
-        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
-        if os.path.exists(passes_file):
-            passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
-        actual = ''
-        for module, asserts in support.split_wast(t):
-            assert len(asserts) == 0
-            support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast', '--print']
-            actual += support.run_command(cmd)
-        with open(os.path.join(shared.options.binaryen_test, 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o:
-            o.write(actual)
-        if 'emit-js-wrapper' in t:
-            with open('a.js') as i:
-                with open(t + '.js', 'w') as o:
-                    o.write(i.read())
-        if 'emit-spec-wrapper' in t:
-            with open('a.wat') as i:
-                with open(t + '.wat', 'w') as o:
-                    o.write(i.read())
-
-    print('\n[ checking wasm-opt testcases... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        print('..', os.path.basename(t))
-        f = t + '.from-wast'
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        actual = support.run_command(cmd)
-        actual = actual.replace('printing before:\n', '')
-        open(f, 'w').write(actual)
-
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        open(f, 'w').write(actual)
 
 
 def update_bin_fmt_tests():
@@ -236,46 +167,12 @@ def update_wasm_dis_tests():
         open(t + '.fromBinary', 'w').write(actual)
 
 
-def update_binaryen_js_tests():
-    if not (shared.MOZJS or shared.NODEJS):
-        print('no vm to run binaryen.js tests')
-        return
-
-    if not os.path.exists(shared.BINARYEN_JS):
-        print('no binaryen.js build to test')
-        return
-
-    print('\n[ checking binaryen.js testcases... ]\n')
-    node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
-    for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
-        basename = os.path.basename(s)
-        print(basename)
-        f = open('a.js', 'w')
-        f.write(open(shared.BINARYEN_JS).read())
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
-        test_src = open(s).read()
-        f.write(test_src)
-        f.close()
-        if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
-            cmd = [shared.MOZJS or shared.NODEJS, 'a.js']
-            if 'fatal' not in basename:
-                out = support.run_command(cmd, stderr=subprocess.STDOUT)
-            else:
-                # expect an error - the specific error code will depend on the vm
-                out = support.run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
-            with open(s + '.txt', 'w') as o:
-                o.write(out)
-        else:
-            print('Skipping ' + basename + ' because WebAssembly might not be supported')
-
-
 def update_ctor_eval_tests():
     print('\n[ checking wasm-ctor-eval... ]\n')
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
-        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
+        cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wast', '-S', '--ctors', ctors]
         support.run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.out'
@@ -326,7 +223,7 @@ def update_spec_tests():
 
 
 TEST_SUITES = OrderedDict([
-    ('wasm-opt', update_wasm_opt_tests),
+    ('wasm-opt', wasm_opt.update_wasm_opt_tests),
     ('asm2wasm', update_asm_js_tests),
     ('wasm-dis', update_wasm_dis_tests),
     ('example', update_example_tests),
@@ -334,10 +231,10 @@ TEST_SUITES = OrderedDict([
     ('wasm-metadce', update_metadce_tests),
     ('wasm-reduce', update_reduce_tests),
     ('spec', update_spec_tests),
-    ('binaryenjs', update_binaryen_js_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binfmt', update_bin_fmt_tests),
+    ('binaryenjs', binaryenjs.update_binaryen_js_tests),
 ])
 
 

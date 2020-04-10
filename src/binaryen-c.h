@@ -167,6 +167,8 @@ BINARYEN_API BinaryenExpressionId BinaryenTryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenThrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPushId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
 
@@ -195,6 +197,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureSIMD128(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -463,9 +466,11 @@ BINARYEN_API BinaryenOp BinaryenOrVec128(void);
 BINARYEN_API BinaryenOp BinaryenXorVec128(void);
 BINARYEN_API BinaryenOp BinaryenAndNotVec128(void);
 BINARYEN_API BinaryenOp BinaryenBitselectVec128(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI8x16(void);
@@ -481,9 +486,11 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI16x8(void);
@@ -499,9 +506,11 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI32x4(void);
@@ -824,6 +833,12 @@ BinaryenBrOnExn(BinaryenModuleRef module,
                 const char* name,
                 const char* eventName,
                 BinaryenExpressionRef exnref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleMake(BinaryenModuleRef module,
+                  BinaryenExpressionRef* operands,
+                  BinaryenIndex numOperands);
+BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
+  BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                                 BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
@@ -1071,6 +1086,16 @@ BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
 
+BINARYEN_API BinaryenIndex
+BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenIndex
+BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
+
 BINARYEN_API BinaryenExpressionRef
 BinaryenPushGetValue(BinaryenExpressionRef expr);
 
@@ -1191,12 +1216,22 @@ BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
 
 // Function table. One per module
 
+// TODO: Add support for multiple segments in BinaryenSetFunctionTable.
 BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenIndex initial,
                                            BinaryenIndex maximum,
                                            const char** funcNames,
                                            BinaryenIndex numFuncNames,
                                            BinaryenExpressionRef offset);
+BINARYEN_API int BinaryenIsFunctionTableImported(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex
+BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef BinaryenGetFunctionTableSegmentOffset(
+  BinaryenModuleRef module, BinaryenIndex segmentId);
+BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
+  BinaryenModuleRef module, BinaryenIndex segmentId);
+BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
+  BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
 
 // Memory. One per module
 
@@ -1220,6 +1255,8 @@ BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
+BINARYEN_API int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                                 BinaryenIndex id);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex id,
                                                 char* buffer);
@@ -1281,6 +1318,50 @@ BINARYEN_API int BinaryenGetDebugInfo(void);
 // Enables or disables debug information in emitted binaries.
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetDebugInfo(int on);
+
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetLowMemoryUnused(void);
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
+
+// Gets the value of the specified arbitrary pass argument.
+// Applies to all modules, globally.
+BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
+
+// Clears all arbitrary pass arguments.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenClearPassArguments();
+
+// Gets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void);
+
+// Sets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void);
+
+// Sets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
+
+// Sets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
@@ -1477,6 +1558,29 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
                                            const char* name,
                                            const char* contents,
                                            BinaryenIndex contentsSize);
+
+//
+// ========= Effect analyzer =========
+//
+
+typedef uint32_t BinaryenSideEffects;
+
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectNone(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectBranches(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectCalls(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesLocal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
+
+BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
+  BinaryenExpressionRef expr, BinaryenFeatures features);
 
 //
 // ========== CFG / Relooper ==========

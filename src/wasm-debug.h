@@ -37,7 +37,7 @@ bool hasDWARFSections(const Module& wasm);
 void dumpDWARF(const Module& wasm);
 
 // Update the DWARF sections.
-void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations);
+void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations);
 
 } // namespace Debug
 

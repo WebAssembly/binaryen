@@ -47,7 +47,7 @@ enum {
 
 // wasm VMs on the web have decided to impose some limits on what they
 // accept
-enum WebLimitations {
+enum WebLimitations : uint32_t {
   MaxDataSegments = 100 * 1000,
   MaxFunctionBodySize = 128 * 1024,
   MaxFunctionLocals = 50 * 1000
@@ -375,6 +375,7 @@ extern const char* SIMD128Feature;
 extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
+extern const char* MultivalueFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -751,9 +752,11 @@ enum ASTNodes {
   V128Xor = 0x4f,
   V128AndNot = 0xd8,
   V128Bitselect = 0x50,
+  I8x16Abs = 0xe1,
   I8x16Neg = 0x51,
   I8x16AnyTrue = 0x52,
   I8x16AllTrue = 0x53,
+  I8x16Bitmask = 0xe4,
   I8x16Shl = 0x54,
   I8x16ShrS = 0x55,
   I8x16ShrU = 0x56,
@@ -769,9 +772,11 @@ enum ASTNodes {
   I8x16MaxS = 0x60,
   I8x16MaxU = 0x61,
   I8x16AvgrU = 0xd9,
+  I16x8Abs = 0xe2,
   I16x8Neg = 0x62,
   I16x8AnyTrue = 0x63,
   I16x8AllTrue = 0x64,
+  I16x8Bitmask = 0xe5,
   I16x8Shl = 0x65,
   I16x8ShrS = 0x66,
   I16x8ShrU = 0x67,
@@ -787,9 +792,11 @@ enum ASTNodes {
   I16x8MaxS = 0x71,
   I16x8MaxU = 0x72,
   I16x8AvgrU = 0xda,
+  I32x4Abs = 0xe3,
   I32x4Neg = 0x73,
   I32x4AnyTrue = 0x74,
   I32x4AllTrue = 0x75,
+  I32x4Bitmask = 0xe6,
   I32x4Shl = 0x76,
   I32x4ShrS = 0x77,
   I32x4ShrU = 0x78,
@@ -944,6 +951,58 @@ inline S32LEB binaryType(Type type) {
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
+  // Computes the indexes in a wasm binary, i.e., with function imports
+  // and function implementations sharing a single index space, etc.,
+  // and with the imports first (the Module's functions and globals
+  // arrays are not assumed to be in a particular order, so we can't
+  // just use them directly).
+  struct BinaryIndexes {
+    std::unordered_map<Name, Index> functionIndexes;
+    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> globalIndexes;
+
+    BinaryIndexes(Module& wasm) {
+      auto addIndexes = [&](auto& source, auto& indexes) {
+        auto addIndex = [&](auto* curr) {
+          auto index = indexes.size();
+          indexes[curr->name] = index;
+        };
+        for (auto& curr : source) {
+          if (curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+        for (auto& curr : source) {
+          if (!curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+      };
+      addIndexes(wasm.functions, functionIndexes);
+      addIndexes(wasm.events, eventIndexes);
+
+      // Globals may have tuple types in the IR, in which case they lower to
+      // multiple globals, one for each tuple element, in the binary. Tuple
+      // globals therefore occupy multiple binary indices, and we have to take
+      // that into account when calculating indices.
+      Index globalCount = 0;
+      auto addGlobal = [&](auto* curr) {
+        globalIndexes[curr->name] = globalCount;
+        globalCount += curr->type.size();
+      };
+      for (auto& curr : wasm.globals) {
+        if (curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+      for (auto& curr : wasm.globals) {
+        if (!curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+    }
+  };
+
 public:
   WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
     : wasm(input), o(o), indexes(*input) {
@@ -1004,16 +1063,20 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
+  void writeDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
+  void writeDebugLocationEnd(Expression* curr, Function* func);
+  void writeExtraDebugLocation(Expression* curr,
+                               Function* func,
+                               BinaryLocations::DelimiterId id);
 
   // helpers
   void writeInlineString(const char* name);
@@ -1039,7 +1102,7 @@ public:
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
-  ModuleUtils::BinaryIndexes indexes;
+  BinaryIndexes indexes;
   std::unordered_map<Signature, Index> typeIndices;
   std::vector<Signature> types;
 
@@ -1059,13 +1122,8 @@ private:
 
   std::unique_ptr<ImportInfo> importInfo;
 
-  // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section. This is similar
-  // to binaryLocations on Function objects, which are filled as we load the
-  // functions from the binary. Here we track them as we write, and then
-  // the combination of the two can be used to update DWARF info for the new
-  // locations of things.
-  BinaryLocationsMap binaryLocations;
+  // General debugging info: track locations as we write.
+  BinaryLocations binaryLocations;
   size_t binaryLocationsSizeAtSectionStart;
   // Track the expressions that we added for the current function being
   // written, so that we can update those specific binary locations when
@@ -1179,8 +1237,8 @@ public:
 
   struct BreakTarget {
     Name name;
-    int arity;
-    BreakTarget(Name name, int arity) : name(name), arity(arity) {}
+    Type type;
+    BreakTarget(Name name, Type type) : name(name), type(type) {}
   };
   std::vector<BreakTarget> breakStack;
   // the names that breaks target. this lets us know if a block has breaks to it
@@ -1188,6 +1246,18 @@ public:
   std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
+
+  // Control flow structure parsing: these have not just the normal binary
+  // data for an instruction, but also some bytes later on like "end" or "else".
+  // We must be aware of the connection between those things, for debug info.
+  std::vector<Expression*> controlFlowStack;
+
+  // Called when we parse the beginning of a control flow structure.
+  void startControlFlow(Expression* curr);
+
+  // Called when we parse a later part of a control flow structure, like "end"
+  // or "else".
+  void continueControlFlow(BinaryLocations::DelimiterId id, BinaryLocation pos);
 
   // set when we know code is unreachable in the sense of the wasm spec: we are
   // in a block and after an unreachable element. this helps parse stacky wasm
@@ -1214,8 +1284,11 @@ public:
   void processExpressions();
   void skipUnreachableCode();
 
+  void pushExpression(Expression* curr);
   Expression* popExpression();
   Expression* popNonVoidExpression();
+  Expression* popTuple(size_t numElems);
+  Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
   void processFunctions();
@@ -1236,6 +1309,7 @@ public:
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
+  void readDylink(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
@@ -1249,7 +1323,7 @@ public:
   int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
-  void pushBlockElements(Block* curr, size_t start, size_t end);
+  void pushBlockElements(Block* curr, Type type, size_t start);
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.

@@ -360,9 +360,11 @@ instructions = [
     ("v128.xor",             "makeBinary(s, BinaryOp::XorVec128)"),
     ("v128.andnot",          "makeBinary(s, BinaryOp::AndNotVec128)"),
     ("v128.bitselect",       "makeSIMDTernary(s, SIMDTernaryOp::Bitselect)"),
+    ("i8x16.abs",            "makeUnary(s, UnaryOp::AbsVecI8x16)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
     ("i8x16.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI8x16)"),
     ("i8x16.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI8x16)"),
+    ("i8x16.bitmask",        "makeUnary(s, UnaryOp::BitmaskVecI8x16)"),
     ("i8x16.shl",            "makeSIMDShift(s, SIMDShiftOp::ShlVecI8x16)"),
     ("i8x16.shr_s",          "makeSIMDShift(s, SIMDShiftOp::ShrSVecI8x16)"),
     ("i8x16.shr_u",          "makeSIMDShift(s, SIMDShiftOp::ShrUVecI8x16)"),
@@ -378,9 +380,11 @@ instructions = [
     ("i8x16.max_s",          "makeBinary(s, BinaryOp::MaxSVecI8x16)"),
     ("i8x16.max_u",          "makeBinary(s, BinaryOp::MaxUVecI8x16)"),
     ("i8x16.avgr_u",         "makeBinary(s, BinaryOp::AvgrUVecI8x16)"),
+    ("i16x8.abs",            "makeUnary(s, UnaryOp::AbsVecI16x8)"),
     ("i16x8.neg",            "makeUnary(s, UnaryOp::NegVecI16x8)"),
     ("i16x8.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI16x8)"),
     ("i16x8.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI16x8)"),
+    ("i16x8.bitmask",        "makeUnary(s, UnaryOp::BitmaskVecI16x8)"),
     ("i16x8.shl",            "makeSIMDShift(s, SIMDShiftOp::ShlVecI16x8)"),
     ("i16x8.shr_s",          "makeSIMDShift(s, SIMDShiftOp::ShrSVecI16x8)"),
     ("i16x8.shr_u",          "makeSIMDShift(s, SIMDShiftOp::ShrUVecI16x8)"),
@@ -396,9 +400,11 @@ instructions = [
     ("i16x8.max_s",          "makeBinary(s, BinaryOp::MaxSVecI16x8)"),
     ("i16x8.max_u",          "makeBinary(s, BinaryOp::MaxUVecI16x8)"),
     ("i16x8.avgr_u",         "makeBinary(s, BinaryOp::AvgrUVecI16x8)"),
+    ("i32x4.abs",            "makeUnary(s, UnaryOp::AbsVecI32x4)"),
     ("i32x4.neg",            "makeUnary(s, UnaryOp::NegVecI32x4)"),
     ("i32x4.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI32x4)"),
     ("i32x4.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI32x4)"),
+    ("i32x4.bitmask",        "makeUnary(s, UnaryOp::BitmaskVecI32x4)"),
     ("i32x4.shl",            "makeSIMDShift(s, SIMDShiftOp::ShlVecI32x4)"),
     ("i32x4.shr_s",          "makeSIMDShift(s, SIMDShiftOp::ShrSVecI32x4)"),
     ("i32x4.shr_u",          "makeSIMDShift(s, SIMDShiftOp::ShrUVecI32x4)"),
@@ -480,7 +486,10 @@ instructions = [
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
     ("rethrow",              "makeRethrow(s)"),
-    ("br_on_exn",            "makeBrOnExn(s)")
+    ("br_on_exn",            "makeBrOnExn(s)"),
+    # Multivalue pseudoinstructions
+    ("tuple.make",           "makeTupleMake(s)"),
+    ("tuple.extract",        "makeTupleExtract(s)")
 ]
 
 

@@ -128,12 +128,17 @@ void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
+  if (curr->exnref->type == Type::unreachable) {
+    replaceUntaken(curr->exnref, nullptr);
+  }
   updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPush(Push* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
+void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
+void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

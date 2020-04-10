@@ -1,6 +1,7 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 1 2)
  (global $sleeping (mut i32) (i32.const 0))
  (global $__asyncify_state (mut i32) (i32.const 0))
@@ -9,7 +10,8 @@
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
- (func $do_sleep (; 0 ;)
+ (export "asyncify_get_state" (func $asyncify_get_state))
+ (func $do_sleep
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -38,7 +40,7 @@
    )
   )
  )
- (func $work (; 1 ;)
+ (func $work
   (local $0 i32)
   (local $1 i32)
   (if
@@ -141,10 +143,10 @@
   )
   (nop)
  )
- (func $stuff (; 2 ;)
+ (func $stuff
   (nop)
  )
- (func $first_event (; 3 ;)
+ (func $first_event
   (local $0 i32)
   (local $1 i32)
   (if
@@ -231,18 +233,18 @@
   )
   (nop)
  )
- (func $second_event (; 4 ;)
+ (func $second_event
   (call $asyncify_start_rewind
    (i32.const 4)
   )
   (call $work)
  )
- (func $never_sleep (; 5 ;)
+ (func $never_sleep
   (call $stuff)
   (call $stuff)
   (call $stuff)
  )
- (func $asyncify_start_unwind (; 6 ;) (param $0 i32)
+ (func $asyncify_start_unwind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 1)
   )
@@ -261,7 +263,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_unwind (; 7 ;)
+ (func $asyncify_stop_unwind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -277,7 +279,7 @@
    (unreachable)
   )
  )
- (func $asyncify_start_rewind (; 8 ;) (param $0 i32)
+ (func $asyncify_start_rewind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 2)
   )
@@ -296,7 +298,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_rewind (; 9 ;)
+ (func $asyncify_stop_rewind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -312,12 +314,15 @@
    (unreachable)
   )
  )
+ (func $asyncify_get_state (result i32)
+  (global.get $__asyncify_state)
+ )
 )
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "import" (func $import))
  (import "env" "import2" (func $import2 (result i32)))
  (import "env" "import3" (func $import3 (param i32)))
@@ -328,7 +333,8 @@
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
- (func $calls-import (; 3 ;)
+ (export "asyncify_get_state" (func $asyncify_get_state))
+ (func $calls-import
   (local $0 i32)
   (local $1 i32)
   (if
@@ -415,7 +421,7 @@
   )
   (nop)
  )
- (func $calls-import2 (; 4 ;) (result i32)
+ (func $calls-import2 (result i32)
   (local $temp i32)
   (local $1 i32)
   (local $2 i32)
@@ -613,7 +619,7 @@
   )
   (i32.const 0)
  )
- (func $calls-import2-drop (; 5 ;)
+ (func $calls-import2-drop
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -759,7 +765,7 @@
    )
   )
  )
- (func $calls-nothing (; 6 ;)
+ (func $calls-nothing
   (local $0 i32)
   (local.set $0
    (i32.eqz
@@ -770,7 +776,7 @@
    (local.get $0)
   )
  )
- (func $many-locals (; 7 ;) (param $x i32) (result i32)
+ (func $many-locals (param $x i32) (result i32)
   (local $y i32)
   (local $2 i32)
   (local $3 i32)
@@ -1045,7 +1051,7 @@
   )
   (i32.const 0)
  )
- (func $calls-import2-if (; 8 ;) (param $x i32)
+ (func $calls-import2-if (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1203,7 +1209,7 @@
    )
   )
  )
- (func $calls-import2-if-else (; 9 ;) (param $x i32)
+ (func $calls-import2-if-else (param $x i32)
   (local $1 i32)
   (local.set $1
    (local.get $x)
@@ -1218,7 +1224,7 @@
    )
   )
  )
- (func $calls-import2-if-else-oneside (; 10 ;) (param $x i32) (result i32)
+ (func $calls-import2-if-else-oneside (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1240,7 +1246,7 @@
    (i32.const 3)
   )
  )
- (func $calls-import2-if-else-oneside2 (; 11 ;) (param $x i32) (result i32)
+ (func $calls-import2-if-else-oneside2 (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1262,7 +1268,7 @@
    (i32.const 3)
   )
  )
- (func $calls-loop (; 12 ;) (param $x i32)
+ (func $calls-loop (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1290,7 +1296,7 @@
    )
   )
  )
- (func $calls-loop2 (; 13 ;)
+ (func $calls-loop2
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -1436,7 +1442,7 @@
    )
   )
  )
- (func $calls-mix (; 14 ;)
+ (func $calls-mix
   (local $0 i32)
   (local $1 i32)
   (if
@@ -1564,10 +1570,10 @@
   )
   (nop)
  )
- (func $boring (; 15 ;)
+ (func $boring
   (nop)
  )
- (func $calls-mix-deep (; 16 ;)
+ (func $calls-mix-deep
   (local $0 i32)
   (local $1 i32)
   (if
@@ -1695,10 +1701,10 @@
   )
   (nop)
  )
- (func $boring-deep (; 17 ;)
+ (func $boring-deep
   (call $boring)
  )
- (func $import-deep (; 18 ;)
+ (func $import-deep
   (local $0 i32)
   (local $1 i32)
   (if
@@ -1785,7 +1791,7 @@
   )
   (nop)
  )
- (func $asyncify_start_unwind (; 19 ;) (param $0 i32)
+ (func $asyncify_start_unwind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 1)
   )
@@ -1804,7 +1810,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_unwind (; 20 ;)
+ (func $asyncify_stop_unwind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -1820,7 +1826,7 @@
    (unreachable)
   )
  )
- (func $asyncify_start_rewind (; 21 ;) (param $0 i32)
+ (func $asyncify_start_rewind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 2)
   )
@@ -1839,7 +1845,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_rewind (; 22 ;)
+ (func $asyncify_stop_rewind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -1854,5 +1860,8 @@
    )
    (unreachable)
   )
+ )
+ (func $asyncify_get_state (result i32)
+  (global.get $__asyncify_state)
  )
 )

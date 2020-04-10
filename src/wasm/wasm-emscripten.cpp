@@ -23,6 +23,7 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"
@@ -214,18 +215,36 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
-  // Then see if its already imported
+  // See if its already imported.
+  // FIXME: O(N)
   ImportInfo info(*module);
-  if (Function* f = info.getImportedFunction(ENV, name)) {
+  if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
   }
-  // Failing that create a new function import.
+  // Failing that create a new import.
   auto import = new Function;
   import->name = name;
   import->module = ENV;
   import->base = name;
   import->sig = sig;
   module->addFunction(import);
+  return import;
+}
+
+static Global* ensureGlobalImport(Module* module, Name name, Type type) {
+  // See if its already imported.
+  // FIXME: O(N)
+  ImportInfo info(*module);
+  if (auto* g = info.getImportedGlobal(ENV, name)) {
+    return g;
+  }
+  // Failing that create a new import.
+  auto import = new Global;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  import->type = type;
+  module->addGlobal(import);
   return import;
 }
 
@@ -269,37 +288,97 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   Block* block = builder.makeBlock();
   assignFunc->body = block;
 
+  bool hasSingleMemorySegment =
+    wasm.memory.exists && wasm.memory.segments.size() == 1;
+
   for (Global* g : gotMemEntries) {
-    Name getter(std::string("g$") + g->base.c_str());
+    // If this global is defined in this module, we export its address relative
+    // to the relocatable memory. If we are in a main module, we can just use
+    // that location (since if other modules have this symbol too, we will "win"
+    // as we are loaded first). Otherwise, import a g$ getter.
+    // Note that this depends on memory having a single segment, so we know the
+    // offset, and that the export is a global.
+    auto base = g->base;
+    if (hasSingleMemorySegment && !sideModule) {
+      if (auto* ex = wasm.getExportOrNull(base)) {
+        if (ex->kind == ExternalKind::Global) {
+          // The base relative to which we are computed is the offset of the
+          // singleton segment.
+          auto* relativeBase =
+            ExpressionManipulator::copy(wasm.memory.segments[0].offset, wasm);
+
+          auto* offset =
+            builder.makeGlobalGet(ex->value, wasm.getGlobal(ex->value)->type);
+          auto* add = builder.makeBinary(AddInt32, relativeBase, offset);
+          GlobalSet* globalSet = builder.makeGlobalSet(g->name, add);
+          block->list.push_back(globalSet);
+          continue;
+        }
+      }
+    }
+    Name getter(std::string("g$") + base.c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
 
+  ImportInfo importInfo(wasm);
+
+  // We may have to add things to the table.
+  Global* tableBase = nullptr;
+
   for (Global* g : gotFuncEntries) {
-    Function* f = nullptr;
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
-    if (ex) {
+    // If this is exported then it must be one of the functions implemented
+    // here, and if this is a main module, then we can simply place the function
+    // in the table: the loader will see it there and resolve all other uses
+    // to this one.
+    if (ex && !sideModule) {
       assert(ex->kind == ExternalKind::Function);
-      f = wasm.getFunction(ex->value);
-    } else {
-      ImportInfo info(wasm);
-      f = info.getImportedFunction(ENV, g->base);
-      if (!f) {
+      auto* f = wasm.getFunction(ex->value);
+      if (f->imported()) {
+        Fatal() << "GOT.func entry is both imported and exported: " << g->base;
+      }
+      // The base relative to which we are computed is the offset of the
+      // singleton segment, which we must ensure exists
+      if (!tableBase) {
+        tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
+      }
+      if (!wasm.table.exists) {
+        wasm.table.exists = true;
+      }
+      if (wasm.table.segments.empty()) {
+        wasm.table.segments.resize(1);
+        wasm.table.segments[0].offset =
+          builder.makeGlobalGet(tableBase->name, Type::i32);
+      }
+      auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
+      auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+      auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
+      auto* add = builder.makeBinary(AddInt32, getBase, c);
+      auto* globalSet = builder.makeGlobalSet(g->name, add);
+      block->list.push_back(globalSet);
+      continue;
+    }
+    // This is imported or in a side module. Create an fp$ import to get the
+    // function table index from the dynamic loader.
+    auto* f = importInfo.getImportedFunction(ENV, g->base);
+    if (!f) {
+      if (!ex) {
         Fatal() << "GOT.func entry with no import/export: " << g->base;
       }
+      f = wasm.getFunction(ex->value);
     }
-
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, Type::i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    auto* call = builder.makeCall(getter, {}, Type::i32);
+    auto* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
 
@@ -994,11 +1073,11 @@ struct FixInvokeFunctionNamesWalker
   : public PostWalker<FixInvokeFunctionNamesWalker> {
   Module& wasm;
   std::map<Name, Name> importRenames;
-  std::vector<Name> toRemove;
-  std::set<Name> newImports;
+  std::map<Name, Name> functionReplace;
   std::set<Signature> invokeSigs;
+  ImportInfo imports;
 
-  FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm) {}
+  FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm), imports(wasm) {}
 
   // Converts invoke wrapper names generated by LLVM backend to real invoke
   // wrapper names that are expected by JavaScript glue code.
@@ -1053,27 +1132,38 @@ struct FixInvokeFunctionNamesWalker
       return;
     }
 
-    assert(importRenames.count(curr->name) == 0);
-    BYN_TRACE("renaming: " << curr->name << " -> " << newname << "\n");
-    importRenames[curr->name] = newname;
-    // Either rename or remove the existing import
-    if (wasm.getFunctionOrNull(newname) || !newImports.insert(newname).second) {
-      toRemove.push_back(curr->name);
+    BYN_TRACE("renaming import: " << curr->module << "." << curr->base << " ("
+                                  << curr->name << ") -> " << newname << "\n");
+    assert(importRenames.count(curr->base) == 0);
+    importRenames[curr->base] = newname;
+    // Either rename the import, or replace it with an existing one
+    Function* existingFunc = imports.getImportedFunction(curr->module, newname);
+    if (existingFunc) {
+      BYN_TRACE("replacing with an existing import: " << existingFunc->name
+                                                      << "\n");
+      functionReplace[curr->name] = existingFunc->name;
     } else {
+      BYN_TRACE("renaming the import in place\n");
       curr->base = newname;
-      curr->name = newname;
     }
   }
 
   void visitModule(Module* curr) {
-    for (auto importName : toRemove) {
-      wasm.removeFunction(importName);
+    // For each replaced function first remove the function itself then
+    // rename all uses to the point to the new function.
+    for (auto& pair : functionReplace) {
+      BYN_TRACE("removeFunction " << pair.first << "\n");
+      wasm.removeFunction(pair.first);
     }
-    ModuleUtils::renameFunctions(wasm, importRenames);
-    ImportInfo imports(wasm);
+    // Rename all uses of the removed functions
+    ModuleUtils::renameFunctions(wasm, functionReplace);
+
+    // For imports that for renamed, update any associated GOT.func imports.
     for (auto& pair : importRenames) {
-      // Update any associated GOT.func import.
+      BYN_TRACE("looking for: GOT.func." << pair.first << "\n");
       if (auto g = imports.getImportedGlobal("GOT.func", pair.first)) {
+        BYN_TRACE("renaming corresponding GOT entry: " << g->base << " -> "
+                                                       << pair.second << "\n");
         g->base = pair.second;
       }
     }

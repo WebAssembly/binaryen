@@ -14,11 +14,11 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
   ;; code offset: 0x3
   (nop)
  )
- (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x10
   (if
    ;; code offset: 0xf
@@ -83,11 +83,11 @@
   ;; code offset: 0x32
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (result i32)
+ (func $stackSave (result i32)
   ;; code offset: 0x37
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   ;; code offset: 0x46
   (global.set $global$0
    ;; code offset: 0x44
@@ -109,14 +109,14 @@
   ;; code offset: 0x48
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   ;; code offset: 0x4f
   (global.set $global$0
    ;; code offset: 0x4d
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
+ (func $__growWasmMemory (param $0 i32) (result i32)
   ;; code offset: 0x56
   (memory.grow
    ;; code offset: 0x54
@@ -144,11 +144,11 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
   ;; code offset: 0x3
   (nop)
  )
- (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x10
   (if
    ;; code offset: 0xf
@@ -213,11 +213,11 @@
   ;; code offset: 0x32
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (result i32)
+ (func $stackSave (result i32)
   ;; code offset: 0x37
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   ;; code offset: 0x46
   (global.set $global$0
    ;; code offset: 0x44
@@ -239,14 +239,14 @@
   ;; code offset: 0x48
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   ;; code offset: 0x4f
   (global.set $global$0
    ;; code offset: 0x4d
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
+ (func $__growWasmMemory (param $0 i32) (result i32)
   ;; code offset: 0x56
   (memory.grow
    ;; code offset: 0x54

@@ -66,6 +66,24 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
   extractBytes<uint64_t, 2>(v128, lanes);
 }
 
+Literals Literal::makeZero(Type type) {
+  assert(type.isConcrete());
+  Literals zeroes;
+  for (auto t : type.expand()) {
+    zeroes.push_back(makeSingleZero(t));
+  }
+  return zeroes;
+}
+
+Literal Literal::makeSingleZero(Type type) {
+  assert(type.isSingle());
+  if (type.isRef()) {
+    return makeNullref();
+  } else {
+    return makeFromInt32(0, type);
+  }
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
@@ -271,10 +289,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "?";
       break;
     case Type::i32:
-      o << literal.i32;
+      o << literal.geti32();
       break;
     case Type::i64:
-      o << literal.i64;
+      o << literal.geti64();
       break;
     case Type::f32:
       literal.printFloat(o, literal.getf32());
@@ -299,6 +317,21 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
   }
   restoreNormalColor(o);
   return o;
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
+  if (literals.size() == 1) {
+    return o << literals[0];
+  } else {
+    o << '(';
+    if (literals.size() > 0) {
+      o << literals[0];
+    }
+    for (size_t i = 1; i < literals.size(); ++i) {
+      o << ", " << literals[i];
+    }
+    return o << ')';
+  }
 }
 
 Literal Literal::countLeadingZeroes() const {
@@ -532,9 +565,9 @@ Literal Literal::neg() const {
 Literal Literal::abs() const {
   switch (type.getSingle()) {
     case Type::i32:
-      return Literal(i32 & 0x7fffffff);
+      return Literal(std::abs(i32));
     case Type::i64:
-      return Literal(int64_t(i64 & 0x7fffffffffffffffULL));
+      return Literal(std::abs(i64));
     case Type::f32:
       return Literal(i32 & 0x7fffffff).castToF32();
     case Type::f64:
@@ -1409,6 +1442,15 @@ Literal Literal::notV128() const {
   ones.fill(0xff);
   return xorV128(Literal(ones.data()));
 }
+Literal Literal::absI8x16() const {
+  return unary<16, &Literal::getLanesSI8x16, &Literal::abs>(*this);
+}
+Literal Literal::absI16x8() const {
+  return unary<8, &Literal::getLanesSI16x8, &Literal::abs>(*this);
+}
+Literal Literal::absI32x4() const {
+  return unary<4, &Literal::getLanesI32x4, &Literal::abs>(*this);
+}
 Literal Literal::negI8x16() const {
   return unary<16, &Literal::getLanesUI8x16, &Literal::neg>(*this);
 }
@@ -1468,7 +1510,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal any_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] != Literal::makeZero(lanes[i].type)) {
+    if (lanes[i] != Literal::makeSingleZero(lanes[i].type)) {
       return Literal(int32_t(1));
     }
   }
@@ -1479,11 +1521,23 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal all_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] == Literal::makeZero(lanes[i].type)) {
+    if (lanes[i] == Literal::makeSingleZero(lanes[i].type)) {
       return Literal(int32_t(0));
     }
   }
   return Literal(int32_t(1));
+}
+
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
+static Literal bitmask(const Literal& val) {
+  uint32_t result = 0;
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    if (lanes[i].geti32() & (1 << 31)) {
+      result = result | (1 << i);
+    }
+  }
+  return Literal(result);
 }
 
 Literal Literal::anyTrueI8x16() const {
@@ -1492,17 +1546,26 @@ Literal Literal::anyTrueI8x16() const {
 Literal Literal::allTrueI8x16() const {
   return all_true<16, &Literal::getLanesUI8x16>(*this);
 }
+Literal Literal::bitmaskI8x16() const {
+  return bitmask<16, &Literal::getLanesSI8x16>(*this);
+}
 Literal Literal::anyTrueI16x8() const {
   return any_true<8, &Literal::getLanesUI16x8>(*this);
 }
 Literal Literal::allTrueI16x8() const {
   return all_true<8, &Literal::getLanesUI16x8>(*this);
 }
+Literal Literal::bitmaskI16x8() const {
+  return bitmask<8, &Literal::getLanesSI16x8>(*this);
+}
 Literal Literal::anyTrueI32x4() const {
   return any_true<4, &Literal::getLanesI32x4>(*this);
 }
 Literal Literal::allTrueI32x4() const {
   return all_true<4, &Literal::getLanesI32x4>(*this);
+}
+Literal Literal::bitmaskI32x4() const {
+  return bitmask<4, &Literal::getLanesI32x4>(*this);
 }
 Literal Literal::anyTrueI64x2() const {
   return any_true<2, &Literal::getLanesI64x2>(*this);

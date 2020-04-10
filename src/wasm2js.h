@@ -326,6 +326,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     if (options.optimizeLevel > 0) {
       runner.add("remove-unused-names");
       runner.add("merge-blocks");
+      runner.add("reorder-locals");
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
@@ -403,7 +404,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     }
   });
   if (flags.emscripten) {
-    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS"));
+    asmFunc[3]->push_back(
+      ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS\n"));
   }
   // functions
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
@@ -425,7 +427,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     wasm->addExport(e);
   }
   if (flags.emscripten) {
-    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS"));
+    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
   }
 
   addTable(asmFunc[3], wasm);
@@ -529,7 +531,7 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
-  FlatTable flat(wasm->table);
+  TableUtils::FlatTable flat(wasm->table);
   if (flat.valid && !wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
@@ -1128,11 +1130,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // If the target has effects that interact with the operands, we must
       // reorder it to the start.
       bool mustReorder = false;
-      EffectAnalyzer targetEffects(parent->options, curr->target);
+      EffectAnalyzer targetEffects(
+        parent->options, module->features, curr->target);
       if (targetEffects.hasAnything()) {
         for (auto* operand : curr->operands) {
           if (targetEffects.invalidates(
-                EffectAnalyzer(parent->options, operand))) {
+                EffectAnalyzer(parent->options, module->features, operand))) {
             mustReorder = true;
             break;
           }
@@ -1720,9 +1723,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // reorder it to the start. We must also use locals if the values have
       // side effects, as a JS conditional does not visit both sides.
       bool useLocals = false;
-      EffectAnalyzer conditionEffects(parent->options, curr->condition);
-      EffectAnalyzer ifTrueEffects(parent->options, curr->ifTrue);
-      EffectAnalyzer ifFalseEffects(parent->options, curr->ifFalse);
+      EffectAnalyzer conditionEffects(
+        parent->options, module->features, curr->condition);
+      EffectAnalyzer ifTrueEffects(
+        parent->options, module->features, curr->ifTrue);
+      EffectAnalyzer ifFalseEffects(
+        parent->options, module->features, curr->ifFalse);
       if (conditionEffects.invalidates(ifTrueEffects) ||
           conditionEffects.invalidates(ifFalseEffects) ||
           ifTrueEffects.hasSideEffects() || ifFalseEffects.hasSideEffects()) {
@@ -1886,6 +1892,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitPop(Pop* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitTupleMake(TupleMake* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitTupleExtract(TupleExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2243,26 +2257,28 @@ void Wasm2JSGlue::emitMemory(
     return;
   }
 
-  auto expr = R"(
-    function(mem) {
-      var _mem = new Uint8Array(mem);
-      return function(offset, s) {
-        var bytes, i;
-        if (typeof Buffer === 'undefined') {
-          bytes = atob(s);
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes.charCodeAt(i);
-        } else {
-          bytes = Buffer.from(s, 'base64');
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes[i];
-        }
-      }
+  auto expr =
+    R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+    base64ReverseLookup[48+i] = 52+i; // '0-9'
+    base64ReverseLookup[65+i] = i; // 'A-Z'
+    base64ReverseLookup[97+i] = 26+i; // 'a-z'
+  }
+  base64ReverseLookup[43] = 62; // '+'
+  base64ReverseLookup[47] = 63; // '/'
+  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
+  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
+    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2);
+    if (b64[bLength-2] == '=') --end;
+    if (b64[bLength-1] == '=') --end;
+    for (; i < bLength; i += 4, j += 3) {
+      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
+      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
+      uint8Array[j] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
+      if (j+1 < end) uint8Array[j+1] = b1 << 4 | b2 >> 2;
+      if (j+2 < end) uint8Array[j+2] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-  )";
-
-  // var assign$name = ($expr)(mem$name);
-  out << "var " << segmentWriter << " = (" << expr << ")(" << buffer << ");\n";
+  })";
+  out << expr << '\n';
 
   auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -2276,10 +2292,12 @@ void Wasm2JSGlue::emitMemory(
     Fatal() << "non-constant offsets aren't supported yet\n";
   };
 
+  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << segmentWriter << "(" << globalOffset(seg) << ", \""
-        << base64Encode(seg.data) << "\");\n";
+    out << "base64DecodeToExistingUint8Array(bufferView, " << globalOffset(seg)
+        << ", \"" << base64Encode(seg.data) << "\");\n";
   }
 }
 

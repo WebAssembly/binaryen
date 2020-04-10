@@ -32,6 +32,7 @@ public:
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
+  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
@@ -72,6 +73,7 @@ private:
   Address stackPointerOffset;
   bool useStackPointerGlobal;
   bool standalone;
+  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;

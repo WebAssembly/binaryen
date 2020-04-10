@@ -6,16 +6,16 @@
  (table $0 0 funcref)
  (global $g (mut f32) (f32.const 0))
  (event $e (attr 0) (param i32))
- (func $foo (; 0 ;) (param $0 i32) (result i32)
+ (func $foo (param $0 i32) (result i32)
   (i32.const 0)
  )
- (func $test_function_block (; 1 ;)
+ (func $test_function_block
   (block $block
    (unreachable)
    (nop)
   )
  )
- (func $test (; 2 ;)
+ (func $test
   (block $block
    (i32.eqz
     (unreachable)
