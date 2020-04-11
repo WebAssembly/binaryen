@@ -129,10 +129,16 @@ def compare(x, y, context):
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
+    # float() on the strings will handle many minor differences, like
+    # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
+    try:
+        return float(x) == float(y)
+    except Exception as e:
+        pass
+    # otherwise, try a full eval which can handle i64s too
     try:
         x = eval(x)
         y = eval(y)
-        # compare as both integers and floats, as they may be i64s or f32s/f64s
         return x == y or float(x) == float(y)
     except Exception as e:
         print('failed to check if numbers are close enough:', e)
