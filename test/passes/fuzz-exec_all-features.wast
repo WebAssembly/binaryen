@@ -39,3 +39,20 @@
   )
  )
 )
+(module
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+ (memory $0 (shared 1 1))
+ (export "memory" (memory $0))
+ (func "func_6" (param $0 i32) (param $1 i32)
+  (drop
+   (i32.atomic.rmw8.cmpxchg_u
+    (i32.const 0)
+    (i32.const 256) ;; 0x100, lower byte is 0 - should be wrapped to that
+    (i32.const 42)
+   )
+  )
+  (call $fimport$0
+   (i32.load (i32.const 0))
+  )
+ )
+)

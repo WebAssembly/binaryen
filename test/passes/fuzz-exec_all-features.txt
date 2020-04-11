@@ -73,3 +73,29 @@
 [fuzz-exec] calling foo
 [trap unaligned atomic operation]
 [fuzz-exec] comparing foo
+[fuzz-exec] calling func_6
+[LoggingExternalInterface logging 42]
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+ (memory $0 (shared 1 1))
+ (export "memory" (memory $0))
+ (export "func_6" (func $0))
+ (func $0 (param $0 i32) (param $1 i32)
+  (drop
+   (i32.atomic.rmw8.cmpxchg_u
+    (i32.const 0)
+    (i32.const 256)
+    (i32.const 42)
+   )
+  )
+  (call $fimport$0
+   (i32.load
+    (i32.const 0)
+   )
+  )
+ )
+)
+[fuzz-exec] calling func_6
+[LoggingExternalInterface logging 42]
