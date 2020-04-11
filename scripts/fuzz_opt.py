@@ -93,11 +93,12 @@ def randomize_feature_opts():
 
 FUZZ_OPTS = None
 NANS = None
+OOB = None
 LEGALIZE = None
 
 
 def randomize_fuzz_settings():
-    global FUZZ_OPTS, NANS, LEGALIZE
+    global FUZZ_OPTS, NANS, OOB, LEGALIZE
     FUZZ_OPTS = []
     if random.random() < 0.5:
         NANS = True
@@ -105,11 +106,16 @@ def randomize_fuzz_settings():
         NANS = False
         FUZZ_OPTS += ['--no-fuzz-nans']
     if random.random() < 0.5:
+        OOB = True
+    else:
+        OOB = False
+        FUZZ_OPTS += ['--no-fuzz-oob']
+    if random.random() < 0.5:
         LEGALIZE = True
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
-    print('randomized settings (NaNs, legalize):', NANS, LEGALIZE)
+    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
 # Test outputs we want to ignore are marked this way.
@@ -358,8 +364,10 @@ class Wasm2JS(TestCaseHandler):
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
         # avoid optimizations if we have nans, as we don't handle them with
         # full precision and optimizations can change things
-        # TODO: OOB too?    FUZZ_OPTS += ['--no-fuzz-oob']
-        if not NANS and random.random() < 0.5:
+        # OOB accesses are also an issue with optimizations, that can turn the
+        # loaded "undefined" into either 0 (with an |0) or stay undefined
+        # in optimized code.
+        if not NANS and not OOB and random.random() < 0.5:
             cmd += ['-O']
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
