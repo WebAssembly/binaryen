@@ -30,4 +30,12 @@
   )
  )
 )
-
+(module
+ (memory $0 (shared 1 1))
+ (func $foo
+  (atomic.notify
+   (i32.const 1) ;; unaligned
+   (i32.const 1)
+  )
+ )
+)

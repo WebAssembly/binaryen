@@ -1817,6 +1817,7 @@ private:
       if (count.breaking()) {
         return count;
       }
+      instance.checkAtomicAddress(ptr.getSingleValue().getInteger(), 4);
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
@@ -2196,8 +2197,18 @@ protected:
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   }
 
+  void checkAtomicAddress(Address addr, Index bytes) {
+    // Unaligned atomics trap.
+    if (bytes > 1) {
+      if (addr & (bytes - 1)) {
+        externalInterface->trap("unaligned atomic operation");
+      }
+    }
+  }
+
   Literal doAtomicLoad(Address addr, Index bytes, Type type) {
     checkLoadAddress(addr, bytes);
+    checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
@@ -2212,6 +2223,7 @@ protected:
   }
 
   void doAtomicStore(Address addr, Index bytes, Literal toStore) {
+    checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
