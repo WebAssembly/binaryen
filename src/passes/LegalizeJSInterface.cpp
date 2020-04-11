@@ -167,8 +167,10 @@ struct LegalizeJSInterface : public Pass {
             // call
             return;
           }
-          replaceCurrent(Builder(*getModule())
-                           .makeCall(iter->second, curr->operands, curr->type));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeCall(
+                iter->second, curr->operands, curr->type, curr->isReturn));
         }
       };
 
