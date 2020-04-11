@@ -1,3 +1,5 @@
+#/usr/bin/python3
+
 '''
 Runs random passes and options on random inputs, using wasm-opt.
 
@@ -24,9 +26,9 @@ import time
 
 from test import shared
 
+assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
-
 
 # feature options that are always passed to the tools.
 # exceptions: https://github.com/WebAssembly/binaryen/issues/2195
@@ -56,7 +58,7 @@ def random_size():
 
 def run(cmd):
     print(' '.join(cmd))
-    return subprocess.check_output(cmd)
+    return subprocess.check_output(cmd, text=True)
 
 
 def run_unchecked(cmd):
@@ -336,7 +338,7 @@ class CheckDeterminism(TestCaseHandler):
         # check for determinism
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
-        assert open('b1.wasm').read() == open('b2.wasm').read(), 'output must be deterministic'
+        assert open('b1.wasm', 'rb').read() == open('b2.wasm', 'rb').read(), 'output must be deterministic'
 
 
 class Wasm2JS(TestCaseHandler):
@@ -633,7 +635,7 @@ if __name__ == '__main__':
         f = open(temp, 'w')
         size = random_size()
         print('')
-        print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+        print('\n\nITERATION:', counter, '\n\n', 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
         for x in range(size):
             f.write(chr(random.randint(0, 255)))
         f.close()
