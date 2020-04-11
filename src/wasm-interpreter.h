@@ -1690,7 +1690,7 @@ private:
       NOTE_EVAL1(flow);
       auto addr = instance.getFinalAddress(curr, flow.getSingleValue());
       if (curr->isAtomic) {
-        instance.checkAtomicAddress(addr, 4);
+        instance.checkAtomicAddress(addr, curr->bytes);
       }
       auto ret = instance.externalInterface->load(curr, addr);
       NOTE_EVAL1(addr);
@@ -1709,7 +1709,7 @@ private:
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       if (curr->isAtomic) {
-        instance.checkAtomicAddress(addr, 4);
+        instance.checkAtomicAddress(addr, curr->bytes);
       }
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
