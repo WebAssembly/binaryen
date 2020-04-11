@@ -1,4 +1,4 @@
-#/usr/bin/python3
+#!/usr/bin/python3
 
 '''
 Runs random passes and options on random inputs, using wasm-opt.
@@ -41,8 +41,8 @@ INPUT_SIZE_LIMIT = 11 * 1024
 
 LOG_LIMIT = 125 * 1024
 
-# utilities
 
+# utilities
 
 def in_binaryen(*args):
     return os.path.join(shared.options.binaryen_root, *args)
@@ -635,7 +635,7 @@ if __name__ == '__main__':
         f = open(temp, 'w')
         size = random_size()
         print('')
-        print('\n\nITERATION:', counter, '\n\n', 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+        print('ITERATION:', counter, '\n\n', 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
         for x in range(size):
             f.write(chr(random.randint(0, 255)))
         f.close()
