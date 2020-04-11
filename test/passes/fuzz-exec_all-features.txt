@@ -99,3 +99,20 @@
 )
 [fuzz-exec] calling func_6
 [LoggingExternalInterface logging 42]
+[fuzz-exec] calling test
+[trap highest > memory: 18446744073709551512 > 65532]
+(module
+ (type $none_=>_none (func))
+ (memory $0 (shared 1 1))
+ (export "test" (func $0))
+ (func $0
+  (drop
+   (atomic.notify offset=22
+    (i32.const -104)
+    (i32.const -72)
+   )
+  )
+ )
+)
+[fuzz-exec] calling test
+[trap highest > memory: 18446744073709551512 > 65532]

@@ -56,3 +56,15 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (memory $0 (shared 1 1))
+ (func "test"
+  (drop
+   (atomic.notify offset=22
+    (i32.const -104) ;; illegal address
+    (i32.const -72)
+   )
+  )
+ )
+)
