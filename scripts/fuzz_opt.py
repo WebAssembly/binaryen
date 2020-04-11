@@ -509,7 +509,7 @@ def test_one(random_input, opts):
                     sys.exit(1)
                 print('')
 
-    # created a second wasm for handlers that want to look at pairs.
+    # create a second wasm for handlers that want to look at pairs.
     printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
     with open('b.printed.wast', 'w') as f:
         f.write(printed)
