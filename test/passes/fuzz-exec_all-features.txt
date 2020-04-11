@@ -57,3 +57,19 @@
 [fuzz-exec] comparing c
 [fuzz-exec] comparing d
 [fuzz-exec] comparing e
+[fuzz-exec] calling foo
+[trap unaligned atomic operation]
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (memory $0 (shared 1 1))
+ (export "foo" (func $0))
+ (func $0 (result i32)
+  (atomic.notify
+   (i32.const 1)
+   (i32.const 1)
+  )
+ )
+)
+[fuzz-exec] calling foo
+[trap unaligned atomic operation]
+[fuzz-exec] comparing foo
