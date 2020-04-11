@@ -1817,6 +1817,7 @@ private:
       if (count.breaking()) {
         return count;
       }
+//align ment, v8 trapps if unaligned
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
