@@ -1819,9 +1819,9 @@ private:
       if (count.breaking()) {
         return count;
       }
-      auto addr = instance.getFinalAddress(ptr.getSingleValue(), 4);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue(), 4);
+      // Just check TODO actual threads support
       instance.checkAtomicAddress(addr, 4);
-      // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
     Flow visitSIMDLoad(SIMDLoad* curr) {
@@ -2195,15 +2195,19 @@ protected:
     }
   }
 
-  template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
+  template<class LS> Address getFinalAddress(LS* curr, Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
-    trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
-    checkLoadAddress(addr, curr->bytes);
+    trapIfGt(bytes, memorySizeBytes, "bytes > memory");
+    checkLoadAddress(addr, bytes);
     return addr;
+  }
+
+  template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
+    return getFinalAddress(curr, ptr, curr->bytes);
   }
 
   Address getFinalAddress(Literal ptr, Index bytes) {
