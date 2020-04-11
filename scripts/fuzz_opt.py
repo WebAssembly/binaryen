@@ -639,8 +639,15 @@ POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
-    print('checking infinite random inputs')
-    random.seed(time.time() * os.getpid())
+    # if we are given a seed, run exactly that one testcase. otherwise,
+    # run new ones until we fail
+    if len(sys.argv) == 2:
+        given_seed = int(sys.argv[1])
+        print('checking a single given seed', given_seed)
+    else:
+        given_seed = None
+        print('checking infinite random inputs')
+    seed = time.time() * os.getpid()
     temp = 'input.dat'
     counter = 0
     bytes = 0    # wasm bytes tested
@@ -648,12 +655,19 @@ if __name__ == '__main__':
     while True:
         counter += 1
         f = open(temp, 'w')
+        if given_seed is not None:
+            seed = given_seed
+        else:
+            seed = random.randint(0, 1 << 64)
+        random.seed(seed)
         size = random_size()
         print('')
-        print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+        print('ITERATION:', counter, 'seed:', seed, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
         for x in range(size):
             f.write(chr(random.randint(0, 255)))
         f.close()
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         bytes += test_one('input.dat', opts)
+        if given_seed is not None:
+            break
