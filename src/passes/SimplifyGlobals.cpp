@@ -175,7 +175,7 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 
   void visitGlobalSet(GlobalSet* curr) {
     if (toRemove->count(curr->name) != 0) {
-      ExpressionManipulator::nop(curr);
+      replaceCurrent(Builder(*getModule()).makeDrop(curr->value));
     }
   }
 
