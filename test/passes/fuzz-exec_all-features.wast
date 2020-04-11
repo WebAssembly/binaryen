@@ -45,6 +45,11 @@
    (i32.const 1)
   )
  )
+ (func "aligned_for_size" (result i32)
+  (i32.atomic.load16_u offset=2 ;; just 2 bytes loaded, so size is ok
+   (i32.const 0)
+  )
+ )
  (func "unaligned_notify" (result i32)
   (atomic.notify
    (i32.const 1) ;; unaligned
