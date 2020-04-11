@@ -1689,6 +1689,9 @@ private:
       }
       NOTE_EVAL1(flow);
       auto addr = instance.getFinalAddress(curr, flow.getSingleValue());
+      if (curr->isAtomic) {
+        instance.checkAtomicAddress(addr, 4);
+      }
       auto ret = instance.externalInterface->load(curr, addr);
       NOTE_EVAL1(addr);
       NOTE_EVAL1(ret);
@@ -1705,6 +1708,9 @@ private:
         return value;
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
+      if (curr->isAtomic) {
+        instance.checkAtomicAddress(addr, 4);
+      }
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
       instance.externalInterface->store(curr, addr, value.getSingleValue());
@@ -1796,7 +1802,7 @@ private:
         return timeout;
       }
       auto bytes = curr->expectedType.getByteSize();
-      auto addr = instance.getFinalAddress(ptr.getSingleValue(), bytes);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue(), bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
       if (loaded != expected.getSingleValue()) {
@@ -1904,7 +1910,7 @@ private:
       auto fillLanes = [&](auto lanes, size_t laneBytes) {
         for (auto& lane : lanes) {
           lane = loadLane(
-            instance.getFinalAddress(Literal(uint32_t(src)), laneBytes));
+            instance.getFinalAddress(curr, Literal(uint32_t(src)), laneBytes));
           src = Address(uint32_t(src) + laneBytes);
         }
         return Literal(lanes);
@@ -2000,7 +2006,7 @@ private:
       }
       for (size_t i = 0; i < sizeVal; ++i) {
         Literal addr(uint32_t(destVal + i));
-        instance.externalInterface->store8(instance.getFinalAddress(addr, 1),
+        instance.externalInterface->store8(instance.getFinalAddressWithoutOffset(addr, 1),
                                            segment.data[offsetVal + i]);
       }
       return {};
@@ -2049,9 +2055,9 @@ private:
       }
       for (int64_t i = start; i != end; i += step) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(
-            instance.getFinalAddress(Literal(uint32_t(sourceVal + i)), 1)));
+            instance.getFinalAddressWithoutOffset(Literal(uint32_t(sourceVal + i)), 1)));
       }
       return {};
     }
@@ -2082,7 +2088,7 @@ private:
       uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)), 1), val);
       }
       return {};
     }
@@ -2209,7 +2215,7 @@ protected:
     return getFinalAddress(curr, ptr, curr->bytes);
   }
 
-  Address getFinalAddress(Literal ptr, Index bytes) {
+  Address getFinalAddressWithoutOffset(Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
