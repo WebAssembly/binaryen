@@ -73,6 +73,7 @@ def randomize_pass_debug():
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
         del os.environ['BINARYEN_PASS_DEBUG']
+    print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
 def randomize_feature_opts():
@@ -87,7 +88,7 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
-    print('feature opts:', ' '.join(FEATURE_OPTS))
+    print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
 FUZZ_OPTS = None
@@ -108,6 +109,7 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
+    print('randomized settings (NaNs, legalize):', NANS, LEGALIZE)
 
 
 # Test outputs we want to ignore are marked this way.
@@ -438,6 +440,7 @@ def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
+    print()
 
     printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
     with open('a.printed.wast', 'w') as f:
@@ -594,7 +597,7 @@ opt_choices = [
 ]
 
 
-def get_multiple_opt_choices():
+def randomize_opt_flags():
     ret = []
     # core opts
     while 1:
@@ -635,10 +638,10 @@ if __name__ == '__main__':
         f = open(temp, 'w')
         size = random_size()
         print('')
-        print('ITERATION:', counter, '\n\n', 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+        print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
         for x in range(size):
             f.write(chr(random.randint(0, 255)))
         f.close()
-        opts = get_multiple_opt_choices()
-        print('opts:', ' '.join(opts))
+        opts = randomize_opt_flags()
+        print('randomized opts:', ' '.join(opts))
         bytes += test_one('input.dat', opts)
