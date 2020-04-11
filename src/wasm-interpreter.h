@@ -1767,7 +1767,8 @@ private:
         return replacement;
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
-      expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
+      expected =
+        Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
