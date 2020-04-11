@@ -77,13 +77,15 @@ function test_types() {
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", i32_pair, binaryen.expandType(i32_pair));
+  console.log("  //", binaryen.expandType(i32_pair));
 
   var duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", duplicate_pair, binaryen.expandType(duplicate_pair));
+  console.log("  //", binaryen.expandType(duplicate_pair));
+
+  assert(i32_pair == duplicate_pair);
 
   var f32_pair = binaryen.createType([binaryen.f32, binaryen.f32]);
-  console.log("  //", f32_pair, binaryen.expandType(f32_pair));
+  console.log("  //", binaryen.expandType(f32_pair));
 }
 
 function test_features() {

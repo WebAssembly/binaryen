@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <array>
 #include <cassert>
 #include <shared_mutex>
 #include <sstream>
@@ -41,8 +42,8 @@ size_t std::hash<wasm::Type>::operator()(const wasm::Type& type) const {
 
 size_t std::hash<wasm::Signature>::
 operator()(const wasm::Signature& sig) const {
-  return wasm::rehash(std::hash<uint64_t>{}(sig.params.getID()),
-                      std::hash<uint64_t>{}(sig.results.getID()));
+  return wasm::rehash(uint64_t(std::hash<uint64_t>{}(sig.params.getID())),
+                      uint64_t(std::hash<uint64_t>{}(sig.results.getID())));
 }
 
 namespace wasm {
