@@ -1767,6 +1767,7 @@ private:
         return replacement;
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
+      expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
@@ -2103,6 +2104,24 @@ private:
 
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
+    }
+
+    // Given a value, wrap it to a smaller given number of bytes.
+    Literal wrapToSmallerSize(Literal value, Index bytes) {
+      switch (bytes) {
+        case 1: {
+          return value.and_(Literal(0xff));
+        }
+        case 2: {
+          return value.and_(Literal(0xffff));
+        }
+        case 4: {
+          if (value.type == Type::i64) {
+            return value.and_(Literal(0xffffffffL));
+          }
+        }
+      }
+      return value;
     }
   };
 
