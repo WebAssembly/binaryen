@@ -1818,7 +1818,8 @@ private:
       if (count.breaking()) {
         return count;
       }
-      instance.checkAtomicAddress(ptr.getSingleValue().getInteger(), 4);
+      auto addr = instance.getFinalAddress(ptr.getSingleValue(), 4);
+      instance.checkAtomicAddress(addr, 4);
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
@@ -2217,6 +2218,7 @@ protected:
   }
 
   void checkAtomicAddress(Address addr, Index bytes) {
+    checkLoadAddress(addr, bytes);
     // Unaligned atomics trap.
     if (bytes > 1) {
       if (addr & (bytes - 1)) {
@@ -2226,7 +2228,6 @@ protected:
   }
 
   Literal doAtomicLoad(Address addr, Index bytes, Type type) {
-    checkLoadAddress(addr, bytes);
     checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
