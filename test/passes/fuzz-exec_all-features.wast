@@ -31,19 +31,27 @@
  )
 )
 (module
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
- (func "foo" (result i32)
+ (func "unaligned_load" (result i32)
+  (i32.atomic.load
+   (i32.const 1) ;; unaligned ptr
+   (i32.const 1)
+  )
+ )
+ (func "unaligned_load_offset" (result i32)
+  (i32.atomic.load offset=1 ;; unaligned with offset
+   (i32.const 0)
+   (i32.const 1)
+  )
+ )
+ (func "unaligned_notify" (result i32)
   (atomic.notify
    (i32.const 1) ;; unaligned
    (i32.const 1)
   )
  )
-)
-(module
- (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
- (memory $0 (shared 1 1))
- (export "memory" (memory $0))
- (func "func_6" (param $0 i32) (param $1 i32)
+ (func "wrap_cmpxchg" (param $0 i32) (param $1 i32)
   (drop
    (i32.atomic.rmw8.cmpxchg_u
     (i32.const 0)
@@ -55,11 +63,7 @@
    (i32.load (i32.const 0))
   )
  )
-)
-(module
- (type $none_=>_none (func))
- (memory $0 (shared 1 1))
- (func "test"
+ (func "oob_notify"
   (drop
    (atomic.notify offset=22
     (i32.const -104) ;; illegal address

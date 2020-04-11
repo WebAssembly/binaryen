@@ -57,32 +57,45 @@
 [fuzz-exec] comparing c
 [fuzz-exec] comparing d
 [fuzz-exec] comparing e
-[fuzz-exec] calling foo
+[fuzz-exec] calling unaligned_load
 [trap unaligned atomic operation]
+[fuzz-exec] calling unaligned_load_offset
+[trap unaligned atomic operation]
+[fuzz-exec] calling unaligned_notify
+[trap unaligned atomic operation]
+[fuzz-exec] calling wrap_cmpxchg
+[LoggingExternalInterface logging 42]
+[fuzz-exec] calling oob_notify
+[trap final > memory: 18446744073709551512 > 65514]
 (module
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
- (export "foo" (func $0))
+ (export "unaligned_load" (func $0))
+ (export "unaligned_load_offset" (func $1))
+ (export "unaligned_notify" (func $2))
+ (export "wrap_cmpxchg" (func $3))
+ (export "oob_notify" (func $4))
  (func $0 (result i32)
+  (i32.atomic.load
+   (i32.const 1)
+  )
+ )
+ (func $1 (result i32)
+  (i32.atomic.load offset=1
+   (i32.const 0)
+  )
+ )
+ (func $2 (result i32)
   (atomic.notify
    (i32.const 1)
    (i32.const 1)
   )
  )
-)
-[fuzz-exec] calling foo
-[trap unaligned atomic operation]
-[fuzz-exec] comparing foo
-[fuzz-exec] calling func_6
-[LoggingExternalInterface logging 42]
-(module
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
- (memory $0 (shared 1 1))
- (export "memory" (memory $0))
- (export "func_6" (func $0))
- (func $0 (param $0 i32) (param $1 i32)
+ (func $3 (param $0 i32) (param $1 i32)
   (drop
    (i32.atomic.rmw8.cmpxchg_u
     (i32.const 0)
@@ -96,16 +109,7 @@
    )
   )
  )
-)
-[fuzz-exec] calling func_6
-[LoggingExternalInterface logging 42]
-[fuzz-exec] calling test
-[trap highest > memory: 18446744073709551512 > 65532]
-(module
- (type $none_=>_none (func))
- (memory $0 (shared 1 1))
- (export "test" (func $0))
- (func $0
+ (func $4
   (drop
    (atomic.notify offset=22
     (i32.const -104)
@@ -114,5 +118,16 @@
   )
  )
 )
-[fuzz-exec] calling test
-[trap highest > memory: 18446744073709551512 > 65532]
+[fuzz-exec] calling unaligned_load
+[trap unaligned atomic operation]
+[fuzz-exec] calling unaligned_load_offset
+[trap unaligned atomic operation]
+[fuzz-exec] calling unaligned_notify
+[trap unaligned atomic operation]
+[fuzz-exec] calling wrap_cmpxchg
+[LoggingExternalInterface logging 42]
+[fuzz-exec] calling oob_notify
+[trap final > memory: 18446744073709551512 > 65514]
+[fuzz-exec] comparing unaligned_load
+[fuzz-exec] comparing unaligned_load_offset
+[fuzz-exec] comparing unaligned_notify
