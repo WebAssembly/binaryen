@@ -225,10 +225,9 @@ def has_shell_timeout():
 
 # Default options to pass to v8. These enable all features.
 V8_OPTS = [
+    '--wasm-staging',
     '--experimental-wasm-eh',
     '--experimental-wasm-mv',
-    '--experimental-wasm-sat-f2i-conversions',
-    '--experimental-wasm-se',
     '--experimental-wasm-threads',
     '--experimental-wasm-simd',
     '--experimental-wasm-anyref',
