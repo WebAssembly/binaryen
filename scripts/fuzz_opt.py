@@ -137,7 +137,7 @@ def numbers_are_close_enough(x, y):
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
         return float(x) == float(y)
-    except Exception as e:
+    except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
     try:
@@ -684,6 +684,6 @@ and the exact version you found it on.
 
 (you can run that testcase again with "fuzz_opt.py %(seed)d")
 ================================================================================
-                ''' % { 'seed': seed })
+                ''' % {'seed': seed})
         if given_seed is not None:
             break
