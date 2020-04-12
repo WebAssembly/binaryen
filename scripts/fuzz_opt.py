@@ -23,6 +23,7 @@ import re
 import shutil
 import sys
 import time
+import traceback
 
 from test import shared
 
@@ -676,7 +677,17 @@ if __name__ == '__main__':
             print('(stopping by user request)')
             break
         except Exception as e:
-            print(e)
+            # print the exception manually, so that we can show our message at
+            # the very end where it won't be missed
+            ex_type, ex, tb = sys.exc_info()
+            print('!')
+            print('-----------------------------------------')
+            print('Exception:')
+            traceback.print_tb(tb)
+            print('-----------------------------------------')
+            print('!')
+            for arg in e.args:
+                print(arg)
             if not ok and given_seed is None:
                 print('''\
 ================================================================================
