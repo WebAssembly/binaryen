@@ -37,7 +37,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
-INPUT_SIZE_LIMIT = 150 * 1024
+INPUT_SIZE_LIMIT = 11 * 1024
 
 
 # utilities
