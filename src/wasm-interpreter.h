@@ -2125,14 +2125,14 @@ private:
     Literal wrapToSmallerSize(Literal value, Index bytes) {
       switch (bytes) {
         case 1: {
-          return value.and_(Literal(0xff));
+          return value.and_(Literal(int32_t(0xff)));
         }
         case 2: {
-          return value.and_(Literal(0xffff));
+          return value.and_(Literal(int32_t(0xffff)));
         }
         case 4: {
           if (value.type == Type::i64) {
-            return value.and_(Literal(0xffffffffL));
+            return value.and_(Literal(int64_t(0xffffffffL)));
           }
         }
       }
