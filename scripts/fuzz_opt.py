@@ -64,6 +64,7 @@ def random_size():
         # also get very high
         return int(min(INPUT_SIZE_MAX, max(INPUT_SIZE_MIN, random.expovariate(1.0 / INPUT_SIZE_MEAN))))
 
+
 def run(cmd):
     print(' '.join(cmd))
     return subprocess.check_output(cmd, text=True)
@@ -702,7 +703,7 @@ if __name__ == '__main__':
     seed = time.time() * os.getpid()
     temp = 'input.dat'
     counter = 0
-    total_wasm_size = 0 # wasm bytes tested
+    total_wasm_size = 0
     total_input_size = 0
     start_time = time.time()
     while True:
