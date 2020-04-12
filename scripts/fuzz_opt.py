@@ -265,6 +265,13 @@ def run_d8(wasm):
 #    * Totally generic: These receive the input pattern, a wasm generated from it, and a wasm
 #        optimized from that, and can then do anything it wants with those.
 class TestCaseHandler:
+    # how frequent this handler will be run. 1 means always run it, 0.5 means half the
+    # time
+    frequency = 1
+
+    def __init__(self):
+        self.num_runs = 0
+
     # If the core handle_pair() method is not overridden, it calls handle_single()
     # on each of the pair. That is useful if you just want the two wasms, and don't
     # care about their relationship
@@ -274,6 +281,12 @@ class TestCaseHandler:
 
     def can_run_on_feature_opts(self, feature_opts):
         return True
+
+    def increment_runs(self):
+        self.num_runs += 1
+
+    def count_runs(self):
+        return self.num_runs
 
 
 # Run VMs and compare results
@@ -287,6 +300,7 @@ class VM:
 
 class CompareVMs(TestCaseHandler):
     def __init__(self):
+        super(CompareVMs, self).__init__()
         self.vms = [
             VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               deterministic_nans=True), # noqa
             VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), deterministic_nans=False), # noqa
@@ -346,19 +360,14 @@ class FuzzExec(TestCaseHandler):
         ]
 
 
-# As FuzzExec, but without a separate invocation. This can find internal bugs with generating
-# the IR (which might be worked around by writing it and then reading it).
-class FuzzExecImmediately(TestCaseHandler):
-    def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # fuzz binaryen interpreter itself. separate invocation so result is easily reduceable
-        run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
-
-
 # Check for determinism - the same command must have the same output.
 # Note that this doesn't use get_commands() intentionally, since we are testing
 # for something that autoreduction won't help with anyhow (nondeterminism is very
 # hard to reduce).
 class CheckDeterminism(TestCaseHandler):
+    # not that important
+    frequency = 0.333
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
@@ -467,7 +476,6 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
-    FuzzExecImmediately(),
 ]
 
 
@@ -498,6 +506,8 @@ def test_one(random_input, opts):
         if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
             if hasattr(testcase_handler, 'get_commands'):
                 print('running testcase handler:', testcase_handler.__class__.__name__)
+                testcase_handler.increment_runs()
+
                 # if the testcase handler supports giving us a list of commands, then we can get those commands
                 # and use them to do useful things like automatic reduction. in this case we give it the input
                 # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
@@ -564,10 +574,22 @@ def test_one(random_input, opts):
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    for testcase_handler in testcase_handlers:
-        if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
-            if not hasattr(testcase_handler, 'get_commands'):
+    # run some of the pair handling handlers. we don't run them all so that we get more
+    # coverage of different wasm files (but we do run all get_commands() using ones,
+    # earlier, because those are autoreducible and we want to maximize the chance of
+    # that)
+    # however, also try our best to pick a handler that can run this
+    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
+    NUM_PAIR_HANDLERS = 2
+    if len(relevant_handlers) > 0:
+        chosen_handlers = set(random.choices(relevant_handlers, k=NUM_PAIR_HANDLERS))
+        for testcase_handler in chosen_handlers:
+            assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+            assert not hasattr(testcase_handler, 'get_commands')
+            if random.random() < testcase_handler.frequency:
                 print('running testcase handler:', testcase_handler.__class__.__name__)
+                testcase_handler.increment_runs()
+
                 # let the testcase handler handle this testcase however it wants. in this case we give it
                 # the input and both wasms.
                 testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
@@ -740,3 +762,7 @@ version (hopefully deterministic random numbers will be identical).
             else:
                 print('(finished running seed %d, see error above)' % given_seed)
             break
+
+        print('\nInvocations so far:')
+        for testcase_handler in testcase_handlers:
+            print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
