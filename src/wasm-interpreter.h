@@ -1736,22 +1736,21 @@ private:
       auto computed = value.getSingleValue();
       switch (curr->op) {
         case Add:
-          computed = computed.add(value.getSingleValue());
+          computed = computed.add(loaded);
           break;
         case Sub:
-          computed = computed.sub(value.getSingleValue());
+          computed = computed.sub(loaded);
           break;
         case And:
-          computed = computed.and_(value.getSingleValue());
+          computed = computed.and_(loaded);
           break;
         case Or:
-          computed = computed.or_(value.getSingleValue());
+          computed = computed.or_(loaded);
           break;
         case Xor:
-          computed = computed.xor_(value.getSingleValue());
+          computed = computed.xor_(loaded);
           break;
         case Xchg:
-          computed = value.getSingleValue();
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -2116,17 +2115,29 @@ private:
 
     // Given a value, wrap it to a smaller given number of bytes.
     Literal wrapToSmallerSize(Literal value, Index bytes) {
-      switch (bytes) {
-        case 1: {
-          return value.and_(Literal(0xff));
-        }
-        case 2: {
-          return value.and_(Literal(0xffff));
-        }
-        case 4: {
-          if (value.type == Type::i64) {
-            return value.and_(Literal(0xffffffffL));
+      if (value.type == Type::i32) {
+        switch (bytes) {
+          case 1: {
+            return value.and_(Literal(int32_t(0xff)));
           }
+          case 2: {
+            return value.and_(Literal(int32_t(0xffff)));
+          }
+          default: WASM_UNREACHABLE("unexpected bytes");
+        }
+      } else {
+        assert(value.type == Type::i64);
+        switch (bytes) {
+          case 1: {
+            return value.and_(Literal(int64_t(0xff)));
+          }
+          case 2: {
+            return value.and_(Literal(int64_t(0xffff)));
+          }
+          case 4: {
+            return value.and_(Literal(int64_t(0xffffffffL)));
+          }
+          default: WASM_UNREACHABLE("unexpected bytes");
         }
       }
       return value;

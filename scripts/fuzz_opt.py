@@ -668,6 +668,12 @@ if __name__ == '__main__':
         f.close()
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
-        bytes += test_one('input.dat', opts)
+        try:
+            ok = False
+            bytes += test_one('input.dat', opts)
+            ok = True
+        finally:
+            if not ok and given_seed is None:
+                print('you found a bug! please report it with seed << %d >>. (you can run that testcase again with "fuzz_opt.py seed"' % seed)
         if given_seed is not None:
             break
