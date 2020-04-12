@@ -87,3 +87,20 @@
   )
  )
 )
+(module
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+ (memory $0 (shared 1 1))
+ (func "rmw-reads-modifies-and-writes"
+  (drop
+   (i64.atomic.rmw16.and_u offset=4
+    (i32.const 0)
+    (i64.const 65535)
+   )
+  )
+  (call $fimport$0
+   (i32.load8_u
+    (i32.const 5)
+   )
+  )
+ )
+)
