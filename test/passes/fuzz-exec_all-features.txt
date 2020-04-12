@@ -61,6 +61,8 @@
 [trap unaligned atomic operation]
 [fuzz-exec] calling unaligned_load_offset
 [trap unaligned atomic operation]
+[fuzz-exec] calling aligned_for_size
+[fuzz-exec] note result: aligned_for_size => 0
 [fuzz-exec] calling unaligned_notify
 [trap unaligned atomic operation]
 [fuzz-exec] calling wrap_cmpxchg
@@ -76,9 +78,10 @@
  (memory $0 (shared 1 1))
  (export "unaligned_load" (func $0))
  (export "unaligned_load_offset" (func $1))
- (export "unaligned_notify" (func $2))
- (export "wrap_cmpxchg" (func $3))
- (export "oob_notify" (func $4))
+ (export "aligned_for_size" (func $2))
+ (export "unaligned_notify" (func $3))
+ (export "wrap_cmpxchg" (func $4))
+ (export "oob_notify" (func $5))
  (func $0 (result i32)
   (i32.atomic.load
    (i32.const 1)
@@ -90,12 +93,17 @@
   )
  )
  (func $2 (result i32)
+  (i32.atomic.load16_u offset=2
+   (i32.const 0)
+  )
+ )
+ (func $3 (result i32)
   (atomic.notify
    (i32.const 1)
    (i32.const 1)
   )
  )
- (func $3 (param $0 i32) (param $1 i32)
+ (func $4 (param $0 i32) (param $1 i32)
   (drop
    (i32.atomic.rmw8.cmpxchg_u
     (i32.const 0)
@@ -109,7 +117,7 @@
    )
   )
  )
- (func $4
+ (func $5
   (drop
    (atomic.notify offset=22
     (i32.const -104)
@@ -122,12 +130,32 @@
 [trap unaligned atomic operation]
 [fuzz-exec] calling unaligned_load_offset
 [trap unaligned atomic operation]
+[fuzz-exec] calling aligned_for_size
+[fuzz-exec] note result: aligned_for_size => 0
 [fuzz-exec] calling unaligned_notify
 [trap unaligned atomic operation]
 [fuzz-exec] calling wrap_cmpxchg
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling oob_notify
 [trap final > memory: 18446744073709551512 > 65514]
+[fuzz-exec] comparing aligned_for_size
 [fuzz-exec] comparing unaligned_load
 [fuzz-exec] comparing unaligned_load_offset
 [fuzz-exec] comparing unaligned_notify
+[fuzz-exec] calling unsigned_2_bytes
+[fuzz-exec] note result: unsigned_2_bytes => 65535
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (memory $0 (shared 1 1))
+ (data (i32.const 0) "\ff\ff")
+ (export "unsigned_2_bytes" (func $0))
+ (func $0 (result i32)
+  (i32.atomic.rmw16.xor_u
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)
+[fuzz-exec] calling unsigned_2_bytes
+[fuzz-exec] note result: unsigned_2_bytes => 65535
+[fuzz-exec] comparing unsigned_2_bytes
