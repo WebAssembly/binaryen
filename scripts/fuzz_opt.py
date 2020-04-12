@@ -674,6 +674,16 @@ if __name__ == '__main__':
             ok = True
         finally:
             if not ok and given_seed is None:
-                print('you found a bug! please report it with seed << %d >>. (you can run that testcase again with "fuzz_opt.py seed"' % seed)
+                print('''\
+================================================================================
+You found a bug! Please report it with
+
+  seed: %(seed)d
+
+and the exact version you found it on.
+
+(you can run that testcase again with "fuzz_opt.py %(seed)d")
+================================================================================
+                ''' % { 'seed': seed })
         if given_seed is not None:
             break
