@@ -77,3 +77,13 @@
   )
  )
 )
+(module
+ (memory $0 (shared 1 1))
+ (data (i32.const 0) "\ff\ff")
+ (func "unsigned_2_bytes" (result i32)
+  (i32.atomic.rmw16.xor_u ;; should be unsigned
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)
