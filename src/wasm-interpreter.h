@@ -2129,7 +2129,7 @@ private:
             return value.and_(Literal(int32_t(0xffff)));
           }
           case 4: {
-              break;
+            break;
           }
           default:
             WASM_UNREACHABLE("unexpected bytes");
@@ -2147,7 +2147,7 @@ private:
             return value.and_(Literal(int64_t(0xffffffffL)));
           }
           case 8: {
-              break;
+            break;
           }
           default:
             WASM_UNREACHABLE("unexpected bytes");
