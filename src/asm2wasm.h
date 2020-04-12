@@ -2028,7 +2028,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32ToFloat64
                                                 : ConvertSInt32ToFloat64;
           conv->value = ret;
-          conv->type = Type::Type::f64;
+          conv->type = Type::f64;
           return conv;
         }
         if (ret->type == Type::f32) {
