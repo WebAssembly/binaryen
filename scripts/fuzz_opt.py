@@ -672,7 +672,11 @@ if __name__ == '__main__':
             ok = False
             bytes += test_one('input.dat', opts)
             ok = True
-        finally:
+        except KeyboardInterrupt:
+            print('(stopping by user request)')
+            break
+        except Exception as e:
+            print(e)
             if not ok and given_seed is None:
                 print('''\
 ================================================================================
