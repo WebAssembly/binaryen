@@ -40,6 +40,8 @@ CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_LIMIT = 150 * 1024
 
+PRINT_WATS = False
+
 
 # utilities
 
@@ -356,7 +358,13 @@ class CheckDeterminism(TestCaseHandler):
 
 class Wasm2JS(TestCaseHandler):
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
+        # always check for compiler crashes. without NaNs we can also compare
+        # before and after (with NaNs, a reinterpret through memory might end up
+        # different in JS than wasm)
+        before = self.run(before_wasm)
+        after = self.run(after_wasm)
+        if not NANS:
+            compare(before, after, 'Wasm2JS')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -455,9 +463,12 @@ def test_one(random_input, opts):
     randomize_fuzz_settings()
     print()
 
-    printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
-    with open('a.printed.wast', 'w') as f:
-        f.write(printed)
+    if PRINT_WATS:
+        printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+        with open('a.printed.wast', 'w') as f:
+            f.write(printed)
+    else:
+        run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -528,9 +539,12 @@ def test_one(random_input, opts):
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
-    printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
-    with open('b.printed.wast', 'w') as f:
-        f.write(printed)
+    if PRINT_WATS:
+        printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+        with open('b.printed.wast', 'w') as f:
+            f.write(printed)
+    else:
+        run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)
@@ -700,5 +714,7 @@ and the exact version you found it on.
 (you can run that testcase again with "fuzz_opt.py %(seed)d")
 ================================================================================
                 ''' % {'seed': seed})
+                break
         if given_seed is not None:
+            print('(finished running seed %d without error)' % given_seed)
             break
