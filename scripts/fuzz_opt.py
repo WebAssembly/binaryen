@@ -143,6 +143,9 @@ def compare(x, y, context):
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
+    # handle nan comparisons like -nan:0x7ffff0 vs NaN, ignoring the bits
+    if 'nan' in x.lower() and 'nan' in y.lower():
+        return True
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
