@@ -178,9 +178,6 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 
   void visitGlobalSet(GlobalSet* curr) {
     if (toRemove->count(curr->name) != 0) {
-<<<<<<< HEAD
-      replaceCurrent(Builder(*getModule()).makeDrop(curr->value));
-=======
       ExpressionManipulator::nop(curr);
       nopped = true;
     }
@@ -192,7 +189,6 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
       runner.setIsNested(true);
       runner.addDefaultFunctionOptimizationPasses();
       runner.runOnFunction(curr);
->>>>>>> origin/atomic4
     }
   }
 
