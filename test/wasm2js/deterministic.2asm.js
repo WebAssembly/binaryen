@@ -24,7 +24,10 @@ function asmFunc(global, env, buffer) {
  var bar = env.base;
  var global$0 = -44;
  function $0() {
-  return (global$0 >>> 0) / ((bar() | 0) >>> 0) | 0 | 0;
+  if ((global$0 >>> 0) / ((bar() | 0) >>> 0) | 0) {
+   abort()
+  }
+  return 1 | 0;
  }
  
  var FUNCTION_TABLE = [];

@@ -870,7 +870,9 @@ int main(int argc, const char* argv[]) {
       "deterministic at least in what happens, which might or might not be "
       "to trap like wasm, but at least should not vary)",
       Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) { flags.deterministic = true; })
+      [&](Options* o, const std::string& argument) {
+        flags.deterministic = true;
+      })
     .add(
       "--symbols-file",
       "",

@@ -23,7 +23,10 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var bar = env.base;
  function $0() {
-  return 4294967252 / (bar() >>> 0) | 0;
+  if (4294967252 / (bar() >>> 0) | 0) {
+   abort()
+  }
+  return 1;
  }
  
  var FUNCTION_TABLE = [];
