@@ -178,13 +178,13 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 
   void visitGlobalSet(GlobalSet* curr) {
     if (toRemove->count(curr->name) != 0) {
-      ExpressionManipulator::nop(curr);
-      nopped = true;
+      replaceCurrent(Builder(*getModule()).makeDrop(curr->value));
+      removed = true;
     }
   }
 
   void visitFunction(Function* curr) {
-    if (nopped && optimize) {
+    if (removed && optimize) {
       PassRunner runner(getModule(), getPassRunner()->options);
       runner.setIsNested(true);
       runner.addDefaultFunctionOptimizationPasses();
@@ -195,7 +195,7 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 private:
   const NameSet* toRemove;
   bool optimize;
-  bool nopped = false;
+  bool removed = false;
 };
 
 } // anonymous namespace
