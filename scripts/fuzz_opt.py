@@ -688,6 +688,7 @@ if __name__ == '__main__':
         f = open(temp, 'w')
         if given_seed is not None:
             seed = given_seed
+            given_seed_passed = True
         else:
             seed = random.randint(0, 1 << 64)
         random.seed(seed)
@@ -717,7 +718,9 @@ if __name__ == '__main__':
             print('!')
             for arg in e.args:
                 print(arg)
-            if given_seed is None:
+            if given_seed is not None:
+                given_seed_passed = False
+            else:
                 print('''\
 ================================================================================
 You found a bug! Please report it with
@@ -732,5 +735,8 @@ version (hopefully deterministic random numbers will be identical).
                 ''' % {'seed': seed})
                 break
         if given_seed is not None:
-            print('(finished running seed %d without error)' % given_seed)
+            if given_seed_passed:
+                print('(finished running seed %d without error)' % given_seed)
+            else:
+                print('(finished running seed %d, see error above)' % given_seed)
             break
