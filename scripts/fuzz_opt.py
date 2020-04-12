@@ -550,7 +550,7 @@ def test_one(random_input, opts):
                     # reduce the input to something smaller with the same behavior on the script
                     subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
                     print('Finished reduction. See "tt.sh" and "reduced.wasm".')
-                    sys.exit(1)
+                    raise Exception('halting after autoreduction')
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
@@ -701,9 +701,7 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            ok = False
             total_wasm_size += test_one('input.dat', opts)
-            ok = True
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
@@ -719,14 +717,15 @@ if __name__ == '__main__':
             print('!')
             for arg in e.args:
                 print(arg)
-            if not ok and given_seed is None:
+            if given_seed is None:
                 print('''\
 ================================================================================
 You found a bug! Please report it with
 
   seed: %(seed)d
 
-and the exact version you found it on.
+and the exact version of Binaryen you found it on, plus the exact Python
+version (hopefully deterministic random numbers will be identical).
 
 (you can run that testcase again with "fuzz_opt.py %(seed)d")
 ================================================================================
