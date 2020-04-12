@@ -141,7 +141,7 @@ static void replaceInPlaceIfPossible(Ref target, Ref value) {
   }
 }
 
-static void optimizeJS(Ref ast) {
+static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
   // Helpers
 
   auto isBinary = [](Ref node, IString op) {
@@ -262,8 +262,21 @@ static void optimizeJS(Ref ast) {
       node[1]->setString(L_NOT);
       node[3]->setNull();
     } else if (isOrZero(node) || isTrshiftZero(node)) {
-      // Just being different from 0 is enough, casts don't matter.
-      return node[2];
+      // Just being different from 0 is enough, casts don't matter. However,
+      // in deterministic mode we care about corner cases that would trap in
+      // wasm, like an integer divide by zero:
+      //
+      //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
+      //
+      // while
+      //
+      //  if (1 / 0)  =>  condition is Infinity which is truthy
+      //
+      // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
+      // which has the right truthiness).
+      if (!(flags.deterministic && isBinary(node[2], DIV))) {
+        return node[2];
+      }
     }
     return node;
   };
@@ -511,7 +524,7 @@ static void emitWasm(Module& wasm,
   Wasm2JSBuilder wasm2js(flags, options);
   auto js = wasm2js.processWasm(&wasm, name);
   if (options.optimizeLevel >= 2) {
-    optimizeJS(js);
+    optimizeJS(js, flags);
   }
   Wasm2JSGlue glue(wasm, output, flags, name);
   glue.emitPre();
@@ -848,6 +861,16 @@ int main(int argc, const char* argv[]) {
       "form)",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.emscripten = true; })
+    .add(
+      "--deterministic",
+      "",
+      "Replace WebAssembly trapping behavior deterministically "
+      "(the default is to not care about what would trap in wasm, like a load "
+      "out of bounds or integer divide by zero; with this flag, we try to be "
+      "deterministic at least in what happens, which might or might not be "
+      "to trap like wasm, but at least should not vary)",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { flags.deterministic = true; })
     .add(
       "--symbols-file",
       "",

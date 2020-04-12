@@ -385,7 +385,12 @@ class Wasm2JS(TestCaseHandler):
         # loaded "undefined" into either 0 (with an |0) or stay undefined
         # in optimized code.
         if not NANS and not OOB and random.random() < 0.5:
-            cmd += ['-O']
+            # when optimizing also enable deterministic mode, to avoid things
+            # like integer divide by zero causing false positives (1 / 0 is
+            # Infinity without a  | 0 , and 0 with one, and the truthiness of
+            # those differs; we don't want to care about this because it
+            # would trap in wasm anyhow)
+            cmd += ['-O', '--deterministic']
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
             glue = f.read()
