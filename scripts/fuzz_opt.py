@@ -675,7 +675,8 @@ if __name__ == '__main__':
     seed = time.time() * os.getpid()
     temp = 'input.dat'
     counter = 0
-    bytes = 0    # wasm bytes tested
+    total_wasm_size = 0 # wasm bytes tested
+    total_input_size = 0
     start_time = time.time()
     while True:
         counter += 1
@@ -685,17 +686,18 @@ if __name__ == '__main__':
         else:
             seed = random.randint(0, 1 << 64)
         random.seed(seed)
-        size = random_size()
+        input_size = random_size()
+        total_input_size += input_size
         print('')
-        print('ITERATION:', counter, 'seed:', seed, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
-        for x in range(size):
+        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(float(total_input_size) / counter) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
+        for x in range(input_size):
             f.write(chr(random.randint(0, 255)))
         f.close()
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
             ok = False
-            bytes += test_one('input.dat', opts)
+            total_wasm_size += test_one('input.dat', opts)
             ok = True
         except KeyboardInterrupt:
             print('(stopping by user request)')
