@@ -126,3 +126,23 @@
     (global.get $g1)
   )
 )
+;; don't remove a value with a side effect
+(module
+ (global $global$0 (mut i32) (i32.const 0))
+ (global $global$1 (mut i32) (i32.const 0))
+ (export "func_9" (func $0))
+ (func $0 (result f64)
+  (global.set $global$0
+   (block $label$1 (result i32)
+    (if
+     (i32.eqz
+      (global.get $global$1)
+     )
+     (unreachable)
+    )
+    (i32.const 2)
+   )
+  )
+  (f64.const 1)
+ )
+)

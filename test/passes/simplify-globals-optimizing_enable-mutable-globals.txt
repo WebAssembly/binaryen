@@ -41,7 +41,7 @@
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
  (func $foo
-  (nop)
+  (unreachable)
  )
 )
 (module
@@ -158,5 +158,16 @@
    (i32.const 100)
   )
   (i32.const 100)
+ )
+)
+(module
+ (type $none_=>_f64 (func (result f64)))
+ (global $global$0 i32 (i32.const 0))
+ (global $global$1 i32 (i32.const 0))
+ (export "func_9" (func $0))
+ (func $0 (result f64)
+  (drop
+   (unreachable)
+  )
  )
 )
