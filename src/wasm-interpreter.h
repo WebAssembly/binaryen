@@ -1731,7 +1731,7 @@ private:
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
-      auto loaded = instance.doAtomicLoadUnsigned(addr, curr->bytes, curr->type);
+      auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
       auto computed = value.getSingleValue();
       switch (curr->op) {
@@ -1778,7 +1778,7 @@ private:
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
-      auto loaded = instance.doAtomicLoadUnsigned(addr, curr->bytes, curr->type);
+      auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
       NOTE_EVAL1(loaded);
       if (loaded == expected.getSingleValue()) {
         instance.doAtomicStore(addr, curr->bytes, replacement.getSingleValue());
@@ -2238,23 +2238,21 @@ protected:
     }
   }
 
-  Literal doAtomicLoad(Address addr, Index bytes, Type type, bool signed_=true) {
+  Literal doAtomicLoad(Address addr, Index bytes, Type type) {
     checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
     Load load;
     load.bytes = bytes;
-    load.signed_ = signed_;
+    // When an atomic loads a partial number of bytes for the type, it is
+    // always an unsigned extension.
+    load.signed_ = false;
     load.align = bytes;
     load.isAtomic = true; // understatement
     load.ptr = &ptr;
     load.type = type;
     return externalInterface->load(&load, addr);
-  }
-
-  Literal doAtomicLoadUnsigned(Address addr, Index bytes, Type type) {
-    return doAtomicLoad(addr, bytes, type, false);
   }
 
   void doAtomicStore(Address addr, Index bytes, Literal toStore) {
