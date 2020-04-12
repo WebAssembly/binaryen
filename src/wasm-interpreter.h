@@ -2006,8 +2006,9 @@ private:
       }
       for (size_t i = 0; i < sizeVal; ++i) {
         Literal addr(uint32_t(destVal + i));
-        instance.externalInterface->store8(instance.getFinalAddressWithoutOffset(addr, 1),
-                                           segment.data[offsetVal + i]);
+        instance.externalInterface->store8(
+          instance.getFinalAddressWithoutOffset(addr, 1),
+          segment.data[offsetVal + i]);
       }
       return {};
     }
@@ -2055,9 +2056,11 @@ private:
       }
       for (int64_t i = start; i != end; i += step) {
         instance.externalInterface->store8(
-          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)), 1),
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
+                                                1),
           instance.externalInterface->load8s(
-            instance.getFinalAddressWithoutOffset(Literal(uint32_t(sourceVal + i)), 1)));
+            instance.getFinalAddressWithoutOffset(
+              Literal(uint32_t(sourceVal + i)), 1)));
       }
       return {};
     }
@@ -2088,7 +2091,9 @@ private:
       uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
-          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)), 1), val);
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
+                                                1),
+          val);
       }
       return {};
     }
@@ -2123,7 +2128,8 @@ private:
           case 2: {
             return value.and_(Literal(int32_t(0xffff)));
           }
-          default: WASM_UNREACHABLE("unexpected bytes");
+          default:
+            WASM_UNREACHABLE("unexpected bytes");
         }
       } else {
         assert(value.type == Type::i64);
@@ -2137,7 +2143,8 @@ private:
           case 4: {
             return value.and_(Literal(int64_t(0xffffffffL)));
           }
-          default: WASM_UNREACHABLE("unexpected bytes");
+          default:
+            WASM_UNREACHABLE("unexpected bytes");
         }
       }
       return value;
@@ -2212,7 +2219,8 @@ protected:
     }
   }
 
-  template<class LS> Address getFinalAddress(LS* curr, Literal ptr, Index bytes) {
+  template<class LS>
+  Address getFinalAddress(LS* curr, Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
