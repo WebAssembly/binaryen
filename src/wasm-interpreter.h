@@ -2242,9 +2242,8 @@ protected:
   }
 
   Address getFinalAddressWithoutOffset(Literal ptr, Index bytes) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
-    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+    checkLoadAddress(addr, bytes);
     return addr;
   }
 
