@@ -631,7 +631,6 @@ opt_choices = [
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
-    ["--flatten"],
     # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
     ["--inlining"],
     ["--inlining-optimizing"],
