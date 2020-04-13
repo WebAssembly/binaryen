@@ -218,7 +218,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void trap(const char* why) override {
-    std::cerr << "[trap " << why << "]\n";
+    std::cout << "[trap " << why << "]\n";
     throw TrapException();
   }
 };
