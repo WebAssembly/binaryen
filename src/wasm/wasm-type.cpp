@@ -50,10 +50,9 @@ namespace wasm {
 
 namespace {
 
-// TODO: switch to std::shared_mutex in C++17
-std::shared_timed_mutex mutex;
+std::mutex mutex;
 
-std::array<std::vector<Type>, Type::_last_value_type + 1> typeLists = {
+std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
   std::vector<Type>{},
   {Type::unreachable},
   {Type::i32},
@@ -66,6 +65,10 @@ std::array<std::vector<Type>, Type::_last_value_type + 1> typeLists = {
   {Type::nullref},
   {Type::exnref}};
 
+// Track unique_ptrs for constructed types to avoid leaks
+std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
+
+// Maps from type vectors to the canonical Type IS
 std::unordered_map<std::vector<Type>, uintptr_t> indices = {
   {{}, Type::none},
   {{Type::unreachable}, Type::unreachable},
@@ -98,31 +101,15 @@ void Type::init(const std::vector<Type>& types) {
     return;
   }
 
-  auto lookup = [&]() {
-    auto indexIt = indices.find(types);
-    if (indexIt != indices.end()) {
-      id = indexIt->second;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  {
-    // Try to look up previously interned type
-    std::shared_lock<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
-  }
-  {
-    // Add a new type if it hasn't been added concurrently
-    std::lock_guard<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
-    auto* vec = new std::vector<Type>(types);
-    id = uintptr_t(vec);
+  // Add a new type if it hasn't been added concurrently
+  std::lock_guard<std::mutex> lock(mutex);
+  auto indexIt = indices.find(types);
+  if (indexIt != indices.end()) {
+    id = indexIt->second;
+  } else {
+    auto vec = std::make_unique<std::vector<Type>>(types);
+    id = uintptr_t(vec.get());
+    constructedTypes.push_back(std::move(vec));
     assert(id > _last_value_type);
     indices[types] = id;
   }
@@ -136,7 +123,7 @@ size_t Type::size() const { return expand().size(); }
 
 const std::vector<Type>& Type::expand() const {
   if (id <= _last_value_type) {
-    return typeLists[id];
+    return basicTypes[id];
   } else {
     return *(std::vector<Type>*)id;
   }
