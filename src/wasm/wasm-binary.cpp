@@ -1316,7 +1316,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         auto name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
-        if (index > signatures.size()) {
+        if (index >= signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }
