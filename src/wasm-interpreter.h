@@ -1736,19 +1736,19 @@ private:
       auto computed = value.getSingleValue();
       switch (curr->op) {
         case Add:
-          computed = computed.add(loaded);
+          computed = loaded.add(computed);
           break;
         case Sub:
-          computed = computed.sub(loaded);
+          computed = loaded.sub(computed);
           break;
         case And:
-          computed = computed.and_(loaded);
+          computed = loaded.and_(computed);
           break;
         case Or:
-          computed = computed.or_(loaded);
+          computed = loaded.or_(computed);
           break;
         case Xor:
-          computed = computed.xor_(loaded);
+          computed = loaded.xor_(computed);
           break;
         case Xchg:
           break;
