@@ -120,10 +120,12 @@ class Wasm2JSBuilder {
 
 public:
   struct Flags {
+    // see wasm2js.cpp for details
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
     bool emscripten = false;
+    bool deterministic = false;
     std::string symbolsFile;
   };
 

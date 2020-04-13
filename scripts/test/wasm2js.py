@@ -56,6 +56,8 @@ def test_wasm2js_output():
                     cmd += ['-O']
                 if 'emscripten' in t:
                     cmd += ['--emscripten']
+                if 'deterministic' in t:
+                    cmd += ['--deterministic']
                 out = support.run_command(cmd)
                 all_out.append(out)
 
@@ -156,6 +158,8 @@ def update_wasm2js_tests():
                     cmd += ['-O']
                 if 'emscripten' in wasm:
                     cmd += ['--emscripten']
+                if 'deterministic' in t:
+                    cmd += ['--deterministic']
                 out = support.run_command(cmd)
                 all_out.append(out)
 
