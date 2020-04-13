@@ -41,7 +41,9 @@
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
  (func $foo
-  (nop)
+  (drop
+   (unreachable)
+  )
  )
 )
 (module
@@ -203,7 +205,9 @@
   (global.set $g1
    (i32.const 100)
   )
-  (nop)
+  (drop
+   (local.get $x)
+  )
   (i32.const 100)
  )
 )
@@ -230,6 +234,8 @@
  (type $none_=>_none (func))
  (global $write-only i32 (i32.const 1))
  (func $foo
-  (nop)
+  (drop
+   (i32.const 2)
+  )
  )
 )

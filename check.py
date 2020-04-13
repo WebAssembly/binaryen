@@ -197,7 +197,11 @@ def run_spec_tests():
 
         def run_spec_test(wast):
             cmd = shared.WASM_SHELL + [wast]
-            return support.run_command(cmd, stderr=subprocess.PIPE)
+            output = support.run_command(cmd, stderr=subprocess.PIPE)
+            # filter out binaryen interpreter logging that the spec suite
+            # doesn't expect
+            filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
+            return '\n'.join(filtered) + '\n'
 
         def run_opt_test(wast):
             # check optimization validation
