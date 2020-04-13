@@ -180,13 +180,13 @@ def run_wasm_reduce_tests():
     if 'fsanitize=thread' not in str(os.environ):
         print('\n[ checking wasm-reduce fuzz testcase ]\n')
 
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'untaken-br_if.wast'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
         before = os.stat('a.wasm').st_size
         support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
-        assert after < 0.75 * before, [before, after]
+        assert after < 0.85 * before, [before, after]
 
 
 def run_spec_tests():
