@@ -40,7 +40,7 @@ CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
-INPUT_SIZE_MAX = 4 * INPUT_SIZE_MEAN
+INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
 
@@ -56,13 +56,17 @@ def in_bin(tool):
 
 
 def random_size():
-    if random.random() < 0.75:
-        # most of the time do a simple linear range around the mean
-        return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
-    else:
-        # sometimes do an exponential one, which prefers smaller sizes but may
+    if random.random() < 0.25:
+        # sometimes do an exponential distribution, which prefers smaller sizes but may
         # also get very high
-        return int(min(INPUT_SIZE_MAX, max(INPUT_SIZE_MIN, random.expovariate(1.0 / INPUT_SIZE_MEAN))))
+        ret = int(random.expovariate(1.0 / INPUT_SIZE_MEAN))
+        # if the result is valid, use it, otherwise do the normal thing
+        # (don't clamp, which would give us a lot of values on the borders)
+        if ret >= INPUT_SIZE_MIN and ret <= INPUT_SIZE_MAX:
+            return ret
+
+    # most of the time do a simple linear range around the mean
+    return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
 def run(cmd):
