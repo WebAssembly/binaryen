@@ -17,6 +17,7 @@ script covers different options being passed)
 
 import os
 import difflib
+import math
 import subprocess
 import random
 import re
@@ -709,6 +710,7 @@ if __name__ == '__main__':
     counter = 0
     total_wasm_size = 0
     total_input_size = 0
+    total_input_size_squares = 0
     start_time = time.time()
     while True:
         counter += 1
@@ -720,8 +722,12 @@ if __name__ == '__main__':
         random.seed(seed)
         input_size = random_size()
         total_input_size += input_size
+        total_input_size_squares += input_size ** 2
         print('')
-        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(float(total_input_size) / counter) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
+        mean = float(total_input_size) / counter
+        mean_of_squares = float(total_input_size_squares) / counter
+        stddev = math.sqrt(mean_of_squares - (mean ** 2))
+        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(mean) + ', stddev:', str(stddev) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
