@@ -1,5 +1,4 @@
 import os
-import time
 
 from scripts.test import shared
 from . import utils
@@ -15,28 +14,28 @@ class FuzzTest(utils.BinaryenTestCase):
         filtered_lines = [line for line in lines if 'ITERATION' not in line]
         # there should be one such line
         self.assertEqual(len(filtered_lines), len(lines) - 1)
+        # output should not be trivially tiny
+        self.assertGreater(len(lines), 5)
         return '\n'.join(filtered_lines)
 
     def run_fuzzer(self, args=[]):
         fuzz_opt = os.path.join(shared.options.binaryen_root, 'scripts', 'fuzz_opt.py')
         output = shared.run_process(['python3', fuzz_opt] + args, capture_output=True).stdout
-        return self.remove_timing(output)
+        input_dat = os.path.join(shared.options.binaryen_root, 'out', 'test', 'input.dat')
+        with open(input_dat, 'rb') as f:
+            data = f.read()
+        return (self.remove_timing(output), data)
 
-    def test_deterministic(self):
+    def test_determinism(self):
+        first_out, first_data = self.run_fuzzer(['42'])
+        self.assertIn('checking a single given seed 42', first_out)
+        self.assertIn('(finished running seed 42 without error)', first_out)
+        second_out, second_data = self.run_fuzzer(['1337'])
+        third_out, third_data = self.run_fuzzer(['42'])
         # running with the same ID produces the same output
-        ID = '42'
-        output = self.run_fuzzer([ID])
-        self.assertIn('(finished running seed 42 without error)', output)
-        # by default we use the time to pick the random seed; make sure we don't
-        # notice a second's difference when given the same ID
-        time.sleep(2)
-        second_output = self.run_fuzzer([ID])
-        self.assertEqual(output, second_output)
-
-    def test_nondeterministic(self):
-        # running with a different ID produces different output (unless some
-        # cosmic coincidence happens, but that's unlikely even if we run this
-        # until the heat death of the universe)
-        output = self.run_fuzzer(['42'])
-        second_output = self.run_fuzzer(['1337'])
-        self.assertNotEqual(output, second_output)
+        self.assertEqual(first_out, third_out)
+        self.assertEqual(first_data, third_data)
+        # running with a different ID should not produce the same output same
+        # (barring a cosmic coincidence)
+        self.assertNotEqual(first_out, second_out)
+        self.assertNotEqual(first_data, second_data)
