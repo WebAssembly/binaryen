@@ -1689,6 +1689,9 @@ private:
       }
       NOTE_EVAL1(flow);
       auto addr = instance.getFinalAddress(curr, flow.getSingleValue());
+      if (curr->isAtomic) {
+        instance.checkAtomicAddress(addr, curr->bytes);
+      }
       auto ret = instance.externalInterface->load(curr, addr);
       NOTE_EVAL1(addr);
       NOTE_EVAL1(ret);
@@ -1705,6 +1708,9 @@ private:
         return value;
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
+      if (curr->isAtomic) {
+        instance.checkAtomicAddress(addr, curr->bytes);
+      }
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
       instance.externalInterface->store(curr, addr, value.getSingleValue());
@@ -1730,22 +1736,21 @@ private:
       auto computed = value.getSingleValue();
       switch (curr->op) {
         case Add:
-          computed = computed.add(value.getSingleValue());
+          computed = loaded.add(computed);
           break;
         case Sub:
-          computed = computed.sub(value.getSingleValue());
+          computed = loaded.sub(computed);
           break;
         case And:
-          computed = computed.and_(value.getSingleValue());
+          computed = loaded.and_(computed);
           break;
         case Or:
-          computed = computed.or_(value.getSingleValue());
+          computed = loaded.or_(computed);
           break;
         case Xor:
-          computed = computed.xor_(value.getSingleValue());
+          computed = loaded.xor_(computed);
           break;
         case Xchg:
-          computed = value.getSingleValue();
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -1767,6 +1772,8 @@ private:
         return replacement;
       }
       auto addr = instance.getFinalAddress(curr, ptr.getSingleValue());
+      expected =
+        Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
       NOTE_EVAL1(addr);
       NOTE_EVAL1(expected);
       NOTE_EVAL1(replacement);
@@ -1795,7 +1802,7 @@ private:
         return timeout;
       }
       auto bytes = curr->expectedType.getByteSize();
-      auto addr = instance.getFinalAddress(ptr.getSingleValue(), bytes);
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue(), bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);
       if (loaded != expected.getSingleValue()) {
@@ -1817,7 +1824,9 @@ private:
       if (count.breaking()) {
         return count;
       }
-      // TODO: add threads support!
+      auto addr = instance.getFinalAddress(curr, ptr.getSingleValue(), 4);
+      // Just check TODO actual threads support
+      instance.checkAtomicAddress(addr, 4);
       return Literal(int32_t(0)); // none woken up
     }
     Flow visitSIMDLoad(SIMDLoad* curr) {
@@ -1901,7 +1910,7 @@ private:
       auto fillLanes = [&](auto lanes, size_t laneBytes) {
         for (auto& lane : lanes) {
           lane = loadLane(
-            instance.getFinalAddress(Literal(uint32_t(src)), laneBytes));
+            instance.getFinalAddress(curr, Literal(uint32_t(src)), laneBytes));
           src = Address(uint32_t(src) + laneBytes);
         }
         return Literal(lanes);
@@ -1997,8 +2006,9 @@ private:
       }
       for (size_t i = 0; i < sizeVal; ++i) {
         Literal addr(uint32_t(destVal + i));
-        instance.externalInterface->store8(instance.getFinalAddress(addr, 1),
-                                           segment.data[offsetVal + i]);
+        instance.externalInterface->store8(
+          instance.getFinalAddressWithoutOffset(addr, 1),
+          segment.data[offsetVal + i]);
       }
       return {};
     }
@@ -2046,9 +2056,11 @@ private:
       }
       for (int64_t i = start; i != end; i += step) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
+                                                1),
           instance.externalInterface->load8s(
-            instance.getFinalAddress(Literal(uint32_t(sourceVal + i)), 1)));
+            instance.getFinalAddressWithoutOffset(
+              Literal(uint32_t(sourceVal + i)), 1)));
       }
       return {};
     }
@@ -2079,7 +2091,9 @@ private:
       uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
+          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
+                                                1),
+          val);
       }
       return {};
     }
@@ -2102,6 +2116,44 @@ private:
 
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
+    }
+
+    // Given a value, wrap it to a smaller given number of bytes.
+    Literal wrapToSmallerSize(Literal value, Index bytes) {
+      if (value.type == Type::i32) {
+        switch (bytes) {
+          case 1: {
+            return value.and_(Literal(uint32_t(0xff)));
+          }
+          case 2: {
+            return value.and_(Literal(uint32_t(0xffff)));
+          }
+          case 4: {
+            break;
+          }
+          default:
+            WASM_UNREACHABLE("unexpected bytes");
+        }
+      } else {
+        assert(value.type == Type::i64);
+        switch (bytes) {
+          case 1: {
+            return value.and_(Literal(uint64_t(0xff)));
+          }
+          case 2: {
+            return value.and_(Literal(uint64_t(0xffff)));
+          }
+          case 4: {
+            return value.and_(Literal(uint64_t(0xffffffffUL)));
+          }
+          case 8: {
+            break;
+          }
+          default:
+            WASM_UNREACHABLE("unexpected bytes");
+        }
+      }
+      return value;
     }
   };
 
@@ -2173,21 +2225,25 @@ protected:
     }
   }
 
-  template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
+  template<class LS>
+  Address getFinalAddress(LS* curr, Literal ptr, Index bytes) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
-    trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
-    checkLoadAddress(addr, curr->bytes);
+    trapIfGt(bytes, memorySizeBytes, "bytes > memory");
+    checkLoadAddress(addr, bytes);
     return addr;
   }
 
-  Address getFinalAddress(Literal ptr, Index bytes) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
+  template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
+    return getFinalAddress(curr, ptr, curr->bytes);
+  }
+
+  Address getFinalAddressWithoutOffset(Literal ptr, Index bytes) {
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
-    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+    checkLoadAddress(addr, bytes);
     return addr;
   }
 
@@ -2196,14 +2252,26 @@ protected:
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   }
 
-  Literal doAtomicLoad(Address addr, Index bytes, Type type) {
+  void checkAtomicAddress(Address addr, Index bytes) {
     checkLoadAddress(addr, bytes);
+    // Unaligned atomics trap.
+    if (bytes > 1) {
+      if (addr & (bytes - 1)) {
+        externalInterface->trap("unaligned atomic operation");
+      }
+    }
+  }
+
+  Literal doAtomicLoad(Address addr, Index bytes, Type type) {
+    checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
     Load load;
     load.bytes = bytes;
-    load.signed_ = true;
+    // When an atomic loads a partial number of bytes for the type, it is
+    // always an unsigned extension.
+    load.signed_ = false;
     load.align = bytes;
     load.isAtomic = true; // understatement
     load.ptr = &ptr;
@@ -2212,6 +2280,7 @@ protected:
   }
 
   void doAtomicStore(Address addr, Index bytes, Literal toStore) {
+    checkAtomicAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
