@@ -68,7 +68,7 @@ std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
 // Track unique_ptrs for constructed types to avoid leaks
 std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
 
-// Maps from type vectors to the canonical Type IS
+// Maps from type vectors to the canonical Type ID
 std::unordered_map<std::vector<Type>, uintptr_t> indices = {
   {{}, Type::none},
   {{Type::unreachable}, Type::unreachable},

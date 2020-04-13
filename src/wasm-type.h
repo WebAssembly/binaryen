@@ -24,6 +24,10 @@
 namespace wasm {
 
 class Type {
+  // The `id` uniquely represents each type, so type equality is just a
+  // comparison of the ids. For basic types the `id` is just the `ValueType`
+  // enum value below, and for constructed types the `id` is the address of the
+  // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
   void init(const std::vector<Type>&);
 
