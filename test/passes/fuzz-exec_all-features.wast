@@ -104,3 +104,20 @@
   )
  )
 )
+(module
+ (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+ (memory $0 (shared 1 1))
+ (func "rmw-reads-modifies-and-writes-asymmetrical"
+  (drop
+   (i32.atomic.rmw8.sub_u
+    (i32.const 3)
+    (i32.const 42)
+   )
+  )
+  (call $fimport$0
+   (i32.load8_u
+    (i32.const 3)
+   )
+  )
+ )
+)
