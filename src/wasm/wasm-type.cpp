@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <array>
 #include <cassert>
 #include <shared_mutex>
 #include <sstream>
@@ -27,7 +28,7 @@
 template<> class std::hash<std::vector<wasm::Type>> {
 public:
   size_t operator()(const std::vector<wasm::Type>& types) const {
-    uint32_t res = wasm::rehash(0, uint32_t(types.size()));
+    uint64_t res = wasm::rehash(0, uint32_t(types.size()));
     for (auto t : types) {
       res = wasm::rehash(res, t.getID());
     }
@@ -36,44 +37,39 @@ public:
 };
 
 size_t std::hash<wasm::Type>::operator()(const wasm::Type& type) const {
-  return std::hash<uint32_t>{}(type.getID());
+  return std::hash<uint64_t>{}(type.getID());
 }
 
 size_t std::hash<wasm::Signature>::
 operator()(const wasm::Signature& sig) const {
-  return std::hash<uint64_t>{}(uint64_t(sig.params.getID()) << 32 |
-                               uint64_t(sig.results.getID()));
+  return wasm::rehash(uint64_t(std::hash<uint64_t>{}(sig.params.getID())),
+                      uint64_t(std::hash<uint64_t>{}(sig.results.getID())));
 }
 
 namespace wasm {
 
 namespace {
 
-// TODO: switch to std::shared_mutex in C++17
-std::shared_timed_mutex mutex;
+std::mutex mutex;
 
-std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
-  std::vector<std::unique_ptr<std::vector<Type>>> lists;
+std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
+  std::vector<Type>{},
+  {Type::unreachable},
+  {Type::i32},
+  {Type::i64},
+  {Type::f32},
+  {Type::f64},
+  {Type::v128},
+  {Type::funcref},
+  {Type::anyref},
+  {Type::nullref},
+  {Type::exnref}};
 
-  auto add = [&](std::initializer_list<Type> types) {
-    return lists.push_back(std::make_unique<std::vector<Type>>(types));
-  };
+// Track unique_ptrs for constructed types to avoid leaks
+std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
 
-  add({});
-  add({Type::unreachable});
-  add({Type::i32});
-  add({Type::i64});
-  add({Type::f32});
-  add({Type::f64});
-  add({Type::v128});
-  add({Type::funcref});
-  add({Type::anyref});
-  add({Type::nullref});
-  add({Type::exnref});
-  return lists;
-}();
-
-std::unordered_map<std::vector<Type>, uint32_t> indices = {
+// Maps from type vectors to the canonical Type ID
+std::unordered_map<std::vector<Type>, uintptr_t> indices = {
   {{}, Type::none},
   {{Type::unreachable}, Type::unreachable},
   {{Type::i32}, Type::i32},
@@ -96,39 +92,25 @@ void Type::init(const std::vector<Type>& types) {
   }
 #endif
 
-  if (types.size() >= (1 << SIZE_BITS)) {
-    WASM_UNREACHABLE("Type too large");
+  if (types.size() == 0) {
+    id = none;
+    return;
   }
-  _size = types.size();
-
-  auto lookup = [&]() {
-    auto indexIt = indices.find(types);
-    if (indexIt != indices.end()) {
-      id = indexIt->second;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  {
-    // Try to look up previously interned type
-    std::shared_lock<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
+  if (types.size() == 1) {
+    *this = types[0];
+    return;
   }
-  {
-    // Add a new type if it hasn't been added concurrently
-    std::lock_guard<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
-    if (typeLists.size() >= (1 << ID_BITS)) {
-      WASM_UNREACHABLE("Too many types!");
-    }
-    id = typeLists.size();
-    typeLists.push_back(std::make_unique<std::vector<Type>>(types));
+
+  // Add a new type if it hasn't been added concurrently
+  std::lock_guard<std::mutex> lock(mutex);
+  auto indexIt = indices.find(types);
+  if (indexIt != indices.end()) {
+    id = indexIt->second;
+  } else {
+    auto vec = std::make_unique<std::vector<Type>>(types);
+    id = uintptr_t(vec.get());
+    constructedTypes.push_back(std::move(vec));
+    assert(id > _last_value_type);
     indices[types] = id;
   }
 }
@@ -137,23 +119,14 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
 
-Type::Type(uint32_t _id) {
-  if (_id <= last_value_type) {
-    *this = Type(static_cast<ValueType>(_id));
-  } else {
-    id = _id;
-    // Unknown complex type; look up the size
-    std::shared_lock<std::shared_timed_mutex> lock(mutex);
-    _size = typeLists[id]->size();
-  }
-}
-
-size_t Type::size() const { return _size; }
+size_t Type::size() const { return expand().size(); }
 
 const std::vector<Type>& Type::expand() const {
-  std::shared_lock<std::shared_timed_mutex> lock(mutex);
-  assert(id < typeLists.size());
-  return *typeLists[id].get();
+  if (id <= _last_value_type) {
+    return basicTypes[id];
+  } else {
+    return *(std::vector<Type>*)id;
+  }
 }
 
 bool Type::operator<(const Type& other) const {

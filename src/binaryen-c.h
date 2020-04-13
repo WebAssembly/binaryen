@@ -90,7 +90,7 @@ typedef uint32_t BinaryenIndex;
 // Core types (call to get the value of each; you can cache them, they
 // never change)
 
-typedef uint32_t BinaryenType;
+typedef uintptr_t BinaryenType;
 
 BINARYEN_API BinaryenType BinaryenTypeNone(void);
 BINARYEN_API BinaryenType BinaryenTypeInt32(void);
