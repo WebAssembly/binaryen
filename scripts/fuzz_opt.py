@@ -701,14 +701,13 @@ if __name__ == '__main__':
         given_seed = None
         print('checking infinite random inputs')
     seed = time.time() * os.getpid()
-    temp = 'input.dat'
+    raw_input_data = 'input.dat'
     counter = 0
     total_wasm_size = 0
     total_input_size = 0
     start_time = time.time()
     while True:
         counter += 1
-        f = open(temp, 'w')
         if given_seed is not None:
             seed = given_seed
             given_seed_passed = True
@@ -719,13 +718,13 @@ if __name__ == '__main__':
         total_input_size += input_size
         print('')
         print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(float(total_input_size) / counter) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
-        for x in range(input_size):
-            f.write(chr(random.randint(0, 255)))
-        f.close()
+        with open(raw_input_data, 'wb') as f:
+            f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        assert os.path.getsize(raw_input_data) == input_size
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            total_wasm_size += test_one('input.dat', opts)
+            total_wasm_size += test_one(raw_input_data, opts)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
