@@ -2123,10 +2123,10 @@ private:
       if (value.type == Type::i32) {
         switch (bytes) {
           case 1: {
-            return value.and_(Literal(int32_t(0xff)));
+            return value.and_(Literal(uint32_t(0xff)));
           }
           case 2: {
-            return value.and_(Literal(int32_t(0xffff)));
+            return value.and_(Literal(uint32_t(0xffff)));
           }
           case 4: {
             break;
@@ -2138,13 +2138,13 @@ private:
         assert(value.type == Type::i64);
         switch (bytes) {
           case 1: {
-            return value.and_(Literal(int64_t(0xff)));
+            return value.and_(Literal(uint64_t(0xff)));
           }
           case 2: {
-            return value.and_(Literal(int64_t(0xffff)));
+            return value.and_(Literal(uint64_t(0xffff)));
           }
           case 4: {
-            return value.and_(Literal(int64_t(0xffffffffL)));
+            return value.and_(Literal(uint64_t(0xffffffffUL)));
           }
           case 8: {
             break;
@@ -2242,9 +2242,8 @@ protected:
   }
 
   Address getFinalAddressWithoutOffset(Literal ptr, Index bytes) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
-    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+    checkLoadAddress(addr, bytes);
     return addr;
   }
 
