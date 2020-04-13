@@ -224,14 +224,13 @@ def has_shell_timeout():
 
 
 # Default options to pass to v8. These enable all features.
+# See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h#L73-L82
 V8_OPTS = [
     '--wasm-staging',
     '--experimental-wasm-eh',
-    '--experimental-wasm-mv',
-    '--experimental-wasm-threads',
     '--experimental-wasm-simd',
     '--experimental-wasm-anyref',
-    '--experimental-wasm-bulk-memory',
+    '--experimental-wasm-compilation-hints',
     '--experimental-wasm-return-call'
 ]
 
