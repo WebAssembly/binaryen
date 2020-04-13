@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import { base } from 'mod';
 
 function asmFunc(global, env, buffer) {
+=======
+
+function asmFunc(global, env, buffer) {
+ var memory = env.memory;
+>>>>>>> origin/master
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,21 +27,38 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+<<<<<<< HEAD
  var bar = env.base;
  var global$0 = -44;
  function $0() {
   if ((global$0 >>> 0) / ((bar() | 0) >>> 0) | 0) {
+=======
+ var global$0 = -44;
+ function $0() {
+  if ((global$0 >>> 0) / ((HEAP32[0 >> 2] | 0) >>> 0) | 0) {
+>>>>>>> origin/master
    abort()
   }
   return 1 | 0;
  }
  
  var FUNCTION_TABLE = [];
+<<<<<<< HEAD
+=======
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
+>>>>>>> origin/master
  return {
   "foo": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
+<<<<<<< HEAD
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },base},memasmFunc);
+=======
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+>>>>>>> origin/master
 export var foo = retasmFunc.foo;
