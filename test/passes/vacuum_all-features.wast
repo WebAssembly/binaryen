@@ -824,4 +824,19 @@
       )
     )
   )
+
+  ;; When catch body is removed, the removal of 'br' inside the catch body
+  ;; should be propagated up to the outer block, so that its type will be
+  ;; correctly updated to unreachable.
+  (func $br-in-catch
+    (block $label$1
+      (try
+        (unreachable)
+        (catch
+          (drop (exnref.pop))
+          (br $label$1)
+        )
+      )
+    )
+  )
 )
