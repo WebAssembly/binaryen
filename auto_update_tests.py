@@ -218,6 +218,10 @@ def update_spec_tests():
         expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(t) + '.log')
         if os.path.isfile(expected):
             stdout = support.run_command(cmd, stderr=subprocess.PIPE)
+            # filter out binaryen interpreter logging that the spec suite
+            # doesn't expect
+            filtered = [line for line in stdout.splitlines() if not line.startswith('[trap')]
+            stdout = '\n'.join(filtered) + '\n'
             with open(expected, 'w') as o:
                 o.write(stdout)
 
