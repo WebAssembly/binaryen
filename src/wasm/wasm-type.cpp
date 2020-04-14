@@ -53,17 +53,17 @@ namespace {
 std::mutex mutex;
 
 std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
-  std::vector<Type>{},
-  {Type::unreachable},
-  {Type::i32},
-  {Type::i64},
-  {Type::f32},
-  {Type::f64},
-  {Type::v128},
-  {Type::funcref},
-  {Type::anyref},
-  {Type::nullref},
-  {Type::exnref}};
+  {{},
+   {Type::unreachable},
+   {Type::i32},
+   {Type::i64},
+   {Type::f32},
+   {Type::f64},
+   {Type::v128},
+   {Type::funcref},
+   {Type::anyref},
+   {Type::nullref},
+   {Type::exnref}}};
 
 // Track unique_ptrs for constructed types to avoid leaks
 std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
