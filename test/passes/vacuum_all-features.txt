@@ -463,4 +463,7 @@
    )
   )
  )
+ (func $br-in-catch
+  (unreachable)
+ )
 )

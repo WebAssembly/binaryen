@@ -423,6 +423,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (!EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
            .throws) {
       replaceCurrent(curr->body);
+      typeUpdater.noteRecursiveRemoval(curr->catchBody);
     }
   }
 
