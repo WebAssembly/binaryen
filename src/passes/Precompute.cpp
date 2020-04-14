@@ -179,24 +179,23 @@ struct Precompute
       // reuse a const / ref.null / ref.func node if there is one
       if (curr->value && flow.values.size() == 1) {
         Literal singleValue = flow.getSingleValue();
-        if (curr->value->template is<Const>() && singleValue.type.isNumber()) {
-          Const* c = curr->value->template cast<Const>();
-          c->value = singleValue;
-          c->finalize();
-          curr->finalize();
+        if (singleValue.type.isNumber()) {
+          if (auto* c = curr->value->template dynCast<Const>()) {
+            c->value = singleValue;
+            c->finalize();
+            curr->finalize();
+            return;
+          }
+        } else if (singleValue.type == Type::nullref &&
+                   curr->value->template is<RefNull>()) {
           return;
-        }
-        if (curr->value->template is<RefNull>() &&
-            singleValue.type == Type::nullref) {
-          return;
-        }
-        if (curr->value->template is<RefFunc>() &&
-            singleValue.type == Type::funcref) {
-          RefFunc* r = curr->value->template cast<RefFunc>();
-          r->func = singleValue.getFunc();
-          r->finalize();
-          curr->finalize();
-          return;
+        } else if (singleValue.type == Type::funcref) {
+          if (auto* r = curr->value->template dynCast<RefFunc>()) {
+            r->func = singleValue.getFunc();
+            r->finalize();
+            curr->finalize();
+            return;
+          }
         }
       }
       curr->value = flow.getConstExpression(*getModule());
