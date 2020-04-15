@@ -1909,6 +1909,8 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
   shouldBeTrue(getModule()->features.hasMultivalue(),
                curr,
                "Tuples are not allowed unless multivalue is enabled");
+  shouldBeTrue(
+    curr->operands.size() > 1, curr, "tuple.make must have multiple operands");
   std::vector<Type> types;
   for (auto* op : curr->operands) {
     if (op->type == Type::unreachable) {
