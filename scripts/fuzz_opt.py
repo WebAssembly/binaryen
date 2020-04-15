@@ -96,7 +96,7 @@ def randomize_feature_opts():
     # half the time apply all the possible opts. this lets all test runners work at max
     # capacity at least half the time, as otherwise if they need almost all the opts, the
     # chance of getting them is exponentially small.
-    if random.random() < 0.5:
+    if random.random() < 1: # 0.5:
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
     else:
         for possible in POSSIBLE_FEATURE_OPTS:
@@ -331,7 +331,10 @@ class CompareVMs(TestCaseHandler):
             # this expects wasm2c to be in the path
             run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
             run(['wasm2c', wasm, '-o', 'wasm.c'])
-            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm'])
+            compile_cmd = ['cc', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm']
+            if random.random() < 0.5:
+              compile_cmd += ['-O' + str(random.randint(1, 3))]
+            run(compile_cmd)
             return run_vm(['./a.out'])
 
         def yes():
@@ -514,11 +517,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
+    #FuzzExec(),
     CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    Asyncify(),
+    #CheckDeterminism(),
+    #Wasm2JS(),
+    #Asyncify(),
 ]
 
 
