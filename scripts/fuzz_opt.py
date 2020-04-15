@@ -313,9 +313,21 @@ class CompareVMs(TestCaseHandler):
             run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
             return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
+        def run_wasm2c(wasm):
+            # this expects wasm2c to be in the path
+            run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
+            run(['wasm2c', wasm, '-o', 'wasm.c'])
+            wabt_bin = run(['whereis', 'wasm2c'])
+            wabt_bin = wabt_bin.split()[-1]  # whereis returns    wasm2c: PATH
+            wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
+            wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(wasm2c_dir, 'wasm-rt-impl.c'), '-I' + wasm2c_dir, '-lm'])
+            return run_vm(['./a.out'])
+
         self.vms = [
             VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False),
             VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True),
+            VM('wasm2c',               run_wasm2c,               deterministic_nans=False, requires_legalization=False),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
