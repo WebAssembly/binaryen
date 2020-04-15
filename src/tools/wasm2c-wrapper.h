@@ -42,6 +42,11 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj(u64 x) {
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj)(u64) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj;
 
+void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii(u32 x, u32 y) {
+  printf("[LoggingExternalInterface logging %d %d]\n", x, y);
+}
+void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii)(u32, u32) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii;
+
 void _Z_fuzzingZ2DsupportZ_logZ2Df32Z_vf(f32 x) {
   printf("[LoggingExternalInterface logging %f]\n", x);
 }

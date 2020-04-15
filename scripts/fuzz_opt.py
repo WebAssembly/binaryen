@@ -262,10 +262,16 @@ def run_d8(wasm):
 
 # wabt integration
 
-wabt_bin = run(['whereis', 'wasm2c'])
-wabt_bin = wabt_bin.split()[-1]  # whereis returns    wasm2c: PATH
-wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
-wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+try:
+    wabt_bin = run(['whereis', 'wasm2c'])
+    wabt_bin = wabt_bin.split()[-1]  # whereis returns    wasm2c: PATH
+except Exception:
+    wabt_bin = None
+
+def get_wasm2c_dir():
+    wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
+    return os.path.join(wabt_root, 'wasm2c')
+
 
 # There are two types of test case handlers:
 #    * get_commands() users: these return a list of commands to run (for example, "run this wasm-opt
@@ -324,7 +330,7 @@ class CompareVMs(TestCaseHandler):
             # this expects wasm2c to be in the path
             run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
             run(['wasm2c', wasm, '-o', 'wasm.c'])
-            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(shared.options.binaryen_root, 'scripts', 'wabt-wasm2c.c'), '-I' + wasm2c_dir, '-lm'])
+            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm'])
             return run_vm(['./a.out'])
 
         self.vms = [
