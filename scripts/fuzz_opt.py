@@ -368,11 +368,12 @@ class CompareVMs(TestCaseHandler):
             for i in range(len(results)):
                 # No legalization for JS means we can't compare JS to others, as any
                 # illegal export will fail immediately.
+                vm = self.vms[i]
                 if (LEGALIZE or not vm.requires_legalization) and results[i] is not None:
                     if first is None:
                         first = i
                     else:
-                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + self.vms[i].name)
+                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + vm.name)
 
         return results
 
