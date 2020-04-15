@@ -496,7 +496,7 @@ def test_one(random_input, opts):
     randomize_fuzz_settings()
     print()
 
-    generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS]
+    generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('a.printed.wast', 'w') as f:
