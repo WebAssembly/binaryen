@@ -324,7 +324,7 @@ class CompareVMs(TestCaseHandler):
             # this expects wasm2c to be in the path
             run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
             run(['wasm2c', wasm, '-o', 'wasm.c'])
-            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(shared.options.binaryen_root, 'scripts', 'wasm-rt-impl.c'), '-I' + wasm2c_dir, '-lm'])
+            run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(shared.options.binaryen_root, 'scripts', 'wabt-wasm2c.c'), '-I' + wasm2c_dir, '-lm'])
             return run_vm(['./a.out'])
 
         self.vms = [

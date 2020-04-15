@@ -28,6 +28,7 @@ static std::string generateWasm2CWrapper(Module& wasm) {
 #include <stdio.h>
 
 #include "wasm.h"
+#include "wasm-rt-impl.h"
 
 // Logging imports
 
@@ -79,13 +80,14 @@ int main(int argc, char** argv) {
 
     auto* func = wasm.getFunction(exp->value);
 
-    ret += "  puts(\"[fuzz-exec] calling hashMemory\");\n";
+    ret += "  puts(\"[fuzz-exec] calling hangLimitInitializer\");\n";
     ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
 
     ret += std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
-    auto result = func->sig.results;//.getSingle();
+    ret += "  if (setjmp(g_jmp_buf) == 0) {\n";
+    auto result = func->sig.results;
     if (result != Type::none) {
-      ret += std::string("  printf(\"[fuzz-exec] note result: ") + exp->name.str + " => ";
+      ret += std::string("    printf(\"[fuzz-exec] note result: ") + exp->name.str + " => ";
       switch (result.getSingle()) {
         case Type::i32:
           ret += "%d";
@@ -140,6 +142,9 @@ int main(int argc, char** argv) {
       }
       ret += "));\n";
     }
+    ret += "  } else {\n";
+    ret += "    puts(\"exception!\\n\");\n";
+    ret += "  }\n";
   }
 
   ret += R"(
