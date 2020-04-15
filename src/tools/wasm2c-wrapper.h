@@ -50,6 +50,7 @@ void _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd(f64 x) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd)(f64) = _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd;
 
 int main(int argc, char** argv) {
+  init();
 
 )";
 
@@ -61,7 +62,7 @@ int main(int argc, char** argv) {
     auto* func = wasm.getFunction(exp->value);
 
     ret += "  puts(\"[fuzz-exec] calling hashMemory\");\n";
-    ret += "  Z_hangLimitInitializerZ_vv();\n";
+    ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
 
     ret += std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
     auto result = func->sig.results;//.getSingle();
@@ -83,7 +84,7 @@ int main(int argc, char** argv) {
         default:
           Fatal() << "unhandled wasm2c wrapper result type: " << result;
       }
-      ret += std::string("\\n\", Z_") + exp->name.str + "Z_";
+      ret += std::string("\\n\", (*Z_") + exp->name.str + "Z_";
       // wasm2c emits names with a special signature
       auto params = func->sig.params.expand();
 
@@ -107,7 +108,7 @@ int main(int argc, char** argv) {
           ret += wasm2cSignature(param);
         }
       }
-      ret += "(";
+      ret += ")(";
       if (!params.empty()) {
         bool first = true;
         for (auto param : params) {
