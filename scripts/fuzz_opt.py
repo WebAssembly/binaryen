@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 '''
 Runs random passes and options on random inputs, using wasm-opt.
 
@@ -15,19 +17,20 @@ script covers different options being passed)
 
 import os
 import difflib
+import math
 import subprocess
 import random
 import re
 import shutil
 import sys
 import time
+import traceback
 
 from test import shared
 
+assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
-
-NANS = True
 
 # feature options that are always passed to the tools.
 # exceptions: https://github.com/WebAssembly/binaryen/issues/2195
@@ -36,13 +39,14 @@ NANS = True
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
-FUZZ_OPTS = []
+INPUT_SIZE_MIN = 1024
+INPUT_SIZE_MEAN = 40 * 1024
+INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
-INPUT_SIZE_LIMIT = 150 * 1024
+PRINT_WATS = False
 
 
 # utilities
-
 
 def in_binaryen(*args):
     return os.path.join(shared.options.binaryen_root, *args)
@@ -53,17 +57,27 @@ def in_bin(tool):
 
 
 def random_size():
-    return random.randint(1, INPUT_SIZE_LIMIT)
+    if random.random() < 0.25:
+        # sometimes do an exponential distribution, which prefers smaller sizes but may
+        # also get very high
+        ret = int(random.expovariate(1.0 / INPUT_SIZE_MEAN))
+        # if the result is valid, use it, otherwise do the normal thing
+        # (don't clamp, which would give us a lot of values on the borders)
+        if ret >= INPUT_SIZE_MIN and ret <= INPUT_SIZE_MAX:
+            return ret
+
+    # most of the time do a simple linear range around the mean
+    return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
 def run(cmd):
     print(' '.join(cmd))
-    return subprocess.check_output(cmd)
+    return subprocess.check_output(cmd, text=True)
 
 
 def run_unchecked(cmd):
     print(' '.join(cmd))
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
+    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).communicate()[0]
 
 
 def randomize_pass_debug():
@@ -73,6 +87,7 @@ def randomize_pass_debug():
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
         del os.environ['BINARYEN_PASS_DEBUG']
+    print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
 def randomize_feature_opts():
@@ -87,13 +102,41 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
-    print('feature opts:', ' '.join(FEATURE_OPTS))
+    print('randomized feature opts:', ' '.join(FEATURE_OPTS))
+
+
+FUZZ_OPTS = None
+NANS = None
+OOB = None
+LEGALIZE = None
+
+
+def randomize_fuzz_settings():
+    global FUZZ_OPTS, NANS, OOB, LEGALIZE
+    FUZZ_OPTS = []
+    if random.random() < 0.5:
+        NANS = True
+    else:
+        NANS = False
+        FUZZ_OPTS += ['--no-fuzz-nans']
+    if random.random() < 0.5:
+        OOB = True
+    else:
+        OOB = False
+        FUZZ_OPTS += ['--no-fuzz-oob']
+    if random.random() < 0.5:
+        LEGALIZE = True
+        FUZZ_OPTS += ['--legalize-js-interface']
+    else:
+        LEGALIZE = False
+    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
 # Test outputs we want to ignore are marked this way.
 IGNORE = '[binaryen-fuzzer-ignore]'
 
 
+# compare two strings, strictly
 def compare(x, y, context):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
@@ -101,6 +144,61 @@ def compare(x, y, context):
             x, y,
             message
         ))
+
+
+# numbers are "close enough" if they just differ in printing, as different
+# vms may print at different precision levels and verbosity
+def numbers_are_close_enough(x, y):
+    # handle nan comparisons like -nan:0x7ffff0 vs NaN, ignoring the bits
+    if 'nan' in x.lower() and 'nan' in y.lower():
+        return True
+    # float() on the strings will handle many minor differences, like
+    # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
+    try:
+        return float(x) == float(y)
+    except Exception:
+        pass
+    # otherwise, try a full eval which can handle i64s too
+    try:
+        x = eval(x)
+        y = eval(y)
+        return x == y or float(x) == float(y)
+    except Exception as e:
+        print('failed to check if numbers are close enough:', e)
+        return False
+
+
+# compare between vms, which may slightly change how numbers are printed
+def compare_between_vms(x, y, context):
+    x_lines = x.splitlines()
+    y_lines = y.splitlines()
+    if len(x_lines) != len(y_lines):
+        return compare(x, y, context)
+
+    num_lines = len(x_lines)
+    for i in range(num_lines):
+        x_line = x_lines[i]
+        y_line = y_lines[i]
+        if x_line != y_line:
+            # this is different, but maybe it's a vm difference we can ignore
+            LEI_LOGGING = '[LoggingExternalInterface logging'
+            if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
+                x_val = x_line[len(LEI_LOGGING) + 1:-1]
+                y_val = y_line[len(LEI_LOGGING) + 1:-1]
+                if numbers_are_close_enough(x_val, y_val):
+                    continue
+            NOTE_RESULT = '[fuzz-exec] note result'
+            if x_line.startswith(NOTE_RESULT) and y_line.startswith(NOTE_RESULT):
+                x_val = x_line.split(' ')[-1]
+                y_val = y_line.split(' ')[-1]
+                if numbers_are_close_enough(x_val, y_val):
+                    continue
+
+            # this failed to compare. print a custom diff of the relevant lines
+            MARGIN = 3
+            start = max(i - MARGIN, 0)
+            end = min(i + MARGIN, num_lines)
+            return compare('\n'.join(x_lines[start:end]), '\n'.join(y_lines[start:end]), context)
 
 
 def fix_output(out):
@@ -114,10 +212,8 @@ def fix_output(out):
             x = str(float(x))
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
-
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
-
     # exceptions may differ when optimizing, but an exception should occur. so ignore their types
     # also js engines print them out slightly differently
     return '\n'.join(map(lambda x: '     *exception*' if 'exception' in x else x, out.splitlines()))
@@ -136,9 +232,6 @@ def run_vm(cmd):
     # ignore some vm assertions, if bugs have already been filed
     known_issues = [
         'local count too large',    # ignore this; can be caused by flatten, ssa, etc. passes
-        'liftoff-assembler.cc, line 239\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-assembler.cc, line 245\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8632
     ]
     try:
         return run(cmd)
@@ -175,6 +268,13 @@ def run_d8(wasm):
 #    * Totally generic: These receive the input pattern, a wasm generated from it, and a wasm
 #        optimized from that, and can then do anything it wants with those.
 class TestCaseHandler:
+    # how frequent this handler will be run. 1 means always run it, 0.5 means half the
+    # time
+    frequency = 1
+
+    def __init__(self):
+        self.num_runs = 0
+
     # If the core handle_pair() method is not overridden, it calls handle_single()
     # on each of the pair. That is useful if you just want the two wasms, and don't
     # care about their relationship
@@ -185,45 +285,71 @@ class TestCaseHandler:
     def can_run_on_feature_opts(self, feature_opts):
         return True
 
+    def increment_runs(self):
+        self.num_runs += 1
+
+    def count_runs(self):
+        return self.num_runs
+
 
 # Run VMs and compare results
+
+class VM:
+    def __init__(self, name, run, deterministic_nans, requires_legalization):
+        self.name = name
+        self.run = run
+        self.deterministic_nans = deterministic_nans
+        self.requires_legalization = requires_legalization
+
+
 class CompareVMs(TestCaseHandler):
+    def __init__(self):
+        super(CompareVMs, self).__init__()
+
+        def run_binaryen_interpreter(wasm):
+            return run_bynterp(wasm, ['--fuzz-exec-before'])
+
+        def run_v8(wasm):
+            run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
+            return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+
+        self.vms = [
+            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False),
+            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True),
+        ]
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'] + FEATURE_OPTS)
-        before = self.run_vms('a.js', before_wasm)
-        after = self.run_vms('b.js', after_wasm)
-        self.compare_vs(before, after)
+        before = self.run_vms(before_wasm)
+        after = self.run_vms(after_wasm)
+        self.compare_before_and_after(before, after)
 
-    def run_vms(self, js, wasm):
+    def run_vms(self, wasm):
         results = []
-        results.append(fix_output(run_bynterp(wasm, ['--fuzz-exec-before'])))
-        results.append(fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm])))
+        for vm in self.vms:
+            results.append(fix_output(vm.run(wasm)))
 
-        # append to add results from VMs
-        # results += [fix_output(run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]))]
-        # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
-        # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
-        # run(['../spec/interpreter/wasm', wasm])
-        # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', wasm, '-e', open(prefix + 'wat').read()]))]
+        # compare between the vms on this specific input
 
-        if len(results) == 0:
-            results = [0]
-
-        # NaNs are a source of nondeterminism between VMs; don't compare them
+        # NaNs are a source of nondeterminism between VMs; don't compare them.
         if not NANS:
-            first = results[0]
+            first = None
             for i in range(len(results)):
-                compare(first, results[i], 'CompareVMs at ' + str(i))
+                # No legalization for JS means we can't compare JS to others, as any
+                # illegal export will fail immediately.
+                if LEGALIZE or not vm.requires_legalization:
+                    if first is None:
+                        first = i
+                    else:
+                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + self.vms[i].name)
 
         return results
 
-    def compare_vs(self, before, after):
+    def compare_before_and_after(self, before, after):
+        # compare each VM to itself on the before and after inputs
         for i in range(len(before)):
-            compare(before[i], after[i], 'CompareVMs at ' + str(i))
-            # with nans, we can only compare the binaryen interpreter to itself
-            if NANS:
-                break
+            vm = self.vms[i]
+            if vm.deterministic_nans:
+                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
@@ -244,40 +370,46 @@ class FuzzExec(TestCaseHandler):
         ]
 
 
-# As FuzzExec, but without a separate invocation. This can find internal bugs with generating
-# the IR (which might be worked around by writing it and then reading it).
-class FuzzExecImmediately(TestCaseHandler):
-    def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # fuzz binaryen interpreter itself. separate invocation so result is easily reduceable
-        run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
-
-
 # Check for determinism - the same command must have the same output.
 # Note that this doesn't use get_commands() intentionally, since we are testing
 # for something that autoreduction won't help with anyhow (nondeterminism is very
 # hard to reduce).
 class CheckDeterminism(TestCaseHandler):
+    # not that important
+    frequency = 0.333
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
-        assert open('b1.wasm').read() == open('b2.wasm').read(), 'output must be deterministic'
+        assert open('b1.wasm', 'rb').read() == open('b2.wasm', 'rb').read(), 'output must be deterministic'
 
 
 class Wasm2JS(TestCaseHandler):
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
+        # always check for compiler crashes. without NaNs we can also compare
+        # before and after (with NaNs, a reinterpret through memory might end up
+        # different in JS than wasm)
+        before = self.run(before_wasm)
+        after = self.run(after_wasm)
+        if not NANS:
+            compare(before, after, 'Wasm2JS')
 
     def run(self, wasm):
-        # TODO: wasm2js does not handle nans precisely, and does not
-        # handle oob loads etc. with traps, should we use
-        #     FUZZ_OPTS += ['--no-fuzz-nans']
-        #     FUZZ_OPTS += ['--no-fuzz-oob']
-        # ?
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
-        if random.random() < 0.5:
-            cmd += ['-O']
+        # avoid optimizations if we have nans, as we don't handle them with
+        # full precision and optimizations can change things
+        # OOB accesses are also an issue with optimizations, that can turn the
+        # loaded "undefined" into either 0 (with an |0) or stay undefined
+        # in optimized code.
+        if not NANS and not OOB and random.random() < 0.5:
+            # when optimizing also enable deterministic mode, to avoid things
+            # like integer divide by zero causing false positives (1 / 0 is
+            # Infinity without a  | 0 , and 0 with one, and the truthiness of
+            # those differs; we don't want to care about this because it
+            # would trap in wasm anyhow)
+            cmd += ['-O', '--deterministic']
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
             glue = f.read()
@@ -303,6 +435,14 @@ class Asyncify(TestCaseHandler):
         before = fix_output(run_d8(before_wasm))
         after = fix_output(run_d8(after_wasm))
 
+        try:
+            compare(before, after, 'Asyncify (before/after)')
+        except Exception:
+            # if we failed to just compare the builds before asyncify even runs,
+            # then it may use NaNs or be sensitive to legalization; ignore it
+            print('ignoring due to pre-asyncify difference')
+            return
+
         # TODO: also something that actually does async sleeps in the code, say
         # on the logging commands?
         # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
@@ -319,12 +459,12 @@ class Asyncify(TestCaseHandler):
             # emit some status logging from asyncify
             print(out.splitlines()[-1])
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
-            for ignore in ['[fuzz-exec] calling $asyncify_start_unwind\nexception!\n',
-                           '[fuzz-exec] calling $asyncify_start_unwind\n',
-                           '[fuzz-exec] calling $asyncify_start_rewind\nexception!\n',
-                           '[fuzz-exec] calling $asyncify_start_rewind\n',
-                           '[fuzz-exec] calling $asyncify_stop_rewind\n',
-                           '[fuzz-exec] calling $asyncify_stop_unwind\n']:
+            for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
+                           '[fuzz-exec] calling asyncify_start_unwind\n',
+                           '[fuzz-exec] calling asyncify_start_rewind\nexception!\n',
+                           '[fuzz-exec] calling asyncify_start_rewind\n',
+                           '[fuzz-exec] calling asyncify_stop_rewind\n',
+                           '[fuzz-exec] calling asyncify_stop_unwind\n']:
                 out = out.replace(ignore, '')
             out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
             return fix_output(out)
@@ -332,7 +472,6 @@ class Asyncify(TestCaseHandler):
         before_asyncify = do_asyncify(before_wasm)
         after_asyncify = do_asyncify(after_wasm)
 
-        compare(before, after, 'Asyncify (before/after)')
         compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
@@ -347,7 +486,6 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
-    FuzzExecImmediately(),
 ]
 
 
@@ -355,10 +493,16 @@ testcase_handlers = [
 def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
+    randomize_fuzz_settings()
+    print()
 
-    printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
-    with open('a.printed.wast', 'w') as f:
-        f.write(printed)
+    generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
+    if PRINT_WATS:
+        printed = run(generate_command + ['--print'])
+        with open('a.printed.wast', 'w') as f:
+            f.write(printed)
+    else:
+        run(generate_command)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -373,6 +517,8 @@ def test_one(random_input, opts):
         if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
             if hasattr(testcase_handler, 'get_commands'):
                 print('running testcase handler:', testcase_handler.__class__.__name__)
+                testcase_handler.increment_runs()
+
                 # if the testcase handler supports giving us a list of commands, then we can get those commands
                 # and use them to do useful things like automatic reduction. in this case we give it the input
                 # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
@@ -425,21 +571,37 @@ def test_one(random_input, opts):
                     # reduce the input to something smaller with the same behavior on the script
                     subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
                     print('Finished reduction. See "tt.sh" and "reduced.wasm".')
-                    sys.exit(1)
+                    raise Exception('halting after autoreduction')
                 print('')
 
-    # created a second wasm for handlers that want to look at pairs.
-    printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
-    with open('b.printed.wast', 'w') as f:
-        f.write(printed)
+    # create a second wasm for handlers that want to look at pairs.
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    if PRINT_WATS:
+        printed = run(generate_command + ['--print'])
+        with open('b.printed.wast', 'w') as f:
+            f.write(printed)
+    else:
+        run(generate_command)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    for testcase_handler in testcase_handlers:
-        if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
-            if not hasattr(testcase_handler, 'get_commands'):
+    # run some of the pair handling handlers. we don't run them all so that we get more
+    # coverage of different wasm files (but we do run all get_commands() using ones,
+    # earlier, because those are autoreducible and we want to maximize the chance of
+    # that)
+    # however, also try our best to pick a handler that can run this
+    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
+    NUM_PAIR_HANDLERS = 2
+    if len(relevant_handlers) > 0:
+        chosen_handlers = set(random.choices(relevant_handlers, k=NUM_PAIR_HANDLERS))
+        for testcase_handler in chosen_handlers:
+            assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+            assert not hasattr(testcase_handler, 'get_commands')
+            if random.random() < testcase_handler.frequency:
                 print('running testcase handler:', testcase_handler.__class__.__name__)
+                testcase_handler.increment_runs()
+
                 # let the testcase handler handle this testcase however it wants. in this case we give it
                 # the input and both wasms.
                 testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
@@ -510,7 +672,7 @@ opt_choices = [
 ]
 
 
-def get_multiple_opt_choices():
+def randomize_opt_flags():
     ret = []
     # core opts
     while 1:
@@ -533,9 +695,6 @@ def get_multiple_opt_choices():
 
 # main
 
-if not NANS:
-    FUZZ_OPTS += ['--no-fuzz-nans']
-
 # possible feature options that are sometimes passed to the tools. this
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
@@ -544,21 +703,82 @@ POSSIBLE_FEATURE_OPTS.remove('--disable-multivalue')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
-    print('checking infinite random inputs')
-    random.seed(time.time() * os.getpid())
-    temp = 'input.dat'
+    # if we are given a seed, run exactly that one testcase. otherwise,
+    # run new ones until we fail
+    if len(sys.argv) == 2:
+        given_seed = int(sys.argv[1])
+        print('checking a single given seed', given_seed)
+    else:
+        given_seed = None
+        print('checking infinite random inputs')
+    seed = time.time() * os.getpid()
+    raw_input_data = 'input.dat'
     counter = 0
-    bytes = 0    # wasm bytes tested
+    total_wasm_size = 0
+    total_input_size = 0
+    total_input_size_squares = 0
     start_time = time.time()
     while True:
         counter += 1
-        f = open(temp, 'w')
-        size = random_size()
+        if given_seed is not None:
+            seed = given_seed
+            given_seed_passed = True
+        else:
+            seed = random.randint(0, 1 << 64)
+        random.seed(seed)
+        input_size = random_size()
+        total_input_size += input_size
+        total_input_size_squares += input_size ** 2
         print('')
-        print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
-        for x in range(size):
-            f.write(chr(random.randint(0, 255)))
-        f.close()
-        opts = get_multiple_opt_choices()
-        print('opts:', ' '.join(opts))
-        bytes += test_one('input.dat', opts)
+        mean = float(total_input_size) / counter
+        mean_of_squares = float(total_input_size_squares) / counter
+        stddev = math.sqrt(mean_of_squares - (mean ** 2))
+        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(mean) + ', stddev:', str(stddev) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
+        with open(raw_input_data, 'wb') as f:
+            f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        assert os.path.getsize(raw_input_data) == input_size
+        opts = randomize_opt_flags()
+        print('randomized opts:', ' '.join(opts))
+        try:
+            total_wasm_size += test_one(raw_input_data, opts)
+        except KeyboardInterrupt:
+            print('(stopping by user request)')
+            break
+        except Exception as e:
+            # print the exception manually, so that we can show our message at
+            # the very end where it won't be missed
+            ex_type, ex, tb = sys.exc_info()
+            print('!')
+            print('-----------------------------------------')
+            print('Exception:')
+            traceback.print_tb(tb)
+            print('-----------------------------------------')
+            print('!')
+            for arg in e.args:
+                print(arg)
+            if given_seed is not None:
+                given_seed_passed = False
+            else:
+                print('''\
+================================================================================
+You found a bug! Please report it with
+
+  seed: %(seed)d
+
+and the exact version of Binaryen you found it on, plus the exact Python
+version (hopefully deterministic random numbers will be identical).
+
+(you can run that testcase again with "fuzz_opt.py %(seed)d")
+================================================================================
+                ''' % {'seed': seed})
+                break
+        if given_seed is not None:
+            if given_seed_passed:
+                print('(finished running seed %d without error)' % given_seed)
+            else:
+                print('(finished running seed %d, see error above)' % given_seed)
+            break
+
+        print('\nInvocations so far:')
+        for testcase_handler in testcase_handlers:
+            print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())

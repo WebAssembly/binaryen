@@ -261,4 +261,54 @@
  (func $reftype-test (result nullref)
   (ref.null)
  )
+ (func $dummy
+  (nop)
+ )
+ (func $br_reuse_node
+  (drop
+   (block $l0 (result f32)
+    (drop
+     (block $l1
+      (global.set $global-mut
+       (i32.const 1)
+      )
+      (br $l0
+       (f32.const 3.5)
+      )
+     )
+    )
+    (f32.const 0)
+   )
+  )
+  (drop
+   (block $l2 (result nullref)
+    (drop
+     (block $l3
+      (global.set $global-mut
+       (i32.const 1)
+      )
+      (br $l2
+       (ref.null)
+      )
+     )
+    )
+    (ref.null)
+   )
+  )
+  (drop
+   (block $l4 (result funcref)
+    (drop
+     (block $l5
+      (global.set $global-mut
+       (i32.const 1)
+      )
+      (br $l4
+       (ref.func $dummy)
+      )
+     )
+    )
+    (ref.null)
+   )
+  )
+ )
 )

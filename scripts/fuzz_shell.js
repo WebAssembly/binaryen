@@ -196,7 +196,7 @@ sortedExports.forEach(function(e) {
   Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
-    console.log('[fuzz-exec] calling $' + e);
+    console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: $' + e + ' => ' + result);
