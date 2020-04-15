@@ -85,7 +85,6 @@ int main(int argc, char** argv) {
 
     auto* func = wasm.getFunction(exp->value);
 
-    ret += "  puts(\"[fuzz-exec] calling hangLimitInitializer\");\n";
     ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
 
     ret += std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
