@@ -29,6 +29,8 @@ static std::string generateWasm2CWrapper(Module& wasm) {
 
 #include "wasm.h"
 
+// Logging imports
+
 void _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi(u32 x) {
   printf("[LoggingExternalInterface logging %d]\n", x);
 }
@@ -48,6 +50,22 @@ void _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd(f64 x) {
   printf("[LoggingExternalInterface logging %lf]\n", x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd)(f64) = _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd;
+
+// Miscellaneous imports
+
+u32 tempRet0 = 0;
+
+void _Z_envZ_setTempRet0Z_vi(u32 x) {
+  tempRet0 = x;
+}
+void (*Z_envZ_setTempRet0Z_vi)(u32) = _Z_envZ_setTempRet0Z_vi;
+
+u32 _Z_envZ_getTempRet0Z_iv(void) {
+  return tempRet0;
+}
+u32 (*Z_envZ_getTempRet0Z_iv)(void) = _Z_envZ_getTempRet0Z_iv;
+
+// Main
 
 int main(int argc, char** argv) {
   init();
