@@ -31,6 +31,7 @@
 #include "support/command-line.h"
 #include "support/debug.h"
 #include "support/file.h"
+#include "wasm2c-wrapper.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
@@ -87,6 +88,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzOOB = true;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
+  std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
@@ -184,6 +186,14 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&](Options* o, const std::string& arguments) {
            emitSpecWrapper = arguments;
+         })
+    .add("--emit-wasm2c-wrapper",
+         "-esw",
+         "Emit a C  wrapper file that can run the wasm after it is compiled "
+         "with wasm2c, useful for fuzzing",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           emitWasm2CWrapper = arguments;
          })
     .add("--input-source-map",
          "-ism",
@@ -293,11 +303,16 @@ int main(int argc, const char* argv[]) {
     outfile << generateJSWrapper(wasm);
     outfile.close();
   }
-
   if (emitSpecWrapper.size() > 0) {
     std::ofstream outfile;
     outfile.open(emitSpecWrapper, std::ofstream::out);
     outfile << generateSpecWrapper(wasm);
+    outfile.close();
+  }
+  if (emitWasm2CWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitWasm2CWrapper, std::ofstream::out);
+    outfile << generateWasm2CWrapper(wasm);
     outfile.close();
   }
 
