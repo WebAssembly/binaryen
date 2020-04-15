@@ -434,7 +434,6 @@ private:
   void setupEvents() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      // Events should have void return type and at least one param type
       auto* event =
         builder.makeEvent(std::string("event$") + std::to_string(i),
                           WASM_EVENT_ATTRIBUTE_EXCEPTION,
@@ -1354,7 +1353,7 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tuple = getTupleType();
-    const std::vector<Type>& elements = tuple.expand();
+    auto& elements = tuple.expand();
 
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
@@ -1366,7 +1365,7 @@ private:
 
     // If there are none, inject one
     if (extractIndices.size() == 0) {
-      std::vector<Type> newElements = elements;
+      auto newElements = elements;
       size_t injected = upTo(elements.size());
       newElements[injected] = type;
       tuple = Type(newElements);
@@ -2369,8 +2368,7 @@ private:
     }
     wasm.memory.shared = true;
     if (type == Type::none) {
-      // return builder.makeAtomicFence();
-      return builder.makeNop();
+      return builder.makeAtomicFence();
     }
     if (type == Type::i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
