@@ -175,8 +175,8 @@ def compare_between_vms(x, y, context):
     if len(x_lines) != len(y_lines):
         return compare(x, y, context)
 
-    num = len(x_lines)
-    for i in range(num):
+    num_lines = len(x_lines)
+    for i in range(num_lines):
         x_line = x_lines[i]
         y_line = y_lines[i]
         if x_line != y_line:
@@ -197,7 +197,7 @@ def compare_between_vms(x, y, context):
             # this failed to compare. print a custom diff of the relevant lines
             MARGIN = 3
             start = max(i - MARGIN, 0)
-            end = min(i + MARGIN, num)
+            end = min(i + MARGIN, num_lines)
             return compare('\n'.join(x_lines[start:end]), '\n'.join(y_lines[start:end]), context)
 
 
