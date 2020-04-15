@@ -228,6 +228,9 @@ private:
   // The maximum amount of vars in each function.
   static const int MAX_VARS = 20;
 
+  // The maximum number of globals in a module.
+  static const int MAX_GLOBALS = 20;
+
   // The maximum number of tuple elements.
   static const int MAX_TUPLE_SIZE = 6;
 
@@ -416,18 +419,15 @@ private:
   std::map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
-    size_t index = 0;
-    for (auto type : getSingleConcreteTypes()) {
-      auto num = upTo(3);
-      for (size_t i = 0; i < num; i++) {
-        auto* glob =
-          builder.makeGlobal(std::string("global$") + std::to_string(index++),
-                             type,
-                             makeConst(type),
-                             Builder::Mutable);
-        wasm.addGlobal(glob);
-        globalsByType[type].push_back(glob->name);
-      }
+    for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
+      auto type = getConcreteType();
+      auto* global =
+        builder.makeGlobal(std::string("global$") + std::to_string(index),
+                           type,
+                           makeConst(type),
+                           Builder::Mutable);
+      wasm.addGlobal(global);
+      globalsByType[type].push_back(global->name);
     }
   }
 
@@ -907,6 +907,7 @@ private:
     options.add(FeatureSet::MVP,
                 &Self::makeLocalGet,
                 &Self::makeLocalSet,
+                &Self::makeGlobalGet,
                 &Self::makeConst);
     if (canMakeControlFlow) {
       options.add(FeatureSet::MVP,
@@ -922,8 +923,7 @@ private:
         .add(FeatureSet::MVP,
              &Self::makeUnary,
              &Self::makeBinary,
-             &Self::makeSelect,
-             &Self::makeGlobalGet)
+             &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
     if (type.isSingle() && !type.isRef()) {
@@ -1322,22 +1322,22 @@ private:
   }
 
   Expression* makeGlobalGet(Type type) {
-    auto& globals = globalsByType[type];
-    if (globals.empty()) {
+    auto it = globalsByType.find(type);
+    if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(globals), type);
+    return builder.makeGlobalGet(pick(it->second), type);
   }
 
   Expression* makeGlobalSet(Type type) {
     assert(type == Type::none);
     type = getConcreteType();
-    auto& globals = globalsByType[type];
-    if (globals.empty()) {
+    auto it = globalsByType.find(type);
+    if (it == globalsByType.end() || it->second.empty()) {
       return makeTrivial(Type::none);
     }
     auto* value = make(type);
-    return builder.makeGlobalSet(pick(globals), value);
+    return builder.makeGlobalSet(pick(it->second), value);
   }
 
   Expression* makeTupleMake(Type type) {
