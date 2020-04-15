@@ -48,12 +48,12 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii(u32 x, u32 y) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii)(u32, u32) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vii;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Df32Z_vf(f32 x) {
-  printf("[LoggingExternalInterface logging %f]\n", x);
+  printf("[LoggingExternalInterface logging %.17e]\n", x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Df32Z_vf)(f32) = _Z_fuzzingZ2DsupportZ_logZ2Df32Z_vf;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd(f64 x) {
-  printf("[LoggingExternalInterface logging %lf]\n", x);
+  printf("[LoggingExternalInterface logging %.17le]\n", x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd)(f64) = _Z_fuzzingZ2DsupportZ_logZ2Df64Z_vd;
 
@@ -100,54 +100,56 @@ int main(int argc, char** argv) {
           ret += "%lld";
           break;
         case Type::f32:
-          ret += "%f";
+          ret += "%.17e";
           break;
         case Type::f64:
-          ret += "%lf";
+          ret += "%.17le";
           break;
         default:
           Fatal() << "unhandled wasm2c wrapper result type: " << result;
       }
-      ret += std::string("\\n\", (*Z_") + exp->name.str + "Z_";
-      // wasm2c emits names with a special signature
-      auto params = func->sig.params.expand();
-
-      auto wasm2cSignature = [](Type type) {
-        switch (type.getSingle()) {
-          case Type::none: return 'v';
-          case Type::i32: return 'i';
-          case Type::i64: return 'j';
-          case Type::f32: return 'f';
-          case Type::f64: return 'd';
-          default:
-            Fatal() << "unhandled wasm2c wrapper signature type: " << type;
-        }
-      };
-
-      ret += wasm2cSignature(result);
-      if (params.empty()) {
-        ret += wasm2cSignature(Type::none);
-      } else {
-        for (auto param : params) {
-          ret += wasm2cSignature(param);
-        }
-      }
-      ret += ")(";
-      if (!params.empty()) {
-        bool first = true;
-        for (auto param : params) {
-          WASM_UNUSED(param);
-          if (!first) {
-            ret += ", ";
-          }
-          ret += "0";
-          first = false;
-        }
-      }
-      ret += "));\n";
+      ret += std::string("\\n\", ");
     }
+    ret += std::string("(*Z_") + exp->name.str + "Z_";
+    // wasm2c emits names with a special signature
+    auto params = func->sig.params.expand();
+
+    auto wasm2cSignature = [](Type type) {
+      switch (type.getSingle()) {
+        case Type::none: return 'v';
+        case Type::i32: return 'i';
+        case Type::i64: return 'j';
+        case Type::f32: return 'f';
+        case Type::f64: return 'd';
+        default:
+          Fatal() << "unhandled wasm2c wrapper signature type: " << type;
+      }
+    };
+
+    ret += wasm2cSignature(result);
+    if (params.empty()) {
+      ret += wasm2cSignature(Type::none);
+    } else {
+      for (auto param : params) {
+        ret += wasm2cSignature(param);
+      }
+    }
+    ret += ")(";
+    bool first = true;
+    for (auto param : params) {
+      WASM_UNUSED(param);
+      if (!first) {
+        ret += ", ";
+      }
+      ret += "0";
+      first = false;
+    }
+    if (result != Type::none) {
+      ret += ")";
+    }
+    ret += ");\n";
     ret += "  } else {\n";
-    ret += "    puts(\"exception!\\n\");\n";
+    ret += "    puts(\"exception!\");\n";
     ret += "  }\n";
   }
 

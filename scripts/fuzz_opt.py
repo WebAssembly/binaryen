@@ -308,11 +308,12 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, deterministic_nans, requires_legalization):
+    def __init__(self, name, run, deterministic_nans, requires_legalization, can_run):
         self.name = name
         self.run = run
         self.deterministic_nans = deterministic_nans
         self.requires_legalization = requires_legalization
+        self.can_run = can_run
 
 
 class CompareVMs(TestCaseHandler):
@@ -333,10 +334,16 @@ class CompareVMs(TestCaseHandler):
             run(['cc', '-O3', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm'])
             return run_vm(['./a.out'])
 
+        def yes():
+            return True
+
+        def can_run_wasm2c():
+            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
+
         self.vms = [
-            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False),
-            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True),
-            VM('wasm2c',               run_wasm2c,               deterministic_nans=False, requires_legalization=False),
+            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False, can_run=yes),
+            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True,  can_run=yes),
+            VM('wasm2c',               run_wasm2c,               deterministic_nans=False, requires_legalization=False, can_run=can_run_wasm2c),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -347,7 +354,11 @@ class CompareVMs(TestCaseHandler):
     def run_vms(self, wasm):
         results = []
         for vm in self.vms:
-            results.append(fix_output(vm.run(wasm)))
+            # when a vm can't run, mark the result as None
+            if vm.can_run():
+                results.append(fix_output(vm.run(wasm)))
+            else:
+                results.append(None)
 
         # compare between the vms on this specific input
 
@@ -357,7 +368,7 @@ class CompareVMs(TestCaseHandler):
             for i in range(len(results)):
                 # No legalization for JS means we can't compare JS to others, as any
                 # illegal export will fail immediately.
-                if LEGALIZE or not vm.requires_legalization:
+                if (LEGALIZE or not vm.requires_legalization) and results[i] is not None:
                     if first is None:
                         first = i
                     else:
@@ -369,7 +380,7 @@ class CompareVMs(TestCaseHandler):
         # compare each VM to itself on the before and after inputs
         for i in range(len(before)):
             vm = self.vms[i]
-            if vm.deterministic_nans:
+            if vm.deterministic_nans and before[i] is not None:
                 compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
