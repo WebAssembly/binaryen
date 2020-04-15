@@ -77,7 +77,7 @@ def run(cmd):
 
 def run_unchecked(cmd):
     print(' '.join(cmd))
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0]
+    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).communicate()[0]
 
 
 def randomize_pass_debug():
@@ -232,9 +232,6 @@ def run_vm(cmd):
     # ignore some vm assertions, if bugs have already been filed
     known_issues = [
         'local count too large',    # ignore this; can be caused by flatten, ssa, etc. passes
-        'liftoff-assembler.cc, line 239\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-assembler.cc, line 245\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n',    # https://bugs.chromium.org/p/v8/issues/detail?id=8632
     ]
     try:
         return run(cmd)
@@ -298,50 +295,59 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, deterministic_nans):
+    def __init__(self, name, run, deterministic_nans, requires_legalization):
         self.name = name
         self.run = run
         self.deterministic_nans = deterministic_nans
+        self.requires_legalization = requires_legalization
 
 
 class CompareVMs(TestCaseHandler):
     def __init__(self):
         super(CompareVMs, self).__init__()
+
+        def run_binaryen_interpreter(wasm):
+            return run_bynterp(wasm, ['--fuzz-exec-before'])
+
+        def run_v8(wasm):
+            run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
+            return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+
+        #def run_wasm2js(wasm):
+
         self.vms = [
-            VM('binaryen interpreter', lambda js, wasm: run_bynterp(wasm, ['--fuzz-exec-before']),               deterministic_nans=True), # noqa
-            VM('d8',                   lambda js, wasm: run_vm([shared.V8, js] + shared.V8_OPTS + ['--', wasm]), deterministic_nans=False), # noqa
-            # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
-            # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
-            # run(['../spec/interpreter/wasm', wasm])
-            # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', wasm, '-e', open(prefix + 'wat').read()]))]
+            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False), # noqa
+            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True), # noqa
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'] + FEATURE_OPTS)
-        before = self.run_vms('a.js', before_wasm)
-        after = self.run_vms('b.js', after_wasm)
-        self.compare_vs(before, after)
+        before = self.run_vms(before_wasm)
+        after = self.run_vms(after_wasm)
+        self.compare_before_and_after(before, after)
 
-    def run_vms(self, js, wasm):
+    def run_vms(self, wasm):
         results = []
         for vm in self.vms:
-            results.append(fix_output(vm.run(js, wasm)))
+            results.append(fix_output(vm.run(wasm)))
 
-        if len(results) == 0:
-            results = [0]
+        # compare between the vms on this specific input
 
         # NaNs are a source of nondeterminism between VMs; don't compare them.
-        # No legalization for JS means we can't compare JS to others, as any
-        # illegal export will fail immediately.
-        if not NANS and LEGALIZE:
-            first = results[0]
+        if not NANS:
+            first = None
             for i in range(len(results)):
-                compare_between_vms(first, results[i], 'CompareVMs between VMs: ' + self.vms[0].name + ' and ' + self.vms[i].name)
+                # No legalization for JS means we can't compare JS to others, as any
+                # illegal export will fail immediately.
+                if LEGALIZE or not vm.requires_legalization:
+                    if first is None:
+                        first = i
+                    else:
+                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + self.vms[i].name)
 
         return results
 
-    def compare_vs(self, before, after):
+    def compare_before_and_after(self, before, after):
+        # compare each VM to itself on the before and after inputs
         for i in range(len(before)):
             vm = self.vms[i]
             if vm.deterministic_nans:
