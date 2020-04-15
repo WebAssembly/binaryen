@@ -1352,8 +1352,8 @@ private:
   Expression* makeTupleExtract(Type type) {
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
-    Type tuple = getTupleType();
-    auto& elements = tuple.expand();
+    Type tupleType = getTupleType();
+    auto& elements = tupleType.expand();
 
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
@@ -1368,12 +1368,12 @@ private:
       auto newElements = elements;
       size_t injected = upTo(elements.size());
       newElements[injected] = type;
-      tuple = Type(newElements);
+      tupleType = Type(newElements);
       extractIndices.push_back(injected);
     }
 
     Index index = pick(extractIndices);
-    Expression* child = make(tuple);
+    Expression* child = make(tupleType);
     return builder.makeTupleExtract(child, index);
   }
 
@@ -2758,7 +2758,7 @@ private:
   }
 
   Type getConcreteType() {
-    if (wasm.features.hasMultivalue() && oneIn(3)) {
+    if (wasm.features.hasMultivalue() && oneIn(5)) {
       return getTupleType();
     } else {
       return getSingleConcreteType();
@@ -2766,7 +2766,7 @@ private:
   }
 
   Type getControlFlowType() {
-    if (oneIn(5)) {
+    if (oneIn(10)) {
       return Type::none;
     } else {
       return getConcreteType();
