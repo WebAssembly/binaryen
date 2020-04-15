@@ -11,10 +11,10 @@
  (global $from_segment (mut i32) (i32.const 0))
  (global $from_segment_2 (mut i32) (i32.const 0))
  (export "wasm_func" (func $a_wasm_func))
- (func $table_func (; 1 ;)
+ (func $table_func
   (nop)
  )
- (func $a_wasm_func (; 2 ;)
+ (func $a_wasm_func
   (call $a_js_func)
   (drop
    (global.get $DYNAMICTOP_PTR$asm2wasm$import)

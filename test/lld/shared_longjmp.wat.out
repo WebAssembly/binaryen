@@ -33,13 +33,13 @@
  (export "__threwValue" (global $global$1))
  (export "dynCall_vii" (func $dynCall_vii))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $0 (; 11 ;)
+ (func $0
   (call $1)
  )
- (func $1 (; 12 ;)
+ (func $1
   (nop)
  )
- (func $2 (; 13 ;)
+ (func $2
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -142,18 +142,18 @@
   )
   (unreachable)
  )
- (func $dynCall_vii (; 14 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
+ (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
    (local.get $1)
    (local.get $fptr)
   )
  )
- (func $__post_instantiate (; 15 ;)
+ (func $__post_instantiate
   (call $__assign_got_enties)
   (call $0)
  )
- (func $__assign_got_enties (; 16 ;)
+ (func $__assign_got_enties
   (global.set $gimport$13
    (call $g$__THREW__)
   )

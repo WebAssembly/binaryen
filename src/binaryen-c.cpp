@@ -128,6 +128,7 @@ void traceNameOrNULL(const char* name, std::ostream& out = std::cout) {
   }
 }
 
+std::map<BinaryenType, size_t> types;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
 std::map<BinaryenGlobalRef, size_t> globals;
@@ -135,6 +136,71 @@ std::map<BinaryenEventRef, size_t> events;
 std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 std::map<ExpressionRunnerRef, size_t> expressionRunners;
+
+static bool isBasicAPIType(BinaryenType type) {
+  return type == BinaryenTypeAuto() || type <= Type::_last_value_type;
+}
+
+static const char* basicAPITypeFunction(BinaryenType type) {
+  if (type == BinaryenTypeAuto()) {
+    return "BinaryenTypeAuto()";
+  }
+  switch (type) {
+    case Type::none:
+      return "BinaryenTypeNone()";
+    case Type::i32:
+      return "BinaryenTypeInt32()";
+    case Type::i64:
+      return "BinaryenTypeInt64()";
+    case Type::f32:
+      return "BinaryenTypeFloat32()";
+    case Type::f64:
+      return "BinaryenTypeFloat64()";
+    case Type::v128:
+      return "BinaryenTypeVec128()";
+    case Type::funcref:
+      return "BinaryenTypeFuncref()";
+    case Type::anyref:
+      return "BinaryenTypeAnyref()";
+    case Type::nullref:
+      return "BinaryenTypeNullref()";
+    case Type::exnref:
+      return "BinaryenTypeExnref()";
+    case Type::unreachable:
+      return "BinaryenTypeUnreachable()";
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+struct TypeArg {
+  BinaryenType type;
+  TypeArg(BinaryenType type) : type(type){};
+};
+
+std::ostream& operator<<(std::ostream& os, TypeArg t) {
+  if (isBasicAPIType(t.type)) {
+    return os << basicAPITypeFunction(t.type);
+  } else {
+    auto it = types.find(t.type);
+    assert(it != types.end());
+    return os << "types[" << it->second << "]";
+  }
+}
+
+size_t noteType(BinaryenType type) {
+  // Basic types can be trivially rematerialized at every use
+  assert(!isBasicAPIType(type));
+  // Unlike expressions, the same type can be created multiple times
+  auto it = types.find(type);
+  if (it != types.end()) {
+    return it->second;
+  } else {
+    auto id = types.size();
+    types[type] = id;
+    return id;
+  }
+}
 
 size_t noteExpression(BinaryenExpressionRef expression) {
   auto id = expressions.size();
@@ -174,6 +240,11 @@ void printArg(std::ostream& setup, std::ostream& out, T arg) {
 }
 
 template<>
+void printArg(std::ostream& setup, std::ostream& out, BinaryenType arg) {
+  out << TypeArg(arg);
+}
+
+template<>
 void printArg(std::ostream& setup,
               std::ostream& out,
               BinaryenExpressionRef arg) {
@@ -188,15 +259,6 @@ struct StringLit {
 template<>
 void printArg(std::ostream& setup, std::ostream& out, StringLit arg) {
   traceNameOrNULL(arg.name, out);
-}
-
-template<>
-void printArg(std::ostream& setup, std::ostream& out, BinaryenType arg) {
-  if (arg == BinaryenTypeAuto()) {
-    out << "BinaryenTypeAuto()";
-  } else {
-    out << arg;
-  }
 }
 
 template<>
@@ -329,7 +391,7 @@ BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
-BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
+BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
 BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
   std::vector<Type> typeVec;
@@ -339,19 +401,20 @@ BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
   }
   Type result(typeVec);
 
-  if (tracing) {
+  if (tracing && !isBasicAPIType(result.getID())) {
+    auto id = noteType(result.getID());
     std::string array = getTemp();
     std::cout << "  {\n";
     std::cout << "    BinaryenType " << array << "[] = {";
     for (size_t i = 0; i < numTypes; ++i) {
-      std::cout << uint32_t(types[i]);
+      std::cout << basicAPITypeFunction(types[i]);
       if (i < numTypes - 1) {
         std::cout << ", ";
       }
     }
     std::cout << "};\n";
-    std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
-              << "); // " << result.getID() << "\n";
+    std::cout << "    types[" << id << "] = BinaryenTypeCreate(" << array
+              << ", " << numTypes << ");\n";
     std::cout << "  }\n";
   }
 
@@ -555,6 +618,7 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
 void BinaryenModuleDispose(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleDispose(the_module);\n";
+    std::cout << "  types.clear();\n";
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
     std::cout << "  globals.clear();\n";
@@ -562,6 +626,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     std::cout << "  expressionRunners.clear();\n";
+    types.clear();
     expressions.clear();
     functions.clear();
     globals.clear();
@@ -3252,7 +3317,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
       if (i > 0) {
         std::cout << ", ";
       }
-      std::cout << varTypes[i];
+      std::cout << TypeArg(varTypes[i]);
     }
     if (numVarTypes == 0) {
       // ensure the array is not empty, otherwise a compiler error on VS
@@ -3263,8 +3328,9 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
     functions[ret] = id;
     std::cout << "    functions[" << id
               << "] = BinaryenAddFunction(the_module, \"" << name << "\", "
-              << params << ", " << results << ", varTypes, " << numVarTypes
-              << ", expressions[" << expressions[body] << "]);\n";
+              << TypeArg(params) << ", " << TypeArg(results) << ", varTypes, "
+              << numVarTypes << ", expressions[" << expressions[body]
+              << "]);\n";
     std::cout << "  }\n";
   }
 
@@ -3336,7 +3402,7 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
     auto id = globals.size();
     globals[ret] = id;
     std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, \""
-              << name << "\", " << type << ", " << int(mutable_)
+              << name << "\", " << TypeArg(type) << ", " << int(mutable_)
               << ", expressions[" << expressions[init] << "]);\n";
   }
 
@@ -3374,7 +3440,8 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   BinaryenType results) {
   if (tracing) {
     std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
-              << attribute << ", " << params << ", " << results << ");\n";
+              << attribute << ", " << TypeArg(params) << ", "
+              << TypeArg(results) << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -3417,7 +3484,8 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   if (tracing) {
     std::cout << "  BinaryenAddFunctionImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << params << ", " << results << ");\n";
+              << "\", " << TypeArg(params) << ", " << TypeArg(results)
+              << ");\n";
   }
 
   ret->name = internalName;
@@ -3470,7 +3538,7 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
   if (tracing) {
     std::cout << "  BinaryenAddGlobalImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << globalType << ", " << mutable_ << ");\n";
+              << "\", " << TypeArg(globalType) << ", " << mutable_ << ");\n";
   }
 
   ret->name = internalName;
@@ -3493,8 +3561,8 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
   if (tracing) {
     std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << attribute << ", " << params << ", " << results
-              << ");\n";
+              << "\", " << attribute << ", " << TypeArg(params) << ", "
+              << TypeArg(results) << ");\n";
   }
 
   ret->name = internalName;
@@ -5032,6 +5100,7 @@ void BinaryenSetAPITracing(int on) {
                  "#include <map>\n"
                  "#include \"binaryen-c.h\"\n"
                  "int main() {\n"
+                 "  std::map<size_t, BinaryenType> types;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
                  "  std::map<size_t, BinaryenGlobalRef> globals;\n"

@@ -225,10 +225,12 @@ if(EMSCRIPTEN)
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
-if(UNIX AND
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
-    CMAKE_GENERATOR STREQUAL "Ninja")
-  add_compile_flag("-fcolor-diagnostics")
+if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_flag("-fdiagnostics-color=always")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_flag("-fcolor-diagnostics")
+  endif()
 endif()
 
 # Static libraries

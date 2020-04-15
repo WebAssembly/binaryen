@@ -121,6 +121,37 @@ struct Precompute
     } while (propagate && worked);
   }
 
+  template<typename T> void reuseConstantNode(T* curr, Flow flow) {
+    if (flow.values.isConcrete()) {
+      // reuse a const / ref.null / ref.func node if there is one
+      if (curr->value && flow.values.size() == 1) {
+        Literal singleValue = flow.getSingleValue();
+        if (singleValue.type.isNumber()) {
+          if (auto* c = curr->value->template dynCast<Const>()) {
+            c->value = singleValue;
+            c->finalize();
+            curr->finalize();
+            return;
+          }
+        } else if (singleValue.type == Type::nullref &&
+                   curr->value->template is<RefNull>()) {
+          return;
+        } else if (singleValue.type == Type::funcref) {
+          if (auto* r = curr->value->template dynCast<RefFunc>()) {
+            r->func = singleValue.getFunc();
+            r->finalize();
+            curr->finalize();
+            return;
+          }
+        }
+      }
+      curr->value = flow.getConstExpression(*getModule());
+    } else {
+      curr->value = nullptr;
+    }
+    curr->finalize();
+  }
+
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
@@ -146,19 +177,7 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          if (flow.values.isConcrete()) {
-            // reuse a const value if there is one
-            if (ret->value && flow.values.size() == 1) {
-              if (auto* value = ret->value->dynCast<Const>()) {
-                value->value = flow.getSingleValue();
-                value->finalize();
-                return;
-              }
-            }
-            ret->value = flow.getConstExpression(*getModule());
-          } else {
-            ret->value = nullptr;
-          }
+          reuseConstantNode(ret, flow);
         } else {
           Builder builder(*getModule());
           replaceCurrent(builder.makeReturn(
@@ -172,21 +191,7 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        if (flow.values.isConcrete()) {
-          // reuse a const value if there is one
-          if (br->value && flow.values.size() == 1) {
-            if (auto* value = br->value->dynCast<Const>()) {
-              value->value = flow.getSingleValue();
-              value->finalize();
-              br->finalize();
-              return;
-            }
-          }
-          br->value = flow.getConstExpression(*getModule());
-        } else {
-          br->value = nullptr;
-        }
-        br->finalize();
+        reuseConstantNode(br, flow);
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(

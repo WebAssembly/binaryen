@@ -15,7 +15,7 @@
  (export "neg" (func $neg))
  (export "bitcasts" (func $bitcasts))
  (export "ctzzzz" (func $ctzzzz))
- (func $floats (; 0 ;) (param $f f32) (result f32)
+ (func $floats (param $f f32) (result f32)
   (local $t f32)
   (return
    (f32.add
@@ -24,7 +24,7 @@
    )
   )
  )
- (func $neg (; 1 ;) (param $k i32) (param $p i32) (result f32)
+ (func $neg (param $k i32) (param $p i32) (result f32)
   (local $n f32)
   (local.set $n
    (f32.neg
@@ -43,7 +43,7 @@
    (local.get $n)
   )
  )
- (func $bitcasts (; 2 ;) (param $i i32) (param $f f32)
+ (func $bitcasts (param $i i32) (param $f f32)
   (drop
    (f32.reinterpret_i32
     (local.get $i)
@@ -62,14 +62,14 @@
    )
   )
  )
- (func $ctzzzz (; 3 ;) (result i32)
+ (func $ctzzzz (result i32)
   (return
    (i32.ctz
     (i32.const 4660)
    )
   )
  )
- (func $ub (; 4 ;) (result i32)
+ (func $ub (result i32)
   (drop
    (call $ub)
   )

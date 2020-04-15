@@ -59,12 +59,12 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 
 // Unlike the default format, tuple types in s-expressions should not have
 // commas.
-struct LocalType {
+struct SExprType {
   Type type;
-  LocalType(Type type) : type(type){};
+  SExprType(Type type) : type(type){};
 };
 
-static std::ostream& operator<<(std::ostream& o, const LocalType& localType) {
+static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
   if (type.isMulti()) {
     const std::vector<Type>& types = type.expand();
@@ -1455,8 +1455,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Function::DebugLocation lastPrintedLocation;
   bool debugInfo;
 
-  std::unordered_map<Name, Index> functionIndexes;
-
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
     if (!full) {
@@ -2072,9 +2070,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
-      o << "(mut " << curr->type << ')';
+      o << "(mut " << SExprType(curr->type) << ')';
     } else {
-      o << curr->type;
+      o << SExprType(curr->type);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2124,14 +2122,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (currModule && !minify) {
-      // emit the function index in a comment
-      if (functionIndexes.empty()) {
-        ModuleUtils::BinaryIndexes indexes(*currModule);
-        functionIndexes = std::move(indexes.functionIndexes);
-      }
-      o << " (; " << functionIndexes[curr->name] << " ;)";
-    }
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
@@ -2155,7 +2145,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << LocalType(curr->getLocalType(i)) << ')';
+        << ' ' << SExprType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.

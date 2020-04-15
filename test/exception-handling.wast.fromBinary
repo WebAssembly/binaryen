@@ -5,16 +5,16 @@
  (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $event$0 (attr 0) (param i32))
  (event $event$1 (attr 0) (param anyref))
- (func $exnref_test (; 0 ;) (param $0 exnref) (result exnref)
+ (func $exnref_test (param $0 exnref) (result exnref)
   (local.get $0)
  )
- (func $foo (; 1 ;)
+ (func $foo
   (nop)
  )
- (func $bar (; 2 ;)
+ (func $bar
   (nop)
  )
- (func $eh_test (; 3 ;)
+ (func $eh_test
   (local $0 exnref)
   (try
    (throw $event$0
@@ -68,7 +68,7 @@
    )
   )
  )
- (func $subtype_test (; 4 ;)
+ (func $subtype_test
   (try
    (nop)
    (catch

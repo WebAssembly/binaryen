@@ -3,7 +3,7 @@
  (import "env" "bar" (func $bar))
  (import "env" "other" (func $other))
  (export "foo" (func $foo))
- (func $foo (; 2 ;)
+ (func $foo
   (call $bar)
  )
 )

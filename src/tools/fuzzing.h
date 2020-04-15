@@ -425,11 +425,10 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = getConcreteType();
       std::vector<Type> params;
-      params.push_back(type);
-      Index numValues = upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues + 1; i++) {
+      Index numValues =
+        wasm.features.hasMultivalue() ? upToSquared(MAX_PARAMS) : upTo(2);
+      for (Index i = 0; i < numValues; i++) {
         params.push_back(getConcreteType());
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
@@ -984,7 +983,7 @@ private:
       case 0:
         return makeBlock(Type::unreachable);
       case 1:
-        return makeIf(Type::Type::unreachable);
+        return makeIf(Type::unreachable);
       case 2:
         return makeLoop(Type::unreachable);
       case 3:
@@ -1162,7 +1161,7 @@ private:
         hangStack.pop_back();
         return ret;
       } else if (type == Type::none) {
-        if (valueType != Type::Type::none) {
+        if (valueType != Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1171,7 +1170,7 @@ private:
         return ret;
       } else {
         assert(type == Type::unreachable);
-        if (valueType != Type::Type::none) {
+        if (valueType != Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1327,7 +1326,7 @@ private:
     type = getConcreteType();
     auto& globals = globalsByType[type];
     if (globals.empty()) {
-      return makeTrivial(Type::Type::none);
+      return makeTrivial(Type::none);
     }
     auto* value = make(type);
     return builder.makeGlobalSet(pick(globals), value);
@@ -2262,7 +2261,7 @@ private:
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
-    Type valueType = Type::Type::unreachable;
+    Type valueType = Type::unreachable;
     while (tries-- > 0) {
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
@@ -2551,7 +2550,7 @@ private:
                           ShrSVecI64x2,
                           ShrUVecI64x2);
     Expression* vec = make(Type::v128);
-    Expression* shift = make(Type::Type::i32);
+    Expression* shift = make(Type::i32);
     return builder.makeSIMDShift(op, vec, shift);
   }
 

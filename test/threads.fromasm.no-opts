@@ -34,7 +34,7 @@
  (global $tempFloat (mut f32) (f32.const 0))
  (global $f0 (mut f32) (f32.const 0))
  (export "test" (func $test))
- (func $test (; 0 ;)
+ (func $test
   (local $$temp i32)
   (local $1 i32)
   (local.set $$temp

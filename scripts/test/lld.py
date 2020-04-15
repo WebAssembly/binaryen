@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright 2017 WebAssembly Community Group participants
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +25,8 @@ def args_for_finalize(filename):
         ret += ['--side-module']
     if 'standalone-wasm' in filename:
         ret += ['--standalone-wasm']
+    if 'bigint' in filename:
+        ret += ['--bigint']
     return ret
 
 
@@ -90,7 +91,3 @@ def update_lld_tests():
             actual = support.run_command(cmd)
             with open(out_path, 'w') as o:
                 o.write(actual)
-
-
-if __name__ == '__main__':
-    test_wasm_emscripten_finalize()

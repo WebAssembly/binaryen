@@ -63,7 +63,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   struct UsableHasher {
     HashType operator()(const Usable value) const {
-      return rehash(value.hashed.hash, value.localType.getID());
+      return rehash(uint64_t(value.hashed.hash), value.localType.getID());
     }
   };
 

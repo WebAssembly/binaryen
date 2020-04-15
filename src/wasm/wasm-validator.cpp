@@ -2137,12 +2137,14 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
     }
   });
-  if (!module.features.hasMutableGlobals()) {
-    ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
+  ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
+    if (!module.features.hasMutableGlobals()) {
       info.shouldBeFalse(
         curr->mutable_, curr->name, "Imported global cannot be mutable");
-    });
-  }
+    }
+    info.shouldBeTrue(
+      curr->type.isSingle(), curr->name, "Imported global cannot be tuple");
+  });
 }
 
 static void validateExports(Module& module, ValidationInfo& info) {
@@ -2164,11 +2166,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
                                "Exported function must not have i64 results");
         }
       }
-    } else if (curr->kind == ExternalKind::Global &&
-               !module.features.hasMutableGlobals()) {
+    } else if (curr->kind == ExternalKind::Global) {
       if (Global* g = module.getGlobalOrNull(curr->value)) {
-        info.shouldBeFalse(
-          g->mutable_, g->name, "Exported global cannot be mutable");
+        if (!module.features.hasMutableGlobals()) {
+          info.shouldBeFalse(
+            g->mutable_, g->name, "Exported global cannot be mutable");
+        }
+        info.shouldBeTrue(
+          g->type.isSingle(), g->name, "Exported global cannot be tuple");
       }
     }
   }

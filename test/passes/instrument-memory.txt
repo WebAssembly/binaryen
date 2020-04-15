@@ -16,7 +16,7 @@
  (import "env" "store_val_f32" (func $store_val_f32 (param i32 f32) (result f32)))
  (import "env" "store_val_f64" (func $store_val_f64 (param i32 f64) (result f64)))
  (memory $0 256 256)
- (func $A (; 10 ;)
+ (func $A
   (drop
    (call $load_val_i32
     (i32.const 1)
@@ -382,7 +382,7 @@
    )
   )
  )
- (func $B (; 11 ;)
+ (func $B
   (i32.store8
    (call $store_ptr
     (i32.const 29)

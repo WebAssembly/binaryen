@@ -298,68 +298,86 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
 
 const auto STACK_ALIGN = 4;
 
-// A helper class for managing fake call names. Creates the targets and
+// A helper class for managing fake global names. Creates the globals and
 // provides mappings for using them.
-// Fake calls are used to stash and then use return values from calls. We
-// need to store them somewhere that is valid Binaryen IR, but also will be
-// ignored by the Asyncify instrumentation, so we don't want to use a local.
-// What we do is replace the local used to receive a call's result with a
-// fake call to stash it, then do a fake call to receive it afterwards. (We
-// do it in two steps so that if we are async, we only do the first and
-// not the second, i.e., we don't store to the target local if not running
-// normally).
-class FakeCallHelper {
+// Fake globals are used to stash and then use return values from calls. We need
+// to store them somewhere that is valid Binaryen IR, but also will be ignored
+// by the Asyncify instrumentation, so we don't want to use a local. What we do
+// is replace the local used to receive a call's result with a fake global.set
+// to stash it, then do a fake global.get to receive it afterwards. (We do it in
+// two steps so that if we are async, we only do the first and not the second,
+// i.e., we don't store to the target local if not running normally).
+class FakeGlobalHelper {
   Module& module;
 
 public:
-  FakeCallHelper(Module& module) : module(module) {
+  FakeGlobalHelper(Module& module) : module(module) {
     Builder builder(module);
-    std::string prefix = "__asyncify_fake_call";
-    for (auto type : {Type::i32, Type::i64, Type::f32, Type::f64}) {
-      auto typedPrefix = prefix + '_' + Type(type).toString();
-      auto setter = typedPrefix + "_set";
-      setterToTypes[setter] = type;
-      typeToSetters[type] = setter;
-      module.addFunction(builder.makeFunction(
-        setter, Signature(type, Type::none), {}, builder.makeUnreachable()));
-      auto getter = typedPrefix + "_get";
-      getterToTypes[getter] = type;
-      typeToGetters[type] = getter;
-      module.addFunction(builder.makeFunction(
-        getter, Signature(Type::none, type), {}, builder.makeNop()));
+    std::string prefix = "asyncify_fake_call_global_";
+    for (auto type : collectTypes()) {
+      auto global = prefix + Type(type).toString();
+      map[type] = global;
+      rev[global] = type;
+      module.addGlobal(builder.makeGlobal(
+        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
     }
   }
 
-  ~FakeCallHelper() {
-    for (auto& pair : typeToSetters) {
+  ~FakeGlobalHelper() {
+    for (auto& pair : map) {
       auto name = pair.second;
-      module.removeFunction(name);
-    }
-    for (auto& pair : typeToGetters) {
-      auto name = pair.second;
-      module.removeFunction(name);
+      module.removeGlobal(name);
     }
   }
 
-  Name getGetter(Type type) { return typeToGetters.at(type); }
-  Name getSetter(Type type) { return typeToSetters.at(type); }
+  Name getName(Type type) { return map.at(type); }
 
-  Function* getGetter(Name name) {
-    if (getterToTypes.count(name)) {
-      return module.getFunction(name);
+  Type getTypeOrNone(Name name) {
+    auto iter = rev.find(name);
+    if (iter != rev.end()) {
+      return iter->second;
     }
-    return nullptr;
-  }
-  Function* getSetter(Name name) {
-    if (setterToTypes.count(name)) {
-      return module.getFunction(name);
-    }
-    return nullptr;
+    return Type::none;
   }
 
 private:
-  std::map<Type, Name> typeToSetters, typeToGetters;
-  std::map<Name, Type> getterToTypes, setterToTypes;
+  std::map<Type, Name> map;
+  std::map<Name, Type> rev;
+
+  // Collect the types returned from all calls for which call support globals
+  // may need to be generated.
+  using Types = std::unordered_set<Type>;
+  Types collectTypes() {
+    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+      module, [&](Function* func, Types& types) {
+        if (!func->body) {
+          return;
+        }
+        struct TypeCollector : PostWalker<TypeCollector> {
+          Types& types;
+          TypeCollector(Types& types) : types(types) {}
+          void visitCall(Call* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+        };
+        TypeCollector(types).walk(func->body);
+      });
+    Types types;
+    for (auto& pair : analysis.map) {
+      Types& functionTypes = pair.second;
+      for (auto t : functionTypes) {
+        types.insert(t);
+      }
+    }
+    return types;
+  }
 };
 
 class PatternMatcher {
@@ -461,7 +479,7 @@ public:
                  const String::Split& whitelistInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeCalls(module), asserts(asserts) {
+      fakeGlobals(module), asserts(asserts) {
 
     PatternMatcher blacklist("black", module, blacklistInput);
     PatternMatcher whitelist("white", module, whitelistInput);
@@ -667,7 +685,7 @@ public:
     return walker.canChangeState;
   }
 
-  FakeCallHelper fakeCalls;
+  FakeGlobalHelper fakeGlobals;
   bool asserts;
 };
 
@@ -913,11 +931,9 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto type = set->value->type;
-      curr = builder->makeCall(
-        analyzer->fakeCalls.getSetter(type), {set->value}, type);
-      set->value =
-        builder->makeCall(analyzer->fakeCalls.getGetter(type), {}, type);
+      auto name = analyzer->fakeGlobals.getName(set->value->type);
+      curr = builder->makeGlobalSet(name, set->value);
+      set->value = builder->makeGlobalGet(name, set->value->type);
     }
     // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
@@ -1031,39 +1047,37 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void visitCall(Call* curr) {
-    // Check if this is one of our fake calls.
-    if (analyzer->fakeCalls.getSetter(curr->target)) {
-      assert(curr->operands.size() == 1);
-      auto type = curr->operands[0]->type;
-      replaceCurrent(
-        builder->makeLocalSet(getFakeCallLocal(type), curr->operands[0]));
-      return;
-    }
-    if (analyzer->fakeCalls.getGetter(curr->target)) {
-      auto type = curr->type;
-      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
-      return;
-    }
     // Replace calls to the fake intrinsics.
     if (curr->target == ASYNCIFY_UNWIND) {
       replaceCurrent(builder->makeBreak(ASYNCIFY_UNWIND, curr->operands[0]));
-      return;
-    }
-    if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
+    } else if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
       replaceCurrent(builder->makeSequence(
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
           builder->makeLoad(
             4, false, 0, 4, builder->makeGetStackPos(), Type::i32))));
-      return;
-    }
-    if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
+    } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
         builder->makeLocalGet(rewindIndex, Type::i32),
         builder->makeConst(
           Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
+    }
+  }
+
+  void visitGlobalSet(GlobalSet* curr) {
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
+    if (type != Type::none) {
+      replaceCurrent(
+        builder->makeLocalSet(getFakeCallLocal(type), curr->value));
+    }
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
+    if (type != Type::none) {
+      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
   }
 

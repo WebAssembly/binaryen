@@ -4,7 +4,7 @@ debugInfo=false
  (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
- (func $0 (; 0 ;)
+ (func $0
   (nop)
  )
 )
@@ -15,7 +15,7 @@ debugInfo=true
  (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $test))
- (func $test (; 0 ;)
+ (func $test
   (nop)
  )
 )
@@ -26,7 +26,7 @@ debugInfo=false
  (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
- (func $0 (; 0 ;)
+ (func $0
   (nop)
  )
 )

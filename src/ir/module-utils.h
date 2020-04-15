@@ -28,39 +28,6 @@ namespace wasm {
 
 namespace ModuleUtils {
 
-// Computes the indexes in a wasm binary, i.e., with function imports
-// and function implementations sharing a single index space, etc.,
-// and with the imports first (the Module's functions and globals
-// arrays are not assumed to be in a particular order, so we can't
-// just use them directly).
-struct BinaryIndexes {
-  std::unordered_map<Name, Index> functionIndexes;
-  std::unordered_map<Name, Index> globalIndexes;
-  std::unordered_map<Name, Index> eventIndexes;
-
-  BinaryIndexes(Module& wasm) {
-    auto addIndexes = [&](auto& source, auto& indexes) {
-      auto addIndex = [&](auto* curr) {
-        auto index = indexes.size();
-        indexes[curr->name] = index;
-      };
-      for (auto& curr : source) {
-        if (curr->imported()) {
-          addIndex(curr.get());
-        }
-      }
-      for (auto& curr : source) {
-        if (!curr->imported()) {
-          addIndex(curr.get());
-        }
-      }
-    };
-    addIndexes(wasm.functions, functionIndexes);
-    addIndexes(wasm.globals, globalIndexes);
-    addIndexes(wasm.events, eventIndexes);
-  }
-};
-
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;

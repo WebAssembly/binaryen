@@ -15,10 +15,10 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $stackSave (; 0 ;) (result i32)
+ (func $stackSave (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 1 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $global$0
    (local.tee $1
@@ -33,12 +33,12 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 2 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 3 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )

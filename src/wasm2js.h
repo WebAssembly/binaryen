@@ -120,10 +120,12 @@ class Wasm2JSBuilder {
 
 public:
   struct Flags {
+    // see wasm2js.cpp for details
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
     bool emscripten = false;
+    bool deterministic = false;
     std::string symbolsFile;
   };
 
@@ -326,6 +328,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     if (options.optimizeLevel > 0) {
       runner.add("remove-unused-names");
       runner.add("merge-blocks");
+      runner.add("reorder-locals");
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
@@ -983,8 +986,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       continueLabels.insert(asmLabel);
       Ref body = visit(curr->body, result);
       // if we can reach the end of the block, we must leave the while (1) loop
-      if (curr->body->type != Type::Type::unreachable) {
-        assert(curr->body->type == Type::Type::none); // flat IR
+      if (curr->body->type != Type::unreachable) {
+        assert(curr->body->type == Type::none); // flat IR
         body = blockify(body);
         flattenAppend(
           body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
@@ -1048,7 +1051,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         for (auto* c : code) {
           ValueBuilder::appendCodeToSwitch(
             theSwitch, blockify(visit(c, NO_RESULT)), false);
-          hoistedEndsWithUnreachable = c->type == Type::Type::unreachable;
+          hoistedEndsWithUnreachable = c->type == Type::unreachable;
         }
       }
       // After the hoisted cases, if any remain we must make sure not to
@@ -1269,7 +1272,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitStore(Store* curr) {
       if (module->memory.initial < module->memory.max &&
-          curr->type != Type::Type::unreachable) {
+          curr->type != Type::unreachable) {
         // In JS, if memory grows then it is dangerous to write
         //  HEAP[f()] = ..
         // or

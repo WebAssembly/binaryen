@@ -6,7 +6,7 @@
  (import "env" "_atexit" (func $fimport$2 (param i32 i32) (result i32)))
  (import "env" "___cxa_atexit" (func $fimport$3 (param i32 i32) (result i32)))
  (import "env" "other" (func $fimport$4 (param i32 i32) (result i32)))
- (func $caller (; 5 ;)
+ (func $caller
   (drop
    (i32.const 0)
   )

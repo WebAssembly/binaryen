@@ -376,14 +376,25 @@ void WasmBinaryWriter::writeGlobals() {
   }
   BYN_TRACE("== writeglobals\n");
   auto start = startSection(BinaryConsts::Section::Global);
-  auto num = importInfo->getNumDefinedGlobals();
+  // Count and emit the total number of globals after tuple globals have been
+  // expanded into their constituent parts.
+  Index num = 0;
+  ModuleUtils::iterDefinedGlobals(
+    *wasm, [&num](Global* global) { num += global->type.size(); });
   o << U32LEB(num);
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one\n");
-    o << binaryType(global->type);
-    o << U32LEB(global->mutable_);
-    writeExpression(global->init);
-    o << int8_t(BinaryConsts::End);
+    const auto& types = global->type.expand();
+    for (size_t i = 0; i < types.size(); ++i) {
+      o << binaryType(types[i]);
+      o << U32LEB(global->mutable_);
+      if (types.size() == 1) {
+        writeExpression(global->init);
+      } else {
+        writeExpression(global->init->cast<TupleMake>()->operands[i]);
+      }
+      o << int8_t(BinaryConsts::End);
+    }
   });
   finishSection(start);
 }
@@ -1305,7 +1316,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         auto name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
-        if (index > signatures.size()) {
+        if (index >= signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }

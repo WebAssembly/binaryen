@@ -9,29 +9,37 @@
  (type $none_=>_i32_i64_nullref (func (result i32 i64 nullref)))
  (type $none_=>_f32 (func (result f32)))
  (import "env" "pair" (func $pair (result i32 i64)))
- (func $triple (; 1 ;) (result i32 i64 f32)
+ (global $g1 (mut (i32 i64)) (tuple.make
+  (i32.const 0)
+  (i64.const 0)
+ ))
+ (global $g2 (i32 i64) (tuple.make
+  (i32.const 0)
+  (i64.const 0)
+ ))
+ (func $triple (result i32 i64 f32)
   (tuple.make
    (i32.const 42)
    (i64.const 7)
    (f32.const 13)
   )
  )
- (func $get-first (; 2 ;) (result i32)
+ (func $get-first (result i32)
   (tuple.extract 0
    (call $triple)
   )
  )
- (func $get-second (; 3 ;) (result i64)
+ (func $get-second (result i64)
   (tuple.extract 1
    (call $triple)
   )
  )
- (func $get-third (; 4 ;) (result f32)
+ (func $get-third (result f32)
   (tuple.extract 2
    (call $triple)
   )
  )
- (func $reverse (; 5 ;) (result f32 i64 i32)
+ (func $reverse (result f32 i64 i32)
   (local $x (i32 i64 f32))
   (local.set $x
    (call $triple)
@@ -48,7 +56,7 @@
    )
   )
  )
- (func $unreachable (; 6 ;) (result i64)
+ (func $unreachable (result i64)
   (tuple.extract 1
    (tuple.make
     (i32.const 42)
@@ -57,12 +65,21 @@
    )
   )
  )
- (func $drop-call (; 7 ;)
+ (func $global (result i32 i64)
+  (global.set $g1
+   (tuple.make
+    (i32.const 42)
+    (i64.const 7)
+   )
+  )
+  (global.get $g2)
+ )
+ (func $drop-call
   (drop
    (call $pair)
   )
  )
- (func $drop-tuple-make (; 8 ;)
+ (func $drop-tuple-make
   (drop
    (tuple.make
     (i32.const 42)
@@ -70,7 +87,7 @@
    )
   )
  )
- (func $drop-block (; 9 ;)
+ (func $drop-block
   (drop
    (block $block (result i32 i64)
     (tuple.make
@@ -80,7 +97,7 @@
    )
   )
  )
- (func $mv-return (; 10 ;) (result i32 i64)
+ (func $mv-return (result i32 i64)
   (return
    (tuple.make
     (i32.const 42)
@@ -88,7 +105,7 @@
    )
   )
  )
- (func $mv-return-in-block (; 11 ;) (result i32 i64)
+ (func $mv-return-in-block (result i32 i64)
   (block $block (result i32 i64)
    (return
     (tuple.make
@@ -98,7 +115,7 @@
    )
   )
  )
- (func $mv-block-break (; 12 ;) (result i32 i64)
+ (func $mv-block-break (result i32 i64)
   (block $l (result i32 i64)
    (br $l
     (tuple.make
@@ -108,7 +125,7 @@
    )
   )
  )
- (func $mv-block-br-if (; 13 ;) (result i32 i64)
+ (func $mv-block-br-if (result i32 i64)
   (block $l (result i32 i64)
    (br_if $l
     (tuple.make
@@ -119,7 +136,7 @@
    )
   )
  )
- (func $mv-if (; 14 ;) (result i32 i64 anyref)
+ (func $mv-if (result i32 i64 anyref)
   (if (result i32 i64 nullref)
    (i32.const 1)
    (tuple.make
@@ -134,7 +151,7 @@
    )
   )
  )
- (func $mv-loop (; 15 ;) (result i32 i64)
+ (func $mv-loop (result i32 i64)
   (loop $loop-in (result i32 i64)
    (tuple.make
     (i32.const 42)
@@ -142,7 +159,7 @@
    )
   )
  )
- (func $mv-switch (; 16 ;) (result i32 i64)
+ (func $mv-switch (result i32 i64)
   (block $a (result i32 i64)
    (block $b (result i32 i64)
     (br_table $a $b

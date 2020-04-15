@@ -170,7 +170,6 @@ NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
 NODEJS = os.getenv('NODE', which('nodejs') or which('node'))
 MOZJS = which('mozjs') or which('spidermonkey')
 V8 = which('v8') or which('d8')
-EMCC = which('emcc')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
@@ -225,19 +224,15 @@ def has_shell_timeout():
 
 
 # Default options to pass to v8. These enable all features.
+# See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h
 V8_OPTS = [
+    '--wasm-staging',
     '--experimental-wasm-eh',
-    '--experimental-wasm-mv',
-    '--experimental-wasm-sat-f2i-conversions',
-    '--experimental-wasm-se',
-    '--experimental-wasm-threads',
     '--experimental-wasm-simd',
     '--experimental-wasm-anyref',
-    '--experimental-wasm-bulk-memory',
+    '--experimental-wasm-compilation-hints',
     '--experimental-wasm-return-call'
 ]
-
-has_vanilla_llvm = False
 
 # external tools
 
@@ -261,26 +256,6 @@ except (OSError, subprocess.CalledProcessError):
 if MOZJS is None:
     warn('no mozjs found (did not check native wasm support nor asm.js'
          ' validation)')
-
-try:
-    if EMCC is not None:
-        subprocess.check_call([EMCC, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-except (OSError, subprocess.CalledProcessError):
-    EMCC = None
-if EMCC is None:
-    warn('no emcc found (did not check non-vanilla emscripten/binaryen'
-         ' integration)')
-
-has_vanilla_emcc = False
-try:
-    subprocess.check_call(
-        [os.path.join(options.binaryen_test, 'emscripten', 'emcc'), '--version'],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    has_vanilla_emcc = True
-except (OSError, subprocess.CalledProcessError):
-    pass
 
 
 # utilities
@@ -392,9 +367,6 @@ def get_tests(test_dir, extensions=[]):
 
 if not options.interpreter:
     warn('no interpreter provided (did not test spec interpreter validation)')
-
-if not has_vanilla_emcc:
-    warn('no functional emcc submodule found')
 
 
 if not options.spec_tests:

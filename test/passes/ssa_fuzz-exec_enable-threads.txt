@@ -5,7 +5,7 @@
  (memory $0 (shared 1 1))
  (table $0 0 0 funcref)
  (export "func_0" (func $0))
- (func $0 (; 0 ;) (result i32)
+ (func $0 (result i32)
   (local $var$0 i32)
   (local $var$1 i32)
   (local $var$2 i32)

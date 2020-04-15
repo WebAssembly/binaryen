@@ -288,8 +288,35 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   Block* block = builder.makeBlock();
   assignFunc->body = block;
 
+  bool hasSingleMemorySegment =
+    wasm.memory.exists && wasm.memory.segments.size() == 1;
+
   for (Global* g : gotMemEntries) {
-    Name getter(std::string("g$") + g->base.c_str());
+    // If this global is defined in this module, we export its address relative
+    // to the relocatable memory. If we are in a main module, we can just use
+    // that location (since if other modules have this symbol too, we will "win"
+    // as we are loaded first). Otherwise, import a g$ getter.
+    // Note that this depends on memory having a single segment, so we know the
+    // offset, and that the export is a global.
+    auto base = g->base;
+    if (hasSingleMemorySegment && !sideModule) {
+      if (auto* ex = wasm.getExportOrNull(base)) {
+        if (ex->kind == ExternalKind::Global) {
+          // The base relative to which we are computed is the offset of the
+          // singleton segment.
+          auto* relativeBase =
+            ExpressionManipulator::copy(wasm.memory.segments[0].offset, wasm);
+
+          auto* offset =
+            builder.makeGlobalGet(ex->value, wasm.getGlobal(ex->value)->type);
+          auto* add = builder.makeBinary(AddInt32, relativeBase, offset);
+          GlobalSet* globalSet = builder.makeGlobalSet(g->name, add);
+          block->list.push_back(globalSet);
+          continue;
+        }
+      }
+    }
+    Name getter(std::string("g$") + base.c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
@@ -306,13 +333,13 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     // Note that we don't search for the function by name since its internal
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
-    if (ex) {
+    // If this is exported then it must be one of the functions implemented
+    // here, and if this is a main module, then we can simply place the function
+    // in the table: the loader will see it there and resolve all other uses
+    // to this one.
+    if (ex && !sideModule) {
       assert(ex->kind == ExternalKind::Function);
       auto* f = wasm.getFunction(ex->value);
-      // This is exported, so must be one of the functions implemented here.
-      // Simply add it to the table, and use that index. The loader will
-      // know to reuse that index for other modules so they all share the
-      // same index and function pointer equality works.
       if (f->imported()) {
         Fatal() << "GOT.func entry is both imported and exported: " << g->base;
       }
@@ -337,10 +364,14 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       block->list.push_back(globalSet);
       continue;
     }
-    // This is imported. Create an fp$ import to get the function table index.
+    // This is imported or in a side module. Create an fp$ import to get the
+    // function table index from the dynamic loader.
     auto* f = importInfo.getImportedFunction(ENV, g->base);
     if (!f) {
-      Fatal() << "GOT.func entry with no import/export: " << g->base;
+      if (!ex) {
+        Fatal() << "GOT.func entry with no import/export: " << g->base;
+      }
+      f = wasm.getFunction(ex->value);
     }
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))

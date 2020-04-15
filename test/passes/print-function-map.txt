@@ -4,10 +4,10 @@
 (module
  (type $none_=>_none (func))
  (import "env" "foo" (func $Foo))
- (func $bar (; 1 ;)
+ (func $bar
   (nop)
  )
- (func $baz (; 2 ;)
+ (func $baz
   (nop)
  )
 )
