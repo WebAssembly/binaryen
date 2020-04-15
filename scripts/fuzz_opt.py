@@ -313,11 +313,9 @@ class CompareVMs(TestCaseHandler):
             run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
             return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
-        #def run_wasm2js(wasm):
-
         self.vms = [
-            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False), # noqa
-            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True), # noqa
+            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False),
+            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -498,12 +496,13 @@ def test_one(random_input, opts):
     randomize_fuzz_settings()
     print()
 
+    generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS]
     if PRINT_WATS:
-        printed = run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+        printed = run(generate_command + ['--print'])
         with open('a.printed.wast', 'w') as f:
             f.write(printed)
     else:
-        run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        run(generate_command)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -576,12 +575,13 @@ def test_one(random_input, opts):
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
-        printed = run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS + ['--print'])
+        printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
             f.write(printed)
     else:
-        run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+        run(generate_command)
     wasm_size = os.stat('b.wasm').st_size
     bytes += wasm_size
     print('post wasm size:', wasm_size)
