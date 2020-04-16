@@ -33,11 +33,8 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# exceptions: https://github.com/WebAssembly/binaryen/issues/2195
-# simd: known issues with d8
-# atomics, bulk memory: doesn't work in wasm2js
-# truncsat: https://github.com/WebAssembly/binaryen/issues/2198
-CONSTANT_FEATURE_OPTS = ['--all-features']
+# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
+CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-multivalue']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -699,7 +696,6 @@ def randomize_opt_flags():
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wat'), '-all']).replace('--enable', '--disable').strip().split('\n')
-POSSIBLE_FEATURE_OPTS.remove('--disable-multivalue')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
