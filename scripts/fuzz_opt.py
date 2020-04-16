@@ -344,8 +344,8 @@ class CompareVMs(TestCaseHandler):
         def if_no_nans():
             return not NANS
 
-        def if_no_oob():
-            return not OOB
+        def if_no_oob_and_no_nans():
+            return not OOB and not NANS
 
         def if_mvp():
             return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
@@ -355,7 +355,7 @@ class CompareVMs(TestCaseHandler):
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=if_no_nans, can_compare_to_others=if_no_oob),
+            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=if_no_nans, can_compare_to_others=if_no_oob_and_no_nans),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -539,6 +539,8 @@ def test_one(random_input, opts):
     randomize_fuzz_settings()
     print()
 
+    #shutil.copyfile('/home/azakai/Dev/binaryen/t.wasm', 'a.wasm')
+    #'''
     generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
@@ -546,6 +548,7 @@ def test_one(random_input, opts):
             f.write(printed)
     else:
         run(generate_command)
+    #'''
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
