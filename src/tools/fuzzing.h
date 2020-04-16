@@ -573,15 +573,21 @@ private:
     } else {
       func->body = make(bodyType);
     }
-    // Recombinations create duplicate code patterns.
-    recombine(func);
-    // Mutations add random small changes, which can subtly break duplicate code
-    // patterns.
-    mutate(func);
-    // TODO: liveness operations on gets, with some prob alter a get to one with
-    //       more possible sets
-    // Recombination, mutation, etc. can break validation; fix things up after.
-    fixLabels(func);
+    // Our OOB checks are already in the code, and if we recombine/mutate we
+    // may end up breaking them. TODO: do them after the fact, like with the
+    // hang limit checks.
+    if (allowOOB) {
+      // Recombinations create duplicate code patterns.
+      recombine(func);
+      // Mutations add random small changes, which can subtly break duplicate
+      // code patterns.
+      mutate(func);
+      // TODO: liveness operations on gets, with some prob alter a get to one
+      // with more possible sets.
+      // Recombination, mutation, etc. can break validation; fix things up
+      // after.
+      fixLabels(func);
+    }
     // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
       addHangLimitChecks(func);
