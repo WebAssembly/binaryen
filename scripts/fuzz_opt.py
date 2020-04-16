@@ -40,7 +40,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
-INPUT_SIZE_MEAN = 2 * 1024
+INPUT_SIZE_MEAN = 40 * 1024
 INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
@@ -340,26 +340,26 @@ class CompareVMs(TestCaseHandler):
         def yes():
             return True
 
-        def not_if_nans_or_illegal():
-            # with nans, VM differences can confuse us
+        def if_legal_and_no_nans():
             # if not legalized, the JS will fail immediately
-            return not NANs and LEGALIZE
+            # with nans, VM differences can confuse us
+            return LEGALIZE and not NANS
 
-        def not_if_nans():
+        def if_no_nans():
             # if not legalized, the JS will fail immediately
             # with nans, VM differences can confuse us
             return not NANS
 
-        def not_if_oob():
+        def if_no_oob():
             return not OOB
 
         def if_mvp():
             return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
 
         self.vms = [
-            VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,         can_compare_to_others=yes),
-            VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=not_if_nans, can_compare_to_others=not_if_nans_or_illegal),
-            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=yes,         can_compare_to_others=not_if_oob),
+            VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
+            VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
+            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=yes,        can_compare_to_others=if_no_oob),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -383,7 +383,7 @@ class CompareVMs(TestCaseHandler):
             # No legalization for JS means we can't compare JS to others, as any
             # illegal export will fail immediately.
             vm = self.vms[i]
-            if results[i] is not None:
+            if vm.can_compare_to_others() and results[i] is not None:
                 if first is None:
                     first = i
                 else:
@@ -394,8 +394,9 @@ class CompareVMs(TestCaseHandler):
     def compare_before_and_after(self, before, after):
         # compare each VM to itself on the before and after inputs
         for i in range(len(before)):
-            if before[i] is not None:
-                compare(before[i], after[i], 'CompareVMs between before and after: ' + self.vms[i].name)
+            vm = self.vms[i]
+            if vm.can_compare_to_self() and before[i] is not None:
+                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
