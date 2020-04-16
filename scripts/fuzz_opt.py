@@ -369,7 +369,6 @@ class CompareVMs(TestCaseHandler):
             Wasm2C()
         ]
 
-
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
         after = self.run_vms(after_wasm)
@@ -551,8 +550,6 @@ def test_one(random_input, opts):
     randomize_fuzz_settings()
     print()
 
-    #shutil.copyfile('/home/azakai/Dev/binaryen/t.wasm', 'a.wasm')
-    #'''
     generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
@@ -560,7 +557,6 @@ def test_one(random_input, opts):
             f.write(printed)
     else:
         run(generate_command)
-    #'''
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
