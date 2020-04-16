@@ -341,13 +341,9 @@ class CompareVMs(TestCaseHandler):
             return True
 
         def if_legal_and_no_nans():
-            # if not legalized, the JS will fail immediately
-            # with nans, VM differences can confuse us
             return LEGALIZE and not NANS
 
         def if_no_nans():
-            # if not legalized, the JS will fail immediately
-            # with nans, VM differences can confuse us
             return not NANS
 
         def if_no_oob():
@@ -358,6 +354,8 @@ class CompareVMs(TestCaseHandler):
 
         self.vms = [
             VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
+            # with nans, VM differences can confuse us
+            # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
             VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=yes,        can_compare_to_others=if_no_oob),
         ]
