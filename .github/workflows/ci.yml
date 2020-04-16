@@ -1,0 +1,232 @@
+name: CI
+
+# Trigger on pull_request or on push to master
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install tools
+      run: |
+        sudo pip3 install flake8==3.7.8
+        sudo apt-get install clang-format clang-tidy
+        echo "::add-path::/usr/lib/llvm-8/bin"
+    - name: flake8
+      run: flake8
+    - run: ./scripts/clang-format-diff.sh
+    - run: ./scripts/clang-tidy-diff.sh
+
+  build:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: install ninja (linux)
+      run: sudo apt-get install ninja-build
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: install ninja (osx)
+      run: brew install ninja
+      if: matrix.os == 'macos-latest'
+
+    - name: install ninja (win)
+      run: choco install ninja
+      if: matrix.os == 'windows-latest'
+
+    - name: mkdir
+      run: mkdir -p out
+
+    - name: cmake (linux)
+      run: cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: cmake (osx)
+      run: cmake -S . -B out -G Ninja
+      if: matrix.os == 'macos-latest'
+
+    - name: cmake (win)
+      # -G "Visual Studio 15 2017"
+      run: cmake -S . -B out
+      if: matrix.os == 'windows-latest'
+
+    - name: build
+      run: cmake --build out
+
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
+  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+  # Note: Alpine uses musl libc.
+  build-alpine:
+    name: alpine
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: start docker
+      run: |
+        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        echo 'docker exec alpine "$@";' > ./alpine.sh
+        chmod +x ./alpine.sh
+    - name: install packages
+      run: |
+        ./alpine.sh apk update
+        ./alpine.sh apk add build-base cmake git python3 clang ninja
+    - name: build
+      run: |
+        ./alpine.sh cmake . -G Ninja
+        ./alpine.sh ninja
+    - name: test
+      run: ./alpine.sh python3 ./check.py
+
+  build-gcc:
+    name: gcc
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
+  # TODO(sbc): Find a way to reduce the duplicate between these sanitizer jobs
+  build-asan:
+    name: asan
+    runs-on: ubuntu-latest
+    env:
+      # FIXME we currently must disable LSAN entirely, see #1351
+      ASAN_OPTIONS: "detect_leaks=0 symbolize=1"
+      COMPILER_FLAGS: "-fsanitize=address"
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
+  # Duplicates build-asan.  Please keep in sync
+  build-ubsan:
+    name: ubsan
+    runs-on: ubuntu-latest
+    env:
+      COMPILER_FLAGS: "-fsanitize=undefined -fno-sanitize-recover=all"
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS -fsanitize-blacklist=$PWD/ubsan.blacklist"
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
+  # Duplicates build-asan.  Please keep in sync
+  build-tsan:
+    name: tsan
+    runs-on: ubuntu-latest
+    env:
+      COMPILER_FLAGS: "-fsanitize=thread"
+      LINKER_FLAGS: "-fsanitize=thread"
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
+  # Build the .js outputs using emcc
+  build-emscripten:
+    name: emscipten
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x' - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: download cmake
+      run: |
+        mkdir $HOME/cmake
+        wget -qO- https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz | tar -xzC $HOME/cmake --strip-components 1
+        echo "::add-path::$HOME/cmake/bin"
+    - name: emsdk install
+      run: |
+        mkdir $HOME/emsdk
+        git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
+        $HOME/emsdk/emsdk update-tags
+        $HOME/emsdk/emsdk install tot
+        $HOME/emsdk/emsdk activate tot
+        echo "::add-path::$HOME/emsdk"
+    - name: emcc-tests
+      run: |
+        source $HOME/emsdk/emsdk_env.sh
+        ./scripts/emcc-tests.sh
