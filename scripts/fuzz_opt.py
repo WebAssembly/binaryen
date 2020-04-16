@@ -33,11 +33,8 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# exceptions: https://github.com/WebAssembly/binaryen/issues/2195
-# simd: known issues with d8
-# atomics, bulk memory: doesn't work in wasm2js
-# truncsat: https://github.com/WebAssembly/binaryen/issues/2198
-CONSTANT_FEATURE_OPTS = ['--all-features']
+# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
+CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-multivalue']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
