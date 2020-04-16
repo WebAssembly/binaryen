@@ -40,7 +40,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
-INPUT_SIZE_MEAN = 40 * 1024
+INPUT_SIZE_MEAN = 2 * 1024
 INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
@@ -308,26 +308,26 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, deterministic_nans, requires_legalization, can_run):
+    def __init__(self, name, run, can_run, can_compare_to_self, can_compare_to_others):
         self.name = name
         self.run = run
-        self.deterministic_nans = deterministic_nans
-        self.requires_legalization = requires_legalization
         self.can_run = can_run
+        self.can_compare_to_self = can_compare_to_self
+        self.can_compare_to_others = can_compare_to_others
 
 
 class CompareVMs(TestCaseHandler):
     def __init__(self):
         super(CompareVMs, self).__init__()
 
-        def run_binaryen_interpreter(wasm):
+        def byn_run(wasm):
             return run_bynterp(wasm, ['--fuzz-exec-before'])
 
-        def run_v8(wasm):
+        def v8_run(wasm):
             run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
             return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
-        def run_wasm2c(wasm):
+        def wasm2c_run(wasm):
             # this expects wasm2c to be in the path
             run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
             run(['wasm2c', wasm, '-o', 'wasm.c'])
@@ -340,13 +340,26 @@ class CompareVMs(TestCaseHandler):
         def yes():
             return True
 
-        def can_run_wasm2c():
+        def not_if_nans_or_illegal():
+            # with nans, VM differences can confuse us
+            # if not legalized, the JS will fail immediately
+            return not NANs and LEGALIZE
+
+        def not_if_nans():
+            # if not legalized, the JS will fail immediately
+            # with nans, VM differences can confuse us
+            return not NANS
+
+        def not_if_oob():
+            return not OOB
+
+        def if_mvp():
             return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
 
         self.vms = [
-            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False, can_run=yes),
-            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True,  can_run=yes),
-            VM('wasm2c',               run_wasm2c,               deterministic_nans=False, requires_legalization=False, can_run=can_run_wasm2c),
+            VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,         can_compare_to_others=yes),
+            VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=not_if_nans, can_compare_to_others=not_if_nans_or_illegal),
+            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=yes,         can_compare_to_others=not_if_oob),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -365,27 +378,24 @@ class CompareVMs(TestCaseHandler):
 
         # compare between the vms on this specific input
 
-        # NaNs are a source of nondeterminism between VMs; don't compare them.
-        if not NANS:
-            first = None
-            for i in range(len(results)):
-                # No legalization for JS means we can't compare JS to others, as any
-                # illegal export will fail immediately.
-                vm = self.vms[i]
-                if (LEGALIZE or not vm.requires_legalization) and results[i] is not None:
-                    if first is None:
-                        first = i
-                    else:
-                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + vm.name)
+        first = None
+        for i in range(len(results)):
+            # No legalization for JS means we can't compare JS to others, as any
+            # illegal export will fail immediately.
+            vm = self.vms[i]
+            if results[i] is not None:
+                if first is None:
+                    first = i
+                else:
+                    compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + vm.name)
 
         return results
 
     def compare_before_and_after(self, before, after):
         # compare each VM to itself on the before and after inputs
         for i in range(len(before)):
-            vm = self.vms[i]
-            if vm.deterministic_nans and before[i] is not None:
-                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
+            if before[i] is not None:
+                compare(before[i], after[i], 'CompareVMs between before and after: ' + self.vms[i].name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling']])
