@@ -323,9 +323,6 @@ class CompareVMs(TestCaseHandler):
         def if_no_nans():
             return not NANS
 
-        def if_no_oob_and_no_nans():
-            return not OOB and not NANS
-
         def if_mvp_and_not_legal():
             return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']]) and not LEGALIZE
 
@@ -356,10 +353,12 @@ class CompareVMs(TestCaseHandler):
                 return run_vm(['./a.out'])
 
             def can_compare_to_self(self):
-                return if_no_nans()
+                # NaNs can change if optimizing
+                return not NANS
 
             def can_compare_to_others(self):
-                return if_no_oob_and_no_nans()
+                # C won't trap on OOB, and NaNs can differ from wasm VMs
+                return not OOB and not NANS
 
         self.vms = [
             VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
@@ -794,6 +793,8 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
+            # don't autoreduce if we are given a specific case to test, as this
+            # is a reproduction of the test case, not the first finding of it
             total_wasm_size += test_one(raw_input_data, opts, allow_autoreduce=given_seed is None)
         except KeyboardInterrupt:
             print('(stopping by user request)')
