@@ -27,8 +27,8 @@ static std::string generateWasm2CWrapper(Module& wasm) {
 #include <stdint.h>
 #include <stdio.h>
 
-#include "wasm.h"
 #include "wasm-rt-impl.h"
+#include "wasm.h"
 
 // Logging imports
 
@@ -87,12 +87,14 @@ int main(int argc, char** argv) {
 
     ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
 
-    ret += std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
+    ret +=
+      std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
     ret += "  if (setjmp(g_jmp_buf) == 0) {\n";
     auto result = func->sig.results;
     ret += "    ";
     if (result != Type::none) {
-      ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str + " => ";
+      ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str +
+             " => ";
       switch (result.getSingle()) {
         case Type::i32:
           ret += "%d\\n\", ";
@@ -116,11 +118,16 @@ int main(int argc, char** argv) {
 
     auto wasm2cSignature = [](Type type) {
       switch (type.getSingle()) {
-        case Type::none: return 'v';
-        case Type::i32: return 'i';
-        case Type::i64: return 'j';
-        case Type::f32: return 'f';
-        case Type::f64: return 'd';
+        case Type::none:
+          return 'v';
+        case Type::i32:
+          return 'i';
+        case Type::i64:
+          return 'j';
+        case Type::f32:
+          return 'f';
+        case Type::f64:
+          return 'd';
         default:
           Fatal() << "unhandled wasm2c wrapper signature type: " << type;
       }

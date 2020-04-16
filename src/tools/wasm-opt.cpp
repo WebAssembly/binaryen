@@ -31,13 +31,13 @@
 #include "support/command-line.h"
 #include "support/debug.h"
 #include "support/file.h"
-#include "wasm2c-wrapper.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "wasm2c-wrapper.h"
 
 #define DEBUG_TYPE "opt"
 
