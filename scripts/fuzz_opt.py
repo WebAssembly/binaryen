@@ -124,7 +124,7 @@ def randomize_fuzz_settings():
     else:
         OOB = False
         FUZZ_OPTS += ['--no-fuzz-oob']
-    if random.random() < 0.5:
+    if random.random() < 0: #.5:
         LEGALIZE = True
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
@@ -331,7 +331,7 @@ class CompareVMs(TestCaseHandler):
             # this expects wasm2c to be in the path
             run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
             run(['wasm2c', wasm, '-o', 'wasm.c'])
-            compile_cmd = ['cc', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm']
+            compile_cmd = ['clang', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm', '-Werror']
             run(compile_cmd)
             return run_vm(['./a.out'])
 
@@ -347,15 +347,15 @@ class CompareVMs(TestCaseHandler):
         def if_no_oob_and_no_nans():
             return not OOB and not NANS
 
-        def if_mvp():
-            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
+        def if_mvp_and_not_legal():
+            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']]) and not LEGALIZE
 
         self.vms = [
             VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            VM('wasm2c',               wasm2c_run, can_run=if_mvp, can_compare_to_self=if_no_nans, can_compare_to_others=if_no_oob_and_no_nans),
+            VM('wasm2c',               wasm2c_run, can_run=if_mvp_and_not_legal, can_compare_to_self=if_no_nans, can_compare_to_others=if_no_oob_and_no_nans),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):

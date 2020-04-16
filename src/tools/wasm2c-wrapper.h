@@ -38,7 +38,7 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi(u32 x) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi)(u32) = _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj(u64 x) {
-  printf("[LoggingExternalInterface logging %lld]\n", x);
+  printf("[LoggingExternalInterface logging %ld]\n", (long)x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj)(u64) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj;
 
@@ -90,25 +90,25 @@ int main(int argc, char** argv) {
     ret += std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
     ret += "  if (setjmp(g_jmp_buf) == 0) {\n";
     auto result = func->sig.results;
+    ret += "    ";
     if (result != Type::none) {
-      ret += std::string("    printf(\"[fuzz-exec] note result: ") + exp->name.str + " => ";
+      ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str + " => ";
       switch (result.getSingle()) {
         case Type::i32:
-          ret += "%d";
+          ret += "%d\\n\", ";
           break;
         case Type::i64:
-          ret += "%lld";
+          ret += "%ld\\n\", (long)";
           break;
         case Type::f32:
-          ret += "%.17e";
+          ret += "%.17e\\n\", ";
           break;
         case Type::f64:
-          ret += "%.17le";
+          ret += "%.17le\\n\", ";
           break;
         default:
           Fatal() << "unhandled wasm2c wrapper result type: " << result;
       }
-      ret += std::string("\\n\", ");
     }
     ret += std::string("(*Z_") + exp->name.str + "Z_";
     // wasm2c emits names with a special signature
