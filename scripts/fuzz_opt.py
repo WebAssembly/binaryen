@@ -323,9 +323,6 @@ class CompareVMs(TestCaseHandler):
         def if_no_nans():
             return not NANS
 
-        def if_mvp_and_not_legal():
-            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']]) and not LEGALIZE
-
         class Wasm2C(VM):
             name = 'wasm2c'
 
@@ -339,13 +336,18 @@ class CompareVMs(TestCaseHandler):
                     self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
                 except Exception as e:
                     print('warning: no wabt found:', e)
-                    wabt_bin = None
+                    self.wasm2c_dir = None
 
             def can_run(self):
-                return self.wasm2c_dir is not None and if_mvp_and_not_legal()
+                if self.wasm2c_dir is None:
+                    return False
+                # if we legalize for JS, the ABI is not what C wants
+                if LEGALIZE:
+                    return False
+                # wasm2c doesn't support most features
+                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
 
             def run(self, wasm):
-                # this expects wasm2c to be in the path
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
                 compile_cmd = ['clang', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm', '-Werror']
@@ -353,7 +355,8 @@ class CompareVMs(TestCaseHandler):
                 return run_vm(['./a.out'])
 
             def can_compare_to_self(self):
-                # NaNs can change if optimizing
+                # The binaryen optimizer changes NaNs in the ways that wasm
+                # expects, but that's not quite what C has
                 return not NANS
 
             def can_compare_to_others(self):
