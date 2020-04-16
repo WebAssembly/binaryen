@@ -96,7 +96,7 @@ def randomize_feature_opts():
     # half the time apply all the possible opts. this lets all test runners work at max
     # capacity at least half the time, as otherwise if they need almost all the opts, the
     # chance of getting them is exponentially small.
-    if random.random() < 1: # 0.5:
+    if random.random() < 0.5:
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
     else:
         for possible in POSSIBLE_FEATURE_OPTS:
@@ -124,7 +124,7 @@ def randomize_fuzz_settings():
     else:
         OOB = False
         FUZZ_OPTS += ['--no-fuzz-oob']
-    if random.random() < 0: #.5:
+    if random.random() < 0.5:
         LEGALIZE = True
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
@@ -260,19 +260,6 @@ def run_d8(wasm):
     return run_vm([shared.V8] + shared.V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
-# wabt integration
-
-try:
-    wabt_bin = run(['whereis', 'wasm2c'])
-    wabt_bin = wabt_bin.split()[-1]  # whereis returns    wasm2c: PATH
-except Exception:
-    wabt_bin = None
-
-def get_wasm2c_dir():
-    wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
-    return os.path.join(wabt_root, 'wasm2c')
-
-
 # There are two types of test case handlers:
 #    * get_commands() users: these return a list of commands to run (for example, "run this wasm-opt
 #        command, then that one"). The calling code gets and runs those commands on the test wasm
@@ -327,14 +314,6 @@ class CompareVMs(TestCaseHandler):
             run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
             return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
-        def wasm2c_run(wasm):
-            # this expects wasm2c to be in the path
-            run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
-            run(['wasm2c', wasm, '-o', 'wasm.c'])
-            compile_cmd = ['clang', 'main.c', 'wasm.c', os.path.join(get_wasm2c_dir(), 'wasm-rt-impl.c'), '-I' + get_wasm2c_dir(), '-lm', '-Werror']
-            run(compile_cmd)
-            return run_vm(['./a.out'])
-
         def yes():
             return True
 
@@ -350,13 +329,46 @@ class CompareVMs(TestCaseHandler):
         def if_mvp_and_not_legal():
             return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']]) and not LEGALIZE
 
+        class Wasm2C(VM):
+            name = 'wasm2c'
+
+            def __init__(self):
+                # look for wabt in the path. if it's not here, don't run wasm2c
+                try:
+                    wabt_bin = run(['whereis', 'wasm2c'])
+                    # whereis returns    wasm2c: PATH
+                    wabt_bin = wabt_bin.split()[-1]
+                    wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
+                    self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+                except Exception as e:
+                    print('warning: no wabt found:', e)
+                    wabt_bin = None
+
+            def can_run(self):
+                return self.wasm2c_dir is not None
+
+            def run(self, wasm):
+                # this expects wasm2c to be in the path
+                run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
+                run(['wasm2c', wasm, '-o', 'wasm.c'])
+                compile_cmd = ['clang', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm', '-Werror']
+                run(compile_cmd)
+                return run_vm(['./a.out'])
+
+            def can_compare_to_self(self):
+                return if_no_nans()
+
+            def can_compare_to_others(self):
+                return if_no_oob_and_no_nans()
+
         self.vms = [
             VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            VM('wasm2c',               wasm2c_run, can_run=if_mvp_and_not_legal, can_compare_to_self=if_no_nans, can_compare_to_others=if_no_oob_and_no_nans),
+            Wasm2C()
         ]
+
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
@@ -524,11 +536,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
+    FuzzExec(),
     CompareVMs(),
-    #CheckDeterminism(),
-    #Wasm2JS(),
-    #Asyncify(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    Asyncify(),
 ]
 
 
@@ -745,7 +757,6 @@ def randomize_opt_flags():
 # contains the list of all possible feature flags we can disable (after
 # we enable all before that in the constant options)
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wat'), '-all']).replace('--enable', '--disable').strip().split('\n')
-POSSIBLE_FEATURE_OPTS.remove('--disable-multivalue')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
