@@ -7,8 +7,8 @@ binaryen.setAPITracing(true);
 
 function assertDeepEqual(x, y) {
   if (typeof x === "object") {
-    for (var i in x) assertDeepEqual(x[i], y[i]);
-    for (i in y) assertDeepEqual(x[i], y[i]);
+    for (let i in x) assertDeepEqual(x[i], y[i]);
+    for (let i in y) assertDeepEqual(x[i], y[i]);
   } else {
     assert(x === y);
   }

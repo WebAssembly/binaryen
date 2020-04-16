@@ -209,20 +209,20 @@ size_t noteExpression(BinaryenExpressionRef expression) {
   return id;
 }
 
-// We would normally use the size of `expressionRunners` as the next index, but
-// since we are going to delete runners the same address can become reused,
-// which would result in unpredictable sizes (indexes) due to undefined
-// behavior. Use a sequential id instead.
-static size_t nextExpressionRunnerId = 0;
-
 // Even though unlikely, it is possible that we are trying to use an id that is
 // still in use after wrapping around, which we must prevent.
-std::unordered_set<size_t> usedExpressionRunnerIds;
+static std::unordered_set<size_t> usedExpressionRunnerIds;
 
 size_t noteExpressionRunner(ExpressionRunnerRef runner) {
+  // We would normally use the size of `expressionRunners` as the next index,
+  // but since we are going to delete runners the same address can become
+  // reused, which would result in unpredictable sizes (indexes) due to
+  // undefined behavior. Use a sequential id instead.
+  static size_t nextId = 0;
+
   size_t id;
   do {
-    id = nextExpressionRunnerId++;
+    id = nextId++;
   } while (usedExpressionRunnerIds.find(id) != usedExpressionRunnerIds.end());
   expressionRunners[runner] = id;
   usedExpressionRunnerIds.insert(id);
