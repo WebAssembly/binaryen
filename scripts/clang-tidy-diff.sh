@@ -17,7 +17,7 @@ fi
 
 CLANG_TIDY=$(which clang-tidy)
 if [ ! -e "$CLANG_TIDY" ]; then
-  echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY)"
+  echo "Failed to find clang-tidy ($CLANG_TIDY)"
   exit 1
 fi
 
