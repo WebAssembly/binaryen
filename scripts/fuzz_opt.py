@@ -327,7 +327,7 @@ class CompareVMs(TestCaseHandler):
             return not OOB and not NANS
 
         def if_mvp_and_not_legal():
-            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']]) and not LEGALIZE
+            return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']]) and not LEGALIZE
 
         class Wasm2C(VM):
             name = 'wasm2c'
@@ -345,7 +345,7 @@ class CompareVMs(TestCaseHandler):
                     wabt_bin = None
 
             def can_run(self):
-                return self.wasm2c_dir is not None
+                return self.wasm2c_dir is not None and if_mvp_and_not_legal()
 
             def run(self, wasm):
                 # this expects wasm2c to be in the path
@@ -544,7 +544,7 @@ testcase_handlers = [
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts):
+def test_one(random_input, opts, allow_autoreduce):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
@@ -592,40 +592,41 @@ def test_one(random_input, opts):
                 try:
                     write_commands_and_test(opts)
                 except subprocess.CalledProcessError:
-                    print('')
-                    print('====================')
-                    print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
-                    print('====================')
-                    print('')
-                    # first, reduce the fuzz opts: keep removing until we can't
-                    while 1:
-                        reduced = False
-                        for i in range(len(opts)):
-                            # some opts can't be removed, like --flatten --dfo requires flatten
-                            if opts[i] == '--flatten':
-                                if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
-                                    continue
-                            shorter = opts[:i] + opts[i + 1:]
-                            try:
-                                write_commands_and_test(shorter)
-                            except subprocess.CalledProcessError:
-                                # great, the shorter one is good as well
-                                opts = shorter
-                                print('reduced opts to ' + ' '.join(opts))
-                                reduced = True
+                    if allow_autoreduce:
+                        print('')
+                        print('====================')
+                        print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
+                        print('====================')
+                        print('')
+                        # first, reduce the fuzz opts: keep removing until we can't
+                        while 1:
+                            reduced = False
+                            for i in range(len(opts)):
+                                # some opts can't be removed, like --flatten --dfo requires flatten
+                                if opts[i] == '--flatten':
+                                    if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
+                                        continue
+                                shorter = opts[:i] + opts[i + 1:]
+                                try:
+                                    write_commands_and_test(shorter)
+                                except subprocess.CalledProcessError:
+                                    # great, the shorter one is good as well
+                                    opts = shorter
+                                    print('reduced opts to ' + ' '.join(opts))
+                                    reduced = True
+                                    break
+                            if not reduced:
                                 break
-                        if not reduced:
-                            break
-                    # second, reduce the wasm
-                    # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
-                    shutil.copyfile('a.wasm', 'input.wasm')
-                    # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
-                    commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
-                    write_commands(commands, 'tt.sh')
-                    # reduce the input to something smaller with the same behavior on the script
-                    subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
-                    print('Finished reduction. See "tt.sh" and "reduced.wasm".')
-                    raise Exception('halting after autoreduction')
+                        # second, reduce the wasm
+                        # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
+                        shutil.copyfile('a.wasm', 'input.wasm')
+                        # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
+                        commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
+                        write_commands(commands, 'tt.sh')
+                        # reduce the input to something smaller with the same behavior on the script
+                        subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
+                        print('Finished reduction. See "tt.sh" and "reduced.wasm".')
+                        raise Exception('halting after autoreduction')
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
@@ -793,7 +794,7 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            total_wasm_size += test_one(raw_input_data, opts)
+            total_wasm_size += test_one(raw_input_data, opts, allow_autoreduce=given_seed is None)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
