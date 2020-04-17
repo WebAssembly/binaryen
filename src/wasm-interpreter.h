@@ -1430,25 +1430,42 @@ public:
     NOTE_NAME(curr->func);
     return Literal::makeFuncref(curr->func);
   }
-  // TODO Implement EH instructions
-  Flow visitTry(Try*) {
+  Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
-    return Flow(NONCONSTANT_FLOW);
+    // FIXME This currently only executes 'try' part. Correctly implement this.
+    return visit(curr->body);
   }
-  Flow visitThrow(Throw*) {
+  Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
-    return Flow(NONCONSTANT_FLOW);
+    LiteralList arguments;
+    Flow flow = generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    NOTE_EVAL1(curr->event);
+    // FIXME This currently traps. Correctly implement throw.
+    trap("throw");
+    WASM_UNREACHABLE("throw");
   }
-  Flow visitRethrow(Rethrow*) {
+  Flow visitRethrow(Rethrow* curr) {
     NOTE_ENTER("Rethrow");
-    return Flow(NONCONSTANT_FLOW);
+    Flow flow = visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    if (flow.getType() == Type::nullref) {
+      trap("rethrow: argument is null");
+    }
+    // FIXME This currently traps. Correctly implement rethrow.
+    trap("rethrow");
+    WASM_UNREACHABLE("rethrow");
   }
-  Flow visitBrOnExn(BrOnExn*) {
+  Flow visitBrOnExn(BrOnExn* curr) {
     NOTE_ENTER("BrOnExn");
     return Flow(NONCONSTANT_FLOW);
   }
 
-  virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
+  virtual void trap(const char* why) { WASM_UNREACHABLE(why); }
 };
 
 // Execute an constant expression in a global init or memory offset.
@@ -2323,6 +2340,25 @@ private:
           val);
       }
       return {};
+    }
+    Flow visitBrOnExn(BrOnExn* curr) {
+      NOTE_ENTER("BrOnExn");
+      Flow flow = this->visit(curr->exnref);
+      if (flow.breaking()) {
+        return flow;
+      }
+      if (flow.getType() == Type::nullref) {
+        trap("br_on_exn: argument is null");
+      }
+      // Currently we don't have a way to tell if the given expression matches
+      // the given event tag. Assume any exnref matches for now and always
+      // extracts a zero or null value of the given event type.
+      // FIXME Correctly implement event matching and extraction.
+      Type eventType = instance.wasm.getEvent(curr->event)->sig.params;
+      flow.values =
+        eventType == Type::none ? Literals() : Literal::makeZero(eventType);
+      flow.breakTo = curr->name;
+      return flow;
     }
     Flow visitPush(Push* curr) {
       NOTE_ENTER("Push");
