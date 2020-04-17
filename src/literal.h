@@ -30,6 +30,7 @@
 namespace wasm {
 
 class Literals;
+struct ExceptionPackage;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -39,6 +40,7 @@ class Literal {
     int64_t i64;
     uint8_t v128[16];
     Name func; // function name for funcref
+    std::unique_ptr<ExceptionPackage> exn;
   };
 
 public:
@@ -65,6 +67,15 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
+  explicit Literal(std::unique_ptr<ExceptionPackage> exn)
+    : exn(std::move(exn)), type(Type::exnref) {}
+  Literal(const Literal& other);
+  Literal& operator=(const Literal& other);
+  ~Literal() {
+    if (type == Type::exnref) {
+      exn.~unique_ptr();
+    }
+  }
 
   bool isConcrete() const { return type != Type::none; }
   bool isNone() const { return type == Type::none; }
@@ -104,6 +115,9 @@ public:
 
   static Literal makeNullref() { return Literal(Type(Type::nullref)); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
+  static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
+    return Literal(std::move(exn));
+  }
 
   Literal castToF32();
   Literal castToF64();
@@ -128,6 +142,7 @@ public:
   }
   std::array<uint8_t, 16> getv128() const;
   Name getFunc() const { return func; }
+  const ExceptionPackage& getExceptionPackage() const { return *exn.get(); }
 
   // careful!
   int32_t* geti32Ptr() {
@@ -472,8 +487,16 @@ public:
   bool isConcrete() { return size() != 0; }
 };
 
+// A struct for a thrown exception, which includes a tag (event) and thrown
+// values
+struct ExceptionPackage {
+  Name event;
+  Literals values;
+};
+
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
+std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 
 } // namespace wasm
 

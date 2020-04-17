@@ -33,6 +33,67 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(const Literal& other) {
+  type = other.type;
+  switch (type.getSingle()) {
+    case Type::i32:
+    case Type::f32:
+      i32 = other.i32;
+      return;
+    case Type::i64:
+    case Type::f64:
+      i64 = other.i64;
+      return;
+    case Type::v128:
+      memcpy(&v128, other.v128, 16);
+      return;
+    case Type::funcref:
+      func = other.func;
+      return;
+    case Type::exnref:
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+      return;
+    case Type::none:
+    case Type::nullref:
+      return;
+    case Type::anyref:
+    case Type::unreachable:
+      WASM_UNREACHABLE("unexpected type");
+  }
+  WASM_UNREACHABLE("unexpected type");
+}
+
+Literal& Literal::operator=(const Literal& other) {
+  type = other.type;
+  assert(!type.isMulti());
+  switch (type.getSingle()) {
+    case Type::i32:
+    case Type::f32:
+      i32 = other.i32;
+      break;
+    case Type::i64:
+    case Type::f64:
+      i64 = other.i64;
+      break;
+    case Type::v128:
+      memcpy(&v128, other.v128, 16);
+      break;
+    case Type::funcref:
+      func = other.func;
+      break;
+    case Type::exnref:
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+      break;
+    case Type::none:
+    case Type::nullref:
+      break;
+    case Type::anyref:
+    case Type::unreachable:
+      WASM_UNREACHABLE("unexpected type");
+  }
+  return *this;
+}
+
 template<typename LaneT, int Lanes>
 static void extractBytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
   std::array<uint8_t, 16> bytes;
@@ -310,8 +371,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     case Type::nullref:
       o << "nullref";
       break;
-    case Type::anyref:
     case Type::exnref:
+      o << "exnref(" << literal.getExceptionPackage() << ")";
+      break;
+    case Type::anyref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -332,6 +395,10 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
     }
     return o << ')';
   }
+}
+
+std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn) {
+  return o << exn.event << " " << exn.values;
 }
 
 Literal Literal::countLeadingZeroes() const {

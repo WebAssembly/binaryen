@@ -40,6 +40,11 @@
 
 namespace wasm {
 
+struct WasmException {
+  WasmException(Literal exn) : exn(exn) {}
+  Literal exn;
+};
+
 using namespace cashew;
 
 // Utilities
@@ -81,7 +86,7 @@ public:
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& o, Flow& flow) {
+  friend std::ostream& operator<<(std::ostream& o, const Flow& flow) {
     o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : {";
     for (size_t i = 0; i < flow.values.size(); ++i) {
       if (i > 0) {
@@ -1215,11 +1220,7 @@ public:
     NOTE_NAME(curr->func);
     return Literal::makeFuncref(curr->func);
   }
-  Flow visitTry(Try* curr) {
-    NOTE_ENTER("Try");
-    // FIXME This currently only executes 'try' part. Correctly implement this.
-    return visit(curr->body);
-  }
+  Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
     LiteralList arguments;
@@ -1228,8 +1229,12 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->event);
-    // FIXME This currently traps. Correctly implement throw.
-    trap("throw");
+    auto exn = std::make_unique<ExceptionPackage>();
+    exn->event = curr->event;
+    for (auto item : arguments) {
+      exn->values.push_back(item);
+    }
+    throwException(Literal(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1241,13 +1246,13 @@ public:
     if (flow.getType() == Type::nullref) {
       trap("rethrow: argument is null");
     }
-    // FIXME This currently traps. Correctly implement rethrow.
-    trap("rethrow");
+    throwException(flow.getSingleValue());
     WASM_UNREACHABLE("rethrow");
   }
   Flow visitBrOnExn(BrOnExn* curr) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void trap(const char* why) { WASM_UNREACHABLE(why); }
+  virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
+  virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
 };
 
 // Execute an constant expression in a global init or memory offset.
@@ -1293,6 +1298,7 @@ public:
                                SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
+    virtual void throwException(Literal exnref) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -2123,6 +2129,15 @@ private:
       }
       return {};
     }
+    Flow visitTry(Try* curr) {
+      NOTE_ENTER("Try");
+      try {
+        return this->visit(curr->body);
+      } catch (const WasmException& e) {
+        instance.multiValues.push_back(e.exn);
+        return this->visit(curr->catchBody);
+      }
+    }
     Flow visitBrOnExn(BrOnExn* curr) {
       NOTE_ENTER("BrOnExn");
       Flow flow = this->visit(curr->exnref);
@@ -2132,13 +2147,12 @@ private:
       if (flow.getType() == Type::nullref) {
         trap("br_on_exn: argument is null");
       }
-      // Currently we don't have a way to tell if the given expression matches
-      // the given event tag. Assume any exnref matches for now and always
-      // extracts a zero or null value of the given event type.
-      // FIXME Correctly implement event matching and extraction.
-      Type eventType = instance.wasm.getEvent(curr->event)->sig.params;
-      flow.values =
-        eventType == Type::none ? Literals() : Literal::makeZero(eventType);
+      const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
+      if (curr->event != ex.event) { // Not taken
+        return flow;
+      }
+      // Taken
+      flow.values = ex.values;
       flow.breakTo = curr->name;
       return flow;
     }
@@ -2161,6 +2175,10 @@ private:
 
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
+    }
+
+    void throwException(Literal exn) override {
+      instance.externalInterface->throwException(exn);
     }
 
     // Given a value, wrap it to a smaller given number of bytes.
