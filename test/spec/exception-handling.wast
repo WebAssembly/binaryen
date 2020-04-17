@@ -2,28 +2,38 @@
   (event $e0 (attr 0) (param i32))
   (event $e1 (attr 0) (param i32 f32))
 
-  (func $exnref_test (param $0 exnref) (result exnref)
-    (local.get $0)
+  (func (export "throw_test")
+    (throw $e0 (i32.const 0))
   )
 
-  (func $eh_test (local $exn exnref)
-    (try
-      (throw $e0 (i32.const 0))
+  (func (export "rethrow_test")
+    (rethrow (ref.null))
+  )
+
+  (func (export "try_test") (result i32)
+    (try (result i32)
+      (i32.const 3)
       (catch
-        ;; Multi-value is not available yet, so block can't take a value from
-        ;; stack. So this uses locals for now.
-        (local.set $exn (exnref.pop))
-        (drop
-          (block $l0 (result i32)
-            (rethrow
-              (br_on_exn $l0 $e0 (local.get $exn))
-            )
-          )
-        )
+        (drop (exnref.pop))
+        (i32.const 3)
       )
     )
   )
+
+  (func (export "br_on_exn_test") (result i32)
+    (block $l0 (result i32)
+      (drop
+        (br_on_exn $l0 $e0 (ref.null))
+      )
+      (i32.const 0)
+    )
+  )
 )
+
+(assert_trap (invoke "throw_test"))
+(assert_trap (invoke "rethrow_test"))
+(assert_return (invoke "try_test") (i32.const 3))
+(assert_trap (invoke "br_on_exn_test"))
 
 (assert_invalid
   (module
