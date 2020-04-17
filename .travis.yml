@@ -180,22 +180,5 @@ jobs:
           fi
       <<: *DEPLOY_TO_GITHUB
 
-    # Build binaries for other architectures using QEMU user-mode emulation.
-    # Note: We don't run tests for these architectures, because some fail under
-    #       QEMU/binfmt and it takes too long time (hits time limit on Travis).
-    # Note: We had to remove ppc64le, because it takes more than 50 minutes
-    #       (Travis limit) to build. :(
-    - <<: *archive-alpine
-      name: x86-linux
-      env: ARCH=x86-linux
-
-    - <<: *archive-alpine
-      name: aarch64-linux
-      env: ARCH=aarch64-linux
-
-    - <<: *archive-alpine
-      name: armhf-linux
-      env: ARCH=armhf-linux
-
 notifications:
   email: false
