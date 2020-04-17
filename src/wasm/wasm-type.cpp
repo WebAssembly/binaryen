@@ -199,14 +199,16 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [](Type t) {
+  auto getSingleFeatures = [](Type t) -> FeatureSet {
     switch (t.getSingle()) {
       case Type::v128:
         return FeatureSet::SIMD;
+      case Type::funcref:
       case Type::anyref:
+      case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
-        return FeatureSet::ExceptionHandling;
+        return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       default:
         return FeatureSet::MVP;
     }

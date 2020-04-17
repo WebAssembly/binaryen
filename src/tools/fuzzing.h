@@ -327,8 +327,10 @@ private:
     options.push_back(type); // includes itself
     switch (type.getSingle()) {
       case Type::anyref:
+        if (wasm.features.hasExceptionHandling()) {
+          options.push_back(Type::exnref);
+        }
         options.push_back(Type::funcref);
-        options.push_back(Type::exnref);
         // falls through
       case Type::funcref:
       case Type::exnref:
