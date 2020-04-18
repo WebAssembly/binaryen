@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 91)
+project(binaryen LANGUAGES C CXX VERSION 92)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
