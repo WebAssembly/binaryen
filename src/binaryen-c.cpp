@@ -2179,8 +2179,8 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
 // CallIndirect
 uint8_t BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenCallIndirectIsReturn(expressions[" << expressions[expr]
-              << "]);\n";
+    std::cout << "  BinaryenCallIndirectIsReturn(expressions["
+              << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
