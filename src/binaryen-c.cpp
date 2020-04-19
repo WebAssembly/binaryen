@@ -2134,6 +2134,16 @@ BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   return static_cast<Switch*>(expression)->value;
 }
 // Call
+uint8_t BinaryenCallIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIsReturn(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return static_cast<Call*>(expression)->isReturn;
+}
 const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallGetTarget(expressions[" << expressions[expr]
@@ -2167,6 +2177,16 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
   return static_cast<Call*>(expression)->operands[index];
 }
 // CallIndirect
+uint8_t BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectIsReturn(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->isReturn;
+}
 BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
