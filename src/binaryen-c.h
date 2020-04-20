@@ -1643,6 +1643,67 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
   RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper);
 
 //
+// ========= ExpressionRunner ==========
+//
+
+#ifdef __cplusplus
+namespace wasm {
+class CExpressionRunner;
+} // namespace wasm
+typedef class wasm::CExpressionRunner* ExpressionRunnerRef;
+#else
+typedef struct CExpressionRunner* ExpressionRunnerRef;
+#endif
+
+typedef uint32_t ExpressionRunnerFlags;
+
+// By default, just evaluate the expression, i.e. all we want to know is whether
+// it computes down to a concrete value, where it is not necessary to preserve
+// side effects like those of a `local.tee`.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsDefault();
+
+// Be very careful to preserve any side effects. For example, if we are
+// intending to replace the expression with a constant afterwards, even if we
+// can technically evaluate down to a constant, we still cannot replace the
+// expression if it also sets a local, which must be preserved in this scenario
+// so subsequent code keeps functioning.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects();
+
+// Traverse through function calls, attempting to compute their concrete value.
+// Must not be used in function-parallel scenarios, where the called function
+// might be concurrently modified, leading to undefined behavior. Traversing
+// another function reuses all of this runner's flags.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
+
+// Creates an ExpressionRunner instance
+BINARYEN_API ExpressionRunnerRef
+ExpressionRunnerCreate(BinaryenModuleRef module,
+                       ExpressionRunnerFlags flags,
+                       BinaryenIndex maxDepth,
+                       BinaryenIndex maxLoopIterations);
+
+// Sets a known local value to use. Order matters if expressions have side
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
+BINARYEN_API int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                               BinaryenIndex index,
+                                               BinaryenExpressionRef value);
+
+// Sets a known global value to use. Order matters if expressions have side
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
+BINARYEN_API int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                                const char* name,
+                                                BinaryenExpressionRef value);
+
+// Runs the expression and returns the constant value expression it evaluates
+// to, if any. Otherwise returns `NULL`. Also disposes the runner.
+BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
+  ExpressionRunnerRef runner, BinaryenExpressionRef expr);
+
+//
 // ========= Other APIs =========
 //
 
