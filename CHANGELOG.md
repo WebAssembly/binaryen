@@ -17,13 +17,16 @@ Current Trunk
 
 v92
 ---
- - The `multivalue` feature has been added. It allows functions and control flow
-   structures to return tuples and for locals and globals to have tuple types.
-   Tuples are created with the new `tuple.make` pseudoinstruction and their
-   elements are retrieved with the new `tuple.extract` pseudoinstruction.
- - The internal type interner has been rewritten to avoid taking locks in far
-   more situations. Depending on the workload, this may result in large speedups
-   and increased parallelism.
+
+- The `multivalue` feature has been added. It allows functions and control flow
+  structures to return tuples and for locals and globals to have tuple types.
+  Tuples are created with the new `tuple.make` pseudoinstruction and their
+  elements are retrieved with the new `tuple.extract` pseudoinstruction.
+- The internal type interner has been rewritten to avoid taking locks in far
+  more situations. Depending on the workload, this may result in large speedups
+  and increased parallelism.
+- Represent the `dylink` section in Binaryen IR, so we can read, write, and
+  update it.
 
 v91
 ---
