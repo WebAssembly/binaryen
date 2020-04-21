@@ -18,7 +18,7 @@
 // Shared execution result checking code
 //
 
-#include "shell-interface.h"
+#include "../shell-interface.h"
 #include "wasm.h"
 
 namespace wasm {
