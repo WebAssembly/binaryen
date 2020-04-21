@@ -189,7 +189,7 @@ int main(int argc, const char* argv[]) {
          })
     .add("--emit-wasm2c-wrapper",
          "-esw",
-         "Emit a C  wrapper file that can run the wasm after it is compiled "
+         "Emit a C wrapper file that can run the wasm after it is compiled "
          "with wasm2c, useful for fuzzing",
          Options::Arguments::One,
          [&](Options* o, const std::string& arguments) {

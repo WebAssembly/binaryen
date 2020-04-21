@@ -326,9 +326,7 @@ class CompareVMs(TestCaseHandler):
             def __init__(self):
                 # look for wabt in the path. if it's not here, don't run wasm2c
                 try:
-                    wabt_bin = run(['whereis', 'wasm2c'])
-                    # whereis returns    wasm2c: PATH
-                    wabt_bin = wabt_bin.split()[-1]
+                    wabt_bin = shared.which('wasm2c')
                     wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
                     self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
                 except Exception as e:
