@@ -1,0 +1,75 @@
+name: Build Release
+
+# Trigger whenever a release is created
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: install ninja (linux)
+      run: sudo apt-get install ninja-build
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: install ninja (osx)
+      run: brew install ninja
+      if: matrix.os == 'macos-latest'
+
+    - name: install ninja (win)
+      run: choco install ninja
+      if: matrix.os == 'windows-latest'
+
+    - name: mkdir
+      run: mkdir -p out
+
+    - name: cmake (linux)
+      run: cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: cmake (osx)
+      run: cmake -S . -B out -G Ninja
+      if: matrix.os == 'macos-latest'
+
+    - name: cmake (win)
+      # -G "Visual Studio 15 2017"
+      run: cmake -S . -B out
+      if: matrix.os == 'windows-latest'
+
+    - name: build
+      run: cmake --build out
+
+    - name: archive
+      id: archive
+      run: |
+        export VERSION=${{ github.event.release.tag_name }}
+        export PKGNAME="binaryen-$VERSION-x86_64-${{ matrix.os }}"
+        export TARBALL=$PKGNAME.tar.gz
+        mv out/bin binaryen-$VERSION
+        tar -czf $TARBALL binaryen-$VERSION
+        shasum -a 256 $TARBALL > $PKGNAME.tar.gz.sha256
+        echo "::set-output name=asset_name::$TARBALL"
+
+    - name: upload release asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ steps.archive.outputs.asset_name }}
+        asset_name: ${{ steps.archive.outputs.asset_name }}
+        asset_content_type: application/gzip
