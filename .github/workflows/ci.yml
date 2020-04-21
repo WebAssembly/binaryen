@@ -161,6 +161,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       COMPILER_FLAGS: "-fsanitize=undefined -fno-sanitize-recover=all"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v1
       with:
