@@ -19,6 +19,10 @@
 // wasm2c, useful for fuzzing.
 //
 
+#include <string>
+
+#include "wasm.h"
+
 namespace wasm {
 
 static std::string generateWasm2CWrapper(Module& wasm) {
