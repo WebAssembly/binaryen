@@ -34,7 +34,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # feature options that are always passed to the tools.
 # * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
-CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-multivalue']
+CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024

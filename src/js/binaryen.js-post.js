@@ -485,6 +485,13 @@ function initializeConstants() {
   ].forEach(function(name) {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
+
+  // ExpressionRunner flags
+  Module['ExpressionRunner']['Flags'] = {
+    'Default': Module['_ExpressionRunnerFlagsDefault'](),
+    'PreserveSideeffects': Module['_ExpressionRunnerFlagsPreserveSideeffects'](),
+    'TraverseCalls': Module['_ExpressionRunnerFlagsTraverseCalls']()
+  };
 }
 
 // 'Module' interface
@@ -2424,6 +2431,24 @@ Module['Relooper'] = function(module) {
   };
   this['renderAndDispose'] = function(entry, labelHelper) {
     return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper);
+  };
+};
+
+// 'ExpressionRunner' interface
+Module['ExpressionRunner'] = function(module, flags, maxDepth, maxLoopIterations) {
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth, maxLoopIterations);
+  this['ptr'] = runner;
+
+  this['setLocalValue'] = function(index, valueExpr) {
+    return Boolean(Module['_ExpressionRunnerSetLocalValue'](runner, index, valueExpr));
+  };
+  this['setGlobalValue'] = function(name, valueExpr) {
+    return preserveStack(function() {
+      return Boolean(Module['_ExpressionRunnerSetGlobalValue'](runner, strToStack(name), valueExpr));
+    });
+  };
+  this['runAndDispose'] = function(expr) {
+    return Module['_ExpressionRunnerRunAndDispose'](runner, expr);
   };
 };
 
