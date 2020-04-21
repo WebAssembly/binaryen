@@ -17,8 +17,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install tools
       run: |
         sudo pip3 install flake8==3.7.8
@@ -45,8 +43,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
 
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
@@ -95,8 +91,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: start docker
       run: |
         docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
@@ -121,8 +115,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: cmake
@@ -147,8 +139,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: cmake
@@ -173,8 +163,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: cmake
@@ -198,8 +186,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: cmake
@@ -220,8 +206,6 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
-      with:
-        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: download cmake
