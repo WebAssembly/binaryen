@@ -1140,8 +1140,9 @@ struct FixInvokeFunctionNamesWalker
       BYN_TRACE("remove redundant import: " << curr->base << "\n");
       toRemove.push_back(curr->name);
       // Make sure the existing import has the correct internal name.
-      if (f->name != newname)
+      if (f->name != newname) {
         functionRenames[f->name] = newname;
+      }
     } else {
       BYN_TRACE("rename import: " << curr->base << "\n");
       curr->base = newname;
