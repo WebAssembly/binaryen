@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include "emscripten-optimizer/istring.h"
+#include "../emscripten-optimizer/istring.h"
 
 namespace wasm {
 

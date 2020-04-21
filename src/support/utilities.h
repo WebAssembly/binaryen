@@ -17,7 +17,7 @@
 #ifndef wasm_support_utilities_h
 #define wasm_support_utilities_h
 
-#include "compiler-support.h"
+#include "../compiler-support.h"
 
 #include <cassert>
 #include <cstdint>
@@ -26,7 +26,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "support/bits.h"
+#include "bits.h"
 
 namespace wasm {
 

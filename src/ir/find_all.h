@@ -17,7 +17,7 @@
 #ifndef wasm_ir_find_all_h
 #define wasm_ir_find_all_h
 
-#include <wasm-traversal.h>
+#include "../wasm-traversal.h"
 
 namespace wasm {
 
