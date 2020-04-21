@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 
