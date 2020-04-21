@@ -323,8 +323,7 @@ def run_gcc_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        subprocess.check_call([shared.NATIVEXX, '-v'])
-        cmd = [shared.NATIVEXX, '-v', '-std=c++14'] + cmd
+        cmd = [shared.NATIVEXX, '-std=c++14'] + cmd
         print('link: ', ' '.join(cmd))
         subprocess.check_call(cmd)
         print('run...', output_file)
