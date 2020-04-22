@@ -288,6 +288,9 @@ struct Reducer
         if (debugInfo) {
           currCommand += " -g ";
         }
+        if (!binary) {
+          currCommand += " -S ";
+        }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
         }
