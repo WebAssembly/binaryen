@@ -13,6 +13,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -55,21 +58,40 @@ jobs:
     - name: archive
       id: archive
       run: |
-        export VERSION=${{ github.event.release.tag_name }}
-        export PKGNAME="binaryen-$VERSION-x86_64-${{ matrix.os }}"
-        export TARBALL=$PKGNAME.tar.gz
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//' | sed 's/ubuntu/linux/')
+        VERSION=${{ github.event.release.tag_name }}
+        PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
+        TARBALL=$PKGNAME.tar.gz
+        SHASUM=$PKGNAME.tar.gz.sha256
         mv out/bin binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
-        shasum -a 256 $TARBALL > $PKGNAME.tar.gz.sha256
-        echo "::set-output name=asset_name::$TARBALL"
+        echo "::set-output name=tarball::$TARBALL"
+        echo "::set-output name=shasum::$SHASUM"
 
-    - name: upload release asset
-      id: upload-release-asset
+    - name: upload tarball
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.asset_name }}
-        asset_name: ${{ steps.archive.outputs.asset_name }}
+        asset_path: ./${{ steps.archive.outputs.tarball }}
+        asset_name: ${{ steps.archive.outputs.tarball }}
         asset_content_type: application/gzip
+
+    # We do the shasum as a seprate step because this tool doesn't
+    # exit on windows.
+    - name: shasum
+      id: shasum
+      run: shasum -a 256 ${{ steps.archive.outputs.tarball }} > ${{ steps.archive.outputs.shasum }}
+      if: matrix.os != 'windows-latest'
+
+    - name: upload shasum
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ steps.archive.outputs.shasum }}
+        asset_name: ${{ steps.archive.outputs.shasum }}
+        asset_content_type: text/plain
+      if: matrix.os != 'windows-latest'
