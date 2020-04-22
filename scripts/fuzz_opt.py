@@ -372,35 +372,38 @@ class CompareVMs(TestCaseHandler):
         self.compare_before_and_after(before, after)
 
     def run_vms(self, wasm):
-        results = []
+        # vm_results will contain pairs of (vm, result)
+        vm_results = []
         for vm in self.vms:
-            # when a vm can't run, mark the result as None
             if vm.can_run():
-                results.append(fix_output(vm.run(wasm)))
-            else:
-                results.append(None)
+                vm_results.append((vm, fix_output(vm.run(wasm))))
 
         # compare between the vms on this specific input
 
-        first = None
-        for i in range(len(results)):
-            # No legalization for JS means we can't compare JS to others, as any
-            # illegal export will fail immediately.
-            vm = self.vms[i]
-            if vm.can_compare_to_others() and results[i] is not None:
-                if first is None:
-                    first = i
+        first_vm = None
+        first_result = None
+        for vm, result in vm_results:
+            if vm.can_compare_to_others():
+                if first_vm is None:
+                    first_vm = vm
+                    first_result = result
                 else:
-                    compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + vm.name)
+                    compare_between_vms(first_result, result, 'CompareVMs between VMs: ' + first_vm.name + ' and ' + vm.name)
 
-        return results
+        return vm_results
 
     def compare_before_and_after(self, before, after):
+        # we received lists of (vm, result). the lists must be of the same size,
+        # and with the same vms
+        assert len(before) == len(after)
+        num = len(before)
+        for i in range(num):
+            assert before[i][0] == after[i][0]
+
         # compare each VM to itself on the before and after inputs
-        for i in range(len(before)):
-            vm = self.vms[i]
-            if vm.can_compare_to_self() and before[i] is not None:
-                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
+        for i in range(num):
+            if before[i][0].can_compare_to_self():
+                compare(before[i][1], after[i][1], 'CompareVMs between before and after: ' + before[i][0].name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
