@@ -364,6 +364,9 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
+                # pass-debug can be very slow in large emcc inputs
+                if os.environ.get('BINARYEN_PASS_DEBUG'):
+                  del os.environ['BINARYEN_PASS_DEBUG']
                 compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
                 if random.random() < 0.5:
                   compile_cmd += ['-O' + str(random.randint(1, 3))]
