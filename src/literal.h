@@ -141,8 +141,14 @@ public:
     return bit_cast<double>(i64);
   }
   std::array<uint8_t, 16> getv128() const;
-  Name getFunc() const { return func; }
-  const ExceptionPackage& getExceptionPackage() const { return *exn.get(); }
+  Name getFunc() const {
+    assert(type == Type::funcref);
+    return func;
+  }
+  const ExceptionPackage& getExceptionPackage() const {
+    assert(type == Type::exnref);
+    return *exn.get();
+  }
 
   // careful!
   int32_t* geti32Ptr() {
