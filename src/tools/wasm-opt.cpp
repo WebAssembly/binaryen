@@ -37,7 +37,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-#include "wasm2c-wrapper.hpp"
+#include "wasm2c-wrapper.h"
 
 #define DEBUG_TYPE "opt"
 
