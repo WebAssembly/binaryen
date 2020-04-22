@@ -15,12 +15,7 @@
    (i32.const 2300)
   )
   (nop)
-  (drop
-   (i32.add
-    (i32.const 1)
-    (local.get $x)
-   )
-  )
+  (nop)
   (nop)
   (nop)
   (nop)

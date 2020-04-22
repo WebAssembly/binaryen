@@ -1132,6 +1132,21 @@ public:
     NOTE_ENTER("Drop");
     Flow value = visit(curr->value);
     if (value.breaking()) {
+      // Handle the case where a local or global value might not be known, even
+      // though we do not need to know in order to perform the drop if there are
+      // no other relevant side-effects.
+      if (value.breakTo == NONCONSTANT_FLOW && module != nullptr) {
+        EffectAnalyzer effects(false, false, module->features, curr->value);
+        effects.localsRead.clear();
+        effects.globalsRead.clear();
+        if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
+          effects.localsWritten.clear();
+          effects.globalsWritten.clear();
+        }
+        if (!effects.hasAnything()) {
+          return Flow();
+        }
+      }
       return value;
     }
     return Flow();

@@ -27,14 +27,21 @@ namespace wasm {
 
 struct EffectAnalyzer
   : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
-  EffectAnalyzer(const PassOptions& passOptions,
+  EffectAnalyzer(bool ignoreImplicitTraps,
+                 bool debugInfo,
                  FeatureSet features,
                  Expression* ast = nullptr)
-    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      debugInfo(passOptions.debugInfo), features(features) {
+    : ignoreImplicitTraps(ignoreImplicitTraps), debugInfo(debugInfo),
+      features(features) {
     if (ast) {
       analyze(ast);
     }
+  }
+  EffectAnalyzer(const PassOptions& passOptions,
+                 FeatureSet features,
+                 Expression* ast = nullptr)
+    : EffectAnalyzer(
+        passOptions.ignoreImplicitTraps, passOptions.debugInfo, features, ast) {
   }
 
   bool ignoreImplicitTraps;
@@ -400,7 +407,8 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
@@ -418,7 +426,8 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }

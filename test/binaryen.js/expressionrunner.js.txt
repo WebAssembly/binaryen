@@ -147,6 +147,20 @@ int main() {
   expressions[62] = BinaryenBreak(the_module, "theLoop", expressions[0], expressions[0]);
   expressions[63] = BinaryenLoop(the_module, "theLoop", expressions[62]);
   ExpressionRunnerRunAndDispose(expressionRunners[11], expressions[63]);
+  expressionRunners[12] = ExpressionRunnerCreate(the_module, 0, 0, 0);
+  expressions[64] = BinaryenLocalGet(the_module, 0, BinaryenTypeNone());
+  expressions[65] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[66] = BinaryenBinary(the_module, 0, expressions[64], expressions[65]);
+  expressions[67] = BinaryenDrop(the_module, expressions[66]);
+  expressions[68] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
+  {
+    BinaryenExpressionRef children[] = { expressions[67], expressions[68] };
+    expressions[69] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeInt32());
+  }
+  expressions[70] = ExpressionRunnerRunAndDispose(expressionRunners[12], expressions[69]);
+  BinaryenExpressionGetId(expressions[70]);
+  BinaryenExpressionGetType(expressions[70]);
+  BinaryenConstGetValueI32(expressions[70]);
   BinaryenModuleDispose(the_module);
   types.clear();
   expressions.clear();
