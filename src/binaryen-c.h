@@ -883,12 +883,14 @@ BinaryenSwitchGetCondition(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSwitchGetValue(BinaryenExpressionRef expr);
 
+BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
 BINARYEN_API const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
 BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
+BINARYEN_API int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex

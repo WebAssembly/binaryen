@@ -2520,6 +2520,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
+        'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expr)),
         'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
         'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
       };
@@ -2527,6 +2528,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
+        'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
       };
