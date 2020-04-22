@@ -292,27 +292,78 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, deterministic_nans, requires_legalization):
+    def __init__(self, name, run, can_run, can_compare_to_self, can_compare_to_others):
         self.name = name
         self.run = run
-        self.deterministic_nans = deterministic_nans
-        self.requires_legalization = requires_legalization
+        self.can_run = can_run
+        self.can_compare_to_self = can_compare_to_self
+        self.can_compare_to_others = can_compare_to_others
 
 
 class CompareVMs(TestCaseHandler):
     def __init__(self):
         super(CompareVMs, self).__init__()
 
-        def run_binaryen_interpreter(wasm):
+        def byn_run(wasm):
             return run_bynterp(wasm, ['--fuzz-exec-before'])
 
-        def run_v8(wasm):
+        def v8_run(wasm):
             run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
             return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
+        def yes():
+            return True
+
+        def if_legal_and_no_nans():
+            return LEGALIZE and not NANS
+
+        def if_no_nans():
+            return not NANS
+
+        class Wasm2C(VM):
+            name = 'wasm2c'
+
+            def __init__(self):
+                # look for wabt in the path. if it's not here, don't run wasm2c
+                try:
+                    wabt_bin = shared.which('wasm2c')
+                    wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
+                    self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+                except Exception as e:
+                    print('warning: no wabt found:', e)
+                    self.wasm2c_dir = None
+
+            def can_run(self):
+                if self.wasm2c_dir is None:
+                    return False
+                # if we legalize for JS, the ABI is not what C wants
+                if LEGALIZE:
+                    return False
+                # wasm2c doesn't support most features
+                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
+
+            def run(self, wasm):
+                run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
+                run(['wasm2c', wasm, '-o', 'wasm.c'])
+                compile_cmd = ['clang', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm', '-Werror']
+                run(compile_cmd)
+                return run_vm(['./a.out'])
+
+            def can_compare_to_self(self):
+                # The binaryen optimizer changes NaNs in the ways that wasm
+                # expects, but that's not quite what C has
+                return not NANS
+
+            def can_compare_to_others(self):
+                # C won't trap on OOB, and NaNs can differ from wasm VMs
+                return not OOB and not NANS
+
         self.vms = [
-            VM('binaryen interpreter', run_binaryen_interpreter, deterministic_nans=True,  requires_legalization=False),
-            VM('d8',                   run_v8,                   deterministic_nans=False, requires_legalization=True),
+            VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
+            # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
+            # if not legalized, the JS will fail immediately, so no point to compare to others
+            VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
+            Wasm2C()
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -321,32 +372,38 @@ class CompareVMs(TestCaseHandler):
         self.compare_before_and_after(before, after)
 
     def run_vms(self, wasm):
-        results = []
+        # vm_results will contain pairs of (vm, result)
+        vm_results = []
         for vm in self.vms:
-            results.append(fix_output(vm.run(wasm)))
+            if vm.can_run():
+                vm_results.append((vm, fix_output(vm.run(wasm))))
 
         # compare between the vms on this specific input
 
-        # NaNs are a source of nondeterminism between VMs; don't compare them.
-        if not NANS:
-            first = None
-            for i in range(len(results)):
-                # No legalization for JS means we can't compare JS to others, as any
-                # illegal export will fail immediately.
-                if LEGALIZE or not vm.requires_legalization:
-                    if first is None:
-                        first = i
-                    else:
-                        compare_between_vms(results[first], results[i], 'CompareVMs between VMs: ' + self.vms[first].name + ' and ' + self.vms[i].name)
+        first_vm = None
+        first_result = None
+        for vm, result in vm_results:
+            if vm.can_compare_to_others():
+                if first_vm is None:
+                    first_vm = vm
+                    first_result = result
+                else:
+                    compare_between_vms(first_result, result, 'CompareVMs between VMs: ' + first_vm.name + ' and ' + vm.name)
 
-        return results
+        return vm_results
 
     def compare_before_and_after(self, before, after):
+        # we received lists of (vm, result). the lists must be of the same size,
+        # and with the same vms
+        assert len(before) == len(after)
+        num = len(before)
+        for i in range(num):
+            assert before[i][0] == after[i][0]
+
         # compare each VM to itself on the before and after inputs
-        for i in range(len(before)):
-            vm = self.vms[i]
-            if vm.deterministic_nans:
-                compare(before[i], after[i], 'CompareVMs between before and after: ' + vm.name)
+        for i in range(num):
+            if before[i][0].can_compare_to_self():
+                compare(before[i][1], after[i][1], 'CompareVMs between before and after: ' + before[i][0].name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
@@ -487,7 +544,7 @@ testcase_handlers = [
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts):
+def test_one(random_input, opts, allow_autoreduce):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
@@ -535,40 +592,41 @@ def test_one(random_input, opts):
                 try:
                     write_commands_and_test(opts)
                 except subprocess.CalledProcessError:
-                    print('')
-                    print('====================')
-                    print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
-                    print('====================')
-                    print('')
-                    # first, reduce the fuzz opts: keep removing until we can't
-                    while 1:
-                        reduced = False
-                        for i in range(len(opts)):
-                            # some opts can't be removed, like --flatten --dfo requires flatten
-                            if opts[i] == '--flatten':
-                                if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
-                                    continue
-                            shorter = opts[:i] + opts[i + 1:]
-                            try:
-                                write_commands_and_test(shorter)
-                            except subprocess.CalledProcessError:
-                                # great, the shorter one is good as well
-                                opts = shorter
-                                print('reduced opts to ' + ' '.join(opts))
-                                reduced = True
+                    if allow_autoreduce:
+                        print('')
+                        print('====================')
+                        print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
+                        print('====================')
+                        print('')
+                        # first, reduce the fuzz opts: keep removing until we can't
+                        while 1:
+                            reduced = False
+                            for i in range(len(opts)):
+                                # some opts can't be removed, like --flatten --dfo requires flatten
+                                if opts[i] == '--flatten':
+                                    if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
+                                        continue
+                                shorter = opts[:i] + opts[i + 1:]
+                                try:
+                                    write_commands_and_test(shorter)
+                                except subprocess.CalledProcessError:
+                                    # great, the shorter one is good as well
+                                    opts = shorter
+                                    print('reduced opts to ' + ' '.join(opts))
+                                    reduced = True
+                                    break
+                            if not reduced:
                                 break
-                        if not reduced:
-                            break
-                    # second, reduce the wasm
-                    # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
-                    shutil.copyfile('a.wasm', 'input.wasm')
-                    # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
-                    commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
-                    write_commands(commands, 'tt.sh')
-                    # reduce the input to something smaller with the same behavior on the script
-                    subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
-                    print('Finished reduction. See "tt.sh" and "reduced.wasm".')
-                    raise Exception('halting after autoreduction')
+                        # second, reduce the wasm
+                        # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
+                        shutil.copyfile('a.wasm', 'input.wasm')
+                        # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
+                        commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
+                        write_commands(commands, 'tt.sh')
+                        # reduce the input to something smaller with the same behavior on the script
+                        subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
+                        print('Finished reduction. See "tt.sh" and "reduced.wasm".')
+                        raise Exception('halting after autoreduction')
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
@@ -736,7 +794,9 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            total_wasm_size += test_one(raw_input_data, opts)
+            # don't autoreduce if we are given a specific case to test, as this
+            # is a reproduction of the test case, not the first finding of it
+            total_wasm_size += test_one(raw_input_data, opts, allow_autoreduce=given_seed is None)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
