@@ -17,9 +17,9 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "find_all.h"
-#include "manipulation.h"
-#include "properties.h"
+#include "ir/find_all.h"
+#include "ir/manipulation.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"

@@ -29,7 +29,7 @@
 #include <thread>
 #include <vector>
 
-#include "../compiler-support.h"
+#include "compiler-support.h"
 
 namespace wasm {
 

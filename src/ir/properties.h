@@ -17,10 +17,10 @@
 #ifndef wasm_ir_properties_h
 #define wasm_ir_properties_h
 
-#include "bits.h"
-#include "effects.h"
-#include "iteration.h"
-#include "../wasm.h"
+#include "ir/bits.h"
+#include "ir/effects.h"
+#include "ir/iteration.h"
+#include "wasm.h"
 
 namespace wasm {
 

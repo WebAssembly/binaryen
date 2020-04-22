@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../support/threads.h"
-#include "../support/utilities.h"
+#include "support/threads.h"
+#include "support/utilities.h"
 
 namespace cashew {
 
