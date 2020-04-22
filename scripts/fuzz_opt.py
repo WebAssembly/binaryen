@@ -366,15 +366,15 @@ class CompareVMs(TestCaseHandler):
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
                 # pass-debug can be very slow in large emcc inputs
                 if os.environ.get('BINARYEN_PASS_DEBUG'):
-                  del os.environ['BINARYEN_PASS_DEBUG']
+                    del os.environ['BINARYEN_PASS_DEBUG']
                 compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
                 if random.random() < 0.5:
-                  compile_cmd += ['-O' + str(random.randint(1, 3))]
+                    compile_cmd += ['-O' + str(random.randint(1, 3))]
                 elif random.random() < 0.5:
-                  if random.random() < 0.5:
-                    compile_cmd += ['-Os']
-                  else:
-                    compile_cmd += ['-Oz']
+                    if random.random() < 0.5:
+                        compile_cmd += ['-Os']
+                    else:
+                        compile_cmd += ['-Oz']
                 run(compile_cmd)
                 return run_vm(['d8', 'a.out.js'])
 
