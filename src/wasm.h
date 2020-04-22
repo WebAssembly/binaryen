@@ -1274,6 +1274,7 @@ public:
   // stack IR. The Pass system will throw away Stack IR if a pass is run
   // that declares it may modify Binaryen IR.
   std::unique_ptr<StackIR> stackIR;
+  bool isStacky = false;
 
   // local names. these are optional.
   std::map<Index, Name> localNames;

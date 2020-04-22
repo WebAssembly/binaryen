@@ -162,6 +162,10 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
+  // Multivalue support.
+  // TODO: make this Literal instead of Literals once tuples are split up
+  std::vector<Literals> valueStack;
+
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
     NOTE_ENTER_("generateArguments");
@@ -177,6 +181,8 @@ protected:
     return Flow();
   }
 
+  bool isStacky() { return static_cast<SubType*>(this)->isStacky(); }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -190,6 +196,11 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
+    if (isStacky() && !Properties::isControlFlowStructure(curr)) {
+      // Reverse the popped values so they come out in the right order
+      Index numChildren = ChildIterator(curr).size();
+      std::reverse(valueStack.end() - numChildren, valueStack.end());
+    }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking()) {
       Type type = ret.getType();
@@ -202,8 +213,15 @@ public:
         }
 #endif
         assert(Type::isSubType(type, curr->type));
+        if (isStacky() && !curr->is<Pop>()) {
+          // TODO: once tuples are lowered away, push results individually
+          // valueStack.insert(valueStack.cend(), ret.values.begin(),
+          //                   ret.values.end());
+          valueStack.push_back(ret.values);
+        }
       }
     }
+    // TODO: handle removing valueStack entries when breaking
     depth--;
     return ret;
   }
@@ -1239,7 +1257,13 @@ public:
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPop(Pop* curr) {
+    NOTE_ENTER("Pop");
+    assert(!valueStack.empty());
+    auto ret = this->valueStack.back();
+    this->valueStack.pop_back();
+    return ret;
+  }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
     return Literal::makeNullref();
@@ -1537,9 +1561,24 @@ public:
     NOTE_ENTER("SIMDLoadExtend");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitPop(Pop* curr) {
-    NOTE_ENTER("Pop");
-    return Flow(NONCONSTANT_FLOW);
+  Flow visitRefNull(RefNull* curr) {
+    NOTE_ENTER("RefNull");
+    return Literal::makeNullref();
+  }
+  Flow visitRefIsNull(RefIsNull* curr) {
+    NOTE_ENTER("RefIsNull");
+    Flow flow = this->visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Literal value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal(value.type == Type::nullref);
+  }
+  Flow visitRefFunc(RefFunc* curr) {
+    NOTE_ENTER("RefFunc");
+    NOTE_NAME(curr->func);
+    return Literal::makeFuncref(curr->func);
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
@@ -1565,6 +1604,7 @@ public:
     : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(maxDepth),
       globals(globals) {}
 
+  bool isStacky() { return false; }
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
 
@@ -1749,9 +1789,6 @@ public:
   // Values of globals
   GlobalManager globals;
 
-  // Multivalue ABI support (see push/pop).
-  std::vector<Literal> multiValues;
-
   ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface)
     : wasm(wasm), externalInterface(externalInterface) {
     // import globals from the outside
@@ -1922,6 +1959,8 @@ private:
                             Index maxDepth)
       : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
         scope(scope) {}
+
+    bool isStacky() { return scope.function->isStacky; }
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
@@ -2454,16 +2493,9 @@ private:
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
-        instance.multiValues.push_back(e.exn);
+        this->valueStack.push_back({e.exn});
         return this->visit(curr->catchBody);
       }
-    }
-    Flow visitPop(Pop* curr) {
-      NOTE_ENTER("Pop");
-      assert(!instance.multiValues.empty());
-      auto ret = instance.multiValues.back();
-      instance.multiValues.pop_back();
-      return ret;
     }
 
     void trap(const char* why) override {

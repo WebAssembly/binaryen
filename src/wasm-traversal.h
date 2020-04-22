@@ -547,7 +547,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
 //
 template<typename SubType, typename VisitorType>
 struct Walker : public VisitorType {
-  // Useful methods for visitor implementions
+  // Useful methods for visitor implementations
 
   // Replace the current node. You can call this in your visit*() methods.
   // Note that the visit*() for the result node is not called for you (i.e.,

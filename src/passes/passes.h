@@ -112,6 +112,7 @@ Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStackCheckPass();
+Pass* createStackifyPass();
 Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripProducersPass();

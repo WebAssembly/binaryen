@@ -350,6 +350,9 @@ void PassRegistry::registerPasses() {
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
+  registerPass("stackify",
+               "Unfold all expressions into a flat stack machine format",
+               createStackifyPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",

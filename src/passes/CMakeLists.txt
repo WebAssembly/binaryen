@@ -57,6 +57,7 @@ set(passes_SOURCES
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RoundTrip.cpp
+  Stackify.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp

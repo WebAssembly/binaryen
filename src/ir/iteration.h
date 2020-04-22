@@ -80,6 +80,7 @@ public:
 
   Iterator begin() const { return Iterator(*this, 0); }
   Iterator end() const { return Iterator(*this, children.size()); }
+  Index size() const { return children.size(); }
 };
 
 // Returns true if the current expression contains a certain kind of expression,

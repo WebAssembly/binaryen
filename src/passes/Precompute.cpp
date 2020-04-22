@@ -87,6 +87,17 @@ public:
     return ConstantExpressionRunner<
       PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
+
+  Flow visitPop(Pop* curr) {
+    if (this->valueStack.empty()) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return ConstantExpressionRunner<PrecomputingExpressionRunner>::visitPop(
+      curr);
+  }
+
+  // TODO: Accept stacky code?
+  bool isStacky() { return false; }
 };
 
 struct Precompute

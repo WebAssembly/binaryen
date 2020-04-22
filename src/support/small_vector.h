@@ -133,6 +133,9 @@ public:
     typedef T value_type;
     typedef long difference_type;
     typedef T& reference;
+    typedef T* pointer;
+    // TODO: Make bidirectional
+    typedef std::forward_iterator_tag iterator_category;
 
     Parent* parent;
     size_t index;

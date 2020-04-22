@@ -440,7 +440,7 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakInfos.erase(iter);
   }
-  if (curr->list.size() > 1) {
+  if (curr->list.size() > 1 && !getFunction()->isStacky) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),

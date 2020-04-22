@@ -3997,6 +3997,11 @@ public:
                     Index maxLoopIterations)
     : ConstantExpressionRunner<CExpressionRunner>(
         module, flags, maxDepth, maxLoopIterations) {}
+
+  bool isStacky() {
+    WASM_UNREACHABLE("TODO: support stackiness by tracking current function in "
+                     "traversing expression runner");
+  }
 };
 
 } // namespace wasm
