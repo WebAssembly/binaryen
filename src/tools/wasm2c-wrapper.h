@@ -112,8 +112,8 @@ int main(int argc, char** argv) {
 
     auto* func = wasm.getFunction(exp->value);
 
-    ret +=
-      std::string("          puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
+    ret += std::string("          puts(\"[fuzz-exec] calling ") +
+           exp->name.str + "\");\n";
     auto result = func->sig.results;
 
     // Emit the call itself.
