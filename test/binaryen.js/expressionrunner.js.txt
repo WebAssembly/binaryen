@@ -148,7 +148,7 @@ int main() {
   expressions[63] = BinaryenLoop(the_module, "theLoop", expressions[62]);
   ExpressionRunnerRunAndDispose(expressionRunners[11], expressions[63]);
   expressionRunners[12] = ExpressionRunnerCreate(the_module, 0, 0, 0);
-  expressions[64] = BinaryenLocalGet(the_module, 0, BinaryenTypeNone());
+  expressions[64] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
   expressions[65] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
   expressions[66] = BinaryenBinary(the_module, 0, expressions[64], expressions[65]);
   expressions[67] = BinaryenDrop(the_module, expressions[66]);
@@ -161,6 +161,39 @@ int main() {
   BinaryenExpressionGetId(expressions[70]);
   BinaryenExpressionGetType(expressions[70]);
   BinaryenConstGetValueI32(expressions[70]);
+  expressionRunners[13] = ExpressionRunnerCreate(the_module, 1, 0, 0);
+  expressions[71] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[72] = BinaryenLocalSet(the_module, 0, expressions[71]);
+  expressions[73] = BinaryenLocalGet(the_module, 1, BinaryenTypeInt32());
+  {
+    BinaryenExpressionRef children[] = { expressions[72], expressions[73] };
+    expressions[74] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeInt32());
+  }
+  expressions[75] = BinaryenDrop(the_module, expressions[74]);
+  expressions[76] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  {
+    BinaryenExpressionRef children[] = { expressions[75], expressions[76] };
+    expressions[77] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeInt32());
+  }
+  ExpressionRunnerRunAndDispose(expressionRunners[13], expressions[77]);
+  expressionRunners[14] = ExpressionRunnerCreate(the_module, 0, 0, 0);
+  expressions[78] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[79] = BinaryenLocalSet(the_module, 0, expressions[78]);
+  expressions[80] = BinaryenLocalGet(the_module, 1, BinaryenTypeInt32());
+  {
+    BinaryenExpressionRef children[] = { expressions[79], expressions[80] };
+    expressions[81] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeInt32());
+  }
+  expressions[82] = BinaryenDrop(the_module, expressions[81]);
+  expressions[83] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  {
+    BinaryenExpressionRef children[] = { expressions[82], expressions[83] };
+    expressions[84] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeInt32());
+  }
+  expressions[85] = ExpressionRunnerRunAndDispose(expressionRunners[14], expressions[84]);
+  BinaryenExpressionGetId(expressions[85]);
+  BinaryenExpressionGetType(expressions[85]);
+  BinaryenConstGetValueI32(expressions[85]);
   BinaryenModuleDispose(the_module);
   types.clear();
   expressions.clear();

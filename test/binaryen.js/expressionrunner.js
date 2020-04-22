@@ -204,13 +204,13 @@ expr = runner.runAndDispose(
 );
 assert(expr === 0);
 
-// Should skip over dropped expressions without side-effects
+// Should skip over dropped expressions if all we don't know is a local value
 runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.block(null, [
     module.drop(
       module.i32.add(
-        module.local.get(0),
+        module.local.get(0, binaryen.i32), // here
         module.i32.const(5)
       )
     ),
@@ -223,6 +223,47 @@ assertDeepEqual(
     id: binaryen.ExpressionIds.Const,
     type: binaryen.i32,
     value: 9
+  }
+);
+
+// Like above, but must preserve relevant side-effects if requested
+runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
+expr = runner.runAndDispose(
+  module.block(null, [
+    module.drop(
+      module.block(null, [
+        module.local.set(0, // here
+          module.i32.const(5)
+        ),
+        module.local.get(1, binaryen.i32)
+      ], binaryen.i32)
+    ),
+    module.i32.const(10)
+  ], binaryen.i32)
+);
+assert(expr === 0);
+
+// Like above, but sets are ok to drop if not preserving side-effects
+runner = new binaryen.ExpressionRunner(module);
+expr = runner.runAndDispose(
+  module.block(null, [
+    module.drop(
+      module.block(null, [
+        module.local.set(0, // here
+          module.i32.const(5)
+        ),
+        module.local.get(1, binaryen.i32)
+      ], binaryen.i32)
+    ),
+    module.i32.const(10)
+  ], binaryen.i32)
+);
+assertDeepEqual(
+  binaryen.getExpressionInfo(expr),
+  {
+    id: binaryen.ExpressionIds.Const,
+    type: binaryen.i32,
+    value: 10
   }
 );
 
