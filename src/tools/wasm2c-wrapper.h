@@ -19,7 +19,6 @@
 // wasm2c, useful for fuzzing.
 //
 
-#include <inttypes.h>
 #include <string>
 
 #include "wasm.h"
@@ -30,6 +29,7 @@ static std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
   std::string ret = R"(
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -42,7 +42,7 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi(u32 x) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi)(u32) = _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj(u64 x) {
-  printf("[LoggingExternalInterface logging %)" PRId64 R"(]\n", (int64_t)x);
+  printf("[LoggingExternalInterface logging %" PRId64 "]\n", (int64_t)x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj)(u64) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj;
 
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
           ret += "%d\\n\", ";
           break;
         case Type::i64:
-          ret += "%" PRId64 "\\n\", (int64_t)";
+          ret += "%\" PRId64 \"\\n\", (int64_t)";
           break;
         case Type::f32:
           ret += "%.17e\\n\", ";
