@@ -80,28 +80,44 @@ u32 (*Z_envZ_getTempRet0Z_iv)(void) = _Z_envZ_getTempRet0Z_iv;
 int main(int argc, char** argv) {
   init();
 
+  // We go through each export and call it, in turn.
+  size_t next = 0;
+
+  // We do this all with a single setjmp. A setjmp is needed to handle wasm
+  // traps, and emitting a single one helps compilation speed into wasm as
+  // compile times are O(size * num_setjmps).
+  while (1) {
+    size_t curr = next;
+    next++;
+    if (setjmp(g_jmp_buf) != 0) {
+      puts("exception!");
+    } else {
+      // Run the next testcase.
+      switch(curr) {
 )";
 
   // For each export in the wasm, emit code to call it and log its result,
   // similar to the other wrappers.
+  size_t exportIndex = 0;
+
   for (auto& exp : wasm.exports) {
     if (exp->kind != ExternalKind::Function) {
       continue;
     }
 
+    ret += "        case " + std::to_string(exportIndex++) + ":\n";
+
     // Always call the hang limit initializer before each export.
-    ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
+    ret += "          (*Z_hangLimitInitializerZ_vv)();\n";
 
     auto* func = wasm.getFunction(exp->value);
 
-    // Emit a setjmp so that we can handle traps from the compiled wasm.
     ret +=
-      std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
-    ret += "  if (setjmp(g_jmp_buf) == 0) {\n";
+      std::string("          puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
     auto result = func->sig.results;
 
     // Emit the call itself.
-    ret += "    ";
+    ret += "            ";
     if (result != Type::none) {
       ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str +
              " => ";
@@ -169,14 +185,15 @@ int main(int argc, char** argv) {
     }
     ret += ");\n";
 
-    // Handle a longjmp which indicates a trap happened.
-    ret += "  } else {\n";
-    ret += "    puts(\"exception!\");\n";
-    ret += "  }\n";
+    // Break from the big switch.
+    ret += "          break;\n";
   }
 
-  ret += R"(
-
+  ret += R"(        default:
+          return 0; // All done.
+      }
+    }
+  }
   return 0;
 }
 )";

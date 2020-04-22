@@ -388,7 +388,7 @@ class CompareVMs(TestCaseHandler):
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
             Wasm2C(),
-            # TODO: Wasm2C2Wasm(), but too slow to compile (many setjmps)
+            Wasm2C2Wasm(),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
