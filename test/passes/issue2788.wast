@@ -1,3 +1,5 @@
+;; Regression test for 'std::move'-related issues in ExpressionRunner during precompute-propagate
+;; see: https://github.com/WebAssembly/binaryen/issues/2788
 (module
  (type $none_=>_anyref (func (result anyref)))
  (type $none_=>_funcref (func (result funcref)))
