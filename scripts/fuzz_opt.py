@@ -382,7 +382,7 @@ class CompareVMs(TestCaseHandler):
                 return True
 
             def can_compare_to_others(self):
-                # C won't trap on OOB, and NaNs can differ from wasm VMs
+                # NaNs can differ from wasm VMs
                 return not NANS
 
         self.vms = [
