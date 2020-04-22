@@ -53,6 +53,10 @@ inline std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
   return wasm::WasmPrinter::printExpression(&expression, o);
 }
 
+inline std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
+  return wasm::WasmPrinter::printExpression(expression, o);
+}
+
 inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return wasm::WasmPrinter::printStackInst(&inst, o);
 }
