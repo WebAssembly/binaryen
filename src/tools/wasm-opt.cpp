@@ -328,28 +328,6 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
-  Module* curr = &wasm;
-  Module other;
-
-  if (fuzzExecAfter && fuzzBinary) {
-    BufferWithRandomAccess buffer;
-    // write the binary
-    WasmBinaryWriter writer(&wasm, buffer);
-    writer.write();
-    // read the binary
-    auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(other, input);
-    parser.read();
-    options.applyFeatures(other);
-    if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(other);
-      if (!valid) {
-        Fatal() << "fuzz-binary must always generate a valid module";
-      }
-    }
-    curr = &other;
-  }
-
   if (!options.runningPasses()) {
     if (!options.quiet) {
       std::cerr << "warning: no passes specified, not doing any work\n";
@@ -357,9 +335,9 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("running passes...\n");
     auto runPasses = [&]() {
-      options.runPasses(*curr);
+      options.runPasses(wasm);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(*curr);
+        bool valid = WasmValidator().validate(wasm);
         if (!valid) {
           exitOnInvalidWasm("error after opts");
         }
@@ -371,7 +349,7 @@ int main(int argc, const char* argv[]) {
       // size no longer decreasing.
       auto getSize = [&]() {
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(curr, buffer);
+        WasmBinaryWriter writer(&wasm, buffer);
         writer.write();
         return buffer.size();
       };
@@ -389,7 +367,27 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExecAfter) {
-    results.check(*curr);
+    if (fuzzBinary) {
+      BufferWithRandomAccess buffer;
+      // write the binary
+      WasmBinaryWriter writer(&wasm, buffer);
+      writer.write();
+      // clear the module
+      wasm.~Module();
+      new (&wasm) Module;
+      // read the binary
+      auto input = buffer.getAsChars();
+      WasmBinaryBuilder parser(wasm, input);
+      parser.read();
+      options.applyFeatures(wasm);
+      if (options.passOptions.validate) {
+        bool valid = WasmValidator().validate(wasm);
+        if (!valid) {
+          Fatal() << "fuzz-binary must always generate a valid module";
+        }
+      }
+    }
+    results.check(wasm);
   }
 
   if (options.extra.count("output") == 0) {
@@ -407,7 +405,7 @@ int main(int argc, const char* argv[]) {
     writer.setSourceMapFilename(outputSourceMapFilename);
     writer.setSourceMapUrl(outputSourceMapUrl);
   }
-  writer.write(*curr, options.extra["output"]);
+  writer.write(wasm, options.extra["output"]);
 
   if (extraFuzzCommand.size() > 0) {
     auto secondOutput = runCommand(extraFuzzCommand);
