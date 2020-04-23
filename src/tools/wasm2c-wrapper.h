@@ -85,10 +85,14 @@ int main(int argc, char** argv) {
   // wasm traps, and emitting a single one helps compilation speed into wasm as
   // compile times are O(size * num_setjmps).
   for (size_t curr = 0;; curr++) {
+    // Always call the hang limit initializer before each export.
+    (*Z_hangLimitInitializerZ_vv)();
+
+    // Prepare to call the export, so we can catch traps.
     if (setjmp(g_jmp_buf) != 0) {
       puts("exception!");
     } else {
-      // Run the next testcase.
+      // Call the proper export.
       switch(curr) {
 )";
 
@@ -102,9 +106,6 @@ int main(int argc, char** argv) {
     }
 
     ret += "        case " + std::to_string(exportIndex++) + ":\n";
-
-    // Always call the hang limit initializer before each export.
-    ret += "          (*Z_hangLimitInitializerZ_vv)();\n";
 
     auto* func = wasm.getFunction(exp->value);
 
