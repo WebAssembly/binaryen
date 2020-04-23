@@ -121,7 +121,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        mv out/bin binaryen-$VERSION
+        mv bin binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         shasum -a 256 $TARBALL > $SHASUM
         echo "::set-output name=tarball::$TARBALL"
