@@ -79,7 +79,6 @@ int main(int argc, const char* argv[]) {
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
-  bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   bool fuzzPasses = false;
@@ -127,12 +126,6 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
-    .add("--fuzz-binary",
-         "-fb",
-         "Convert to binary and back after optimizations and before fuzz-exec, "
-         "helping fuzzing find binary format bugs",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzBinary = true; })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
@@ -367,26 +360,6 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExecAfter) {
-    if (fuzzBinary) {
-      BufferWithRandomAccess buffer;
-      // write the binary
-      WasmBinaryWriter writer(&wasm, buffer);
-      writer.write();
-      // clear the module
-      wasm.~Module();
-      new (&wasm) Module;
-      // read the binary
-      auto input = buffer.getAsChars();
-      WasmBinaryBuilder parser(wasm, input);
-      parser.read();
-      options.applyFeatures(wasm);
-      if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(wasm);
-        if (!valid) {
-          Fatal() << "fuzz-binary must always generate a valid module";
-        }
-      }
-    }
     results.check(wasm);
   }
 

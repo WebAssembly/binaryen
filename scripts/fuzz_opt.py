@@ -414,7 +414,7 @@ class CompareVMs(TestCaseHandler):
 class FuzzExec(TestCaseHandler):
     def get_commands(self, wasm, opts, random_seed):
         return [
-            '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec --fuzz-binary %(opts)s %(wasm)s' % {
+            '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec %(opts)s %(wasm)s' % {
                 'MAX_INTERPRETER_ENV_VAR': MAX_INTERPRETER_ENV_VAR,
                 'MAX_INTERPRETER_DEPTH': MAX_INTERPRETER_DEPTH,
                 'wasm_opt': in_bin('wasm-opt'),

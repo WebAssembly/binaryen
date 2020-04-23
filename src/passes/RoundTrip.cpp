@@ -20,17 +20,9 @@
 // parameter.
 //
 
-#ifdef _WIN32
-#include <io.h>
-#endif
-
-#include <cstdlib>
-#include <vector>
-
 #include "ir/module-utils.h"
 #include "pass.h"
-#include "support/file.h"
-#include "wasm-io.h"
+#include "wasm-binary.h"
 #include "wasm.h"
 
 using namespace std;
@@ -39,28 +31,18 @@ namespace wasm {
 
 struct RoundTrip : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    std::string templateName = "byn_round_trip_XXXXXX";
-    std::vector<char> buffer(templateName.begin(), templateName.end());
-    buffer.push_back(0);
-#ifndef _WIN32
-    auto fd = mkstemp(buffer.data());
-    WASM_UNUSED(fd);
-    std::string tempName(buffer.begin(), buffer.end());
-#else
-    std::string tempName = _mktemp(buffer.data());
-#endif
-    // Write
-    ModuleWriter writer;
-    writer.setBinary(true);
-    writer.setDebugInfo(runner->options.debugInfo);
-    writer.write(*module, tempName);
-    // Read
+    BufferWithRandomAccess buffer;
+    // Save features, which might not make it through a round trip
+    auto features = module->features;
+    // Write, clear, and read the module
+    WasmBinaryWriter(module, buffer).write();
     ModuleUtils::clearModule(*module);
-    ModuleReader reader;
-    reader.setDWARF(runner->options.debugInfo);
-    reader.read(tempName, *module);
-    // Clean up
-    std::remove(tempName.c_str());
+    auto input = buffer.getAsChars();
+    WasmBinaryBuilder parser(*module, input);
+    parser.setDWARF(runner->options.debugInfo);
+    parser.read();
+    // Reapply features
+    module->features = features;
   }
 };
 
