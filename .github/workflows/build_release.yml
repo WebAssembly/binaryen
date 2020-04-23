@@ -50,7 +50,7 @@ jobs:
     - name: archive
       id: archive
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//'
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
         VERSION=${{ github.event.release.tag_name }}
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
