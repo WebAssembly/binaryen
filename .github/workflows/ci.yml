@@ -1,11 +1,8 @@
 name: CI
 
-# Trigger on pull_request or on push to master
+# Trigger on all branches, even before a PR is opened.
 on:
   push:
-    branches:
-      - master
-  pull_request:
 
 jobs:
 
