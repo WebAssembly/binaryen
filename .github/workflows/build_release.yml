@@ -109,7 +109,8 @@ jobs:
         ./alpine.sh apk add build-base cmake git python3 clang ninja
     - name: build
       run: |
-        ./alpine.sh cmake . -G Ninja
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static"
+
         ./alpine.sh ninja
     - name: test
       run: ./alpine.sh python3 ./check.py
