@@ -199,7 +199,7 @@ jobs:
 
   # Build the .js outputs using emcc
   build-emscripten:
-    name: emscipten
+    name: emscripten
     runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-python@v1
@@ -208,11 +208,6 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
-    - name: download cmake
-      run: |
-        mkdir $HOME/cmake
-        wget -qO- https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz | tar -xzC $HOME/cmake --strip-components 1
-        echo "::add-path::$HOME/cmake/bin"
     - name: emsdk install
       run: |
         mkdir $HOME/emsdk
