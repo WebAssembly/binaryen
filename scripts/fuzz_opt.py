@@ -329,6 +329,9 @@ class CompareVMs(TestCaseHandler):
                     wabt_bin = shared.which('wasm2c')
                     wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
                     self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+                    if not os.path.isdir(self.wasm2c_dir):
+                        print('wabt found, but not wasm2c support dir')
+                        self.wasm2c_dir = None
                 except Exception as e:
                     print('warning: no wabt found:', e)
                     self.wasm2c_dir = None
@@ -364,9 +367,6 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
-                # pass-debug can be very slow in large emcc inputs
-                if os.environ.get('BINARYEN_PASS_DEBUG'):
-                    del os.environ['BINARYEN_PASS_DEBUG']
                 compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
                 if random.random() < 0.5:
                     compile_cmd += ['-O' + str(random.randint(1, 3))]

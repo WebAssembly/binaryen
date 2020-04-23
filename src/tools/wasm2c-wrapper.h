@@ -80,15 +80,11 @@ u32 (*Z_envZ_getTempRet0Z_iv)(void) = _Z_envZ_getTempRet0Z_iv;
 int main(int argc, char** argv) {
   init();
 
-  // We go through each export and call it, in turn.
-  size_t next = 0;
-
-  // We do this all with a single setjmp. A setjmp is needed to handle wasm
-  // traps, and emitting a single one helps compilation speed into wasm as
+  // We go through each export and call it, in turn. Note that we use a loop
+  // so we can do all this with a single setjmp. A setjmp is needed to handle
+  // wasm traps, and emitting a single one helps compilation speed into wasm as
   // compile times are O(size * num_setjmps).
-  while (1) {
-    size_t curr = next;
-    next++;
+  for (size_t curr = 0;; curr++) {
     if (setjmp(g_jmp_buf) != 0) {
       puts("exception!");
     } else {
