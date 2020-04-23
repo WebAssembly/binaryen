@@ -562,12 +562,12 @@ function wrapModule(module, self) {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
   };
-  self['returnCall'] = function(name, operands, type) {
+  self['returnCall'] = self['return_call'] = function(name, operands, type) {
     return preserveStack(function() {
       return Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
-  self['returnCallIndirect'] = function(target, operands, params, results) {
+  self['returnCallIndirect'] = self['return_call_indirect'] = function(target, operands, params, results) {
     return preserveStack(function() {
       return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
