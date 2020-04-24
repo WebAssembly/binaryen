@@ -364,6 +364,11 @@ class CompareVMs(TestCaseHandler):
         class Wasm2C2Wasm(Wasm2C):
             name = 'wasm2c2wasm'
 
+            def __init__(self):
+                super(Wasm2C2Wasm, self).__init__()
+
+                self.has_emcc = shared.which('emcc') is not None
+
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
@@ -377,6 +382,9 @@ class CompareVMs(TestCaseHandler):
                         compile_cmd += ['-Oz']
                 run(compile_cmd)
                 return run_vm(['d8', 'a.out.js'])
+
+            def can_run(self):
+                return super(Wasm2C2Wasm, self).can_run() and self.has_emcc
 
             def can_compare_to_self(self):
                 return True
