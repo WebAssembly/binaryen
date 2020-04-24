@@ -981,32 +981,32 @@ private:
 
   Expression* _makeunreachable() {
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>().add(
-      FeatureSet::MVP,
-      &Self::makeBlock,
-      LastIsImportant,
-      &Self::makeIf,
-      LastIsImportant,
-      &Self::makeLoop,
-      LastIsImportant,
-      &Self::makeBreak,
-      LastIsImportant,
-      &Self::makeCall,
-      LastIsImportant,
-      &Self::makeCallIndirect,
-      &Self::makeLocalSet,
-      LastIsVeryImportant,
-      &Self::makeStore,
-      LastIsImportant,
-      &Self::makeUnary,
-      LastIsImportant,
-      &Self::makeBinary,
-      LastIsImportant,
-      &Self::makeSelect,
-      &Self::makeSwitch,
-      &Self::makeDrop,
-      &Self::makeReturn,
-      &Self::makeUnreachable);
+    auto options =
+      FeatureOptions<Expression* (Self::*)(Type)>().add(FeatureSet::MVP,
+                                                        &Self::makeBlock,
+                                                        LastIsImportant,
+                                                        &Self::makeIf,
+                                                        LastIsImportant,
+                                                        &Self::makeLoop,
+                                                        LastIsImportant,
+                                                        &Self::makeBreak,
+                                                        LastIsImportant,
+                                                        &Self::makeCall,
+                                                        LastIsImportant,
+                                                        &Self::makeCallIndirect,
+                                                        &Self::makeLocalSet,
+                                                        LastIsVeryImportant,
+                                                        &Self::makeStore,
+                                                        LastIsImportant,
+                                                        &Self::makeUnary,
+                                                        LastIsImportant,
+                                                        &Self::makeBinary,
+                                                        LastIsImportant,
+                                                        &Self::makeSelect,
+                                                        &Self::makeSwitch,
+                                                        &Self::makeDrop,
+                                                        &Self::makeReturn,
+                                                        &Self::makeUnreachable);
     return (this->*pick(options))(Type::unreachable);
   }
 
