@@ -79,7 +79,7 @@ public:
     if (iter != getValues.end()) {
       auto values = iter->second;
       if (values.isConcrete()) {
-        return Flow(std::move(values));
+        return Flow(values);
       }
     }
     return ExpressionRunner<PrecomputingExpressionRunner>::visitLocalGet(curr);

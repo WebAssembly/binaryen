@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
     defaults:
       run:
         shell: bash
@@ -24,10 +24,6 @@ jobs:
       with:
         submodules: true
 
-    - name: install ninja (linux)
-      run: sudo apt-get install ninja-build
-      if: matrix.os == 'ubuntu-latest'
-
     - name: install ninja (osx)
       run: brew install ninja
       if: matrix.os == 'macos-latest'
@@ -38,10 +34,6 @@ jobs:
 
     - name: mkdir
       run: mkdir -p out
-
-    - name: cmake (linux)
-      run: cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-      if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (osx)
       run: cmake -S . -B out -G Ninja
@@ -58,7 +50,7 @@ jobs:
     - name: archive
       id: archive
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//' | sed 's/ubuntu/linux/')
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
         VERSION=${{ github.event.release.tag_name }}
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
@@ -79,7 +71,7 @@ jobs:
         asset_content_type: application/gzip
 
     # We do the shasum as a seprate step because this tool doesn't
-    # exit on windows.
+    # exist on windows.
     - name: shasum
       id: shasum
       run: shasum -a 256 ${{ steps.archive.outputs.tarball }} > ${{ steps.archive.outputs.shasum }}
@@ -95,3 +87,63 @@ jobs:
         asset_name: ${{ steps.archive.outputs.shasum }}
         asset_content_type: text/plain
       if: matrix.os != 'windows-latest'
+
+  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+  # Note: Alpine uses musl libc.
+  build-alpine:
+    name: alpine
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+    - name: start docker
+      run: |
+        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        echo 'docker exec alpine "$@";' > ./alpine.sh
+        chmod +x ./alpine.sh
+    - name: install packages
+      run: |
+        ./alpine.sh apk update
+        ./alpine.sh apk add build-base cmake git python3 clang ninja
+    - name: build
+      run: |
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static"
+
+        ./alpine.sh ninja
+    - name: test
+      run: ./alpine.sh python3 ./check.py
+
+    - name: archive
+      id: archive
+      run: |
+        VERSION=${{ github.event.release.tag_name }}
+        PKGNAME="binaryen-$VERSION-x86_64-linux"
+        TARBALL=$PKGNAME.tar.gz
+        SHASUM=$PKGNAME.tar.gz.sha256
+        mv bin binaryen-$VERSION
+        tar -czf $TARBALL binaryen-$VERSION
+        shasum -a 256 $TARBALL > $SHASUM
+        echo "::set-output name=tarball::$TARBALL"
+        echo "::set-output name=shasum::$SHASUM"
+
+    - name: upload tarball
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ steps.archive.outputs.tarball }}
+        asset_name: ${{ steps.archive.outputs.tarball }}
+        asset_content_type: application/gzip
+
+    - name: upload shasum
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ steps.archive.outputs.shasum }}
+        asset_name: ${{ steps.archive.outputs.shasum }}
+        asset_content_type: text/plain
