@@ -107,3 +107,12 @@ def test_binaryen_js():
 
 def test_binaryen_wasm():
     do_test_binaryen_js_with(shared.BINARYEN_WASM)
+
+# This is used by test/emcc-tets.sh for CI
+if __name__ == "__main__":
+    if sys.argv[1] == "js":
+        test_binaryen_js()
+    elif sys.argv[1] == "wasm":
+        test_binaryen_wasm()
+    else:
+        test_binaryen_js_and_wasm()
