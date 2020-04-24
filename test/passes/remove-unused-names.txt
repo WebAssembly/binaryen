@@ -78,4 +78,11 @@
    )
   )
  )
+ (func $loop-with-child-of-other-type
+  (drop
+   (loop (result i32)
+    (unreachable)
+   )
+  )
+ )
 )
