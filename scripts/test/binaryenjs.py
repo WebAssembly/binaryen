@@ -14,6 +14,7 @@
 
 import os
 import subprocess
+import sys
 
 from . import shared
 from . import support
