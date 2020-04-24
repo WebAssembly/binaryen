@@ -849,7 +849,7 @@ bool WasmBinaryBuilder::hasDWARFSections() {
   getInt32(); // version
   bool has = false;
   while (more()) {
-    int8_t sectionCode = getInt8();
+    uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
     if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
@@ -885,7 +885,7 @@ void WasmBinaryBuilder::read() {
 
   // read sections until the end
   while (more()) {
-    uint32_t sectionCode = getU32LEB();
+    uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
     if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
