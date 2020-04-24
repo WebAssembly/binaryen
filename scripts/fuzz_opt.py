@@ -363,7 +363,7 @@ class CompareVMs(TestCaseHandler):
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            Wasm2C()
+            # Wasm2C()
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
@@ -734,8 +734,11 @@ def randomize_opt_flags():
         choice = random.choice(opt_choices)
         if '--flatten' in ret and '--flatten' in choice:
             print('avoiding multiple --flatten in a single command, due to exponential overhead')
-        else:
-            ret += choice
+            continue
+        ret += choice
+        # add a sprinkling of round trips
+        if random.random() < 0.5:
+            ret.append('--roundtrip')
         if len(ret) > 20 or random.random() < 0.3:
             break
     # modifiers (if not already implied by a -O? option)

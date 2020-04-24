@@ -32,7 +32,8 @@ namespace wasm {
 struct RoundTrip : public Pass {
   void run(PassRunner* runner, Module* module) override {
     BufferWithRandomAccess buffer;
-    // Save features, which might not make it through a round trip
+    // Save features, which would not otherwise make it through a round trip if
+    // the target features section has been stripped.
     auto features = module->features;
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer).write();

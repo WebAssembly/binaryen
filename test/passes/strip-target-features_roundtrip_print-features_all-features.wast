@@ -1,5 +1,5 @@
-;; Test that features survive a round trip even if the target features
-;; section is stripped
+;; Test that features enabled on the IR Module survive a round trip
+;; even if the target features section is stripped first
 
 (module
   (func $foo (result v128 anyref )
