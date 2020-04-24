@@ -728,19 +728,25 @@ opt_choices = [
 
 
 def randomize_opt_flags():
-    ret = []
+    flag_groups = []
+    has_flatten = False
     # core opts
     while 1:
         choice = random.choice(opt_choices)
-        if '--flatten' in ret and '--flatten' in choice:
+        if '--flatten' in choice:
+          if has_flatten:
             print('avoiding multiple --flatten in a single command, due to exponential overhead')
             continue
-        ret += choice
-        # add a sprinkling of round trips
-        if random.random() < 0.5:
-            ret.append('--roundtrip')
-        if len(ret) > 20 or random.random() < 0.3:
+          else:
+            has_flatten = True
+        flag_groups.append(choice)
+        if len(flag_groups) > 20 or random.random() < 0.3:
             break
+    # maybe add an extra round trip
+    if random.random() < 0.5:
+        pos = random.randint(0, len(flag_groups))
+        flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+    ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
         if random.random() < 0.5:
