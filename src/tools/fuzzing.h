@@ -896,24 +896,35 @@ private:
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     options.add(FeatureSet::MVP,
-                &Self::makeLocalGet, VeryImportant,
-                &Self::makeLocalSet, VeryImportant,
-                &Self::makeGlobalGet, Important,
-                &Self::makeConst, Important);
+                &Self::makeLocalGet,
+                VeryImportant,
+                &Self::makeLocalSet,
+                VeryImportant,
+                &Self::makeGlobalGet,
+                Important,
+                &Self::makeConst,
+                Important);
     if (canMakeControlFlow) {
       options.add(FeatureSet::MVP,
-                  &Self::makeBlock, Important,
-                  &Self::makeIf, Important,
-                  &Self::makeLoop, Important,
-                  &Self::makeBreak, Important,
-                  &Self::makeCall, Important,
+                  &Self::makeBlock,
+                  Important,
+                  &Self::makeIf,
+                  Important,
+                  &Self::makeLoop,
+                  Important,
+                  &Self::makeBreak,
+                  Important,
+                  &Self::makeCall,
+                  Important,
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
         .add(FeatureSet::MVP,
-             &Self::makeUnary, Important,
-             &Self::makeBinary, Important,
+             &Self::makeUnary,
+             Important,
+             &Self::makeBinary,
+             Important,
              &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
@@ -945,14 +956,21 @@ private:
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                      .add(FeatureSet::MVP,
-                          &Self::makeLocalSet, VeryImportant,
-                          &Self::makeBlock, Important,
-                          &Self::makeIf, Important,
-                          &Self::makeLoop, Important,
-                          &Self::makeBreak, Important,
-                          &Self::makeCall, Important,
+                          &Self::makeLocalSet,
+                          VeryImportant,
+                          &Self::makeBlock,
+                          Important,
+                          &Self::makeIf,
+                          Important,
+                          &Self::makeLoop,
+                          Important,
+                          &Self::makeBreak,
+                          Important,
+                          &Self::makeCall,
+                          Important,
                           &Self::makeCallIndirect,
-                          &Self::makeStore, Important,
+                          &Self::makeStore,
+                          Important,
                           &Self::makeDrop,
                           &Self::makeNop,
                           &Self::makeGlobalSet)
@@ -963,23 +981,32 @@ private:
 
   Expression* _makeunreachable() {
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
-                     .add(FeatureSet::MVP,
-                          &Self::makeBlock, Important,
-                          &Self::makeIf, Important,
-                          &Self::makeLoop, Important,
-                          &Self::makeBreak, Important,
-                          &Self::makeCall, Important,
-                          &Self::makeCallIndirect,
-                          &Self::makeLocalSet, VeryImportant,
-                          &Self::makeStore, Important,
-                          &Self::makeUnary, Important,
-                          &Self::makeBinary, Important,
-                          &Self::makeSelect,
-                          &Self::makeSwitch,
-                          &Self::makeDrop,
-                          &Self::makeReturn,
-                          &Self::makeUnreachable);
+    auto options =
+      FeatureOptions<Expression* (Self::*)(Type)>().add(FeatureSet::MVP,
+                                                        &Self::makeBlock,
+                                                        Important,
+                                                        &Self::makeIf,
+                                                        Important,
+                                                        &Self::makeLoop,
+                                                        Important,
+                                                        &Self::makeBreak,
+                                                        Important,
+                                                        &Self::makeCall,
+                                                        Important,
+                                                        &Self::makeCallIndirect,
+                                                        &Self::makeLocalSet,
+                                                        VeryImportant,
+                                                        &Self::makeStore,
+                                                        Important,
+                                                        &Self::makeUnary,
+                                                        Important,
+                                                        &Self::makeBinary,
+                                                        Important,
+                                                        &Self::makeSelect,
+                                                        &Self::makeSwitch,
+                                                        &Self::makeDrop,
+                                                        &Self::makeReturn,
+                                                        &Self::makeUnreachable);
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -2846,7 +2873,8 @@ private:
     }
 
     template<typename... Ts>
-    FeatureOptions<T>& add(FeatureSet feature, T option, size_t count, Ts... rest) {
+    FeatureOptions<T>&
+    add(FeatureSet feature, T option, size_t count, Ts... rest) {
       for (size_t i = 0; i < count; i++) {
         options[feature].push_back(option);
       }
