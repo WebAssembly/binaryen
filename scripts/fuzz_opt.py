@@ -363,7 +363,7 @@ class CompareVMs(TestCaseHandler):
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            # Wasm2C()
+            Wasm2C()
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
