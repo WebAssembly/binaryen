@@ -1006,7 +1006,8 @@ private:
                                                         &Self::makeSwitch,
                                                         &Self::makeDrop,
                                                         &Self::makeReturn,
-                                                        &Self::makeUnreachable);
+                                                        &Self::makeUnreachable,
+                                                        LastIsImportant);
     return (this->*pick(options))(Type::unreachable);
   }
 
