@@ -15,6 +15,7 @@ BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-finding
 script covers different options being passed)
 '''
 
+import contextlib
 import os
 import difflib
 import math
@@ -85,6 +86,17 @@ def randomize_pass_debug():
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
         del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
+
+
+@contextlib.contextmanager
+def without_pass_debug():
+    old_env = os.environ.copy()
+    if os.environ.get('BINARYEN_PASS_DEBUG'):
+        del os.environ['BINARYEN_PASS_DEBUG']
+    try:
+        yield
+    finally:
+        os.environ.update(old_env)
 
 
 def randomize_feature_opts():
@@ -380,7 +392,11 @@ class CompareVMs(TestCaseHandler):
                         compile_cmd += ['-Os']
                     else:
                         compile_cmd += ['-Oz']
-                run(compile_cmd)
+                # avoid pass-debug on the emcc invocation itself (which runs
+                # binaryen to optimize the wasm), as the wasm here can be very
+                # large and it isn't what we are focused on testing here
+                with without_pass_debug():
+                    run(compile_cmd)
                 return run_vm(['d8', 'a.out.js'])
 
             def can_run(self):
