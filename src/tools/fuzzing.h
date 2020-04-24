@@ -845,6 +845,11 @@ private:
     return std::string("label$") + std::to_string(labelIndex++);
   }
 
+  // Weighting for the core make* methods. Some nodes are important enough that
+  // we should do them quite often.
+  static const size_t VeryImportant = 4;
+  static const size_t Important = 2;
+
   // always call the toplevel make(type) command, not the internal specific ones
 
   int nesting = 0;
@@ -884,57 +889,36 @@ private:
     nesting--;
     return ret;
   }
+
   Expression* _makeConcrete(Type type) {
     bool canMakeControlFlow =
       !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
-    auto choice = upTo(100);
-    if (choice < 10) {
-      return makeConst(type);
-    }
-    if (choice < 30) {
-      return makeLocalSet(type);
-    }
-    if (choice < 50) {
-      return makeLocalGet(type);
-    }
-    if (choice < 60 && canMakeControlFlow) {
-      return makeBlock(type);
-    }
-    if (choice < 70 && canMakeControlFlow) {
-      return makeIf(type);
-    }
-    if (choice < 80 && canMakeControlFlow) {
-      return makeLoop(type);
-    }
-    if (choice < 90 && canMakeControlFlow) {
-      return makeBreak(type);
-    }
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     options.add(FeatureSet::MVP,
-                &Self::makeLocalGet,
-                &Self::makeLocalSet,
-                &Self::makeGlobalGet,
-                &Self::makeConst);
+                &Self::makeLocalGet, VeryImportant,
+                &Self::makeLocalSet, VeryImportant,
+                &Self::makeGlobalGet, Important,
+                &Self::makeConst, Important);
     if (canMakeControlFlow) {
       options.add(FeatureSet::MVP,
-                  &Self::makeBlock,
-                  &Self::makeIf,
-                  &Self::makeLoop,
-                  &Self::makeBreak,
-                  &Self::makeCall,
+                  &Self::makeBlock, Important,
+                  &Self::makeIf, Important,
+                  &Self::makeLoop, Important,
+                  &Self::makeBreak, Important,
+                  &Self::makeCall, Important,
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
         .add(FeatureSet::MVP,
-             &Self::makeUnary,
-             &Self::makeBinary,
+             &Self::makeUnary, Important,
+             &Self::makeBinary, Important,
              &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
     if (type.isSingle() && !type.isRef()) {
-      options.add(FeatureSet::MVP, &Self::makeLoad);
+      options.add(FeatureSet::MVP, &Self::makeLoad, Important);
       options.add(FeatureSet::SIMD, &Self::makeSIMD);
     }
     if (type.isInteger()) {
@@ -958,33 +942,17 @@ private:
         return makeMemoryHashLogging();
       }
     }
-    choice = upTo(100);
-    if (choice < 50) {
-      return makeLocalSet(Type::none);
-    }
-    if (choice < 60) {
-      return makeBlock(Type::none);
-    }
-    if (choice < 70) {
-      return makeIf(Type::none);
-    }
-    if (choice < 80) {
-      return makeLoop(Type::none);
-    }
-    if (choice < 90) {
-      return makeBreak(Type::none);
-    }
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                      .add(FeatureSet::MVP,
-                          &Self::makeBlock,
-                          &Self::makeIf,
-                          &Self::makeLoop,
-                          &Self::makeBreak,
-                          &Self::makeCall,
+                          &Self::makeLocalSet, VeryImportant,
+                          &Self::makeBlock, Important,
+                          &Self::makeIf, Important,
+                          &Self::makeLoop, Important,
+                          &Self::makeBreak, Important,
+                          &Self::makeCall, Important,
                           &Self::makeCallIndirect,
-                          &Self::makeLocalSet,
-                          &Self::makeStore,
+                          &Self::makeStore, Important,
                           &Self::makeDrop,
                           &Self::makeNop,
                           &Self::makeGlobalSet)
@@ -994,39 +962,25 @@ private:
   }
 
   Expression* _makeunreachable() {
-    switch (upTo(15)) {
-      case 0:
-        return makeBlock(Type::unreachable);
-      case 1:
-        return makeIf(Type::unreachable);
-      case 2:
-        return makeLoop(Type::unreachable);
-      case 3:
-        return makeBreak(Type::unreachable);
-      case 4:
-        return makeCall(Type::unreachable);
-      case 5:
-        return makeCallIndirect(Type::unreachable);
-      case 6:
-        return makeLocalSet(Type::unreachable);
-      case 7:
-        return makeStore(Type::unreachable);
-      case 8:
-        return makeUnary(Type::unreachable);
-      case 9:
-        return makeBinary(Type::unreachable);
-      case 10:
-        return makeSelect(Type::unreachable);
-      case 11:
-        return makeSwitch(Type::unreachable);
-      case 12:
-        return makeDrop(Type::unreachable);
-      case 13:
-        return makeReturn(Type::unreachable);
-      case 14:
-        return makeUnreachable(Type::unreachable);
-    }
-    WASM_UNREACHABLE("unexpected value");
+    using Self = TranslateToFuzzReader;
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
+                     .add(FeatureSet::MVP,
+                          &Self::makeBlock, Important,
+                          &Self::makeIf, Important,
+                          &Self::makeLoop, Important,
+                          &Self::makeBreak, Important,
+                          &Self::makeCall, Important,
+                          &Self::makeCallIndirect,
+                          &Self::makeLocalSet, VeryImportant,
+                          &Self::makeStore, Important,
+                          &Self::makeUnary, Important,
+                          &Self::makeBinary, Important,
+                          &Self::makeSelect,
+                          &Self::makeSwitch,
+                          &Self::makeDrop,
+                          &Self::makeReturn,
+                          &Self::makeUnreachable);
+    return (this->*pick(options))(Type::unreachable);
   }
 
   // make something with no chance of infinite recursion
@@ -2888,6 +2842,14 @@ private:
     template<typename... Ts>
     FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);
+      return add(feature, rest...);
+    }
+
+    template<typename... Ts>
+    FeatureOptions<T>& add(FeatureSet feature, T option, size_t count, Ts... rest) {
+      for (size_t i = 0; i < count; i++) {
+        options[feature].push_back(option);
+      }
       return add(feature, rest...);
     }
 
