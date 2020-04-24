@@ -3,6 +3,7 @@ name: CI
 # Trigger on all branches, even before a PR is opened.
 on:
   push:
+  pull_request:
 
 jobs:
 
