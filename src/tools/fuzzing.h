@@ -847,8 +847,8 @@ private:
 
   // Weighting for the core make* methods. Some nodes are important enough that
   // we should do them quite often.
-  static const size_t VeryImportant = 4;
-  static const size_t Important = 2;
+  static const size_t LastIsVeryImportant = 4;
+  static const size_t LastIsImportant = 2;
 
   // always call the toplevel make(type) command, not the internal specific ones
 
@@ -897,39 +897,39 @@ private:
     FeatureOptions<Expression* (Self::*)(Type)> options;
     options.add(FeatureSet::MVP,
                 &Self::makeLocalGet,
-                VeryImportant,
+                LastIsVeryLastIsImportant,
                 &Self::makeLocalSet,
-                VeryImportant,
+                LastIsVeryLastIsImportant,
                 &Self::makeGlobalGet,
-                Important,
+                LastIsImportant,
                 &Self::makeConst,
-                Important);
+                LastIsImportant);
     if (canMakeControlFlow) {
       options.add(FeatureSet::MVP,
                   &Self::makeBlock,
-                  Important,
+                  LastIsImportant,
                   &Self::makeIf,
-                  Important,
+                  LastIsImportant,
                   &Self::makeLoop,
-                  Important,
+                  LastIsImportant,
                   &Self::makeBreak,
-                  Important,
+                  LastIsImportant,
                   &Self::makeCall,
-                  Important,
+                  LastIsImportant,
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
         .add(FeatureSet::MVP,
              &Self::makeUnary,
-             Important,
+             LastIsImportant,
              &Self::makeBinary,
-             Important,
+             LastIsImportant,
              &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
     if (type.isSingle() && !type.isRef()) {
-      options.add(FeatureSet::MVP, &Self::makeLoad, Important);
+      options.add(FeatureSet::MVP, &Self::makeLoad, LastIsImportant);
       options.add(FeatureSet::SIMD, &Self::makeSIMD);
     }
     if (type.isInteger()) {
@@ -957,20 +957,20 @@ private:
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                      .add(FeatureSet::MVP,
                           &Self::makeLocalSet,
-                          VeryImportant,
+                          LastIsVeryLastIsImportant,
                           &Self::makeBlock,
-                          Important,
+                          LastIsImportant,
                           &Self::makeIf,
-                          Important,
+                          LastIsImportant,
                           &Self::makeLoop,
-                          Important,
+                          LastIsImportant,
                           &Self::makeBreak,
-                          Important,
+                          LastIsImportant,
                           &Self::makeCall,
-                          Important,
+                          LastIsImportant,
                           &Self::makeCallIndirect,
                           &Self::makeStore,
-                          Important,
+                          LastIsImportant,
                           &Self::makeDrop,
                           &Self::makeNop,
                           &Self::makeGlobalSet)
@@ -984,24 +984,24 @@ private:
     auto options =
       FeatureOptions<Expression* (Self::*)(Type)>().add(FeatureSet::MVP,
                                                         &Self::makeBlock,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeIf,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeLoop,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeBreak,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeCall,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeCallIndirect,
                                                         &Self::makeLocalSet,
-                                                        VeryImportant,
+                                                        LastIsVeryLastIsImportant,
                                                         &Self::makeStore,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeUnary,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeBinary,
-                                                        Important,
+                                                        LastIsImportant,
                                                         &Self::makeSelect,
                                                         &Self::makeSwitch,
                                                         &Self::makeDrop,
