@@ -915,7 +915,6 @@ private:
                   &Self::makeBreak,
                   LastIsImportant,
                   &Self::makeCall,
-                  LastIsImportant,
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
@@ -967,7 +966,6 @@ private:
                           &Self::makeBreak,
                           LastIsImportant,
                           &Self::makeCall,
-                          LastIsImportant,
                           &Self::makeCallIndirect,
                           &Self::makeStore,
                           LastIsImportant,
@@ -992,7 +990,6 @@ private:
                                                         &Self::makeBreak,
                                                         LastIsImportant,
                                                         &Self::makeCall,
-                                                        LastIsImportant,
                                                         &Self::makeCallIndirect,
                                                         &Self::makeLocalSet,
                                                         LastIsVeryImportant,
