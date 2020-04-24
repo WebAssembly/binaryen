@@ -734,11 +734,11 @@ def randomize_opt_flags():
     while 1:
         choice = random.choice(opt_choices)
         if '--flatten' in choice:
-          if has_flatten:
-            print('avoiding multiple --flatten in a single command, due to exponential overhead')
-            continue
-          else:
-            has_flatten = True
+            if has_flatten:
+                print('avoiding multiple --flatten in a single command, due to exponential overhead')
+                continue
+            else:
+                has_flatten = True
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break
