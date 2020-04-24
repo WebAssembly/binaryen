@@ -29,6 +29,7 @@ static std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
   std::string ret = R"(
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -41,7 +42,7 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi(u32 x) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi)(u32) = _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj(u64 x) {
-  printf("[LoggingExternalInterface logging %ld]\n", (long)x);
+  printf("[LoggingExternalInterface logging %" PRId64 "]\n", (int64_t)x);
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj)(u64) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj;
 
@@ -79,28 +80,41 @@ u32 (*Z_envZ_getTempRet0Z_iv)(void) = _Z_envZ_getTempRet0Z_iv;
 int main(int argc, char** argv) {
   init();
 
+  // We go through each export and call it, in turn. Note that we use a loop
+  // so we can do all this with a single setjmp. A setjmp is needed to handle
+  // wasm traps, and emitting a single one helps compilation speed into wasm as
+  // compile times are O(size * num_setjmps).
+  for (size_t curr = 0;; curr++) {
+    // Always call the hang limit initializer before each export.
+    (*Z_hangLimitInitializerZ_vv)();
+
+    // Prepare to call the export, so we can catch traps.
+    if (setjmp(g_jmp_buf) != 0) {
+      puts("exception!");
+    } else {
+      // Call the proper export.
+      switch(curr) {
 )";
 
   // For each export in the wasm, emit code to call it and log its result,
   // similar to the other wrappers.
+  size_t exportIndex = 0;
+
   for (auto& exp : wasm.exports) {
     if (exp->kind != ExternalKind::Function) {
       continue;
     }
 
-    // Always call the hang limit initializer before each export.
-    ret += "  (*Z_hangLimitInitializerZ_vv)();\n";
+    ret += "        case " + std::to_string(exportIndex++) + ":\n";
 
     auto* func = wasm.getFunction(exp->value);
 
-    // Emit a setjmp so that we can handle traps from the compiled wasm.
-    ret +=
-      std::string("  puts(\"[fuzz-exec] calling ") + exp->name.str + "\");\n";
-    ret += "  if (setjmp(g_jmp_buf) == 0) {\n";
+    ret += std::string("          puts(\"[fuzz-exec] calling ") +
+           exp->name.str + "\");\n";
     auto result = func->sig.results;
 
     // Emit the call itself.
-    ret += "    ";
+    ret += "            ";
     if (result != Type::none) {
       ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str +
              " => ";
@@ -109,7 +123,7 @@ int main(int argc, char** argv) {
           ret += "%d\\n\", ";
           break;
         case Type::i64:
-          ret += "%ld\\n\", (long)";
+          ret += "%\" PRId64 \"\\n\", (int64_t)";
           break;
         case Type::f32:
           ret += "%.17e\\n\", ";
@@ -168,14 +182,15 @@ int main(int argc, char** argv) {
     }
     ret += ");\n";
 
-    // Handle a longjmp which indicates a trap happened.
-    ret += "  } else {\n";
-    ret += "    puts(\"exception!\");\n";
-    ret += "  }\n";
+    // Break from the big switch.
+    ret += "          break;\n";
   }
 
-  ret += R"(
-
+  ret += R"(        default:
+          return 0; // All done.
+      }
+    }
+  }
   return 0;
 }
 )";

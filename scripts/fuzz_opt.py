@@ -329,6 +329,9 @@ class CompareVMs(TestCaseHandler):
                     wabt_bin = shared.which('wasm2c')
                     wabt_root = os.path.dirname(os.path.dirname(wabt_bin))
                     self.wasm2c_dir = os.path.join(wabt_root, 'wasm2c')
+                    if not os.path.isdir(self.wasm2c_dir):
+                        print('wabt found, but not wasm2c support dir')
+                        self.wasm2c_dir = None
                 except Exception as e:
                     print('warning: no wabt found:', e)
                     self.wasm2c_dir = None
@@ -358,12 +361,45 @@ class CompareVMs(TestCaseHandler):
                 # C won't trap on OOB, and NaNs can differ from wasm VMs
                 return not OOB and not NANS
 
+        class Wasm2C2Wasm(Wasm2C):
+            name = 'wasm2c2wasm'
+
+            def __init__(self):
+                super(Wasm2C2Wasm, self).__init__()
+
+                self.has_emcc = shared.which('emcc') is not None
+
+            def run(self, wasm):
+                run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
+                run(['wasm2c', wasm, '-o', 'wasm.c'])
+                compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
+                if random.random() < 0.5:
+                    compile_cmd += ['-O' + str(random.randint(1, 3))]
+                elif random.random() < 0.5:
+                    if random.random() < 0.5:
+                        compile_cmd += ['-Os']
+                    else:
+                        compile_cmd += ['-Oz']
+                run(compile_cmd)
+                return run_vm(['d8', 'a.out.js'])
+
+            def can_run(self):
+                return super(Wasm2C2Wasm, self).can_run() and self.has_emcc
+
+            def can_compare_to_self(self):
+                return True
+
+            def can_compare_to_others(self):
+                # NaNs can differ from wasm VMs
+                return not NANS
+
         self.vms = [
             VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
             VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
-            Wasm2C()
+            Wasm2C(),
+            Wasm2C2Wasm(),
         ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
