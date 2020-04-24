@@ -9,7 +9,7 @@ var foo = module.addFunction(
   binaryen.none,
   binaryen.none,
   [],
-  module.returnCall("foo", [], binaryen.none, binaryen.none)
+  module.return_call("foo", [], binaryen.none, binaryen.none)
 );
 
 var bar = module.addFunction(
@@ -17,7 +17,7 @@ var bar = module.addFunction(
   binaryen.none,
   binaryen.none,
   [],
-  module.returnCallIndirect(
+  module.return_call_indirect(
     module.i32.const(0),
     [],
     binaryen.none,
