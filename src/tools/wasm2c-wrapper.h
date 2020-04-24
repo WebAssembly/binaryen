@@ -98,14 +98,13 @@ int main(int argc, char** argv) {
 
   // For each export in the wasm, emit code to call it and log its result,
   // similar to the other wrappers.
-  size_t exportIndex = 0;
-
-  for (auto& exp : wasm.exports) {
+  for (size_t i = 0; i < wasm.exports.size(); i++) {
+    auto& exp = wasm.exports[i];
     if (exp->kind != ExternalKind::Function) {
       continue;
     }
 
-    ret += "        case " + std::to_string(exportIndex++) + ":\n";
+    ret += "        case " + std::to_string(i) + ":\n";
 
     auto* func = wasm.getFunction(exp->value);
 
