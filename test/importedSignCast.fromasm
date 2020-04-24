@@ -1,15 +1,15 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "memory" (memory $memory 256 256))
- (data (global.get $__memory_base) "importedSignCast.asm.js")
- (import "env" "table" (table $table 1 1 funcref))
- (elem (global.get $__table_base) $gm)
- (import "env" "__memory_base" (global $__memory_base i32))
- (import "env" "__table_base" (global $__table_base i32))
+ (import "env" "memory" (memory $3 256 256))
+ (data (global.get $gimport$1) "importedSignCast.asm.js")
+ (import "env" "table" (table $timport$4 1 1 funcref))
+ (elem (global.get $gimport$2) $gm)
+ (import "env" "__memory_base" (global $gimport$1 i32))
+ (import "env" "__table_base" (global $gimport$2 i32))
  (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))
  (export "func" (func $func))
- (func $func (; has Stack IR ;)
+ (func $func
   (drop
    (call $gm
     (i32.const 0)

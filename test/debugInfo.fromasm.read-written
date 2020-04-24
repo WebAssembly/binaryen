@@ -13,38 +13,28 @@
  (export "nofile" (func $nofile))
  (export "inlineInto" (func $inlineInto))
  (func $add (param $0 i32) (param $1 i32) (result i32)
-  ;;@ tests/other_file.cpp:314159:0
   (i32.add
    (local.get $1)
    (local.get $1)
   )
  )
  (func $ret (param $0 i32) (result i32)
-  ;;@ return.cpp:50:0
-  (local.set $0
+  (i32.add
    (i32.shl
     (local.get $0)
     (i32.const 1)
    )
-  )
-  ;;@ return.cpp:100:0
-  (i32.add
-   (local.get $0)
    (i32.const 1)
   )
  )
  (func $opts (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
-  ;;@ even-opted.cpp:3:0
   (i32.add
-   ;;@ even-opted.cpp:1:0
    (if (result i32)
     (local.tee $2
      (local.tee $0
       (i32.shr_s
-       ;;@ even-opted.cpp:2:0
        (local.get $1)
-       ;;@ even-opted.cpp:1:0
        (local.tee $1
         (i32.add
          (local.get $0)
@@ -54,7 +44,6 @@
       )
      )
     )
-    ;;@ even-opted.cpp:3:0
     (i32.rem_s
      (local.get $1)
      (local.get $2)
@@ -69,35 +58,25 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  ;;@ fib.c:8:0
   (local.set $2
-   ;;@ fib.c:3:0
    (if (result i32)
     (i32.gt_s
      (local.get $0)
      (i32.const 0)
     )
     (i32.const 1)
-    (block (result i32)
-     (local.set $0
-      (i32.const 1)
-     )
-     ;;@ fib.c:8:0
-     (return
-      (local.get $0)
-     )
+    (return
+     (i32.const 1)
     )
    )
   )
   (loop $label$3
-   ;;@ fib.c:4:0
    (local.set $4
     (i32.add
      (local.get $2)
      (local.get $3)
     )
    )
-   ;;@ fib.c:3:0
    (local.set $1
     (i32.add
      (local.get $1)
@@ -120,12 +99,12 @@
     )
    )
   )
-  ;;@ fib.c:8:0
   (local.get $4)
  )
  (func $switch_reach (param $0 i32) (result i32)
   (local $1 i32)
-  (local.set $1
+  (local $2 i32)
+  (local.set $2
    (block $label$1 (result i32)
     (block $label$2
      (if
@@ -169,15 +148,12 @@
     (local.get $0)
    )
   )
-  ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
-  (local.get $1)
+  (local.get $2)
  )
  (func $nofile
-  ;;@ (unknown):1337:0
   (call $nofile)
  )
  (func $inlineInto (param $0 i32) (param $1 i32) (result i32)
-  ;;@ inline_me.c:120:0
   (i32.add
    (local.tee $0
     (i32.add
@@ -190,7 +166,6 @@
     (local.get $1)
    )
   )
-  ;;@ inline_me.c:125:0
  )
 )
 

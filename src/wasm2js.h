@@ -315,6 +315,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         runner.add("avoid-reinterprets");
       }
       runner.addDefaultOptimizationPasses();
+      // Translate back from Stack IR to normal IR
+      runner.add("roundtrip");
       runner.add("avoid-reinterprets");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and
@@ -410,9 +412,12 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS\n"));
   }
   // functions
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    asmFunc[3]->push_back(processFunction(wasm, func));
-  });
+  // Don't use iterDefinedFunctions because the iterator could be invalidated
+  for (size_t i = 0; i < wasm->functions.size(); ++i) {
+    if (!wasm->functions[i]->imported()) {
+      asmFunc[3]->push_back(processFunction(wasm, wasm->functions[i].get()));
+    }
+  }
   if (generateFetchHighBits) {
     Builder builder(allocator);
     asmFunc[3]->push_back(processFunction(

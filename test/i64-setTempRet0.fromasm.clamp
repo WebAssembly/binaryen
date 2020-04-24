@@ -1,15 +1,15 @@
 (module
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_none (func (param i32)))
- (import "env" "memory" (memory $memory 256 256))
- (data (global.get $__memory_base) "i64-setTempRet0.asm.js")
- (import "env" "__memory_base" (global $__memory_base i32))
+ (import "env" "memory" (memory $4 256 256))
+ (data (global.get $gimport$3) "i64-setTempRet0.asm.js")
+ (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
- (func $imports (; has Stack IR ;) (result i32)
+ (func $imports (result i32)
   (i32.wrap_i64
    (i64.or
     (i64.extend_i32_u
@@ -24,7 +24,7 @@
    )
   )
  )
- (func $legalstub$illegalResult (; has Stack IR ;) (result i32)
+ (func $legalstub$illegalResult (result i32)
   (call $setTempRet0
    (i32.const 2)
   )

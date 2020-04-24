@@ -233,13 +233,7 @@ private:
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
 
-  // After running a pass, handle any changes due to
-  // how the pass is defined, such as clearing away any
-  // temporary data structures that the pass declares it
-  // invalidates.
-  // If a function is passed, we operate just on that function;
-  // otherwise, the whole module.
-  void handleAfterEffects(Pass* pass, Function* func = nullptr);
+  void checkStackIR(Pass* pass, Function* func);
 };
 
 //
@@ -296,6 +290,14 @@ public:
   // This property is important as if Binaryen IR is modified, we need to throw
   // out any Stack IR - it would need to be regenerated and optimized.
   virtual bool modifiesBinaryenIR() { return true; }
+
+  // Whether this pass operates on StackIR. Once StackIR is generated, the
+  // normal Binaryen IR is no longer valid, so it is an error to run a
+  // non-StackIR pass after that point.
+  virtual bool acceptsStackIR() { return false; }
+
+  // Whether this pass operates on nested IR.
+  virtual bool acceptsNestedIR() { return true; }
 
   std::string name;
 

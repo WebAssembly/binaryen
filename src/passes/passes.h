@@ -83,7 +83,7 @@ Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
-Pass* createPrintStackIRPass();
+Pass* createReloadModulePass();
 Pass* createRelooperJumpThreadingPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();

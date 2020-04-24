@@ -70,7 +70,7 @@ function asmFunc(global, env, buffer) {
  
  function $13($0) {
   $0 = $0 | 0;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    case 3:
     return 100;
@@ -81,7 +81,7 @@ function asmFunc(global, env, buffer) {
    case 0:
     return 103;
    default:
-    break block;
+    break label$1;
    };
   }
   return 104;
@@ -89,7 +89,7 @@ function asmFunc(global, env, buffer) {
  
  function $14($0) {
   $0 = $0 | 0;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    case 3:
     return 210;
@@ -100,7 +100,7 @@ function asmFunc(global, env, buffer) {
    case 0:
     return 213;
    default:
-    break block;
+    break label$1;
    };
   }
   return 214;
@@ -108,7 +108,7 @@ function asmFunc(global, env, buffer) {
  
  function $15($0) {
   $0 = $0 | 0;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    case 0:
    case 2:
@@ -12420,7 +12420,7 @@ function asmFunc(global, env, buffer) {
    case 24614:
     return 0;
    default:
-    break block;
+    break label$1;
    };
   }
   return 1;
@@ -12565,7 +12565,7 @@ function asmFunc(global, env, buffer) {
   var $1 = 0, $2 = 0;
   $1 = 16;
   $2 = 16;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    case 0:
     $2 = 18;
@@ -12573,7 +12573,7 @@ function asmFunc(global, env, buffer) {
     $1 = $2 + 1 | 0;
     break;
    default:
-    break block;
+    break label$1;
    };
   }
   return $1 | 0;
@@ -12584,7 +12584,7 @@ function asmFunc(global, env, buffer) {
   var $1 = 0, $2 = 0;
   $1 = 8;
   $2 = 8;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    default:
     $2 = 16;
@@ -12592,7 +12592,7 @@ function asmFunc(global, env, buffer) {
     $1 = $2 + 1 | 0;
     break;
    case 0:
-    break block;
+    break label$1;
    };
   }
   return $1 | 0;
@@ -12603,7 +12603,7 @@ function asmFunc(global, env, buffer) {
   var $1 = 0, $2 = 0;
   $1 = 8;
   $2 = 8;
-  block : {
+  label$1 : {
    switch ($0 | 0) {
    case 0:
     $2 = 16;
@@ -12611,7 +12611,7 @@ function asmFunc(global, env, buffer) {
     $1 = $2 + 1 | 0;
     break;
    default:
-    break block;
+    break label$1;
    };
   }
   return $1 | 0;

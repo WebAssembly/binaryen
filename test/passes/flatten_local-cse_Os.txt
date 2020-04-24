@@ -1,27 +1,20 @@
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (export "div16_internal" (func $0))
- (func $0 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (i32.add
-   (local.tee $0
-    (i32.xor
-     (i32.shr_s
-      (i32.shl
-       (local.get $0)
-       (i32.const 16)
-      )
-      (i32.const 16)
-     )
-     (i32.shr_s
-      (i32.shl
-       (local.get $1)
-       (i32.const 16)
-      )
-      (i32.const 16)
-     )
-    )
-   )
-   (local.get $0)
-  )
+ (func $0 (param $0 i32) (param $1 i32) (result i32)
+  local.get $0
+  i32.const 16
+  i32.shl
+  i32.const 16
+  i32.shr_s
+  local.get $1
+  i32.const 16
+  i32.shl
+  i32.const 16
+  i32.shr_s
+  i32.xor
+  local.tee $0
+  local.get $0
+  i32.add
  )
 )

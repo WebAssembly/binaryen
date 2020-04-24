@@ -618,7 +618,7 @@ def test_one(random_input, opts, allow_autoreduce):
                 # gets commands from the handler, for a given set of optimizations. this is all the commands
                 # needed to run the testing that that handler wants to do.
                 def get_commands(opts):
-                    return testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
+                    return testcase_handler.get_commands(wasm='a.wasm', opts=FUZZ_OPTS + opts + FEATURE_OPTS, random_seed=random_seed)
 
                 def write_commands_and_test(opts):
                     commands = get_commands(opts)
@@ -641,6 +641,12 @@ def test_one(random_input, opts, allow_autoreduce):
                                 # some opts can't be removed, like --flatten --dfo requires flatten
                                 if opts[i] == '--flatten':
                                     if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
+                                        continue
+                                if opts[i] == '--generate-stack-ir':
+                                    if i != len(opts) - 1 and opts[i + 1] == '--optimize-stack-ir':
+                                        continue
+                                if opts[i] == '--roundtrip':
+                                    if i != 0 and (opts[i - 1].startswith('-O') or 'stack-ir' in opts[i - 1]):
                                         continue
                                 shorter = opts[:i] + opts[i + 1:]
                                 try:
@@ -666,7 +672,7 @@ def test_one(random_input, opts, allow_autoreduce):
                 print('')
 
     # create a second wasm for handlers that want to look at pairs.
-    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + FUZZ_OPTS + opts + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
@@ -695,7 +701,7 @@ def test_one(random_input, opts, allow_autoreduce):
 
                 # let the testcase handler handle this testcase however it wants. in this case we give it
                 # the input and both wasms.
-                testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+                testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=FUZZ_OPTS + opts + FEATURE_OPTS)
                 print('')
 
     return bytes
@@ -715,7 +721,16 @@ def write_commands(commands, filename):
 
 opt_choices = [
     [],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    # Even though -O0 and -O1 by themselves do not generate stack IR, the
+    # optimization level may be overridden by later optimization flags so we
+    # have to be defensive and add round trips for them as well.
+    ["-O0", "--roundtrip"],
+    ["-O1", "--roundtrip"],
+    ["-O2", "--roundtrip"],
+    ["-O3", "--roundtrip"],
+    ["-O4", "--roundtrip"],
+    ["-Os", "--roundtrip"],
+    ["-Oz", "--roundtrip"],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -732,14 +747,13 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
-    ["--generate-stack-ir"],
+    ["--generate-stack-ir", "--roundtrip"],
+    ["--generate-stack-ir", "--optimize-stack-ir", "--roundtrip"],
     ["--licm"],
     ["--memory-packing"],
     ["--merge-blocks"],
-    ['--merge-locals'],
+    ["--merge-locals"],
     ["--optimize-instructions"],
-    ["--optimize-stack-ir"],
-    ["--generate-stack-ir", "--optimize-stack-ir"],
     ["--pick-load-signs"],
     ["--precompute"],
     ["--precompute-propagate"],
@@ -783,6 +797,9 @@ def randomize_opt_flags():
         pos = random.randint(0, len(flag_groups))
         flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
+    # we want to end up with Stack IR sometimes
+    if ret and ret[-1] == '--roundtrip' and random.random() < 0.5:
+        ret.pop()
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
         if random.random() < 0.5:

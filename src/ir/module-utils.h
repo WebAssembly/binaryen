@@ -259,6 +259,9 @@ template<typename T> struct ParallelFunctionAnalysis {
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
       bool modifiesBinaryenIR() override { return false; }
+      // Trust that the caller will behave correctly
+      bool acceptsStackIR() override { return true; }
+      bool acceptsNestedIR() override { return true; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}

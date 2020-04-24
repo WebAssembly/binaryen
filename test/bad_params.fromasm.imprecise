@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (export "ex" (func $ex))
- (func $ex (; has Stack IR ;)
+ (func $ex
   (nop)
  )
 )

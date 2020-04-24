@@ -328,6 +328,8 @@ private:
 
 struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
+  bool acceptsStackIR() override { return true; }
+  bool acceptsNestedIR() override { return false; }
 
   Pass* create() override { return new OptimizeStackIR; }
 
@@ -335,7 +337,7 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
 
   void doWalkFunction(Function* func) {
     if (!func->stackIR) {
-      return;
+      WASM_UNREACHABLE("Should have had stack IR!");
     }
     StackIROptimizer(func, getPassOptions()).run();
   }

@@ -26,8 +26,8 @@ function asmFunc(global, env, buffer) {
  
  function $1($0) {
   $0 = $0 | 0;
-  a : {
-   b : {
+  label$1 : {
+   label$2 : {
     switch ($0 | 0) {
     default:
      zed(-1);
@@ -38,11 +38,11 @@ function asmFunc(global, env, buffer) {
     case 2:
      zed(-5);
      zed(-6);
-     break a;
+     break label$1;
     case 0:
-     break a;
+     break label$1;
     case 1:
-     break b;
+     break label$2;
     };
    }
    zed(-7);
@@ -54,23 +54,23 @@ function asmFunc(global, env, buffer) {
  
  function $2($0) {
   $0 = $0 | 0;
-  a : {
-   b : {
-    c : {
-     d : {
+  label$1 : {
+   label$2 : {
+    label$3 : {
+     label$4 : {
       switch ($0 | 0) {
       default:
        zed(-1);
        zed(-2);
-       break c;
+       break label$3;
       case 0:
-       break a;
+       break label$1;
       case 1:
-       break b;
+       break label$2;
       case 2:
-       break c;
+       break label$3;
       case 3:
-       break d;
+       break label$4;
       };
      }
      zed(-3);
@@ -78,7 +78,7 @@ function asmFunc(global, env, buffer) {
     }
     zed(-5);
     zed(-6);
-    break a;
+    break label$1;
    }
    zed(-7);
    zed(-8);
@@ -89,26 +89,26 @@ function asmFunc(global, env, buffer) {
  
  function $3($0) {
   $0 = $0 | 0;
-  a : {
-   b : {
-    c : {
-     d : {
+  label$1 : {
+   label$2 : {
+    label$3 : {
+     label$4 : {
       switch ($0 | 0) {
       default:
        if ($0) {
-        break c
+        break label$3
        }
        zed(-1);
        zed(-2);
        break;
       case 0:
-       break a;
+       break label$1;
       case 1:
-       break b;
+       break label$2;
       case 2:
-       break c;
+       break label$3;
       case 3:
-       break d;
+       break label$4;
       };
      }
      zed(-3);
@@ -116,7 +116,7 @@ function asmFunc(global, env, buffer) {
     }
     zed(-5);
     zed(-6);
-    break a;
+    break label$1;
    }
    zed(-7);
    zed(-8);
@@ -127,29 +127,29 @@ function asmFunc(global, env, buffer) {
  
  function $4($0) {
   $0 = $0 | 0;
-  a : {
-   b : {
-    c : {
+  label$1 : {
+   label$2 : {
+    label$3 : {
      if ($0) {
-      break c
+      break label$3
      }
-     d : {
+     label$4 : {
       switch ($0 | 0) {
       default:
        if ($0) {
-        break c
+        break label$3
        }
        zed(-1);
        zed(-2);
        break;
       case 0:
-       break a;
+       break label$1;
       case 1:
-       break b;
+       break label$2;
       case 2:
-       break c;
+       break label$3;
       case 3:
-       break d;
+       break label$4;
       };
      }
      zed(-3);
@@ -157,7 +157,7 @@ function asmFunc(global, env, buffer) {
     }
     zed(-5);
     zed(-6);
-    break a;
+    break label$1;
    }
    zed(-7);
    zed(-8);

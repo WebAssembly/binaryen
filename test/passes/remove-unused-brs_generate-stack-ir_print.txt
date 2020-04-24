@@ -24,20 +24,25 @@
 )
 (module
  (type $i64_=>_none (func (param i64)))
- (func $0 (; has Stack IR ;) (param $var$0 i64)
-  (block $label$1
-   (br_if $label$1
-    (block $label$2
-     (loop $label$3
-      (local.tee $var$0
-       (block $label$4
-        (unreachable)
-       )
-      )
-     )
-     (unreachable)
-    )
-   )
-  )
+ (func $0 (param $var$0 i64)
+  block $label$1
+   block $label$2
+    loop $label$3
+     block $label$4
+      unreachable
+      unreachable
+     end
+     unreachable
+     unreachable
+     unreachable
+    end
+    unreachable
+    unreachable
+    unreachable
+   end
+   unreachable
+   br_if $label$1
+   unreachable
+  end
  )
 )

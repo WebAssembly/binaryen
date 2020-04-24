@@ -2,10 +2,10 @@
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i64 (func (result i64)))
- (import "env" "memory" (memory $memory (shared 256 256)))
+ (import "env" "memory" (memory $1 (shared 256 256)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (export "test64" (func $legalstub$test64))
- (func $test64 (; has Stack IR ;) (result i64)
+ (func $test64 (result i64)
   (local $0 i64)
   (local $1 i64)
   (i64.atomic.store
@@ -48,7 +48,7 @@
   )
   (local.get $1)
  )
- (func $legalstub$test64 (; has Stack IR ;) (result i32)
+ (func $legalstub$test64 (result i32)
   (local $0 i64)
   (local.set $0
    (call $test64)
