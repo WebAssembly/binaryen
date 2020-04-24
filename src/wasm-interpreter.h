@@ -1300,9 +1300,6 @@ protected:
   // Flags indicating special requirements. See FlagValues.
   Flags flags = FlagValues::DEFAULT;
 
-  // Maximum iterations before giving up on a loop.
-  Index maxLoopIterations = NO_LIMIT;
-
   // Map remembering concrete local values set in the context of this flow.
   std::unordered_map<Index, Literals> localValues;
   // Map remembering concrete global values set in the context of this flow.
