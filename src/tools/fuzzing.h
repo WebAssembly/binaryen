@@ -847,8 +847,8 @@ private:
 
   // Weighting for the core make* methods. Some nodes are important enough that
   // we should do them quite often.
-  static const size_t LastIsVeryImportant = 4;
-  static const size_t LastIsImportant = 2;
+  static const size_t VeryImportant = 4;
+  static const size_t Important = 2;
 
   // always call the toplevel make(type) command, not the internal specific ones
 
@@ -895,40 +895,31 @@ private:
       !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
+    using WeightedOption = decltype(options)::WeightedOption;
     options.add(FeatureSet::MVP,
-                &Self::makeLocalGet,
-                LastIsVeryImportant,
-                &Self::makeLocalSet,
-                LastIsVeryImportant,
-                &Self::makeGlobalGet,
-                LastIsImportant,
-                &Self::makeConst,
-                LastIsImportant);
+                WeightedOption{&Self::makeLocalGet, VeryImportant},
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
+                WeightedOption{&Self::makeGlobalGet, Important},
+                WeightedOption{&Self::makeConst, Important});
     if (canMakeControlFlow) {
       options.add(FeatureSet::MVP,
-                  &Self::makeBlock,
-                  LastIsImportant,
-                  &Self::makeIf,
-                  LastIsImportant,
-                  &Self::makeLoop,
-                  LastIsImportant,
-                  &Self::makeBreak,
-                  LastIsImportant,
+                  WeightedOption{&Self::makeBlock, Important},
+                  WeightedOption{&Self::makeIf, Important},
+                  WeightedOption{&Self::makeLoop, Important},
+                  WeightedOption{&Self::makeBreak, Important},
                   &Self::makeCall,
                   &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
         .add(FeatureSet::MVP,
-             &Self::makeUnary,
-             LastIsImportant,
-             &Self::makeBinary,
-             LastIsImportant,
+             WeightedOption{&Self::makeUnary, Important},
+             WeightedOption{&Self::makeBinary, Important},
              &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
     if (type.isSingle() && !type.isRef()) {
-      options.add(FeatureSet::MVP, &Self::makeLoad, LastIsImportant);
+      options.add(FeatureSet::MVP, {&Self::makeLoad, Important});
       options.add(FeatureSet::SIMD, &Self::makeSIMD);
     }
     if (type.isInteger()) {
@@ -953,58 +944,46 @@ private:
       }
     }
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
-                     .add(FeatureSet::MVP,
-                          &Self::makeLocalSet,
-                          LastIsVeryImportant,
-                          &Self::makeBlock,
-                          LastIsImportant,
-                          &Self::makeIf,
-                          LastIsImportant,
-                          &Self::makeLoop,
-                          LastIsImportant,
-                          &Self::makeBreak,
-                          LastIsImportant,
-                          &Self::makeCall,
-                          &Self::makeCallIndirect,
-                          &Self::makeStore,
-                          LastIsImportant,
-                          &Self::makeDrop,
-                          &Self::makeNop,
-                          &Self::makeGlobalSet)
-                     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-                     .add(FeatureSet::Atomics, &Self::makeAtomic);
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>();
+    using WeightedOption = decltype(options)::WeightedOption;
+    options
+      .add(FeatureSet::MVP,
+           WeightedOption{&Self::makeLocalSet, VeryImportant},
+           WeightedOption{&Self::makeBlock, Important},
+           WeightedOption{&Self::makeIf, Important},
+           WeightedOption{&Self::makeLoop, Important},
+           WeightedOption{&Self::makeBreak, Important},
+           &Self::makeCall,
+           &Self::makeCallIndirect,
+           WeightedOption{&Self::makeStore, Important},
+           &Self::makeDrop,
+           &Self::makeNop,
+           &Self::makeGlobalSet)
+      .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
+      .add(FeatureSet::Atomics, &Self::makeAtomic);
     return (this->*pick(options))(Type::none);
   }
 
   Expression* _makeunreachable() {
     using Self = TranslateToFuzzReader;
-    auto options =
-      FeatureOptions<Expression* (Self::*)(Type)>().add(FeatureSet::MVP,
-                                                        &Self::makeBlock,
-                                                        LastIsImportant,
-                                                        &Self::makeIf,
-                                                        LastIsImportant,
-                                                        &Self::makeLoop,
-                                                        LastIsImportant,
-                                                        &Self::makeBreak,
-                                                        LastIsImportant,
-                                                        &Self::makeCall,
-                                                        &Self::makeCallIndirect,
-                                                        &Self::makeLocalSet,
-                                                        LastIsVeryImportant,
-                                                        &Self::makeStore,
-                                                        LastIsImportant,
-                                                        &Self::makeUnary,
-                                                        LastIsImportant,
-                                                        &Self::makeBinary,
-                                                        LastIsImportant,
-                                                        &Self::makeSelect,
-                                                        &Self::makeSwitch,
-                                                        &Self::makeDrop,
-                                                        &Self::makeReturn,
-                                                        &Self::makeUnreachable,
-                                                        LastIsImportant);
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>();
+    using WeightedOption = decltype(options)::WeightedOption;
+    options.add(FeatureSet::MVP,
+                WeightedOption{&Self::makeBlock, Important},
+                WeightedOption{&Self::makeIf, Important},
+                WeightedOption{&Self::makeLoop, Important},
+                WeightedOption{&Self::makeBreak, Important},
+                &Self::makeCall,
+                &Self::makeCallIndirect,
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
+                WeightedOption{&Self::makeStore, Important},
+                WeightedOption{&Self::makeUnary, Important},
+                WeightedOption{&Self::makeBinary, Important},
+                &Self::makeSelect,
+                &Self::makeSwitch,
+                &Self::makeDrop,
+                &Self::makeReturn,
+                WeightedOption{&Self::makeUnreachable, Important});
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -2870,11 +2849,16 @@ private:
       return add(feature, rest...);
     }
 
+    struct WeightedOption {
+      T option;
+      size_t weight;
+    };
+
     template<typename... Ts>
     FeatureOptions<T>&
-    add(FeatureSet feature, T option, size_t count, Ts... rest) {
-      for (size_t i = 0; i < count; i++) {
-        options[feature].push_back(option);
+    add(FeatureSet feature, WeightedOption weightedOption, Ts... rest) {
+      for (size_t i = 0; i < weightedOption.weight; i++) {
+        options[feature].push_back(weightedOption.option);
       }
       return add(feature, rest...);
     }
