@@ -99,17 +99,8 @@ inline void copyModule(const Module& in, Module& out) {
 }
 
 inline void clearModule(Module& wasm) {
-  wasm.exports.clear();
-  wasm.functions.clear();
-  wasm.globals.clear();
-  wasm.events.clear();
-  wasm.table.clear();
-  wasm.memory.clear();
-  wasm.start = Name();
-  wasm.userSections.clear();
-  wasm.debugInfoFileNames.clear();
-  wasm.updateMaps();
-  wasm.allocator.clear();
+  wasm.~Module();
+  new (&wasm) Module;
 }
 
 // Renaming

@@ -18,7 +18,6 @@
 // Shared execution result checking code
 //
 
-#include "ir/import-utils.h"
 #include "shell-interface.h"
 #include "wasm.h"
 

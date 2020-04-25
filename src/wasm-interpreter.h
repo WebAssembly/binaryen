@@ -1267,7 +1267,7 @@ public:
     // Check if a constant value has been set in the context of this runner.
     auto iter = localValues.find(curr->index);
     if (iter != localValues.end()) {
-      return Flow(std::move(iter->second));
+      return Flow(iter->second);
     }
     seenUnknownLocalGet = true;
     return Flow(NONCONSTANT_FLOW);
@@ -1304,7 +1304,7 @@ public:
     // Check if a constant value has been set in the context of this runner.
     auto iter = globalValues.find(curr->name);
     if (iter != globalValues.end()) {
-      return Flow(std::move(iter->second));
+      return Flow(iter->second);
     }
     return Flow(NONCONSTANT_FLOW);
   }
@@ -1343,13 +1343,13 @@ public:
             auto argFlow = visit(curr->operands[i]);
             if (!argFlow.breaking()) {
               assert(argFlow.values.isConcrete());
-              localValues[i] = std::move(argFlow.values);
+              localValues[i] = argFlow.values;
             }
           }
           auto retFlow = visit(func->body);
-          localValues = std::move(prevLocalValues);
+          localValues = prevLocalValues;
           if (retFlow.breakTo == RETURN_FLOW) {
-            return Flow(std::move(retFlow.values));
+            return Flow(retFlow.values);
           } else if (!retFlow.breaking()) {
             return retFlow;
           }
@@ -1359,7 +1359,7 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
 
-  Flow visitCallIndirect(CallIndirect*) {
+  Flow visitCallIndirect(CallIndirect* curr) {
     NOTE_ENTER("CallIndirect");
     return Flow(NONCONSTANT_FLOW);
   }
@@ -1391,39 +1391,39 @@ public:
     NOTE_ENTER("MemoryFill");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicRMW(AtomicRMW*) {
+  Flow visitAtomicRMW(AtomicRMW* curr) {
     NOTE_ENTER("AtomicRMW");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg*) {
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     NOTE_ENTER("AtomicCmpxchg");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicWait(AtomicWait*) {
+  Flow visitAtomicWait(AtomicWait* curr) {
     NOTE_ENTER("AtomicWait");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicNotify(AtomicNotify*) {
+  Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitSIMDLoad(SIMDLoad*) {
+  Flow visitSIMDLoad(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoad");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitSIMDLoadSplat(SIMDLoad*) {
+  Flow visitSIMDLoadSplat(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoadSplat");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitSIMDLoadExtend(SIMDLoad*) {
+  Flow visitSIMDLoadExtend(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoadExtend");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitPush(Push*) {
+  Flow visitPush(Push* curr) {
     NOTE_ENTER("Push");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitPop(Pop*) {
+  Flow visitPop(Pop* curr) {
     NOTE_ENTER("Pop");
     return Flow(NONCONSTANT_FLOW);
   }
@@ -2486,7 +2486,8 @@ public:
       functionStack.pop_back();
     }
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "exiting " << function->name << " with " << ret << '\n';
+    std::cout << "exiting " << function->name << " with " << flow.values
+              << '\n';
 #endif
     return flow.values;
   }
