@@ -92,7 +92,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
 
   void visitLoop(Loop* curr) {
     handleBreakTarget(curr->name);
-    if (!curr->name.is()) {
+    if (!curr->name.is() && curr->body->type == curr->type) {
       replaceCurrent(curr->body);
     }
   }
