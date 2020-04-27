@@ -466,7 +466,7 @@ class CompareVMs(TestCaseHandler):
 class FuzzExec(TestCaseHandler):
     def get_commands(self, wasm, opts, random_seed):
         return [
-            '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec --fuzz-binary %(opts)s %(wasm)s' % {
+            '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec %(opts)s %(wasm)s' % {
                 'MAX_INTERPRETER_ENV_VAR': MAX_INTERPRETER_ENV_VAR,
                 'MAX_INTERPRETER_DEPTH': MAX_INTERPRETER_DEPTH,
                 'wasm_opt': in_bin('wasm-opt'),
@@ -780,16 +780,25 @@ opt_choices = [
 
 
 def randomize_opt_flags():
-    ret = []
+    flag_groups = []
+    has_flatten = False
     # core opts
     while 1:
         choice = random.choice(opt_choices)
-        if '--flatten' in ret and '--flatten' in choice:
-            print('avoiding multiple --flatten in a single command, due to exponential overhead')
-        else:
-            ret += choice
-        if len(ret) > 20 or random.random() < 0.3:
+        if '--flatten' in choice:
+            if has_flatten:
+                print('avoiding multiple --flatten in a single command, due to exponential overhead')
+                continue
+            else:
+                has_flatten = True
+        flag_groups.append(choice)
+        if len(flag_groups) > 20 or random.random() < 0.3:
             break
+    # maybe add an extra round trip
+    if random.random() < 0.5:
+        pos = random.randint(0, len(flag_groups))
+        flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+    ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
         if random.random() < 0.5:
