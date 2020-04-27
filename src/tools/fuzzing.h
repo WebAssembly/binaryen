@@ -953,9 +953,9 @@ private:
            WeightedOption{&Self::makeIf, Important},
            WeightedOption{&Self::makeLoop, Important},
            WeightedOption{&Self::makeBreak, Important},
+           WeightedOption{&Self::makeStore, Important},
            &Self::makeCall,
            &Self::makeCallIndirect,
-           WeightedOption{&Self::makeStore, Important},
            &Self::makeDrop,
            &Self::makeNop,
            &Self::makeGlobalSet)
@@ -969,21 +969,21 @@ private:
     auto options = FeatureOptions<Expression* (Self::*)(Type)>();
     using WeightedOption = decltype(options)::WeightedOption;
     options.add(FeatureSet::MVP,
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
                 WeightedOption{&Self::makeBlock, Important},
                 WeightedOption{&Self::makeIf, Important},
                 WeightedOption{&Self::makeLoop, Important},
                 WeightedOption{&Self::makeBreak, Important},
-                &Self::makeCall,
-                &Self::makeCallIndirect,
-                WeightedOption{&Self::makeLocalSet, VeryImportant},
                 WeightedOption{&Self::makeStore, Important},
                 WeightedOption{&Self::makeUnary, Important},
                 WeightedOption{&Self::makeBinary, Important},
+                WeightedOption{&Self::makeUnreachable, Important},
+                &Self::makeCall,
+                &Self::makeCallIndirect,
                 &Self::makeSelect,
                 &Self::makeSwitch,
                 &Self::makeDrop,
-                &Self::makeReturn,
-                WeightedOption{&Self::makeUnreachable, Important});
+                &Self::makeReturn);
     return (this->*pick(options))(Type::unreachable);
   }
 
