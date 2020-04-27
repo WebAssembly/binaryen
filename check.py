@@ -365,17 +365,29 @@ TEST_SUITES = OrderedDict([
     ('gcc', run_gcc_tests),
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
+    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
 ])
 
 
 # Run all the tests
 def main():
+    all_suites = TEST_SUITES.keys()
+    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+
     if shared.options.list_suites:
-        for suite in TEST_SUITES.keys():
+        for suite in all_suites:
             print(suite)
         return 0
 
-    for test in shared.requested or TEST_SUITES.keys():
+    for r in shared.requested:
+        if r not in all_suites:
+            print('invalid test suite: %s (see --list-suites)\n' % r)
+            return 1
+
+    if not shared.requested:
+        shared.requested = [s for s in all_suites if s not in skip_by_default]
+
+    for test in shared.requested:
         TEST_SUITES[test]()
 
     # Check/display the results
