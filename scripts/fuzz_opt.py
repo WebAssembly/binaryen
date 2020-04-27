@@ -89,7 +89,7 @@ def randomize_pass_debug():
 
 
 @contextlib.contextmanager
-def without_pass_debug():
+def no_pass_debug():
     old_env = os.environ.copy()
     if os.environ.get('BINARYEN_PASS_DEBUG'):
         del os.environ['BINARYEN_PASS_DEBUG']
@@ -395,7 +395,7 @@ class CompareVMs(TestCaseHandler):
                 # avoid pass-debug on the emcc invocation itself (which runs
                 # binaryen to optimize the wasm), as the wasm here can be very
                 # large and it isn't what we are focused on testing here
-                with without_pass_debug():
+                with no_pass_debug():
                     run(compile_cmd)
                 return run_vm(['d8', 'a.out.js'])
 
