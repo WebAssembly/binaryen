@@ -22,7 +22,6 @@ import math
 import subprocess
 import random
 import re
-import shutil
 import sys
 import time
 import traceback
@@ -269,13 +268,6 @@ def run_d8(wasm):
     return run_vm([shared.V8] + shared.V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
-# There are two types of test case handlers:
-#    * get_commands() users: these return a list of commands to run (for example, "run this wasm-opt
-#        command, then that one"). The calling code gets and runs those commands on the test wasm
-#        file, and has enough information and control to be able to perform auto-reduction of any
-#        bugs found.
-#    * Totally generic: These receive the input pattern, a wasm generated from it, and a wasm
-#        optimized from that, and can then do anything it wants with those.
 class TestCaseHandler:
     # how frequent this handler will be run. 1 means always run it, 0.5 means half the
     # time
@@ -284,9 +276,9 @@ class TestCaseHandler:
     def __init__(self):
         self.num_runs = 0
 
-    # If the core handle_pair() method is not overridden, it calls handle_single()
-    # on each of the pair. That is useful if you just want the two wasms, and don't
-    # care about their relationship
+    # If the core handle_pair() method is not overridden, it calls handle() on
+    # each of the items. That is useful if you just want the two wasms and don't
+    # care about their relationship.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
         self.handle(after_wasm)
@@ -312,7 +304,17 @@ class VM:
         self.can_compare_to_others = can_compare_to_others
 
 
+# Fuzz the interpreter with --fuzz-exec.
+class FuzzExec(TestCaseHandler):
+    frequency = 1
+
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
+        run([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
+
+
 class CompareVMs(TestCaseHandler):
+    frequency = 0.5
+
     def __init__(self):
         super(CompareVMs, self).__init__()
 
@@ -461,28 +463,10 @@ class CompareVMs(TestCaseHandler):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
 
 
-# Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
-# two separate binaries) so it's easy to reproduce.
-class FuzzExec(TestCaseHandler):
-    def get_commands(self, wasm, opts, random_seed):
-        return [
-            '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec %(opts)s %(wasm)s' % {
-                'MAX_INTERPRETER_ENV_VAR': MAX_INTERPRETER_ENV_VAR,
-                'MAX_INTERPRETER_DEPTH': MAX_INTERPRETER_DEPTH,
-                'wasm_opt': in_bin('wasm-opt'),
-                'opts': ' '.join(opts),
-                'wasm': wasm
-            }
-        ]
-
-
 # Check for determinism - the same command must have the same output.
-# Note that this doesn't use get_commands() intentionally, since we are testing
-# for something that autoreduction won't help with anyhow (nondeterminism is very
-# hard to reduce).
 class CheckDeterminism(TestCaseHandler):
     # not that important
-    frequency = 0.333
+    frequency = 0.3
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
@@ -492,6 +476,8 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
+    frequency = 0.6
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # always check for compiler crashes. without NaNs we can also compare
         # before and after (with NaNs, a reinterpret through memory might end up
@@ -534,6 +520,8 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
+    frequency = 0.6
+
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
         run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
@@ -596,7 +584,7 @@ testcase_handlers = [
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts, allow_autoreduce):
+def test_one(random_input, opts):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
@@ -613,74 +601,6 @@ def test_one(random_input, opts, allow_autoreduce):
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
 
-    # first, run all handlers that use get_commands(). those don't need the second wasm in the
-    # pair, since they all they do is return their commands, and expect us to run them, and
-    # those commands do the actual testing, by operating on the original input wasm file. by
-    # fuzzing the get_commands() ones first we can find bugs in creating the second wasm (that
-    # has the opts run on it) before we try to create it later down for the passes that
-    # expect to get it as one of their inputs.
-    for testcase_handler in testcase_handlers:
-        if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
-            if hasattr(testcase_handler, 'get_commands'):
-                print('running testcase handler:', testcase_handler.__class__.__name__)
-                testcase_handler.increment_runs()
-
-                # if the testcase handler supports giving us a list of commands, then we can get those commands
-                # and use them to do useful things like automatic reduction. in this case we give it the input
-                # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
-                # value there if we reduce).
-                random_seed = random.random()
-
-                # gets commands from the handler, for a given set of optimizations. this is all the commands
-                # needed to run the testing that that handler wants to do.
-                def get_commands(opts):
-                    return testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
-
-                def write_commands_and_test(opts):
-                    commands = get_commands(opts)
-                    write_commands(commands, 't.sh')
-                    subprocess.check_call(['bash', 't.sh'])
-
-                try:
-                    write_commands_and_test(opts)
-                except subprocess.CalledProcessError:
-                    if allow_autoreduce:
-                        print('')
-                        print('====================')
-                        print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
-                        print('====================')
-                        print('')
-                        # first, reduce the fuzz opts: keep removing until we can't
-                        while 1:
-                            reduced = False
-                            for i in range(len(opts)):
-                                # some opts can't be removed, like --flatten --dfo requires flatten
-                                if opts[i] == '--flatten':
-                                    if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
-                                        continue
-                                shorter = opts[:i] + opts[i + 1:]
-                                try:
-                                    write_commands_and_test(shorter)
-                                except subprocess.CalledProcessError:
-                                    # great, the shorter one is good as well
-                                    opts = shorter
-                                    print('reduced opts to ' + ' '.join(opts))
-                                    reduced = True
-                                    break
-                            if not reduced:
-                                break
-                        # second, reduce the wasm
-                        # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
-                        shutil.copyfile('a.wasm', 'input.wasm')
-                        # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
-                        commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
-                        write_commands(commands, 'tt.sh')
-                        # reduce the input to something smaller with the same behavior on the script
-                        subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
-                        print('Finished reduction. See "tt.sh" and "reduced.wasm".')
-                        raise Exception('halting after autoreduction')
-                print('')
-
     # create a second wasm for handlers that want to look at pairs.
     generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
@@ -693,26 +613,29 @@ def test_one(random_input, opts, allow_autoreduce):
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    # run some of the pair handling handlers. we don't run them all so that we get more
-    # coverage of different wasm files (but we do run all get_commands() using ones,
-    # earlier, because those are autoreducible and we want to maximize the chance of
-    # that)
-    # however, also try our best to pick a handler that can run this
+    # first, find which handlers can even run here
     relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
-    NUM_PAIR_HANDLERS = 2
-    if len(relevant_handlers) > 0:
-        chosen_handlers = set(random.choices(relevant_handlers, k=NUM_PAIR_HANDLERS))
-        for testcase_handler in chosen_handlers:
-            assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
-            assert not hasattr(testcase_handler, 'get_commands')
-            if random.random() < testcase_handler.frequency:
-                print('running testcase handler:', testcase_handler.__class__.__name__)
-                testcase_handler.increment_runs()
+    if len(relevant_handlers) == 0:
+        return 0
+    # filter by frequency
+    filtered_handlers = [handler for handler in relevant_handlers if random.random() < handler.frequency]
+    if len(filtered_handlers) == 0:
+        # pick at least one, to not waste the effort we put into making the wasm
+        filtered_handlers = [random.choice(relevant_handlers)]
+    # run only some of the pair handling handlers. if we ran them all all the
+    # time that would mean we have less variety in wasm files and passes run
+    # on them in the same amount of time.
+    NUM_PAIR_HANDLERS = 3
+    chosen_handlers = set(random.choices(filtered_handlers, k=NUM_PAIR_HANDLERS))
+    for testcase_handler in chosen_handlers:
+        assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+        print('running testcase handler:', testcase_handler.__class__.__name__)
+        testcase_handler.increment_runs()
 
-                # let the testcase handler handle this testcase however it wants. in this case we give it
-                # the input and both wasms.
-                testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
-                print('')
+        # let the testcase handler handle this testcase however it wants. in this case we give it
+        # the input and both wasms.
+        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+        print('')
 
     return bytes
 
@@ -855,9 +778,7 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            # don't autoreduce if we are given a specific case to test, as this
-            # is a reproduction of the test case, not the first finding of it
-            total_wasm_size += test_one(raw_input_data, opts, allow_autoreduce=given_seed is None)
+            total_wasm_size += test_one(raw_input_data, opts)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
