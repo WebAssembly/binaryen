@@ -79,7 +79,6 @@ int main(int argc, const char* argv[]) {
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
-  bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   bool fuzzPasses = false;
@@ -127,12 +126,6 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
-    .add("--fuzz-binary",
-         "-fb",
-         "Convert to binary and back after optimizations and before fuzz-exec, "
-         "helping fuzzing find binary format bugs",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzBinary = true; })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
@@ -328,28 +321,6 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
-  Module* curr = &wasm;
-  Module other;
-
-  if (fuzzExecAfter && fuzzBinary) {
-    BufferWithRandomAccess buffer;
-    // write the binary
-    WasmBinaryWriter writer(&wasm, buffer);
-    writer.write();
-    // read the binary
-    auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(other, input);
-    parser.read();
-    options.applyFeatures(other);
-    if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(other);
-      if (!valid) {
-        Fatal() << "fuzz-binary must always generate a valid module";
-      }
-    }
-    curr = &other;
-  }
-
   if (!options.runningPasses()) {
     if (!options.quiet) {
       std::cerr << "warning: no passes specified, not doing any work\n";
@@ -357,9 +328,9 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("running passes...\n");
     auto runPasses = [&]() {
-      options.runPasses(*curr);
+      options.runPasses(wasm);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(*curr);
+        bool valid = WasmValidator().validate(wasm);
         if (!valid) {
           exitOnInvalidWasm("error after opts");
         }
@@ -371,7 +342,7 @@ int main(int argc, const char* argv[]) {
       // size no longer decreasing.
       auto getSize = [&]() {
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(curr, buffer);
+        WasmBinaryWriter writer(&wasm, buffer);
         writer.write();
         return buffer.size();
       };
@@ -389,7 +360,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExecAfter) {
-    results.check(*curr);
+    results.check(wasm);
   }
 
   if (options.extra.count("output") == 0) {
@@ -407,7 +378,7 @@ int main(int argc, const char* argv[]) {
     writer.setSourceMapFilename(outputSourceMapFilename);
     writer.setSourceMapUrl(outputSourceMapUrl);
   }
-  writer.write(*curr, options.extra["output"]);
+  writer.write(wasm, options.extra["output"]);
 
   if (extraFuzzCommand.size() > 0) {
     auto secondOutput = runCommand(extraFuzzCommand);
