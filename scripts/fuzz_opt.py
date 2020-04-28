@@ -19,6 +19,7 @@ import contextlib
 import os
 import difflib
 import math
+import shutil
 import subprocess
 import random
 import re
@@ -584,19 +585,22 @@ testcase_handlers = [
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts):
+def test_one(random_input, opts, given_wasm):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
     print()
 
-    generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
-    if PRINT_WATS:
-        printed = run(generate_command + ['--print'])
-        with open('a.printed.wast', 'w') as f:
-            f.write(printed)
+    if given_wasm:
+        shutil.copyfile(given_wasm, 'a.wasm')
     else:
-        run(generate_command)
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
+        if PRINT_WATS:
+            printed = run(generate_command + ['--print'])
+            with open('a.printed.wast', 'w') as f:
+                f.write(printed)
+        else:
+            run(generate_command)
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
@@ -743,9 +747,16 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
-    if len(sys.argv) == 2:
+    # if we are given a seed, we can also be given a wasm file, which we use
+    # instead of the randomly generating one. this can be useful for
+    # reduction.
+    given_wasm = None
+    if len(sys.argv) >= 2:
         given_seed = int(sys.argv[1])
         print('checking a single given seed', given_seed)
+        if len(sys.argv) >= 3:
+            given_wasm = sys.argv[2]
+            print('using given wasm file', given_wasm)
     else:
         given_seed = None
         print('checking infinite random inputs')
@@ -778,7 +789,7 @@ if __name__ == '__main__':
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
         try:
-            total_wasm_size += test_one(raw_input_data, opts)
+            total_wasm_size += test_one(raw_input_data, opts, given_wasm)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
@@ -797,6 +808,12 @@ if __name__ == '__main__':
             if given_seed is not None:
                 given_seed_passed = False
             else:
+                # show some useful info about filing a bug and reducing the
+                # testcase (to make reduction simple, save "original.wasm" on
+                # the side, so that we can autoreduce using the name "a.wasm"
+                # which we use internally)
+                original_wasm = os.path.abspath('original.wasm')
+                shutil.copyfile('a.wasm', original_wasm)
                 print('''\
 ================================================================================
 You found a bug! Please report it with
@@ -806,9 +823,37 @@ You found a bug! Please report it with
 and the exact version of Binaryen you found it on, plus the exact Python
 version (hopefully deterministic random numbers will be identical).
 
-(you can run that testcase again with "fuzz_opt.py %(seed)d")
+You can run that testcase again with "fuzz_opt.py %(seed)d"
+
+The initial wasm file used here is saved as %(original)s
+
+You can try to reduce the testcase with
+
+  wasm-reduce %(original)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
+
+where "reduce.sh" is something like
+
+  # check the input is even a valid wasm file
+  bin/wasm-opt %(temp_wasm)s
+  echo $?
+
+  # run the command
+  ./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
+  cat o | tail -n 10
+  echo $?
+
+You may want to adjust what is printed there: in the example we save stdout
+and stderr separately and then print (so that wasm-reduce can see it) what we
+think is the relevant part of that output. Make sure that includes the right
+details, and preferably no more (less details allow more reduction, but raise
+the risk of it reducing to something you don't quite want).
+
+You may also need to add  --timeout 5  or such if the testcase is a slow one.
 ================================================================================
-                ''' % {'seed': seed})
+                ''' % {'seed': seed,
+                       'original_wasm': original_wasm,
+                       'temp_wasm': os.path.abspath('t.wasm'),
+                       'working_wasm': os.path.abspath('w.wasm')})
                 break
         if given_seed is not None:
             if given_seed_passed:
