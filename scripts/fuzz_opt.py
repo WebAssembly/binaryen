@@ -846,6 +846,8 @@ details, and preferably no more (less details allow more reduction, but raise
 the risk of it reducing to something you don't quite want).
 
 You may also need to add  --timeout 5  or such if the testcase is a slow one.
+
+After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
                 ''' % {'seed': seed,
                        'original_wasm': original_wasm,
