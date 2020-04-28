@@ -23,15 +23,15 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var gimport$0 = env.memoryBase | 0;
- var gimport$1 = env.tableBase | 0;
+ var import$memoryBase = env.memoryBase | 0;
+ var import$tableBase = env.tableBase | 0;
  function foo() {
   
  }
  
  var FUNCTION_TABLE = [];
- FUNCTION_TABLE[gimport$1 + 0] = foo;
- FUNCTION_TABLE[gimport$1 + 1] = foo;
+ FUNCTION_TABLE[import$tableBase + 0] = foo;
+ FUNCTION_TABLE[import$tableBase + 1] = foo;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

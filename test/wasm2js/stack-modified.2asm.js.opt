@@ -22,7 +22,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var global$0 = 0;
+ var i64toi32_i32$HIGH_BITS = 0;
  function $0($0_1, $1) {
   $0_1 = $0_1 | 0;
   $1 = $1 | 0;
@@ -32,7 +32,7 @@ function asmFunc(global, env, buffer) {
   while (1) {
    if ($0_1 | $2) {
     $3 = _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE($0_1, $2, $3, $4);
-    $4 = global$0;
+    $4 = i64toi32_i32$HIGH_BITS;
     $1 = $0_1;
     $0_1 = $0_1 - 1 | 0;
     $2 = $2 - ($1 >>> 0 < 1) | 0;
@@ -40,13 +40,13 @@ function asmFunc(global, env, buffer) {
    }
    break;
   };
-  global$0 = $4;
+  i64toi32_i32$HIGH_BITS = $4;
   return $3 | 0;
  }
  
  function legalstub$0($0_1, $1) {
   $0_1 = $0($0_1, $1);
-  setTempRet0(global$0 | 0);
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $0_1;
  }
  
@@ -62,7 +62,7 @@ function asmFunc(global, env, buffer) {
   $4 = ($5 & 65535) + Math_imul($4, $7) | 0;
   $0_1 = (Math_imul($1, $2) + $9 | 0) + Math_imul($0_1, $3) + ($5 >>> 16) + ($4 >>> 16) | 0;
   $1 = $8 & 65535 | $4 << 16;
-  global$0 = $0_1;
+  i64toi32_i32$HIGH_BITS = $0_1;
   return $1;
  }
  

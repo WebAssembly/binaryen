@@ -351,10 +351,10 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
-void PassRunner::addDefaultOptimizationPasses() {
+void PassRunner::addDefaultOptimizationPasses(bool withStackIR) {
   addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();
-  addDefaultGlobalOptimizationPostPasses();
+  addDefaultGlobalOptimizationPostPasses(withStackIR);
 }
 
 // Check whether we should preserve valid DWARF while optimizing. If so, we
@@ -456,7 +456,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("memory-packing");
 }
 
-void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+void PassRunner::addDefaultGlobalOptimizationPostPasses(bool withStackIR) {
   auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
   // FIXME DWARF may be badly affected currently as DAE changes function
   // signatures and hence params and locals.
@@ -485,7 +485,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("directize");
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+  if (withStackIR && (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
     add("generate-stack-ir");
     add("optimize-stack-ir");
   }

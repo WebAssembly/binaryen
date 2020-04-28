@@ -180,7 +180,7 @@ struct PassRunner {
 
   // Adds the default set of optimization passes; this is
   // what -O does.
-  void addDefaultOptimizationPasses();
+  void addDefaultOptimizationPasses(bool withStackIR = true);
 
   // Adds the default optimization passes that work on
   // individual functions.
@@ -197,7 +197,7 @@ struct PassRunner {
   // This is run at the very end of the optimization
   // process - you can assume no other opts will be run
   // afterwards.
-  void addDefaultGlobalOptimizationPostPasses();
+  void addDefaultGlobalOptimizationPostPasses(bool withStackIR = true);
 
   // Run the passes on the module
   void run();

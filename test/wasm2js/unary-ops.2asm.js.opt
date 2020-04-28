@@ -20,7 +20,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var global$0 = 0;
+ var i64toi32_i32$HIGH_BITS = 0;
  function $1($0) {
   $0 = $0 | 0;
   return __wasm_popcnt_i32($0) | 0;
@@ -53,7 +53,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$2($0, $1_1, $2, $3) {
-  return (__wasm_popcnt_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (global$0 | 0);
+  return (__wasm_popcnt_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
  }
  
  function legalstub$3($0, $1_1, $2) {
@@ -73,13 +73,12 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$9($0, $1_1, $2, $3) {
-  return (__wasm_ctz_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (global$0 | 0);
+  return (__wasm_ctz_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
  }
  
  function __wasm_ctz_i64($0, $1_1) {
-  var $2 = 0, $3 = 0, $4 = 0;
+  var $2 = 0, $3 = 0;
   if ($0 | $1_1) {
-   $4 = 63;
    $3 = $1_1 + -1 | 0;
    $2 = $0 + -1 | 0;
    if ($2 >>> 0 < 4294967295) {
@@ -88,10 +87,11 @@ function asmFunc(global, env, buffer) {
    $2 = Math_clz32($0 ^ $2) + 32 | 0;
    $0 = Math_clz32($1_1 ^ $3);
    $0 = ($0 | 0) == 32 ? $2 : $0;
-   global$0 = 0 - (63 < $0 >>> 0) | 0;
-   return $4 - $0 | 0;
+   $1_1 = 63 - $0 | 0;
+   i64toi32_i32$HIGH_BITS = 0 - (63 < $0 >>> 0) | 0;
+   return $1_1;
   }
-  global$0 = 0;
+  i64toi32_i32$HIGH_BITS = 0;
   return 64;
  }
  
@@ -127,7 +127,7 @@ function asmFunc(global, env, buffer) {
    }
    break;
   };
-  global$0 = $2;
+  i64toi32_i32$HIGH_BITS = $2;
   return $5;
  }
  

@@ -314,9 +314,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         // it later down as default optimizations help as well.
         runner.add("avoid-reinterprets");
       }
-      runner.addDefaultOptimizationPasses();
-      // Translate back from Stack IR to normal IR
-      runner.add("roundtrip");
+      runner.addDefaultOptimizationPasses(/*withStackIR=*/false);
       runner.add("avoid-reinterprets");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and

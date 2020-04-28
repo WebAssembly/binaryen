@@ -48,13 +48,13 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var global$0 = 0;
+ var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   return HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
  }
  
  function $1() {
-  global$0 = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
+  i64toi32_i32$HIGH_BITS = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
   return HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
  }
  
@@ -106,7 +106,7 @@ function asmFunc(global, env, buffer) {
  function legalstub$1() {
   var $0_1 = 0;
   $0_1 = $1();
-  setTempRet0(global$0 | 0);
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $0_1;
  }
  

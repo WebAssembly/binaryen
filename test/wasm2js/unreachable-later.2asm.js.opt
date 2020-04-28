@@ -23,16 +23,16 @@ function asmFunc(global, env, buffer) {
  var global$0 = 10;
  function $0($0_1) {
   $0_1 = $0_1 | 0;
-  label$1 : {
+  folding_inner0 : {
    if (global$0) {
-    break label$1
+    break folding_inner0
    }
    global$0 = 0;
    if (global$0) {
-    break label$1
+    break folding_inner0
    }
    if (global$0) {
-    break label$1
+    break folding_inner0
    }
    abort();
   }
