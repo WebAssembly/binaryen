@@ -169,7 +169,7 @@ def run_wasm_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:
@@ -180,9 +180,9 @@ def run_wasm_reduce_tests():
     if 'fsanitize=thread' not in str(os.environ):
         print('\n[ checking wasm-reduce fuzz testcase ]\n')
         # TODO: re-enable multivalue once it is better optimized
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '-all', '--disable-multivalue'])
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
