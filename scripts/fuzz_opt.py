@@ -182,7 +182,7 @@ def compare_between_vms(x, y, context):
     x_lines = x.splitlines()
     y_lines = y.splitlines()
     if len(x_lines) != len(y_lines):
-        return compare(x, y, context)
+        return compare(x, y, context + ' (note: different number of lines between vms)')
 
     num_lines = len(x_lines)
     for i in range(num_lines):
