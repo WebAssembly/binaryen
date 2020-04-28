@@ -405,9 +405,6 @@ class CompareVMs(TestCaseHandler):
             def can_run(self):
                 return super(Wasm2C2Wasm, self).can_run() and self.has_emcc
 
-            def can_compare_to_self(self):
-                return True
-
             def can_compare_to_others(self):
                 # NaNs can differ from wasm VMs
                 return not NANS
@@ -825,11 +822,11 @@ version (hopefully deterministic random numbers will be identical).
 
 You can run that testcase again with "fuzz_opt.py %(seed)d"
 
-The initial wasm file used here is saved as %(original)s
+The initial wasm file used here is saved as %(original_wasm)s
 
 You can try to reduce the testcase with
 
-  wasm-reduce %(original)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
+  wasm-reduce %(original_wasm)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
 
 where "reduce.sh" is something like
 
