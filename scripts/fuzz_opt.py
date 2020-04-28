@@ -402,9 +402,6 @@ class CompareVMs(TestCaseHandler):
             def can_run(self):
                 return super(Wasm2C2Wasm, self).can_run() and self.has_emcc
 
-            def can_compare_to_self(self):
-                return True
-
             def can_compare_to_others(self):
                 # NaNs can differ from wasm VMs
                 return not NANS
