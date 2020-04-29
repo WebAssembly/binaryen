@@ -60,13 +60,6 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "__start",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
   "exports": [
     "_start",
     "stackSave",

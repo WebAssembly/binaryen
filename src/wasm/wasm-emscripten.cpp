@@ -1288,15 +1288,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "\n  ],\n";
 
   if (!wasm.exports.empty()) {
-    meta << "  \"implementedFunctions\": [";
-    commaFirst = true;
-    for (const auto& ex : wasm.exports) {
-      if (ex->kind == ExternalKind::Function) {
-        meta << nextElement() << "\"_" << ex->name.str << '"';
-      }
-    }
-    meta << "\n  ],\n";
-
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {

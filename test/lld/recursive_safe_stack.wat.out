@@ -213,15 +213,6 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "___set_stack_limit",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
   "exports": [
     "__wasm_call_ctors",
     "main",
