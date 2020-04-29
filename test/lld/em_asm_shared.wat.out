@@ -132,11 +132,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "___original_main",
-    "_main",
-    "___post_instantiate"
-  ],
   "exports": [
     "__original_main",
     "main",

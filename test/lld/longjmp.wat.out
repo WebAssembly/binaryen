@@ -191,15 +191,6 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "_dynCall_vii",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
   "exports": [
     "__wasm_call_ctors",
     "main",
