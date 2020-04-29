@@ -408,7 +408,7 @@ class CompareVMs(TestCaseHandler):
                 # prefer not to run if the wasm is very large, as it can OOM
                 # the JS engine.
                 return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
-                       os.path.getsize(wasm) <= INPUT_SIZE_MEAN
+                    os.path.getsize(wasm) <= INPUT_SIZE_MEAN
 
             def can_compare_to_others(self):
                 # NaNs can differ from wasm VMs
