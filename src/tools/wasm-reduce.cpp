@@ -282,9 +282,7 @@ struct Reducer
       // compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        // TODO(tlively): -all should be replaced with an option to use the
-        // existing feature set, once implemented.
-        currCommand += working + " -all -o " + test + " " + pass;
+        currCommand += working + " --detect-features -o " + test + " " + pass;
         if (debugInfo) {
           currCommand += " -g ";
         }
@@ -1191,10 +1189,8 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    // TODO(tlively): -all should be replaced with an option to use the existing
-    // feature set, once implemented.
     auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
-               " -all -o " + test;
+               " --detect-features -o " + test;
     if (!binary) {
       cmd += " -S";
     }

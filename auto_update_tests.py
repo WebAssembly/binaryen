@@ -243,12 +243,18 @@ TEST_SUITES = OrderedDict([
 
 
 def main():
+    all_suites = TEST_SUITES.keys()
+    skip_by_default = ['binaryenjs']
+
     if shared.options.list_suites:
-        for suite in TEST_SUITES.keys():
+        for suite in all_suites:
             print(suite)
         return 0
 
-    for test in shared.requested or TEST_SUITES.keys():
+    if not shared.requested:
+        shared.requested = [s for s in all_suites if s not in skip_by_default]
+
+    for test in shared.requested:
         TEST_SUITES[test]()
 
     print('\n[ success! ]')

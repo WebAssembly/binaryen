@@ -15,6 +15,12 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v93
+---
+
+- First release with binaries built with github actions.
+
+
 v92
 ---
 
