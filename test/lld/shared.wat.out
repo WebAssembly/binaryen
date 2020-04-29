@@ -83,10 +83,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "__Z13print_messagev",
-    "___post_instantiate"
-  ],
   "exports": [
     "_Z13print_messagev",
     "__post_instantiate"
