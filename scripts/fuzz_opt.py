@@ -623,8 +623,12 @@ def test_one(random_input, opts, given_wasm):
     # time that would mean we have less variety in wasm files and passes run
     # on them in the same amount of time.
     NUM_PAIR_HANDLERS = 3
-    chosen_handlers = set(random.choices(filtered_handlers, k=NUM_PAIR_HANDLERS))
-    for testcase_handler in chosen_handlers:
+    used_handlers = set()
+    for i in range(NUM_PAIR_HANDLERS):
+        testcase_handler = random.choice(filtered_handlers)
+        if testcase_handler in used_handlers:
+            continue
+        used_handlers.add(testcase_handler)
         assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
         print('running testcase handler:', testcase_handler.__class__.__name__)
         testcase_handler.increment_runs()
