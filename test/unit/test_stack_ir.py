@@ -7,8 +7,8 @@ class StackIRTest(utils.BinaryenTestCase):
     # test that stack IR opts make a difference.
     def test_stack_ir_opts(self):
         path = self.input_path('stack_ir.wat')
-        opt = shared.run_process(shared.WASM_OPT + [path, '-O', '--generate-stack-ir', '--optimize-stack-ir', '--print', '-o', 'a.wasm'], capture_output=True).stdout
-        nonopt = shared.run_process(shared.WASM_OPT + [path, '-O', '--generate-stack-ir', '--print', '-o', 'b.wasm'], capture_output=True).stdout
+        opt = shared.run_process(shared.WASM_OPT + [path, '--generate-stack-ir', '--optimize-stack-ir', '--print', '--shrink-level=1', '-o', 'a.wasm'], capture_output=True).stdout
+        nonopt = shared.run_process(shared.WASM_OPT + [path, '--generate-stack-ir', '--print', '--shrink-level=1', '-o', 'b.wasm'], capture_output=True).stdout
         # see a difference in the printed stack IR (the optimizations let us
         # remove a pair of local.set/get)
         self.assertNotEqual(opt, nonopt)
