@@ -89,14 +89,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "_main",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "___assign_got_enties"
-  ],
   "exports": [
     "main",
     "stackSave",

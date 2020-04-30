@@ -186,11 +186,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "__start",
-    "_dynCall_vii",
-    "___post_instantiate"
-  ],
   "exports": [
     "_start",
     "dynCall_vii",
