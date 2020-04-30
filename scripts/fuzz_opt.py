@@ -297,12 +297,14 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, can_run, can_compare_to_self, can_compare_to_others):
+    def __init__(self, name, run, can_compare_to_self, can_compare_to_others):
         self.name = name
         self.run = run
-        self.can_run = can_run
         self.can_compare_to_self = can_compare_to_self
         self.can_compare_to_others = can_compare_to_others
+
+    def can_run(self, wasm):
+        return True
 
 
 # Fuzz the interpreter with --fuzz-exec.
@@ -351,7 +353,7 @@ class CompareVMs(TestCaseHandler):
                     print('warning: no wabt found:', e)
                     self.wasm2c_dir = None
 
-            def can_run(self):
+            def can_run(self, wasm):
                 if self.wasm2c_dir is None:
                     return False
                 # if we legalize for JS, the ABI is not what C wants
@@ -402,18 +404,21 @@ class CompareVMs(TestCaseHandler):
                     run(compile_cmd)
                 return run_vm(['d8', 'a.out.js'])
 
-            def can_run(self):
-                return super(Wasm2C2Wasm, self).can_run() and self.has_emcc
+            def can_run(self, wasm):
+                # prefer not to run if the wasm is very large, as it can OOM
+                # the JS engine.
+                return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
+                    os.path.getsize(wasm) <= INPUT_SIZE_MEAN
 
             def can_compare_to_others(self):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
         self.vms = [
-            VM('binaryen interpreter', byn_run,    can_run=yes,    can_compare_to_self=yes,        can_compare_to_others=yes),
+            VM('binaryen interpreter', byn_run,    can_compare_to_self=yes,        can_compare_to_others=yes),
             # with nans, VM differences can confuse us, so only very simple VMs can compare to themselves after opts in that case.
             # if not legalized, the JS will fail immediately, so no point to compare to others
-            VM('d8',                   v8_run,     can_run=yes,    can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
+            VM('d8',                   v8_run,     can_compare_to_self=if_no_nans, can_compare_to_others=if_legal_and_no_nans),
             Wasm2C(),
             Wasm2C2Wasm(),
         ]
@@ -424,38 +429,29 @@ class CompareVMs(TestCaseHandler):
         self.compare_before_and_after(before, after)
 
     def run_vms(self, wasm):
-        # vm_results will contain pairs of (vm, result)
-        vm_results = []
+        # vm_results will map vms to their results
+        vm_results = {}
         for vm in self.vms:
-            if vm.can_run():
-                vm_results.append((vm, fix_output(vm.run(wasm))))
+            if vm.can_run(wasm):
+                vm_results[vm] = fix_output(vm.run(wasm))
 
         # compare between the vms on this specific input
 
         first_vm = None
-        first_result = None
-        for vm, result in vm_results:
+        for vm in vm_results.keys():
             if vm.can_compare_to_others():
                 if first_vm is None:
                     first_vm = vm
-                    first_result = result
                 else:
-                    compare_between_vms(first_result, result, 'CompareVMs between VMs: ' + first_vm.name + ' and ' + vm.name)
+                    compare_between_vms(vm_results[first_vm], vm_results[vm], 'CompareVMs between VMs: ' + first_vm.name + ' and ' + vm.name)
 
         return vm_results
 
     def compare_before_and_after(self, before, after):
-        # we received lists of (vm, result). the lists must be of the same size,
-        # and with the same vms
-        assert len(before) == len(after)
-        num = len(before)
-        for i in range(num):
-            assert before[i][0] == after[i][0]
-
         # compare each VM to itself on the before and after inputs
-        for i in range(num):
-            if before[i][0].can_compare_to_self():
-                compare(before[i][1], after[i][1], 'CompareVMs between before and after: ' + before[i][0].name)
+        for vm in before.keys():
+            if vm in after and vm.can_compare_to_self():
+                compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
@@ -627,8 +623,12 @@ def test_one(random_input, opts, given_wasm):
     # time that would mean we have less variety in wasm files and passes run
     # on them in the same amount of time.
     NUM_PAIR_HANDLERS = 3
-    chosen_handlers = set(random.choices(filtered_handlers, k=NUM_PAIR_HANDLERS))
-    for testcase_handler in chosen_handlers:
+    used_handlers = set()
+    for i in range(NUM_PAIR_HANDLERS):
+        testcase_handler = random.choice(filtered_handlers)
+        if testcase_handler in used_handlers:
+            continue
+        used_handlers.add(testcase_handler)
         assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
         print('running testcase handler:', testcase_handler.__class__.__name__)
         testcase_handler.increment_runs()
@@ -826,7 +826,7 @@ The initial wasm file used here is saved as %(original_wasm)s
 
 You can try to reduce the testcase with
 
-  wasm-reduce %(original_wasm)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
+  bin/wasm-reduce %(original_wasm)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
 
 where "reduce.sh" is something like
 
@@ -836,14 +836,24 @@ where "reduce.sh" is something like
 
   # run the command
   ./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
-  cat o | tail -n 10
   echo $?
+  cat o | tail -n 10
 
 You may want to adjust what is printed there: in the example we save stdout
 and stderr separately and then print (so that wasm-reduce can see it) what we
 think is the relevant part of that output. Make sure that includes the right
-details, and preferably no more (less details allow more reduction, but raise
-the risk of it reducing to something you don't quite want).
+details (sometimes stderr matters too), and preferably no more (less details
+allow more reduction, but raise the risk of it reducing to something you don't
+quite want).
+
+To do a "dry run" of what the reducer will do, copy the original file to the
+test file that the script will run on,
+
+  cp %(original_wasm)s %(temp_wasm)s
+
+and then run
+
+  bash reduce.sh
 
 You may also need to add  --timeout 5  or such if the testcase is a slow one.
 
