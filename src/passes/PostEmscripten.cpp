@@ -19,6 +19,7 @@
 // emscripten output.
 //
 
+#include "wasm-emscripten.h"
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/localize.h>
@@ -28,7 +29,6 @@
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
-#include "wasm-emscripten.h"
 #include <wasm.h>
 
 #define DEBUG_TYPE "post-emscripten"
@@ -81,16 +81,18 @@ struct PostEmscripten : public Pass {
     // Apply the stack pointer, if it was provided.  This is needed here
     // bacuase emscripten JS compiler can add static data allocations that
     // comes before the stack.
-    auto stackPtrStr = runner->options.getArgumentOrDefault("stack-pointer", "");
+    auto stackPtrStr =
+      runner->options.getArgumentOrDefault("stack-pointer", "");
     if (stackPtrStr != "") {
       Global* stackPointer = getStackPointerGlobal(*module);
       BYN_TRACE("stack_pointer: " << stackPtrStr << "\n");
-      if (stackPointer) {
+      if (stackPointer && !stackPointer->imported()) {
         auto stackPtr = std::stoi(stackPtrStr);
         auto oldValue = stackPointer->init->cast<Const>()->value;
         BYN_TRACE("updateing __stack_pointer: " << oldValue.geti32() << " -> "
                                                 << stackPtr << "\n");
-        stackPointer->init = Builder(*module).makeConst(Literal(int32_t(stackPtr)));
+        stackPointer->init =
+          Builder(*module).makeConst(Literal(int32_t(stackPtr)));
       }
     }
 
