@@ -106,7 +106,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
     - name: build
       run: cmake --build out
     - name: test
