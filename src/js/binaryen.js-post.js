@@ -485,6 +485,13 @@ function initializeConstants() {
   ].forEach(function(name) {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
   });
+
+  // ExpressionRunner flags
+  Module['ExpressionRunner']['Flags'] = {
+    'Default': Module['_ExpressionRunnerFlagsDefault'](),
+    'PreserveSideeffects': Module['_ExpressionRunnerFlagsPreserveSideeffects'](),
+    'TraverseCalls': Module['_ExpressionRunnerFlagsTraverseCalls']()
+  };
 }
 
 // 'Module' interface
@@ -550,17 +557,20 @@ function wrapModule(module, self) {
       return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
+  // 'callIndirect', 'returnCall', 'returnCallIndirect' are deprecated and may
+  // be removed in a future release. Please use the the snake_case names
+  // instead.
   self['callIndirect'] = self['call_indirect'] = function(target, operands, params, results) {
     return preserveStack(function() {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
   };
-  self['returnCall'] = function(name, operands, type) {
+  self['returnCall'] = self['return_call'] = function(name, operands, type) {
     return preserveStack(function() {
       return Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
-  self['returnCallIndirect'] = function(target, operands, params, results) {
+  self['returnCallIndirect'] = self['return_call_indirect'] = function(target, operands, params, results) {
     return preserveStack(function() {
       return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
@@ -2427,6 +2437,24 @@ Module['Relooper'] = function(module) {
   };
 };
 
+// 'ExpressionRunner' interface
+Module['ExpressionRunner'] = function(module, flags, maxDepth, maxLoopIterations) {
+  var runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth, maxLoopIterations);
+  this['ptr'] = runner;
+
+  this['setLocalValue'] = function(index, valueExpr) {
+    return Boolean(Module['_ExpressionRunnerSetLocalValue'](runner, index, valueExpr));
+  };
+  this['setGlobalValue'] = function(name, valueExpr) {
+    return preserveStack(function() {
+      return Boolean(Module['_ExpressionRunnerSetGlobalValue'](runner, strToStack(name), valueExpr));
+    });
+  };
+  this['runAndDispose'] = function(expr) {
+    return Module['_ExpressionRunnerRunAndDispose'](runner, expr);
+  };
+};
+
 function getAllNested(ref, numFn, getFn) {
   var num = numFn(ref);
   var ret = new Array(num);
@@ -2495,6 +2523,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
+        'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expr)),
         'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
         'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
       };
@@ -2502,6 +2531,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
+        'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
       };

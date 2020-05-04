@@ -135,6 +135,7 @@ std::map<BinaryenGlobalRef, size_t> globals;
 std::map<BinaryenEventRef, size_t> events;
 std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
+std::map<ExpressionRunnerRef, size_t> expressionRunners;
 
 static bool isBasicAPIType(BinaryenType type) {
   return type == BinaryenTypeAuto() || type <= Type::_last_value_type;
@@ -205,6 +206,26 @@ size_t noteExpression(BinaryenExpressionRef expression) {
   auto id = expressions.size();
   assert(expressions.find(expression) == expressions.end());
   expressions[expression] = id;
+  return id;
+}
+
+// Even though unlikely, it is possible that we are trying to use an id that is
+// still in use after wrapping around, which we must prevent.
+static std::unordered_set<size_t> usedExpressionRunnerIds;
+
+size_t noteExpressionRunner(ExpressionRunnerRef runner) {
+  // We would normally use the size of `expressionRunners` as the next index,
+  // but since we are going to delete runners the same address can become
+  // reused, which would result in unpredictable sizes (indexes) due to
+  // undefined behavior. Use a sequential id instead.
+  static size_t nextId = 0;
+
+  size_t id;
+  do {
+    id = nextId++;
+  } while (usedExpressionRunnerIds.find(id) != usedExpressionRunnerIds.end());
+  expressionRunners[runner] = id;
+  usedExpressionRunnerIds.insert(id);
   return id;
 }
 
@@ -604,6 +625,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  events.clear();\n";
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
+    std::cout << "  expressionRunners.clear();\n";
     types.clear();
     expressions.clear();
     functions.clear();
@@ -2112,6 +2134,16 @@ BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   return static_cast<Switch*>(expression)->value;
 }
 // Call
+int BinaryenCallIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIsReturn(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return static_cast<Call*>(expression)->isReturn;
+}
 const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallGetTarget(expressions[" << expressions[expr]
@@ -2145,6 +2177,16 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
   return static_cast<Call*>(expression)->operands[index];
 }
 // CallIndirect
+int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectIsReturn(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->isReturn;
+}
 BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -4951,6 +4993,123 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 }
 
 //
+// ========= ExpressionRunner =========
+//
+
+namespace wasm {
+
+// Evaluates a suspected constant expression via the C-API. Inherits most of its
+// functionality from ConstantExpressionRunner, which it shares with the
+// precompute pass, but must be `final` so we can `delete` its instances.
+class CExpressionRunner final
+  : public ConstantExpressionRunner<CExpressionRunner> {
+public:
+  CExpressionRunner(Module* module,
+                    CExpressionRunner::Flags flags,
+                    Index maxDepth,
+                    Index maxLoopIterations)
+    : ConstantExpressionRunner<CExpressionRunner>(
+        module, flags, maxDepth, maxLoopIterations) {}
+};
+
+} // namespace wasm
+
+ExpressionRunnerFlags ExpressionRunnerFlagsDefault() {
+  return CExpressionRunner::FlagValues::DEFAULT;
+}
+
+ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects() {
+  return CExpressionRunner::FlagValues::PRESERVE_SIDEEFFECTS;
+}
+
+ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls() {
+  return CExpressionRunner::FlagValues::TRAVERSE_CALLS;
+}
+
+ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
+                                           ExpressionRunnerFlags flags,
+                                           BinaryenIndex maxDepth,
+                                           BinaryenIndex maxLoopIterations) {
+  auto* wasm = (Module*)module;
+  auto* runner = ExpressionRunnerRef(
+    new CExpressionRunner(wasm, flags, maxDepth, maxLoopIterations));
+  if (tracing) {
+    auto id = noteExpressionRunner(runner);
+    std::cout << "  expressionRunners[" << id
+              << "] = ExpressionRunnerCreate(the_module, " << flags << ", "
+              << maxDepth << ", " << maxLoopIterations << ");\n";
+  }
+  return runner;
+}
+
+int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                  BinaryenIndex index,
+                                  BinaryenExpressionRef value) {
+  if (tracing) {
+    std::cout << "  ExpressionRunnerSetLocalValue(expressionRunners["
+              << expressionRunners[runner] << "], " << index << ", expressions["
+              << expressions[value] << "]);\n";
+  }
+
+  auto* R = (CExpressionRunner*)runner;
+  auto setFlow = R->visit(value);
+  if (!setFlow.breaking()) {
+    R->setLocalValue(index, setFlow.values);
+    return 1;
+  }
+  return 0;
+}
+
+int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                   const char* name,
+                                   BinaryenExpressionRef value) {
+  if (tracing) {
+    std::cout << "  ExpressionRunnerSetGlobalValue(expressionRunners["
+              << expressionRunners[runner] << "], ";
+    traceNameOrNULL(name);
+    std::cout << ", expressions[" << expressions[value] << "]);\n";
+  }
+
+  auto* R = (CExpressionRunner*)runner;
+  auto setFlow = R->visit(value);
+  if (!setFlow.breaking()) {
+    R->setGlobalValue(name, setFlow.values);
+    return 1;
+  }
+  return 0;
+}
+
+BinaryenExpressionRef
+ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
+                              BinaryenExpressionRef expr) {
+  auto* R = (CExpressionRunner*)runner;
+  Expression* ret = nullptr;
+  try {
+    auto flow = R->visit(expr);
+    if (!flow.breaking() && !flow.values.empty()) {
+      ret = flow.getConstExpression(*R->getModule());
+    }
+  } catch (CExpressionRunner::NonconstantException&) {
+  }
+
+  if (tracing) {
+    if (ret != nullptr) {
+      auto id = noteExpression(ret);
+      std::cout << "  expressions[" << id << "] = ";
+    } else {
+      std::cout << "  ";
+    }
+    auto id = expressionRunners[runner];
+    std::cout << "ExpressionRunnerRunAndDispose(expressionRunners[" << id
+              << "], expressions[" << expressions[expr] << "]);\n";
+    usedExpressionRunnerIds.erase(id);
+  }
+
+  delete R;
+  return ret;
+}
+
+//
 // ========= Other APIs =========
 //
 
@@ -4970,6 +5129,7 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenEventRef> events;\n"
                  "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
+                 "  std::map<size_t, ExpressionRunnerRef> expressionRunners;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
                  "  RelooperRef the_relooper = NULL;\n";
   } else {

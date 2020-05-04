@@ -28,7 +28,10 @@
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
+#include <wasm-emscripten.h>
 #include <wasm.h>
+
+#define DEBUG_TYPE "post-emscripten"
 
 namespace wasm {
 
@@ -75,6 +78,24 @@ struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
 
 struct PostEmscripten : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // Apply the stack pointer, if it was provided.  This is needed here
+    // because the emscripten JS compiler can add static data allocations that
+    // come before the stack.
+    auto stackPtrStr =
+      runner->options.getArgumentOrDefault("stack-pointer", "");
+    if (stackPtrStr != "") {
+      Global* stackPointer = getStackPointerGlobal(*module);
+      BYN_TRACE("stack_pointer: " << stackPtrStr << "\n");
+      if (stackPointer && !stackPointer->imported()) {
+        auto stackPtr = std::stoi(stackPtrStr);
+        auto oldValue = stackPointer->init->cast<Const>()->value;
+        BYN_TRACE("updating __stack_pointer: " << oldValue.geti32() << " -> "
+                                               << stackPtr << "\n");
+        stackPointer->init =
+          Builder(*module).makeConst(Literal(int32_t(stackPtr)));
+      }
+    }
+
     // Apply the sbrk ptr, if it was provided.
     auto sbrkPtrStr =
       runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");

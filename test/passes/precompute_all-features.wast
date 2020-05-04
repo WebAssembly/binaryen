@@ -376,6 +376,13 @@
     )
    )
   )
+  (func $loop-precompute (result i32)
+   (block $block (result i32)
+    (loop $loop
+     (br $block (i32.const 1))
+    )
+   )
+  )
 
   ;; Check if Precompute pass does not crash on reference types
   (func $reftype-test (result nullref)

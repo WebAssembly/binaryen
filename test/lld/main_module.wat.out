@@ -130,16 +130,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "__Z13print_messagev",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "___assign_got_enties",
-    "_dynCall_i"
-  ],
   "exports": [
     "__wasm_call_ctors",
     "_Z13print_messagev",

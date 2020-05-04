@@ -169,7 +169,7 @@ def run_wasm_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:
@@ -180,9 +180,9 @@ def run_wasm_reduce_tests():
     if 'fsanitize=thread' not in str(os.environ):
         print('\n[ checking wasm-reduce fuzz testcase ]\n')
         # TODO: re-enable multivalue once it is better optimized
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '-all', '--disable-multivalue'])
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
@@ -329,7 +329,7 @@ def run_gcc_tests():
         print('run...', output_file)
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
         os.remove(output_file)
-        if sys.platform == 'darwin':
+        if sys.platform == 'darwin' and os.path.exists(output_file + '.dSYM'):
             # Also removes debug directory produced on Mac OS
             shutil.rmtree(output_file + '.dSYM')
 
@@ -365,17 +365,29 @@ TEST_SUITES = OrderedDict([
     ('gcc', run_gcc_tests),
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
+    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
 ])
 
 
 # Run all the tests
 def main():
+    all_suites = TEST_SUITES.keys()
+    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+
     if shared.options.list_suites:
-        for suite in TEST_SUITES.keys():
+        for suite in all_suites:
             print(suite)
         return 0
 
-    for test in shared.requested or TEST_SUITES.keys():
+    for r in shared.requested:
+        if r not in all_suites:
+            print('invalid test suite: %s (see --list-suites)\n' % r)
+            return 1
+
+    if not shared.requested:
+        shared.requested = [s for s in all_suites if s not in skip_by_default]
+
+    for test in shared.requested:
         TEST_SUITES[test]()
 
     # Check/display the results

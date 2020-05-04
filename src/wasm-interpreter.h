@@ -49,7 +49,7 @@ using namespace cashew;
 
 // Utilities
 
-extern Name WASM, RETURN_FLOW;
+extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -155,9 +155,12 @@ public:
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
 protected:
+  // Maximum depth before giving up.
   Index maxDepth;
-
   Index depth = 0;
+
+  // Maximum iterations before giving up on a loop.
+  Index maxLoopIterations;
 
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
@@ -175,11 +178,16 @@ protected:
   }
 
 public:
-  ExpressionRunner(Index maxDepth) : maxDepth(maxDepth) {}
+  // Indicates no limit of maxDepth or maxLoopIterations.
+  static const Index NO_LIMIT = 0;
+
+  ExpressionRunner(Index maxDepth = NO_LIMIT,
+                   Index maxLoopIterations = NO_LIMIT)
+    : maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
 
   Flow visit(Expression* curr) {
     depth++;
-    if (depth > maxDepth) {
+    if (maxDepth != NO_LIMIT && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -255,10 +263,15 @@ public:
   }
   Flow visitLoop(Loop* curr) {
     NOTE_ENTER("Loop");
+    Index loopCount = 0;
     while (1) {
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
         if (flow.breakTo == curr->name) {
+          if (maxLoopIterations != NO_LIMIT &&
+              ++loopCount >= maxLoopIterations) {
+            return Flow(NONCONSTANT_FLOW);
+          }
           continue; // lol
         }
       }
@@ -1179,12 +1192,12 @@ public:
     assert(flow.values.size() > curr->index);
     return Flow(flow.values[curr->index]);
   }
-
-  Flow visitCall(Call*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalGet(LocalGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalSet(LocalSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitGlobalGet(GlobalGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitGlobalSet(GlobalSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCall(Call* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitHost(Host* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1192,15 +1205,15 @@ public:
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitPush(Push*) { WASM_UNREACHABLE("unimp"); }
-  Flow visitPop(Pop*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicNotify(AtomicNotify* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoad(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPush(Push* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
     return Literal::makeNullref();
@@ -1252,18 +1265,261 @@ public:
   Flow visitBrOnExn(BrOnExn* curr) { WASM_UNREACHABLE("unimp"); }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
+
   virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
 };
 
-// Execute an constant expression in a global init or memory offset.
+// Execute a suspected constant expression (precompute and C-API).
+template<typename SubType>
+class ConstantExpressionRunner : public ExpressionRunner<SubType> {
+public:
+  enum FlagValues {
+    // By default, just evaluate the expression, i.e. all we want to know is
+    // whether it computes down to a concrete value, where it is not necessary
+    // to preserve side effects like those of a `local.tee`.
+    DEFAULT = 0,
+    // Be very careful to preserve any side effects. For example, if we are
+    // intending to replace the expression with a constant afterwards, even if
+    // we can technically evaluate down to a constant, we still cannot replace
+    // the expression if it also sets a local, which must be preserved in this
+    // scenario so subsequent code keeps functioning.
+    PRESERVE_SIDEEFFECTS = 1 << 0,
+    // Traverse through function calls, attempting to compute their concrete
+    // value. Must not be used in function-parallel scenarios, where the called
+    // function might be concurrently modified, leading to undefined behavior.
+    TRAVERSE_CALLS = 1 << 1
+  };
+
+  // Flags indicating special requirements, for example whether we are just
+  // evaluating (default), also going to replace the expression afterwards or
+  // executing in a function-parallel scenario. See FlagValues.
+  typedef uint32_t Flags;
+
+  // Indicates no limit of maxDepth or maxLoopIterations.
+  static const Index NO_LIMIT = 0;
+
+protected:
+  // Optional module context to search for globals and called functions. NULL if
+  // we are not interested in any context.
+  Module* module = nullptr;
+
+  // Flags indicating special requirements. See FlagValues.
+  Flags flags = FlagValues::DEFAULT;
+
+  // Map remembering concrete local values set in the context of this flow.
+  std::unordered_map<Index, Literals> localValues;
+  // Map remembering concrete global values set in the context of this flow.
+  std::unordered_map<Name, Literals> globalValues;
+
+public:
+  struct NonconstantException {
+  }; // TODO: use a flow with a special name, as this is likely very slow
+
+  ConstantExpressionRunner(Module* module,
+                           Flags flags,
+                           Index maxDepth,
+                           Index maxLoopIterations)
+    : ExpressionRunner<SubType>(maxDepth, maxLoopIterations), module(module),
+      flags(flags) {}
+
+  // Gets the module this runner is operating on.
+  Module* getModule() { return module; }
+
+  // Sets a known local value to use.
+  void setLocalValue(Index index, Literals& values) {
+    assert(values.isConcrete());
+    localValues[index] = values;
+  }
+
+  // Sets a known global value to use.
+  void setGlobalValue(Name name, Literals& values) {
+    assert(values.isConcrete());
+    globalValues[name] = values;
+  }
+
+  Flow visitLocalGet(LocalGet* curr) {
+    NOTE_ENTER("LocalGet");
+    NOTE_EVAL1(curr->index);
+    // Check if a constant value has been set in the context of this runner.
+    auto iter = localValues.find(curr->index);
+    if (iter != localValues.end()) {
+      return Flow(iter->second);
+    }
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitLocalSet(LocalSet* curr) {
+    NOTE_ENTER("LocalSet");
+    NOTE_EVAL1(curr->index);
+    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
+      // If we are evaluating and not replacing the expression, remember the
+      // constant value set, if any, and see if there is a value flowing through
+      // a tee.
+      auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
+      if (!setFlow.breaking()) {
+        setLocalValue(curr->index, setFlow.values);
+        if (curr->type.isConcrete()) {
+          assert(curr->isTee());
+          return setFlow;
+        }
+        return Flow();
+      }
+    }
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitGlobalGet(GlobalGet* curr) {
+    NOTE_ENTER("GlobalGet");
+    NOTE_NAME(curr->name);
+    if (module != nullptr) {
+      auto* global = module->getGlobal(curr->name);
+      // Check if the global has an immutable value anyway
+      if (!global->imported() && !global->mutable_) {
+        return ExpressionRunner<SubType>::visit(global->init);
+      }
+    }
+    // Check if a constant value has been set in the context of this runner.
+    auto iter = globalValues.find(curr->name);
+    if (iter != globalValues.end()) {
+      return Flow(iter->second);
+    }
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitGlobalSet(GlobalSet* curr) {
+    NOTE_ENTER("GlobalSet");
+    NOTE_NAME(curr->name);
+    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) && module != nullptr) {
+      // If we are evaluating and not replacing the expression, remember the
+      // constant value set, if any, for subsequent gets.
+      auto* global = module->getGlobal(curr->name);
+      assert(global->mutable_);
+      auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
+      if (!setFlow.breaking()) {
+        setGlobalValue(curr->name, setFlow.values);
+        return Flow();
+      }
+    }
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitCall(Call* curr) {
+    NOTE_ENTER("Call");
+    NOTE_NAME(curr->target);
+    // Traverse into functions using the same mode, which we can also do
+    // when replacing as long as the function does not have any side effects.
+    // Might yield something useful for simple functions like `clamp`, sometimes
+    // even if arguments are only partially constant or not constant at all.
+    if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && module != nullptr) {
+      auto* func = module->getFunction(curr->target);
+      if (!func->imported()) {
+        if (func->sig.results.isConcrete()) {
+          auto numOperands = curr->operands.size();
+          assert(numOperands == func->getNumParams());
+          auto prevLocalValues = localValues;
+          localValues.clear();
+          for (Index i = 0; i < numOperands; ++i) {
+            auto argFlow = ExpressionRunner<SubType>::visit(curr->operands[i]);
+            if (!argFlow.breaking()) {
+              assert(argFlow.values.isConcrete());
+              localValues[i] = argFlow.values;
+            }
+          }
+          auto retFlow = ExpressionRunner<SubType>::visit(func->body);
+          localValues = prevLocalValues;
+          if (retFlow.breakTo == RETURN_FLOW) {
+            return Flow(retFlow.values);
+          } else if (!retFlow.breaking()) {
+            return retFlow;
+          }
+        }
+      }
+    }
+    return Flow(NONCONSTANT_FLOW);
+  }
+
+  Flow visitCallIndirect(CallIndirect* curr) {
+    NOTE_ENTER("CallIndirect");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitLoad(Load* curr) {
+    NOTE_ENTER("Load");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStore(Store* curr) {
+    NOTE_ENTER("Store");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitHost(Host* curr) {
+    NOTE_ENTER("Host");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitMemoryInit(MemoryInit* curr) {
+    NOTE_ENTER("MemoryInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitDataDrop(DataDrop* curr) {
+    NOTE_ENTER("DataDrop");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitMemoryCopy(MemoryCopy* curr) {
+    NOTE_ENTER("MemoryCopy");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitMemoryFill(MemoryFill* curr) {
+    NOTE_ENTER("MemoryFill");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitAtomicRMW(AtomicRMW* curr) {
+    NOTE_ENTER("AtomicRMW");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    NOTE_ENTER("AtomicCmpxchg");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitAtomicWait(AtomicWait* curr) {
+    NOTE_ENTER("AtomicWait");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitAtomicNotify(AtomicNotify* curr) {
+    NOTE_ENTER("AtomicNotify");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSIMDLoad(SIMDLoad* curr) {
+    NOTE_ENTER("SIMDLoad");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSIMDLoadSplat(SIMDLoad* curr) {
+    NOTE_ENTER("SIMDLoadSplat");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSIMDLoadExtend(SIMDLoad* curr) {
+    NOTE_ENTER("SIMDLoadExtend");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitPush(Push* curr) {
+    NOTE_ENTER("Push");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitPop(Pop* curr) {
+    NOTE_ENTER("Pop");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitBrOnExn(BrOnExn* curr) {
+    NOTE_ENTER("BrOnExn");
+    return Flow(NONCONSTANT_FLOW);
+  }
+
+  void trap(const char* why) override { throw NonconstantException(); }
+};
+
+// Execute an initializer expression of a global, data or element segment.
+// see: https://webassembly.org/docs/modules/#initializer-expression
 template<typename GlobalManager>
-class ConstantExpressionRunner
-  : public ExpressionRunner<ConstantExpressionRunner<GlobalManager>> {
+class InitializerExpressionRunner
+  : public ExpressionRunner<InitializerExpressionRunner<GlobalManager>> {
   GlobalManager& globals;
 
 public:
-  ConstantExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<ConstantExpressionRunner<GlobalManager>>(maxDepth),
+  InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
+    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(maxDepth),
       globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
@@ -1462,7 +1718,7 @@ public:
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] =
-        ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
+        InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(global->init)
           .values;
     });
@@ -1527,7 +1783,7 @@ private:
   void initializeTableContents() {
     for (auto& segment : wasm.table.segments) {
       Address offset =
-        (uint32_t)ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
+        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment.offset)
           .getSingleValue()
           .geti32();
@@ -2270,7 +2526,8 @@ public:
       functionStack.pop_back();
     }
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "exiting " << function->name << " with " << ret << '\n';
+    std::cout << "exiting " << function->name << " with " << flow.values
+              << '\n';
 #endif
     return flow.values;
   }

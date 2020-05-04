@@ -15,11 +15,11 @@
  (import "env" "malloc" (func $fimport$4 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$5 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$6 (result i32)))
- (import "env" "invoke_vii" (func $fimport$8 (param i32 i32 i32)))
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$9 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$10 (param i32)))
  (import "env" "free" (func $fimport$11 (param i32)))
- (import "env" "emscripten_longjmp" (func $fimport$12 (param i32 i32)))
+ (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
  (import "env" "g$__THREW__" (func $g$__THREW__ (result i32)))
  (import "env" "g$__threwValue" (func $g$__threwValue (result i32)))
  (import "env" "fp$emscripten_longjmp$vii" (func $fp$emscripten_longjmp$vii (result i32)))
@@ -78,7 +78,7 @@
       )
       (i32.const 0)
      )
-     (call $fimport$8
+     (call $invoke_vii
       (global.get $gimport$14)
       (local.get $0)
       (i32.const 1)
@@ -136,7 +136,7 @@
    )
    (return)
   )
-  (call $fimport$12
+  (call $emscripten_longjmp
    (local.get $3)
    (local.get $0)
   )
@@ -185,11 +185,6 @@
   "externs": [
     "___memory_base",
     "___table_base"
-  ],
-  "implementedFunctions": [
-    "__start",
-    "_dynCall_vii",
-    "___post_instantiate"
   ],
   "exports": [
     "_start",

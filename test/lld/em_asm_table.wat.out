@@ -74,14 +74,6 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "_dynCall_vii",
-    "_dynCall_iiii"
-  ],
   "exports": [
     "stackSave",
     "stackAlloc",

@@ -21,14 +21,11 @@ from . import support
 
 def do_test_binaryen_js_with(which):
     if not (shared.MOZJS or shared.NODEJS):
-        print('no vm to run binaryen.js tests')
-        return
+        shared.fail_with_error('no vm to run binaryen.js tests')
 
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
-
     if not os.path.exists(which):
-        print('no ' + which + ' build to test')
-        return
+        shared.fail_with_error('no ' + which + ' build to test')
 
     print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
 
