@@ -62,11 +62,11 @@ jobs:
       run: mkdir -p out
 
     - name: cmake (linux)
-      run: cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release
       if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (osx)
-      run: cmake -S . -B out -G Ninja
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -75,7 +75,11 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out
+      run: cmake --build out --config Release
+
+    - name: strip
+      run: find out/bin/ -type f -perm -u=x -exec strip {} +
+      if: matrix.os != 'windows-latest'
 
     - name: test
       run: python check.py --binaryen-bin=out/bin
@@ -83,8 +87,14 @@ jobs:
       # https://github.com/WebAssembly/binaryen/issues/2781
       if: matrix.os != 'windows-latest'
 
-  build-gcc:
-    name: gcc
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-${{ matrix.os }}
+        path: out/bin
+
+  build-clang:
+    name: clang
     runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-python@v1
@@ -96,7 +106,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
     - name: build
       run: cmake --build out
     - name: test
