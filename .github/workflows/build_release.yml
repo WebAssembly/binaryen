@@ -36,7 +36,7 @@ jobs:
       run: mkdir -p out
 
     - name: cmake (osx)
-      run: cmake -S . -B out -G Ninja
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -45,7 +45,11 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out
+      run: cmake --build out --config Release
+
+    - name: strip
+      run: find bin/ -type f -perm -u=x -exec strip {} +
+      if: matrix.os != 'windows-latest'
 
     - name: archive
       id: archive
@@ -103,15 +107,20 @@ jobs:
         docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
+
     - name: install packages
       run: |
         ./alpine.sh apk update
         ./alpine.sh apk add build-base cmake git python3 clang ninja
+
+    - name: cmake
+      run: |
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release
+
     - name: build
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static"
-
         ./alpine.sh ninja
+
     - name: test
       run: ./alpine.sh python3 ./check.py
 
@@ -122,6 +131,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
+        ./alpine find bin/ -type f -perm -u=x -exec strip {} +
         mv bin binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         shasum -a 256 $TARBALL > $SHASUM
