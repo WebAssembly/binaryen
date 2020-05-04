@@ -1502,12 +1502,20 @@ public:
     NOTE_ENTER("Pop");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTry(Try* curr) {
+    NOTE_ENTER("Try");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitBrOnExn(BrOnExn* curr) {
     NOTE_ENTER("BrOnExn");
     return Flow(NONCONSTANT_FLOW);
   }
 
   void trap(const char* why) override { throw NonconstantException(); }
+
+  virtual void throwException(Literal exn) override {
+    throw NonconstantException();
+  }
 };
 
 // Execute an initializer expression of a global, data or element segment.
