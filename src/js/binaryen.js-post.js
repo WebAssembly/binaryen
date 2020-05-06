@@ -3081,18 +3081,13 @@ var pendingPromises = [];
 var initializeError = null;
 Object.defineProperty(Module, 'ready', {
   get: function() {
-    return new Promise(function(resolve, reject) {
-      if (initializeError) {
-        reject(initializeError);
-      } else if (runtimeInitialized) {
-        resolve(Module);
-      } else {
+    return {
+      then: function(resolve) {
         pendingPromises.push({
           resolve: resolve,
-          reject: reject
         });
       }
-    });
+    }
   }
 });
 
