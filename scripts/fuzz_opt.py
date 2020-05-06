@@ -819,7 +819,7 @@ if __name__ == '__main__':
 echo $?
 
 # run the command
-./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
 echo $?
 
 #
