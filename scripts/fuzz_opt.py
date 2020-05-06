@@ -813,7 +813,7 @@ if __name__ == '__main__':
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
                 with open('reduce.sh', 'w') as reduce_sh:
-                  reduce_sh.write('''\
+                    reduce_sh.write('''\
 # check the input is even a valid wasm file
 %(wasm_opt)s -all %(temp_wasm)s
 echo $?
