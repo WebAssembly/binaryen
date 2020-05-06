@@ -204,14 +204,14 @@ expr = runner.runAndDispose(
 );
 assert(expr === 0);
 
-// Should not bail on dropped expressions if all we don't know is a local value
+// Should not bail on dropped expressions if all we don't know is a value
 runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.block(null, [
     module.drop(
       module.i32.add(
-        module.local.get(0, binaryen.i32), // here
-        module.i32.const(5)
+        module.local.get(0, binaryen.i32),          // here
+        module.global.get("aGlobal", binaryen.i32), //
       )
     ),
     module.i32.const(9)

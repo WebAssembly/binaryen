@@ -196,8 +196,9 @@ protected:
   // Map remembering concrete global values set in the context of this flow.
   std::unordered_map<Name, Literals> globalValues;
 
-  // Whether an unknown local has been encountered in a sub-expression.
-  bool seenUnknownLocalGet = false;
+  // Whether an unknown value of a local or global has been encountered in a
+  // sub-expression.
+  bool seenUnknownValue = false;
 
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
@@ -1133,16 +1134,17 @@ public:
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
-    seenUnknownLocalGet = false;
+    seenUnknownValue = false;
     Flow value = visit(curr->value);
     if (value.breaking()) {
       // Handle the case where all we don't know to perform the drop is a local
-      // value, which we do not need to know if there are no other side-effects.
-      // Doesn't apply to globals since these would error when module is given.
-      if (seenUnknownLocalGet && value.breakTo == NONCONSTANT_FLOW &&
+      // or global value, which we do not need to know if there are no other
+      // side-effects.
+      if (seenUnknownValue && value.breakTo == NONCONSTANT_FLOW &&
           module != nullptr) {
         EffectAnalyzer effects(false, false, module->features, curr->value);
         effects.localsRead.clear();
+        effects.globalsRead.clear();
         if (!effects.hasAnything()) {
           return Flow();
         }
@@ -1269,7 +1271,7 @@ public:
     if (iter != localValues.end()) {
       return Flow(iter->second);
     }
-    seenUnknownLocalGet = true;
+    seenUnknownValue = true;
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitLocalSet(LocalSet* curr) {
@@ -1306,6 +1308,7 @@ public:
     if (iter != globalValues.end()) {
       return Flow(iter->second);
     }
+    seenUnknownValue = true;
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitGlobalSet(GlobalSet* curr) {

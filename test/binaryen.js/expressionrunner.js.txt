@@ -149,7 +149,7 @@ int main() {
   ExpressionRunnerRunAndDispose(expressionRunners[11], expressions[63]);
   expressionRunners[12] = ExpressionRunnerCreate(the_module, 0, 0, 0);
   expressions[64] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
-  expressions[65] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[65] = BinaryenGlobalGet(the_module, "aGlobal", BinaryenTypeInt32());
   expressions[66] = BinaryenBinary(the_module, 0, expressions[64], expressions[65]);
   expressions[67] = BinaryenDrop(the_module, expressions[66]);
   expressions[68] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
