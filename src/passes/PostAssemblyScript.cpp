@@ -412,7 +412,7 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
         }
       } else {
         auto retain = it->first; // local.set(X, __retain(...))
-        auto retained = retain->value->dynCast<Call>()->operands[0];
+        auto retained = retain->value->cast<Call>()->operands[0];
         if (testRetainsAllocation(retained, graph)) {
           return cache[release] = false;
         }
