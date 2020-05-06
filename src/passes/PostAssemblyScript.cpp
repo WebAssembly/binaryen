@@ -365,7 +365,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   }
 
   // Tests if a release has balanced retains, that is it is being retained in
-  // any path leading to the release. For example
+  // any path leading to the release and no retained value originates at an
+  // allocation. For example
   //
   //   var c = somethingElse() || a;
   //   ...
@@ -395,7 +396,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
       if (localSet == nullptr) {
         return cache[release] = false;
       }
-      if (retains.find(localSet) == retains.end()) {
+      auto it = retains.find(localSet);
+      if (it == retains.end()) {
         if (auto* localGet = localSet->value->dynCast<LocalGet>()) {
           if (seen.find(localGet) == seen.end()) {
             seen.insert(localGet);
@@ -406,6 +408,12 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
             return cache[release] = false;
           }
         } else {
+          return cache[release] = false;
+        }
+      } else {
+        auto retain = it->first; // local.set(X, __retain(...))
+        auto retained = retain->value->dynCast<Call>()->operands[0];
+        if (testRetainsAllocation(retained, graph)) {
           return cache[release] = false;
         }
       }

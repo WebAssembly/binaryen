@@ -3,10 +3,11 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "rt" "retain" (func $~lib/rt/pure/__retain (param i32) (result i32)))
  (import "rt" "release" (func $~lib/rt/pure/__release (param i32)))
+ (import "rt" "alloc" (func $~lib/rt/tlsf/__alloc (param i32 i32) (result i32)))
  (import "rc" "getRetainedRef" (func $getRetainedRef (result i32)))
  (func $eliminates.linearArgument (param $0 i32)
   (local.set $0
@@ -258,6 +259,42 @@
    (return
     (i32.const 0)
    )
+  )
+ )
+ (func $keeps.balancedRetainsWithAllocation (param $0 i32) (param $cond1 i32) (param $cond2 i32)
+  (local $3 i32)
+  (local $flat i32)
+  (if
+   (local.get $cond1)
+   (if
+    (local.get $cond2)
+    (local.set $3
+     (call $~lib/rt/pure/__retain
+      (local.get $0)
+     )
+    )
+    (block $block
+     (local.set $flat
+      (call $~lib/rt/tlsf/__alloc
+       (i32.const 16)
+       (i32.const 0)
+      )
+     )
+     (local.set $3
+      (call $~lib/rt/pure/__retain
+       (local.get $flat)
+      )
+     )
+    )
+   )
+   (local.set $3
+    (call $~lib/rt/pure/__retain
+     (local.get $0)
+    )
+   )
+  )
+  (call $~lib/rt/pure/__release
+   (local.get $3)
   )
  )
 )
