@@ -25,9 +25,11 @@
 #include "wasm-features.h"
 #include "wasm-type.h"
 
-template<> class std::hash<std::vector<wasm::Type>> {
+namespace std {
+
+template<> class hash<vector<wasm::Type>> {
 public:
-  size_t operator()(const std::vector<wasm::Type>& types) const {
+  size_t operator()(const vector<wasm::Type>& types) const {
     uint64_t res = wasm::rehash(0, uint32_t(types.size()));
     for (auto t : types) {
       res = wasm::rehash(res, t.getID());
@@ -36,15 +38,16 @@ public:
   }
 };
 
-size_t std::hash<wasm::Type>::operator()(const wasm::Type& type) const {
-  return std::hash<uint64_t>{}(type.getID());
+size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
+  return hash<uint64_t>{}(type.getID());
 }
 
-size_t std::hash<wasm::Signature>::
-operator()(const wasm::Signature& sig) const {
-  return wasm::rehash(uint64_t(std::hash<uint64_t>{}(sig.params.getID())),
-                      uint64_t(std::hash<uint64_t>{}(sig.results.getID())));
+size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
+  return wasm::rehash(uint64_t(hash<uint64_t>{}(sig.params.getID())),
+                      uint64_t(hash<uint64_t>{}(sig.results.getID())));
 }
+
+} // namespace std
 
 namespace wasm {
 
