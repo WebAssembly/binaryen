@@ -68,7 +68,7 @@ struct FeatureSet {
 
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
-  constexpr operator uint32_t() const { return features; }
+  operator uint32_t() const { return features; }
 
   bool isMVP() const { return features == MVP; }
   bool has(FeatureSet f) { return (features & f) == f; }

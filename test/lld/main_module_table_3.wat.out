@@ -77,15 +77,6 @@
     "___stack_pointer",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "___stdio_write",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "___assign_got_enties",
-    "_dynCall_v"
-  ],
   "exports": [
     "__stdio_write",
     "stackSave",

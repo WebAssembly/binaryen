@@ -42,9 +42,11 @@ namespace wasm {
 typedef std::unordered_map<LocalGet*, Literals> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
-// precomputed.
+// precomputed. Inherits most of its functionality from
+// ConstantExpressionRunner, which it shares with the C-API, but adds handling
+// of GetValues computed during the precompute pass.
 class PrecomputingExpressionRunner
-  : public ExpressionRunner<PrecomputingExpressionRunner> {
+  : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
 
   // Concrete values of gets computed during the pass, which the runner does not
   // know about since it only records values of sets it visits.
@@ -66,7 +68,7 @@ public:
   PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
                                bool replaceExpression)
-    : ExpressionRunner<PrecomputingExpressionRunner>(
+    : ConstantExpressionRunner<PrecomputingExpressionRunner>(
         module,
         replaceExpression ? FlagValues::PRESERVE_SIDEEFFECTS
                           : FlagValues::DEFAULT,
@@ -82,10 +84,9 @@ public:
         return Flow(values);
       }
     }
-    return ExpressionRunner<PrecomputingExpressionRunner>::visitLocalGet(curr);
+    return ConstantExpressionRunner<
+      PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
-
-  void trap(const char* why) override { throw NonconstantException(); }
 };
 
 struct Precompute

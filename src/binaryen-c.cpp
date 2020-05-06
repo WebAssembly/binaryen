@@ -4998,16 +4998,18 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 
 namespace wasm {
 
-class CExpressionRunner final : public ExpressionRunner<CExpressionRunner> {
+// Evaluates a suspected constant expression via the C-API. Inherits most of its
+// functionality from ConstantExpressionRunner, which it shares with the
+// precompute pass, but must be `final` so we can `delete` its instances.
+class CExpressionRunner final
+  : public ConstantExpressionRunner<CExpressionRunner> {
 public:
   CExpressionRunner(Module* module,
                     CExpressionRunner::Flags flags,
                     Index maxDepth,
                     Index maxLoopIterations)
-    : ExpressionRunner<CExpressionRunner>(
+    : ConstantExpressionRunner<CExpressionRunner>(
         module, flags, maxDepth, maxLoopIterations) {}
-
-  void trap(const char* why) override { throw NonconstantException(); }
 };
 
 } // namespace wasm

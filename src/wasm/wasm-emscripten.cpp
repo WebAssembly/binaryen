@@ -65,7 +65,7 @@ bool isExported(Module& wasm, Name name) {
   return false;
 }
 
-Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
+Global* getStackPointerGlobal(Module& wasm) {
   // Assumption: The stack pointer is either imported as __stack_pointer or
   // its the first non-imported and non-exported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
@@ -92,7 +92,7 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
       /* ptr    =*/builder.makeConst(Literal(0)),
       /* type   =*/Type::i32);
   }
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
@@ -142,7 +142,7 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
       /* value  =*/value,
       /* type   =*/Type::i32);
   }
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
@@ -530,7 +530,7 @@ private:
 // __stack_pointer and initializes it from an immutable global instead.
 // For -shared builds we instead call replaceStackPointerGlobal.
 void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer || !stackPointer->imported() || !stackPointer->mutable_) {
     return;
   }
@@ -552,7 +552,7 @@ void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
 }
 
 void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     return;
   }
@@ -606,7 +606,7 @@ private:
 };
 
 void EmscriptenGlueGenerator::enforceStackLimit() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     return;
   }
@@ -1288,15 +1288,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "\n  ],\n";
 
   if (!wasm.exports.empty()) {
-    meta << "  \"implementedFunctions\": [";
-    commaFirst = true;
-    for (const auto& ex : wasm.exports) {
-      if (ex->kind == ExternalKind::Function) {
-        meta << nextElement() << "\"_" << ex->name.str << '"';
-      }
-    }
-    meta << "\n  ],\n";
-
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
