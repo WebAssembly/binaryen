@@ -157,10 +157,6 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-  // Whether an unknown value of a local or global has been encountered in a
-  // sub-expression.
-  bool seenUnknownValue = false;
-
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
     NOTE_ENTER_("generateArguments");
@@ -1075,21 +1071,8 @@ public:
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
-    seenUnknownValue = false;
     Flow value = visit(curr->value);
     if (value.breaking()) {
-      // Handle the case where all we don't know to perform the drop is a local
-      // or global value, which we do not need to know if there are no other
-      // side-effects.
-      if (seenUnknownValue && value.breakTo == NONCONSTANT_FLOW &&
-          module != nullptr) {
-        EffectAnalyzer effects(false, false, module->features, curr->value);
-        effects.localsRead.clear();
-        effects.globalsRead.clear();
-        if (!effects.hasAnything()) {
-          return Flow();
-        }
-      }
       return value;
     }
     return Flow();
@@ -1322,6 +1305,10 @@ protected:
   // Map remembering concrete global values set in the context of this flow.
   std::unordered_map<Name, Literals> globalValues;
 
+  // Whether an unknown value of a local or global has been encountered in a
+  // sub-expression.
+  bool seenUnknownValue = false;
+
 public:
   struct NonconstantException {
   }; // TODO: use a flow with a special name, as this is likely very slow
@@ -1411,6 +1398,27 @@ public:
       }
     }
     return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitDrop(Drop* curr) {
+    NOTE_ENTER("Drop");
+    seenUnknownValue = false;
+    Flow value = ExpressionRunner<SubType>::visit(curr->value);
+    if (value.breaking()) {
+      // Handle the case where all we don't know to perform the drop is a local
+      // or global value, which we do not need to know if there are no other
+      // side-effects.
+      if (seenUnknownValue && value.breakTo == NONCONSTANT_FLOW &&
+          module != nullptr) {
+        EffectAnalyzer effects(false, false, module->features, curr->value);
+        effects.localsRead.clear();
+        effects.globalsRead.clear();
+        if (!effects.hasAnything()) {
+          return Flow();
+        }
+      }
+      return value;
+    }
+    return Flow();
   }
   Flow visitCall(Call* curr) {
     NOTE_ENTER("Call");
