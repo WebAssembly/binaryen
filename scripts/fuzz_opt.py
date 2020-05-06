@@ -811,6 +811,46 @@ if __name__ == '__main__':
                 # which we use internally)
                 original_wasm = os.path.abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
+                # write out a useful reduce.sh
+                with open('reduce.sh', 'w') as reduce_sh:
+                  reduce_sh.write('''\
+# check the input is even a valid wasm file
+%(wasm_opt)s -all %(temp_wasm)s
+echo $?
+
+# run the command
+./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
+echo $?
+
+#
+# You may want to print out part of "o" or "e", if the output matters and not
+# just the return code. For example,
+#
+#   cat o | tail -n 10
+#
+# would print out the last few lines of stdout, which might be useful if that
+# mentions the specific error you want. Make sure that includes the right
+# details (sometimes stderr matters too), and preferably no more (less details
+# allow more reduction, but raise the risk of it reducing to something you don't
+# quite want).
+#
+# To do a "dry run" of what the reducer will do, copy the original file to the
+# test file that this script will run on,
+#
+#   cp %(original_wasm)s %(temp_wasm)s
+#
+# and then run
+#
+#   bash %(reduce_sh)s
+#
+# You may also need to add  --timeout 5  or such if the testcase is a slow one.
+#
+                  ''' % {'wasm_opt': in_bin('wasm-opt'),
+                         'seed': seed,
+                         'original_wasm': original_wasm,
+                         'temp_wasm': os.path.abspath('t.wasm'),
+                         'reduce_sh': os.path.abspath('reduce.sh')})
+
                 print('''\
 ================================================================================
 You found a bug! Please report it with
@@ -824,51 +864,29 @@ You can run that testcase again with "fuzz_opt.py %(seed)d"
 
 The initial wasm file used here is saved as %(original_wasm)s
 
-You can try to reduce the testcase with
+You can reduce the testcase by running this now:
 
-  bin/wasm-reduce %(original_wasm)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
 
-where "reduce.sh" is something like
+%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
-  # check the input is even a valid wasm file
-  bin/wasm-opt %(temp_wasm)s
-  echo $?
 
-  # run the command
-  ./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
-  echo $?
-  cat o | tail -n 10
-
-You may want to adjust what is printed there: in the example we save stdout
-and stderr separately and then print (so that wasm-reduce can see it) what we
-think is the relevant part of that output. Make sure that includes the right
-details (sometimes stderr matters too), and preferably no more (less details
-allow more reduction, but raise the risk of it reducing to something you don't
-quite want).
-
-To do a "dry run" of what the reducer will do, copy the original file to the
-test file that the script will run on,
-
-  cp %(original_wasm)s %(temp_wasm)s
-
-and then run
-
-  bash reduce.sh
-
-You may also need to add  --timeout 5  or such if the testcase is a slow one.
+"%(reduce_sh)s" has been filled out for you, and includes docs and suggestions.
 
 After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
                 ''' % {'seed': seed,
                        'original_wasm': original_wasm,
                        'temp_wasm': os.path.abspath('t.wasm'),
-                       'working_wasm': os.path.abspath('w.wasm')})
+                       'working_wasm': os.path.abspath('w.wasm'),
+                       'wasm_reduce': in_bin('wasm-reduce'),
+                       'reduce_sh': os.path.abspath('reduce.sh')})
                 break
         if given_seed is not None:
             if given_seed_passed:
                 print('(finished running seed %d without error)' % given_seed)
             else:
                 print('(finished running seed %d, see error above)' % given_seed)
+                sys.exit(1)
             break
 
         print('\nInvocations so far:')
