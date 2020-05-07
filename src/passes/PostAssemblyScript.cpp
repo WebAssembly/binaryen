@@ -364,9 +364,16 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     return (*releaseLocation)->cast<Call>()->operands[0]->cast<LocalGet>();
   }
 
+  // Tests if the given retain is generally eliminable (does not retain an
+  // allocation and does not reach an escape)
+  bool testRetainEliminable(LocalSet* retain, AliasGraph& graph) {
+    return !testRetainsAllocation(getRetainedExpression(retain), graph) &&
+           !testReachesEscape(retain, graph);
+  }
+
   // Tests if a release has balanced retains, that is it is being retained in
-  // any path leading to the release and no retained value originates at an
-  // allocation. For example
+  // any path leading to the release and that each path is generally eliminable.
+  // For example
   //
   //   var c = somethingElse() || a;
   //   ...
@@ -410,12 +417,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
         } else {
           return cache[release] = false;
         }
-      } else {
-        auto retain = it->first; // local.set(X, __retain(...))
-        auto retained = retain->value->cast<Call>()->operands[0];
-        if (testRetainsAllocation(retained, graph)) {
-          return cache[release] = false;
-        }
+      } else if (!testRetainEliminable(it->first, graph)) {
+        return cache[release] = false;
       }
     }
     return cache[release] = true;
@@ -449,71 +452,60 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     Set<Expression**> redundantReleases;
     Map<LocalGet*, bool> balancedRetainsCache;
 
-    // For each retain, check that it
-    //
-    // * doesn't reach an escape
-    // * doesn't retain an allocation
+    // For each retain, check that it is
+    // * generally eliminable (does not retain an allocation / reach an escape)
     // * reaches at least one release
-    // * reaches only releases with balanced retains
-    //
+    // * reaches only releases with balanced (generally eliminable) retains
     for (auto& pair : retains) {
       auto* retain = pair.first;
       auto** retainLocation = pair.second;
-      if (!testReachesEscape(retain, graph)) {
-        if (!testRetainsAllocation(getRetainedExpression(retain), graph)) {
-          Set<Expression**> releaseLocations;
-          collectReleases(retain, graph, releaseLocations);
-          if (!releaseLocations.empty()) {
-            bool allBalanced = true;
-            for (auto** releaseLocation : releaseLocations) {
-              if (!testBalancedRetains(getReleaseByLocation(releaseLocation),
-                                       graph,
-                                       balancedRetainsCache)) {
-                allBalanced = false;
-                break;
-              }
+      if (testRetainEliminable(retain, graph)) {
+        Set<Expression**> releaseLocations;
+        collectReleases(retain, graph, releaseLocations);
+        if (!releaseLocations.empty()) {
+          bool allBalanced = true;
+          for (auto** releaseLocation : releaseLocations) {
+            if (!testBalancedRetains(getReleaseByLocation(releaseLocation),
+                                     graph,
+                                     balancedRetainsCache)) {
+              allBalanced = false;
+              break;
             }
-            if (allBalanced) {
+          }
+          if (allBalanced) {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
-              std::cerr << "  eliminating ";
-              WasmPrinter::printExpression(retain, std::cerr, true);
-              std::cerr << " reaching\n";
+            std::cerr << "  eliminating ";
+            WasmPrinter::printExpression(retain, std::cerr, true);
+            std::cerr << " reaching\n";
 #endif
-              redundantRetains.insert(retainLocation);
-              for (auto** getLocation : releaseLocations) {
+            redundantRetains.insert(retainLocation);
+            for (auto** getLocation : releaseLocations) {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
-                std::cerr << "    ";
-                WasmPrinter::printExpression(*getLocation, std::cerr, true);
-                std::cerr << "\n";
+              std::cerr << "    ";
+              WasmPrinter::printExpression(*getLocation, std::cerr, true);
+              std::cerr << "\n";
 #endif
-                redundantReleases.insert(getLocation);
-              }
-#ifdef POST_ASSEMBLYSCRIPT_DEBUG
-            } else {
-              std::cerr << "  cannot eliminate ";
-              WasmPrinter::printExpression(retain, std::cerr, true);
-              std::cerr << " - unbalanced\n";
-#endif
+              redundantReleases.insert(getLocation);
             }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
           } else {
             std::cerr << "  cannot eliminate ";
             WasmPrinter::printExpression(retain, std::cerr, true);
-            std::cerr << " - zero releases\n";
+            std::cerr << " - unbalanced\n";
 #endif
           }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
         } else {
           std::cerr << "  cannot eliminate ";
           WasmPrinter::printExpression(retain, std::cerr, true);
-          std::cerr << " - retains allocation\n";
+          std::cerr << " - zero releases\n";
 #endif
         }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
       } else {
         std::cerr << "  cannot eliminate ";
         WasmPrinter::printExpression(retain, std::cerr, true);
-        std::cerr << " - reaches return\n";
+        std::cerr << " - not eliminable\n";
 #endif
       }
     }
