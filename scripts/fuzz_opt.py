@@ -518,8 +518,10 @@ class Asyncify(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', 'async.' + before_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', 'async.' + after_wasm] + FEATURE_OPTS)
+        before_wasm = 'async.' + before_wasm
+        after_wasm = 'async.' + after_wasm
         before = fix_output(run_d8(before_wasm))
         after = fix_output(run_d8(after_wasm))
 
@@ -536,16 +538,14 @@ class Asyncify(TestCaseHandler):
         # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
 
         def do_asyncify(wasm):
-            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 't.wasm']
+            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
             if random.random() < 0.5:
                 cmd += ['--optimize-level=%d' % random.randint(1, 3)]
             if random.random() < 0.5:
                 cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
-            out = run_d8('t.wasm')
-            # emit some status logging from asyncify
-            print(out.splitlines()[-1])
+            out = run_d8('async.t.wasm')
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
             for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
                            '[fuzz-exec] calling asyncify_start_unwind\n',
@@ -587,7 +587,9 @@ def test_one(random_input, opts, given_wasm):
     if given_wasm:
         shutil.copyfile(given_wasm, 'a.wasm')
     else:
-        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
+        # emit the target features section so that reduction can work later,
+        # without needing to specify the features
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm', '--emit-target-features'] + FUZZ_OPTS + FEATURE_OPTS
         if PRINT_WATS:
             printed = run(generate_command + ['--print'])
             with open('a.printed.wast', 'w') as f:
@@ -826,7 +828,7 @@ if __name__ == '__main__':
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
-%(wasm_opt)s -all %(temp_wasm)s
+%(wasm_opt)s --detect-features %(temp_wasm)s
 echo $?
 
 # run the command
