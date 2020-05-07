@@ -291,6 +291,12 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException(std::string("trap: ") + why);
   }
 
+  void throwException(Literal exn) override {
+    std::stringstream ss;
+    ss << "exception thrown: " << exn;
+    throw FailToEvalException(ss.str());
+  }
+
 private:
   // TODO: handle unaligned too, see shell-interface
 

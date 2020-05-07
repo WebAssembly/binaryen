@@ -518,8 +518,10 @@ class Asyncify(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', 'async.' + before_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', 'async.' + after_wasm] + FEATURE_OPTS)
+        before_wasm = 'async.' + before_wasm
+        after_wasm = 'async.' + after_wasm
         before = fix_output(run_d8(before_wasm))
         after = fix_output(run_d8(after_wasm))
 
@@ -536,16 +538,14 @@ class Asyncify(TestCaseHandler):
         # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
 
         def do_asyncify(wasm):
-            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 't.wasm']
+            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
             if random.random() < 0.5:
                 cmd += ['--optimize-level=%d' % random.randint(1, 3)]
             if random.random() < 0.5:
                 cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
-            out = run_d8('t.wasm')
-            # emit some status logging from asyncify
-            print(out.splitlines()[-1])
+            out = run_d8('async.t.wasm')
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
             for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
                            '[fuzz-exec] calling asyncify_start_unwind\n',
@@ -587,7 +587,9 @@ def test_one(random_input, opts, given_wasm):
     if given_wasm:
         shutil.copyfile(given_wasm, 'a.wasm')
     else:
-        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
+        # emit the target features section so that reduction can work later,
+        # without needing to specify the features
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm', '--emit-target-features'] + FUZZ_OPTS + FEATURE_OPTS
         if PRINT_WATS:
             printed = run(generate_command + ['--print'])
             with open('a.printed.wast', 'w') as f:
@@ -811,6 +813,46 @@ if __name__ == '__main__':
                 # which we use internally)
                 original_wasm = os.path.abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
+                # write out a useful reduce.sh
+                with open('reduce.sh', 'w') as reduce_sh:
+                    reduce_sh.write('''\
+# check the input is even a valid wasm file
+%(wasm_opt)s --detect-features %(temp_wasm)s
+echo $?
+
+# run the command
+./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
+echo $?
+
+#
+# You may want to print out part of "o" or "e", if the output matters and not
+# just the return code. For example,
+#
+#   cat o | tail -n 10
+#
+# would print out the last few lines of stdout, which might be useful if that
+# mentions the specific error you want. Make sure that includes the right
+# details (sometimes stderr matters too), and preferably no more (less details
+# allow more reduction, but raise the risk of it reducing to something you don't
+# quite want).
+#
+# To do a "dry run" of what the reducer will do, copy the original file to the
+# test file that this script will run on,
+#
+#   cp %(original_wasm)s %(temp_wasm)s
+#
+# and then run
+#
+#   bash %(reduce_sh)s
+#
+# You may also need to add  --timeout 5  or such if the testcase is a slow one.
+#
+                  ''' % {'wasm_opt': in_bin('wasm-opt'),
+                         'seed': seed,
+                         'original_wasm': original_wasm,
+                         'temp_wasm': os.path.abspath('t.wasm'),
+                         'reduce_sh': os.path.abspath('reduce.sh')})
+
                 print('''\
 ================================================================================
 You found a bug! Please report it with
@@ -824,51 +866,29 @@ You can run that testcase again with "fuzz_opt.py %(seed)d"
 
 The initial wasm file used here is saved as %(original_wasm)s
 
-You can try to reduce the testcase with
+You can reduce the testcase by running this now:
 
-  bin/wasm-reduce %(original_wasm)s '--command=bash reduce.sh' -t %(temp_wasm)s -w %(working_wasm)s
 
-where "reduce.sh" is something like
+%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
-  # check the input is even a valid wasm file
-  bin/wasm-opt %(temp_wasm)s
-  echo $?
 
-  # run the command
-  ./scripts/fuzz_opt.py %(seed)s %(temp_wasm)s > o 2> e
-  echo $?
-  cat o | tail -n 10
-
-You may want to adjust what is printed there: in the example we save stdout
-and stderr separately and then print (so that wasm-reduce can see it) what we
-think is the relevant part of that output. Make sure that includes the right
-details (sometimes stderr matters too), and preferably no more (less details
-allow more reduction, but raise the risk of it reducing to something you don't
-quite want).
-
-To do a "dry run" of what the reducer will do, copy the original file to the
-test file that the script will run on,
-
-  cp %(original_wasm)s %(temp_wasm)s
-
-and then run
-
-  bash reduce.sh
-
-You may also need to add  --timeout 5  or such if the testcase is a slow one.
+"%(reduce_sh)s" has been filled out for you, and includes docs and suggestions.
 
 After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
                 ''' % {'seed': seed,
                        'original_wasm': original_wasm,
                        'temp_wasm': os.path.abspath('t.wasm'),
-                       'working_wasm': os.path.abspath('w.wasm')})
+                       'working_wasm': os.path.abspath('w.wasm'),
+                       'wasm_reduce': in_bin('wasm-reduce'),
+                       'reduce_sh': os.path.abspath('reduce.sh')})
                 break
         if given_seed is not None:
             if given_seed_passed:
                 print('(finished running seed %d without error)' % given_seed)
             else:
                 print('(finished running seed %d, see error above)' % given_seed)
+                sys.exit(1)
             break
 
         print('\nInvocations so far:')
