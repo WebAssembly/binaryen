@@ -199,8 +199,8 @@ jobs:
         mkdir $HOME/emsdk
         git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
         $HOME/emsdk/emsdk update-tags
-        $HOME/emsdk/emsdk install latest
-        $HOME/emsdk/emsdk activate latest
+        $HOME/emsdk/emsdk install 1.39.14
+        $HOME/emsdk/emsdk activate 1.39.14
         echo "::add-path::$HOME/emsdk"
     - name: emcc-tests
       run: |
