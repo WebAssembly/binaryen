@@ -877,8 +877,7 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
                          BinaryenType params,
                          BinaryenType results,
                          bool isReturn) {
-  auto* wasm = (Module*)module;
-  auto* ret = wasm->allocator.alloc<CallIndirect>();
+  auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
@@ -1300,7 +1299,7 @@ BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
                                       const char* name,
                                       const char* eventName,
                                       BinaryenExpressionRef exnref) {
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   Event* event = wasm->getEventOrNull(eventName);
   assert(event && "br_on_exn's event must exist");
   return static_cast<Expression*>(
@@ -2069,11 +2068,11 @@ uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module) {
 }
 BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
                                                BinaryenIndex id) {
-  auto* wasm = (Module*)module;
-  if (wasm->functions.size() <= id) {
+  const auto& functions = ((Module*)module)->functions;
+  if (functions.size() <= id) {
     Fatal() << "invalid function id.";
   }
-  return wasm->functions[id].get();
+  return functions[id].get();
 }
 
 // Globals
@@ -2140,19 +2139,19 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,
                             const char* externalBaseName) {
-  auto* wasm = (Module*)module;
-  wasm->table.module = externalModuleName;
-  wasm->table.base = externalBaseName;
+  auto& table = ((Module*)module)->table;
+  table.module = externalModuleName;
+  table.base = externalBaseName;
 }
 void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto* wasm = (Module*)module;
-  wasm->memory.module = externalModuleName;
-  wasm->memory.base = externalBaseName;
-  wasm->memory.shared = shared;
+  auto& memory = ((Module*)module)->memory;
+  memory.module = externalModuleName;
+  memory.base = externalBaseName;
+  memory.shared = shared;
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
@@ -2252,15 +2251,15 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               const char** funcNames,
                               BinaryenIndex numFuncNames,
                               BinaryenExpressionRef offset) {
-  auto* wasm = (Module*)module;
   Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }
-  wasm->table.initial = initial;
-  wasm->table.max = maximum;
-  wasm->table.exists = true;
-  wasm->table.segments.push_back(segment);
+  auto& table = ((Module*)module)->table;
+  table.initial = initial;
+  table.max = maximum;
+  table.exists = true;
+  table.segments.push_back(segment);
 }
 
 int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
@@ -2272,29 +2271,29 @@ BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
 BinaryenExpressionRef
 BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
                                       BinaryenIndex segmentId) {
-  auto* wasm = (Module*)module;
-  if (wasm->table.segments.size() <= segmentId) {
+  const auto& segments = ((Module*)module)->table.segments;
+  if (segments.size() <= segmentId) {
     Fatal() << "invalid function table segment id.";
   }
-  return wasm->table.segments[segmentId].offset;
+  return segments[segmentId].offset;
 }
 BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
                                                     BinaryenIndex segmentId) {
-  auto* wasm = (Module*)module;
-  if (wasm->table.segments.size() <= segmentId) {
+  const auto& segments = ((Module*)module)->table.segments;
+  if (segments.size() <= segmentId) {
     Fatal() << "invalid function table segment id.";
   }
-  return wasm->table.segments[segmentId].data.size();
+  return segments[segmentId].data.size();
 }
 const char* BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex segmentId,
                                                 BinaryenIndex dataId) {
-  auto* wasm = (Module*)module;
-  if (wasm->table.segments.size() <= segmentId ||
-      wasm->table.segments[segmentId].data.size() <= dataId) {
+  const auto& segments = ((Module*)module)->table.segments;
+  if (segments.size() <= segmentId ||
+      segments[segmentId].data.size() <= dataId) {
     Fatal() << "invalid function table segment or data id.";
   }
-  return wasm->table.segments[segmentId].data[dataId].c_str();
+  return segments[segmentId].data[dataId].c_str();
 }
 
 // Memory. One per module
@@ -2368,30 +2367,28 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
-  auto* wasm = (Module*)module;
-  if (wasm->memory.segments.size() <= id) {
+  const auto& segments = ((Module*)module)->memory.segments;
+  if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment& segment = wasm->memory.segments[id];
-  return segment.data.size();
+  return segments[id].data.size();
 }
 int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
                                     BinaryenIndex id) {
-  auto* wasm = (Module*)module;
-  if (wasm->memory.segments.size() <= id) {
+  const auto& segments = ((Module*)module)->memory.segments;
+  if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment& segment = wasm->memory.segments[id];
-  return segment.isPassive;
+  return segments[id].isPassive;
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
-  auto* wasm = (Module*)module;
-  if (wasm->memory.segments.size() <= id) {
+  const auto& segments = ((Module*)module)->memory.segments;
+  if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment& segment = wasm->memory.segments[id];
+  const Memory::Segment& segment = segments[id];
   std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
 }
 
@@ -2434,7 +2431,7 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   Wasm2JSBuilder::Flags flags;
   Wasm2JSBuilder wasm2js(flags, globalPassOptions);
   Ref asmjs = wasm2js.processWasm(wasm);
@@ -2484,7 +2481,7 @@ void BinaryenSetLowMemoryUnused(int on) {
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);
-  auto& args = globalPassOptions.arguments;
+  const auto& args = globalPassOptions.arguments;
   auto it = args.find(key);
   if (it == args.end()) {
     return nullptr;
@@ -2540,7 +2537,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
 }
 
 void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner runner(wasm, globalPassOptions);
   AutoDrop().run(&runner, wasm);
 }
@@ -2666,7 +2663,7 @@ BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
 
 const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
                                                BinaryenIndex index) {
-  auto& debugInfoFileNames = ((Module*)module)->debugInfoFileNames;
+  const auto& debugInfoFileNames = ((Module*)module)->debugInfoFileNames;
   return index < debugInfoFileNames.size()
            ? debugInfoFileNames.at(index).c_str()
            : nullptr;
@@ -2690,7 +2687,7 @@ BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
 }
 BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
                                     BinaryenIndex index) {
-  auto& vars = ((Function*)func)->vars;
+  const auto& vars = ((Function*)func)->vars;
   assert(index < vars.size());
   return vars[index].getID();
 }
@@ -2833,7 +2830,7 @@ uint32_t BinaryenGetNumExports(BinaryenModuleRef module) {
 }
 BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
                                            BinaryenIndex id) {
-  auto& exports = ((Module*)module)->exports;
+  const auto& exports = ((Module*)module)->exports;
   if (exports.size() <= id) {
     Fatal() << "invalid export id.";
   }
