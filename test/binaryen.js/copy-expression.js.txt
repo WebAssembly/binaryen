@@ -23,7 +23,7 @@ int main() {
     BinaryenExpressionRef children[] = { expressions[4] };
     expressions[5] = BinaryenBlock(the_module, NULL, children, 1, BinaryenTypeInt32());
   }
-  expressions[6] = BinaryenExpressionCopy(expressions[5], theModule);
+  expressions[6] = BinaryenExpressionCopy(expressions[5], the_module);
   BinaryenBlockGetChild(expressions[5], 0);
   BinaryenBlockGetChild(expressions[6], 0);
   BinaryenIfGetCondition(expressions[4]);

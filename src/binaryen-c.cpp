@@ -1970,7 +1970,7 @@ BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id
               << "] = BinaryenExpressionCopy(expressions[" << expressions[expr]
-              << "], theModule);\n";
+              << "], the_module);\n";
   }
   return ret;
 }
