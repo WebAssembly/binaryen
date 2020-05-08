@@ -2349,7 +2349,7 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     return false;
   };
 
-  const Memory::Segment& segment = wasm->memory.segments[id];
+  const auto& segment = wasm->memory.segments[id];
 
   int64_t ret;
   if (globalOffset(segment.offset, ret)) {
@@ -2388,7 +2388,7 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment& segment = segments[id];
+  const auto& segment = segments[id];
   std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
 }
 
