@@ -2407,6 +2407,9 @@ function wrapModule(module, self) {
   self['setDebugLocation'] = function(func, expr, fileIndex, lineNumber, columnNumber) {
     return Module['_BinaryenFunctionSetDebugLocation'](func, expr, fileIndex, lineNumber, columnNumber);
   };
+  self['copyExpression'] = function(expr) {
+    return Module['_BinaryenExpressionCopy'](expr, module);
+  };
 
   return self;
 }

@@ -1962,6 +1962,19 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   std::cout << '\n';
 }
 
+BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
+                                             BinaryenModuleRef module) {
+  auto* wasm = (Module*)module;
+  auto* ret = ExpressionManipulator::copy(expr, *wasm);
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id
+              << "] = BinaryenExpressionCopy(expressions[" << expressions[expr]
+              << "], theModule);\n";
+  }
+  return ret;
+}
+
 // Specific expression utility
 
 // Block
