@@ -1,5 +1,3 @@
-binaryen.setAPITracing(true);
-
 assert(binaryen.getPassArgument("theKey") === null);
 
 binaryen.setPassArgument("theKey", "theValue");
@@ -13,5 +11,3 @@ assert(binaryen.getPassArgument("theKey") === "theValue2");
 
 binaryen.clearPassArguments();
 assert(binaryen.getPassArgument("theKey") === null);
-
-binaryen.setAPITracing(false);
