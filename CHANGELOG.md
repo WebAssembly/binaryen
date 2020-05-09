@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- The C-API's `BinaryenSetAPITracing` and the JS-API's `setAPITracing` have been
+  removed because this feature was not very useful anymore and had a significant
+  maintainance cost.
+
 v93
 ---
 
