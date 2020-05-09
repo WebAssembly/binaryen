@@ -806,16 +806,16 @@ if __name__ == '__main__':
                 print(arg)
             if given_seed is not None:
                 given_seed_passed = False
-            else:
-                # show some useful info about filing a bug and reducing the
-                # testcase (to make reduction simple, save "original.wasm" on
-                # the side, so that we can autoreduce using the name "a.wasm"
-                # which we use internally)
-                original_wasm = os.path.abspath('original.wasm')
-                shutil.copyfile('a.wasm', original_wasm)
-                # write out a useful reduce.sh
-                with open('reduce.sh', 'w') as reduce_sh:
-                    reduce_sh.write('''\
+
+            # show some useful info about filing a bug and reducing the
+            # testcase (to make reduction simple, save "original.wasm" on
+            # the side, so that we can autoreduce using the name "a.wasm"
+            # which we use internally)
+            original_wasm = os.path.abspath('original.wasm')
+            shutil.copyfile('a.wasm', original_wasm)
+            # write out a useful reduce.sh
+            with open('reduce.sh', 'w') as reduce_sh:
+                reduce_sh.write('''\
 # check the input is even a valid wasm file
 %(wasm_opt)s --detect-features %(temp_wasm)s
 echo $?
@@ -847,13 +847,13 @@ echo $?
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
-                  ''' % {'wasm_opt': in_bin('wasm-opt'),
-                         'seed': seed,
-                         'original_wasm': original_wasm,
-                         'temp_wasm': os.path.abspath('t.wasm'),
-                         'reduce_sh': os.path.abspath('reduce.sh')})
+              ''' % {'wasm_opt': in_bin('wasm-opt'),
+                     'seed': seed,
+                     'original_wasm': original_wasm,
+                     'temp_wasm': os.path.abspath('t.wasm'),
+                     'reduce_sh': os.path.abspath('reduce.sh')})
 
-                print('''\
+            print('''\
 ================================================================================
 You found a bug! Please report it with
 
@@ -876,13 +876,13 @@ You can reduce the testcase by running this now:
 
 After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
-                ''' % {'seed': seed,
-                       'original_wasm': original_wasm,
-                       'temp_wasm': os.path.abspath('t.wasm'),
-                       'working_wasm': os.path.abspath('w.wasm'),
-                       'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': os.path.abspath('reduce.sh')})
-                break
+            ''' % {'seed': seed,
+                   'original_wasm': original_wasm,
+                   'temp_wasm': os.path.abspath('t.wasm'),
+                   'working_wasm': os.path.abspath('w.wasm'),
+                   'wasm_reduce': in_bin('wasm-reduce'),
+                   'reduce_sh': os.path.abspath('reduce.sh')})
+            break
         if given_seed is not None:
             if given_seed_passed:
                 print('(finished running seed %d without error)' % given_seed)
