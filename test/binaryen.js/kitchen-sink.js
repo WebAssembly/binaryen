@@ -897,14 +897,6 @@ function test_nonvalid() {
   module.dispose();
 }
 
-function test_tracing() {
-  binaryen.setAPITracing(1);
-  test_core();
-  test_relooper();
-  test_types();
-  binaryen.setAPITracing(0);
-}
-
 function test_parsing() {
   var text;
 
@@ -1019,8 +1011,6 @@ function test_expression_info() {
   module.dispose();
 }
 
-// Tracing must be first so it starts with a fresh set of interned types
-test_tracing();
 test_types();
 test_features();
 test_ids();

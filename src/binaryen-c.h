@@ -1706,20 +1706,6 @@ BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
   ExpressionRunnerRef runner, BinaryenExpressionRef expr);
 
 //
-// ========= Other APIs =========
-//
-
-// Sets whether API tracing is on or off. It is off by default. When on, each
-// call to an API method will print out C code equivalent to it, which is useful
-// for auto-generating standalone testcases from projects using the API. When
-// calling this to turn on tracing, the prelude of the full program is printed,
-// and when calling it to turn it off, the ending of the program is printed,
-// giving you the full compilable testcase.
-// TODO: compile-time option to enable/disable this feature entirely at build
-// time?
-BINARYEN_API void BinaryenSetAPITracing(int on);
-
-//
 // ========= Utilities =========
 //
 
