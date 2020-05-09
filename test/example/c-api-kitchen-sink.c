@@ -1226,14 +1226,6 @@ void test_nonvalid() {
   }
 }
 
-void test_tracing() {
-  BinaryenSetAPITracing(1);
-  test_core();
-  test_relooper();
-  test_types();
-  BinaryenSetAPITracing(0);
-}
-
 void test_color_status() {
     int i;
 
@@ -1332,8 +1324,6 @@ void test_for_each() {
 }
 
 int main() {
-  // Tracing must be first so it starts with a fresh set of interned types
-  test_tracing();
   test_types();
   test_features();
   test_core();

@@ -26,10 +26,8 @@ module.optimize();
 assert(module.validate());
 console.log(module.emitText());
 
-binaryen.setAPITracing(true);
 binaryen.setLowMemoryUnused(true);
 assert(binaryen.getLowMemoryUnused());
-binaryen.setAPITracing(false);
 console.log();
 
 console.log("=== optimized, lowMemoryUnused=" + binaryen.getLowMemoryUnused() + " ===");

@@ -209,6 +209,9 @@ static void run_asserts(Name moduleName,
         result = operation.operate();
       } catch (const TrapException&) {
         trapped = true;
+      } catch (const WasmException& e) {
+        std::cout << "[exception thrown: " << e.exn << "]" << std::endl;
+        trapped = true;
       }
       if (id == ASSERT_RETURN) {
         assert(!trapped);
