@@ -1,5 +1,3 @@
-binaryen.setAPITracing(true);
-
 var module = new binaryen.Module();
 
 // Create an expression and copy it
@@ -14,15 +12,20 @@ var copy = module.copyExpression(original);
 
 // Check that the expression incl. sub-expressions are copies
 assert(original !== copy);
-var originalIf = binaryen._BinaryenBlockGetChild(original, 0);
-var copyIf = binaryen._BinaryenBlockGetChild(copy, 0);
-assert(originalIf !== copyIf);
-assert(binaryen._BinaryenIfGetCondition(originalIf) !== binaryen._BinaryenIfGetCondition(copyIf));
-assert(binaryen._BinaryenIfGetIfTrue(originalIf) !== binaryen._BinaryenIfGetIfTrue(copyIf));
-assert(binaryen._BinaryenIfGetIfFalse(originalIf) !== binaryen._BinaryenIfGetIfFalse(copyIf));
 
-binaryen.setAPITracing(false);
+var originalInfo = binaryen.getExpressionInfo(original);
+assert(originalInfo.children.length === 1);
 
-// Check that both are otherwise identical, but do it after tracing so
-// emitText and tracing output don't conflict on stdout
+var copyInfo = binaryen.getExpressionInfo(copy);
+assert(originalInfo.children.length === copyInfo.children.length);
+assert(originalInfo.children[0] !== copyInfo.children[0]);
+
+var originalIfInfo = binaryen.getExpressionInfo(originalInfo.children[0]);
+var copyIfInfo = binaryen.getExpressionInfo(copyInfo.children[0]);
+
+assert(originalIfInfo.condition !== copyIfInfo.condition);
+assert(originalIfInfo.ifTrue !== copyIfInfo.ifTrue);
+assert(originalIfInfo.ifFalse !== copyIfInfo.ifFalse);
+
+// Check that both are otherwise identical
 assert(binaryen.emitText(original) === binaryen.emitText(copy));

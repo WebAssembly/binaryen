@@ -1321,15 +1321,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
 BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
                                              BinaryenModuleRef module) {
-  auto* wasm = (Module*)module;
-  auto* ret = ExpressionManipulator::copy(expr, *wasm);
-  if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id
-              << "] = BinaryenExpressionCopy(expressions[" << expressions[expr]
-              << "], the_module);\n";
-  }
-  return ret;
+  return ExpressionManipulator::copy(expr, *(Module*)module);
 }
 
 // Specific expression utility
