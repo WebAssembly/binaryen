@@ -3056,11 +3056,6 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
-// Enables or disables C-API tracing
-Module['setAPITracing'] = function(on) {
-  return Module['_BinaryenSetAPITracing'](on);
-};
-
 // Additional customizations
 
 Module['exit'] = function(status) {

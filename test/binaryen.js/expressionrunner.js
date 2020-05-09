@@ -3,8 +3,6 @@ console.log("// ExpressionRunner.Flags.Default = " + Flags.Default);
 console.log("// ExpressionRunner.Flags.PreserveSideeffects = " + Flags.PreserveSideeffects);
 console.log("// ExpressionRunner.Flags.TraverseCalls = " + Flags.TraverseCalls);
 
-binaryen.setAPITracing(true);
-
 function assertDeepEqual(x, y) {
   if (typeof x === "object") {
     for (let i in x) assertDeepEqual(x[i], y[i]);
@@ -205,4 +203,3 @@ expr = runner.runAndDispose(
 assert(expr === 0);
 
 module.dispose();
-binaryen.setAPITracing(false);
