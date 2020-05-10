@@ -884,7 +884,7 @@ After reduction, the reduced file will be in %(working_wasm)s
                    'reduce_sh': os.path.abspath('reduce.sh')})
             break
         if given_seed is not None:
-          break
+            break
 
         print('\nInvocations so far:')
         for testcase_handler in testcase_handlers:
