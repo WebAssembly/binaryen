@@ -884,13 +884,16 @@ After reduction, the reduced file will be in %(working_wasm)s
                    'reduce_sh': os.path.abspath('reduce.sh')})
             break
         if given_seed is not None:
-            if given_seed_passed:
-                print('(finished running seed %d without error)' % given_seed)
-                sys.exit(0)
-            else:
-                print('(finished running seed %d, see error above)' % given_seed)
-                sys.exit(1)
+          break
 
         print('\nInvocations so far:')
         for testcase_handler in testcase_handlers:
             print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
+
+    if given_seed is not None:
+        if given_seed_passed:
+            print('(finished running seed %d without error)' % given_seed)
+            sys.exit(0)
+        else:
+            print('(finished running seed %d, see error above)' % given_seed)
+            sys.exit(1)
