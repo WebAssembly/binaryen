@@ -148,14 +148,6 @@ struct DeadCodeElimination
     reachable = false;
   }
 
-  void visitBrOnExn(BrOnExn* curr) {
-    if (isDead(curr->exnref)) {
-      replaceCurrent(curr->exnref);
-      return;
-    }
-    addBreak(curr->name);
-  }
-
   void visitReturn(Return* curr) {
     if (isDead(curr->value)) {
       replaceCurrent(curr->value);
@@ -257,6 +249,18 @@ struct DeadCodeElimination
     // the try may have had a type, but can now be unreachable, which allows
     // more reduction outside
     typeUpdater.maybeUpdateTypeToUnreachable(curr);
+  }
+
+  void visitThrow(Throw* curr) { reachable = false; }
+
+  void visitRethrow(Rethrow* curr) { reachable = false; }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (isDead(curr->exnref)) {
+      replaceCurrent(curr->exnref);
+      return;
+    }
+    addBreak(curr->name);
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
