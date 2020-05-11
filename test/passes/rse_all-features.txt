@@ -478,7 +478,9 @@
  (func $try1
   (local $x i32)
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)
@@ -495,7 +497,7 @@
  (func $try2
   (local $x i32)
   (try
-   (block $block
+   (do
     (throw $e
      (i32.const 0)
     )
@@ -516,8 +518,10 @@
  (func $try3
   (local $x i32)
   (try
-   (throw $e
-    (i32.const 0)
+   (do
+    (throw $e
+     (i32.const 0)
+    )
    )
    (catch
     (drop
@@ -538,7 +542,7 @@
  (func $try4
   (local $x i32)
   (try
-   (block $block
+   (do
     (call $foo)
     (local.set $x
      (i32.const 1)
@@ -557,7 +561,7 @@
  (func $try5
   (local $x i32)
   (try
-   (block $block
+   (do
     (local.set $x
      (i32.const 1)
     )
@@ -576,13 +580,17 @@
  (func $nested-try
   (local $x i32)
   (try
-   (try
-    (throw $e
-     (i32.const 0)
-    )
-    (catch
-     (rethrow
-      (exnref.pop)
+   (do
+    (try
+     (do
+      (throw $e
+       (i32.const 0)
+      )
+     )
+     (catch
+      (rethrow
+       (exnref.pop)
+      )
      )
     )
    )

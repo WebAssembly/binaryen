@@ -1828,12 +1828,16 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   if (elementStartsWith(*s[i], "catch")) {   // empty try body
     ret->body = makeNop();
   } else {
-    ret->body = parseExpression(*s[i++]);
+    if (!elementStartsWith(*s[i], "do")) {
+      throw ParseException(
+        "try body should start with 'do'", s[i]->line, s[i]->col);
+    }
+    ret->body = makeTryOrCatchBody(*s[i++], type, true);
   }
   if (!elementStartsWith(*s[i], "catch")) {
     throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
   }
-  ret->catchBody = makeCatch(*s[i++], type);
+  ret->catchBody = makeTryOrCatchBody(*s[i++], type, false);
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
@@ -1847,8 +1851,12 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeCatch(Element& s, Type type) {
-  if (!elementStartsWith(s, "catch")) {
+Expression*
+SExpressionWasmBuilder::makeTryOrCatchBody(Element& s, Type type, bool isTry) {
+  if (isTry && !elementStartsWith(s, "do")) {
+    throw ParseException("invalid try do clause", s.line, s.col);
+  }
+  if (!isTry && !elementStartsWith(s, "catch")) {
     throw ParseException("invalid catch clause", s.line, s.col);
   }
   auto ret = allocator.alloc<Block>();

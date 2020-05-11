@@ -3,7 +3,9 @@
 
   (func $eh (local $exn exnref)
     (try
-      (throw $e0 (i32.const 0))
+      (do
+        (throw $e0 (i32.const 0))
+      )
       (catch
         (local.set $exn (exnref.pop))
         (drop

@@ -44,8 +44,10 @@
   (local $x i32)
   (block $out
    (try
-    (throw $e
-     (i32.const 0)
+    (do
+     (throw $e
+      (i32.const 0)
+     )
     )
     (catch
      (drop
@@ -74,8 +76,10 @@
     (i32.const 1)
    )
    (try
-    (throw $e
-     (i32.const 0)
+    (do
+     (throw $e
+      (i32.const 0)
+     )
     )
     (catch
      (rethrow

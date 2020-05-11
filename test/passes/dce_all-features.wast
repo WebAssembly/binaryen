@@ -743,9 +743,10 @@
 
   (func $try_unreachable
     (try
-      (unreachable)
-      (catch
+      (do
+        (unreachable)
       )
+      (catch)
     )
     (call $foo) ;; shouldn't be dce'd
   )
@@ -761,7 +762,9 @@
 
   (func $both_unreachable
     (try
-      (unreachable)
+      (do
+        (unreachable)
+      )
       (catch
         (unreachable)
       )

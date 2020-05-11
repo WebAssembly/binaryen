@@ -240,9 +240,11 @@
     )
     (if
       (try (result i32)
-        (i32.eqz
+        (do
           (i32.eqz
-            (i32.const 123)
+            (i32.eqz
+              (i32.const 123)
+            )
           )
         )
         (catch

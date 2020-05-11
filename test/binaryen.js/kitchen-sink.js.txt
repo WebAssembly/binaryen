@@ -1758,8 +1758,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (try
-       (throw $a-event
-        (i32.const 0)
+       (do
+        (throw $a-event
+         (i32.const 0)
+        )
        )
        (catch
         (local.set $5
@@ -3524,8 +3526,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (try
-       (throw $a-event
-        (i32.const 0)
+       (do
+        (throw $a-event
+         (i32.const 0)
+        )
        )
        (catch
         (local.set $5

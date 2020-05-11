@@ -1194,15 +1194,17 @@
 
   (func $exnref_pop_test (local $exn exnref)
     (try
-      (try
-        (catch
-          ;; Expressions containing exnref.pop should NOT be taken out and
-          ;; folded.
-          (local.set $exn (exnref.pop))
-          (drop (i32.const 111))
-          (drop (i32.const 222))
-          (drop (i32.const 333))
-          (unreachable)
+      (do
+        (try
+          (catch
+            ;; Expressions containing exnref.pop should NOT be taken out and
+            ;; folded.
+            (local.set $exn (exnref.pop))
+            (drop (i32.const 111))
+            (drop (i32.const 222))
+            (drop (i32.const 333))
+            (unreachable)
+          )
         )
       )
       (catch

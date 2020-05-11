@@ -19,7 +19,9 @@ module.setFeatures(binaryen.Features.ReferenceTypes |
 var event_ = module.addEvent("e", 0, binaryen.i32, binaryen.none);
 
 // (try
-//   (throw $e (i32.const 0))
+//   (do
+//     (throw $e (i32.const 0))
+//   )
 //   (catch
 //     ;; We don't support multi-value yet. Use locals instead.
 //     (local.set 0 (exnref.pop))

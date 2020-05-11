@@ -801,7 +801,9 @@
   ;; When try body does not throw, try-body can be replaced with the try body
   (func $try-test
     (try
-      (drop (i32.const 0))
+      (do
+        (drop (i32.const 0))
+      )
       (catch
         (drop (exnref.pop))
       )
@@ -812,11 +814,15 @@
   ;; outer try body does not throw and the outer try-catch can be removed
   (func $inner-try-test (local $0 i32)
     (try
-      (try
-        (throw $e (i32.const 0))
-        (catch
-          (drop (exnref.pop))
-          (local.set $0 (i32.const 1))
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch
+            (drop (exnref.pop))
+            (local.set $0 (i32.const 1))
+          )
         )
       )
       (catch
@@ -831,7 +837,9 @@
   (func $br-in-catch
     (block $label$1
       (try
-        (unreachable)
+        (do
+          (unreachable)
+        )
         (catch
           (drop (exnref.pop))
           (br $label$1)

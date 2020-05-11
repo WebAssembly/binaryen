@@ -32,7 +32,9 @@
       ;; to be caught by the inner catch
       (local.set $x (i32.const 1))
       (try
-        (throw $e (i32.const 0))
+        (do
+          (throw $e (i32.const 0))
+        )
         (catch
           (drop (exnref.pop))
         )
@@ -50,7 +52,9 @@
       ;; the inner catch
       (local.set $x (i32.const 1))
       (try
-        (throw $e (i32.const 0))
+        (do
+          (throw $e (i32.const 0))
+        )
         (catch
           (rethrow (exnref.pop))
         )

@@ -1925,9 +1925,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   // try-catch-end is written in the folded wat format as
   // (try
+  //  (do
   //   ...
+  //  )
   //  (catch
-  //    ...
+  //   ...
   //  )
   // )
   // The parenthesis wrapping 'catch' is just a syntax and does not affect
@@ -1936,7 +1938,12 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    maybePrintImplicitBlock(curr->body, false);
+    doIndent(o, indent);
+    o << "(do";
+    incIndent();
+    maybePrintImplicitBlock(curr->body, true);
+    decIndent();
+    o << "\n";
     doIndent(o, indent);
     o << "(catch";
     incIndent();
