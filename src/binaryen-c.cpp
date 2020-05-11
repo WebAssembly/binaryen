@@ -1319,6 +1319,11 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   std::cout << '\n';
 }
 
+BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
+                                             BinaryenModuleRef module) {
+  return ExpressionManipulator::copy(expr, *(Module*)module);
+}
+
 // Specific expression utility
 
 // Block

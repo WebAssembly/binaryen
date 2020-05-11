@@ -848,6 +848,8 @@ BINARYEN_API BinaryenExpressionId
 BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
 
 BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
