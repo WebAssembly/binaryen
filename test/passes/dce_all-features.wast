@@ -739,6 +739,7 @@
 ;; reachable
 (module
   (func $foo)
+  (event $e (attr 0))
 
   (func $try_unreachable
     (try
@@ -766,6 +767,40 @@
       )
     )
     (call $foo) ;; should be dce'd
+  )
+
+  (func $throw
+    (drop
+      (block $label$0 (result nullref)
+        (if
+          (i32.clz
+            (block $label$1 (result i32)
+              (throw $e)
+            )
+          )
+          (nop)
+        )
+        (ref.null)
+      )
+    )
+  )
+
+  (func $rethrow
+    (drop
+      (block $label$0 (result nullref)
+        (if
+          (i32.clz
+            (block $label$1 (result i32)
+              (rethrow
+                (ref.null)
+              )
+            )
+          )
+          (nop)
+        )
+        (ref.null)
+      )
+    )
   )
 )
 

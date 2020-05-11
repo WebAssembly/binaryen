@@ -503,6 +503,7 @@
 )
 (module
  (type $none_=>_none (func))
+ (event $e (attr 0) (param))
  (func $foo
   (nop)
  )
@@ -529,6 +530,15 @@
    (catch
     (unreachable)
    )
+  )
+ )
+ (func $throw
+  (throw $e
+  )
+ )
+ (func $rethrow
+  (rethrow
+   (ref.null)
   )
  )
 )
