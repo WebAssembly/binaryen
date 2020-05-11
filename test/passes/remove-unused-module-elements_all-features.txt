@@ -290,8 +290,10 @@
  (func $start
   (local $exn exnref)
   (try
-   (throw $e-throw
-    (i32.const 0)
+   (do
+    (throw $e-throw
+     (i32.const 0)
+    )
    )
    (catch
     (local.set $exn

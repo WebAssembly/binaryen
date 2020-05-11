@@ -11,7 +11,9 @@
     ;; try - try body does not throw, can
     (local.set $x0
       (try (result i32)
-        (i32.const 1)
+        (do
+          (i32.const 1)
+        )
         (catch
           (drop (exnref.pop))
           (i32.const 3)
@@ -23,7 +25,7 @@
     ;; try - try body may throw, can't
     (local.set $x1
       (try (result i32)
-        (block (result i32)
+        (do
           (call $dummy)
           (i32.const 1)
         )
@@ -38,9 +40,11 @@
     ;; nested try - inner try may throw but will be caught by inner catch, can
     (local.set $x2
       (try (result i32)
-        (block (result i32)
+        (do
           (try
-            (throw $e (i32.const 0))
+            (do
+              (throw $e (i32.const 0))
+            )
             (catch
               (drop (exnref.pop))
             )
@@ -58,7 +62,7 @@
     ;; nested try - inner catch may throw, can't
     (local.set $x3
       (try (result i32)
-        (block (result i32)
+        (do
           (try
             (catch
               (drop (exnref.pop))

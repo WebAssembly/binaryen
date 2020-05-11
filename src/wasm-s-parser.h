@@ -232,7 +232,7 @@ private:
   Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
   Expression* makeTry(Element& s);
-  Expression* makeCatch(Element& s, Type type);
+  Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
   Expression* makeBrOnExn(Element& s);

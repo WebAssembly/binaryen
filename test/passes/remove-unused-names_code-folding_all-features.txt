@@ -1713,13 +1713,17 @@
   (local $exn exnref)
   (block $folding-inner0
    (try
-    (try
-     (nop)
-     (catch
-      (local.set $exn
-       (exnref.pop)
+    (do
+     (try
+      (do
+       (nop)
       )
-      (br $folding-inner0)
+      (catch
+       (local.set $exn
+        (exnref.pop)
+       )
+       (br $folding-inner0)
+      )
      )
     )
     (catch

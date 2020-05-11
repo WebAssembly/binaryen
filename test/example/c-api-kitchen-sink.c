@@ -305,7 +305,9 @@ void test_core() {
   // Exception handling
 
   // (try
-  //   (throw $a-event (i32.const 0))
+  //   (do
+  //     (throw $a-event (i32.const 0))
+  //   )
   //   (catch
   //     ;; We don't support multi-value yet. Use locals instead.
   //     (local.set 0 (exnref.pop))

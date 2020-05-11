@@ -32,7 +32,9 @@
    (unreachable)
   )
   (try
-   (unreachable)
+   (do
+    (unreachable)
+   )
    (catch
     (unreachable)
    )
