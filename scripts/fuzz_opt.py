@@ -817,7 +817,13 @@ if __name__ == '__main__':
                 print(arg)
             if given_seed is not None:
                 given_seed_passed = False
-            else:
+
+            # We want to generate a template reducer script only when there is
+            # no given wasm file. That we have a given wasm file means we are no
+            # longer working on the original test case but modified one, which
+            # is likely to be called within wasm-reduce script itself, so
+            # original.wasm and reduce.sh should not be overwritten.
+            if not given_wasm:
                 # show some useful info about filing a bug and reducing the
                 # testcase (to make reduction simple, save "original.wasm" on
                 # the side, so that we can autoreduce using the name "a.wasm"
@@ -895,13 +901,16 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'reduce_sh': os.path.abspath('reduce.sh')})
                 break
         if given_seed is not None:
-            if given_seed_passed:
-                print('(finished running seed %d without error)' % given_seed)
-            else:
-                print('(finished running seed %d, see error above)' % given_seed)
-                sys.exit(1)
             break
 
         print('\nInvocations so far:')
         for testcase_handler in testcase_handlers:
             print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
+
+    if given_seed is not None:
+        if given_seed_passed:
+            print('(finished running seed %d without error)' % given_seed)
+            sys.exit(0)
+        else:
+            print('(finished running seed %d, see error above)' % given_seed)
+            sys.exit(1)
