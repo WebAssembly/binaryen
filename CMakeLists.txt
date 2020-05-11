@@ -273,7 +273,10 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
-install(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS binaryen
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -302,7 +305,7 @@ add_executable(wasm-metadce ${wasm-metadce_SOURCES} ${binaryen_objs})
 target_link_libraries(wasm-metadce ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
 set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-metadce DESTINATION bin)
+install(TARGETS wasm-metadce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
@@ -356,7 +359,7 @@ add_executable(wasm-ctor-eval ${wasm-ctor-eval_SOURCES} ${binaryen_objs})
 target_link_libraries(wasm-ctor-eval ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
 set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-ctor-eval DESTINATION bin)
+install(TARGETS wasm-ctor-eval DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set(wasm-reduce_SOURCES
   src/tools/wasm-reduce.cpp
