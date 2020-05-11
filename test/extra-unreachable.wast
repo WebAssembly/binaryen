@@ -43,7 +43,9 @@
     ;; If a try is unreachable, i.e., both the 'try' and 'catch' bodies are
     ;; unreachable, we emit an extra unreachable after the try.
     (try
-      (unreachable)
+      (do
+        (unreachable)
+      )
       (catch
         (unreachable)
       )

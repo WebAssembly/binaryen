@@ -9,7 +9,7 @@
  (func $2
   (local $0 exnref)
   (try
-   (block
+   (do
     (call $0)
     (call $1)
    )

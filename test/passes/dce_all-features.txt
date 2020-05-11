@@ -508,7 +508,9 @@
  )
  (func $try_unreachable
   (try
-   (unreachable)
+   (do
+    (unreachable)
+   )
    (catch
    )
   )
@@ -516,7 +518,9 @@
  )
  (func $catch_unreachable
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (unreachable)
    )
@@ -525,7 +529,9 @@
  )
  (func $both_unreachable
   (try
-   (unreachable)
+   (do
+    (unreachable)
+   )
    (catch
     (unreachable)
    )

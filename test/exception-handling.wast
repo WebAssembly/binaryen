@@ -11,7 +11,9 @@
 
   (func $eh_test (local $exn exnref)
     (try
-      (throw $e0 (i32.const 0))
+      (do
+        (throw $e0 (i32.const 0))
+      )
       (catch
         ;; Multi-value is not available yet, so block can't take a value from
         ;; stack. So this uses locals for now.
@@ -28,7 +30,9 @@
 
     ;; Try with a block label
     (try $l1
-      (br $l1)
+      (do
+        (br $l1)
+      )
       (catch
         (br $l1)
       )
@@ -43,7 +47,7 @@
 
     ;; Multiple instructions within try and catch bodies
     (try
-      (block
+      (do
         (call $foo)
         (call $bar)
       )

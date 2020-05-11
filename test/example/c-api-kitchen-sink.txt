@@ -1691,8 +1691,10 @@ BinaryenFeatureAll: 1023
        )
       )
       (try
-       (throw $a-event
-        (i32.const 0)
+       (do
+        (throw $a-event
+         (i32.const 0)
+        )
        )
        (catch
         (local.set $5

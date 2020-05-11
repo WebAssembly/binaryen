@@ -202,7 +202,9 @@
     ;; Test subtype relationship for try return type
     (drop
       (try (result anyref)
-        (local.get $local_anyref)
+        (do
+          (local.get $local_anyref)
+        )
         (catch
           (exnref.pop)
         )
@@ -210,7 +212,9 @@
     )
     (drop
       (try (result anyref)
-        (ref.func $foo)
+        (do
+          (ref.func $foo)
+        )
         (catch
           (drop (exnref.pop))
           (ref.null)
@@ -219,7 +223,9 @@
     )
     (drop
       (try (result funcref)
-        (ref.func $foo)
+        (do
+          (ref.func $foo)
+        )
         (catch
           (drop (exnref.pop))
           (ref.null)
@@ -228,7 +234,9 @@
     )
     (drop
       (try (result exnref)
-        (ref.null)
+        (do
+          (ref.null)
+        )
         (catch
           (exnref.pop)
         )
@@ -236,7 +244,9 @@
     )
     (drop
       (try (result nullref)
-        (ref.null)
+        (do
+          (ref.null)
+        )
         (catch
           (drop (exnref.pop))
           (ref.null)

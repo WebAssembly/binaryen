@@ -309,7 +309,9 @@
   )
   (drop
    (try (result anyref)
-    (local.get $1)
+    (do
+     (local.get $1)
+    )
     (catch
      (exnref.pop)
     )
@@ -317,7 +319,9 @@
   )
   (drop
    (try (result anyref)
-    (ref.func $4)
+    (do
+     (ref.func $4)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -328,7 +332,9 @@
   )
   (drop
    (try (result funcref)
-    (ref.func $4)
+    (do
+     (ref.func $4)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -339,7 +345,9 @@
   )
   (drop
    (try (result exnref)
-    (ref.null)
+    (do
+     (ref.null)
+    )
     (catch
      (exnref.pop)
     )
@@ -347,7 +355,9 @@
   )
   (drop
    (try (result nullref)
-    (ref.null)
+    (do
+     (ref.null)
+    )
     (catch
      (drop
       (exnref.pop)

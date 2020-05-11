@@ -450,8 +450,10 @@
  (func $inner-try-test
   (local $0 i32)
   (try
-   (throw $e
-    (i32.const 0)
+   (do
+    (throw $e
+     (i32.const 0)
+    )
    )
    (catch
     (drop

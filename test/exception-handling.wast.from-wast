@@ -17,8 +17,10 @@
  (func $eh_test
   (local $exn exnref)
   (try
-   (throw $e0
-    (i32.const 0)
+   (do
+    (throw $e0
+     (i32.const 0)
+    )
    )
    (catch
     (local.set $exn
@@ -37,14 +39,18 @@
   )
   (block $l1
    (try
-    (br $l1)
+    (do
+     (br $l1)
+    )
     (catch
      (br $l1)
     )
    )
   )
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)
@@ -52,7 +58,7 @@
    )
   )
   (try
-   (block $block
+   (do
     (call $foo)
     (call $bar)
    )
@@ -67,7 +73,9 @@
  )
  (func $subtype_test
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)
