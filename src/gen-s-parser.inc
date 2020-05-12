@@ -338,6 +338,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'p': {
+                switch (op[8]) {
+                  case 'a':
+                    if (strcmp(op, "f32x4.pmax") == 0) { return makeBinary(s, BinaryOp::PMaxVecF32x4); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "f32x4.pmin") == 0) { return makeBinary(s, BinaryOp::PMinVecF32x4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'q': {
                 switch (op[9]) {
                   case 'a':
@@ -615,6 +626,17 @@ switch (op[0]) {
                     goto parse_error;
                   case 'g':
                     if (strcmp(op, "f64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecF64x2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'p': {
+                switch (op[8]) {
+                  case 'a':
+                    if (strcmp(op, "f64x2.pmax") == 0) { return makeBinary(s, BinaryOp::PMaxVecF64x2); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "f64x2.pmin") == 0) { return makeBinary(s, BinaryOp::PMinVecF64x2); }
                     goto parse_error;
                   default: goto parse_error;
                 }

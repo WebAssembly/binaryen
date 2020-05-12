@@ -681,6 +681,8 @@ BinaryenOp BinaryenMulVecF32x4(void) { return MulVecF32x4; }
 BinaryenOp BinaryenDivVecF32x4(void) { return DivVecF32x4; }
 BinaryenOp BinaryenMinVecF32x4(void) { return MinVecF32x4; }
 BinaryenOp BinaryenMaxVecF32x4(void) { return MaxVecF32x4; }
+BinaryenOp BinaryenPMinVecF32x4(void) { return PMinVecF32x4; }
+BinaryenOp BinaryenPMaxVecF32x4(void) { return PMaxVecF32x4; }
 BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
 BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
 BinaryenOp BinaryenSqrtVecF64x2(void) { return SqrtVecF64x2; }
@@ -692,6 +694,8 @@ BinaryenOp BinaryenMulVecF64x2(void) { return MulVecF64x2; }
 BinaryenOp BinaryenDivVecF64x2(void) { return DivVecF64x2; }
 BinaryenOp BinaryenMinVecF64x2(void) { return MinVecF64x2; }
 BinaryenOp BinaryenMaxVecF64x2(void) { return MaxVecF64x2; }
+BinaryenOp BinaryenPMinVecF64x2(void) { return PMinVecF64x2; }
+BinaryenOp BinaryenPMaxVecF64x2(void) { return PMaxVecF64x2; }
 BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
   return TruncSatSVecF32x4ToVecI32x4;
 }
