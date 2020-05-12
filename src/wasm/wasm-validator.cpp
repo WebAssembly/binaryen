@@ -1457,12 +1457,16 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case DivVecF32x4:
     case MinVecF32x4:
     case MaxVecF32x4:
+    case PMinVecF32x4:
+    case PMaxVecF32x4:
     case AddVecF64x2:
     case SubVecF64x2:
     case MulVecF64x2:
     case DivVecF64x2:
     case MinVecF64x2:
     case MaxVecF64x2:
+    case PMinVecF64x2:
+    case PMaxVecF64x2:
     case NarrowSVecI16x8ToVecI8x16:
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:

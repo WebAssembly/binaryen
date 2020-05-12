@@ -859,6 +859,8 @@ enum ASTNodes {
   F32x4Div = 0xe7,
   F32x4Min = 0xe8,
   F32x4Max = 0xe9,
+  F32x4PMin = 0xea,
+  F32x4PMax = 0xeb,
 
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
@@ -869,6 +871,8 @@ enum ASTNodes {
   F64x2Div = 0xf3,
   F64x2Min = 0xf4,
   F64x2Max = 0xf5,
+  F64x2PMin = 0xf6,
+  F64x2PMax = 0xf7,
 
   I32x4TruncSatSF32x4 = 0xf8,
   I32x4TruncSatUF32x4 = 0xf9,

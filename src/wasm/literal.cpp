@@ -1321,6 +1321,26 @@ Literal Literal::max(const Literal& other) const {
   }
 }
 
+Literal Literal::pmin(const Literal& other) const {
+  switch (type.getSingle()) {
+    case Type::f32:
+    case Type::f64:
+      return other.lt(*this).geti32() ? other : *this;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal Literal::pmax(const Literal& other) const {
+  switch (type.getSingle()) {
+    case Type::f32:
+    case Type::f64:
+      return this->lt(other).geti32() ? other : *this;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 Literal Literal::copysign(const Literal& other) const {
   // operate on bits directly, to avoid signalling bit being set on a float
   switch (type.getSingle()) {
@@ -1958,6 +1978,12 @@ Literal Literal::minF32x4(const Literal& other) const {
 Literal Literal::maxF32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesF32x4, &Literal::max>(*this, other);
 }
+Literal Literal::pminF32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesF32x4, &Literal::pmin>(*this, other);
+}
+Literal Literal::pmaxF32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesF32x4, &Literal::pmax>(*this, other);
+}
 Literal Literal::addF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::add>(*this, other);
 }
@@ -1975,6 +2001,12 @@ Literal Literal::minF64x2(const Literal& other) const {
 }
 Literal Literal::maxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::max>(*this, other);
+}
+Literal Literal::pminF64x2(const Literal& other) const {
+  return binary<2, &Literal::getLanesF64x2, &Literal::pmin>(*this, other);
+}
+Literal Literal::pmaxF64x2(const Literal& other) const {
+  return binary<2, &Literal::getLanesF64x2, &Literal::pmax>(*this, other);
 }
 
 Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
