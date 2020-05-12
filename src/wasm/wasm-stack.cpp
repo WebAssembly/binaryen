@@ -1561,6 +1561,12 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MaxVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Max);
       break;
+    case PMinVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4PMin);
+      break;
+    case PMaxVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4PMax);
+      break;
     case AddVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Add);
       break;
@@ -1578,6 +1584,12 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case MaxVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max);
+      break;
+    case PMinVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2PMin);
+      break;
+    case PMaxVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2PMax);
       break;
 
     case NarrowSVecI16x8ToVecI8x16:

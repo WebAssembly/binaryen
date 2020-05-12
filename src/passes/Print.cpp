@@ -1337,6 +1337,12 @@ struct PrintExpressionContents
       case MaxVecF32x4:
         o << "f32x4.max";
         break;
+      case PMinVecF32x4:
+        o << "f32x4.pmin";
+        break;
+      case PMaxVecF32x4:
+        o << "f32x4.pmax";
+        break;
       case AddVecF64x2:
         o << "f64x2.add";
         break;
@@ -1354,6 +1360,12 @@ struct PrintExpressionContents
         break;
       case MaxVecF64x2:
         o << "f64x2.max";
+        break;
+      case PMinVecF64x2:
+        o << "f64x2.pmin";
+        break;
+      case PMaxVecF64x2:
+        o << "f64x2.pmax";
         break;
 
       case NarrowSVecI16x8ToVecI8x16:

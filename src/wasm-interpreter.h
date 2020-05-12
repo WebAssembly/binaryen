@@ -893,6 +893,10 @@ public:
         return left.minF32x4(right);
       case MaxVecF32x4:
         return left.maxF32x4(right);
+      case PMinVecF32x4:
+        return left.pminF32x4(right);
+      case PMaxVecF32x4:
+        return right.pmaxF32x4(right);
       case AddVecF64x2:
         return left.addF64x2(right);
       case SubVecF64x2:
@@ -905,6 +909,10 @@ public:
         return left.minF64x2(right);
       case MaxVecF64x2:
         return left.maxF64x2(right);
+      case PMinVecF64x2:
+        return left.pminF64x2(right);
+      case PMaxVecF64x2:
+        return left.pmaxF64x2(right);
 
       case NarrowSVecI16x8ToVecI8x16:
         return left.narrowSToVecI8x16(right);

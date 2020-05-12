@@ -400,12 +400,16 @@ enum BinaryOp {
   DivVecF32x4,
   MinVecF32x4,
   MaxVecF32x4,
+  PMinVecF32x4,
+  PMaxVecF32x4,
   AddVecF64x2,
   SubVecF64x2,
   MulVecF64x2,
   DivVecF64x2,
   MinVecF64x2,
   MaxVecF64x2,
+  PMinVecF64x2,
+  PMaxVecF64x2,
 
   // SIMD Conversion
   NarrowSVecI16x8ToVecI8x16,
