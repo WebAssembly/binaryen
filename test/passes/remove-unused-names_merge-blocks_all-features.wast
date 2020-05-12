@@ -1556,3 +1556,60 @@
   )
  )
 )
+
+(module
+  (event $e (attr 0) (param i32))
+  (func $foo)
+
+  ;; 'nop' within 'block' of `throw' can be hoisted
+  (func $throw
+    (throw $e
+      (block (result i32)
+        (nop)
+        (i32.const 3)
+      )
+    )
+  )
+
+  ;; 'call $foo' within 'block' of `rethrow' can be hoisted
+  (func $rethrow (local $0 exnref)
+    (rethrow
+      (block (result exnref)
+        (call $foo)
+        (local.get $0)
+      )
+    )
+  )
+
+  ;; 'call $foo' within 'block' of `br_on_exn' can be hoisted
+  (func $br_on_exn (result i32) (local $0 exnref)
+    (block $label$0 (result i32)
+      (drop
+        (br_on_exn $label$0 $e
+          (block (result exnref)
+            (call $foo)
+            (local.get $0)
+          )
+        )
+      )
+      (i32.const 3)
+    )
+  )
+
+  ;; Unlike br_if, br_on_exn's exnref argument itself cannot be extracted.
+  ;; Without proper handling for br_on_exn in ProblemFinder, this crashes.
+  (func $cannot_extract_br_on_exn_exnref (local $0 exnref)
+    (block
+      (drop
+        (block $label$0 (result i32)
+          (drop
+            (br_on_exn $label$0 $e
+              (local.get $0)
+            )
+          )
+          (i32.const 5)
+        )
+      )
+    )
+  )
+)
