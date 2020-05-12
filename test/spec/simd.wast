@@ -796,7 +796,7 @@
 (assert_return (invoke "f32x4.min" (v128.const f32x4 -0 0 nan 5) (v128.const f32x4 0 -0 5 nan)) (v128.const f32x4 -0 -0 nan nan))
 (assert_return (invoke "f32x4.max" (v128.const f32x4 -0 0 nan 5) (v128.const f32x4 0 -0 5 nan)) (v128.const f32x4 0 0 nan nan))
 (assert_return (invoke "f32x4.pmin" (v128.const f32x4 -0 0 nan 5) (v128.const f32x4 0 -0 5 nan)) (v128.const f32x4 -0 0 nan 5))
-(assert_return (invoke "f32x4.pmax" (v128.const f32x4 -0 0 nan 5) (v128.const f32x4 0 -0 5 nan)) (v128.const f32x4 0 -0 5 nan))
+(assert_return (invoke "f32x4.pmax" (v128.const f32x4 -0 0 nan 5) (v128.const f32x4 0 -0 5 nan)) (v128.const f32x4 -0 0 nan 5))
 
 ;; f64x2 arithmetic
 (assert_return (invoke "f64x2.abs" (v128.const f64x2 -0 nan)) (v128.const f64x2 0 nan))
@@ -818,6 +818,10 @@
 (assert_return (invoke "f64x2.min" (v128.const f64x2 nan 5) (v128.const f64x2 5 nan)) (v128.const f64x2 nan nan))
 (assert_return (invoke "f64x2.max" (v128.const f64x2 -0 0) (v128.const f64x2 0 -0)) (v128.const f64x2 0 0))
 (assert_return (invoke "f64x2.max" (v128.const f64x2 nan 5) (v128.const f64x2 5 nan)) (v128.const f64x2 nan nan))
+(assert_return (invoke "f64x2.pmin" (v128.const f64x2 -0 0) (v128.const f64x2 0 -0)) (v128.const f64x2 -0 0))
+(assert_return (invoke "f64x2.pmin" (v128.const f64x2 nan 5) (v128.const f64x2 5 nan)) (v128.const f64x2 nan 5))
+(assert_return (invoke "f64x2.pmax" (v128.const f64x2 -0 0) (v128.const f64x2 0 -0)) (v128.const f64x2 -0 0))
+(assert_return (invoke "f64x2.pmax" (v128.const f64x2 nan 5) (v128.const f64x2 5 nan)) (v128.const f64x2 nan 5))
 
 ;; conversions
 (assert_return (invoke "i32x4.trunc_sat_f32x4_s" (v128.const f32x4 42 nan infinity -infinity)) (v128.const i32x4 42 0 2147483647 -2147483648))

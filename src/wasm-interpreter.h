@@ -896,7 +896,7 @@ public:
       case PMinVecF32x4:
         return left.pminF32x4(right);
       case PMaxVecF32x4:
-        return right.pmaxF32x4(right);
+        return left.pmaxF32x4(right);
       case AddVecF64x2:
         return left.addF64x2(right);
       case SubVecF64x2:
