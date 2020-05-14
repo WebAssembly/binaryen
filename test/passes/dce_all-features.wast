@@ -746,13 +746,18 @@
       (do
         (unreachable)
       )
-      (catch)
+      (catch
+        (drop
+          (exnref.pop)
+        )
+      )
     )
     (call $foo) ;; shouldn't be dce'd
   )
 
   (func $catch_unreachable
     (try
+      (do)
       (catch
         (unreachable)
       )

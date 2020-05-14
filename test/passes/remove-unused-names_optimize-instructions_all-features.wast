@@ -64,6 +64,7 @@
       (try (result i32)
         (do
           (try
+            (do)
             (catch
               (drop (exnref.pop))
               (throw $e (i32.const 0))
