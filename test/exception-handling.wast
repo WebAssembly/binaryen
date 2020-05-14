@@ -40,6 +40,7 @@
 
     ;; Empty try body
     (try
+      (do)
       (catch
         (drop (exnref.pop))
       )
@@ -62,6 +63,7 @@
   ;; Test subtype relationship
   (func $subtype_test
     (try
+      (do)
       (catch
         (drop (exnref.pop))
         (drop

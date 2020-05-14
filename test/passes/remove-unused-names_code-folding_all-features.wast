@@ -1196,6 +1196,7 @@
     (try
       (do
         (try
+          (do)
           (catch
             ;; Expressions containing exnref.pop should NOT be taken out and
             ;; folded.
