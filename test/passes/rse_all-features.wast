@@ -291,6 +291,7 @@
   (func $try1
     (local $x i32)
     (try
+      (do)
       (catch
         (drop (exnref.pop))
         (local.set $x (i32.const 1))

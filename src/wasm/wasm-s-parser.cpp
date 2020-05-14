@@ -1825,15 +1825,11 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   }
   auto label = nameMapper.pushLabelName(sName);
   Type type = parseOptionalResultType(s, i); // signature
-  if (elementStartsWith(*s[i], "catch")) {   // empty try body
-    ret->body = makeNop();
-  } else {
-    if (!elementStartsWith(*s[i], "do")) {
-      throw ParseException(
-        "try body should start with 'do'", s[i]->line, s[i]->col);
-    }
-    ret->body = makeTryOrCatchBody(*s[i++], type, true);
+  if (!elementStartsWith(*s[i], "do")) {
+    throw ParseException(
+      "try body should start with 'do'", s[i]->line, s[i]->col);
   }
+  ret->body = makeTryOrCatchBody(*s[i++], type, true);
   if (!elementStartsWith(*s[i], "catch")) {
     throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
   }
@@ -1858,6 +1854,9 @@ SExpressionWasmBuilder::makeTryOrCatchBody(Element& s, Type type, bool isTry) {
   }
   if (!isTry && !elementStartsWith(s, "catch")) {
     throw ParseException("invalid catch clause", s.line, s.col);
+  }
+  if (s.size() == 1) { // (do) or (catch) without instructions
+    return makeNop();
   }
   auto ret = allocator.alloc<Block>();
   for (size_t i = 1; i < s.size(); i++) {
