@@ -158,6 +158,9 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
+  if (wasm.getExportOrNull(STACK_SAVE)) {
+    return;
+  }
   BYN_TRACE("generateStackSaveFunction\n");
   std::vector<NameType> params{};
   Function* function =
@@ -169,6 +172,9 @@ void EmscriptenGlueGenerator::generateStackSaveFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackAllocFunction() {
+  if (wasm.getExportOrNull(STACK_ALLOC)) {
+    return;
+  }
   BYN_TRACE("generateStackAllocFunction\n");
   std::vector<NameType> params{{"0", Type::i32}};
   Function* function = builder.makeFunction(
@@ -194,6 +200,9 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackRestoreFunction() {
+  if (wasm.getExportOrNull(STACK_RESTORE)) {
+    return;
+  }
   BYN_TRACE("generateStackRestoreFunction\n");
   std::vector<NameType> params{{"0", Type::i32}};
   Function* function =
