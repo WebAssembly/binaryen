@@ -54,6 +54,7 @@ int main(int argc, const char* argv[]) {
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
+  bool addStackLimitGlobal = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
 
@@ -149,11 +150,22 @@ int main(int argc, const char* argv[]) {
          })
     .add("--check-stack-overflow",
          "",
-         "Check for stack overflows every time the stack is extended",
+         "Check for stack overflows every time the stack is extended."
+         " Implies --add-stack-limit-global.",
          Options::Arguments::Zero,
-         [&checkStackOverflow](Options* o, const std::string&) {
+         [&checkStackOverflow, &addStackLimitGlobal](Options* o, const std::string&) {
            checkStackOverflow = true;
+           addStackLimitGlobal = true;
          })
+    .add("--add-stack-limit-global",
+         "",
+         "Add a global variable __stack_limit to the Wasm module (set with"
+         " __set_stack_limit() function).",
+         Options::Arguments::Zero,
+         [&addStackLimitGlobal](Options* o, const std::string&) {
+           addStackLimitGlobal = true;
+         })
+
     .add("--standalone-wasm",
          "",
          "Emit a wasm file that does not depend on JS, as much as possible,"
@@ -226,6 +238,7 @@ int main(int argc, const char* argv[]) {
   generator.setSideModule(sideModule);
 
   generator.fixInvokeFunctionNames();
+  generator.fixStackGetFree();
 
   std::vector<Name> initializerFunctions;
 
@@ -241,9 +254,7 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
-  if (checkStackOverflow && !sideModule) {
-    generator.enforceStackLimit();
-  }
+  generator.generateStackLimit(addStackLimitGlobal && !sideModule);
 
   if (sideModule) {
     BYN_TRACE("finalizing as side module\n");

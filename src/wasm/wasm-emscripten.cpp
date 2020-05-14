@@ -40,6 +40,7 @@ cashew::IString EM_JS_PREFIX("__em_js__");
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
 static Name STACK_ALLOC("stackAlloc");
+static Name STACK_GET_FREE("stackGetFree");
 static Name STACK_INIT("stack$init");
 static Name STACK_LIMIT("__stack_limit");
 static Name SET_STACK_LIMIT("__set_stack_limit");
@@ -206,10 +207,26 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   addExportedFunction(wasm, function);
 }
 
+void EmscriptenGlueGenerator::generateStackGetFreeFunction() {
+  BYN_TRACE("generateStackGetFreeFunction\n");
+  std::vector<NameType> params{};
+  Function* function =
+    builder.makeFunction(STACK_GET_FREE, std::move(params), Type::i32, {});
+
+  auto* stackLimit = wasm.getGlobalOrNull(STACK_LIMIT);
+  if (stackLimit) {
+    function->body = builder.makeBinary(BinaryOp::SubInt32,
+                                        generateLoadStackPointer(),
+                                        builder.makeGlobalGet(stackLimit->name, stackLimit->type));
+    addExportedFunction(wasm, function);
+  }
+}
+
 void EmscriptenGlueGenerator::generateRuntimeFunctions() {
   BYN_TRACE("generateRuntimeFunctions\n");
   generateStackSaveFunction();
   generateStackAllocFunction();
+  generateStackGetFreeFunction();
   generateStackRestoreFunction();
 }
 
@@ -605,7 +622,7 @@ private:
   Name handler;
 };
 
-void EmscriptenGlueGenerator::enforceStackLimit() {
+void EmscriptenGlueGenerator::generateStackLimit(bool addStackLimitChecks) {
   Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     return;
@@ -617,10 +634,12 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
                                         Builder::Mutable);
   wasm.addGlobal(stackLimit);
 
-  Name handler = importStackOverflowHandler();
-  StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
-  PassRunner runner(&wasm);
-  walker.run(&runner, &wasm);
+  if (addStackLimitChecks) {
+    Name handler = importStackOverflowHandler();
+    StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
+    PassRunner runner(&wasm);
+    walker.run(&runner, &wasm);
+  }
 
   generateSetStackLimitFunction();
 }
@@ -1173,6 +1192,53 @@ struct FixInvokeFunctionNamesWalker
     }
   }
 };
+
+// The emscripten_stack_get_free() and emscripten_stack_get_current() functions should call a built-in
+// implemented functions stackSave() and stackGetFree(). This walker reroutes calls to the internal function.
+struct FixEmscriptenStackGetWalker
+  : public PostWalker<FixEmscriptenStackGetWalker, UnifiedExpressionVisitor<FixEmscriptenStackGetWalker>> {
+  Module& wasm;
+
+  FixEmscriptenStackGetWalker(Module& _wasm) : wasm(_wasm) {}
+
+  Name stackGetCurrentName;
+  Name stackGetFreeName;
+
+  void visitFunction(Function* curr) {
+    // Find the function name that gets imported from "emscripten_stack_get_free/current".
+    if (curr->imported()) {
+      if (curr->base == "emscripten_stack_get_free") {
+        stackGetFreeName = curr->name;
+      } else if (curr->base == "emscripten_stack_get_current") {
+        stackGetCurrentName = curr->name;
+      }
+    }
+  }
+
+  void visitExpression(Expression* curr) {
+    // Replace all calls to import emscripten_stack_get_free/current() with a call to built-in stackGetFree()/stackSave().
+    if (curr->is<Call>()) {
+      Call *call = curr->cast<Call>();
+      if (call->target == stackGetFreeName) {
+        call->target = STACK_GET_FREE;
+      } else if (call->target == stackGetCurrentName) {
+        call->target = STACK_SAVE;
+      }
+    }
+  }
+};
+
+void EmscriptenGlueGenerator::fixStackGetFree() {
+  BYN_TRACE("fixStackGetFree/GetCurrent\n");
+  FixEmscriptenStackGetWalker walker(wasm);
+  // Reroute calls emscripten_stack_get_free/current() -> stackGetFree()/stackSave().
+  walker.walkModule(&wasm);
+  // Drop the import and export of emscripten_stack_get_free() and emscripten_stack_get_current().
+  wasm.removeFunction(walker.stackGetFreeName);
+  wasm.removeFunction(walker.stackGetCurrentName);
+  wasm.removeExport("emscripten_stack_get_free");
+  wasm.removeExport("emscripten_stack_get_current");
+}
 
 void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   BYN_TRACE("fixInvokeFunctionNames\n");

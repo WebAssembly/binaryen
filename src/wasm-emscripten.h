@@ -57,9 +57,13 @@ public:
   generateEmscriptenMetadata(Address staticBump,
                              std::vector<Name> const& initializerFunctions);
 
+  void fixStackGetFree();
   void fixInvokeFunctionNames();
 
-  void enforceStackLimit();
+  // Adds the __stack_limit variable and the __set_stack_limit() function,
+  // and if addStackLimitChecks==true, annotates all functions with stack
+  // overflow checks.
+  void generateStackLimit(bool addStackLimitChecks);
 
   void exportWasiStart();
 
@@ -86,6 +90,7 @@ private:
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
+  void generateStackGetFreeFunction();
   void generateSetStackLimitFunction();
   Name importStackOverflowHandler();
 };
