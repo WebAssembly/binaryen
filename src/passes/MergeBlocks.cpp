@@ -129,6 +129,11 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
     }
   }
 
+  void visitBrOnExn(BrOnExn* curr) {
+    // We should not take exnref value out of br_on_exn
+    foundProblem = true;
+  }
+
   bool found() {
     assert(brIfs >= droppedBrIfs);
     return foundProblem || brIfs > droppedBrIfs;
@@ -526,6 +531,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitBreak(Break* curr) {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
+
   void visitSwitch(Switch* curr) {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
@@ -540,7 +546,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    return;
   }
 
   void visitCall(Call* curr) { handleCall(curr); }
@@ -561,6 +566,22 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     }
     optimize(curr, curr->target, outer);
   }
+
+  void visitThrow(Throw* curr) {
+    Block* outer = nullptr;
+    for (Index i = 0; i < curr->operands.size(); i++) {
+      if (EffectAnalyzer(
+            getPassOptions(), getModule()->features, curr->operands[i])
+            .hasSideEffects()) {
+        return;
+      }
+      outer = optimize(curr, curr->operands[i], outer);
+    }
+  }
+
+  void visitRethrow(Rethrow* curr) { optimize(curr, curr->exnref); }
+
+  void visitBrOnExn(BrOnExn* curr) { optimize(curr, curr->exnref); }
 };
 
 Pass* createMergeBlocksPass() { return new MergeBlocks(); }
