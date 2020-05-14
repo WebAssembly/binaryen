@@ -130,8 +130,9 @@ void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
   if (curr->exnref->type == Type::unreachable) {
     replaceUntaken(curr->exnref, nullptr);
+  } else {
+    updateBreakValueType(curr->name, curr->sent);
   }
-  updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
