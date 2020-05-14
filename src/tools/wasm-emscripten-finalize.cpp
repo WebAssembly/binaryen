@@ -153,7 +153,8 @@ int main(int argc, const char* argv[]) {
          "Check for stack overflows every time the stack is extended."
          " Implies --add-stack-limit-global.",
          Options::Arguments::Zero,
-         [&checkStackOverflow, &addStackLimitGlobal](Options* o, const std::string&) {
+         [&checkStackOverflow, &addStackLimitGlobal](Options* o,
+                                                     const std::string&) {
            checkStackOverflow = true;
            addStackLimitGlobal = true;
          })

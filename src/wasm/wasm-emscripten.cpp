@@ -215,9 +215,10 @@ void EmscriptenGlueGenerator::generateStackGetFreeFunction() {
 
   auto* stackLimit = wasm.getGlobalOrNull(STACK_LIMIT);
   if (stackLimit) {
-    function->body = builder.makeBinary(BinaryOp::SubInt32,
-                                        generateLoadStackPointer(),
-                                        builder.makeGlobalGet(stackLimit->name, stackLimit->type));
+    function->body = builder.makeBinary(
+      BinaryOp::SubInt32,
+      generateLoadStackPointer(),
+      builder.makeGlobalGet(stackLimit->name, stackLimit->type));
     addExportedFunction(wasm, function);
   }
 }
@@ -1193,10 +1194,12 @@ struct FixInvokeFunctionNamesWalker
   }
 };
 
-// The emscripten_stack_get_free() and emscripten_stack_get_current() functions should call a built-in
-// implemented functions stackSave() and stackGetFree(). This walker reroutes calls to the internal function.
+// The emscripten_stack_get_free() and emscripten_stack_get_current() functions
+// should call a built-in implemented functions stackSave() and stackGetFree().
+// This walker reroutes calls to the internal function.
 struct FixEmscriptenStackGetWalker
-  : public PostWalker<FixEmscriptenStackGetWalker, UnifiedExpressionVisitor<FixEmscriptenStackGetWalker>> {
+  : public PostWalker<FixEmscriptenStackGetWalker,
+                      UnifiedExpressionVisitor<FixEmscriptenStackGetWalker>> {
   Module& wasm;
 
   FixEmscriptenStackGetWalker(Module& _wasm) : wasm(_wasm) {}
@@ -1205,7 +1208,8 @@ struct FixEmscriptenStackGetWalker
   Name stackGetFreeName;
 
   void visitFunction(Function* curr) {
-    // Find the function name that gets imported from "emscripten_stack_get_free/current".
+    // Find the function name that gets imported from
+    // "emscripten_stack_get_free/current".
     if (curr->imported()) {
       if (curr->base == "emscripten_stack_get_free") {
         stackGetFreeName = curr->name;
@@ -1216,9 +1220,10 @@ struct FixEmscriptenStackGetWalker
   }
 
   void visitExpression(Expression* curr) {
-    // Replace all calls to import emscripten_stack_get_free/current() with a call to built-in stackGetFree()/stackSave().
+    // Replace all calls to import emscripten_stack_get_free/current() with a
+    // call to built-in stackGetFree()/stackSave().
     if (curr->is<Call>()) {
-      Call *call = curr->cast<Call>();
+      Call* call = curr->cast<Call>();
       if (call->target == stackGetFreeName) {
         call->target = STACK_GET_FREE;
       } else if (call->target == stackGetCurrentName) {
@@ -1231,9 +1236,11 @@ struct FixEmscriptenStackGetWalker
 void EmscriptenGlueGenerator::fixStackGetFree() {
   BYN_TRACE("fixStackGetFree/GetCurrent\n");
   FixEmscriptenStackGetWalker walker(wasm);
-  // Reroute calls emscripten_stack_get_free/current() -> stackGetFree()/stackSave().
+  // Reroute calls emscripten_stack_get_free/current() ->
+  // stackGetFree()/stackSave().
   walker.walkModule(&wasm);
-  // Drop the import and export of emscripten_stack_get_free() and emscripten_stack_get_current().
+  // Drop the import and export of emscripten_stack_get_free() and
+  // emscripten_stack_get_current().
   wasm.removeFunction(walker.stackGetFreeName);
   wasm.removeFunction(walker.stackGetCurrentName);
   wasm.removeExport("emscripten_stack_get_free");
