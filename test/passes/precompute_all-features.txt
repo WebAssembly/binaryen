@@ -10,6 +10,7 @@
  (data (i32.const 0) "passive")
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
+ (event $event$0 (attr 0) (param))
  (func $x (param $x i32)
   (call $x
    (i32.const 2300)
@@ -311,6 +312,15 @@
      )
     )
     (ref.null)
+   )
+  )
+ )
+ (func $unreachable-br_on_exn
+  (block $label$1
+   (drop
+    (loop $label$2
+     (br $label$2)
+    )
    )
   )
  )
