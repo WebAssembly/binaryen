@@ -461,4 +461,19 @@
     )
    )
   )
+
+  ;; br_on_exn's argument becomes unreachable, so br_on_exn itself is replaced
+  ;; with its argument in ReFinalize process after precompute.
+  (event $event$0 (attr 0) (param))
+  (func $unreachable-br_on_exn
+    (block $label$1
+      (drop
+        (br_on_exn $label$1 $event$0
+          (loop $label$2 (result nullref)
+            (br $label$2)
+          )
+        )
+      )
+    )
+  )
 )

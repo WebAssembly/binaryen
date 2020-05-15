@@ -1270,7 +1270,24 @@ public:
     throwException(flow.getSingleValue());
     WASM_UNREACHABLE("rethrow");
   }
-  Flow visitBrOnExn(BrOnExn* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitBrOnExn(BrOnExn* curr) {
+    NOTE_ENTER("BrOnExn");
+    Flow flow = this->visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    if (flow.getType() == Type::nullref) {
+      trap("br_on_exn: argument is null");
+    }
+    const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
+    if (curr->event != ex.event) { // Not taken
+      return flow;
+    }
+    // Taken
+    flow.values = ex.values;
+    flow.breakTo = curr->name;
+    return flow;
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
@@ -1512,10 +1529,6 @@ public:
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitBrOnExn(BrOnExn* curr) {
-    NOTE_ENTER("BrOnExn");
     return Flow(NONCONSTANT_FLOW);
   }
 
@@ -2409,24 +2422,6 @@ private:
         instance.multiValues.push_back(e.exn);
         return this->visit(curr->catchBody);
       }
-    }
-    Flow visitBrOnExn(BrOnExn* curr) {
-      NOTE_ENTER("BrOnExn");
-      Flow flow = this->visit(curr->exnref);
-      if (flow.breaking()) {
-        return flow;
-      }
-      if (flow.getType() == Type::nullref) {
-        trap("br_on_exn: argument is null");
-      }
-      const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
-      if (curr->event != ex.event) { // Not taken
-        return flow;
-      }
-      // Taken
-      flow.values = ex.values;
-      flow.breakTo = curr->name;
-      return flow;
     }
     Flow visitPush(Push* curr) {
       NOTE_ENTER("Push");
