@@ -1,8 +1,8 @@
 (module
- (type $0 (func (param i32 i32 i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
- (type $3 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
@@ -13,9 +13,9 @@
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 1 ;) (type $1)
+ (func $__wasm_call_ctors
  )
- (func $__original_main (; 2 ;) (type $2) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (global.set $global$0
    (local.tee $0
@@ -62,7 +62,7 @@
   )
   (i32.const 0)
  )
- (func $main (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
  ;; custom section "producers", size 112
