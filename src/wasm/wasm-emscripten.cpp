@@ -460,8 +460,9 @@ struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
                                Expression* value,
                                Global* stackPointer,
                                Global* stackLimit) {
-    // Add a local to store the value of the expression. We need the value twice:
-    // once to check if it has overflowed, and again to assign to store it.
+    // Add a local to store the value of the expression. We need the value
+    // twice: once to check if it has overflowed, and again to assign to store
+    // it.
     auto newSP = Builder::addVar(func, stackPointer->type);
     // If we imported a handler, call it. That can show a nice error in JS.
     // Otherwise, just trap.
@@ -471,7 +472,7 @@ struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
     } else {
       handlerExpr = builder.makeUnreachable();
     }
-    // (if (i32.lt_u (local.tee $newSP (...value...)) (global.get $__stack_limit))
+    // (if (i32.lt_u (local.tee $newSP (...val...)) (global.get $__stack_limit))
     auto check = builder.makeIf(
       builder.makeBinary(
         BinaryOp::LtUInt32,
