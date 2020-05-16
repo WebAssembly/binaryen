@@ -1652,10 +1652,6 @@ void WasmBinaryBuilder::readNextDebugLocation() {
   }
 
   while (nextDebugLocation.first && nextDebugLocation.first <= pos) {
-    if (nextDebugLocation.first < pos) {
-      std::cerr << "skipping debug location info for 0x";
-      std::cerr << std::hex << nextDebugLocation.first << std::dec << std::endl;
-    }
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
