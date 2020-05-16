@@ -26,7 +26,6 @@ module.optimize();
 assert(module.validate());
 console.log(module.emitText());
 
-module = binaryen.parseText(wast);
 binaryen.setLowMemoryUnused(true);
 assert(binaryen.getLowMemoryUnused());
 console.log();
