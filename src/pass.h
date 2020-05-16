@@ -296,8 +296,8 @@ public:
   // non-StackIR pass after that point.
   virtual bool acceptsStackIR() { return false; }
 
-  // Whether this pass operates on nested IR.
-  virtual bool acceptsNestedIR() { return true; }
+  // Whether this pass operates on Binaryen IR.
+  virtual bool acceptsBinaryenIR() { return true; }
 
   std::string name;
 

@@ -329,7 +329,7 @@ private:
 struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
   bool acceptsStackIR() override { return true; }
-  bool acceptsNestedIR() override { return false; }
+  bool acceptsBinaryenIR() override { return false; }
 
   Pass* create() override { return new OptimizeStackIR; }
 

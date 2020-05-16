@@ -636,7 +636,7 @@ void PassRunner::run() {
 void PassRunner::checkStackIR(Pass* pass, Function* func) {
   if (func->stackIR && !pass->acceptsStackIR()) {
     Fatal() << "[PassRunner] Pass cannot be run on modules with Stack IR";
-  } else if (!func->stackIR && !pass->acceptsNestedIR()) {
+  } else if (!func->stackIR && !pass->acceptsBinaryenIR()) {
     Fatal() << "[PassRunner] Pass cannot be run on modules without Stack IR";
   }
 }
@@ -671,7 +671,7 @@ struct AfterEffectFunctionChecker {
   AfterEffectFunctionChecker(Pass* pass, Function* func)
     : pass(pass), func(func), name(func->name) {
     // TODO: Check the Stack IR did not change if the pass does not accept it
-    checkHash = !pass->modifiesBinaryenIR() || !pass->acceptsNestedIR();
+    checkHash = !pass->modifiesBinaryenIR() || !pass->acceptsBinaryenIR();
     if (checkHash) {
       originalFunctionHash = FunctionHasher::hashFunction(func);
     }
