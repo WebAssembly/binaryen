@@ -30,41 +30,43 @@ def args_for_finalize(filename):
     return ret
 
 
+def run_test(input_path):
+    print('..', input_path)
+    is_passive = '.passive.' in input_path
+    mem_file = input_path + '.mem'
+    extension_arg_map = {
+        '.out': [],
+    }
+    if not is_passive:
+        extension_arg_map.update({
+            '.mem.out': ['--separate-data-segments', mem_file],
+        })
+    for ext, args in extension_arg_map.items():
+        expected_file = input_path + ext
+        if ext != '.out' and not os.path.exists(expected_file):
+            continue
+
+        cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [input_path, '-S'] + args
+        cmd += args_for_finalize(os.path.basename(input_path))
+        actual = support.run_command(cmd)
+
+        if not os.path.exists(expected_file):
+            print(actual)
+            shared.fail_with_error('output ' + expected_file +
+                                   ' does not exist')
+        shared.fail_if_not_identical_to_file(actual, expected_file)
+        if ext == '.mem.out':
+            with open(mem_file) as mf:
+                mem = mf.read()
+                shared.fail_if_not_identical_to_file(mem, input_path + '.mem.mem')
+            os.remove(mem_file)
+
+
 def test_wasm_emscripten_finalize():
     print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
 
     for input_path in shared.get_tests(shared.get_test_dir('lld'), ['.wat', '.wasm']):
-        print('..', input_path)
-        is_passive = '.passive.' in input_path
-        mem_file = input_path + '.mem'
-        extension_arg_map = {
-            '.out': [],
-        }
-        if not is_passive:
-            extension_arg_map.update({
-                '.mem.out': ['--separate-data-segments', mem_file],
-            })
-        for ext, ext_args in extension_arg_map.items():
-            expected_file = input_path + ext
-            if ext != '.out' and not os.path.exists(expected_file):
-                continue
-
-            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [input_path, '-S'] + \
-                ext_args
-            cmd += args_for_finalize(os.path.basename(input_path))
-            actual = support.run_command(cmd)
-
-            if not os.path.exists(expected_file):
-                print(actual)
-                shared.fail_with_error('output ' + expected_file +
-                                       ' does not exist')
-            shared.fail_if_not_identical_to_file(actual, expected_file)
-            if ext == '.mem.out':
-                with open(mem_file) as mf:
-                    mem = mf.read()
-                    shared.fail_if_not_identical_to_file(mem, input_path +
-                                                         '.mem.mem')
-                os.remove(mem_file)
+        run_test(input_path)
 
 
 def update_lld_tests():

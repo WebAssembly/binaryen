@@ -34,7 +34,7 @@ def generate_wat_files(llvm_bin, emscripten_root):
     print('\n[ building wat files from C sources... ]\n')
 
     lld_path = os.path.join(shared.options.binaryen_test, 'lld')
-    for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp']):
+    for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp', '.s']):
         print('..', src_file)
         obj_file = src_file.replace(ext, '.o')
 
@@ -69,6 +69,7 @@ def generate_wat_files(llvm_bin, emscripten_root):
             '--export', '__wasm_call_ctors',
             '--export', '__data_end',
             '--global-base=568',
+            '--no-gc-sections',
         ]
         # We had a regression where this test only worked if debug names
         # were included.
