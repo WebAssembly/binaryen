@@ -126,8 +126,7 @@ struct SimplifyLocals
                   Expression** currp) {
     // Main processing.
     auto* curr = *currp;
-    if (curr->is<Break>()) {
-      auto* br = curr->cast<Break>();
+    if (auto *br = curr->dynCast<Break>()) {
       if (br->value) {
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
@@ -147,6 +146,9 @@ struct SimplifyLocals
         self->unoptimizableBlocks.insert(target);
       }
       // TODO: we could use this info to stop gathering data on these blocks
+    } else if (auto *br = curr->dynCast<BrOnExn>()) {
+      // We cannot sink br_on_exn out of its targeting block
+      self->unoptimizableBlocks.insert(br->name);
     }
     self->sinkables.clear();
   }
@@ -162,10 +164,9 @@ struct SimplifyLocals
   static void
   doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
                Expression** currp) {
-    auto* iff = (*currp)->dynCast<If>();
+    auto* iff = (*currp)->cast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
-      assert((*currp)->cast<If>()->ifFalse);
       self->ifStack.push_back(std::move(self->sinkables));
     } else {
       // This is an if without an else.

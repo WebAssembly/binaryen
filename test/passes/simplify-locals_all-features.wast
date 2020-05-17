@@ -1671,3 +1671,17 @@
   (local.get $1)
  )
 )
+(module
+  (event $event$0 (attr 0) (param))
+  (func $br_on_exn-test (result exnref) (local $0 exnref)
+    (block $label$0
+      (local.set $0
+        ;; br_on_exn cannot be sinked out of its targeting block
+        (br_on_exn $label$0 $event$0
+          (ref.null)
+        )
+      )
+    )
+    (local.get $0)
+  )
+)
