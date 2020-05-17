@@ -126,7 +126,7 @@ struct SimplifyLocals
                   Expression** currp) {
     // Main processing.
     auto* curr = *currp;
-    if (auto *br = curr->dynCast<Break>()) {
+    if (auto* br = curr->dynCast<Break>()) {
       if (br->value) {
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
@@ -146,7 +146,7 @@ struct SimplifyLocals
         self->unoptimizableBlocks.insert(target);
       }
       // TODO: we could use this info to stop gathering data on these blocks
-    } else if (auto *br = curr->dynCast<BrOnExn>()) {
+    } else if (auto* br = curr->dynCast<BrOnExn>()) {
       // We cannot sink br_on_exn out of its targeting block
       self->unoptimizableBlocks.insert(br->name);
     }
