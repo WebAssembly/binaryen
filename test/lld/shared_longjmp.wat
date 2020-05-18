@@ -1,12 +1,12 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func (param i32 i32 i32 i32) (result i32)))
- (type $2 (func (result i32)))
- (type $3 (func (param i32 i32)))
- (type $4 (func (param i32 i32 i32)))
- (type $5 (func (param i32 i32 i32) (result i32)))
- (type $6 (func (param i32)))
- (type $7 (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$2) "\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
@@ -30,12 +30,12 @@
  (export "_start" (func $2))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
- (func $0 (; 9 ;) (type $7)
+ (func $0
   (call $1)
  )
- (func $1 (; 10 ;) (type $7)
+ (func $1
  )
- (func $2 (; 11 ;) (type $7)
+ (func $2
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -138,7 +138,11 @@
   )
   (unreachable)
  )
- ;; custom section "dylink", size 5
+ ;; dylink section
+ ;;   memorysize: 8
+ ;;   memoryalignment: 2
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section "producers", size 112
 )
 

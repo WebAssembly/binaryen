@@ -1,7 +1,7 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
@@ -17,10 +17,10 @@
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
- (func $__wasm_call_ctors (; 1 ;) (type $1)
+ (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 2 ;) (type $1)
+ (func $__wasm_apply_relocs
   (i32.store
    (i32.add
     (global.get $gimport$2)
@@ -36,7 +36,7 @@
    (global.get $gimport$7)
   )
  )
- (func $print_message\28\29 (; 3 ;) (type $2) (result i32)
+ (func $print_message\28\29 (result i32)
   (drop
    (call $puts
     (i32.add
@@ -49,7 +49,11 @@
    (global.get $gimport$5)
   )
  )
- ;; custom section "dylink", size 5
+ ;; dylink section
+ ;;   memorysize: 24
+ ;;   memoryalignment: 2
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section "producers", size 112
 )
 

@@ -26,9 +26,9 @@
  (export "__wasm_call_ctors" (func $0))
  (export "main" (func $2))
  (export "__data_end" (global $global$1))
- (func $0 (; 9 ;)
+ (func $0
  )
- (func $1 (; 10 ;) (result i32)
+ (func $1 (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -128,7 +128,7 @@
   )
   (unreachable)
  )
- (func $2 (; 11 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $2 (param $0 i32) (param $1 i32) (result i32)
   (call $1)
  )
  ;; custom section "producers", size 112
