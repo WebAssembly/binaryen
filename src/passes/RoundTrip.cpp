@@ -30,7 +30,7 @@ using namespace std;
 namespace wasm {
 
 struct RoundTrip : public Pass {
-  bool acceptsStackIR() override { return true; }
+  bool acceptsStackIR() const override { return true; }
   void run(PassRunner* runner, Module* module) override {
     BufferWithRandomAccess buffer;
     // Save features, which would not otherwise make it through a round trip if

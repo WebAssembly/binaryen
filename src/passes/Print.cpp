@@ -2447,7 +2447,7 @@ public:
   Printer(std::ostream* o) : o(*o) {}
 
   bool modifiesBinaryenIR() override { return false; }
-  bool acceptsStackIR() override { return true; }
+  bool acceptsStackIR() const override { return true; }
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);

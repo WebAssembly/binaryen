@@ -287,17 +287,15 @@ public:
   // most passes, except for passes that have no side effects, or passes that
   // only modify other things than Binaryen IR (for example, the Stack IR
   // passes only modify that IR).
-  // This property is important as if Binaryen IR is modified, we need to throw
-  // out any Stack IR - it would need to be regenerated and optimized.
   virtual bool modifiesBinaryenIR() { return true; }
 
   // Whether this pass operates on StackIR. Once StackIR is generated, the
   // normal Binaryen IR is no longer valid, so it is an error to run a
   // non-StackIR pass after that point.
-  virtual bool acceptsStackIR() { return false; }
+  virtual bool acceptsStackIR() const { return false; }
 
   // Whether this pass operates on Binaryen IR.
-  virtual bool acceptsBinaryenIR() { return true; }
+  virtual bool acceptsBinaryenIR() const { return true; }
 
   std::string name;
 
