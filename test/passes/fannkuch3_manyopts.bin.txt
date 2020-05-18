@@ -2842,7 +2842,7 @@ Abbrev table for offset: 0x00000000
 0x00000269:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000267: 
                      [0xffffffff,  0x0000039f): 
-                     [0xffffffe7,  0xffffffec): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
+                     [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dc] = "n")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(153)
@@ -3066,7 +3066,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000267: 
             [0xffffffff,  0x0000039f): 
-            [0xffffffe7,  0xffffffec): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
 
 0x00000285: 
             [0xffffffff,  0x0000039f): 

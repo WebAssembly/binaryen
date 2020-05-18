@@ -897,9 +897,23 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
         // This part of the loc no longer has a mapping, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
-        // Finally, relativize it against the base.
-        newStart -= base;
-        newEnd -= base;
+        // See if we can relativize it against the base. If things moved around
+        // so that the base is no longer before the start or the end, then we
+        // must skip this. That is, if we had something like
+        //
+        //    [base]  [start]      [end]
+        //
+        // (where the X axis is the offset) and transforms led to
+        //
+        //    [start]     [base] [end]
+        //
+        // or such, then give up TODO: perhaps remap with a new base?
+        if (newStart >= base && newEnd >= base) {
+          newStart -= base;
+          newEnd -= base;
+        } else {
+          newStart = newEnd = IGNOREABLE_LOCATION;
+        }
       }
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no
