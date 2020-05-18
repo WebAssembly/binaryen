@@ -80,7 +80,7 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      block/if/loop to take it, allowing [local transforms that don't need to
      know the global context][unreachable]. As a result, Binaryen's default text
      output is not necessarily valid wasm text. (To get valid wasm text, you can
-     do `--generate-stack-ir --print`, which prints Stack IR, this is guaranteed
+     do `--generate-stack-ir --print`, which prints Stack IR, which is guaranteed
      to be valid for wasm parsers.)
    * Binaryen ignores unreachable code when reading WebAssembly binaries. That
      means that if you read a wasm file with unreachable code, that code will be
