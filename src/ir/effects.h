@@ -446,8 +446,16 @@ struct EffectAnalyzer
     if (tryDepth == 0) {
       throws = true;
     }
+    if (!ignoreImplicitTraps) { // rethrow traps when the arg is null
+      implicitTrap = true;
+    }
   }
-  void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
+  void visitBrOnExn(BrOnExn* curr) {
+    breakNames.insert(curr->name);
+    if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
+      implicitTrap = true;
+    }
+  }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
   void visitPush(Push* curr) { calls = true; }

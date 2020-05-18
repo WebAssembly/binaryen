@@ -1673,7 +1673,7 @@
 )
 (module
   (event $event$0 (attr 0) (param))
-  (func $br_on_exn-test (result exnref) (local $0 exnref)
+  (func $br_on_exn-cannot-sink (result exnref) (local $0 exnref)
     (block $label$0
       (local.set $0
         ;; br_on_exn cannot be sinked out of its targeting block
@@ -1683,5 +1683,32 @@
       )
     )
     (local.get $0)
+  )
+
+  (event $event$1 (attr 0) (param exnref))
+  (func $br_on_exn-trap (local $0 exnref)
+    ;; This dead local.set cannot be replaced with a nop because br_on_exn can
+    ;; trap.
+    (local.set $0
+      (block $label$1 (result exnref)
+        (br_on_exn $label$1 $event$1
+          (ref.null)
+        )
+      )
+    )
+  )
+
+  (func $rethrow-trap (local $0 i32)
+    ;; This dead local.set cannot be replaced with a nop because rethrow can
+    ;; trap.
+    (local.set $0
+      (block $label$1 (result i32)
+        (try
+          (do (rethrow (ref.null)))
+          (catch)
+        )
+        (i32.const 0)
+      )
+    )
   )
 )
