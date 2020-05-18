@@ -283,12 +283,6 @@ public:
   // Walker, as otherwise this will create the parent class.
   virtual Pass* create() { WASM_UNREACHABLE("unimplenented"); }
 
-  // Whether this pass modifies the Binaryen IR in the module. This is true for
-  // most passes, except for passes that have no side effects, or passes that
-  // only modify other things than Binaryen IR (for example, the Stack IR
-  // passes only modify that IR).
-  virtual bool modifiesBinaryenIR() { return true; }
-
   // Whether this pass operates on StackIR. Once StackIR is generated, the
   // normal Binaryen IR is no longer valid, so it is an error to run a
   // non-StackIR pass after that point.

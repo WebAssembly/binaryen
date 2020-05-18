@@ -30,8 +30,6 @@
 namespace wasm {
 
 struct PrintFunctionMap : public Pass {
-  bool modifiesBinaryenIR() override { return false; }
-
   void run(PassRunner* runner, Module* module) override {
     Index i = 0;
     for (auto& func : module->functions) {

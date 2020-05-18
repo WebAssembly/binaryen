@@ -671,7 +671,7 @@ struct AfterEffectFunctionChecker {
   AfterEffectFunctionChecker(Pass* pass, Function* func)
     : pass(pass), func(func), name(func->name) {
     // TODO: Check the Stack IR did not change if the pass does not accept it
-    checkHash = !pass->modifiesBinaryenIR() || !pass->acceptsBinaryenIR();
+    checkHash = !pass->acceptsBinaryenIR();
     if (checkHash) {
       originalFunctionHash = FunctionHasher::hashFunction(func);
     }
@@ -703,25 +703,6 @@ struct AfterEffectModuleChecker {
   }
 
   void check() {
-    // Check global invariants
-    if (!pass->modifiesBinaryenIR()) {
-      // If anything changed to the functions, that's not good.
-      if (checkers.size() != module->functions.size()) {
-        error();
-      }
-      for (Index i = 0; i < checkers.size(); i++) {
-        // Did a pointer change? (a deallocated function could cause that)
-        if (module->functions[i].get() != checkers[i].func ||
-            module->functions[i]->body != checkers[i].func->body) {
-          error();
-        }
-        // Did a name change?
-        if (module->functions[i]->name != checkers[i].name) {
-          error();
-        }
-      }
-      // TODO: check globals and other global state as well
-    }
     // Check invariants for each function as well
     for (auto& checker : checkers) {
       checker.check();
