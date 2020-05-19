@@ -880,6 +880,8 @@ public:
         return left.addI64x2(right);
       case SubVecI64x2:
         return left.subI64x2(right);
+      case MulVecI64x2:
+        return left.mulI64x2(right);
 
       case AddVecF32x4:
         return left.addF32x4(right);

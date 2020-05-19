@@ -790,6 +790,12 @@
    (local.get $1)
   )
  )
+ (func $i64x2.mul (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $f32x4.add (param $0 v128) (param $1 v128) (result v128)
   (f32x4.add
    (local.get $0)

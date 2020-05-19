@@ -383,6 +383,7 @@ function test_core() {
     module.i32x4.dot_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

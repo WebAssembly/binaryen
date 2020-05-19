@@ -424,6 +424,7 @@ instructions = [
     ("i64x2.shr_u",          "makeSIMDShift(s, SIMDShiftOp::ShrUVecI64x2)"),
     ("i64x2.add",            "makeBinary(s, BinaryOp::AddVecI64x2)"),
     ("i64x2.sub",            "makeBinary(s, BinaryOp::SubVecI64x2)"),
+    ("i64x2.mul",            "makeBinary(s, BinaryOp::MulVecI64x2)"),
     ("f32x4.abs",            "makeUnary(s, UnaryOp::AbsVecF32x4)"),
     ("f32x4.neg",            "makeUnary(s, UnaryOp::NegVecF32x4)"),
     ("f32x4.sqrt",           "makeUnary(s, UnaryOp::SqrtVecF32x4)"),

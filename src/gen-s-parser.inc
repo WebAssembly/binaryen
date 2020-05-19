@@ -2199,6 +2199,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'm':
+                if (strcmp(op, "i64x2.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI64x2); }
+                goto parse_error;
               case 'n':
                 if (strcmp(op, "i64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI64x2); }
                 goto parse_error;

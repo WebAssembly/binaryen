@@ -394,6 +394,7 @@ enum BinaryOp {
   DotSVecI16x8ToVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
+  MulVecI64x2,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,

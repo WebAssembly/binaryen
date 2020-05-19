@@ -550,6 +550,7 @@ void test_core() {
     makeBinary(module, BinaryenMulVecI32x4(), v128),
     makeBinary(module, BinaryenAddVecI64x2(), v128),
     makeBinary(module, BinaryenSubVecI64x2(), v128),
+    makeBinary(module, BinaryenMulVecI64x2(), v128),
     makeBinary(module, BinaryenAddVecF32x4(), v128),
     makeBinary(module, BinaryenSubVecF32x4(), v128),
     makeBinary(module, BinaryenMulVecF32x4(), v128),
