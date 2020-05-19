@@ -1892,3 +1892,49 @@
   (local.get $0)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $exnref_=>_none (func (param exnref)))
+ (type $none_=>_exnref (func (result exnref)))
+ (event $event$0 (attr 0) (param))
+ (event $event$1 (attr 0) (param exnref))
+ (func $unoptimizable-br_on_exn-block (result exnref)
+  (local $0 exnref)
+  (block $label$0
+   (local.set $0
+    (br_on_exn $label$0 $event$0
+     (ref.null)
+    )
+   )
+  )
+  (local.get $0)
+ )
+ (func $br_on_exn-trap
+  (local $0 exnref)
+  (drop
+   (block $label$1 (result exnref)
+    (br_on_exn $label$1 $event$1
+     (ref.null)
+    )
+   )
+  )
+ )
+ (func $rethrow-trap
+  (local $0 i32)
+  (drop
+   (block $label$1 (result i32)
+    (try
+     (do
+      (rethrow
+       (ref.null)
+      )
+     )
+     (catch
+      (nop)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+ )
+)
