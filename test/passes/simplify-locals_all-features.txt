@@ -1898,7 +1898,7 @@
  (type $none_=>_exnref (func (result exnref)))
  (event $event$0 (attr 0) (param))
  (event $event$1 (attr 0) (param exnref))
- (func $br_on_exn-cannot-sink (result exnref)
+ (func $unoptimizable-br_on_exn-block (result exnref)
   (local $0 exnref)
   (block $label$0
    (local.set $0
