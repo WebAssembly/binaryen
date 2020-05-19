@@ -848,7 +848,7 @@ enum ASTNodes {
   I64x2ShrU = 0xcd,
   I64x2Add = 0xce,
   I64x2Sub = 0xd1,
-  // TODO: i64x2.mul
+  I64x2Mul = 0xd5,
 
   F32x4Abs = 0xe0,
   F32x4Neg = 0xe1,

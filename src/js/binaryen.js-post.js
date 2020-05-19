@@ -410,6 +410,7 @@ function initializeConstants() {
     'ShrUVecI64x2',
     'AddVecI64x2',
     'SubVecI64x2',
+    'MulVecI64x2',
     'AbsVecF32x4',
     'NegVecF32x4',
     'SqrtVecF32x4',
@@ -1832,6 +1833,9 @@ function wrapModule(module, self) {
     },
     'sub': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI64x2'], left, right);
+    },
+    'mul': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MulVecI64x2'], left, right);
     },
     'trunc_sat_f64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF64x2ToVecI64x2'], value);

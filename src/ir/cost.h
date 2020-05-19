@@ -669,6 +669,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case SubVecI64x2:
         ret = 1;
         break;
+      case MulVecI64x2:
+        ret = 1;
+        break;
       case AddVecF32x4:
         ret = 1;
         break;

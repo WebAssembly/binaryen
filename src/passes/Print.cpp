@@ -1318,6 +1318,9 @@ struct PrintExpressionContents
       case SubVecI64x2:
         o << "i64x2.sub";
         break;
+      case MulVecI64x2:
+        o << "i64x2.mul";
+        break;
 
       case AddVecF32x4:
         o << "f32x4.add";

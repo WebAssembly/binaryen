@@ -417,6 +417,7 @@ public:
   Literal shrUI64x2(const Literal& other) const;
   Literal addI64x2(const Literal& other) const;
   Literal subI64x2(const Literal& other) const;
+  Literal mulI64x2(const Literal& other) const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;

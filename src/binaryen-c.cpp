@@ -670,6 +670,7 @@ BinaryenOp BinaryenShrSVecI64x2(void) { return ShrSVecI64x2; }
 BinaryenOp BinaryenShrUVecI64x2(void) { return ShrUVecI64x2; }
 BinaryenOp BinaryenAddVecI64x2(void) { return AddVecI64x2; }
 BinaryenOp BinaryenSubVecI64x2(void) { return SubVecI64x2; }
+BinaryenOp BinaryenMulVecI64x2(void) { return MulVecI64x2; }
 BinaryenOp BinaryenAbsVecF32x4(void) { return AbsVecF32x4; }
 BinaryenOp BinaryenNegVecF32x4(void) { return NegVecF32x4; }
 BinaryenOp BinaryenSqrtVecF32x4(void) { return SqrtVecF32x4; }

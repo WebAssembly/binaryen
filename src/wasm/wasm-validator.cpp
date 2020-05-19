@@ -1449,6 +1449,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case DotSVecI16x8ToVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
+    case MulVecI64x2:
     case AddVecF32x4:
     case SubVecF32x4:
     case MulVecF32x4:

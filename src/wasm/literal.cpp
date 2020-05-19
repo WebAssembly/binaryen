@@ -1960,6 +1960,9 @@ Literal Literal::addI64x2(const Literal& other) const {
 Literal Literal::subI64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesI64x2, &Literal::sub>(*this, other);
 }
+Literal Literal::mulI64x2(const Literal& other) const {
+  return binary<2, &Literal::getLanesI64x2, &Literal::mul>(*this, other);
+}
 Literal Literal::addF32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesF32x4, &Literal::add>(*this, other);
 }

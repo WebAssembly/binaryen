@@ -530,6 +530,7 @@ BINARYEN_API BinaryenOp BinaryenShrSVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAddVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenSubVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenMulVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenSqrtVecF32x4(void);

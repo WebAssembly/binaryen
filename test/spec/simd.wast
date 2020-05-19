@@ -167,6 +167,7 @@
  (func (export "i64x2.shr_u") (param $0 v128) (param $1 i32) (result v128) (i64x2.shr_u (local.get $0) (local.get $1)))
  (func (export "i64x2.add") (param $0 v128) (param $1 v128) (result v128) (i64x2.add (local.get $0) (local.get $1)))
  (func (export "i64x2.sub") (param $0 v128) (param $1 v128) (result v128) (i64x2.sub (local.get $0) (local.get $1)))
+ (func (export "i64x2.mul") (param $0 v128) (param $1 v128) (result v128) (i64x2.mul (local.get $0) (local.get $1)))
  (func (export "f32x4.abs") (param $0 v128) (result v128) (f32x4.abs (local.get $0)))
  (func (export "f32x4.neg") (param $0 v128) (result v128) (f32x4.neg (local.get $0)))
  (func (export "f32x4.sqrt") (param $0 v128) (result v128) (f32x4.sqrt (local.get $0)))
@@ -783,6 +784,7 @@
 (assert_return (invoke "i64x2.shr_u" (v128.const i64x2 1 0x8000000000000000) (i32.const 64)) (v128.const i64x2 1 0x8000000000000000))
 (assert_return (invoke "i64x2.add" (v128.const i64x2 0x8000000000000001 42) (v128.const i64x2 0x8000000000000001 0)) (v128.const i64x2 2 42))
 (assert_return (invoke "i64x2.sub" (v128.const i64x2 2 42) (v128.const i64x2 0x8000000000000001 0)) (v128.const i64x2 0x8000000000000001 42))
+(assert_return (invoke "i64x2.mul" (v128.const i64x2 2 42) (v128.const i64x2 0x8000000000000001 0)) (v128.const i64x2 2 0))
 
 ;; f32x4 arithmetic
 (assert_return (invoke "f32x4.abs" (v128.const f32x4 -0 nan -infinity 5)) (v128.const f32x4 0 nan infinity 5))
