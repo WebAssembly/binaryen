@@ -2,7 +2,6 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
  (import "env" "__stack_pointer" (global $sp_import i32))
  (import "env" "__table_base" (global $__table_base i32))
  (table $0 1 funcref)
@@ -12,37 +11,11 @@
  (global $sp (mut i32) (global.get $sp_import))
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
  (export "dynCall_v" (func $dynCall_v))
  (func $__stdio_write
   (nop)
- )
- (func $stackSave (result i32)
-  (global.get $sp)
- )
- (func $stackAlloc (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $sp
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $sp)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (param $0 i32)
-  (global.set $sp
-   (local.get $0)
-  )
  )
  (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
@@ -79,9 +52,6 @@
   ],
   "exports": [
     "__stdio_write",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory",
     "__assign_got_enties",
     "dynCall_v"

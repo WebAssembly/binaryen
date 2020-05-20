@@ -2,7 +2,6 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -19,9 +18,6 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
@@ -194,29 +190,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $stackSave (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $global$0
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $global$0)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (param $0 i32)
-  (global.set $global$0
-   (local.get $0)
-  )
- )
  (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
@@ -243,9 +216,6 @@
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory"
   ],
   "namedGlobals": {

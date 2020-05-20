@@ -1,7 +1,6 @@
 (module
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $foo)
@@ -12,38 +11,12 @@
  (export "_start" (func $_start))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $_start (result i32)
   (nop)
  )
  (func $foo (result i32)
   (nop)
- )
- (func $stackSave (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $global$0
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $global$0)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (param $0 i32)
-  (global.set $global$0
-   (local.get $0)
-  )
  )
  (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
@@ -62,9 +35,6 @@
   ],
   "exports": [
     "_start",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory"
   ],
   "namedGlobals": {

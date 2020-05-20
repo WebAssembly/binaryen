@@ -36,7 +36,6 @@ public:
   void setStandalone(bool standalone_) { standalone = standalone_; }
   void setSideModule(bool sideModule_) { sideModule = sideModule_; }
 
-  void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
@@ -80,12 +79,7 @@ private:
   // so far.
   std::unordered_set<Signature> sigs;
 
-  Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Function* func, Expression* value);
   void generateDynCallThunk(Signature sig);
-  void generateStackSaveFunction();
-  void generateStackAllocFunction();
-  void generateStackRestoreFunction();
   void generateSetStackLimitFunction();
   Name importStackOverflowHandler();
 };

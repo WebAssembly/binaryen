@@ -251,7 +251,6 @@ int main(int argc, const char* argv[]) {
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    generator.generateRuntimeFunctions();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate

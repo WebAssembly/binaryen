@@ -18,6 +18,9 @@ Current Trunk
 - The C-API's `BinaryenSetAPITracing` and the JS-API's `setAPITracing` have been
   removed because this feature was not very useful anymore and had a significant
   maintainance cost.
+- wasm-emscripten-finalize will no longer generate `stackSave`, `stackAlloc`,
+  `stackRestore` function.  It not expects them to be included in the input
+  file.
 
 v93
 ---

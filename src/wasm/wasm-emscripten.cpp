@@ -39,7 +39,6 @@ cashew::IString EM_JS_PREFIX("__em_js__");
 
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
-static Name STACK_ALLOC("stackAlloc");
 static Name STACK_INIT("stack$init");
 static Name STACK_LIMIT("__stack_limit");
 static Name SET_STACK_LIMIT("__set_stack_limit");
@@ -80,146 +79,6 @@ Global* getStackPointerGlobal(Module& wasm) {
     }
   }
   return nullptr;
-}
-
-Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
-  if (!useStackPointerGlobal) {
-    return builder.makeLoad(
-      /* bytes  =*/4,
-      /* signed =*/false,
-      /* offset =*/stackPointerOffset,
-      /* align  =*/4,
-      /* ptr    =*/builder.makeConst(Literal(0)),
-      /* type   =*/Type::i32);
-  }
-  Global* stackPointer = getStackPointerGlobal(wasm);
-  if (!stackPointer) {
-    Fatal() << "stack pointer global not found";
-  }
-  return builder.makeGlobalGet(stackPointer->name, Type::i32);
-}
-
-inline Expression* stackBoundsCheck(Builder& builder,
-                                    Function* func,
-                                    Expression* value,
-                                    Global* stackPointer,
-                                    Global* stackLimit,
-                                    Name handlerName) {
-  // Add a local to store the value of the expression. We need the value twice:
-  // once to check if it has overflowed, and again to assign to store it.
-  auto newSP = Builder::addVar(func, stackPointer->type);
-  // If we imported a handler, call it. That can show a nice error in JS.
-  // Otherwise, just trap.
-  Expression* handler;
-  if (handlerName.is()) {
-    handler = builder.makeCall(handlerName, {}, Type::none);
-  } else {
-    handler = builder.makeUnreachable();
-  }
-  // (if (i32.lt_u (local.tee $newSP (...value...)) (global.get $__stack_limit))
-  auto check =
-    builder.makeIf(builder.makeBinary(
-                     BinaryOp::LtUInt32,
-                     builder.makeLocalTee(newSP, value, stackPointer->type),
-                     builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
-                   handler);
-  // (global.set $__stack_pointer (local.get $newSP))
-  auto newSet = builder.makeGlobalSet(
-    stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
-  return builder.blockify(check, newSet);
-}
-
-Expression*
-EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
-                                                   Expression* value) {
-  BYN_TRACE("generateStoreStackPointer\n");
-  if (!useStackPointerGlobal) {
-    return builder.makeStore(
-      /* bytes  =*/4,
-      /* offset =*/stackPointerOffset,
-      /* align  =*/4,
-      /* ptr    =*/builder.makeConst(Literal(0)),
-      /* value  =*/value,
-      /* type   =*/Type::i32);
-  }
-  Global* stackPointer = getStackPointerGlobal(wasm);
-  if (!stackPointer) {
-    Fatal() << "stack pointer global not found";
-  }
-  if (auto* stackLimit = wasm.getGlobalOrNull(STACK_LIMIT)) {
-    return stackBoundsCheck(builder,
-                            func,
-                            value,
-                            stackPointer,
-                            stackLimit,
-                            importStackOverflowHandler());
-  }
-  return builder.makeGlobalSet(stackPointer->name, value);
-}
-
-void EmscriptenGlueGenerator::generateStackSaveFunction() {
-  if (wasm.getExportOrNull(STACK_SAVE)) {
-    return;
-  }
-  BYN_TRACE("generateStackSaveFunction\n");
-  std::vector<NameType> params{};
-  Function* function =
-    builder.makeFunction(STACK_SAVE, std::move(params), Type::i32, {});
-
-  function->body = generateLoadStackPointer();
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateStackAllocFunction() {
-  if (wasm.getExportOrNull(STACK_ALLOC)) {
-    return;
-  }
-  BYN_TRACE("generateStackAllocFunction\n");
-  std::vector<NameType> params{{"0", Type::i32}};
-  Function* function = builder.makeFunction(
-    STACK_ALLOC, std::move(params), Type::i32, {{"1", Type::i32}});
-  Expression* loadStack = generateLoadStackPointer();
-  LocalGet* getSizeArg = builder.makeLocalGet(0, Type::i32);
-  Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
-  const static uint32_t bitAlignment = 16;
-  const static uint32_t bitMask = bitAlignment - 1;
-  Const* subConst = builder.makeConst(Literal(~bitMask));
-  Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, Type::i32);
-  Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
-
-  Block* block = builder.makeBlock();
-  block->list.push_back(storeStack);
-  LocalGet* getStackLocal2 = builder.makeLocalGet(1, Type::i32);
-  block->list.push_back(getStackLocal2);
-  block->type = Type::i32;
-  function->body = block;
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateStackRestoreFunction() {
-  if (wasm.getExportOrNull(STACK_RESTORE)) {
-    return;
-  }
-  BYN_TRACE("generateStackRestoreFunction\n");
-  std::vector<NameType> params{{"0", Type::i32}};
-  Function* function =
-    builder.makeFunction(STACK_RESTORE, std::move(params), Type::none, {});
-  LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
-  Expression* store = generateStoreStackPointer(function, getArg);
-
-  function->body = store;
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateRuntimeFunctions() {
-  BYN_TRACE("generateRuntimeFunctions\n");
-  generateStackSaveFunction();
-  generateStackAllocFunction();
-  generateStackRestoreFunction();
 }
 
 static Function*
@@ -526,12 +385,21 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
     }
   }
 
-  bool needStackSave = false;
-  bool needStackRestore = false;
+  void visitModule(Module* curr) {
+    if (needStackSave) {
+      ensureFunctionImport(curr, STACK_SAVE, Signature(Type::none, Type::i32));
+    }
+    if (needStackRestore) {
+      ensureFunctionImport(
+        curr, STACK_RESTORE, Signature(Type::i32, Type::none));
+    }
+  }
 
 private:
   std::unique_ptr<Builder> builder;
   Global* stackPointer;
+  bool needStackSave = false;
+  bool needStackRestore = false;
 };
 
 // lld can sometimes produce a build with an imported mutable __stack_pointer
@@ -567,15 +435,7 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   }
 
   // Replace all uses of stack pointer global
-  RemoveStackPointer walker(stackPointer);
-  walker.walkModule(&wasm);
-  if (walker.needStackSave) {
-    ensureFunctionImport(&wasm, STACK_SAVE, Signature(Type::none, Type::i32));
-  }
-  if (walker.needStackRestore) {
-    ensureFunctionImport(
-      &wasm, STACK_RESTORE, Signature(Type::i32, Type::none));
-  }
+  RemoveStackPointer(stackPointer).walkModule(&wasm);
 
   // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
@@ -596,14 +456,39 @@ struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
     return new StackLimitEnforcer(stackPointer, stackLimit, builder, handler);
   }
 
+  Expression* stackBoundsCheck(Function* func,
+                               Expression* value,
+                               Global* stackPointer,
+                               Global* stackLimit) {
+    // Add a local to store the value of the expression. We need the value
+    // twice: once to check if it has overflowed, and again to assign to store
+    // it.
+    auto newSP = Builder::addVar(func, stackPointer->type);
+    // If we imported a handler, call it. That can show a nice error in JS.
+    // Otherwise, just trap.
+    Expression* handlerExpr;
+    if (handler.is()) {
+      handlerExpr = builder.makeCall(handler, {}, Type::none);
+    } else {
+      handlerExpr = builder.makeUnreachable();
+    }
+    // (if (i32.lt_u (local.tee $newSP (...val...)) (global.get $__stack_limit))
+    auto check = builder.makeIf(
+      builder.makeBinary(
+        BinaryOp::LtUInt32,
+        builder.makeLocalTee(newSP, value, stackPointer->type),
+        builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
+      handlerExpr);
+    // (global.set $__stack_pointer (local.get $newSP))
+    auto newSet = builder.makeGlobalSet(
+      stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
+    return builder.blockify(check, newSet);
+  }
+
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      replaceCurrent(stackBoundsCheck(builder,
-                                      getFunction(),
-                                      curr->value,
-                                      stackPointer,
-                                      stackLimit,
-                                      handler));
+      replaceCurrent(
+        stackBoundsCheck(getFunction(), curr->value, stackPointer, stackLimit));
     }
   }
 
