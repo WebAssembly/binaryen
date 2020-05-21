@@ -475,7 +475,7 @@ struct LocationUpdater {
 
   // Map offset of location list entries in the debug_loc section to the base
   // address of the compilation units referencing them.
-  std::map<uint64_t, BinaryLocation> debugLocMap;
+  std::map<BinaryLocation, BinaryLocation> debugLocToUnitMap;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -616,7 +616,7 @@ struct LocationUpdater {
   }
 
   BinaryLocation getLocationBaseAddress(BinaryLocation offset) const {
-    return debugLocMap.at(offset);
+    return debugLocToUnitMap.at(offset);
   }
 };
 
@@ -736,7 +736,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
                       LocationUpdater& locationUpdater,
-                      BinaryLocation baseAddress) {
+                      BinaryLocation compilationUnitBaseAddress) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -773,7 +773,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       } else if (attr == llvm::dwarf::DW_AT_location &&
                  attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
         BinaryLocation locOffset = yamlValue.Value;
-        locationUpdater.debugLocMap[locOffset] = baseAddress;
+        locationUpdater.debugLocToUnitMap[locOffset] =
+          compilationUnitBaseAddress;
       }
     });
   // Next, process the high_pcs.
@@ -833,10 +834,13 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            auto unitBaseAddress = CU->getBaseAddress();
-            BinaryLocation baseAddress =
-              unitBaseAddress ? unitBaseAddress->Address : 0;
-            updateDIE(DIE, yamlEntry, abbrevDecl, locationUpdater, baseAddress);
+            BinaryLocation compilationUnitBaseAddress =
+              CU->getBaseAddress() ? CU->getBaseAddress()->Address : 0;
+            updateDIE(DIE,
+                      yamlEntry,
+                      abbrevDecl,
+                      locationUpdater,
+                      compilationUnitBaseAddress);
           }
         });
     });
@@ -890,17 +894,9 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
   // Locations have an optional base.
-  BinaryLocation base = 0;
-  uint64_t section_offset = 0, location_list_offset = 0;
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
-
-    // A location list entry consists of:
-    // - a beginning address offset,
-    // - an end address offset,
-    // - (only for normal entries) a single location description.
-    location_list_offset += (sizeof(loc.Start) + sizeof(loc.End));
-    base = locationUpdater.getLocationBaseAddress(section_offset);
+    BinaryLocation base = locationUpdater.getLocationBaseAddress(loc.Offset);
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
@@ -911,8 +907,6 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
     } else if (newStart == 0 && newEnd == 0) {
       // This is an end marker, this list is done.
       base = 0;
-      section_offset += location_list_offset;
-      location_list_offset = 0;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
@@ -945,10 +939,6 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // instructions in the middle may have moved around, making the loc no
       // longer contiguous, we should check that, and possibly split/merge
       // the loc. Or, we may need to have tracking in the IR for this.
-
-      // For normal entries, a location description consists of a uint16 size
-      // followed by an array of bytes that describe the location.
-      location_list_offset += sizeof(uint16_t) + loc.Location.size();
     }
     loc.Start = newStart;
     loc.End = newEnd;

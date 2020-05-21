@@ -120,6 +120,7 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
   uint64_t offset = 0;
   DWARFDebugLoc locList;
   while (locsData.isValidOffset(offset)) {
+    uint64_t locListOffset = offset; // XXX BINARYEN
     auto list = locList.parseOneLocationList(locsData, &offset);
     if (!list) {
       errs() << "debug_loc error\n";
@@ -132,11 +133,13 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
       for (auto x : entry.Loc) {
         loc.Location.push_back(x);
       }
+      loc.Offset = locListOffset; // XXX BINARYEN
       Y.Locs.push_back(loc);
     }
     DWARFYAML::Loc loc;
     loc.Start = 0;
     loc.End = 0;
+    loc.Offset = locListOffset; // XXX BINARYEN
     Y.Locs.push_back(loc);
   }
 }
