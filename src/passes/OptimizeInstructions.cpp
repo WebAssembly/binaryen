@@ -1264,6 +1264,7 @@ private:
               //   (x > y) | (x < y)     ==>    x != y
               if (right->op == GtSInt32 || right->op == GtUInt32) {
                 left->op = NeInt32;
+                return left;
               }
               break;
             }
