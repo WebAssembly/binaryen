@@ -1211,6 +1211,9 @@ private:
 
   // We can combine `or` operations, e.g.
   //   (x > y) | (x == y)    ==>    x >= y
+  //   (x < y) | (x == y)    ==>    x <= y
+  //   (x < y) | (x > y)     ==>    x != y
+  //   (x != y) | (x == y)   ==>    1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
     FeatureSet features = getModule()->features;
@@ -1224,11 +1227,47 @@ private:
             !EffectAnalyzer(getPassOptions(), features, left->right)
                .hasSideEffects()) {
           switch (left->op) {
-            //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
+              //   (x > y) | (x == y)    ==>    x >= y
               if (right->op == GtSInt32) {
                 left->op = GeSInt32;
                 return left;
+              }
+              if (right->op == GtUInt32) {
+                left->op = GeUInt32;
+                return left;
+              }
+
+              //   (x < y) | (x == y)    ==>    x <= y
+              if (right->op == LtSInt32) {
+                left->op = LeSInt32;
+                return left;
+              }
+              if (right->op == LtUInt32) {
+                left->op = LeUInt32;
+                return left;
+              }
+
+              //   (x != y) | (x == y)   ==>    1
+              if (right->op == NeInt32) {
+                return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
+              }
+
+              break;
+            }
+            case GtUInt32:
+            case GtSInt32: {
+              //   (x < y) | (x > y)     ==>    x != y
+              if (right->op == LtSInt32 || right->op == LtUInt32) {
+                left->op = NeInt32;
+              }
+              break;
+            }
+            case LtUInt32:
+            case LtSInt32: {
+              //   (x > y) | (x < y)     ==>    x != y
+              if (right->op == GtSInt32 || right->op == GtUInt32) {
+                left->op = NeInt32;
               }
               break;
             }

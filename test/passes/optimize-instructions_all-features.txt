@@ -3315,6 +3315,192 @@
     )
    )
   )
+  (drop
+   (i32.le_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.le_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.lt_s
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.lt_s
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (call $ne0)
+     (local.get $y)
+    )
+    (i32.eq
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $y)
+     (call $ne0)
+    )
+    (i32.eq
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.ne
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.ne
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.ne
+     (call $ne0)
+     (local.get $y)
+    )
+    (i32.eq
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.ne
+     (call $ne0)
+     (local.get $y)
+    )
+    (i32.eq
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.gt_s
+     (local.get $y)
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.gt_s
+     (local.get $y)
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.gt_s
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.gt_s
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (call $ne0)
+     (local.get $y)
+    )
+    (i32.gt_s
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.lt_s
+     (local.get $y)
+     (call $ne0)
+    )
+    (i32.gt_s
+     (local.get $y)
+     (call $ne0)
+    )
+   )
+  )
  )
  (func $combine-or (param $x i32) (param $y i32)
   (drop
