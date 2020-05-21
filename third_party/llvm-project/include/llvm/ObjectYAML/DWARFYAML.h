@@ -82,6 +82,7 @@ struct Loc {
   uint32_t Start;
   uint32_t End;
   std::vector<uint8_t> Location;
+  uint64_t Offset;
 };
 // XXX BINARYEN -->
 
