@@ -3963,15 +3963,15 @@
         (local.get $y)
       )
       (i32.gt_s
-        (local.get $y) ;; ordering should not stop us
         (local.get $x)
+        (local.get $y)
       )
     ))
     ;; x > y | x < y --> pass
     (drop (i32.or
-      (i32.gt_s ;; ordering should not stop us
-        (local.get $y)
+      (i32.gt_s
         (local.get $x)
+        (local.get $y)
       )
       (i32.lt_s
         (local.get $x)
