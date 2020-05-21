@@ -2,7 +2,6 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
  (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow))
  (memory $0 2)
  (table $0 1 1 funcref)
@@ -16,7 +15,6 @@
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
  (export "__set_stack_limit" (func $__set_stack_limit))
- (export "stackSave" (func $stackSave))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
@@ -72,9 +70,6 @@
    (local.get $0)
   )
  )
- (func $stackSave (result i32)
-  (global.get $global$0)
- )
  (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
@@ -100,7 +95,6 @@
     "stackAlloc",
     "main",
     "__set_stack_limit",
-    "stackSave",
     "__growWasmMemory"
   ],
   "namedGlobals": {
