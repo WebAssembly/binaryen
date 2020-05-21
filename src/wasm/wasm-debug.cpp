@@ -833,11 +833,10 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            updateDIE(DIE,
-                      yamlEntry,
-                      abbrevDecl,
-                      locationUpdater,
-                      CU->getBaseAddress()->Address);
+            auto unitBaseAddress = CU->getBaseAddress();
+            BinaryLocation baseAddress =
+              unitBaseAddress ? unitBaseAddress->Address : 0;
+            updateDIE(DIE, yamlEntry, abbrevDecl, locationUpdater, baseAddress);
           }
         });
     });
@@ -892,9 +891,16 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   // so we mark no longer valid addresses as empty.
   // Locations have an optional base.
   BinaryLocation base = 0;
+  uint64_t section_offset = 0, location_list_offset = 0;
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
-    base = locationUpdater.getLocationBaseAddress(loc.Offset);
+
+    // A location list entry consists of:
+    // - a beginning address offset,
+    // - an end address offset,
+    // - (only for normal entries) a single location description.
+    location_list_offset += (sizeof(loc.Start) + sizeof(loc.End));
+    base = locationUpdater.getLocationBaseAddress(section_offset);
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
@@ -905,6 +911,8 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
     } else if (newStart == 0 && newEnd == 0) {
       // This is an end marker, this list is done.
       base = 0;
+      section_offset += location_list_offset;
+      location_list_offset = 0;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
@@ -937,6 +945,10 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // instructions in the middle may have moved around, making the loc no
       // longer contiguous, we should check that, and possibly split/merge
       // the loc. Or, we may need to have tracking in the IR for this.
+
+      // For normal entries, a location description consists of a uint16 size
+      // followed by an array of bytes that describe the location.
+      location_list_offset += sizeof(uint16_t) + loc.Location.size();
     }
     loc.Start = newStart;
     loc.End = newEnd;
