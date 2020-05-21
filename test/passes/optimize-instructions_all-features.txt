@@ -3268,6 +3268,18 @@
    )
   )
   (drop
+   (i32.ge_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
    (i32.or
     (i32.eq
      (local.get $x)
@@ -3313,6 +3325,18 @@
      (call $ne0)
      (local.get $y)
     )
+   )
+  )
+  (drop
+   (i32.le_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.le_s
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop

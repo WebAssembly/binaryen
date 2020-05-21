@@ -3728,6 +3728,30 @@
         (local.get $y)
       )
     ))
+    ;;
+    ;; x >= y | x == y --> pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
+    ;; x == y | x >= y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
     ;; x > y | x == 1 --> skip
     (drop (i32.or
       (i32.gt_s
@@ -3785,6 +3809,17 @@
         (local.get $x)
       )
     ))
+    ;; x <= y | x == y --> pass
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
     ;; x == y | x < y --> pass
     (drop (i32.or
       (i32.eq ;; ordering should not stop us
@@ -3792,6 +3827,17 @@
         (local.get $x)
       )
       (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x == y | x <= y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.le_s
         (local.get $x)
         (local.get $y)
       )

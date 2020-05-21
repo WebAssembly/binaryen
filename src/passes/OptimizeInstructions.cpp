@@ -1210,10 +1210,12 @@ private:
   }
 
   // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
-  //   (x < y) | (x == y)    ==>    x <= y
-  //   (x < y) | (x > y)     ==>    x != y
-  //   (x != y) | (x == y)   ==>    1
+  //   (x >  y) | (x == y)    ==>    x >= y
+  //   (x >= y) | (x == y)    ==>    x >= y
+  //   (x <  y) | (x == y)    ==>    x <= y
+  //   (x <= y) | (x == y)    ==>    x <= y
+  //   (x <  y) | (x >  y)    ==>    x != y
+  //   (x != y) | (x == y)    ==>    1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
     FeatureSet features = getModule()->features;
@@ -1228,22 +1230,24 @@ private:
                .hasSideEffects()) {
           switch (left->op) {
             case EqInt32: {
-              //   (x > y) | (x == y)    ==>    x >= y
-              if (right->op == GtSInt32) {
+              //   (x >  y) | (x == y)   ==>    x >= y
+              //   (x >= y) | (x == y)   ==>    x >= y
+              if (right->op == GtSInt32 || right->op == GeSInt32) {
                 left->op = GeSInt32;
                 return left;
               }
-              if (right->op == GtUInt32) {
+              if (right->op == GtUInt32 || right->op == GeUInt32) {
                 left->op = GeUInt32;
                 return left;
               }
 
-              //   (x < y) | (x == y)    ==>    x <= y
-              if (right->op == LtSInt32) {
+              //   (x  < y) | (x == y)    ==>    x <= y
+              //   (x <= y) | (x == y)    ==>    x <= y
+              if (right->op == LtSInt32 || right->op == LeSInt32) {
                 left->op = LeSInt32;
                 return left;
               }
-              if (right->op == LtUInt32) {
+              if (right->op == LtUInt32 || right->op == LeUInt32) {
                 left->op = LeUInt32;
                 return left;
               }
