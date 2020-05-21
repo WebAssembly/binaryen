@@ -280,6 +280,15 @@ install(TARGETS binaryen
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endfunction()
+
 set(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
 )
@@ -292,11 +301,7 @@ install(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 set(wasm-opt_SOURCES
   src/tools/wasm-opt.cpp
 )
-add_executable(wasm-opt ${wasm-opt_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-opt ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
+binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
 
 set(wasm-metadce_SOURCES
   src/tools/wasm-metadce.cpp
