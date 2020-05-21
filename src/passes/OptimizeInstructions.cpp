@@ -1255,14 +1255,6 @@ private:
 
               break;
             }
-            case GtUInt32:
-            case GtSInt32: {
-              //   (x < y) | (x > y)     ==>    x != y
-              if (right->op == LtSInt32 || right->op == LtUInt32) {
-                left->op = NeInt32;
-              }
-              break;
-            }
             case LtUInt32:
             case LtSInt32: {
               //   (x > y) | (x < y)     ==>    x != y
