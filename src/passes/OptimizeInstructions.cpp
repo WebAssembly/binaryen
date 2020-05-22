@@ -1257,7 +1257,8 @@ private:
                 }
                 //   (x != y) | (x == y)   ==>    1
                 case NeInt32: {
-                  return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
                 }
                 default: {
                 }
