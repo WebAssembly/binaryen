@@ -3627,6 +3627,20 @@
         (i32.const 1)
       )
     )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
   )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)

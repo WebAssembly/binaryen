@@ -820,6 +820,26 @@ struct OptimizeInstructions
           }
         }
       }
+      if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
+        if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
+          if (constTrue->type == Type::i32 && constFalse->type == Type::i32) {
+            // expr ? 1 : 0   ==>   expr != 0
+            if (constTrue->value.geti32() == int32_t(1) &&
+                constFalse->value.geti32() == int32_t(0)) {
+              Builder builder(*getModule());
+              return builder.makeBinary(NeInt32,
+                                        select->condition,
+                                        builder.makeConst(Literal(int32_t(0))));
+            }
+            // expr ? 0 : 1   ==>   expr == 0
+            if (constTrue->value.geti32() == int32_t(0) &&
+                constFalse->value.geti32() == int32_t(1)) {
+              Builder builder(*getModule());
+              return builder.makeUnary(EqZInt32, select->condition);
+            }
+          }
+        }
+      }
       if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
         // sides are identical, fold
         EffectAnalyzer value(getPassOptions(), features, select->ifTrue);
