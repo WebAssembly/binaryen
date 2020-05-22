@@ -3513,6 +3513,60 @@
     )
    )
   )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.or
+    (i32.le_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.ge_s
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.le_s
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.ge_s
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.le_s
+     (call $ne0)
+     (local.get $y)
+    )
+    (i32.ge_s
+     (call $ne0)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.le_s
+     (local.get $y)
+     (call $ne0)
+    )
+    (i32.ge_s
+     (local.get $y)
+     (call $ne0)
+    )
+   )
+  )
  )
  (func $combine-or (param $x i32) (param $y i32)
   (drop

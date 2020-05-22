@@ -1214,8 +1214,9 @@ private:
   //   (x >= y) | (x == y)    ==>    x >= y
   //   (x <  y) | (x == y)    ==>    x <= y
   //   (x <= y) | (x == y)    ==>    x <= y
-  //   (x <  y) | (x >  y)    ==>    x != y
+  //   (x >  y) | (x <  y)    ==>    x != y
   //   (x != y) | (x == y)    ==>    1
+  //   (x >= y) | (x <= y)    ==>    1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
     FeatureSet features = getModule()->features;
@@ -1265,10 +1266,10 @@ private:
               }
               break;
             }
-            case LtUInt32:
-            case LtSInt32: {
+            case LtSInt32:
+            case LtUInt32: {
               switch (right->op) {
-                //   (x > y) | (x < y)     ==>    x != y
+                //   (x > y) | (x < y)    ==>    x != y
                 case GtSInt32:
                 case GtUInt32: {
                   left->op = NeInt32;
@@ -1278,6 +1279,19 @@ private:
                 }
               }
               break;
+            }
+            case LeSInt32:
+            case LeUInt32: {
+              switch (right->op) {
+                //   (x >= y) | (x <= y)    ==>    1
+                case GeUInt32:
+                case GeSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default: {
+                }
+              }
             }
             default: {}
           }

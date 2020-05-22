@@ -4022,6 +4022,74 @@
         (call $ne0)
       )
     ))
+    ;;
+    ;; x >= y | x <= y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x <= y | x >= y --> pass
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x <= y | x >= 1 --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    ;; x <= 1 | x >= y --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; fn() <= y | fn() >= y --> skip
+    (drop (i32.or
+      (i32.le_s
+        (call $ne0) ;; side effects
+        (local.get $y)
+      )
+      (i32.ge_s
+        (call $ne0)
+        (local.get $y)
+      )
+    ))
+    ;; y <= fn() | y >= fn() --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.ge_s
+        (local.get $y)
+        (call $ne0)
+      )
+    ))
   )
   (func $combine-or (param $x i32) (param $y i32)
     (drop (i32.or
