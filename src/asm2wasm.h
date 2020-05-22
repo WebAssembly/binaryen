@@ -1749,6 +1749,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     //    if r then *r = x % y
     //    returns x / y
     auto* func = wasm.getFunction(udivmoddi4);
+    func->stackIR.reset();
     Builder::clearLocals(func);
     Index xl = Builder::addParam(func, "xl", Type::i32),
           xh = Builder::addParam(func, "xh", Type::i32),

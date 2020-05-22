@@ -180,7 +180,7 @@ struct PassRunner {
 
   // Adds the default set of optimization passes; this is
   // what -O does.
-  void addDefaultOptimizationPasses();
+  void addDefaultOptimizationPasses(bool withStackIR = true);
 
   // Adds the default optimization passes that work on
   // individual functions.
@@ -197,7 +197,7 @@ struct PassRunner {
   // This is run at the very end of the optimization
   // process - you can assume no other opts will be run
   // afterwards.
-  void addDefaultGlobalOptimizationPostPasses();
+  void addDefaultGlobalOptimizationPostPasses(bool withStackIR = true);
 
   // Run the passes on the module
   void run();
@@ -233,13 +233,7 @@ private:
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
 
-  // After running a pass, handle any changes due to
-  // how the pass is defined, such as clearing away any
-  // temporary data structures that the pass declares it
-  // invalidates.
-  // If a function is passed, we operate just on that function;
-  // otherwise, the whole module.
-  void handleAfterEffects(Pass* pass, Function* func = nullptr);
+  void checkStackIR(Pass* pass, Function* func);
 };
 
 //
@@ -289,13 +283,13 @@ public:
   // Walker, as otherwise this will create the parent class.
   virtual Pass* create() { WASM_UNREACHABLE("unimplenented"); }
 
-  // Whether this pass modifies the Binaryen IR in the module. This is true for
-  // most passes, except for passes that have no side effects, or passes that
-  // only modify other things than Binaryen IR (for example, the Stack IR
-  // passes only modify that IR).
-  // This property is important as if Binaryen IR is modified, we need to throw
-  // out any Stack IR - it would need to be regenerated and optimized.
-  virtual bool modifiesBinaryenIR() { return true; }
+  // Whether this pass operates on StackIR. Once StackIR is generated, the
+  // normal Binaryen IR is no longer valid, so it is an error to run a
+  // non-StackIR pass after that point.
+  virtual bool acceptsStackIR() const { return false; }
+
+  // Whether this pass operates on Binaryen IR.
+  virtual bool acceptsBinaryenIR() const { return true; }
 
   std::string name;
 

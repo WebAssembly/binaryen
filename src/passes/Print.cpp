@@ -1461,9 +1461,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   bool full = false; // whether to not elide nodes in output when possible
                      // (like implicit blocks) and to emit types
-  bool printStackIR = false; // whether to print stack IR if it is present
-                             // (if false, and Stack IR is there, we just
-                             // note it exists)
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -1522,8 +1519,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
 
   void setFull(bool full_) { full = full_; }
-
-  void setPrintStackIR(bool printStackIR_) { printStackIR = printStackIR_; }
 
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
@@ -2144,9 +2139,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (!printStackIR && curr->stackIR && !minify) {
-      o << " (; has Stack IR ;)";
-    }
     const std::vector<Type>& params = curr->sig.params.expand();
     if (params.size() > 0) {
       for (size_t i = 0; i < params.size(); i++) {
@@ -2171,7 +2163,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << maybeNewLine;
     }
     // Print the body.
-    if (!printStackIR || !curr->stackIR) {
+    if (!curr->stackIR) {
       // It is ok to emit a block here, as a function can directly contain a
       // list, even if our ast avoids that for simplicity. We can just do that
       // optimization here..
@@ -2457,7 +2449,7 @@ public:
   Printer() : o(std::cout) {}
   Printer(std::ostream* o) : o(*o) {}
 
-  bool modifiesBinaryenIR() override { return false; }
+  bool acceptsStackIR() const override { return true; }
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
@@ -2501,23 +2493,6 @@ public:
 };
 
 Pass* createFullPrinterPass() { return new FullPrinter(); }
-
-// Print Stack IR (if present)
-
-class PrintStackIR : public Printer {
-public:
-  PrintStackIR() = default;
-  PrintStackIR(std::ostream* o) : Printer(o) {}
-
-  void run(PassRunner* runner, Module* module) override {
-    PrintSExpression print(o);
-    print.setDebugInfo(runner->options.debugInfo);
-    print.setPrintStackIR(true);
-    print.visitModule(module);
-  }
-};
-
-Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 
 // Print individual expressions
 

@@ -1,12 +1,12 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "table" (table $table 1 1 funcref))
- (elem (global.get $__table_base) $gm)
- (import "env" "__table_base" (global $__table_base i32))
+ (import "env" "table" (table $timport$2 1 1 funcref))
+ (elem (global.get $gimport$1) $gm)
+ (import "env" "__table_base" (global $gimport$1 i32))
  (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))
  (export "func" (func $func))
- (func $func (; has Stack IR ;)
+ (func $func
   (drop
    (call $gm
     (i32.const 0)

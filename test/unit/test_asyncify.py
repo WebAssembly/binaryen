@@ -20,8 +20,8 @@ class AsyncifyTest(utils.BinaryenTestCase):
         test([])
         test(['-O1'])
         test(['--optimize-level=1'])
-        test(['-O3'])
-        test(['-Os', '-g'])
+        test(['-O3', '--roundtrip'])
+        test(['-Os', '--roundtrip', '-g'])
 
     def test_asyncify_pure_wasm(self):
         def test(input_file):

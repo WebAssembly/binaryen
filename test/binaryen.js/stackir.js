@@ -26,4 +26,5 @@ console.log("=== default ===");
 console.log(module.emitStackIR());
 
 console.log("=== optimize ==="); // should omit the second block
+var module = binaryen.parseText(wast);
 console.log(module.emitStackIR(true));

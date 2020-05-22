@@ -15,95 +15,72 @@
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_unwind))
  (export "asyncify_get_state" (func $asyncify_get_state))
- (func $calls-import (; has Stack IR ;)
-  (if
-   (select
-    (i32.eqz
-     (if (result i32)
-      (i32.eq
-       (global.get $__asyncify_state)
-       (i32.const 2)
-      )
-      (block (result i32)
-       (i32.store
-        (global.get $__asyncify_data)
-        (i32.add
-         (i32.load
-          (global.get $__asyncify_data)
-         )
-         (i32.const -4)
-        )
-       )
-       (i32.load
-        (i32.load
-         (global.get $__asyncify_data)
-        )
-       )
-      )
-      (i32.const 0)
-     )
-    )
-    (i32.const 1)
-    (global.get $__asyncify_state)
-   )
-   (call $import)
-  )
+ (func $calls-import
+  global.get $__asyncify_state
+  i32.const 2
+  i32.eq
+  if (result i32)
+   global.get $__asyncify_data
+   global.get $__asyncify_data
+   i32.load
+   i32.const -4
+   i32.add
+   i32.store
+   global.get $__asyncify_data
+   i32.load
+   i32.load
+  else
+   i32.const 0
+  end
+  i32.eqz
+  i32.const 1
+  global.get $__asyncify_state
+  select
+  if
+   call $import
+  end
  )
- (func $asyncify_start_unwind (; has Stack IR ;) (param $0 i32)
-  (global.set $__asyncify_state
-   (i32.const 1)
-  )
-  (global.set $__asyncify_data
-   (local.get $0)
-  )
-  (if
-   (i32.gt_u
-    (i32.load
-     (global.get $__asyncify_data)
-    )
-    (i32.load offset=4
-     (global.get $__asyncify_data)
-    )
-   )
-   (unreachable)
-  )
+ (func $asyncify_start_unwind (param $0 i32)
+  i32.const 1
+  global.set $__asyncify_state
+  local.get $0
+  global.set $__asyncify_data
+  global.get $__asyncify_data
+  i32.load
+  global.get $__asyncify_data
+  i32.load offset=4
+  i32.gt_u
+  if
+   unreachable
+  end
  )
- (func $asyncify_stop_unwind (; has Stack IR ;)
-  (global.set $__asyncify_state
-   (i32.const 0)
-  )
-  (if
-   (i32.gt_u
-    (i32.load
-     (global.get $__asyncify_data)
-    )
-    (i32.load offset=4
-     (global.get $__asyncify_data)
-    )
-   )
-   (unreachable)
-  )
+ (func $asyncify_stop_unwind
+  i32.const 0
+  global.set $__asyncify_state
+  global.get $__asyncify_data
+  i32.load
+  global.get $__asyncify_data
+  i32.load offset=4
+  i32.gt_u
+  if
+   unreachable
+  end
  )
- (func $asyncify_start_rewind (; has Stack IR ;) (param $0 i32)
-  (global.set $__asyncify_state
-   (i32.const 2)
-  )
-  (global.set $__asyncify_data
-   (local.get $0)
-  )
-  (if
-   (i32.gt_u
-    (i32.load
-     (global.get $__asyncify_data)
-    )
-    (i32.load offset=4
-     (global.get $__asyncify_data)
-    )
-   )
-   (unreachable)
-  )
+ (func $asyncify_start_rewind (param $0 i32)
+  i32.const 2
+  global.set $__asyncify_state
+  local.get $0
+  global.set $__asyncify_data
+  global.get $__asyncify_data
+  i32.load
+  global.get $__asyncify_data
+  i32.load offset=4
+  i32.gt_u
+  if
+   unreachable
+  end
  )
- (func $asyncify_get_state (; has Stack IR ;) (result i32)
-  (global.get $__asyncify_state)
+ (func $asyncify_get_state (result i32)
+  global.get $__asyncify_state
  )
 )

@@ -9,33 +9,29 @@
  (export "ssa-const" (func $2))
  (export "if-nothing" (func $3))
  (export "only-dfo" (func $4))
- (func $0 (; has Stack IR ;)
-  (nop)
+ (func $0
+  nop
  )
- (func $1 (; has Stack IR ;) (result f64)
-  (unreachable)
+ (func $1 (result f64)
+  unreachable
  )
- (func $2 (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
-  (unreachable)
+ (func $2 (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
+  unreachable
  )
- (func $3 (; has Stack IR ;) (param $0 i64)
-  (unreachable)
+ (func $3 (param $0 i64)
+  unreachable
  )
- (func $4 (; has Stack IR ;) (param $0 f64) (result i32)
+ (func $4 (param $0 f64) (result i32)
   (local $1 i32)
-  (loop $label$1
-   (if
-    (i32.eqz
-     (local.get $1)
-    )
-    (block
-     (local.set $1
-      (i32.const -2147483648)
-     )
-     (br $label$1)
-    )
-   )
-  )
-  (i32.const -2766)
+  loop $label$1
+   local.get $1
+   i32.eqz
+   if
+    i32.const -2147483648
+    local.set $1
+    br $label$1
+   end
+  end
+  i32.const -2766
  )
 )

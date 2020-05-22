@@ -1,0 +1,1260 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $f32_=>_none (func (param f32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
+ (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
+ (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
+ (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
+ (memory $0 4096 4096)
+ (data (i32.const 1026) "\14\00")
+ (table $0 10 funcref)
+ (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+ (export "big_negative" (func $big_negative))
+ (func $big_negative
+  (local $temp f64)
+  f64.const -2147483648
+  local.set $temp
+  f64.const -2147483648
+  local.set $temp
+  f64.const -21474836480
+  local.set $temp
+  f64.const 0.039625
+  local.set $temp
+  f64.const -0.039625
+  local.set $temp
+ )
+ (func $importedDoubles (result f64)
+  (local $temp f64)
+  block $topmost (result f64)
+   i32.const 8
+   f64.load
+   i32.const 16
+   f64.load
+   f64.add
+   i32.const 16
+   f64.load
+   f64.neg
+   f64.add
+   i32.const 8
+   f64.load
+   f64.neg
+   f64.add
+   local.set $temp
+   i32.const 24
+   i32.load
+   i32.const 0
+   i32.gt_s
+   if
+    f64.const -3.4
+    br $topmost
+   end
+   i32.const 32
+   f64.load
+   f64.const 0
+   f64.gt
+   if
+    f64.const 5.6
+    br $topmost
+   end
+   f64.const 1.2
+  end
+ )
+ (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+  (local $t f64)
+  (local $Int f64)
+  (local $Double i32)
+  block $topmost (result f64)
+   local.get $x
+   f64.const 0
+   f64.gt
+   if
+    f64.const 1.2
+    br $topmost
+   end
+   local.get $Int
+   f64.const 0
+   f64.gt
+   if
+    f64.const -3.4
+    br $topmost
+   end
+   local.get $Double
+   i32.const 0
+   i32.gt_s
+   if
+    f64.const 5.6
+    br $topmost
+   end
+   local.get $x
+   local.get $y
+   f64.lt
+   if
+    local.get $x
+    br $topmost
+   end
+   local.get $y
+  end
+ )
+ (func $intOps (result i32)
+  (local $x i32)
+  local.get $x
+  i32.const 0
+  i32.eq
+ )
+ (func $hexLiterals
+  i32.const 0
+  i32.const 313249263
+  i32.add
+  i32.const -19088752
+  i32.add
+  drop
+ )
+ (func $conversions
+  (local $i i32)
+  (local $d f64)
+  local.get $d
+  call $f64-to-int
+  local.set $i
+  local.get $i
+  f64.convert_i32_s
+  local.set $d
+  local.get $i
+  i32.const 0
+  i32.shr_u
+  f64.convert_i32_u
+  local.set $d
+ )
+ (func $seq
+  (local $J f64)
+  f64.const 0.1
+  drop
+  f64.const 5.1
+  f64.const 3.2
+  drop
+  f64.const 4.2
+  f64.sub
+  local.set $J
+ )
+ (func $switcher (param $x i32) (result i32)
+  block $topmost (result i32)
+   block $switch-default$3
+    block $switch-case$2
+     block $switch-case$1
+      local.get $x
+      i32.const 1
+      i32.sub
+      br_table $switch-case$1 $switch-case$2 $switch-default$3
+     end
+     i32.const 1
+     br $topmost
+    end
+    i32.const 2
+    br $topmost
+   end
+   nop
+   block $switch-default$7
+    block $switch-case$6
+     block $switch-case$5
+      local.get $x
+      i32.const 5
+      i32.sub
+      br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
+     end
+     i32.const 121
+     br $topmost
+    end
+    i32.const 51
+    br $topmost
+   end
+   nop
+   block $label$break$Lout
+    block $switch-default$16
+     block $switch-case$15
+      block $switch-case$12
+       block $switch-case$9
+        block $switch-case$8
+         local.get $x
+         i32.const 2
+         i32.sub
+         br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
+        end
+        br $label$break$Lout
+       end
+       br $label$break$Lout
+      end
+      block $while-out$10
+       loop $while-in$11
+        br $while-out$10
+       end
+       unreachable
+      end
+     end
+     loop $while-in$14
+      br $label$break$Lout
+     end
+     unreachable
+    end
+    nop
+   end
+   i32.const 0
+  end
+ )
+ (func $blocker
+  block $label$break$L
+   br $label$break$L
+  end
+ )
+ (func $frem (result f64)
+  f64.const 5.5
+  f64.const 1.2
+  call $f64-rem
+ )
+ (func $big_uint_div_u (result i32)
+  (local $x i32)
+  i32.const -1
+  i32.const 2
+  i32.div_u
+  i32.const -1
+  i32.and
+ )
+ (func $fr (param $x f32)
+  (local $y f32)
+  (local $z f64)
+  local.get $z
+  f32.demote_f64
+  drop
+  local.get $y
+  drop
+  f32.const 5
+  drop
+  f32.const 0
+  drop
+  f32.const 5
+  drop
+  f32.const 0
+  drop
+ )
+ (func $negZero (result f64)
+  f64.const -0
+ )
+ (func $abs
+  (local $x i32)
+  (local $y f64)
+  (local $z f32)
+  (local $asm2wasm_i32_temp i32)
+  i32.const 0
+  local.set $asm2wasm_i32_temp
+  i32.const 0
+  local.get $asm2wasm_i32_temp
+  i32.sub
+  local.get $asm2wasm_i32_temp
+  local.get $asm2wasm_i32_temp
+  i32.const 0
+  i32.lt_s
+  select
+  local.set $x
+  f64.const 0
+  f64.abs
+  local.set $y
+  f32.const 0
+  f32.abs
+  local.set $z
+ )
+ (func $neg
+  (local $x f32)
+  local.get $x
+  f32.neg
+  i32.const 1
+  i32.const 7
+  i32.and
+  i32.const 8
+  i32.add
+  call_indirect (type $f32_=>_none)
+ )
+ (func $cneg (param $x f32)
+  local.get $x
+  i32.const 1
+  i32.const 7
+  i32.and
+  i32.const 8
+  i32.add
+  call_indirect (type $f32_=>_none)
+ )
+ (func $___syscall_ret
+  (local $$0 i32)
+  local.get $$0
+  i32.const 0
+  i32.shr_u
+  i32.const -4096
+  i32.gt_u
+  drop
+ )
+ (func $z
+  nop
+ )
+ (func $w
+  nop
+ )
+ (func $block_and_after (result i32)
+  block $waka
+   i32.const 1
+   drop
+   br $waka
+  end
+  i32.const 0
+ )
+ (func $loop-roundtrip (param $0 f64) (result f64)
+  loop $loop-in1 (result f64)
+   local.get $0
+   drop
+   local.get $0
+  end
+ )
+ (func $big-i64 (result i64)
+  i64.const -9218868437227405313
+ )
+ (func $i64-store32 (param $0 i32) (param $1 i64)
+  local.get $0
+  local.get $1
+  i64.store32
+ )
+ (func $return-unreachable (result i32)
+  i32.const 1
+  return
+ )
+ (func $unreachable-block (result i32)
+  i32.const 1
+  drop
+  i32.const 2
+  return
+ )
+ (func $unreachable-block-toplevel (result i32)
+  i32.const 1
+  drop
+  i32.const 2
+  return
+ )
+ (func $unreachable-block0 (result i32)
+  i32.const 2
+  return
+ )
+ (func $unreachable-block0-toplevel (result i32)
+  i32.const 2
+  return
+ )
+ (func $unreachable-block-with-br (result i32)
+  block $block
+   i32.const 1
+   drop
+   br $block
+  end
+  i32.const 1
+ )
+ (func $unreachable-if (result i32)
+  i32.const 3
+  if
+   i32.const 2
+   return
+  else
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-if-toplevel (result i32)
+  i32.const 3
+  if
+   i32.const 2
+   return
+  else
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop (result i32)
+  loop $loop-in
+   nop
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop0 (result i32)
+  loop $loop-in
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop-toplevel (result i32)
+  loop $loop-in
+   nop
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop0-toplevel (result i32)
+  loop $loop-in
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-ifs
+  unreachable
+ )
+ (func $unreachable-if-arm
+  i32.const 1
+  if
+   nop
+  else
+   unreachable
+  end
+ )
+ (func $local-to-stack (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+ )
+ (func $local-to-stack-1 (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.eqz
+ )
+ (func $local-to-stack-1b (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.const 3
+  i32.add
+ )
+ (func $local-to-stack-1c-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  local.set $temp
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.const 3
+  local.get $temp
+  i32.add
+ )
+ (func $local-to-stack-2-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  local.set $temp
+  i32.const 2
+  call $local-to-stack
+  drop
+  local.get $temp
+  local.get $temp
+  i32.add
+ )
+ (func $local-to-stack-3-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  if
+   i32.const 1
+   call $local-to-stack
+   local.set $temp
+  else
+   i32.const 2
+   call $local-to-stack
+   local.set $temp
+  end
+  i32.const 3
+  call $local-to-stack
+  drop
+  local.get $temp
+ )
+ (func $local-to-stack-multi-4 (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-multi-5 (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-multi-6-justone (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  local.set $temp2
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp2
+  local.get $temp2
+  i32.add
+ )
+ (func $local-to-stack-multi-7-justone (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  local.set $temp1
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp1
+  local.get $temp1
+  i32.add
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-overlapping-multi-8-no (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  local.set $temp1
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 3
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp1
+  i32.add
+ )
+ (func $local-to-stack-overlapping-multi-9-yes (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 3
+  call $local-to-stack-multi-4
+  drop
+  i32.add
+ )
+ (func $local-to-stack-through-control-flow
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 0
+  call $local-to-stack-multi-4
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 0
+  if
+   nop
+  end
+  drop
+  i32.const 2
+  call $local-to-stack-multi-4
+  block $block
+   br $block
+  end
+  drop
+  drop
+ )
+ (func $local-to-stack-in-control-flow
+  (local $temp1 i32)
+  i32.const 0
+  if
+   i32.const 0
+   call $local-to-stack-multi-4
+   drop
+  else
+   i32.const 1
+   call $local-to-stack-multi-4
+   drop
+  end
+ )
+ (func $remove-block (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 0
+  call $remove-block
+  i32.const 1
+  call $remove-block
+  i32.const 2
+  call $remove-block
+  drop
+  i32.eqz
+  i32.add
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $f32_=>_none (func (param f32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
+ (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
+ (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
+ (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
+ (memory $0 4096 4096)
+ (data (i32.const 1026) "\14\00")
+ (table $0 10 funcref)
+ (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+ (export "big_negative" (func $big_negative))
+ (func $big_negative
+  (local $temp f64)
+  f64.const -2147483648
+  local.set $temp
+  f64.const -2147483648
+  local.set $temp
+  f64.const -21474836480
+  local.set $temp
+  f64.const 0.039625
+  local.set $temp
+  f64.const -0.039625
+  local.set $temp
+ )
+ (func $importedDoubles (result f64)
+  (local $temp f64)
+  block $topmost (result f64)
+   i32.const 8
+   f64.load
+   i32.const 16
+   f64.load
+   f64.add
+   i32.const 16
+   f64.load
+   f64.neg
+   f64.add
+   i32.const 8
+   f64.load
+   f64.neg
+   f64.add
+   local.set $temp
+   i32.const 24
+   i32.load
+   i32.const 0
+   i32.gt_s
+   if
+    f64.const -3.4
+    br $topmost
+   end
+   i32.const 32
+   f64.load
+   f64.const 0
+   f64.gt
+   if
+    f64.const 5.6
+    br $topmost
+   end
+   f64.const 1.2
+  end
+ )
+ (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+  (local $t f64)
+  (local $Int f64)
+  (local $Double i32)
+  block $topmost (result f64)
+   local.get $x
+   f64.const 0
+   f64.gt
+   if
+    f64.const 1.2
+    br $topmost
+   end
+   local.get $Int
+   f64.const 0
+   f64.gt
+   if
+    f64.const -3.4
+    br $topmost
+   end
+   local.get $Double
+   i32.const 0
+   i32.gt_s
+   if
+    f64.const 5.6
+    br $topmost
+   end
+   local.get $x
+   local.get $y
+   f64.lt
+   if
+    local.get $x
+    br $topmost
+   end
+   local.get $y
+  end
+ )
+ (func $intOps (result i32)
+  (local $x i32)
+  local.get $x
+  i32.const 0
+  i32.eq
+ )
+ (func $hexLiterals
+  i32.const 0
+  i32.const 313249263
+  i32.add
+  i32.const -19088752
+  i32.add
+  drop
+ )
+ (func $conversions
+  (local $i i32)
+  (local $d f64)
+  local.get $d
+  call $f64-to-int
+  local.set $i
+  local.get $i
+  f64.convert_i32_s
+  local.set $d
+  local.get $i
+  i32.const 0
+  i32.shr_u
+  f64.convert_i32_u
+  local.set $d
+ )
+ (func $seq
+  (local $J f64)
+  f64.const 0.1
+  drop
+  f64.const 5.1
+  f64.const 3.2
+  drop
+  f64.const 4.2
+  f64.sub
+  local.set $J
+ )
+ (func $switcher (param $x i32) (result i32)
+  block $topmost (result i32)
+   block $switch-default$3
+    block $switch-case$2
+     block $switch-case$1
+      local.get $x
+      i32.const 1
+      i32.sub
+      br_table $switch-case$1 $switch-case$2 $switch-default$3
+     end
+     i32.const 1
+     br $topmost
+    end
+    i32.const 2
+    br $topmost
+   end
+   nop
+   block $switch-default$7
+    block $switch-case$6
+     block $switch-case$5
+      local.get $x
+      i32.const 5
+      i32.sub
+      br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
+     end
+     i32.const 121
+     br $topmost
+    end
+    i32.const 51
+    br $topmost
+   end
+   nop
+   block $label$break$Lout
+    block $switch-default$16
+     block $switch-case$15
+      block $switch-case$12
+       block $switch-case$9
+        block $switch-case$8
+         local.get $x
+         i32.const 2
+         i32.sub
+         br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
+        end
+        br $label$break$Lout
+       end
+       br $label$break$Lout
+      end
+      block $while-out$10
+       loop $while-in$11
+        br $while-out$10
+       end
+       unreachable
+      end
+     end
+     loop $while-in$14
+      br $label$break$Lout
+     end
+     unreachable
+    end
+    nop
+   end
+   i32.const 0
+  end
+ )
+ (func $blocker
+  block $label$break$L
+   br $label$break$L
+  end
+ )
+ (func $frem (result f64)
+  f64.const 5.5
+  f64.const 1.2
+  call $f64-rem
+ )
+ (func $big_uint_div_u (result i32)
+  (local $x i32)
+  i32.const -1
+  i32.const 2
+  i32.div_u
+  i32.const -1
+  i32.and
+ )
+ (func $fr (param $x f32)
+  (local $y f32)
+  (local $z f64)
+  local.get $z
+  f32.demote_f64
+  drop
+  local.get $y
+  drop
+  f32.const 5
+  drop
+  f32.const 0
+  drop
+  f32.const 5
+  drop
+  f32.const 0
+  drop
+ )
+ (func $negZero (result f64)
+  f64.const -0
+ )
+ (func $abs
+  (local $x i32)
+  (local $y f64)
+  (local $z f32)
+  (local $asm2wasm_i32_temp i32)
+  i32.const 0
+  local.set $asm2wasm_i32_temp
+  i32.const 0
+  local.get $asm2wasm_i32_temp
+  i32.sub
+  local.get $asm2wasm_i32_temp
+  local.get $asm2wasm_i32_temp
+  i32.const 0
+  i32.lt_s
+  select
+  local.set $x
+  f64.const 0
+  f64.abs
+  local.set $y
+  f32.const 0
+  f32.abs
+  local.set $z
+ )
+ (func $neg
+  (local $x f32)
+  local.get $x
+  f32.neg
+  i32.const 1
+  i32.const 7
+  i32.and
+  i32.const 8
+  i32.add
+  call_indirect (type $f32_=>_none)
+ )
+ (func $cneg (param $x f32)
+  local.get $x
+  i32.const 1
+  i32.const 7
+  i32.and
+  i32.const 8
+  i32.add
+  call_indirect (type $f32_=>_none)
+ )
+ (func $___syscall_ret
+  (local $$0 i32)
+  local.get $$0
+  i32.const 0
+  i32.shr_u
+  i32.const -4096
+  i32.gt_u
+  drop
+ )
+ (func $z
+  nop
+ )
+ (func $w
+  nop
+ )
+ (func $block_and_after (result i32)
+  block $waka
+   i32.const 1
+   drop
+   br $waka
+  end
+  i32.const 0
+ )
+ (func $loop-roundtrip (param $0 f64) (result f64)
+  loop $loop-in1 (result f64)
+   local.get $0
+   drop
+   local.get $0
+  end
+ )
+ (func $big-i64 (result i64)
+  i64.const -9218868437227405313
+ )
+ (func $i64-store32 (param $0 i32) (param $1 i64)
+  local.get $0
+  local.get $1
+  i64.store32
+ )
+ (func $return-unreachable (result i32)
+  i32.const 1
+  return
+ )
+ (func $unreachable-block (result i32)
+  i32.const 1
+  drop
+  i32.const 2
+  return
+ )
+ (func $unreachable-block-toplevel (result i32)
+  i32.const 1
+  drop
+  i32.const 2
+  return
+ )
+ (func $unreachable-block0 (result i32)
+  i32.const 2
+  return
+ )
+ (func $unreachable-block0-toplevel (result i32)
+  i32.const 2
+  return
+ )
+ (func $unreachable-block-with-br (result i32)
+  block $block
+   i32.const 1
+   drop
+   br $block
+  end
+  i32.const 1
+ )
+ (func $unreachable-if (result i32)
+  i32.const 3
+  if
+   i32.const 2
+   return
+  else
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-if-toplevel (result i32)
+  i32.const 3
+  if
+   i32.const 2
+   return
+  else
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop (result i32)
+  loop $loop-in
+   nop
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop0 (result i32)
+  loop $loop-in
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop-toplevel (result i32)
+  loop $loop-in
+   nop
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-loop0-toplevel (result i32)
+  loop $loop-in
+   i32.const 1
+   return
+  end
+  unreachable
+ )
+ (func $unreachable-ifs
+  unreachable
+ )
+ (func $unreachable-if-arm
+  i32.const 1
+  if
+   nop
+  else
+   unreachable
+  end
+ )
+ (func $local-to-stack (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+ )
+ (func $local-to-stack-1 (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.eqz
+ )
+ (func $local-to-stack-1b (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.const 3
+  i32.add
+ )
+ (func $local-to-stack-1c-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  local.set $temp
+  i32.const 2
+  call $local-to-stack
+  drop
+  i32.const 3
+  local.get $temp
+  i32.add
+ )
+ (func $local-to-stack-2-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  call $local-to-stack
+  local.set $temp
+  i32.const 2
+  call $local-to-stack
+  drop
+  local.get $temp
+  local.get $temp
+  i32.add
+ )
+ (func $local-to-stack-3-no (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 1
+  if
+   i32.const 1
+   call $local-to-stack
+   local.set $temp
+  else
+   i32.const 2
+   call $local-to-stack
+   local.set $temp
+  end
+  i32.const 3
+  call $local-to-stack
+  drop
+  local.get $temp
+ )
+ (func $local-to-stack-multi-4 (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-multi-5 (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-multi-6-justone (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  local.set $temp2
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp2
+  local.get $temp2
+  i32.add
+ )
+ (func $local-to-stack-multi-7-justone (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  local.set $temp1
+  i32.const 2
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp1
+  local.get $temp1
+  i32.add
+  drop
+  i32.const 3
+  call $local-to-stack-multi-4
+  i32.const 4
+  call $local-to-stack-multi-4
+  drop
+ )
+ (func $local-to-stack-overlapping-multi-8-no (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  local.set $temp1
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 3
+  call $local-to-stack-multi-4
+  drop
+  local.get $temp1
+  i32.add
+ )
+ (func $local-to-stack-overlapping-multi-9-yes (param $x i32) (result i32)
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 3
+  call $local-to-stack-multi-4
+  drop
+  i32.add
+ )
+ (func $local-to-stack-through-control-flow
+  (local $temp1 i32)
+  (local $temp2 i32)
+  i32.const 0
+  call $local-to-stack-multi-4
+  i32.const 1
+  call $local-to-stack-multi-4
+  i32.const 0
+  if
+   nop
+  end
+  drop
+  i32.const 2
+  call $local-to-stack-multi-4
+  block $block
+   br $block
+  end
+  drop
+  drop
+ )
+ (func $local-to-stack-in-control-flow
+  (local $temp1 i32)
+  i32.const 0
+  if
+   i32.const 0
+   call $local-to-stack-multi-4
+   drop
+  else
+   i32.const 1
+   call $local-to-stack-multi-4
+   drop
+  end
+ )
+ (func $remove-block (param $x i32) (result i32)
+  (local $temp i32)
+  i32.const 0
+  call $remove-block
+  i32.const 1
+  call $remove-block
+  i32.const 2
+  call $remove-block
+  drop
+  i32.eqz
+  i32.add
+ )
+)

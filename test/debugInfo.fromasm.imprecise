@@ -9,43 +9,34 @@
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
  (export "inlineInto" (func $inlineInto))
- (func $add (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  ;;@ tests/other_file.cpp:314159:0
+ (func $add (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $1)
    (local.get $1)
   )
  )
- (func $ret (; has Stack IR ;) (param $0 i32) (result i32)
-  ;;@ return.cpp:50:0
-  (local.set $0
+ (func $ret (param $0 i32) (result i32)
+  (i32.add
    (i32.shl
     (local.get $0)
     (i32.const 1)
    )
-  )
-  ;;@ return.cpp:100:0
-  (i32.add
-   (local.get $0)
    (i32.const 1)
   )
  )
- (func $opts (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  ;;@ even-opted.cpp:1:0
+ (func $opts (param $0 i32) (param $1 i32) (result i32)
   (local.set $0
    (i32.add
     (local.get $0)
     (local.get $1)
    )
   )
-  ;;@ even-opted.cpp:2:0
   (local.set $1
    (i32.shr_s
     (local.get $1)
     (local.get $0)
    )
   )
-  ;;@ even-opted.cpp:3:0
   (i32.add
    (local.get $1)
    (i32.rem_s
@@ -54,39 +45,30 @@
    )
   )
  )
- (func $fib (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $fib (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local.set $2
    (if (result i32)
-    ;;@ fib.c:3:0
     (i32.gt_s
      (local.get $0)
      (i32.const 0)
     )
     (i32.const 1)
-    (block
-     (local.set $0
-      (i32.const 1)
-     )
-     ;;@ fib.c:8:0
-     (return
-      (local.get $0)
-     )
+    (return
+     (i32.const 1)
     )
    )
   )
-  (loop $while-in
-   ;;@ fib.c:4:0
+  (loop $label$3
    (local.set $4
     (i32.add
      (local.get $2)
      (local.get $3)
     )
    )
-   ;;@ fib.c:3:0
    (local.set $1
     (i32.add
      (local.get $1)
@@ -105,18 +87,18 @@
      (local.set $2
       (local.get $4)
      )
-     (br $while-in)
+     (br $label$3)
     )
    )
   )
-  ;;@ fib.c:8:0
   (local.get $4)
  )
- (func $switch_reach (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $switch_reach (param $0 i32) (result i32)
   (local $1 i32)
-  (local.set $1
-   (block $__rjto$0 (result i32)
-    (block $__rjti$0
+  (local $2 i32)
+  (local.set $2
+   (block $label$1 (result i32)
+    (block $label$2
      (if
       (i32.lt_s
        (local.tee $1
@@ -127,7 +109,7 @@
        )
        (i32.const 1369188723)
       )
-      (br_if $__rjti$0
+      (br_if $label$2
        (i32.eqz
         (i32.sub
          (local.get $1)
@@ -135,7 +117,7 @@
         )
        )
       )
-      (br_if $__rjti$0
+      (br_if $label$2
        (i32.eqz
         (i32.sub
          (local.get $1)
@@ -144,7 +126,7 @@
        )
       )
      )
-     (br $__rjto$0
+     (br $label$1
       (i32.const 0)
      )
     )
@@ -158,17 +140,13 @@
     (local.get $0)
    )
   )
-  ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
-  (local.get $1)
+  (local.get $2)
  )
- (func $nofile (; has Stack IR ;)
-  ;;@ (unknown):1337:0
+ (func $nofile
   (call $nofile)
  )
- (func $inlineInto (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  ;;@ inline_me.c:125:0
+ (func $inlineInto (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   ;;@ inline_me.c:120:0
    (local.tee $0
     (i32.add
      (local.get $0)

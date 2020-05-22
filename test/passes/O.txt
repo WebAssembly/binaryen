@@ -7,50 +7,44 @@
  (export "many-selects" (func $many-selects))
  (export "end-if-else" (func $end-if-else))
  (export "end-if-else-call" (func $end-if-else-call))
- (func $ret (; has Stack IR ;) (result i32)
-  (drop
-   (call $ret)
-  )
-  (if
-   (call $ret)
-   (return
-    (i32.const 1)
-   )
-  )
-  (i32.const 999)
+ (func $ret (result i32)
+  call $ret
+  drop
+  call $ret
+  if
+   i32.const 1
+   return
+  end
+  i32.const 999
  )
- (func $if-0-unreachable-to-none (; has Stack IR ;) (param $0 i64)
-  (unreachable)
+ (func $if-0-unreachable-to-none (param $0 i64)
+  unreachable
  )
- (func $many-selects (; has Stack IR ;) (param $0 i32) (result i32)
-  (select
-   (i32.const -1073741824)
-   (select
-    (i32.const 1073741823)
-    (local.get $0)
-    (i32.gt_s
-     (local.get $0)
-     (i32.const 1073741823)
-    )
-   )
-   (i32.lt_s
-    (local.get $0)
-    (i32.const -1073741824)
-   )
-  )
+ (func $many-selects (param $0 i32) (result i32)
+  i32.const -1073741824
+  i32.const 1073741823
+  local.get $0
+  local.get $0
+  i32.const 1073741823
+  i32.gt_s
+  select
+  local.get $0
+  i32.const -1073741824
+  i32.lt_s
+  select
  )
- (func $end-if-else (; has Stack IR ;) (param $0 i32) (result i32)
-  (select
-   (i32.const 1)
-   (local.get $0)
-   (local.get $0)
-  )
+ (func $end-if-else (param $0 i32) (result i32)
+  i32.const 1
+  local.get $0
+  local.get $0
+  select
  )
- (func $end-if-else-call (; has Stack IR ;) (param $0 i32) (result i32)
-  (if (result i32)
-   (local.get $0)
-   (call $ret)
-   (local.get $0)
-  )
+ (func $end-if-else-call (param $0 i32) (result i32)
+  local.get $0
+  if (result i32)
+   call $ret
+  else
+   local.get $0
+  end
  )
 )

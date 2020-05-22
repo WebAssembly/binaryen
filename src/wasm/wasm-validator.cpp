@@ -211,10 +211,10 @@ struct ValidationInfo {
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
+  // TODO: make this meaningfully true.
+  bool acceptsStackIR() const override { return true; }
 
   Pass* create() override { return new FunctionValidator(&info); }
-
-  bool modifiesBinaryenIR() override { return false; }
 
   ValidationInfo& info;
 

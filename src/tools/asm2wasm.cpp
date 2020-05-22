@@ -287,6 +287,18 @@ int main(int argc, const char* argv[]) {
   if (emitBinary) {
     writer.setSourceMapFilename(sourceMapFilename);
     writer.setSourceMapUrl(sourceMapUrl);
+  } else {
+    bool hasStackIR =
+      std::any_of(wasm.functions.begin(), wasm.functions.end(), [](auto& func) {
+        return bool(func->stackIR);
+      });
+    if (hasStackIR) {
+      // Get rid of Stack IR before printing to make sure we can parse the
+      // result
+      PassRunner runner(&wasm, options.passOptions);
+      runner.add("roundtrip");
+      runner.run();
+    }
   }
   writer.write(wasm, options.extra["output"]);
 

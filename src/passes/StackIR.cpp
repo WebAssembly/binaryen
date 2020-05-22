@@ -33,8 +33,6 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
   Pass* create() override { return new GenerateStackIR; }
 
-  bool modifiesBinaryenIR() override { return false; }
-
   void doWalkFunction(Function* func) {
     StackIRGenerator stackIRGen(getModule()->allocator, func);
     stackIRGen.write();
@@ -328,14 +326,14 @@ private:
 
 struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
+  bool acceptsStackIR() const override { return true; }
+  bool acceptsBinaryenIR() const override { return false; }
 
   Pass* create() override { return new OptimizeStackIR; }
 
-  bool modifiesBinaryenIR() override { return false; }
-
   void doWalkFunction(Function* func) {
     if (!func->stackIR) {
-      return;
+      WASM_UNREACHABLE("Should have had stack IR!");
     }
     StackIROptimizer(func, getPassOptions()).run();
   }

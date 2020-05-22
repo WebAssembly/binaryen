@@ -2351,7 +2351,7 @@ function wrapModule(module, self) {
     var old = out;
     var ret = '';
     out = function(x) { ret += x + '\n' };
-    self['runPasses'](['print-stack-ir']);
+    self['runPasses'](['print']);
     out = old;
     return ret;
   };

@@ -601,7 +601,7 @@ def test_one(random_input, opts, given_wasm):
     print('pre wasm size:', wasm_size)
 
     # create a second wasm for handlers that want to look at pairs.
-    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + FUZZ_OPTS + opts + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
@@ -637,7 +637,7 @@ def test_one(random_input, opts, given_wasm):
 
         # let the testcase handler handle this testcase however it wants. in this case we give it
         # the input and both wasms.
-        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=FUZZ_OPTS + opts + FEATURE_OPTS)
         print('')
 
     return bytes
@@ -657,7 +657,16 @@ def write_commands(commands, filename):
 
 opt_choices = [
     [],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    # Even though -O0 and -O1 by themselves do not generate stack IR, the
+    # optimization level may be overridden by later optimization flags so we
+    # have to be defensive and add round trips for them as well.
+    ["-O0", "--roundtrip"],
+    ["-O1", "--roundtrip"],
+    ["-O2", "--roundtrip"],
+    ["-O3", "--roundtrip"],
+    ["-O4", "--roundtrip"],
+    ["-Os", "--roundtrip"],
+    ["-Oz", "--roundtrip"],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -674,14 +683,13 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
-    ["--generate-stack-ir"],
+    ["--generate-stack-ir", "--roundtrip"],
+    ["--generate-stack-ir", "--optimize-stack-ir", "--roundtrip"],
     ["--licm"],
     ["--memory-packing"],
     ["--merge-blocks"],
-    ['--merge-locals'],
+    ["--merge-locals"],
     ["--optimize-instructions"],
-    ["--optimize-stack-ir"],
-    ["--generate-stack-ir", "--optimize-stack-ir"],
     ["--pick-load-signs"],
     ["--precompute"],
     ["--precompute-propagate"],
@@ -725,6 +733,9 @@ def randomize_opt_flags():
         pos = random.randint(0, len(flag_groups))
         flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
+    # we want to end up with Stack IR sometimes
+    if ret and ret[-1] == '--roundtrip' and random.random() < 0.5:
+        ret.pop()
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
         if random.random() < 0.5:

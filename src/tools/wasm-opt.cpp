@@ -360,6 +360,16 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExecAfter) {
+    bool hasStackIR =
+      std::any_of(wasm.functions.begin(), wasm.functions.end(), [](auto& func) {
+        return bool(func->stackIR);
+      });
+    // Cannot interpret Stack IR, so round trip back to normal IR
+    if (hasStackIR) {
+      PassRunner runner(&wasm);
+      runner.add("roundtrip");
+      runner.run();
+    }
     results.check(wasm);
   }
 
