@@ -482,8 +482,9 @@ struct OptimizeInstructions
           if (constValue == 0) {
             // 0 > (signed)x => (unsigned)x >> 31
             Builder builder(*getModule());
-            return builder.makeBinary(
-              ShrUInt32, binary->right, builder.makeConst(Literal(int32_t(31))));
+            return builder.makeBinary(ShrUInt32,
+                                      binary->right,
+                                      builder.makeConst(Literal(int32_t(31))));
           } else if (constValue == int32_t(0x7FFFFFFF)) {
             // 0x7FFFFFFF > (signed)x => x != 0x7FFFFFFF
             binary->op = NeInt32;
