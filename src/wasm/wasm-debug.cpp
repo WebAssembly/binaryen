@@ -894,9 +894,14 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
   // Locations have an optional base.
+  bool atStart = true;
+  BinaryLocation base = 0;
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
-    BinaryLocation base = locationUpdater.getLocationBaseAddress(loc.Offset);
+    if (atStart) {
+      base = locationUpdater.getLocationBaseAddress(loc.Offset);
+    }
+    atStart = false;
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
@@ -907,6 +912,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
     } else if (newStart == 0 && newEnd == 0) {
       // This is an end marker, this list is done.
       base = 0;
+      atStart = true;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
