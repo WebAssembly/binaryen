@@ -463,6 +463,50 @@
     )
     (i32.const 1)
   )
+  (func $compare-with-consts (param $x i32)
+    ;;   (signed)x < 0   ->   pass
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+    ;;   0 > (signed)x   ->   pass
+    (drop
+      (i32.gt_s
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    ;;   (signed)x < 0x7FFFFFFF   ->   pass
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0x7FFFFFFF)
+      )
+    )
+    ;;    0x7FFFFFFF > (signed)x   ->   pass
+    (drop
+      (i32.gt_s
+        (i32.const 0x7FFFFFFF)
+        (local.get $x)
+      )
+    )
+    ;;   (signed)x < 0x80000000   ->   pass
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+    )
+    ;;   0x80000000 > (signed)x  ->   pass
+    (drop
+      (i32.gt_s
+        (i32.const 0x80000000)
+        (local.get $x)
+      )
+    )
+  )
   (func $recurse-bool
     (if
       (if (result i32)

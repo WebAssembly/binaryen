@@ -1101,7 +1101,7 @@
   )
   (local.set $0
    (if (result i32)
-    (i32.lt_s
+    (i32.shr_u
      (call $_printf_core
       (i32.const 0)
       (local.get $1)
@@ -1109,7 +1109,7 @@
       (local.get $3)
       (local.get $7)
      )
-     (i32.const 0)
+     (i32.const 31)
     )
     (i32.const -1)
     (block (result i32)
@@ -2766,9 +2766,9 @@
          )
          (local.set $12
           (if (result i32)
-           (i32.lt_s
+           (i32.shr_u
             (local.get $17)
-            (i32.const 0)
+            (i32.const 31)
            )
            (block (result i32)
             (local.set $17
@@ -2846,9 +2846,9 @@
            )
           )
           (if (result i32)
-           (i32.lt_s
+           (i32.shr_u
             (local.get $6)
-            (i32.const 0)
+            (i32.const 31)
            )
            (block
             (local.set $18
@@ -3406,9 +3406,9 @@
                                           (local.get $5)
                                           (i32.shr_s
                                            (i32.shl
-                                            (i32.lt_s
+                                            (i32.shr_u
                                              (local.get $18)
-                                             (i32.const 0)
+                                             (i32.const 31)
                                             )
                                             (i32.const 31)
                                            )
@@ -3477,9 +3477,9 @@
                                       (local.get $5)
                                       (i32.shr_s
                                        (i32.shl
-                                        (i32.lt_s
+                                        (i32.shr_u
                                          (local.get $18)
-                                         (i32.const 0)
+                                         (i32.const 31)
                                         )
                                         (i32.const 31)
                                        )
@@ -3630,13 +3630,13 @@
                                  )
                                 )
                                 (if
-                                 (i32.lt_s
+                                 (i32.shr_u
                                   (local.tee $7
                                    (i32.load offset=4
                                     (local.get $13)
                                    )
                                   )
-                                  (i32.const 0)
+                                  (i32.const 31)
                                  )
                                  (block
                                   (global.set $tempRet0
@@ -3842,11 +3842,11 @@
                          )
                          (local.set $30
                           (if (result i32)
-                           (i32.lt_s
+                           (i32.shr_u
                             (i32.load offset=4
                              (global.get $tempDoublePtr)
                             )
-                            (i32.const 0)
+                            (i32.const 31)
                            )
                            (block (result i32)
                             (local.set $27
@@ -4047,17 +4047,17 @@
                                      )
                                     )
                                     (local.get $7)
-                                    (i32.lt_s
+                                    (i32.shr_u
                                      (local.get $7)
-                                     (i32.const 0)
+                                     (i32.const 31)
                                     )
                                    )
                                   )
                                   (i32.shr_s
                                    (i32.shl
-                                    (i32.lt_s
+                                    (i32.shr_u
                                      (local.get $5)
-                                     (i32.const 0)
+                                     (i32.const 31)
                                     )
                                     (i32.const 31)
                                    )
@@ -4403,9 +4403,9 @@
                               (select
                                (local.get $46)
                                (local.get $47)
-                               (i32.lt_s
+                               (i32.shr_u
                                 (local.get $5)
-                                (i32.const 0)
+                                (i32.const 31)
                                )
                               )
                              )
@@ -4626,16 +4626,16 @@
                              (select
                               (i32.const 6)
                               (local.get $6)
-                              (i32.lt_s
+                              (i32.shr_u
                                (local.get $6)
-                               (i32.const 0)
+                               (i32.const 31)
                               )
                              )
                             )
                             (if
-                             (i32.lt_s
+                             (i32.shr_u
                               (local.get $9)
-                              (i32.const 0)
+                              (i32.const 31)
                              )
                              (block
                               (local.set $20
@@ -4823,9 +4823,9 @@
                                  )
                                 )
                                 (if (result i32)
-                                 (i32.lt_s
+                                 (i32.shr_u
                                   (local.get $9)
-                                  (i32.const 0)
+                                  (i32.const 31)
                                  )
                                  (block
                                   (local.set $6
@@ -5511,9 +5511,9 @@
                                            (local.get $5)
                                           )
                                          )
-                                         (i32.lt_s
+                                         (i32.shr_u
                                           (local.get $5)
-                                          (i32.const 0)
+                                          (i32.const 31)
                                          )
                                         )
                                        )
@@ -5541,9 +5541,9 @@
                                            (local.get $5)
                                           )
                                          )
-                                         (i32.lt_s
+                                         (i32.shr_u
                                           (local.get $5)
-                                          (i32.const 0)
+                                          (i32.const 31)
                                          )
                                         )
                                        )
@@ -5618,17 +5618,17 @@
                                        (select
                                         (local.get $36)
                                         (local.get $8)
-                                        (i32.lt_s
+                                        (i32.shr_u
                                          (local.get $8)
-                                         (i32.const 0)
+                                         (i32.const 31)
                                         )
                                        )
                                       )
                                       (i32.shr_s
                                        (i32.shl
-                                        (i32.lt_s
+                                        (i32.shr_u
                                          (local.get $6)
-                                         (i32.const 0)
+                                         (i32.const 31)
                                         )
                                         (i32.const 31)
                                        )
@@ -6528,14 +6528,14 @@
                       )
                       (br_if $while-out124
                        (i32.or
-                        (i32.lt_s
+                        (i32.shr_u
                          (local.tee $7
                           (call $_wctomb
                            (local.get $33)
                            (local.get $9)
                           )
                          )
-                         (i32.const 0)
+                         (i32.const 31)
                         )
                         (i32.gt_u
                          (local.get $7)
@@ -6566,9 +6566,9 @@
                      )
                     )
                     (if
-                     (i32.lt_s
+                     (i32.shr_u
                       (local.get $7)
-                      (i32.const 0)
+                      (i32.const 31)
                      )
                      (block
                       (local.set $18

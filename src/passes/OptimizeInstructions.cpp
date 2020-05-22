@@ -459,6 +459,40 @@ struct OptimizeInstructions
         }
         // note that both left and right may be consts, but then we let
         // precompute compute the constant result
+      } else if (binary->op == LtSInt32) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          auto constValue = c->value.geti32();
+          if (constValue == 0) {
+            // (signed)x < 0 => (unsigned)x >> 31
+            Builder builder(*getModule());
+            return builder.makeBinary(
+              ShrUInt32, binary->left, builder.makeConst(Literal(int32_t(31))));
+          } else if (constValue == int32_t(0x7FFFFFFF)) {
+            // (signed)x < 0x7FFFFFFF => x != 0x7FFFFFFF
+            binary->op = NeInt32;
+            return binary;
+          } else if (constValue == int32_t(0x80000000)) {
+            // (signed)x < 0x80000000 => 0
+            return LiteralUtils::makeZero(Type::i32, *getModule());
+          }
+        }
+      } else if (binary->op == GtSInt32) {
+        if (auto* c = binary->left->dynCast<Const>()) {
+          auto constValue = c->value.geti32();
+          if (constValue == 0) {
+            // 0 > (signed)x => (unsigned)x >> 31
+            Builder builder(*getModule());
+            return builder.makeBinary(
+              ShrUInt32, binary->right, builder.makeConst(Literal(int32_t(31))));
+          } else if (constValue == int32_t(0x7FFFFFFF)) {
+            // 0x7FFFFFFF > (signed)x => x != 0x7FFFFFFF
+            binary->op = NeInt32;
+            return binary;
+          } else if (constValue == int32_t(0x80000000)) {
+            // 0x80000000 > (signed)x => 0
+            return LiteralUtils::makeZero(Type::i32, *getModule());
+          }
+        }
       } else if (binary->op == AddInt32) {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
