@@ -1230,41 +1230,49 @@ private:
                .hasSideEffects()) {
           switch (left->op) {
             case EqInt32: {
-              //   (x >  y) | (x == y)   ==>    x >= y
-              //   (x >= y) | (x == y)   ==>    x >= y
-              if (right->op == GtSInt32 || right->op == GeSInt32) {
-                left->op = GeSInt32;
-                return left;
+              switch (right->op) {
+                //   (x >  y) | (x == y)   ==>    x >= y
+                //   (x >= y) | (x == y)   ==>    x >= y
+                case GtSInt32:
+                case GeSInt32: {
+                  left->op = GeSInt32;
+                  return left;
+                }
+                case GtUInt32:
+                case GeUInt32: {
+                  left->op = GeUInt32;
+                  return left;
+                }
+                //   (x  < y) | (x == y)    ==>    x <= y
+                //   (x <= y) | (x == y)    ==>    x <= y
+                case LtSInt32:
+                case LeSInt32: {
+                  left->op = LeSInt32;
+                  return left;
+                }
+                case LtUInt32:
+                case LeUInt32: {
+                  left->op = LeUInt32;
+                  return left;
+                }
+                //   (x != y) | (x == y)   ==>    1
+                case NeInt32: {
+                  return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
+                }
+                default: {}
               }
-              if (right->op == GtUInt32 || right->op == GeUInt32) {
-                left->op = GeUInt32;
-                return left;
-              }
-
-              //   (x  < y) | (x == y)    ==>    x <= y
-              //   (x <= y) | (x == y)    ==>    x <= y
-              if (right->op == LtSInt32 || right->op == LeSInt32) {
-                left->op = LeSInt32;
-                return left;
-              }
-              if (right->op == LtUInt32 || right->op == LeUInt32) {
-                left->op = LeUInt32;
-                return left;
-              }
-
-              //   (x != y) | (x == y)   ==>    1
-              if (right->op == NeInt32) {
-                return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
-              }
-
               break;
             }
             case LtUInt32:
             case LtSInt32: {
-              //   (x > y) | (x < y)     ==>    x != y
-              if (right->op == GtSInt32 || right->op == GtUInt32) {
-                left->op = NeInt32;
-                return left;
+              switch (right->op) {
+                //   (x > y) | (x < y)     ==>    x != y
+                case GtSInt32:
+                case GtUInt32: {
+                  left->op = NeInt32;
+                  return left;
+                }
+                default: {}
               }
               break;
             }
