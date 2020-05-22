@@ -1222,7 +1222,6 @@ public:
   Flow visitSIMDLoad(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitPush(Push* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
@@ -1519,10 +1518,6 @@ public:
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoadExtend");
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitPush(Push* curr) {
-    NOTE_ENTER("Push");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -2424,15 +2419,6 @@ private:
         instance.multiValues.push_back(e.exn);
         return this->visit(curr->catchBody);
       }
-    }
-    Flow visitPush(Push* curr) {
-      NOTE_ENTER("Push");
-      Flow value = this->visit(curr->value);
-      if (value.breaking()) {
-        return value;
-      }
-      instance.multiValues.push_back(value.getSingleValue());
-      return Flow();
     }
     Flow visitPop(Pop* curr) {
       NOTE_ENTER("Pop");

@@ -733,18 +733,18 @@ void test_core() {
     BinaryenTupleMake(module, tupleElements4a, 4),
     BinaryenTupleExtract(
       module, BinaryenTupleMake(module, tupleElements4b, 4), 2),
-    // Push and pop
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt32())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt64())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat32())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat64())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFuncref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeAnyref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeNullref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeExnref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFuncref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeNullref())),
-    BinaryenPush(module, BinaryenPop(module, BinaryenTypeExnref())),
+    // Pop
+    BinaryenPop(module, BinaryenTypeInt32()),
+    BinaryenPop(module, BinaryenTypeInt64()),
+    BinaryenPop(module, BinaryenTypeFloat32()),
+    BinaryenPop(module, BinaryenTypeFloat64()),
+    BinaryenPop(module, BinaryenTypeFuncref()),
+    BinaryenPop(module, BinaryenTypeAnyref()),
+    BinaryenPop(module, BinaryenTypeNullref()),
+    BinaryenPop(module, BinaryenTypeExnref()),
+    BinaryenPop(module, BinaryenTypeFuncref()),
+    BinaryenPop(module, BinaryenTypeNullref()),
+    BinaryenPop(module, BinaryenTypeExnref()),
 
     // TODO: Host
     BinaryenNop(module),

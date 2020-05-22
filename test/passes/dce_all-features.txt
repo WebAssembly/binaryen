@@ -551,14 +551,3 @@
   )
  )
 )
-(module
- (type $none_=>_none (func))
- (func $foo
-  (nop)
- )
- (func $push_unreachable
-  (push
-   (unreachable)
-  )
- )
-)

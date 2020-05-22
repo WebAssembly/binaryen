@@ -145,7 +145,6 @@ function test_ids() {
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
-  console.log("PushId: " + binaryen.PushId);
   console.log("PopId: " + binaryen.PopId);
 }
 
@@ -548,16 +547,16 @@ function test_core() {
       ), 2
     ),
 
-    // Push and pop
-    module.push(module.i32.pop()),
-    module.push(module.i64.pop()),
-    module.push(module.f32.pop()),
-    module.push(module.f64.pop()),
-    module.push(module.v128.pop()),
-    module.push(module.anyref.pop()),
-    module.push(module.funcref.pop()),
-    module.push(module.nullref.pop()),
-    module.push(module.exnref.pop()),
+    // Pop
+    module.i32.pop(),
+    module.i64.pop(),
+    module.f32.pop(),
+    module.f64.pop(),
+    module.v128.pop(),
+    module.anyref.pop(),
+    module.funcref.pop(),
+    module.nullref.pop(),
+    module.exnref.pop(),
     // TODO: Host
     module.nop(),
     module.unreachable(),

@@ -458,7 +458,6 @@ struct EffectAnalyzer
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
-  void visitPush(Push* curr) { calls = true; }
   void visitPop(Pop* curr) { calls = true; }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
