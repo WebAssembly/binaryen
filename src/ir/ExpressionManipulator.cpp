@@ -257,9 +257,6 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitUnreachable(Unreachable* curr) {
       return builder.makeUnreachable();
     }
-    Expression* visitPush(Push* curr) {
-      return builder.makePush(copy(curr->value));
-    }
     Expression* visitPop(Pop* curr) { return builder.makePop(curr->type); }
     Expression* visitTupleMake(TupleMake* curr) {
       std::vector<Expression*> operands;

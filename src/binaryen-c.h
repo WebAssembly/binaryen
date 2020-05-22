@@ -169,7 +169,6 @@ BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
-BINARYEN_API BinaryenExpressionId BinaryenPushId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
 
 // External kinds (call to get the value of each; you can cache them)
@@ -844,8 +843,6 @@ BinaryenTupleMake(BinaryenModuleRef module,
                   BinaryenIndex numOperands);
 BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
   BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
-BINARYEN_API BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
-                                                BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
 
@@ -1104,9 +1101,6 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
 BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
-
-BINARYEN_API BinaryenExpressionRef
-BinaryenPushGetValue(BinaryenExpressionRef expr);
 
 // Functions
 

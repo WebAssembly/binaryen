@@ -589,12 +589,6 @@ public:
     return ret;
   }
   Unreachable* makeUnreachable() { return allocator.alloc<Unreachable>(); }
-  Push* makePush(Expression* value) {
-    auto* ret = allocator.alloc<Push>();
-    ret->value = value;
-    ret->finalize();
-    return ret;
-  }
   Pop* makePop(Type type) {
     auto* ret = allocator.alloc<Pop>();
     ret->type = type;

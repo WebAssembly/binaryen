@@ -1779,37 +1779,37 @@ BinaryenFeatureAll: 1023
         )
        )
       )
-      (push
+      (drop
        (i32.pop)
       )
-      (push
+      (drop
        (i64.pop)
       )
-      (push
+      (drop
        (f32.pop)
       )
-      (push
+      (drop
        (f64.pop)
       )
-      (push
+      (drop
        (funcref.pop)
       )
-      (push
+      (drop
        (anyref.pop)
       )
-      (push
+      (drop
        (nullref.pop)
       )
-      (push
+      (drop
        (exnref.pop)
       )
-      (push
+      (drop
        (funcref.pop)
       )
-      (push
+      (drop
        (nullref.pop)
       )
-      (push
+      (drop
        (exnref.pop)
       )
       (nop)

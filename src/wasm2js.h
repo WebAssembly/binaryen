@@ -1889,10 +1889,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitPush(Push* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitPop(Pop* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
