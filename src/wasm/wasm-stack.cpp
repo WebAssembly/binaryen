@@ -1707,10 +1707,6 @@ void BinaryInstWriter::visitDrop(Drop* curr) {
   }
 }
 
-void BinaryInstWriter::visitPush(Push* curr) {
-  // Turns into nothing in the binary format
-}
-
 void BinaryInstWriter::visitPop(Pop* curr) {
   // Turns into nothing in the binary format
 }

@@ -269,7 +269,6 @@ BinaryenExpressionId BinaryenTupleMakeId(void) {
 BinaryenExpressionId BinaryenTupleExtractId(void) {
   return Expression::Id::TupleExtractId;
 }
-BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
 
 // External kinds
@@ -1249,11 +1248,6 @@ BinaryenExpressionRef BinaryenTupleExtract(BinaryenModuleRef module,
     Builder(*(Module*)module).makeTupleExtract((Expression*)tuple, index));
 }
 
-BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
-                                   BinaryenExpressionRef value) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module).makePush((Expression*)value));
-}
 BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makePop(Type(type)));
@@ -2032,12 +2026,6 @@ BinaryenIndex BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TupleExtract>());
   return static_cast<TupleExtract*>(expression)->index;
-}
-// Push
-BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Push>());
-  return static_cast<Push*>(expression)->value;
 }
 
 // Functions

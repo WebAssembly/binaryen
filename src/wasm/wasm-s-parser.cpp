@@ -1581,13 +1581,6 @@ Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makePush(Element& s) {
-  auto ret = allocator.alloc<Push>();
-  ret->value = parseExpression(s[1]);
-  ret->finalize();
-  return ret;
-}
-
 Expression* SExpressionWasmBuilder::makePop(Type type) {
   auto ret = allocator.alloc<Pop>();
   ret->type = type;

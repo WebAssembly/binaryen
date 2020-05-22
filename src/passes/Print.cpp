@@ -1436,7 +1436,6 @@ struct PrintExpressionContents
   }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
-  void visitPush(Push* curr) { prepareColor(o) << "push"; }
   void visitPop(Pop* curr) {
     prepareColor(o) << curr->type;
     o << ".pop";
@@ -2007,13 +2006,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
-  }
-  void visitPush(Push* curr) {
-    o << '(';
-    PrintExpressionContents(currFunction, o).visit(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
   }
   void visitPop(Pop* curr) {
     o << '(';
@@ -2600,9 +2592,9 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
     switch (inst->op) {
       case StackInst::Basic: {
         doIndent();
-        // push and pop are pseudo instructions and should not be printed in the
-        // stack IR format to make it valid wat form.
-        if (inst->origin->is<Push>() || inst->origin->is<Pop>()) {
+        // Pop is a pseudo instruction and should not be printed in the stack IR
+        // format to make it valid wat form.
+        if (inst->origin->is<Pop>()) {
           break;
         }
         PrintExpressionContents(func, o).visit(inst->origin);

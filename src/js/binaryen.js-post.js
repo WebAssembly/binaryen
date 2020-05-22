@@ -97,7 +97,6 @@ function initializeConstants() {
     'BrOnExn',
     'TupleMake',
     'TupleExtract',
-    'Push',
     'Pop'
   ].forEach(function(name) {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
@@ -2119,9 +2118,6 @@ function wrapModule(module, self) {
       return Module['_BinaryenBrOnExn'](module, strToStack(label), strToStack(event_), exnref);
     });
   };
-  self['push'] = function(value) {
-    return Module['_BinaryenPush'](module, value);
-  };
 
   self['tuple'] = {
     'make': function(elements) {
@@ -2868,11 +2864,6 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
         'index': Module['_BinaryenTupleExtractGetIndex'](expr)
-      };
-    case Module['PushId']:
-      return {
-        'id': id,
-        'value': Module['_BinaryenPushGetValue'](expr)
       };
 
     default:
