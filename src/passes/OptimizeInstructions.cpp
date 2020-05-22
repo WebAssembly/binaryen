@@ -464,9 +464,9 @@ struct OptimizeInstructions
           auto constValue = c->value.geti32();
           if (constValue == 0) {
             // (signed)x < 0 => (unsigned)x >> 31
-            Builder builder(*getModule());
-            return builder.makeBinary(
-              ShrUInt32, binary->left, builder.makeConst(Literal(int32_t(31))));
+            binary->op = ShrUInt32;
+            c->value = Literal(int32_t(31));
+            return binary;
           } else if (constValue == int32_t(0x7FFFFFFF)) {
             // (signed)x < 0x7FFFFFFF => x != 0x7FFFFFFF
             binary->op = NeInt32;
@@ -481,10 +481,10 @@ struct OptimizeInstructions
           auto constValue = c->value.geti32();
           if (constValue == 0) {
             // 0 > (signed)x => (unsigned)x >> 31
-            Builder builder(*getModule());
-            return builder.makeBinary(ShrUInt32,
-                                      binary->right,
-                                      builder.makeConst(Literal(int32_t(31))));
+            binary->op = ShrUInt32;
+            c->value = Literal(int32_t(31));
+            std::swap(binary->left, binary->right);
+            return binary;
           } else if (constValue == int32_t(0x7FFFFFFF)) {
             // 0x7FFFFFFF > (signed)x => x != 0x7FFFFFFF
             binary->op = NeInt32;
