@@ -1416,6 +1416,18 @@ private:
             Abstract::getBinary(type, Abstract::Sub),
             builder.makeConst(Literal::makeFromInt32(0, type)),
             binary->left);
+        } else if ((binary->op == LeUInt32 || binary->op == LeUInt64) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (unsigned)x <= -1   ==>   1
+          return LiteralUtils::makeFromInt32(1, type, *getModule());
+        } else if (binary->op == LeSInt32 || binary->op == LeSInt64) {
+          // (signed)x <= -1   ==>   (unsigned)x >> sizeof(bits) - 1
+          Builder builder(*getModule());
+          return builder.makeBinary(Abstract::getBinary(type, Abstract::ShrU),
+                                    binary->left,
+                                    builder.makeConst(Literal::makeFromInt32(
+                                      type.getByteSize() * 8 - 1, type)));
         }
       }
       // wasm binary encoding uses signed LEBs, which slightly favor negative

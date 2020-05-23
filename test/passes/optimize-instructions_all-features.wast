@@ -3781,11 +3781,31 @@
       (local.get $y)
       (i64.const -1)
     ))
-     (drop (i32.gt_s
+    (drop (i32.gt_s
       (local.get $x)
       (i32.const -1)
     ))
     (drop (i64.gt_s
+      (local.get $y)
+      (i64.const -1)
+    ))
+  )
+  (func $less-on-equal-than-neg-one (param $x i32) (param $y i64)
+    ;; (unsigned)x <= -1   ==>   1
+    (drop (i32.le_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.le_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; (signed)x <= -1   ==>   (unsigned)x >> sizeof(bits) - 1
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.le_s
       (local.get $y)
       (i64.const -1)
     ))
