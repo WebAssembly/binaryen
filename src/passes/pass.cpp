@@ -374,6 +374,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("unstackify",
+               "Fold stackified code into the default AST format",
+               createUnstackifyPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
