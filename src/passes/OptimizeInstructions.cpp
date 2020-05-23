@@ -594,10 +594,12 @@ struct OptimizeInstructions
           uint64_t c = right->value.geti64();
           if (IsPowerOf2(c)) {
             switch (binary->op) {
-              // TODO:
               case MulInt64:
+                return optimizePowerOf2Mul(binary, c);
               case RemUInt64:
+                return optimizePowerOf2URem(binary, c);
               case DivUInt64:
+                return optimizePowerOf2UDiv(binary, c);
               default:
                 break;
             }
@@ -1283,10 +1285,10 @@ private:
   // but it's still worth doing since
   //  * Often shifts are more common than muls.
   //  * The constant is smaller.
-  Expression* optimizePowerOf2Mul(Binary* binary, uint32_t c) {
-    uint32_t shifts = CountTrailingZeroes(c);
-    binary->op = ShlInt32;
-    binary->right->cast<Const>()->value = Literal(int32_t(shifts));
+  template<typename T> Expression* optimizePowerOf2Mul(Binary* binary, T c) {
+    int32_t shifts = CountTrailingZeroes<T>(c);
+    binary->op = sizeof(T) == 4 ? ShlInt32 : ShlInt64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
 
@@ -1295,10 +1297,10 @@ private:
   // but it's still worth doing since
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
-  Expression* optimizePowerOf2UDiv(Binary* binary, uint32_t c) {
-    uint32_t shifts = CountTrailingZeroes(c);
-    binary->op = ShrUInt32;
-    binary->right->cast<Const>()->value = Literal(int32_t(shifts));
+  template<typename T> Expression* optimizePowerOf2UDiv(Binary* binary, T c) {
+    int32_t shifts = CountTrailingZeroes<T>(c);
+    binary->op = sizeof(T) == 4 ? ShrUInt32 : ShrUInt64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
 
@@ -1308,9 +1310,9 @@ private:
   // but it's still worth doing since
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
-  Expression* optimizePowerOf2URem(Binary* binary, uint32_t c) {
-    binary->op = AndInt32;
-    binary->right->cast<Const>()->value = Literal(int32_t(c - 1));
+  template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
+    binary->op = sizeof(T) == 4 ? AndInt32 : AndInt64;
+    binary->right->cast<Const>()->value = Literal(c - 1);
     return binary;
   }
 
