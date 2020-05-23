@@ -1386,6 +1386,13 @@ private:
                       .hasSideEffects()) {
           // x & -1   ==>   -1
           return binary->right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+          // x - (-1)   ==>   x + 1
+          Builder builder(*getModule());
+          return builder
+            .makeBinary(Abstract::getBinary(type, Abstract::Add),
+                        binary->left,
+                        builder.makeConst(Literal::makeFromInt32(1, type)));
         } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {

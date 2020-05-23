@@ -3762,6 +3762,16 @@
     (i32.const 2)
    )
   )
+  (func $sub-neg-one (param $x i32) (param $y i64)
+    (drop (i32.sub
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.sub
+      (local.get $y)
+      (i64.const -1)
+    ))
+  )
   (func $pre-combine-or (param $x i32) (param $y i32)
     (drop (i32.or
       (i32.gt_s
