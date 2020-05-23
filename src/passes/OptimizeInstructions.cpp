@@ -1389,10 +1389,10 @@ private:
         } else if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
           // x - (-1)   ==>   x + 1
           Builder builder(*getModule());
-          return builder
-            .makeBinary(Abstract::getBinary(type, Abstract::Add),
-                        binary->left,
-                        builder.makeConst(Literal::makeFromInt32(1, type)));
+          return builder.makeBinary(
+            Abstract::getBinary(type, Abstract::Add),
+            binary->left,
+            builder.makeConst(Literal::makeFromInt32(1, type)));
         } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
@@ -1402,8 +1402,8 @@ private:
           // (unsigned)x / -1   ==>   x != -1
           return Builder(*getModule())
             .makeBinary(Abstract::getBinary(type, Abstract::Eq),
-                        binary->right,
-                        binary->left);
+                        binary->left,
+                        binary->right);
         } else if ((binary->op == Abstract::getBinary(type, Abstract::DivS) ||
                     binary->op == Abstract::getBinary(type, Abstract::Mul))) {
           // (signed)x / -1   ==>   0 - x
