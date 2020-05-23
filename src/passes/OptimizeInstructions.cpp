@@ -1375,7 +1375,6 @@ private:
         }
       }
       // operations on all 1s
-      // TODO: shortcut method to create an all-ones?
       if (right->value == Literal(int32_t(-1)) ||
           right->value == Literal(int64_t(-1))) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
@@ -1393,10 +1392,12 @@ private:
             Abstract::getBinary(type, Abstract::Add),
             binary->left,
             builder.makeConst(Literal::makeFromInt32(1, type)));
-        } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
+        } else if ((binary->op == Abstract::getBinary(type, Abstract::RemS) ||
+                    binary->op == GtUInt32 || binary->op == GtUInt64) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (signed)x % -1   ==>   0
+          // (unsigned)x > -1   ==>   0
           return LiteralUtils::makeZero(type, *getModule());
         } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
           // (unsigned)x / -1   ==>   x != -1
