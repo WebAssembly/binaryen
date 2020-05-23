@@ -578,10 +578,28 @@ struct OptimizeInstructions
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
           if (IsPowerOf2(c)) {
-            if (binary->op == MulInt32) {
-              return optimizePowerOf2Mul(binary, c);
-            } else if (binary->op == RemUInt32) {
-              return optimizePowerOf2URem(binary, c);
+            switch (binary->op) {
+              case MulInt32:
+                return optimizePowerOf2Mul(binary, c);
+              case RemUInt32:
+                return optimizePowerOf2URem(binary, c);
+              case DivUInt32:
+                return optimizePowerOf2UDiv(binary, c);
+              default:
+                break;
+            }
+          }
+        }
+        if (right->type == Type::i64) {
+          uint64_t c = right->value.geti64();
+          if (IsPowerOf2(c)) {
+            switch (binary->op) {
+              // TODO:
+              case MulInt64:
+              case RemUInt64:
+              case DivUInt64:
+              default:
+                break;
             }
           }
         }
@@ -1272,6 +1290,18 @@ private:
     return binary;
   }
 
+  // Optimize an unsigned divide by a power of two on the right
+  // This doesn't shrink code size, and VMs likely optimize it anyhow,
+  // but it's still worth doing since
+  //  * Usually ands are more common than urems.
+  //  * The constant is slightly smaller.
+  Expression* optimizePowerOf2UDiv(Binary* binary, uint32_t c) {
+    uint32_t shifts = CountTrailingZeroes(c);
+    binary->op = ShrUInt32;
+    binary->right->cast<Const>()->value = Literal(int32_t(shifts));
+    return binary;
+  }
+
   // Optimize an unsigned divide by a power of two on the right,
   // which can be an AND mask
   // This doesn't shrink code size, and VMs likely optimize it anyhow,
@@ -1354,6 +1384,28 @@ private:
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           return binary->right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (signed)x % -1  ==>   0
+          return LiteralUtils::makeZero(type, *getModule());
+        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (unsigned)x / -1  ==>   x != -1
+          return Builder(*getModule())
+            .makeBinary(Abstract::getBinary(type, Abstract::Eq),
+                        binary->right,
+                        binary->left);
+        } else if (binary->op == Abstract::getBinary(type, Abstract::DivS) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (signed)x / -1  ==>   0 - x
+          Builder builder(*getModule());
+          return builder.makeBinary(
+            Abstract::getBinary(type, Abstract::Sub),
+            builder.makeConst(Literal::makeFromInt32(0, type)),
+            binary->left);
         }
       }
       // wasm binary encoding uses signed LEBs, which slightly favor negative

@@ -2915,6 +2915,65 @@
     )
     (unreachable)
   )
+  (func $div-32-power-2 (param $x i32) (result i32)
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 4)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 5)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (call $div-32-power-2 (i32.const 123)) ;; side effects
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0xffffffff)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0x80000000)
+        )
+      )
+    )
+    (unreachable)
+  )
   (func $urem-power-2 (param $x i32) (result i32)
     (drop
       (call $urem-power-2
