@@ -1379,30 +1379,28 @@ private:
       if (right->value == Literal(int32_t(-1)) ||
           right->value == Literal(int64_t(-1))) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
+          // x & -1   ==>   x
           return binary->left;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
+          // x & -1   ==>   -1
           return binary->right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
-          // (signed)x % -1  ==>   0
+          // (signed)x % -1   ==>   0
           return LiteralUtils::makeZero(type, *getModule());
-        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
-          // (unsigned)x / -1  ==>   x != -1
+        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+          // (unsigned)x / -1   ==>   x != -1
           return Builder(*getModule())
             .makeBinary(Abstract::getBinary(type, Abstract::Eq),
                         binary->right,
                         binary->left);
         } else if ((binary->op == Abstract::getBinary(type, Abstract::DivS) ||
-                    binary->op == Abstract::getBinary(type, Abstract::Mul)) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
-          // (signed)x / -1  ==>   0 - x
-          // (signed)x * -1  ==>   0 - x
+                    binary->op == Abstract::getBinary(type, Abstract::Mul))) {
+          // (signed)x / -1   ==>   0 - x
+          // (signed)x * -1   ==>   0 - x
           Builder builder(*getModule());
           return builder.makeBinary(
             Abstract::getBinary(type, Abstract::Sub),
