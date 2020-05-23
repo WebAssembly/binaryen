@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import os
-import shutil
 import subprocess
 import sys
 from collections import OrderedDict
