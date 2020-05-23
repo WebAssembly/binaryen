@@ -1287,7 +1287,7 @@ private:
   //  * The constant is smaller.
   template<typename T> Expression* optimizePowerOf2Mul(Binary* binary, T c) {
     int32_t shifts = CountTrailingZeroes<T>(c);
-    binary->op = sizeof(T) == 4 ? ShlInt32 : ShlInt64;
+    binary->op = sizeof(T) <= 4 ? ShlInt32 : ShlInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
@@ -1299,7 +1299,7 @@ private:
   //  * The constant is slightly smaller.
   template<typename T> Expression* optimizePowerOf2UDiv(Binary* binary, T c) {
     int32_t shifts = CountTrailingZeroes<T>(c);
-    binary->op = sizeof(T) == 4 ? ShrUInt32 : ShrUInt64;
+    binary->op = sizeof(T) <= 4 ? ShrUInt32 : ShrUInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
@@ -1311,7 +1311,7 @@ private:
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
   template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
-    binary->op = sizeof(T) == 4 ? AndInt32 : AndInt64;
+    binary->op = sizeof(T) <= 4 ? AndInt32 : AndInt64;
     binary->right->cast<Const>()->value = Literal(c - 1);
     return binary;
   }
