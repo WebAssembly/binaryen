@@ -823,24 +823,28 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           if (select->type == Type::i32) {
-            // expr ? 1 : 0   ==>   expr != 0
+            // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
             if (constTrue->value.geti32() == int32_t(1) &&
                 constFalse->value.geti32() == int32_t(0)) {
+              // TODO: check is expr is comparision and just return it
               return Builder(*getModule())
                 .makeBinary(NeInt32, select->condition, constFalse);
             }
-            // expr ? 0 : 1   ==>   expr == 0
+            // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
             if (constTrue->value.geti32() == int32_t(0) &&
                 constFalse->value.geti32() == int32_t(1)) {
+              // TODO: check is expr is comparision and just return it
+              // with de-morgan's transform
               return Builder(*getModule())
                 .makeUnary(EqZInt32, select->condition);
             }
           }
           if (select->type == Type::i64) {
             if (select->condition->type == Type::i32) {
-              // expr ? 1 : 0   ==>   expr != 0
+              // [i32]->[i64]:   expr ? 1 : 0   ==>   expr != 0
               if (constTrue->value.geti64() == int64_t(1) &&
                   constFalse->value.geti64() == int64_t(0)) {
+                // TODO: check is expr is comparision and just return it
                 Builder builder(*getModule());
                 return builder.makeUnary(
                   ExtendUInt32,
@@ -848,15 +852,17 @@ struct OptimizeInstructions
                                      select->condition,
                                      builder.makeConst(Literal(int32_t(0)))));
               }
-              // expr ? 0 : 1   ==>   expr == 0
+              // [i32]->[i64]:   expr ? 0 : 1   ==>   expr == 0
               if (constTrue->value.geti64() == int64_t(0) &&
                   constFalse->value.geti64() == int64_t(1)) {
+                // TODO: check is expr is comparision and just return it
+                // with de-morgan's transform
                 Builder builder(*getModule());
                 return builder.makeUnary(
                   ExtendUInt32, builder.makeUnary(EqZInt32, select->condition));
               }
             }
-            // TODO select->condition->type == Type::i64
+            // TODO: select->condition->type == Type::i64
           }
         }
       }
