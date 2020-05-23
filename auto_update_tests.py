@@ -150,9 +150,6 @@ def update_example_tests():
                 o.write(actual)
         finally:
             os.remove(output_file)
-            if sys.platform == 'darwin':
-                # Also removes debug directory produced on Mac OS
-                shutil.rmtree(output_file + '.dSYM', ignore_errors=True)
 
 
 def update_wasm_dis_tests():
