@@ -2560,9 +2560,9 @@
   )
   (drop
    (call $mul-power-2
-    (i32.mul
+    (i32.sub
+     (i32.const 0)
      (local.get $x)
-     (i32.const -1)
     )
    )
   )
@@ -2797,15 +2797,15 @@
    )
   )
   (drop
-   (i32.mul
+   (i32.sub
+    (i32.const 0)
     (local.get $x32)
-    (i32.const -1)
    )
   )
   (drop
-   (i64.mul
+   (i64.sub
+    (i64.const 0)
     (local.get $x64)
-    (i64.const -1)
    )
   )
   (drop

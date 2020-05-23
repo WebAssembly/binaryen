@@ -1397,10 +1397,12 @@ private:
             .makeBinary(Abstract::getBinary(type, Abstract::Eq),
                         binary->right,
                         binary->left);
-        } else if (binary->op == Abstract::getBinary(type, Abstract::DivS) &&
+        } else if ((binary->op == Abstract::getBinary(type, Abstract::DivS) ||
+                    binary->op == Abstract::getBinary(type, Abstract::Mul)) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (signed)x / -1  ==>   0 - x
+          // (signed)x * -1  ==>   0 - x
           Builder builder(*getModule());
           return builder.makeBinary(
             Abstract::getBinary(type, Abstract::Sub),
