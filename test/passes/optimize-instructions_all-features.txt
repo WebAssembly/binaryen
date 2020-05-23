@@ -3,9 +3,9 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
@@ -3102,7 +3102,7 @@
    (local.get $x)
   )
  )
- (func $select-on-const (param $x i32) (param $y i32)
+ (func $select-on-const (param $x i32) (param $y i64)
   (drop
    (local.get $x)
   )
@@ -3161,6 +3161,25 @@
    (i64.extend_i32_u
     (i32.eqz
      (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i32.ne
+     (i64.eqz
+      (local.get $y)
+     )
+     (i32.const 0)
+    )
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i32.eqz
+     (i64.eqz
+      (local.get $y)
+     )
     )
    )
   )

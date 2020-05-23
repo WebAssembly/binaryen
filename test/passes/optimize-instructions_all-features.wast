@@ -3576,7 +3576,7 @@
       )
     )
   )
-  (func $select-on-const (param $x i32) (param $y i32)
+  (func $select-on-const (param $x i32) (param $y i64)
     (drop
       (select
         (i32.const 2)
@@ -3653,6 +3653,24 @@
         (i64.const 0)
         (i64.const 1)
         (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.eqz
+          (local.get $y)
+        )
       )
     )
   )

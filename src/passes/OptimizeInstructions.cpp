@@ -862,7 +862,7 @@ struct OptimizeInstructions
                   ExtendUInt32, builder.makeUnary(EqZInt32, select->condition));
               }
             }
-            // TODO: select->condition->type == Type::i64
+            // TODO: select->condition->type == Type::i64 and if expr is comparision expr
           }
         }
       }
