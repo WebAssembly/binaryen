@@ -3641,6 +3641,20 @@
         (local.get $x)
       )
     )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (local.get $x)
+      )
+    )
   )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)

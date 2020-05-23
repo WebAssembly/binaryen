@@ -3149,6 +3149,21 @@
     (local.get $x)
    )
   )
+  (drop
+   (i64.extend_i32_u
+    (i32.ne
+     (local.get $x)
+     (i32.const 0)
+    )
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i32.eqz
+     (local.get $x)
+    )
+   )
+  )
  )
  (func $getFallthrough
   (local $x0 i32)
