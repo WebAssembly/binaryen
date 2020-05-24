@@ -1398,13 +1398,15 @@ private:
                     binary->op == GtUInt32 || binary->op == GtUInt64) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
-          // (signed)x % -1   ==>   0
+          // (signed)x % -1     ==>   0
           // (unsigned)x > -1   ==>   0
           return LiteralUtils::makeZero(type, *getModule());
-        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+        } else if (binary->op == LtUInt32 || binary->op == LtUInt64 ||
+                   binary->op == Abstract::getBinary(type, Abstract::DivU)) {
           // (unsigned)x / -1   ==>   x != -1
+          // (unsigned)x < -1   ==>   x != -1
           return Builder(*getModule())
-            .makeBinary(Abstract::getBinary(type, Abstract::Eq),
+            .makeBinary(Abstract::getBinary(type, Abstract::Ne),
                         binary->left,
                         binary->right);
         } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {

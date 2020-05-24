@@ -2673,7 +2673,7 @@
   )
   (drop
    (call $div-32-power-2
-    (i32.eq
+    (i32.ne
      (local.get $x)
      (i32.const -1)
     )
