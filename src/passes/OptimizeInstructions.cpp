@@ -1407,10 +1407,8 @@ private:
             .makeBinary(Abstract::getBinary(type, Abstract::Eq),
                         binary->left,
                         binary->right);
-        } else if ((binary->op == Abstract::getBinary(type, Abstract::DivS) ||
-                    binary->op == Abstract::getBinary(type, Abstract::Mul))) {
-          // (signed)x / -1   ==>   0 - x
-          // (signed)x * -1   ==>   0 - x
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+          // (signed)x * -1   ==>   -x
           Builder builder(*getModule());
           return builder.makeBinary(
             Abstract::getBinary(type, Abstract::Sub),

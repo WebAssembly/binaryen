@@ -220,7 +220,10 @@
   (i32.const 2147483647)
  )
  (func $trapping_sint_div_s (; has Stack IR ;) (result i32)
-  (i32.const -2147483648)
+  (i32.div_s
+   (i32.const -2147483648)
+   (i32.const -1)
+  )
  )
  (func $fr (; has Stack IR ;) (param $0 f32)
   (nop)
