@@ -647,8 +647,8 @@ struct OptimizeInstructions
     } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          // Try return inversed rational opertations using De Morgan's laws
-          auto op = inversedRationalOp(inner->op);
+          // Try return inversed relational opertations using De Morgan's laws
+          auto op = inversedRelationalOp(inner->op);
           if (op != inner->op) {
             inner->op = op;
             return inner;
@@ -1494,7 +1494,7 @@ private:
     }
   }
 
-  BinaryOp inversedRationalOp(BinaryOp op) {
+  BinaryOp inversedRelationalOp(BinaryOp op) {
     // use de-morgan's laws
     switch (op) {
       case EqInt32:
