@@ -645,87 +645,13 @@ struct OptimizeInstructions
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
-      // de-morgan's laws
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          switch (inner->op) {
-            case EqInt32:
-              inner->op = NeInt32;
-              return inner;
-            case NeInt32:
-              inner->op = EqInt32;
-              return inner;
-            case LtSInt32:
-              inner->op = GeSInt32;
-              return inner;
-            case LtUInt32:
-              inner->op = GeUInt32;
-              return inner;
-            case LeSInt32:
-              inner->op = GtSInt32;
-              return inner;
-            case LeUInt32:
-              inner->op = GtUInt32;
-              return inner;
-            case GtSInt32:
-              inner->op = LeSInt32;
-              return inner;
-            case GtUInt32:
-              inner->op = LeUInt32;
-              return inner;
-            case GeSInt32:
-              inner->op = LtSInt32;
-              return inner;
-            case GeUInt32:
-              inner->op = LtUInt32;
-              return inner;
-
-            case EqInt64:
-              inner->op = NeInt64;
-              return inner;
-            case NeInt64:
-              inner->op = EqInt64;
-              return inner;
-            case LtSInt64:
-              inner->op = GeSInt64;
-              return inner;
-            case LtUInt64:
-              inner->op = GeUInt64;
-              return inner;
-            case LeSInt64:
-              inner->op = GtSInt64;
-              return inner;
-            case LeUInt64:
-              inner->op = GtUInt64;
-              return inner;
-            case GtSInt64:
-              inner->op = LeSInt64;
-              return inner;
-            case GtUInt64:
-              inner->op = LeUInt64;
-              return inner;
-            case GeSInt64:
-              inner->op = LtSInt64;
-              return inner;
-            case GeUInt64:
-              inner->op = LtUInt64;
-              return inner;
-
-            case EqFloat32:
-              inner->op = NeFloat32;
-              return inner;
-            case NeFloat32:
-              inner->op = EqFloat32;
-              return inner;
-
-            case EqFloat64:
-              inner->op = NeFloat64;
-              return inner;
-            case NeFloat64:
-              inner->op = EqFloat64;
-              return inner;
-
-            default: {}
+          // Try return inversed rational opertations using De Morgan's laws
+          auto op = inversedRationalOp(inner->op);
+          if (op != inner->op) {
+            inner->op = op;
+            return inner;
           }
         }
         // eqz of a sign extension can be of zero-extension
@@ -823,28 +749,28 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           if (select->type == Type::i32) {
-            // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
             if (constTrue->value.geti32() == int32_t(1) &&
                 constFalse->value.geti32() == int32_t(0)) {
               // TODO: check is expr is comparision and just return it
+              // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
               return Builder(*getModule())
                 .makeBinary(NeInt32, select->condition, constFalse);
             }
-            // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
             if (constTrue->value.geti32() == int32_t(0) &&
                 constFalse->value.geti32() == int32_t(1)) {
               // TODO: check is expr is comparision and just return it
               // with de-morgan's transform
+              // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
               return Builder(*getModule())
                 .makeUnary(EqZInt32, select->condition);
             }
           }
           if (select->type == Type::i64) {
             if (select->condition->type == Type::i32) {
-              // [i32]->[i64]:   expr ? 1 : 0   ==>   expr != 0
               if (constTrue->value.geti64() == int64_t(1) &&
                   constFalse->value.geti64() == int64_t(0)) {
                 // TODO: check is expr is comparision and just return it
+                // [i32]->[i64]:   expr ? 1 : 0   ==>   expr != 0
                 Builder builder(*getModule());
                 return builder.makeUnary(
                   ExtendUInt32,
@@ -852,11 +778,11 @@ struct OptimizeInstructions
                                      select->condition,
                                      builder.makeConst(Literal(int32_t(0)))));
               }
-              // [i32]->[i64]:   expr ? 0 : 1   ==>   expr == 0
               if (constTrue->value.geti64() == int64_t(0) &&
                   constFalse->value.geti64() == int64_t(1)) {
                 // TODO: check is expr is comparision and just return it
                 // with de-morgan's transform
+                // [i32]->[i64]:   expr ? 0 : 1   ==>   expr == 0
                 Builder builder(*getModule());
                 return builder.makeUnary(
                   ExtendUInt32, builder.makeUnary(EqZInt32, select->condition));
@@ -1565,6 +1491,66 @@ private:
         return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
+    }
+  }
+
+  BinaryOp inversedRationalOp(BinaryOp op) {
+    // use de-morgan's laws
+    switch (op) {
+      case EqInt32:
+        return NeInt32;
+      case NeInt32:
+        return EqInt32;
+      case LtSInt32:
+        return GeSInt32;
+      case LtUInt32:
+        return GeUInt32;
+      case LeSInt32:
+        return GtSInt32;
+      case LeUInt32:
+        return GtUInt32;
+      case GtSInt32:
+        return LeSInt32;
+      case GtUInt32:
+        return LeUInt32;
+      case GeSInt32:
+        return LtSInt32;
+      case GeUInt32:
+        return LtUInt32;
+
+      case EqInt64:
+        return NeInt64;
+      case NeInt64:
+        return EqInt64;
+      case LtSInt64:
+        return GeSInt64;
+      case LtUInt64:
+        return GeUInt64;
+      case LeSInt64:
+        return GtSInt64;
+      case LeUInt64:
+        return GtUInt64;
+      case GtSInt64:
+        return LeSInt64;
+      case GtUInt64:
+        return LeUInt64;
+      case GeSInt64:
+        return LtSInt64;
+      case GeUInt64:
+        return LtUInt64;
+
+      case EqFloat32:
+        return NeFloat32;
+      case NeFloat32:
+        return EqFloat32;
+
+      case EqFloat64:
+        return NeFloat64;
+      case NeFloat64:
+        return EqFloat64;
+
+      default:
+        return op;
     }
   }
 };
