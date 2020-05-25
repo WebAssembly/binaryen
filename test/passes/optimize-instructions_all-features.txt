@@ -3190,20 +3190,16 @@
   )
   (drop
    (i64.extend_i32_u
-    (i32.ne
-     (i64.eqz
-      (local.get $y)
-     )
-     (i32.const 0)
+    (i64.eqz
+     (local.get $y)
     )
    )
   )
   (drop
    (i64.extend_i32_u
-    (i32.eqz
-     (i64.eqz
-      (local.get $y)
-     )
+    (i64.ne
+     (local.get $y)
+     (i64.const 0)
     )
    )
   )

@@ -751,9 +751,15 @@ struct OptimizeInstructions
           if (select->type == Type::i32) {
             if (constTrue->value.geti32() == int32_t(1) &&
                 constFalse->value.geti32() == int32_t(0)) {
-              //  [i32]->[i32]:   a <=> b ? 1 : 0   ==>   a <=> b
+              //  [i32]->[i32]:   x <=> y ? 1 : 0   ==>   x <=> y
               if (auto* condition = select->condition->dynCast<Binary>()) {
-                if (isRelationalOp(condition->op)) {
+                if (condition->isRelational()) {
+                  return condition;
+                }
+              }
+              // [i32]->[i32]:   !x ? 1 : 0   ==>   !x
+              if (auto* condition = select->condition->dynCast<Unary>()) {
+                if (condition->isRelational()) {
                   return condition;
                 }
               }
@@ -763,12 +769,19 @@ struct OptimizeInstructions
             }
             if (constTrue->value.geti32() == int32_t(0) &&
                 constFalse->value.geti32() == int32_t(1)) {
-              //  [i32]->[i32]:   a <=> b ? 1 : 0   ==>   !(a <=> b)
+              //  [i32]->[i32]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
                   condition->op = op;
                   return condition;
+                }
+              }
+              // [i32]->[i32]:   !x ? 0 : 1   ==>   x != 0
+              if (auto* condition = select->condition->dynCast<Unary>()) {
+                if (condition->isRelational()) {
+                  return Builder(*getModule())
+                    .makeBinary(NeInt32, condition->value, constTrue);
                 }
               }
               // with de-morgan's transform
@@ -781,9 +794,16 @@ struct OptimizeInstructions
             if (select->condition->type == Type::i32) {
               if (constTrue->value.geti64() == int64_t(1) &&
                   constFalse->value.geti64() == int64_t(0)) {
-                //  [i32]->[i64]:   a <=> b ? 1 : 0   ==>   a <=> b
+                //  [i32]->[i64]:   x <=> y ? 1 : 0   ==>   x <=> y
                 if (auto* condition = select->condition->dynCast<Binary>()) {
-                  if (isRelationalOp(condition->op)) {
+                  if (condition->isRelational()) {
+                    return Builder(*getModule())
+                      .makeUnary(ExtendUInt32, condition);
+                  }
+                }
+                // [i32]->[i64]:   !x ? 1 : 0   ==>   !x
+                if (auto* condition = select->condition->dynCast<Unary>()) {
+                  if (condition->isRelational()) {
                     return Builder(*getModule())
                       .makeUnary(ExtendUInt32, condition);
                   }
@@ -798,13 +818,22 @@ struct OptimizeInstructions
               }
               if (constTrue->value.geti64() == int64_t(0) &&
                   constFalse->value.geti64() == int64_t(1)) {
-                //  [i32]->[i64]:   a <=> b ? 1 : 0   ==>   !(a <=> b)
+                //  [i32]->[i64]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
                 if (auto* condition = select->condition->dynCast<Binary>()) {
                   auto op = inversedRelationalOp(condition->op);
                   if (op != condition->op) {
                     condition->op = op;
                     return Builder(*getModule())
                       .makeUnary(ExtendUInt32, condition);
+                  }
+                }
+                // [i32]->[i64]:   !x ? 0 : 1   ==>   x != 0
+                if (auto* condition = select->condition->dynCast<Unary>()) {
+                  if (condition->isRelational()) {
+                    Builder builder(*getModule());
+                    return builder.makeUnary(
+                      ExtendUInt32,
+                      builder.makeBinary(NeInt64, condition->value, constTrue));
                   }
                 }
                 // [i32]->[i64]:   expr ? 0 : 1   ==>   expr == 0
@@ -1576,50 +1605,6 @@ private:
 
       default:
         return op;
-    }
-  }
-
-  bool isRelationalOp(BinaryOp op) {
-    switch (op) {
-      case EqInt32:
-      case NeInt32:
-      case LtSInt32:
-      case LtUInt32:
-      case LeSInt32:
-      case LeUInt32:
-      case GtSInt32:
-      case GtUInt32:
-      case GeSInt32:
-      case GeUInt32:
-
-      case EqInt64:
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case LeSInt64:
-      case LeUInt64:
-      case GtSInt64:
-      case GtUInt64:
-      case GeSInt64:
-      case GeUInt64:
-
-      case EqFloat32:
-      case NeFloat32:
-      case LtFloat32:
-      case LeFloat32:
-      case GtFloat32:
-      case GeFloat32:
-
-      case EqFloat64:
-      case NeFloat64:
-      case LtFloat64:
-      case LeFloat64:
-      case GtFloat64:
-      case GeFloat64:
-        return true;
-
-      default:
-        return false;
     }
   }
 };
