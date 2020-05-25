@@ -752,7 +752,7 @@ struct OptimizeInstructions
             if (constTrue->value.geti32() == int32_t(1) &&
                 constFalse->value.geti32() == int32_t(0)) {
               //  [i32]->[i32]:   a <=> b ? 1 : 0   ==>   a <=> b
-              if (auto condition = select->condition->dynCast<Binary>()) {
+              if (auto* condition = select->condition->dynCast<Binary>()) {
                 if (isRelationalOp(condition->op)) {
                   return condition;
                 }
@@ -764,7 +764,7 @@ struct OptimizeInstructions
             if (constTrue->value.geti32() == int32_t(0) &&
                 constFalse->value.geti32() == int32_t(1)) {
               //  [i32]->[i32]:   a <=> b ? 1 : 0   ==>   !(a <=> b)
-              if (auto condition = select->condition->dynCast<Binary>()) {
+              if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
                   condition->op = op;
@@ -782,7 +782,7 @@ struct OptimizeInstructions
               if (constTrue->value.geti64() == int64_t(1) &&
                   constFalse->value.geti64() == int64_t(0)) {
                 //  [i32]->[i64]:   a <=> b ? 1 : 0   ==>   a <=> b
-                if (auto condition = select->condition->dynCast<Binary>()) {
+                if (auto* condition = select->condition->dynCast<Binary>()) {
                   if (isRelationalOp(condition->op)) {
                     return Builder(*getModule())
                       .makeUnary(ExtendUInt32, condition);
@@ -799,7 +799,7 @@ struct OptimizeInstructions
               if (constTrue->value.geti64() == int64_t(0) &&
                   constFalse->value.geti64() == int64_t(1)) {
                 //  [i32]->[i64]:   a <=> b ? 1 : 0   ==>   !(a <=> b)
-                if (auto condition = select->condition->dynCast<Binary>()) {
+                if (auto* condition = select->condition->dynCast<Binary>()) {
                   auto op = inversedRelationalOp(condition->op);
                   if (op != condition->op) {
                     condition->op = op;
@@ -1618,10 +1618,9 @@ private:
       case GeFloat64:
         return true;
 
-      default: {
-      }
+      default:
+        return false;
     }
-    return false;
   }
 };
 
