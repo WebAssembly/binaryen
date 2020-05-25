@@ -764,11 +764,11 @@ struct OptimizeInstructions
                 }
               }
               // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
-              return Builder(*getModule())
-                .makeBinary(NeInt32, select->condition, constFalse);
-            }
-            if (constTrue->value.geti32() == int32_t(0) &&
-                constFalse->value.geti32() == int32_t(1)) {
+              return optimizeBoolean(
+                Builder(*getModule())
+                  .makeBinary(NeInt32, select->condition, constFalse));
+            } else if (constTrue->value.geti32() == int32_t(0) &&
+                       constFalse->value.geti32() == int32_t(1)) {
               // [i32]->[i32]:   !x ? 0 : 1   ==>   x != 0
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
@@ -776,7 +776,7 @@ struct OptimizeInstructions
                     .makeBinary(NeInt32, condition->value, constTrue);
                 }
               }
-              //  [i32]->[i32]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
+              // [i32]->[i32]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
@@ -784,13 +784,11 @@ struct OptimizeInstructions
                   return condition;
                 }
               }
-              // with de-morgan's transform
               // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
-              return Builder(*getModule())
-                .makeUnary(EqZInt32, select->condition);
+              return optimizeBoolean(
+                Builder(*getModule()).makeUnary(EqZInt32, select->condition));
             }
-          }
-          if (select->type == Type::i64) {
+          } else if (select->type == Type::i64) {
             if (select->condition->type == Type::i32) {
               if (constTrue->value.geti64() == int64_t(1) &&
                   constFalse->value.geti64() == int64_t(0)) {
@@ -815,9 +813,8 @@ struct OptimizeInstructions
                   builder.makeBinary(NeInt32,
                                      select->condition,
                                      builder.makeConst(Literal(int32_t(0)))));
-              }
-              if (constTrue->value.geti64() == int64_t(0) &&
-                  constFalse->value.geti64() == int64_t(1)) {
+              } else if (constTrue->value.geti64() == int64_t(0) &&
+                         constFalse->value.geti64() == int64_t(1)) {
                 // [i32]->[i64]:   !x ? 0 : 1   ==>   x != 0
                 if (auto* condition = select->condition->dynCast<Unary>()) {
                   if (condition->isRelational()) {

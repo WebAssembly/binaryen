@@ -3139,10 +3139,7 @@
    )
   )
   (drop
-   (i32.ne
-    (local.get $x)
-    (i32.const 0)
-   )
+   (local.get $x)
   )
   (drop
    (i32.eqz
