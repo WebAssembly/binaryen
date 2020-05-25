@@ -3643,6 +3643,46 @@
     )
     (drop
       (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.ge_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.ge_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
         (i64.const 1)
         (i64.const 0)
         (local.get $x)
@@ -3670,6 +3710,46 @@
         (i64.const 1)
         (i64.eqz
           (local.get $y)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.lt_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.lt_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.ge_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.ge_s
+          (local.get $y)
+          (i64.const 0)
         )
       )
     )
