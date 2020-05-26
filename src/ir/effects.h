@@ -120,8 +120,8 @@ struct EffectAnalyzer
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
-           branches() || implicitTrap;
+    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches() ||
+           implicitTrap;
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
