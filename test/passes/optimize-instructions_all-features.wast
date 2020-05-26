@@ -3939,6 +3939,22 @@
         (i32.const -1)
       )
     ))
+    ;; 0 - x   ==>   x
+    (if
+      (i32.sub
+        (i32.const 0)
+        (local.get $x)
+      )
+      (unreachable)
+    )
+    (drop (select
+      (local.get $x)
+      (local.get $y)
+      (i32.sub
+        (i32.const 0)
+        (local.get $x)
+      )
+    ))
   )
 )
 (module
