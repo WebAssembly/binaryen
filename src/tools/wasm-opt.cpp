@@ -82,7 +82,6 @@ int main(int argc, const char* argv[]) {
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   bool fuzzPasses = false;
-  bool fuzzNaNs = true;
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   std::string emitJSWrapper;
@@ -148,12 +147,6 @@ int main(int argc, const char* argv[]) {
          "on translate-to-fuzz (it picks the passes from the input)",
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzPasses = true; })
-    .add("--no-fuzz-nans",
-         "",
-         "don't emit NaNs when fuzzing, and remove them at runtime as well "
-         "(helps avoid nondeterminism between VMs)",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzNaNs = false; })
     .add("--no-fuzz-memory",
          "",
          "don't emit memory ops when fuzzing",
@@ -266,7 +259,6 @@ int main(int argc, const char* argv[]) {
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.build();
