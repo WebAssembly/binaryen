@@ -42,7 +42,7 @@ struct EffectAnalyzer
   FeatureSet features;
 
   void analyze(Expression* ast) {
-    breakNames.clear();
+    breakTargets.clear();
     walk(ast);
     assert(tryDepth == 0);
   }
@@ -128,7 +128,7 @@ struct EffectAnalyzer
   }
 
   // check if we break to anything external from ourselves
-  bool hasExternalBreakTargets() const { return !breakNames.empty(); }
+  bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
@@ -203,8 +203,8 @@ struct EffectAnalyzer
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
     }
-    for (auto i : other.breakNames) {
-      breakNames.insert(i);
+    for (auto i : other.breakTargets) {
+      breakTargets.insert(i);
     }
   }
 
@@ -227,17 +227,17 @@ struct EffectAnalyzer
     return hasAnything();
   }
 
-  std::set<Name> breakNames;
+  std::set<Name> breakTargets;
 
   void visitBlock(Block* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
   }
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
     // if the loop is unreachable, then there is branching control flow:
     //  (1) if the body is unreachable because of a (return), uncaught (br)
@@ -252,12 +252,12 @@ struct EffectAnalyzer
       branches = true;
     }
   }
-  void visitBreak(Break* curr) { breakNames.insert(curr->name); }
+  void visitBreak(Break* curr) { breakTargets.insert(curr->name); }
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      breakNames.insert(name);
+      breakTargets.insert(name);
     }
-    breakNames.insert(curr->default_);
+    breakTargets.insert(curr->default_);
   }
 
   void visitCall(Call* curr) {
@@ -451,7 +451,7 @@ struct EffectAnalyzer
     }
   }
   void visitBrOnExn(BrOnExn* curr) {
-    breakNames.insert(curr->name);
+    breakTargets.insert(curr->name);
     if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
       implicitTrap = true;
     }
@@ -526,6 +526,11 @@ struct EffectAnalyzer
       effects |= SideEffects::Throws;
     }
     return effects;
+  }
+
+  void ignoreBranches() {
+    branches = false;
+    breakTargets.clear();
   }
 };
 

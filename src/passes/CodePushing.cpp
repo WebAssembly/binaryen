@@ -163,7 +163,7 @@ private:
     cumulativeEffects.analyze(list[pushPoint]);
     // it is ok to ignore the branching here, that is the crucial point of this
     // opt
-    cumulativeEffects.branches = false;
+    cumulativeEffects.ignoreBranches();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
