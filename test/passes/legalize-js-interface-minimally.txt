@@ -9,7 +9,7 @@
  (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
  (export "func" (func $func))
  (export "dynCall_foo" (func $legalstub$dyn))
- (func $func (; 3 ;) (result i64)
+ (func $func (result i64)
   (drop
    (call $imported)
   )
@@ -18,13 +18,13 @@
   )
   (unreachable)
  )
- (func $dyn (; 4 ;) (result i64)
+ (func $dyn (result i64)
   (drop
    (call $imported)
   )
   (unreachable)
  )
- (func $legalstub$dyn (; 5 ;) (result i32)
+ (func $legalstub$dyn (result i32)
   (local $0 i64)
   (local.set $0
    (call $dyn)
@@ -41,7 +41,7 @@
    (local.get $0)
   )
  )
- (func $legalfunc$invoke_vj (; 6 ;) (param $0 i64)
+ (func $legalfunc$invoke_vj (param $0 i64)
   (call $legalimport$invoke_vj
    (i32.wrap_i64
     (local.get $0)

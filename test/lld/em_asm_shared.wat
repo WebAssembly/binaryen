@@ -1,8 +1,8 @@
 (module
- (type $0 (func (param i32 i32 i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
- (type $3 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
@@ -22,12 +22,12 @@
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $global$1))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $global$2))
  (export "main" (func $main))
- (func $__wasm_call_ctors (; 1 ;) (type $1)
+ (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 2 ;) (type $1)
+ (func $__wasm_apply_relocs
  )
- (func $__original_main (; 3 ;) (type $2) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (global.set $gimport$2
@@ -86,10 +86,14 @@
   )
   (i32.const 0)
  )
- (func $main (; 4 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- ;; custom section "dylink", size 5
+ ;; dylink section
+ ;;   memorysize: 90
+ ;;   memoryalignment: 0
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section "producers", size 112
 )
 

@@ -2,24 +2,24 @@
  (type $none_=>_none (func))
  (memory $0 1024 1024)
  (data (i32.const 0) "hello, world")
- (func $0 (; 0 ;)
+ (func $0
   (memory.init 0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $1 (; 1 ;)
+ (func $1
   (data.drop 0)
  )
- (func $2 (; 2 ;)
+ (func $2
   (memory.copy
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $3 (; 3 ;)
+ (func $3
   (memory.fill
    (i32.const 0)
    (i32.const 42)

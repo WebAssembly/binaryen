@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 90)
+project(binaryen LANGUAGES C CXX VERSION 93)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -22,9 +22,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
                GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(${GIT_VERSION_RESULT})
-    message(FATAL_ERROR "Error running git describe to determine version")
+    message(WARNING "Error running git describe to determine version")
   else()
-    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
+    set(PROJECT_VERSION "${PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 
@@ -185,7 +185,7 @@ else()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_link_flag("-Wl,--stack,8388608")
-  else()
+  elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
   endif()
   add_debug_compile_flag("-O0")
@@ -225,10 +225,12 @@ if(EMSCRIPTEN)
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
-if(UNIX AND
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
-    CMAKE_GENERATOR STREQUAL "Ninja")
-  add_compile_flag("-fcolor-diagnostics")
+if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_flag("-fdiagnostics-color=always")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_flag("-fcolor-diagnostics")
+  endif()
 endif()
 
 # Static libraries
@@ -271,7 +273,10 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
-install(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS binaryen
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -300,7 +305,7 @@ add_executable(wasm-metadce ${wasm-metadce_SOURCES} ${binaryen_objs})
 target_link_libraries(wasm-metadce ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
 set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-metadce DESTINATION bin)
+install(TARGETS wasm-metadce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
@@ -354,7 +359,7 @@ add_executable(wasm-ctor-eval ${wasm-ctor-eval_SOURCES} ${binaryen_objs})
 target_link_libraries(wasm-ctor-eval ${CMAKE_THREAD_LIBS_INIT})
 set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
 set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-ctor-eval DESTINATION bin)
+install(TARGETS wasm-ctor-eval DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set(wasm-reduce_SOURCES
   src/tools/wasm-reduce.cpp
@@ -380,11 +385,12 @@ if(EMSCRIPTEN)
   add_executable(binaryen_wasm
                  ${binaryen_emscripten_SOURCES})
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-  target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
   target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
   target_link_libraries(binaryen_wasm debug "--profiling")
@@ -402,11 +408,12 @@ if(EMSCRIPTEN)
     # only valid with fastcomp and WASM=0
     target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
   endif()
-  target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
   target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
   target_link_libraries(binaryen_js debug "--profiling")

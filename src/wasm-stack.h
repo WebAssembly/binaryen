@@ -141,13 +141,17 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
-  void emitIfElse();
-  void emitCatch();
-  void emitScopeEnd();    // emit an end at the end of a block/loop/if/try
-  void emitFunctionEnd(); // emit an end at the end of a function
+  void emitResultType(Type type);
+  void emitIfElse(If* curr);
+  void emitCatch(Try* curr);
+  // emit an end at the end of a block/loop/if/try
+  void emitScopeEnd(Expression* curr);
+  // emit an end at the end of a function
+  void emitFunctionEnd();
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
 
@@ -164,8 +168,14 @@ private:
 
   // type => number of locals of that type in the compact form
   std::map<Type, size_t> numLocalsByType;
-  // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<Index, size_t> mappedLocals;
+  // (local index, tuple index) => binary local index
+  std::map<std::pair<Index, Index>, size_t> mappedLocals;
+
+  // Keeps track of the binary index of the scratch locals used to lower
+  // tuple.extract.
+  std::map<Type, Index> scratchLocals;
+  void countScratchLocals();
+  void setScratchLocals();
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
@@ -223,8 +233,9 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
 protected:
   Function* func = nullptr;
@@ -781,13 +792,28 @@ void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
   emit(curr);
 }
 
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
-  visit(curr->value);
+template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
   emit(curr);
 }
 
-template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitTupleMake(TupleMake* curr) {
+  for (auto* operand : curr->operands) {
+    visit(operand);
+  }
+  emit(curr);
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+  }
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitTupleExtract(TupleExtract* curr) {
+  visit(curr->tuple);
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
@@ -813,9 +839,9 @@ public:
     }
     writer.mapLocalsAndEmitHeader();
   }
-  void emitIfElse(If* curr) { writer.emitIfElse(); }
-  void emitCatch(Try* curr) { writer.emitCatch(); }
-  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(); }
+  void emitIfElse(If* curr) { writer.emitIfElse(curr); }
+  void emitCatch(Try* curr) { writer.emitCatch(curr); }
+  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());

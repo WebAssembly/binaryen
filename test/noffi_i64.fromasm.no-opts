@@ -9,7 +9,7 @@
  (import "env" "_importll" (func $importll (param i64) (result i64)))
  (export "_add" (func $add))
  (export "_main" (func $main))
- (func $add (; 1 ;) (param $a i64) (param $b i64) (result i64)
+ (func $add (param $a i64) (param $b i64) (result i64)
   (local $c i64)
   (local.set $c
    (i64.add
@@ -21,7 +21,7 @@
    (local.get $c)
   )
  )
- (func $main (; 2 ;) (result i32)
+ (func $main (result i32)
   (drop
    (call $importll
     (i64.const 2)

@@ -288,14 +288,29 @@
  )
 )
 
-;; After --flatten, there will be a series of chain copies between multiple
-;; locals, but some of the locals will be nullref type and others funcref type.
-;; We cannot make locals of different types a common subexpression.
 (module
+ ;; After --flatten, there will be a series of chain copies between multiple
+ ;; locals, but some of the locals will be nullref type and others funcref type.
+ ;; We cannot make locals of different types a common subexpression.
  (func $subtype-test (result funcref)
   (nop)
   (loop $label$1 (result nullref)
    (ref.null)
+  )
+ )
+
+ (func $test
+  (local $0 anyref)
+  (drop
+   (block $label$1 (result nullref)
+    (local.set $0
+     (ref.null)
+    )
+    ;; After --flatten, this will be assigned to a local of nullref type. After
+    ;; --local-cse, even if we set (ref.null) to local $0 above, this should not
+    ;; be replaced with $0, because it is of type anyref.
+    (ref.null)
+   )
   )
  )
 )

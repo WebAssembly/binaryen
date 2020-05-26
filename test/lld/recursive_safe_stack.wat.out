@@ -19,14 +19,11 @@
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
  (export "__set_stack_limit" (func $__set_stack_limit))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 2 ;)
+ (func $__wasm_call_ctors
   (nop)
  )
- (func $foo (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $foo (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -85,7 +82,7 @@
    (local.get $0)
   )
  )
- (func $__original_main (; 4 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -140,60 +137,15 @@
   )
   (i32.const 0)
  )
- (func $main (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__set_stack_limit (; 6 ;) (param $0 i32)
+ (func $__set_stack_limit (param $0 i32)
   (global.set $__stack_limit
    (local.get $0)
   )
  )
- (func $stackSave (; 7 ;) (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (; 8 ;) (param $0 i32) (result i32)
-  (local $1 i32)
-  (local $2 i32)
-  (block
-   (if
-    (i32.lt_u
-     (local.tee $2
-      (local.tee $1
-       (i32.and
-        (i32.sub
-         (global.get $global$0)
-         (local.get $0)
-        )
-        (i32.const -16)
-       )
-      )
-     )
-     (global.get $__stack_limit)
-    )
-    (call $__handle_stack_overflow)
-   )
-   (global.set $global$0
-    (local.get $2)
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (; 9 ;) (param $0 i32)
-  (local $1 i32)
-  (if
-   (i32.lt_u
-    (local.tee $1
-     (local.get $0)
-    )
-    (global.get $__stack_limit)
-   )
-   (call $__handle_stack_overflow)
-  )
-  (global.set $global$0
-   (local.get $1)
-  )
- )
- (func $__growWasmMemory (; 10 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
@@ -213,22 +165,10 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "___set_stack_limit",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
   "exports": [
     "__wasm_call_ctors",
     "main",
     "__set_stack_limit",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory"
   ],
   "namedGlobals": {

@@ -8,20 +8,20 @@
  (import "rt" "retain" (func $~lib/rt/pure/__retain (param i32) (result i32)))
  (import "rt" "release" (func $~lib/rt/pure/__release (param i32)))
  (import "rc" "getRetainedRef" (func $getRetainedRef (result i32)))
- (func $eliminates.linearArgument (; 3 ;) (param $0 i32)
+ (func $eliminates.linearArgument (param $0 i32)
   (local.set $0
    (local.get $0)
   )
   (nop)
  )
- (func $eliminates.linearLocal (; 4 ;) (param $0 i32)
+ (func $eliminates.linearLocal (param $0 i32)
   (local $1 i32)
   (local.set $1
    (local.get $0)
   )
   (nop)
  )
- (func $eliminates.linearChain (; 5 ;) (param $0 i32)
+ (func $eliminates.linearChain (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -38,7 +38,7 @@
   (nop)
   (nop)
  )
- (func $eliminates.balancedReleases (; 6 ;) (param $0 i32) (param $cond i32)
+ (func $eliminates.balancedReleases (param $0 i32) (param $cond i32)
   (local $2 i32)
   (local.set $2
    (local.get $0)
@@ -49,7 +49,7 @@
    (nop)
   )
  )
- (func $eliminates.partialReleases (; 7 ;) (param $0 i32) (param $cond i32)
+ (func $eliminates.partialReleases (param $0 i32) (param $cond i32)
   (local $2 i32)
   (local.set $2
    (local.get $0)
@@ -59,7 +59,7 @@
    (nop)
   )
  )
- (func $eliminates.balancedRetains (; 8 ;) (param $0 i32) (param $cond1 i32) (param $cond2 i32)
+ (func $eliminates.balancedRetains (param $0 i32) (param $cond1 i32) (param $cond2 i32)
   (local $3 i32)
   (if
    (local.get $cond1)
@@ -78,7 +78,7 @@
   )
   (nop)
  )
- (func $eliminates.balancedInsideLoop (; 9 ;) (param $0 i32) (param $cond i32)
+ (func $eliminates.balancedInsideLoop (param $0 i32) (param $cond i32)
   (local $flat i32)
   (block $break|0
    (loop $continue|0
@@ -99,7 +99,7 @@
    (unreachable)
   )
  )
- (func $eliminates.balancedOutsideLoop (; 10 ;) (param $0 i32) (param $cond i32)
+ (func $eliminates.balancedOutsideLoop (param $0 i32) (param $cond i32)
   (local $flat i32)
   (local.set $0
    (local.get $0)
@@ -120,7 +120,7 @@
   )
   (nop)
  )
- (func $eliminates.balancedInsideOutsideLoop (; 11 ;) (param $0 i32) (param $cond i32)
+ (func $eliminates.balancedInsideOutsideLoop (param $0 i32) (param $cond i32)
   (local $flat i32)
   (local.set $0
    (local.get $0)
@@ -145,7 +145,7 @@
   )
   (nop)
  )
- (func $eliminates.balancedInsideOutsideLoopWithBranch (; 12 ;) (param $0 i32) (param $cond1 i32) (param $cond2 i32)
+ (func $eliminates.balancedInsideOutsideLoopWithBranch (param $0 i32) (param $cond1 i32) (param $cond2 i32)
   (local $flat i32)
   (local.set $0
    (local.get $0)
@@ -177,7 +177,7 @@
   )
   (nop)
  )
- (func $eliminates.replace (; 13 ;) (param $0 i32) (param $1 i32)
+ (func $eliminates.replace (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local.set $0
@@ -208,7 +208,7 @@
   (nop)
   (nop)
  )
- (func $eliminates.replaceAlreadyRetained (; 14 ;) (param $0 i32) (result i32)
+ (func $eliminates.replaceAlreadyRetained (param $0 i32) (result i32)
   (local $1 i32)
   (block $block
    (local.set $0
@@ -226,7 +226,7 @@
    )
   )
  )
- (func $keeps.partialRetains (; 15 ;) (param $0 i32) (param $cond i32)
+ (func $keeps.partialRetains (param $0 i32) (param $cond i32)
   (if
    (local.get $cond)
    (local.set $0
@@ -239,7 +239,7 @@
    (local.get $0)
   )
  )
- (func $keeps.reachesReturn (; 16 ;) (param $0 i32) (param $cond i32) (result i32)
+ (func $keeps.reachesReturn (param $0 i32) (param $cond i32) (result i32)
   (block $block
    (local.set $0
     (call $~lib/rt/pure/__retain

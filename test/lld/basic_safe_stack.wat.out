@@ -1,0 +1,110 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow))
+ (memory $0 2)
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (i32.const 66112))
+ (global $global$1 i32 (i32.const 568))
+ (global $__stack_limit (mut i32) (i32.const 0))
+ (export "memory" (memory $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "stackRestore" (func $stackRestore))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "main" (func $main))
+ (export "__data_end" (global $global$1))
+ (export "__set_stack_limit" (func $__set_stack_limit))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $__wasm_call_ctors
+  (nop)
+ )
+ (func $stackRestore (param $0 i32)
+  (local $1 i32)
+  (if
+   (i32.lt_u
+    (local.tee $1
+     (local.get $0)
+    )
+    (global.get $__stack_limit)
+   )
+   (call $__handle_stack_overflow)
+  )
+  (global.set $global$0
+   (local.get $1)
+  )
+ )
+ (func $stackAlloc (param $0 i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (block
+   (if
+    (i32.lt_u
+     (local.tee $3
+      (local.tee $1
+       (i32.and
+        (i32.sub
+         (global.get $global$0)
+         (local.get $0)
+        )
+        (i32.const -16)
+       )
+      )
+     )
+     (global.get $__stack_limit)
+    )
+    (call $__handle_stack_overflow)
+   )
+   (global.set $global$0
+    (local.get $3)
+   )
+  )
+  (local.get $1)
+ )
+ (func $main
+  (nop)
+ )
+ (func $__set_stack_limit (param $0 i32)
+  (global.set $__stack_limit
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 0,
+  "tableSize": 1,
+  "initializers": [
+    "__wasm_call_ctors"
+  ],
+  "declares": [
+    "__handle_stack_overflow"
+  ],
+  "externs": [
+  ],
+  "exports": [
+    "__wasm_call_ctors",
+    "stackRestore",
+    "stackAlloc",
+    "main",
+    "__set_stack_limit",
+    "__growWasmMemory"
+  ],
+  "namedGlobals": {
+    "__data_end" : "568"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 1
+}
+-- END METADATA --
+;)

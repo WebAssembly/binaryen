@@ -81,8 +81,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitBrOnExn(BrOnExn* curr) { return ReturnType(); }
   ReturnType visitNop(Nop* curr) { return ReturnType(); }
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
-  ReturnType visitPush(Push* curr) { return ReturnType(); }
   ReturnType visitPop(Pop* curr) { return ReturnType(); }
+  ReturnType visitTupleMake(TupleMake* curr) { return ReturnType(); }
+  ReturnType visitTupleExtract(TupleExtract* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
@@ -188,10 +189,12 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
         DELEGATE(Unreachable);
-      case Expression::Id::PushId:
-        DELEGATE(Push);
       case Expression::Id::PopId:
         DELEGATE(Pop);
+      case Expression::Id::TupleMakeId:
+        DELEGATE(TupleMake);
+      case Expression::Id::TupleExtractId:
+        DELEGATE(TupleExtract);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -259,8 +262,9 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(BrOnExn);
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
-  UNIMPLEMENTED(Push);
   UNIMPLEMENTED(Pop);
+  UNIMPLEMENTED(TupleMake);
+  UNIMPLEMENTED(TupleExtract);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
@@ -367,10 +371,12 @@ struct OverriddenVisitor {
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
         DELEGATE(Unreachable);
-      case Expression::Id::PushId:
-        DELEGATE(Push);
       case Expression::Id::PopId:
         DELEGATE(Pop);
+      case Expression::Id::TupleMakeId:
+        DELEGATE(TupleMake);
+      case Expression::Id::TupleExtractId:
+        DELEGATE(TupleExtract);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -521,10 +527,13 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitUnreachable(Unreachable* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitPush(Push* curr) {
+  ReturnType visitPop(Pop* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitPop(Pop* curr) {
+  ReturnType visitTupleMake(TupleMake* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitTupleExtract(TupleExtract* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
 };
@@ -832,11 +841,14 @@ struct Walker : public VisitorType {
   static void doVisitUnreachable(SubType* self, Expression** currp) {
     self->visitUnreachable((*currp)->cast<Unreachable>());
   }
-  static void doVisitPush(SubType* self, Expression** currp) {
-    self->visitPush((*currp)->cast<Push>());
-  }
   static void doVisitPop(SubType* self, Expression** currp) {
     self->visitPop((*currp)->cast<Pop>());
+  }
+  static void doVisitTupleMake(SubType* self, Expression** currp) {
+    self->visitTupleMake((*currp)->cast<TupleMake>());
+  }
+  static void doVisitTupleExtract(SubType* self, Expression** currp) {
+    self->visitTupleExtract((*currp)->cast<TupleExtract>());
   }
 
   void setModule(Module* module) { currModule = module; }
@@ -1117,13 +1129,21 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitUnreachable, currp);
         break;
       }
-      case Expression::Id::PushId: {
-        self->pushTask(SubType::doVisitPush, currp);
-        self->pushTask(SubType::scan, &curr->cast<Push>()->value);
-        break;
-      }
       case Expression::Id::PopId: {
         self->pushTask(SubType::doVisitPop, currp);
+        break;
+      }
+      case Expression::Id::TupleMakeId: {
+        self->pushTask(SubType::doVisitTupleMake, currp);
+        auto& operands = curr->cast<TupleMake>()->operands;
+        for (int i = int(operands.size()) - 1; i >= 0; --i) {
+          self->pushTask(SubType::scan, &operands[i]);
+        }
+        break;
+      }
+      case Expression::Id::TupleExtractId: {
+        self->pushTask(SubType::doVisitTupleExtract, currp);
+        self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
         break;
       }
       case Expression::Id::NumExpressionIds:
@@ -1159,7 +1179,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        // an if, ignorable
+        // an if or try, ignorable
         assert(curr->template is<If>() || curr->template is<Try>());
       }
       if (i == 0) {

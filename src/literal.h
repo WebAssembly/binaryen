@@ -23,10 +23,14 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/name.h"
+#include "support/small_vector.h"
 #include "support/utilities.h"
 #include "wasm-type.h"
 
 namespace wasm {
+
+class Literals;
+struct ExceptionPackage;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -36,6 +40,7 @@ class Literal {
     int64_t i64;
     uint8_t v128[16];
     Name func; // function name for funcref
+    std::unique_ptr<ExceptionPackage> exn;
   };
 
 public:
@@ -43,7 +48,9 @@ public:
 
 public:
   Literal() : v128(), type(Type::none) {}
-  explicit Literal(Type type) : v128(), type(type) {}
+  explicit Literal(Type type) : v128(), type(type) {
+    assert(type != Type::unreachable);
+  }
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
@@ -60,9 +67,18 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
+  explicit Literal(std::unique_ptr<ExceptionPackage> exn)
+    : exn(std::move(exn)), type(Type::exnref) {}
+  Literal(const Literal& other);
+  Literal& operator=(const Literal& other);
+  ~Literal() {
+    if (type == Type::exnref) {
+      exn.~unique_ptr();
+    }
+  }
 
-  bool isConcrete() { return type != Type::none; }
-  bool isNone() { return type == Type::none; }
+  bool isConcrete() const { return type != Type::none; }
+  bool isNone() const { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getSingle()) {
@@ -94,15 +110,14 @@ public:
     WASM_UNREACHABLE("unexpected type");
   }
 
-  static Literal makeZero(Type type) {
-    if (type.isRef()) {
-      return makeNullref();
-    }
-    return makeFromInt32(0, type);
-  }
+  static Literals makeZero(Type type);
+  static Literal makeSingleZero(Type type);
 
   static Literal makeNullref() { return Literal(Type(Type::nullref)); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
+  static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
+    return Literal(std::move(exn));
+  }
 
   Literal castToF32();
   Literal castToF64();
@@ -126,7 +141,14 @@ public:
     return bit_cast<double>(i64);
   }
   std::array<uint8_t, 16> getv128() const;
-  Name getFunc() const { return func; }
+  Name getFunc() const {
+    assert(type == Type::funcref);
+    return func;
+  }
+  const ExceptionPackage& getExceptionPackage() const {
+    assert(type == Type::exnref);
+    return *exn.get();
+  }
 
   // careful!
   int32_t* geti32Ptr() {
@@ -178,8 +200,6 @@ public:
   static void printFloat(std::ostream& o, float f);
   static void printDouble(std::ostream& o, double d);
   static void printVec128(std::ostream& o, const std::array<uint8_t, 16>& v);
-
-  friend std::ostream& operator<<(std::ostream& o, Literal literal);
 
   Literal countLeadingZeroes() const;
   Literal countTrailingZeroes() const;
@@ -251,6 +271,8 @@ public:
 
   Literal min(const Literal& other) const;
   Literal max(const Literal& other) const;
+  Literal pmin(const Literal& other) const;
+  Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
@@ -331,9 +353,11 @@ public:
   Literal orV128(const Literal& other) const;
   Literal xorV128(const Literal& other) const;
   Literal bitselectV128(const Literal& left, const Literal& right) const;
+  Literal absI8x16() const;
   Literal negI8x16() const;
   Literal anyTrueI8x16() const;
   Literal allTrueI8x16() const;
+  Literal bitmaskI8x16() const;
   Literal shlI8x16(const Literal& other) const;
   Literal shrSI8x16(const Literal& other) const;
   Literal shrUI8x16(const Literal& other) const;
@@ -349,9 +373,11 @@ public:
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
   Literal avgrUI8x16(const Literal& other) const;
+  Literal absI16x8() const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
   Literal allTrueI16x8() const;
+  Literal bitmaskI16x8() const;
   Literal shlI16x8(const Literal& other) const;
   Literal shrSI16x8(const Literal& other) const;
   Literal shrUI16x8(const Literal& other) const;
@@ -367,9 +393,11 @@ public:
   Literal maxSI16x8(const Literal& other) const;
   Literal maxUI16x8(const Literal& other) const;
   Literal avgrUI16x8(const Literal& other) const;
+  Literal absI32x4() const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
   Literal allTrueI32x4() const;
+  Literal bitmaskI32x4() const;
   Literal shlI32x4(const Literal& other) const;
   Literal shrSI32x4(const Literal& other) const;
   Literal shrUI32x4(const Literal& other) const;
@@ -389,6 +417,7 @@ public:
   Literal shrUI64x2(const Literal& other) const;
   Literal addI64x2(const Literal& other) const;
   Literal subI64x2(const Literal& other) const;
+  Literal mulI64x2(const Literal& other) const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;
@@ -398,6 +427,8 @@ public:
   Literal divF32x4(const Literal& other) const;
   Literal minF32x4(const Literal& other) const;
   Literal maxF32x4(const Literal& other) const;
+  Literal pminF32x4(const Literal& other) const;
+  Literal pmaxF32x4(const Literal& other) const;
   Literal absF64x2() const;
   Literal negF64x2() const;
   Literal sqrtF64x2() const;
@@ -407,6 +438,8 @@ public:
   Literal divF64x2(const Literal& other) const;
   Literal minF64x2(const Literal& other) const;
   Literal maxF64x2(const Literal& other) const;
+  Literal pminF64x2(const Literal& other) const;
+  Literal pmaxF64x2(const Literal& other) const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal truncSatToSI64x2() const;
@@ -445,6 +478,39 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
+class Literals : public SmallVector<Literal, 1> {
+public:
+  Literals() = default;
+  Literals(std::initializer_list<Literal> init)
+    : SmallVector<Literal, 1>(init) {
+#ifndef NDEBUG
+    for (auto& lit : init) {
+      assert(lit.isConcrete());
+    }
+#endif
+  };
+  Type getType() {
+    std::vector<Type> types;
+    for (auto& val : *this) {
+      types.push_back(val.type);
+    }
+    return Type(types);
+  }
+  bool isNone() { return size() == 0; }
+  bool isConcrete() { return size() != 0; }
+};
+
+// A struct for a thrown exception, which includes a tag (event) and thrown
+// values
+struct ExceptionPackage {
+  Name event;
+  Literals values;
+};
+
+std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
+std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
+std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
+
 } // namespace wasm
 
 namespace std {
@@ -457,6 +523,15 @@ template<> struct hash<wasm::Literal> {
     return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
                                      uint64_t(hash<int64_t>()(chunks[0]))),
                         uint64_t(hash<int64_t>()(chunks[1])));
+  }
+};
+template<> struct hash<wasm::Literals> {
+  size_t operator()(const wasm::Literals& a) const {
+    size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
+    for (const auto& lit : a) {
+      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
+    }
+    return h;
   }
 };
 template<> struct less<wasm::Literal> {

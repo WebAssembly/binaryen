@@ -156,15 +156,21 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AbsVecI8x16,
   NegVecI8x16,
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,
   AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
   NegVecI32x4,
   AnyTrueVecI32x4,
   AllTrueVecI32x4,
+  BitmaskVecI32x4,
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
@@ -388,18 +394,23 @@ enum BinaryOp {
   DotSVecI16x8ToVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
+  MulVecI64x2,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,
   DivVecF32x4,
   MinVecF32x4,
   MaxVecF32x4,
+  PMinVecF32x4,
+  PMaxVecF32x4,
   AddVecF64x2,
   SubVecF64x2,
   MulVecF64x2,
   DivVecF64x2,
   MinVecF64x2,
   MaxVecF64x2,
+  PMinVecF64x2,
+  PMaxVecF64x2,
 
   // SIMD Conversion
   NarrowSVecI16x8ToVecI8x16,
@@ -529,7 +540,6 @@ public:
     DataDropId,
     MemoryCopyId,
     MemoryFillId,
-    PushId,
     PopId,
     RefNullId,
     RefIsNullId,
@@ -538,6 +548,8 @@ public:
     ThrowId,
     RethrowId,
     BrOnExnId,
+    TupleMakeId,
+    TupleExtractId,
     NumExpressionIds
   };
   Id _id;
@@ -572,7 +584,8 @@ public:
 
 const char* getExpressionName(Expression* curr);
 
-Literal getLiteralFromConstExpression(Expression* curr);
+Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
@@ -1053,25 +1066,8 @@ public:
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
-// A multivalue push. This represents a push of a value, which will be
-// used in the next return. That is, a multivalue return is done by
-// pushing some values, then doing a return (with a value as well).
-// For more on this design, see the readme.
-class Push : public SpecificExpression<Expression::PushId> {
-public:
-  Push() = default;
-  Push(MixedArena& allocator) {}
-
-  Expression* value;
-
-  void finalize();
-};
-
-// A multivalue pop. This represents a pop of a value, which arrived
-// from a multivalue call or other situation where there are things on
-// the stack. That is, a multivalue-returning call is done by doing
-// the call, receiving the first value normally, and receiving the others
-// via calls to pop.
+// Represents a pop of a value that arrives as an implicit argument to the
+// current block. Currently used in exception handling.
 class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
@@ -1149,6 +1145,25 @@ public:
   void finalize();
 };
 
+class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
+public:
+  TupleMake(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
+public:
+  TupleExtract(MixedArena& allocator) {}
+
+  Expression* tuple;
+  Index index;
+
+  void finalize();
+};
+
 // Globals
 
 struct Importable {
@@ -1170,10 +1185,52 @@ using BinaryLocation = uint32_t;
 // Offsets are relative to the beginning of the code section, as in DWARF.
 struct BinaryLocations {
   struct Span {
-    BinaryLocation start, end;
+    BinaryLocation start = 0, end = 0;
   };
+
+  // Track the range of addresses an expressions appears at. This is the
+  // contiguous range that all instructions have - control flow instructions
+  // have additional opcodes later (like an end for a block or loop), see
+  // just after this.
   std::unordered_map<Expression*, Span> expressions;
-  std::unordered_map<Function*, Span> functions;
+
+  // Track the extra delimiter positions that some instructions, in particular
+  // control flow, have, like 'end' for loop and block. We keep these in a
+  // separate map because they are rare and we optimize for the storage space
+  // for the common type of instruction which just needs a Span. We implement
+  // this as a simple struct with two elements (as two extra elements is the
+  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
+  // second value may be 0, indicating it is not used.
+  struct DelimiterLocations : public std::array<BinaryLocation, 2> {
+    DelimiterLocations() {
+      // Ensure zero-initialization.
+      for (auto& item : *this) {
+        item = 0;
+      }
+    }
+  };
+
+  enum DelimiterId {
+    // All control flow structures have an end, so use index 0 for that.
+    End = 0,
+    // Use index 1 for all other current things.
+    Else = 1,
+    Catch = 1,
+    Invalid = -1
+  };
+  std::unordered_map<Expression*, DelimiterLocations> delimiters;
+
+  // DWARF debug info can refer to multiple interesting positions in a function.
+  struct FunctionLocations {
+    // The very start of the function, where the binary has a size LEB.
+    BinaryLocation start = 0;
+    // The area where we declare locals, which is right after the size LEB.
+    BinaryLocation declarations = 0;
+    // The end, which is one past the final "end" instruction byte.
+    BinaryLocation end = 0;
+  };
+
+  std::unordered_map<Function*, FunctionLocations> functions;
 };
 
 // Forward declarations of Stack IR, as functions can contain it, see
@@ -1187,8 +1244,8 @@ using StackIR = std::vector<StackInst*>;
 class Function : public Importable {
 public:
   Name name;
-  Signature sig;
-  std::vector<Type> vars;   // params plus vars
+  Signature sig;          // parameters and return value
+  std::vector<Type> vars; // non-param locals
 
   // The body of the function
   Expression* body = nullptr;
@@ -1231,7 +1288,9 @@ public:
 
   // General debugging info support: track instructions and the function itself.
   std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
-  BinaryLocations::Span funcLocation;
+  std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
+    delimiterLocations;
+  BinaryLocations::FunctionLocations funcLocation;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1365,7 +1424,7 @@ class Global : public Importable {
 public:
   Name name;
   Type type;
-  Expression* init;
+  Expression* init = nullptr;
   bool mutable_ = false;
 };
 
@@ -1388,6 +1447,13 @@ public:
   std::vector<char> data;
 };
 
+// The optional "dylink" section is used in dynamic linking.
+class DylinkSection {
+public:
+  Index memorySize, memoryAlignment, tableSize, tableAlignment;
+  std::vector<Name> neededDynlibs;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
@@ -1402,6 +1468,9 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Optional user section IR representation.
+  std::unique_ptr<DylinkSection> dylinkSection;
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;

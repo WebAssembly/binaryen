@@ -1,0 +1,81 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (import "env" "memory" (memory $0 0))
+ (data (global.get $gimport$3) "")
+ (import "env" "table" (table $0 0 funcref))
+ (import "env" "__stack_pointer" (global $gimport$2_import i32))
+ (import "env" "__memory_base" (global $gimport$3 i32))
+ (import "env" "__table_base" (global $gimport$4 i32))
+ (import "env" "g$someglobal1" (func $g$someglobal1 (result i32)))
+ (import "env" "g$someglobal3" (func $g$someglobal3 (result i32)))
+ (global $gimport$6 (mut i32) (i32.const 0))
+ (global $gimport$7 (mut i32) (i32.const 0))
+ (global $gimport$8 (mut i32) (i32.const 0))
+ (global $global$1 i32 (i32.const 54))
+ (global $global$2 i32 (i32.const 0))
+ (global $gimport$2 (mut i32) (global.get $gimport$2_import))
+ (export "someglobal2" (global $global$1))
+ (export "main" (func $main))
+ (export "__data_end" (global $global$2))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (export "__assign_got_enties" (func $__assign_got_enties))
+ (func $main (param $0 i32) (param $1 i32) (result i32)
+  (i32.const 0)
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+ (func $__assign_got_enties
+  (global.set $gimport$6
+   (call $g$someglobal1)
+  )
+  (global.set $gimport$7
+   (i32.add
+    (global.get $gimport$3)
+    (global.get $global$1)
+   )
+  )
+  (global.set $gimport$8
+   (call $g$someglobal3)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 4294966728,
+  "tableSize": 0,
+  "initializers": [
+    "__assign_got_enties"
+  ],
+  "declares": [
+    "g$someglobal1",
+    "g$someglobal3"
+  ],
+  "externs": [
+    "___stack_pointer",
+    "___memory_base",
+    "___table_base"
+  ],
+  "exports": [
+    "main",
+    "__growWasmMemory",
+    "__assign_got_enties"
+  ],
+  "namedGlobals": {
+    "someglobal2" : "54",
+    "__data_end" : "0"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 1
+}
+-- END METADATA --
+;)

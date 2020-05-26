@@ -27,9 +27,11 @@ namespace wasm {
 
 struct EffectAnalyzer
   : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
-  EffectAnalyzer(const PassOptions& passOptions, Expression* ast = nullptr) {
-    ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
-    debugInfo = passOptions.debugInfo;
+  EffectAnalyzer(const PassOptions& passOptions,
+                 FeatureSet features,
+                 Expression* ast = nullptr)
+    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       analyze(ast);
     }
@@ -37,6 +39,7 @@ struct EffectAnalyzer
 
   bool ignoreImplicitTraps;
   bool debugInfo;
+  FeatureSet features;
 
   void analyze(Expression* ast) {
     breakNames.clear();
@@ -45,6 +48,7 @@ struct EffectAnalyzer
     if (breakNames.size() > 0) {
       branches = true;
     }
+    assert(tryDepth == 0);
   }
 
   // Core effect tracking
@@ -66,6 +70,36 @@ struct EffectAnalyzer
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
+  bool throws = false;
+  // The nested depth of try. If an instruction that may throw is inside an
+  // inner try, we don't mark it as 'throws', because it will be caught by an
+  // inner catch.
+  size_t tryDepth = 0;
+
+  static void scan(EffectAnalyzer* self, Expression** currp) {
+    Expression* curr = *currp;
+    // We need to decrement try depth before catch starts, so handle it
+    // separately
+    if (curr->is<Try>()) {
+      self->pushTask(doVisitTry, currp);
+      self->pushTask(scan, &curr->cast<Try>()->catchBody);
+      self->pushTask(doStartCatch, currp);
+      self->pushTask(scan, &curr->cast<Try>()->body);
+      self->pushTask(doStartTry, currp);
+      return;
+    }
+    PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>>::scan(self,
+                                                                        currp);
+  }
+
+  static void doStartTry(EffectAnalyzer* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doStartCatch(EffectAnalyzer* self, Expression** currp) {
+    assert(self->tryDepth > 0 && "try depth cannot be negative");
+    self->tryDepth--;
+  }
 
   // Helper functions to check for various effect types
 
@@ -76,17 +110,20 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool transfersControlFlow() const { return branches || throws; }
 
   bool hasGlobalSideEffects() const {
-    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
+    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
+           throws;
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
            implicitTrap;
   }
   bool hasAnything() const {
-    return branches || calls || accessesLocal() || readsMemory ||
-           writesMemory || accessesGlobal() || implicitTrap || isAtomic;
+    return calls || accessesLocal() || readsMemory || writesMemory ||
+           accessesGlobal() || implicitTrap || isAtomic ||
+           transfersControlFlow();
   }
 
   bool noticesGlobalSideEffects() {
@@ -99,8 +136,8 @@ struct EffectAnalyzer
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if ((branches && other.hasSideEffects()) ||
-        (other.branches && hasSideEffects()) ||
+    if ((transfersControlFlow() && other.hasSideEffects()) ||
+        (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
@@ -137,7 +174,8 @@ struct EffectAnalyzer
       }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+    if ((implicitTrap && other.transfersControlFlow()) ||
+        (other.implicitTrap && transfersControlFlow())) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
@@ -155,6 +193,7 @@ struct EffectAnalyzer
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
+    throws = throws || other.throws;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -223,6 +262,10 @@ struct EffectAnalyzer
 
   void visitCall(Call* curr) {
     calls = true;
+    // When EH is enabled, any call can throw.
+    if (features.hasExceptionHandling() && tryDepth == 0) {
+      throws = true;
+    }
     if (curr->isReturn) {
       branches = true;
     }
@@ -235,6 +278,9 @@ struct EffectAnalyzer
   }
   void visitCallIndirect(CallIndirect* curr) {
     calls = true;
+    if (features.hasExceptionHandling() && tryDepth == 0) {
+      throws = true;
+    }
     if (curr->isReturn) {
       branches = true;
     }
@@ -391,21 +437,39 @@ struct EffectAnalyzer
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitTry(Try* curr) {}
-  // We safely model throws as branches
-  void visitThrow(Throw* curr) { branches = true; }
-  void visitRethrow(Rethrow* curr) { branches = true; }
-  void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
+  void visitThrow(Throw* curr) {
+    if (tryDepth == 0) {
+      throws = true;
+    }
+  }
+  void visitRethrow(Rethrow* curr) {
+    if (tryDepth == 0) {
+      throws = true;
+    }
+    if (!ignoreImplicitTraps) { // rethrow traps when the arg is null
+      implicitTrap = true;
+    }
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    breakNames.insert(curr->name);
+    if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
+      implicitTrap = true;
+    }
+  }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
-  void visitPush(Push* curr) { calls = true; }
   void visitPop(Pop* curr) { calls = true; }
+  void visitTupleMake(TupleMake* curr) {}
+  void visitTupleExtract(TupleExtract* curr) {}
 
   // Helpers
 
-  static bool
-  canReorder(const PassOptions& passOptions, Expression* a, Expression* b) {
-    EffectAnalyzer aEffects(passOptions, a);
-    EffectAnalyzer bEffects(passOptions, b);
+  static bool canReorder(const PassOptions& passOptions,
+                         FeatureSet features,
+                         Expression* a,
+                         Expression* b) {
+    EffectAnalyzer aEffects(passOptions, features, a);
+    EffectAnalyzer bEffects(passOptions, features, b);
     return !aEffects.invalidates(bEffects);
   }
 
@@ -423,7 +487,8 @@ struct EffectAnalyzer
     WritesMemory = 1 << 7,
     ImplicitTrap = 1 << 8,
     IsAtomic = 1 << 9,
-    Any = (1 << 10) - 1
+    Throws = 1 << 10,
+    Any = (1 << 11) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -456,6 +521,9 @@ struct EffectAnalyzer
     }
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;
+    }
+    if (throws) {
+      effects |= SideEffects::Throws;
     }
     return effects;
   }

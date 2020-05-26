@@ -68,7 +68,12 @@ struct Flatten
       return;
     }
 
-    if (Flat::isControlFlowStructure(curr)) {
+    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+        curr->is<BrOnExn>()) {
+      Fatal() << "Flatten does not support EH instructions yet";
+    }
+
+    if (Properties::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
@@ -291,7 +296,7 @@ struct Flatten
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !Flat::isControlFlowStructure(parent)) {
+      if (parent && !Properties::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);

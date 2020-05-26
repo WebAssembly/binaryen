@@ -16,7 +16,6 @@
 
 import glob
 import os
-import shutil
 import subprocess
 import sys
 import unittest
@@ -28,6 +27,7 @@ from scripts.test import lld
 from scripts.test import shared
 from scripts.test import support
 from scripts.test import wasm2js
+from scripts.test import wasm_opt
 
 
 if shared.options.interpreter:
@@ -83,111 +83,6 @@ def run_help_tests():
         assert version == changelog_version
 
 
-def run_wasm_opt_tests():
-    print('\n[ checking wasm-opt -o notation... ]\n')
-
-    for extra_args in [[], ['--no-validation']]:
-        wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
-        shared.delete_from_orbit('a.wat')
-        out = 'a.wat'
-        cmd = shared.WASM_OPT + [wast, '-o', out, '-S'] + extra_args
-        support.run_command(cmd)
-        shared.fail_if_not_identical_to_file(open(out).read(), wast)
-
-    print('\n[ checking wasm-opt binary reading/writing... ]\n')
-
-    shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wat'), 'a.wat')
-    shared.delete_from_orbit('a.wasm')
-    shared.delete_from_orbit('b.wast')
-    support.run_command(shared.WASM_OPT + ['a.wat', '-o', 'a.wasm'])
-    assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
-    support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
-    assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
-
-    print('\n[ checking wasm-opt passes... ]\n')
-
-    for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
-        print('..', os.path.basename(t))
-        binary = '.wasm' in t
-        base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
-        passname = base
-        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
-        if os.path.exists(passes_file):
-            passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
-        actual = ''
-        for module, asserts in support.split_wast(t):
-            assert len(asserts) == 0
-            support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast', '--print']
-            curr = support.run_command(cmd)
-            actual += curr
-            # also check debug mode output is valid
-            debugged = support.run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
-            shared.fail_if_not_contained(actual, debugged)
-
-            # also check pass-debug mode
-            def check():
-                pass_debug = support.run_command(cmd)
-                shared.fail_if_not_identical(curr, pass_debug)
-            shared.with_pass_debug(check)
-
-        expected_file = os.path.join(shared.get_test_dir('passes'), base + ('.bin' if binary else '') + '.txt')
-        shared.fail_if_not_identical_to_file(actual, expected_file)
-
-        if 'emit-js-wrapper' in t:
-            with open('a.js') as actual:
-                shared.fail_if_not_identical_to_file(actual.read(), t + '.js')
-        if 'emit-spec-wrapper' in t:
-            with open('a.wat') as actual:
-                shared.fail_if_not_identical_to_file(actual.read(), t + '.wat')
-
-    print('\n[ checking wasm-opt parsing & printing... ]\n')
-
-    for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
-        print('..', os.path.basename(t))
-        wasm = os.path.basename(t).replace('.wast', '')
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        print('    ', ' '.join(cmd))
-        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
-        expected_file = os.path.join(shared.get_test_dir('print'), wasm + '.txt')
-        shared.fail_if_not_identical_to_file(actual, expected_file)
-        cmd = shared.WASM_OPT + [os.path.join(shared.get_test_dir('print'), t), '--print-minified', '-all']
-        print('    ', ' '.join(cmd))
-        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
-        shared.fail_if_not_identical(actual.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
-
-    print('\n[ checking wasm-opt testcases... ]\n')
-
-    for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        print('..', os.path.basename(t))
-        f = t + '.from-wast'
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        actual = support.run_command(cmd)
-        actual = actual.replace('printing before:\n', '')
-
-        shared.fail_if_not_identical_to_file(actual, f)
-
-        # FIXME Remove this condition after nullref is implemented in V8
-        if 'reference-types.wast' not in t:
-            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
-            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
-
-        shared.minify_check(t)
-
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        shared.fail_if_not_identical_to_file(actual, f)
-
-
 def run_wasm_dis_tests():
     print('\n[ checking wasm-dis on provided binaries... ]\n')
 
@@ -240,7 +135,7 @@ def run_ctor_eval_tests():
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
-        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wat', '-S', '--ctors', ctors]
+        cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wat', '-S', '--ctors', ctors]
         support.run_command(cmd)
         actual = open('a.wat').read()
         out = t + '.out'
@@ -273,7 +168,7 @@ def run_wasm_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:
@@ -283,14 +178,14 @@ def run_wasm_reduce_tests():
     # this is very slow in ThreadSanitizer, so avoid it there
     if 'fsanitize=thread' not in str(os.environ):
         print('\n[ checking wasm-reduce fuzz testcase ]\n')
-
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
+        # TODO: re-enable multivalue once it is better optimized
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
-        assert after < 0.75 * before, [before, after]
+        assert after < 0.85 * before, [before, after]
 
 
 def run_spec_tests():
@@ -301,7 +196,11 @@ def run_spec_tests():
 
         def run_spec_test(wast):
             cmd = shared.WASM_SHELL + [wast]
-            return support.run_command(cmd, stderr=subprocess.PIPE)
+            output = support.run_command(cmd, stderr=subprocess.PIPE)
+            # filter out binaryen interpreter logging that the spec suite
+            # doesn't expect
+            filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
+            return '\n'.join(filtered) + '\n'
 
         def run_opt_test(wast):
             # check optimization validation
@@ -429,10 +328,6 @@ def run_gcc_tests():
         print('run...', output_file)
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
         os.remove(output_file)
-        if sys.platform == 'darwin':
-            # Also removes debug directory produced on Mac OS
-            shutil.rmtree(output_file + '.dSYM')
-
         shared.fail_if_not_identical_to_file(actual, expected)
 
 
@@ -449,7 +344,7 @@ def run_unittest():
 
 TEST_SUITES = OrderedDict([
     ('help-messages', run_help_tests),
-    ('wasm-opt', run_wasm_opt_tests),
+    ('wasm-opt', wasm_opt.test_wasm_opt),
     ('asm2wasm', asm2wasm.test_asm2wasm),
     ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
     ('wasm-dis', run_wasm_dis_tests),
@@ -459,23 +354,35 @@ TEST_SUITES = OrderedDict([
     ('wasm-metadce', run_wasm_metadce_tests),
     ('wasm-reduce', run_wasm_reduce_tests),
     ('spec', run_spec_tests),
-    ('binaryenjs', binaryenjs.test_binaryen_js),
     ('lld', lld.test_wasm_emscripten_finalize),
     ('wasm2js', wasm2js.test_wasm2js),
     ('validator', run_validator_tests),
     ('gcc', run_gcc_tests),
     ('unit', run_unittest),
+    ('binaryenjs', binaryenjs.test_binaryen_js),
+    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
 ])
 
 
 # Run all the tests
 def main():
+    all_suites = TEST_SUITES.keys()
+    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+
     if shared.options.list_suites:
-        for suite in TEST_SUITES.keys():
+        for suite in all_suites:
             print(suite)
         return 0
 
-    for test in shared.requested or TEST_SUITES.keys():
+    for r in shared.requested:
+        if r not in all_suites:
+            print('invalid test suite: %s (see --list-suites)\n' % r)
+            return 1
+
+    if not shared.requested:
+        shared.requested = [s for s in all_suites if s not in skip_by_default]
+
+    for test in shared.requested:
         TEST_SUITES[test]()
 
     # Check/display the results

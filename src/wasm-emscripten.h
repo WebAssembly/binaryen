@@ -23,6 +23,8 @@
 
 namespace wasm {
 
+Global* getStackPointerGlobal(Module& wasm);
+
 // Class which modifies a wasm module for use with emscripten. Generates
 // runtime functions and emits metadata.
 class EmscriptenGlueGenerator {
@@ -32,8 +34,8 @@ public:
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
+  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
 
-  void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
@@ -72,17 +74,12 @@ private:
   Address stackPointerOffset;
   bool useStackPointerGlobal;
   bool standalone;
+  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
 
-  Global* getStackPointerGlobal();
-  Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Function* func, Expression* value);
   void generateDynCallThunk(Signature sig);
-  void generateStackSaveFunction();
-  void generateStackAllocFunction();
-  void generateStackRestoreFunction();
   void generateSetStackLimitFunction();
   Name importStackOverflowHandler();
 };

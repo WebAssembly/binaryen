@@ -272,7 +272,9 @@
  (start $start)
  (func $start (local $exn exnref) (; 0 ;)
   (try
-   (throw $e-throw (i32.const 0))
+   (do
+    (throw $e-throw (i32.const 0))
+   )
    (catch
     (local.set $exn (exnref.pop))
     (drop

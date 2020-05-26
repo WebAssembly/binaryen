@@ -152,15 +152,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
+      case AbsVecI8x16:
       case NegVecI8x16:
       case AnyTrueVecI8x16:
       case AllTrueVecI8x16:
+      case BitmaskVecI8x16:
+      case AbsVecI16x8:
       case NegVecI16x8:
       case AnyTrueVecI16x8:
       case AllTrueVecI16x8:
+      case BitmaskVecI16x8:
+      case AbsVecI32x4:
       case NegVecI32x4:
       case AnyTrueVecI32x4:
       case AllTrueVecI32x4:
+      case BitmaskVecI32x4:
       case NegVecI64x2:
       case AnyTrueVecI64x2:
       case AllTrueVecI64x2:
@@ -663,6 +669,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case SubVecI64x2:
         ret = 1;
         break;
+      case MulVecI64x2:
+        ret = 1;
+        break;
       case AddVecF32x4:
         ret = 1;
         break;
@@ -681,6 +690,12 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case MaxVecF32x4:
         ret = 1;
         break;
+      case PMinVecF32x4:
+        ret = 1;
+        break;
+      case PMaxVecF32x4:
+        ret = 1;
+        break;
       case AddVecF64x2:
         ret = 1;
         break;
@@ -697,6 +712,12 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 1;
         break;
       case MaxVecF64x2:
+        ret = 1;
+        break;
+      case PMinVecF64x2:
+        ret = 1;
+        break;
+      case PMaxVecF64x2:
         ret = 1;
         break;
       case NarrowSVecI16x8ToVecI8x16:
@@ -726,6 +747,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitDrop(Drop* curr) { return visit(curr->value); }
   Index visitReturn(Return* curr) { return maybeVisit(curr->value); }
   Index visitHost(Host* curr) { return 100; }
+  Index visitRefNull(RefNull* curr) { return 1; }
+  Index visitRefIsNull(RefIsNull* curr) { return 1; }
+  Index visitRefFunc(RefFunc* curr) { return 1; }
+  Index visitTry(Try* curr) {
+    // We assume no exception will be thrown in most cases
+    return visit(curr->body);
+  }
+  Index visitThrow(Throw* curr) { return 100; }
+  Index visitRethrow(Rethrow* curr) { return 100; }
+  Index visitBrOnExn(BrOnExn* curr) {
+    return 1 + visit(curr->exnref) + curr->sent.size();
+  }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
 };

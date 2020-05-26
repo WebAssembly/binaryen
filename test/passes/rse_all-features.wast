@@ -20,6 +20,15 @@
     (local.set $a (i32.const 1))
     (local.set $a (i32.const 0))
   )
+  (func $tuple-value
+    (local $x (i32 i64))
+    (local.set $x
+      (tuple.make (i32.const 42) (i64.const 42))
+    )
+    (local.set $x
+      (tuple.make (i32.const 42) (i64.const 42))
+    )
+  )
   (func $unreach
     (local $a i32)
     (block $x
@@ -282,6 +291,7 @@
   (func $try1
     (local $x i32)
     (try
+      (do)
       (catch
         (drop (exnref.pop))
         (local.set $x (i32.const 1))
@@ -292,7 +302,7 @@
   (func $try2
     (local $x i32)
     (try
-      (block
+      (do
         (throw $e (i32.const 0))
         (local.set $x (i32.const 1))
       )
@@ -305,7 +315,9 @@
   (func $try3
     (local $x i32)
     (try
-      (throw $e (i32.const 0))
+      (do
+        (throw $e (i32.const 0))
+      )
       (catch
         (drop (exnref.pop))
         (local.set $x (i32.const 1))
@@ -317,7 +329,7 @@
   (func $try4
     (local $x i32)
     (try
-      (block
+      (do
         (call $foo)
         (local.set $x (i32.const 1))
       )
@@ -330,7 +342,7 @@
   (func $try5
     (local $x i32)
     (try
-      (block
+      (do
         (local.set $x (i32.const 1))
         (call $foo)
       )
@@ -343,10 +355,14 @@
   (func $nested-try
     (local $x i32)
     (try
-      (try
-        (throw $e (i32.const 0))
-        (catch
-          (rethrow (exnref.pop))
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch
+            (rethrow (exnref.pop))
+          )
         )
       )
       (catch
@@ -357,4 +373,3 @@
     (local.set $x (i32.const 1)) ;; should be dropped
   )
 )
-

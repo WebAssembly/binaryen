@@ -5,20 +5,22 @@
  (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $event$0 (attr 0) (param i32))
  (event $event$1 (attr 0) (param anyref))
- (func $0 (; 0 ;) (param $0 exnref) (result exnref)
+ (func $0 (param $0 exnref) (result exnref)
   (local.get $0)
  )
- (func $1 (; 1 ;)
+ (func $1
   (nop)
  )
- (func $2 (; 2 ;)
+ (func $2
   (nop)
  )
- (func $3 (; 3 ;)
+ (func $3
   (local $0 exnref)
   (try
-   (throw $event$0
-    (i32.const 0)
+   (do
+    (throw $event$0
+     (i32.const 0)
+    )
    )
    (catch
     (local.set $0
@@ -37,7 +39,9 @@
   )
   (block $label$4
    (try
-    (br $label$4)
+    (do
+     (br $label$4)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -47,7 +51,9 @@
    )
   )
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)
@@ -55,7 +61,7 @@
    )
   )
   (try
-   (block
+   (do
     (call $1)
     (call $2)
    )
@@ -68,9 +74,11 @@
    )
   )
  )
- (func $4 (; 4 ;)
+ (func $4
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)

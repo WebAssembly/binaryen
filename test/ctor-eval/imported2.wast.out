@@ -5,7 +5,7 @@
  (global $mine (mut i32) (i32.const 1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
- (func $test2 (; 0 ;)
+ (func $test2
   (global.set $mine
    (i32.const 2)
   )
@@ -14,7 +14,7 @@
    (i32.const 115)
   )
  )
- (func $test3 (; 1 ;)
+ (func $test3
   (i32.store8
    (i32.const 14)
    (i32.const 115)

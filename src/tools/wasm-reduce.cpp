@@ -282,11 +282,12 @@ struct Reducer
       // compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        // TODO(tlively): -all should be replaced with an option to use the
-        // existing feature set, once implemented.
-        currCommand += working + " -all -o " + test + " " + pass;
+        currCommand += working + " --detect-features -o " + test + " " + pass;
         if (debugInfo) {
           currCommand += " -g ";
+        }
+        if (!binary) {
+          currCommand += " -S ";
         }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
@@ -566,14 +567,14 @@ struct Reducer
         }
       }
     }
-    // If that didn't work, try to replace with a child + a unary conversion
-    if (curr->type.isConcrete() &&
-        !curr->is<Unary>()) { // but not if it's already unary
+    // If that didn't work, try to replace with a child + a unary conversion,
+    // but not if it's already unary
+    if (curr->type.isSingle() && !curr->is<Unary>()) {
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!child->type.isConcrete()) {
+        if (!child->type.isSingle()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
@@ -1013,6 +1014,11 @@ struct Reducer
       RefNull* n = builder->makeRefNull();
       return tryToReplaceCurrent(n);
     }
+    if (curr->type.isMulti()) {
+      Expression* n =
+        builder->makeConstantExpression(Literal::makeZero(curr->type));
+      return tryToReplaceCurrent(n);
+    }
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) {
       return true;
@@ -1183,10 +1189,8 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    // TODO(tlively): -all should be replaced with an option to use the existing
-    // feature set, once implemented.
     auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
-               " -all -o " + test;
+               " --detect-features -o " + test;
     if (!binary) {
       cmd += " -S";
     }

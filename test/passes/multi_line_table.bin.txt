@@ -211,8 +211,8 @@ DWARF debug info
 ================
 
 Contains section .debug_info (130 bytes)
-Contains section .debug_abbrev (99 bytes)
-Contains section .debug_line (139 bytes)
+Contains section .debug_abbrev (100 bytes)
+Contains section .debug_line (145 bytes)
 Contains section .debug_str (407 bytes)
 
 .debug_abbrev contents:
@@ -240,6 +240,7 @@ Abbrev table for offset: 0x00000000
 	DW_AT_encoding	DW_FORM_data1
 	DW_AT_byte_size	DW_FORM_data1
 
+Abbrev table for offset: 0x00000032
 [1] DW_TAG_compile_unit	DW_CHILDREN_yes
 	DW_AT_producer	DW_FORM_strp
 	DW_AT_language	DW_FORM_data2
@@ -291,14 +292,37 @@ Abbrev table for offset: 0x00000000
                 DW_AT_byte_size [DW_FORM_data1]	(0x04)
 
 0x00000040:   NULL
-0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 addr_size = 0x04 (next unit at 0x00000082)
-<compile unit can't be parsed!>
+0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 abbr_offset = 0x0032 addr_size = 0x04 (next unit at 0x00000082)
 
+0x0000004c: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x000000cc] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000161] = "third.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000049)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000016b] = "/tmp/emscripten_test_wasm0_xkAHBX")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+              DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+
+0x00000067:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018d] = "sidef")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/third.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0039 => {0x0000007a} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000007a:   DW_TAG_base_type [3]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000193] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000081:   NULL
 
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x00000042
+    total_length: 0x00000045
          version: 4
  prologue_length: 0x00000022
  min_inst_length: 1
@@ -324,21 +348,25 @@ file_names[  1]:
       dir_index: 0
        mod_time: 0x00000000
          length: 0x00000000
-0x0000002c: 00 DW_LNE_set_address (0x0000000000000011)
-0x00000033: 05 DW_LNS_set_column (26)
-0x00000035: 0a DW_LNS_set_prologue_end
-0x00000036: 00 DW_LNE_end_sequence
-            0x0000000000000011      1     26      1   0             0  is_stmt end_sequence
+0x0000002c: 00 DW_LNE_set_address (0x000000000000000a)
+0x00000033: 01 DW_LNS_copy
+            0x000000000000000a      1      0      1   0             0  is_stmt
 
-0x00000039: 00 DW_LNE_set_address (0x0000000000000015)
-0x00000040: 05 DW_LNS_set_column (26)
-0x00000042: 0a DW_LNS_set_prologue_end
-0x00000043: 00 DW_LNE_end_sequence
+
+0x00000034: 00 DW_LNE_set_address (0x0000000000000011)
+0x0000003b: 05 DW_LNS_set_column (26)
+0x0000003d: 0a DW_LNS_set_prologue_end
+0x0000003e: 01 DW_LNS_copy
+            0x0000000000000011      1     26      1   0             0  is_stmt prologue_end
+
+
+0x0000003f: 00 DW_LNE_set_address (0x0000000000000015)
+0x00000046: 00 DW_LNE_end_sequence
             0x0000000000000015      1     26      1   0             0  is_stmt end_sequence
 
-debug_line[0x00000046]
+debug_line[0x00000049]
 Line table prologue:
-    total_length: 0x00000041
+    total_length: 0x00000044
          version: 4
  prologue_length: 0x00000021
  min_inst_length: 1
@@ -364,16 +392,20 @@ file_names[  1]:
       dir_index: 0
        mod_time: 0x00000000
          length: 0x00000000
-0x00000071: 00 DW_LNE_set_address (0x000000000000001d)
-0x00000078: 05 DW_LNS_set_column (26)
-0x0000007a: 0a DW_LNS_set_prologue_end
-0x0000007b: 00 DW_LNE_end_sequence
-            0x000000000000001d      1     26      1   0             0  is_stmt end_sequence
+0x00000074: 00 DW_LNE_set_address (0x0000000000000016)
+0x0000007b: 01 DW_LNS_copy
+            0x0000000000000016      1      0      1   0             0  is_stmt
 
-0x0000007e: 00 DW_LNE_set_address (0x0000000000000021)
-0x00000085: 05 DW_LNS_set_column (26)
-0x00000087: 0a DW_LNS_set_prologue_end
-0x00000088: 00 DW_LNE_end_sequence
+
+0x0000007c: 00 DW_LNE_set_address (0x000000000000001d)
+0x00000083: 05 DW_LNS_set_column (26)
+0x00000085: 0a DW_LNS_set_prologue_end
+0x00000086: 01 DW_LNS_copy
+            0x000000000000001d      1     26      1   0             0  is_stmt prologue_end
+
+
+0x00000087: 00 DW_LNE_set_address (0x0000000000000021)
+0x0000008e: 00 DW_LNE_end_sequence
             0x0000000000000021      1     26      1   0             0  is_stmt end_sequence
 
 
@@ -402,13 +434,13 @@ file_names[  1]:
  (export "sideg" (func $sideg))
  (export "sidef" (func $sidef))
  (export "__dso_handle" (global $global$0))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
   ;; code offset: 0x3
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 1 ;)
+ (func $__wasm_apply_relocs
  )
- (func $sideg (; 2 ;) (result i32)
+ (func $sideg (result i32)
   (local $0 i32)
   ;; code offset: 0xf
   (local.set $0
@@ -421,7 +453,7 @@ file_names[  1]:
    (local.get $0)
   )
  )
- (func $sidef (; 3 ;) (result i32)
+ (func $sidef (result i32)
   (local $0 i32)
   ;; code offset: 0x1b
   (local.set $0
@@ -434,10 +466,14 @@ file_names[  1]:
    (local.get $0)
   )
  )
- ;; custom section "dylink", size 5
+ ;; dylink section
+ ;;   memorysize: 0
+ ;;   memoryalignment: 0
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section ".debug_info", size 130
- ;; custom section ".debug_abbrev", size 99
- ;; custom section ".debug_line", size 139
+ ;; custom section ".debug_abbrev", size 100
+ ;; custom section ".debug_line", size 145
  ;; custom section ".debug_str", size 407
  ;; custom section "producers", size 180
 )

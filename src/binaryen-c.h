@@ -90,7 +90,7 @@ typedef uint32_t BinaryenIndex;
 // Core types (call to get the value of each; you can cache them, they
 // never change)
 
-typedef uint32_t BinaryenType;
+typedef uintptr_t BinaryenType;
 
 BINARYEN_API BinaryenType BinaryenTypeNone(void);
 BINARYEN_API BinaryenType BinaryenTypeInt32(void);
@@ -167,7 +167,8 @@ BINARYEN_API BinaryenExpressionId BinaryenTryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenThrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
-BINARYEN_API BinaryenExpressionId BinaryenPushId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
+BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
 
 // External kinds (call to get the value of each; you can cache them)
@@ -195,6 +196,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureSIMD128(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -463,9 +465,11 @@ BINARYEN_API BinaryenOp BinaryenOrVec128(void);
 BINARYEN_API BinaryenOp BinaryenXorVec128(void);
 BINARYEN_API BinaryenOp BinaryenAndNotVec128(void);
 BINARYEN_API BinaryenOp BinaryenBitselectVec128(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI8x16(void);
@@ -481,9 +485,11 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI16x8(void);
@@ -499,9 +505,11 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI32x4(void);
@@ -521,6 +529,7 @@ BINARYEN_API BinaryenOp BinaryenShrSVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAddVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenSubVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenMulVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenSqrtVecF32x4(void);
@@ -532,6 +541,8 @@ BINARYEN_API BinaryenOp BinaryenMulVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenDivVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenMinVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxVecF32x4(void);
+BINARYEN_API BinaryenOp BinaryenPMinVecF32x4(void);
+BINARYEN_API BinaryenOp BinaryenPMaxVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenNegVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenSqrtVecF64x2(void);
@@ -543,6 +554,8 @@ BINARYEN_API BinaryenOp BinaryenMulVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenDivVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenMinVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenMaxVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenPMinVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenPMaxVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void);
@@ -824,8 +837,12 @@ BinaryenBrOnExn(BinaryenModuleRef module,
                 const char* name,
                 const char* eventName,
                 BinaryenExpressionRef exnref);
-BINARYEN_API BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
-                                                BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleMake(BinaryenModuleRef module,
+                  BinaryenExpressionRef* operands,
+                  BinaryenIndex numOperands);
+BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
+  BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
 
@@ -833,6 +850,8 @@ BINARYEN_API BinaryenExpressionId
 BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
 
 BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
@@ -868,12 +887,14 @@ BinaryenSwitchGetCondition(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSwitchGetValue(BinaryenExpressionRef expr);
 
+BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
 BINARYEN_API const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
 BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
+BINARYEN_API int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenIndex
@@ -1071,8 +1092,15 @@ BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
 
+BINARYEN_API BinaryenIndex
+BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
-BinaryenPushGetValue(BinaryenExpressionRef expr);
+BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenIndex
+BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 
 // Functions
 
@@ -1191,12 +1219,22 @@ BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
 
 // Function table. One per module
 
+// TODO: Add support for multiple segments in BinaryenSetFunctionTable.
 BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenIndex initial,
                                            BinaryenIndex maximum,
                                            const char** funcNames,
                                            BinaryenIndex numFuncNames,
                                            BinaryenExpressionRef offset);
+BINARYEN_API int BinaryenIsFunctionTableImported(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex
+BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef BinaryenGetFunctionTableSegmentOffset(
+  BinaryenModuleRef module, BinaryenIndex segmentId);
+BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
+  BinaryenModuleRef module, BinaryenIndex segmentId);
+BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
+  BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
 
 // Memory. One per module
 
@@ -1220,6 +1258,8 @@ BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
+BINARYEN_API int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                                 BinaryenIndex id);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex id,
                                                 char* buffer);
@@ -1281,6 +1321,50 @@ BINARYEN_API int BinaryenGetDebugInfo(void);
 // Enables or disables debug information in emitted binaries.
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetDebugInfo(int on);
+
+// Gets whether the low 1K of memory can be considered unused when optimizing.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetLowMemoryUnused(void);
+
+// Enables or disables whether the low 1K of memory can be considered unused
+// when optimizing. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
+
+// Gets the value of the specified arbitrary pass argument.
+// Applies to all modules, globally.
+BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
+
+// Sets the value of the specified arbitrary pass argument. Removes the
+// respective argument if `value` is NULL. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
+
+// Clears all arbitrary pass arguments.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenClearPassArguments();
+
+// Gets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void);
+
+// Sets the function size at which we always inline.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAlwaysInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void);
+
+// Sets the function size which we inline when functions are lightweight.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size);
+
+// Gets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
+
+// Sets the function size which we inline when there is only one caller.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
@@ -1495,10 +1579,11 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
-BINARYEN_API BinaryenSideEffects
-BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
+  BinaryenExpressionRef expr, BinaryenFeatures features);
 
 //
 // ========== CFG / Relooper ==========
@@ -1561,18 +1646,65 @@ BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
   RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper);
 
 //
-// ========= Other APIs =========
+// ========= ExpressionRunner ==========
 //
 
-// Sets whether API tracing is on or off. It is off by default. When on, each
-// call to an API method will print out C code equivalent to it, which is useful
-// for auto-generating standalone testcases from projects using the API. When
-// calling this to turn on tracing, the prelude of the full program is printed,
-// and when calling it to turn it off, the ending of the program is printed,
-// giving you the full compilable testcase.
-// TODO: compile-time option to enable/disable this feature entirely at build
-// time?
-BINARYEN_API void BinaryenSetAPITracing(int on);
+#ifdef __cplusplus
+namespace wasm {
+class CExpressionRunner;
+} // namespace wasm
+typedef class wasm::CExpressionRunner* ExpressionRunnerRef;
+#else
+typedef struct CExpressionRunner* ExpressionRunnerRef;
+#endif
+
+typedef uint32_t ExpressionRunnerFlags;
+
+// By default, just evaluate the expression, i.e. all we want to know is whether
+// it computes down to a concrete value, where it is not necessary to preserve
+// side effects like those of a `local.tee`.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsDefault();
+
+// Be very careful to preserve any side effects. For example, if we are
+// intending to replace the expression with a constant afterwards, even if we
+// can technically evaluate down to a constant, we still cannot replace the
+// expression if it also sets a local, which must be preserved in this scenario
+// so subsequent code keeps functioning.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects();
+
+// Traverse through function calls, attempting to compute their concrete value.
+// Must not be used in function-parallel scenarios, where the called function
+// might be concurrently modified, leading to undefined behavior. Traversing
+// another function reuses all of this runner's flags.
+BINARYEN_API ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls();
+
+// Creates an ExpressionRunner instance
+BINARYEN_API ExpressionRunnerRef
+ExpressionRunnerCreate(BinaryenModuleRef module,
+                       ExpressionRunnerFlags flags,
+                       BinaryenIndex maxDepth,
+                       BinaryenIndex maxLoopIterations);
+
+// Sets a known local value to use. Order matters if expressions have side
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
+BINARYEN_API int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                               BinaryenIndex index,
+                                               BinaryenExpressionRef value);
+
+// Sets a known global value to use. Order matters if expressions have side
+// effects. For example, if the expression also sets a local, this side effect
+// will also happen (not affected by any flags). Returns `true` if the
+// expression actually evaluates to a constant.
+BINARYEN_API int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                                const char* name,
+                                                BinaryenExpressionRef value);
+
+// Runs the expression and returns the constant value expression it evaluates
+// to, if any. Otherwise returns `NULL`. Also disposes the runner.
+BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
+  ExpressionRunnerRef runner, BinaryenExpressionRef expr);
 
 //
 // ========= Utilities =========

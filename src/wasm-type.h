@@ -24,7 +24,11 @@
 namespace wasm {
 
 class Type {
-  uint32_t id;
+  // The `id` uniquely represents each type, so type equality is just a
+  // comparison of the ids. For basic types the `id` is just the `ValueType`
+  // enum value below, and for constructed types the `id` is the address of the
+  // canonical representation of the type, making lookups cheap for all types.
+  uintptr_t id;
   void init(const std::vector<Type>&);
 
 public:
@@ -40,20 +44,16 @@ public:
     anyref,
     nullref,
     exnref,
+    _last_value_type = exnref
   };
 
-private:
-  // Not in the enum because we don't want to have to have a case for it
-  static constexpr uint32_t last_value_type = exnref;
-
-public:
   Type() = default;
 
   // ValueType can be implicitly upgraded to Type
   constexpr Type(ValueType id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
-  constexpr explicit Type(uint32_t id) : id(id){};
+  explicit Type(uint64_t id) : id(id){};
 
   // Construct from lists of elementary types
   Type(std::initializer_list<Type> types);
@@ -64,15 +64,32 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  constexpr bool isSingle() const { return id >= i32 && id <= last_value_type; }
-  constexpr bool isMulti() const { return id > last_value_type; }
+  constexpr bool isSingle() const {
+    return id >= i32 && id <= _last_value_type;
+  }
+  constexpr bool isMulti() const { return id > _last_value_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   constexpr bool isRef() const { return id >= funcref && id <= exnref; }
-  constexpr uint32_t getID() const { return id; }
+
+private:
+  template<bool (Type::*pred)() const> bool hasPredicate() {
+    for (auto t : expand()) {
+      if ((t.*pred)()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+public:
+  bool hasVector() { return hasPredicate<&Type::isVector>(); }
+  bool hasRef() { return hasPredicate<&Type::isRef>(); }
+
+  constexpr uint64_t getID() const { return id; }
   constexpr ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");
     return static_cast<ValueType>(id);
@@ -156,9 +173,18 @@ std::ostream& operator<<(std::ostream& os, Signature t);
 
 } // namespace wasm
 
-template<> class std::hash<wasm::Signature> {
+namespace std {
+
+template<> class hash<wasm::Type> {
+public:
+  size_t operator()(const wasm::Type& type) const;
+};
+
+template<> class hash<wasm::Signature> {
 public:
   size_t operator()(const wasm::Signature& sig) const;
 };
+
+} // namespace std
 
 #endif // wasm_wasm_type_h

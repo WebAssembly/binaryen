@@ -101,7 +101,8 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
         brIfs++;
       }
       // if the value has side effects, we can't remove it
-      if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
+      if (EffectAnalyzer(passOptions, getModule()->features, curr->value)
+            .hasSideEffects()) {
         foundProblem = true;
       }
     }
@@ -126,6 +127,11 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
         return;
       }
     }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    // We should not take exnref value out of br_on_exn
+    foundProblem = true;
   }
 
   bool found() {
@@ -224,6 +230,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
               Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us
               ProblemFinder finder(passOptions);
+              finder.setModule(module);
               finder.origin = childBlock->name;
               finder.walk(expression);
               if (finder.found()) {
@@ -418,17 +425,18 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     if (!child) {
       return outer;
     }
+    FeatureSet features = getModule()->features;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure
       // no problems there
-      EffectAnalyzer childEffects(getPassOptions(), child);
+      EffectAnalyzer childEffects(getPassOptions(), features, child);
       if (dependency1 && *dependency1 &&
-          EffectAnalyzer(getPassOptions(), *dependency1)
+          EffectAnalyzer(getPassOptions(), features, *dependency1)
             .invalidates(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
-          EffectAnalyzer(getPassOptions(), *dependency2)
+          EffectAnalyzer(getPassOptions(), features, *dependency2)
             .invalidates(childEffects)) {
         return outer;
       }
@@ -495,16 +503,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
                        Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
+    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, first).hasSideEffects()) {
       return;
     }
     outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, second).hasSideEffects()) {
       return;
     }
     outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, third).hasSideEffects()) {
       return;
     }
     optimize(curr, third, outer);
@@ -522,6 +531,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitBreak(Break* curr) {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
+
   void visitSwitch(Switch* curr) {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
@@ -529,31 +539,49 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+      if (EffectAnalyzer(
+            getPassOptions(), getModule()->features, curr->operands[i])
             .hasSideEffects()) {
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    return;
   }
 
   void visitCall(Call* curr) { handleCall(curr); }
 
   void visitCallIndirect(CallIndirect* curr) {
+    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), features, curr->operands[i])
             .hasSideEffects()) {
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), features, curr->target)
+          .hasSideEffects()) {
       return;
     }
     optimize(curr, curr->target, outer);
   }
+
+  void visitThrow(Throw* curr) {
+    Block* outer = nullptr;
+    for (Index i = 0; i < curr->operands.size(); i++) {
+      if (EffectAnalyzer(
+            getPassOptions(), getModule()->features, curr->operands[i])
+            .hasSideEffects()) {
+        return;
+      }
+      outer = optimize(curr, curr->operands[i], outer);
+    }
+  }
+
+  void visitRethrow(Rethrow* curr) { optimize(curr, curr->exnref); }
+
+  void visitBrOnExn(BrOnExn* curr) { optimize(curr, curr->exnref); }
 };
 
 Pass* createMergeBlocksPass() { return new MergeBlocks(); }

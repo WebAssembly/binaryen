@@ -24,6 +24,7 @@ namespace wasm {
 
 Name WASM("wasm");
 Name RETURN_FLOW("*return:)*");
+Name NONCONSTANT_FLOW("*nonconstant:)*");
 
 namespace BinaryConsts {
 namespace UserSections {
@@ -42,6 +43,7 @@ const char* SignExtFeature = "sign-ext";
 const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
+const char* MultivalueFeature = "multivalue";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -169,8 +171,6 @@ const char* getExpressionName(Expression* curr) {
       return "memory_copy";
     case Expression::Id::MemoryFillId:
       return "memory_fill";
-    case Expression::Id::PushId:
-      return "push";
     case Expression::Id::PopId:
       return "pop";
     case Expression::Id::RefNullId:
@@ -187,13 +187,17 @@ const char* getExpressionName(Expression* curr) {
       return "rethrow";
     case Expression::Id::BrOnExnId:
       return "br_on_exn";
+    case Expression::Id::TupleMakeId:
+      return "tuple.make";
+    case Expression::Id::TupleExtractId:
+      return "tuple.extract";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
   WASM_UNREACHABLE("invalid expr id");
 }
 
-Literal getLiteralFromConstExpression(Expression* curr) {
+Literal getSingleLiteralFromConstExpression(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (curr->is<RefNull>()) {
@@ -202,6 +206,18 @@ Literal getLiteralFromConstExpression(Expression* curr) {
     return Literal::makeFuncref(r->func);
   } else {
     WASM_UNREACHABLE("Not a constant expression");
+  }
+}
+
+Literals getLiteralsFromConstExpression(Expression* curr) {
+  if (auto* t = curr->dynCast<TupleMake>()) {
+    Literals values;
+    for (auto* operand : t->operands) {
+      values.push_back(getSingleLiteralFromConstExpression(operand));
+    }
+    return values;
+  } else {
+    return {getSingleLiteralFromConstExpression(curr)};
   }
 }
 
@@ -720,6 +736,9 @@ void Unary::finalize() {
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:
+    case AbsVecI8x16:
+    case AbsVecI16x8:
+    case AbsVecI32x4:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -749,13 +768,16 @@ void Unary::finalize() {
       type = Type::v128;
       break;
     case AnyTrueVecI8x16:
-    case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
-    case AllTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
+    case AllTrueVecI8x16:
+    case AllTrueVecI16x8:
+    case AllTrueVecI32x4:
     case AllTrueVecI64x2:
+    case BitmaskVecI8x16:
+    case BitmaskVecI16x8:
+    case BitmaskVecI32x4:
       type = Type::i32;
       break;
 
@@ -889,11 +911,23 @@ void BrOnExn::finalize() {
   }
 }
 
-void Push::finalize() {
-  if (value->type == Type::unreachable) {
+void TupleMake::finalize() {
+  std::vector<Type> types;
+  for (auto* op : operands) {
+    if (op->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
+    types.push_back(op->type);
+  }
+  type = Type(types);
+}
+
+void TupleExtract::finalize() {
+  if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::none;
+    type = tuple->type.expand()[index];
   }
 }
 
@@ -949,11 +983,11 @@ Index Function::getLocalIndex(Name name) {
 Index Function::getVarIndexBase() { return sig.params.size(); }
 
 Type Function::getLocalType(Index index) {
-  const std::vector<Type>& params = sig.params.expand();
-  if (index < params.size()) {
-    return params[index];
+  auto numParams = sig.params.size();
+  if (index < numParams) {
+    return sig.params.expand()[index];
   } else if (isVar(index)) {
-    return vars[index - params.size()];
+    return vars[index - numParams];
   } else {
     WASM_UNREACHABLE("invalid local index");
   }

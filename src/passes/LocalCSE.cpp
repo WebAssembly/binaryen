@@ -54,18 +54,45 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   Pass* create() override { return new LocalCSE(); }
 
+  struct Usable {
+    HashedExpression hashed;
+    Type localType;
+    Usable(HashedExpression hashed, Type localType)
+      : hashed(hashed), localType(localType) {}
+  };
+
+  struct UsableHasher {
+    HashType operator()(const Usable value) const {
+      return rehash(uint64_t(value.hashed.hash), value.localType.getID());
+    }
+  };
+
+  struct UsableComparer {
+    bool operator()(const Usable a, const Usable b) const {
+      if (a.hashed.hash != b.hashed.hash || a.localType != b.localType) {
+        return false;
+      }
+      return ExpressionAnalyzer::equal(a.hashed.expr, b.hashed.expr);
+    }
+  };
+
   // information for an expression we can reuse
   struct UsableInfo {
     Expression* value; // the value we can reuse
     Index index; // the local we are assigned to, local.get that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression* value, Index index, PassOptions& passOptions)
-      : value(value), index(index), effects(passOptions, value) {}
+    UsableInfo(Expression* value,
+               Index index,
+               PassOptions& passOptions,
+               FeatureSet features)
+      : value(value), index(index), effects(passOptions, features, value) {}
   };
 
   // a list of usables in a linear execution trace
-  typedef HashedExpressionMap<UsableInfo> Usables;
+  class Usables
+    : public std::
+        unordered_map<Usable, UsableInfo, UsableHasher, UsableComparer> {};
 
   // locals in current linear execution trace, which we try to sink
   Usables usables;
@@ -101,7 +128,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // taken into account.
   void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
     // TODO: this is O(bad)
-    std::vector<HashedExpression> invalidated;
+    std::vector<Usable> invalidated;
     for (auto& sinkable : usables) {
       // Check invalidations of the values we may want to use.
       if (effects.invalidates(sinkable.second.effects)) {
@@ -136,7 +163,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     // pre operations
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -152,7 +179,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
     // post operations
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPost(curr)) {
       self->checkInvalidations(effects, curr);
     }
@@ -182,8 +209,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       // consider the value
       auto* value = set->value;
       if (isRelevant(value)) {
-        HashedExpression hashed(value);
-        auto iter = usables.find(hashed);
+        Usable usable(value, func->getLocalType(set->index));
+        auto iter = usables.find(usable);
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
@@ -194,7 +221,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         } else {
           // not in table, add this, maybe we can help others later
           usables.emplace(std::make_pair(
-            hashed, UsableInfo(value, set->index, getPassOptions())));
+            usable,
+            UsableInfo(
+              value, set->index, getPassOptions(), getModule()->features)));
         }
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
@@ -215,7 +244,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (!value->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), getModule()->features, value)
+          .hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     auto& options = getPassRunner()->options;
