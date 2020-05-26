@@ -476,7 +476,9 @@ struct OptimizeInstructions
             // (signed)x < 0x7FFFFFFF => x != 0x7FFFFFFF
             binary->op = NeInt32;
             return binary;
-          } else if (constValue == int32_t(0x80000000)) {
+          } else if (constValue == int32_t(0x80000000) &&
+                     !EffectAnalyzer(options, features, binary->left)
+                        .hasSideEffects()) {
             // (signed)x < 0x80000000 => 0
             return LiteralUtils::makeZero(Type::i32, *getModule());
           }
@@ -520,7 +522,7 @@ struct OptimizeInstructions
             if (auto* subZero = sub->left->dynCast<Const>()) {
               if (subZero->value.geti32() == 0) {
                 if (EffectAnalyzer::canReorder(
-                      getPassOptions(), features, sub->right, binary->right)) {
+                      options, features, sub->right, binary->right)) {
                   sub->left = binary->right;
                   return sub;
                 }
@@ -678,8 +680,7 @@ struct OptimizeInstructions
       }
       // finally, try more expensive operations on the binary in
       // the case that they have no side effects
-      if (!EffectAnalyzer(getPassOptions(), features, binary->left)
-             .hasSideEffects()) {
+      if (!EffectAnalyzer(options, features, binary->left).hasSideEffects()) {
         if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
           return optimizeBinaryWithEqualEffectlessChildren(binary);
         }
@@ -799,8 +800,7 @@ struct OptimizeInstructions
           // if we can replace the if with one arm, and no side effects in the
           // condition, do that
           auto needCondition =
-            EffectAnalyzer(getPassOptions(), features, iff->condition)
-              .hasSideEffects();
+            EffectAnalyzer(options, features, iff->condition).hasSideEffects();
           auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
           if (isSubType && !needCondition) {
             return iff->ifTrue;
@@ -831,8 +831,8 @@ struct OptimizeInstructions
       auto* condition = select->condition->dynCast<Unary>();
       if (condition && condition->op == EqZInt32) {
         // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+        EffectAnalyzer ifTrue(options, features, select->ifTrue);
+        EffectAnalyzer ifFalse(options, features, select->ifFalse);
         if (!ifTrue.invalidates(ifFalse)) {
           select->condition = condition->value;
           std::swap(select->ifTrue, select->ifFalse);
@@ -842,7 +842,7 @@ struct OptimizeInstructions
         // constant condition, we can just pick the right side (barring side
         // effects)
         if (c->value.getInteger()) {
-          if (!EffectAnalyzer(getPassOptions(), features, select->ifFalse)
+          if (!EffectAnalyzer(options, features, select->ifFalse)
                  .hasSideEffects()) {
             return select->ifTrue;
           } else {
@@ -850,7 +850,7 @@ struct OptimizeInstructions
             // local, which is bad
           }
         } else {
-          if (!EffectAnalyzer(getPassOptions(), features, select->ifTrue)
+          if (!EffectAnalyzer(options, features, select->ifTrue)
                  .hasSideEffects()) {
             return select->ifFalse;
           } else {
@@ -862,7 +862,7 @@ struct OptimizeInstructions
       }
       if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
         // sides are identical, fold
-        EffectAnalyzer value(getPassOptions(), features, select->ifTrue);
+        EffectAnalyzer value(options, features, select->ifTrue);
         if (value.hasSideEffects()) {
           // at best we don't need the condition, but need to execute the value
           // twice. a block is larger than a select by 2 bytes, and
@@ -870,8 +870,7 @@ struct OptimizeInstructions
           // so it's not clear this is worth it, TODO
         } else {
           // value has no side effects
-          EffectAnalyzer condition(
-            getPassOptions(), features, select->condition);
+          EffectAnalyzer condition(options, features, select->condition);
           if (!condition.hasSideEffects()) {
             return select->ifTrue;
           } else {
