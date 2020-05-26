@@ -44,10 +44,6 @@ struct EffectAnalyzer
   void analyze(Expression* ast) {
     breakNames.clear();
     walk(ast);
-    // if we are left with breaks, they are external
-    if (breakNames.size() > 0) {
-      branches = true;
-    }
     assert(tryDepth == 0);
   }
 
@@ -110,28 +106,28 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool transfersControlFlow() const { return branches || throws; }
+  bool transfersControlFlow() const { return branches || throws || hasExternalBreakTargets(); }
 
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
+    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
+           transfersControlFlow() ||
            implicitTrap;
   }
   bool hasAnything() const {
-    return calls || accessesLocal() || readsMemory || writesMemory ||
-           accessesGlobal() || implicitTrap || isAtomic ||
-           transfersControlFlow();
+    return hasSideEffects() || accessesLocal() || readsMemory ||
+           accessesGlobal() || isAtomic;
   }
 
-  bool noticesGlobalSideEffects() {
+  bool noticesGlobalSideEffects() const {
     return calls || readsMemory || isAtomic || globalsRead.size();
   }
 
   // check if we break to anything external from ourselves
-  bool hasExternalBreakTargets() { return !breakNames.empty(); }
+  bool hasExternalBreakTargets() const { return !breakNames.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
@@ -205,6 +201,9 @@ struct EffectAnalyzer
     }
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
+    }
+    for (auto i : other.breakNames) {
+      breakNames.insert(i);
     }
   }
 
