@@ -49,8 +49,13 @@ struct EffectAnalyzer
 
   // Core effect tracking
 
-  // branches out of this expression, returns, infinite loops, etc
-  bool branches = false;
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut = false;
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -106,8 +111,8 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool transfersControlFlow() const {
-    return branches || throws || hasExternalBreakTargets();
+  bool branches() const {
+    return branchesOut || throws || hasExternalBreakTargets();
   }
 
   bool hasGlobalSideEffects() const {
@@ -116,7 +121,7 @@ struct EffectAnalyzer
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 ||
-           transfersControlFlow() || implicitTrap;
+           branches() || implicitTrap;
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
@@ -133,8 +138,8 @@ struct EffectAnalyzer
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if ((transfersControlFlow() && other.hasSideEffects()) ||
-        (other.transfersControlFlow() && hasSideEffects()) ||
+    if ((branches() && other.hasSideEffects()) ||
+        (other.branches() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
@@ -171,8 +176,8 @@ struct EffectAnalyzer
       }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.transfersControlFlow()) ||
-        (other.implicitTrap && transfersControlFlow())) {
+    if ((implicitTrap && other.branches()) ||
+        (other.implicitTrap && branches())) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
@@ -184,7 +189,7 @@ struct EffectAnalyzer
   }
 
   void mergeIn(EffectAnalyzer& other) {
-    branches = branches || other.branches;
+    branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
@@ -213,7 +218,7 @@ struct EffectAnalyzer
   // the children, i.e., loops
   bool checkPre(Expression* curr) {
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
       return true;
     }
     return false;
@@ -222,7 +227,7 @@ struct EffectAnalyzer
   bool checkPost(Expression* curr) {
     visit(curr);
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
     }
     return hasAnything();
   }
@@ -249,7 +254,7 @@ struct EffectAnalyzer
     //      consider that a branching side effect (note how the same logic does
     //      not apply to blocks).
     if (curr->type == Type::unreachable) {
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitBreak(Break* curr) { breakTargets.insert(curr->name); }
@@ -267,13 +272,13 @@ struct EffectAnalyzer
       throws = true;
     }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
       // move code around them
       // FIXME: we could check if the call is to an import
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
@@ -282,7 +287,7 @@ struct EffectAnalyzer
       throws = true;
     }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
@@ -424,7 +429,7 @@ struct EffectAnalyzer
   }
   void visitSelect(Select* curr) {}
   void visitDrop(Drop* curr) {}
-  void visitReturn(Return* curr) { branches = true; }
+  void visitReturn(Return* curr) { branchesOut = true; }
   void visitHost(Host* curr) {
     calls = true;
     // memory.grow modifies the set of valid addresses, and thus can be modeled
@@ -457,7 +462,7 @@ struct EffectAnalyzer
     }
   }
   void visitNop(Nop* curr) {}
-  void visitUnreachable(Unreachable* curr) { branches = true; }
+  void visitUnreachable(Unreachable* curr) { branchesOut = true; }
   void visitPop(Pop* curr) { calls = true; }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
@@ -492,7 +497,7 @@ struct EffectAnalyzer
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (branches) {
+    if (branches()) {
       effects |= SideEffects::Branches;
     }
     if (calls) {
@@ -529,7 +534,7 @@ struct EffectAnalyzer
   }
 
   void ignoreBranches() {
-    branches = false;
+    branchesOut = false;
     breakTargets.clear();
   }
 };
