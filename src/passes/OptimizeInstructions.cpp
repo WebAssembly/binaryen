@@ -463,10 +463,15 @@ struct OptimizeInstructions
         if (auto* c = binary->right->dynCast<Const>()) {
           auto constValue = c->value.geti32();
           if (constValue == 0) {
-            // (signed)x < 0 => (unsigned)x >> 31
-            binary->op = ShrUInt32;
-            c->value = Literal(int32_t(31));
-            return binary;
+            // this may increase size for compressed binaryes so it apply
+            // only for non-zero shrinkLevel levels
+            auto options = getPassOptions();
+            if (options.optimizeLevel >= 2 && options.shrinkLevel <= 1) {
+              // (signed)x < 0 => (unsigned)x >> 31
+              binary->op = ShrUInt32;
+              c->value = Literal(int32_t(31));
+              return binary;
+            }
           } else if (constValue == int32_t(0x7FFFFFFF)) {
             // (signed)x < 0x7FFFFFFF => x != 0x7FFFFFFF
             binary->op = NeInt32;
