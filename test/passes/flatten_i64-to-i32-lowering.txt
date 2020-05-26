@@ -83,6 +83,7 @@
  )
  (func $unreachable-select-i64 (result i32)
   (local $i64toi32_i32$0 i32)
+  (unreachable)
   (block
    (drop
     (block (result i32)
@@ -101,6 +102,7 @@
  )
  (func $unreachable-select-i64-b (result i32)
   (local $i64toi32_i32$0 i32)
+  (unreachable)
   (block
    (unreachable)
    (drop
@@ -120,6 +122,7 @@
  (func $unreachable-select-i64-c (result i32)
   (local $i64toi32_i32$0 i32)
   (local $i64toi32_i32$1 i32)
+  (unreachable)
   (block
    (drop
     (block (result i32)
@@ -462,6 +465,7 @@
   (local $1$hi i32)
   (local $i64toi32_i32$0 i32)
   (block $label$1
+   (unreachable)
    (unreachable)
   )
   (block
