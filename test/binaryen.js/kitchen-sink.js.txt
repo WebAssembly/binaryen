@@ -69,12 +69,11 @@ MemoryInitId: 34
 DataDropId: 35
 MemoryCopyId: 36
 MemoryFillId: 37
-TryId: 43
-ThrowId: 44
-RethrowId: 45
-BrOnExnId: 46
-PushId: 38
-PopId: 39
+TryId: 42
+ThrowId: 43
+RethrowId: 44
+BrOnExnId: 45
+PopId: 38
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1846,31 +1845,31 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         )
        )
       )
-      (push
+      (drop
        (i32.pop)
       )
-      (push
+      (drop
        (i64.pop)
       )
-      (push
+      (drop
        (f32.pop)
       )
-      (push
+      (drop
        (f64.pop)
       )
-      (push
+      (drop
        (v128.pop)
       )
-      (push
+      (drop
        (anyref.pop)
       )
-      (push
+      (drop
        (funcref.pop)
       )
-      (push
+      (drop
        (nullref.pop)
       )
-      (push
+      (drop
        (exnref.pop)
       )
       (nop)
@@ -3644,31 +3643,31 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         )
        )
       )
-      (push
+      (drop
        (i32.pop)
       )
-      (push
+      (drop
        (i64.pop)
       )
-      (push
+      (drop
        (f32.pop)
       )
-      (push
+      (drop
        (f64.pop)
       )
-      (push
+      (drop
        (v128.pop)
       )
-      (push
+      (drop
        (anyref.pop)
       )
-      (push
+      (drop
        (funcref.pop)
       )
-      (push
+      (drop
        (nullref.pop)
       )
-      (push
+      (drop
        (exnref.pop)
       )
       (nop)

@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import os
-import shutil
 import subprocess
 import sys
 from collections import OrderedDict
@@ -150,9 +149,6 @@ def update_example_tests():
                 o.write(actual)
         finally:
             os.remove(output_file)
-            if sys.platform == 'darwin':
-                # Also removes debug directory produced on Mac OS
-                shutil.rmtree(output_file + '.dSYM')
 
 
 def update_wasm_dis_tests():

@@ -2537,9 +2537,6 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'p':
-    if (strcmp(op, "push") == 0) { return makePush(s); }
-    goto parse_error;
   case 'r': {
     switch (op[2]) {
       case 'f': {
