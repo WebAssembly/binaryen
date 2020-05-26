@@ -1,4 +1,4 @@
-![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=master&event=push)
+[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
 
 # Binaryen
 
