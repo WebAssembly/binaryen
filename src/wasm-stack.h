@@ -141,7 +141,6 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
   void visitPop(Pop* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
@@ -234,7 +233,6 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
   void visitPop(Pop* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
@@ -790,12 +788,6 @@ void BinaryenIRWriter<SubType>::visitUnreachable(Unreachable* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
-  visit(curr->value);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
   visit(curr->value);
   emit(curr);
 }

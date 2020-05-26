@@ -171,8 +171,6 @@ const char* getExpressionName(Expression* curr) {
       return "memory_copy";
     case Expression::Id::MemoryFillId:
       return "memory_fill";
-    case Expression::Id::PushId:
-      return "push";
     case Expression::Id::PopId:
       return "pop";
     case Expression::Id::RefNullId:
@@ -910,14 +908,6 @@ void BrOnExn::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::exnref;
-  }
-}
-
-void Push::finalize() {
-  if (value->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::none;
   }
 }
 

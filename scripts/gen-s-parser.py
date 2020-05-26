@@ -43,7 +43,6 @@ instructions = [
     ("data.drop",      "makeDataDrop(s)"),
     ("memory.copy",    "makeMemoryCopy(s)"),
     ("memory.fill",    "makeMemoryFill(s)"),
-    ("push",           "makePush(s)"),
     ("i32.pop",        "makePop(Type::i32)"),
     ("i64.pop",        "makePop(Type::i64)"),
     ("f32.pop",        "makePop(Type::f32)"),

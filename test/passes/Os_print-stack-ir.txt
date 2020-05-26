@@ -49,23 +49,15 @@
  (export "ppf32" (func $2))
  (export "ppf64" (func $3))
  (func $0 (result i32)
-  i32.const 1
-  
   
  )
  (func $1 (result i64)
-  i64.const 1
-  
   
  )
  (func $2 (result f32)
-  f32.const 1
-  
   
  )
  (func $3 (result f64)
-  f64.const 1
-  
   
  )
 )
@@ -79,27 +71,15 @@
  (export "ppf32" (func $2))
  (export "ppf64" (func $3))
  (func $0 (; has Stack IR ;) (result i32)
-  (push
-   (i32.const 1)
-  )
   (i32.pop)
  )
  (func $1 (; has Stack IR ;) (result i64)
-  (push
-   (i64.const 1)
-  )
   (i64.pop)
  )
  (func $2 (; has Stack IR ;) (result f32)
-  (push
-   (f32.const 1)
-  )
   (f32.pop)
  )
  (func $3 (; has Stack IR ;) (result f64)
-  (push
-   (f64.const 1)
-  )
   (f64.pop)
  )
 )
