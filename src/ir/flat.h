@@ -76,9 +76,9 @@ inline void verifyFlatness(Function* func) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (auto* set = curr->dynCast<LocalSet>()) {
-        verify(!set->isTee() || set->type == unreachable,
+        verify(!set->isTee() || set->type == Type::unreachable,
                "tees are not allowed, only sets");
-        verify(!isControlFlowStructure(set->value),
+        verify(!Properties::isControlFlowStructure(set->value),
                "set values cannot be control flow");
       } else {
         for (auto* child : ChildIterator(curr)) {
