@@ -3042,7 +3042,7 @@
                (local.get $0)
               )
               (if
-               (i32.ne
+               (i32.xor
                 (local.get $0)
                 (i32.const -1)
                )
@@ -3083,7 +3083,7 @@
            (i32.const 171)
           )
           (if
-           (i32.ne
+           (i32.xor
             (local.tee $2
              (call $ta
               (i32.const 0)
@@ -3280,7 +3280,7 @@
             )
            )
            (if
-            (i32.ne
+            (i32.xor
              (local.get $24)
              (i32.const -1)
             )

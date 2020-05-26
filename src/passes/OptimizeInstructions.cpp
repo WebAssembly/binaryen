@@ -764,9 +764,8 @@ struct OptimizeInstructions
                 }
               }
               // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
-              return optimizeBoolean(
-                Builder(*getModule())
-                  .makeBinary(NeInt32, select->condition, constFalse));
+              return Builder(*getModule())
+                .makeBinary(NeInt32, select->condition, constFalse);
             } else if (constTrue->value.geti32() == int32_t(0) &&
                        constFalse->value.geti32() == int32_t(1)) {
               // [i32]->[i32]:   !x ? 0 : 1   ==>   x != 0
@@ -785,8 +784,8 @@ struct OptimizeInstructions
                 }
               }
               // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
-              return optimizeBoolean(
-                Builder(*getModule()).makeUnary(EqZInt32, select->condition));
+              return Builder(*getModule())
+                .makeUnary(EqZInt32, select->condition);
             }
           } else if (select->type == Type::i64) {
             if (select->condition->type == Type::i32) {
@@ -991,10 +990,15 @@ private:
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
       } else if (binary->op == NeInt32) {
-        // x != 0 is just x if it's used as a bool
         if (auto* num = binary->right->dynCast<Const>()) {
+          // x != 0 is just x if it's used as a bool
           if (num->value.geti32() == 0) {
             return binary->left;
+          }
+          // x != -1   ==>    x ^ -1
+          if (num->value.geti32() == -1) {
+            binary->op = XorInt32;
+            return binary;
           }
         }
       }

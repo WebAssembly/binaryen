@@ -3922,6 +3922,24 @@
       (ref.null)
     )
   )
+  (func $optimize-boolean-context (param $x i32) (param $y i32)
+    ;; x != -1   ==>   ~x
+    (if
+      (i32.ne
+        (local.get $x)
+        (i32.const -1)
+      )
+      (unreachable)
+    )
+    (drop (select
+      (local.get $x)
+      (local.get $y)
+      (i32.ne
+        (local.get $x)
+        (i32.const -1)
+      )
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
