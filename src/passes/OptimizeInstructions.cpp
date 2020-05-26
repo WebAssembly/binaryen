@@ -336,6 +336,7 @@ struct OptimizeInstructions
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
     FeatureSet features = getModule()->features;
+    PassOptions options = getPassOptions();
     // if this contains dead code, don't bother trying to optimize it, the type
     // might change (if might not be unreachable if just one arm is, for
     // example). this optimization pass focuses on actually executing code. the
@@ -465,7 +466,6 @@ struct OptimizeInstructions
           if (constValue == 0) {
             // this may increase size for compressed binaryes so it apply
             // only for non-zero shrinkLevel levels
-            auto options = getPassOptions();
             if (options.optimizeLevel >= 2 && options.shrinkLevel <= 1) {
               // (signed)x < 0 => (unsigned)x >> 31
               binary->op = ShrUInt32;
