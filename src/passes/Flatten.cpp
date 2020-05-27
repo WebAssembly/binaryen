@@ -62,9 +62,8 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    // Nothing to do for constants, nop, and unreachable
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
-        curr->is<Unreachable>()) {
+    // Nothing to do for constants and nop.
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
 
