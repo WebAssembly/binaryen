@@ -540,9 +540,13 @@
    )
    (if
     (local.get $0)
-    (unreachable)
+    (block
+     (unreachable)
+     (unreachable)
+    )
     (block
      (block $label$3
+      (unreachable)
       (unreachable)
      )
      (local.set $2
@@ -651,6 +655,7 @@
   (local $0 i32)
   (local $1 i32)
   (block $label$1
+   (unreachable)
    (local.set $0
     (i32.const 1)
    )
@@ -676,6 +681,7 @@
  (func $a19 (result f32)
   (block $label$0
    (block $label$1
+    (unreachable)
     (return
      (f32.const 4289944320)
     )
@@ -727,6 +733,7 @@
    (block
     (block $out1
      (unreachable)
+     (unreachable)
      (drop
       (i32.const 0)
      )
@@ -773,6 +780,7 @@
       (block
        (block $out8
         (unreachable)
+        (unreachable)
         (drop
          (i32.const 0)
         )
@@ -781,6 +789,7 @@
       )
       (block
        (block $out9
+        (unreachable)
         (unreachable)
         (drop
          (i32.const 0)
@@ -803,9 +812,11 @@
     (block $out11
      (unreachable)
      (unreachable)
+     (unreachable)
      (drop
       (i32.const 0)
      )
+     (unreachable)
      (unreachable)
     )
     (local.set $2
@@ -822,9 +833,11 @@
     (block $out13
      (unreachable)
      (unreachable)
+     (unreachable)
      (drop
       (i32.const 0)
      )
+     (unreachable)
      (unreachable)
     )
     (local.set $4
@@ -841,9 +854,12 @@
     (block $out15
      (unreachable)
      (unreachable)
+     (unreachable)
+     (unreachable)
      (drop
       (i32.const 0)
      )
+     (unreachable)
      (unreachable)
     )
     (local.set $6
@@ -861,6 +877,7 @@
     )
    )
    (unreachable)
+   (unreachable)
   )
   (if
    (i32.const 0)
@@ -872,6 +889,7 @@
         (i32.const 1)
        )
       )
+      (unreachable)
       (unreachable)
      )
      (unreachable)
@@ -890,6 +908,7 @@
     (unreachable)
    )
    (unreachable)
+   (unreachable)
   )
   (block $out22
    (block $in23
@@ -898,6 +917,7 @@
     )
     (unreachable)
    )
+   (unreachable)
    (unreachable)
   )
   (if
@@ -911,6 +931,7 @@
        )
        (unreachable)
       )
+      (unreachable)
       (unreachable)
      )
      (unreachable)
@@ -932,9 +953,12 @@
       (i32.const 42)
      )
      (unreachable)
+     (unreachable)
+     (unreachable)
      (return
       (unreachable)
      )
+     (unreachable)
      (unreachable)
      (unreachable)
      (return)
@@ -948,6 +972,7 @@
    (block
     (loop $loop-in18
      (unreachable)
+     (unreachable)
     )
     (unreachable)
    )
@@ -958,6 +983,7 @@
      (br_if $out29
       (i32.const 1)
      )
+     (unreachable)
      (unreachable)
     )
     (unreachable)
@@ -974,6 +1000,7 @@
         (i32.const 1)
        )
        (unreachable)
+       (unreachable)
       )
       (unreachable)
      )
@@ -988,6 +1015,7 @@
   (if
    (i32.const 1)
    (block
+    (unreachable)
     (call $call-me
      (i32.const 123)
      (unreachable)
@@ -998,6 +1026,7 @@
   (if
    (i32.const 2)
    (block
+    (unreachable)
     (call $call-me
      (unreachable)
      (i32.const 0)
@@ -1008,6 +1037,8 @@
   (if
    (i32.const 3)
    (block
+    (unreachable)
+    (unreachable)
     (call $call-me
      (unreachable)
      (unreachable)
@@ -1018,6 +1049,7 @@
   (if
    (i32.const -1)
    (block
+    (unreachable)
     (call_indirect (type $i32_i32_=>_none)
      (i32.const 123)
      (i32.const 456)
@@ -1029,6 +1061,7 @@
   (if
    (i32.const -2)
    (block
+    (unreachable)
     (call_indirect (type $i32_i32_=>_none)
      (i32.const 139)
      (unreachable)
@@ -1040,6 +1073,8 @@
   (if
    (i32.const -3)
    (block
+    (unreachable)
+    (unreachable)
     (call_indirect (type $i32_i32_=>_none)
      (i32.const 246)
      (unreachable)
@@ -1051,6 +1086,9 @@
   (if
    (i32.const -4)
    (block
+    (unreachable)
+    (unreachable)
+    (unreachable)
     (call_indirect (type $i32_i32_=>_none)
      (unreachable)
      (unreachable)
@@ -1064,11 +1102,13 @@
    (block
     (unreachable)
     (unreachable)
+    (unreachable)
    )
   )
   (if
    (i32.const 22)
    (block
+    (unreachable)
     (i32.load
      (unreachable)
     )
@@ -1081,6 +1121,7 @@
   (if
    (i32.const 33)
    (block
+    (unreachable)
     (i32.store
      (i32.const 0)
      (unreachable)
@@ -1091,6 +1132,7 @@
   (if
    (i32.const 44)
    (block
+    (unreachable)
     (i32.store
      (unreachable)
      (i32.const 0)
@@ -1101,6 +1143,8 @@
   (if
    (i32.const 55)
    (block
+    (unreachable)
+    (unreachable)
     (i32.store
      (unreachable)
      (unreachable)
@@ -1111,6 +1155,7 @@
   (if
    (i32.const 66)
    (block
+    (unreachable)
     (i32.eqz
      (unreachable)
     )
@@ -1123,6 +1168,7 @@
   (if
    (i32.const 77)
    (block
+    (unreachable)
     (i32.add
      (unreachable)
      (i32.const 0)
@@ -1136,6 +1182,7 @@
   (if
    (i32.const 88)
    (block
+    (unreachable)
     (i32.add
      (i32.const 0)
      (unreachable)
@@ -1149,6 +1196,8 @@
   (if
    (i32.const 99)
    (block
+    (unreachable)
+    (unreachable)
     (i32.add
      (unreachable)
      (unreachable)
@@ -1159,6 +1208,7 @@
   (if
    (i32.const 100)
    (block
+    (unreachable)
     (select
      (i32.const 123)
      (i32.const 456)
@@ -1173,6 +1223,7 @@
   (if
    (i32.const 101)
    (block
+    (unreachable)
     (select
      (i32.const 123)
      (unreachable)
@@ -1187,6 +1238,7 @@
   (if
    (i32.const 102)
    (block
+    (unreachable)
     (select
      (unreachable)
      (i32.const 123)
@@ -1204,6 +1256,7 @@
  )
  (func $killer
   (block
+   (unreachable)
    (unreachable)
    (drop
     (i32.const 1000)
@@ -1290,6 +1343,7 @@
   (local $0 i32)
   (block
    (unreachable)
+   (unreachable)
    (local.set $0
     (global.get $x)
    )
@@ -1353,9 +1407,11 @@
   (block $label$0
    (block $label$3
     (nop)
+    (unreachable)
     (br_table $label$3
      (unreachable)
     )
+    (unreachable)
     (unreachable)
     (unreachable)
    )
@@ -1376,9 +1432,11 @@
   (block $label$0
    (block $label$2
     (nop)
+    (unreachable)
     (br_if $label$2
      (unreachable)
     )
+    (unreachable)
     (unreachable)
     (unreachable)
    )
@@ -1425,6 +1483,7 @@
   (local $5 i32)
   (block $label$0
    (block $label$1
+    (unreachable)
     (local.set $1
      (i32.const 4104)
     )
@@ -1538,6 +1597,7 @@
       (local.set $13
        (local.get $12)
       )
+      (unreachable)
       (i64.mul
        (local.get $13)
        (unreachable)
@@ -1897,6 +1957,7 @@
     (unreachable)
    )
    (unreachable)
+   (unreachable)
    (i32.add
     (i32.const 1)
     (unreachable)
@@ -2196,6 +2257,7 @@
  )
  (func $switch-unreachable
   (block $label$3
+   (unreachable)
    (br_table $label$3
     (unreachable)
    )
@@ -2278,6 +2340,7 @@
     (local.get $2)
    )
    (unreachable)
+   (unreachable)
    (drop
     (unreachable)
    )
@@ -2359,5 +2422,24 @@
   (return
    (local.get $7)
   )
+ )
+)
+(module
+ (type $i64_f32_=>_none (func (param i64 f32)))
+ (type $none_=>_i32 (func (result i32)))
+ (export "test" (func $1))
+ (func $0 (param $0 i64) (param $1 f32)
+  (nop)
+ )
+ (func $1 (result i32)
+  (unreachable)
+  (return
+   (i32.const -111)
+  )
+  (call $0
+   (unreachable)
+   (unreachable)
+  )
+  (unreachable)
  )
 )
