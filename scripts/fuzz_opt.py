@@ -127,7 +127,7 @@ def randomize_fuzz_settings():
         NANS = True
     else:
         NANS = False
-        FUZZ_OPTS += ['--no-fuzz-nans']
+        FUZZ_OPTS += ['--denan']
     if random.random() < 0.5:
         OOB = True
     else:
