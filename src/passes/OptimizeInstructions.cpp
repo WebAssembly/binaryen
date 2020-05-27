@@ -64,16 +64,26 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   } else if (auto* binary = curr->dynCast<Binary>()) {
     switch (binary->op) {
       // 32-bit
+      case RotLInt32:
+      case RotRInt32:
       case AddInt32:
       case SubInt32:
       case MulInt32:
       case DivSInt32: // TODO: could more precise if rhs is constant
       case DivUInt32: // TODO: could more precise if rhs is constant
-      case RemSInt32: // TODO: could more precise if rhs is constant
-      case RemUInt32: // TODO: could more precise if rhs is constant
-      case RotLInt32:
-      case RotRInt32:
+      case RemSInt32:
         return 32;
+      case RemUInt32: {
+        if (auto* const_ = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto value = const_->value.geti32();
+          return value <= 1
+                   ? Index(0)
+                   : std::min(maxBits,
+                              32 - Index(CountLeadingZeroes(value - 1)));
+        }
+        return 32;
+      }
       case AndInt32:
         return std::min(getMaxBits(binary->left, localInfoProvider),
                         getMaxBits(binary->right, localInfoProvider));
@@ -113,16 +123,26 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
         return 32;
       }
 
+      case RotLInt64:
+      case RotRInt64:
       case AddInt64:
       case SubInt64:
       case MulInt64:
       case DivSInt64: // TODO: could more precise if rhs is constant
       case DivUInt64: // TODO: could more precise if rhs is constant
-      case RemSInt64: // TODO: could more precise if rhs is constant
-      case RemUInt64: // TODO: could more precise if rhs is constant
-      case RotLInt64:
-      case RotRInt64:
+      case RemSInt64:
         return 64;
+      case RemUInt64: {
+        if (auto* const_ = binary->right->dynCast<Const>()) {
+          auto value = const_->value.geti64();
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          return value <= 1
+                   ? Index(0)
+                   : std::min(maxBits,
+                              64 - Index(CountLeadingZeroes(value - 1)));
+        }
+        return 64;
+      }
       case AndInt64:
         return std::min(getMaxBits(binary->left, localInfoProvider),
                         getMaxBits(binary->right, localInfoProvider));
