@@ -748,98 +748,61 @@ struct OptimizeInstructions
       }
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
-          if (select->type == Type::i32) {
-            if (constTrue->value.geti32() == 1 &&
-                constFalse->value.geti32() == 0) {
-              // [i32]->[i32]:   !x ? 1 : 0   ==>   !x
+          bool isPartially64bits =
+            select->type == Type::i64 && select->condition->type == Type::i32;
+          auto extendIfNeeded = [=](Builder* builder, Expression* expression) {
+            return isPartially64bits
+                     ? builder->makeUnary(ExtendUInt32, expression)
+                     : expression;
+          };
+          if (select->type == Type::i32 || isPartially64bits) {
+            if (constTrue->type == constFalse->type &&
+                constTrue->value.getInteger() == 1LL &&
+                constFalse->value.getInteger() == 0LL) {
+              Builder builder(*getModule());
+              // !x ? 1 : 0   ==>   !x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
-                  return condition;
+                  return extendIfNeeded(&builder, condition);
                 }
               }
-              // [i32]->[i32]:   x <=> y ? 1 : 0   ==>   x <=> y
+              // x <=> y ? 1 : 0   ==>   x <=> y
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 if (condition->isRelational()) {
-                  return condition;
+                  return extendIfNeeded(&builder, condition);
                 }
               }
-              // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
-              return Builder(*getModule())
-                .makeBinary(NeInt32, select->condition, constFalse);
-            } else if (constTrue->value.geti32() == 0 &&
-                       constFalse->value.geti32() == 1) {
-              // [i32]->[i32]:   !x ? 0 : 1   ==>   !!x
+              // expr ? 1 : 0   ==>   expr != 0
+              return extendIfNeeded(
+                &builder,
+                builder.makeBinary(
+                  NeInt32, select->condition, builder.makeConst(Literal(0))));
+            } else if (constTrue->type == constFalse->type &&
+                       constTrue->value.getInteger() == 0LL &&
+                       constFalse->value.getInteger() == 1LL) {
+              Builder builder(*getModule());
+              // !x ? 0 : 1   ==>   !!x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
-                  return Builder(*getModule())
-                    .makeUnary(EqZInt32, condition->value);
+                  return extendIfNeeded(
+                    &builder,
+                    builder.makeUnary(
+                      Abstract::getUnary(select->type, Abstract::EqZ),
+                      condition->value));
                 }
               }
-              // [i32]->[i32]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
+              // x <=> y ? 1 : 0   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
                   condition->op = op;
-                  return condition;
+                  return extendIfNeeded(&builder, condition);
                 }
               }
-              // [i32]->[i32]:   expr ? 0 : 1   ==>   !expr
-              return Builder(*getModule())
-                .makeUnary(EqZInt32, select->condition);
+              // expr ? 0 : 1   ==>   !expr
+              return extendIfNeeded(
+                &builder, builder.makeUnary(EqZInt32, select->condition));
             }
-          } else if (select->type == Type::i64) {
-            if (select->condition->type == Type::i32) {
-              if (constTrue->value.geti64() == 1LL &&
-                  constFalse->value.geti64() == 0LL) {
-                // [i32]->[i64]:   !x ? 1 : 0   ==>   !x
-                if (auto* condition = select->condition->dynCast<Unary>()) {
-                  if (condition->isRelational()) {
-                    return Builder(*getModule())
-                      .makeUnary(ExtendUInt32, condition);
-                  }
-                }
-                // [i32]->[i64]:   x <=> y ? 1 : 0   ==>   x <=> y
-                if (auto* condition = select->condition->dynCast<Binary>()) {
-                  if (condition->isRelational()) {
-                    return Builder(*getModule())
-                      .makeUnary(ExtendUInt32, condition);
-                  }
-                }
-                // [i32]->[i64]:   expr ? 1 : 0   ==>   expr != 0
-                Builder builder(*getModule());
-                return builder.makeUnary(
-                  ExtendUInt32,
-                  builder.makeBinary(NeInt32,
-                                     select->condition,
-                                     builder.makeConst(Literal(int32_t(0)))));
-              } else if (constTrue->value.geti64() == 0LL &&
-                         constFalse->value.geti64() == 1LL) {
-                // [i32]->[i64]:   !x ? 0 : 1   ==>   !!x
-                if (auto* condition = select->condition->dynCast<Unary>()) {
-                  if (condition->isRelational()) {
-                    Builder builder(*getModule());
-                    return builder.makeUnary(
-                      ExtendUInt32,
-                      builder.makeUnary(EqZInt64, condition->value));
-                  }
-                }
-                // [i32]->[i64]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
-                if (auto* condition = select->condition->dynCast<Binary>()) {
-                  auto op = inversedRelationalOp(condition->op);
-                  if (op != condition->op) {
-                    condition->op = op;
-                    return Builder(*getModule())
-                      .makeUnary(ExtendUInt32, condition);
-                  }
-                }
-                // [i32]->[i64]:   expr ? 0 : 1   ==>   expr == 0
-                Builder builder(*getModule());
-                return builder.makeUnary(
-                  ExtendUInt32, builder.makeUnary(EqZInt32, select->condition));
-              }
-            }
-            // TODO: select->condition->type == Type::i64 and if expr is
-            // comparision expr
           }
         }
       }
