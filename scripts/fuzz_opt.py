@@ -703,7 +703,7 @@ basic_opt_choices = [
 # Exception handling does not run with these options. We split these from
 # basic_opt_choices to handle EH fuzzing.
 advanced_opt_choices = [
-    ['-O4'], # Contains --flatten
+    ['-O4'],  # Contains --flatten
     ["--flatten", "--dfo"],
     ["--flatten"],
     ["--flatten", "--local-cse"],
@@ -716,9 +716,9 @@ def randomize_opt_flags():
     has_flatten = False
     # Exception handling does not support some passes yet.
     if '--disable-exception-handling' in FEATURE_OPTS:
-      opt_choices = basic_opt_choices + advanced_opt_choices
+        opt_choices = basic_opt_choices + advanced_opt_choices
     else:
-      opt_choices = basic_opt_choices
+        opt_choices = basic_opt_choices
     # core opts
     while 1:
         choice = random.choice(opt_choices)
@@ -833,9 +833,9 @@ if __name__ == '__main__':
                 # passes yet. When EH is enabled, don't use those passes in
                 # wasm-reduce.
                 if '--disable-exception-handling' in FEATURE_OPTS:
-                  disable_flatten_opt = ''
+                    disable_flatten_opt = ''
                 else:
-                  disable_flatten_opt = ' --disable-flatten'
+                    disable_flatten_opt = ' --disable-flatten'
                 # write out a useful reduce.sh
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
