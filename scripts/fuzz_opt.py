@@ -824,11 +824,11 @@ if __name__ == '__main__':
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
 %(wasm_opt)s --detect-features %(temp_wasm)s
-echo $?
+echo "should be 0:" $?
 
 # run the command
 ./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
-echo $?
+echo "should be 1:" $?
 
 #
 # You may want to print out part of "o" or "e", if the output matters and not
@@ -874,11 +874,23 @@ The initial wasm file used here is saved as %(original_wasm)s
 
 You can reduce the testcase by running this now:
 
+||||
+vvvv
+
 
 %(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
-"%(reduce_sh)s" has been filled out for you, and includes docs and suggestions.
+^^^^
+||||
+
+Make sure to verify by eye that the output says
+
+should be 0: 0
+should be 1: 1
+
+You can also read "%(reduce_sh)s" which has been filled out for you and includes
+docs and suggestions.
 
 After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
