@@ -15,9 +15,11 @@
  */
 
 //
-// Convert all NaN values at runtime into 0s, immediately as they are
-// generated, so that NaNs are never encountered. This is useful when fuzzing
-// between VMs that differ on wasm's nondeterminism around NaNs.
+// Instrument the wasm to convert NaN values at runtime into 0s. That is, every
+// operation that might produce a NaN will go through a helper function which
+// filters out NaNs (replacing them with 0). This ensures that NaNs are never
+// consumed by any instructions, which is useful when fuzzin between VMs that
+// differ on wasm's nondeterminism around NaNs.
 //
 
 #include "pass.h"
@@ -66,6 +68,17 @@ struct DeNaN : public WalkerPass<
       auto* func = new Function;
       func->name = name;
       func->sig = Signature(type, type);
+      // Compare the value to itself to check if it is a NaN, and return 0 if
+      // so:
+      //
+      //   (if (result f*)
+      //     (f*.eq
+      //       (local.get $0)
+      //       (local.get $0)
+      //     )
+      //     (local.get $0)
+      //     (f*.const 0)
+      //   )
       func->body = builder.makeIf(
         builder.makeBinary(
           op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),

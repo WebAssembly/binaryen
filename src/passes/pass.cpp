@@ -104,7 +104,7 @@ void PassRegistry::registerPasses() {
                createConstHoistingPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
-  registerPass("denan", "convert all NaNs into 0 at runtime", createDeNaNPass);
+  registerPass("denan", "instrument the wasm to convert NaNs into 0 at runtime", createDeNaNPass);
   registerPass(
     "directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass(
