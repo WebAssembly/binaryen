@@ -69,8 +69,20 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case AddInt32:
       case SubInt32:
       case MulInt32:
-      case RemSInt32:
+      case RemSInt32: {
+        if (auto* const_ = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          if (maxBits == 32) {
+            return 32;
+          }
+          auto value = const_->value.geti32();
+          return value <= 1
+                   ? Index(0)
+                   : std::min(maxBits,
+                              32 - Index(CountLeadingZeroes(value - 1)));
+        }
         return 32;
+      }
       case RemUInt32: {
         if (auto* const_ = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
@@ -93,11 +105,11 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       }
       case DivSInt32: {
         if (auto* const_ = binary->right->dynCast<Const>()) {
-          auto value = const_->value.geti32();
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
           if (maxBits == 32) {
             return 32;
           }
+          auto value = const_->value.geti32();
           return std::max(Index(0),
                           maxBits - (31 - Index(CountLeadingZeroes(value))));
         }
@@ -147,12 +159,24 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case AddInt64:
       case SubInt64:
       case MulInt64:
-      case RemSInt64:
+      case RemSInt64: {
+        if (auto* const_ = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          if (maxBits == 64) {
+            return 64;
+          }
+          auto value = const_->value.geti64();
+          return value <= 1
+                   ? Index(0)
+                   : std::min(maxBits,
+                              64 - Index(CountLeadingZeroes(value - 1)));
+        }
         return 64;
+      }
       case RemUInt64: {
         if (auto* const_ = binary->right->dynCast<Const>()) {
-          auto value = const_->value.geti64();
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto value = const_->value.geti64();
           return value <= 1
                    ? Index(0)
                    : std::min(maxBits,
@@ -162,8 +186,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       }
       case DivUInt64: {
         if (auto* const_ = binary->right->dynCast<Const>()) {
-          auto value = const_->value.geti64();
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto value = const_->value.geti64();
           return std::max(Index(0),
                           maxBits - (63 - Index(CountLeadingZeroes(value))));
         }
@@ -171,11 +195,11 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       }
       case DivSInt64: {
         if (auto* const_ = binary->right->dynCast<Const>()) {
-          auto value = const_->value.geti64();
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
           if (maxBits == 64) {
             return 64;
           }
+          auto value = const_->value.geti64();
           return std::max(Index(0),
                           maxBits - (63 - Index(CountLeadingZeroes(value))));
         }
