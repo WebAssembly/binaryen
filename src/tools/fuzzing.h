@@ -2700,6 +2700,7 @@ private:
     switch (upTo(4)) {
       case 0:
         firstExpr = builder.makeDrop(pop);
+        break;
       case 1: {
         auto& locals = typeLocals[Type::exnref];
         if (locals.empty()) {
@@ -2707,6 +2708,7 @@ private:
         } else {
           firstExpr = builder.makeLocalSet(pick(locals), pop);
         }
+        break;
       }
       case 2: {
         auto& globals = globalsByType[Type::exnref];
@@ -2715,6 +2717,7 @@ private:
         } else {
           firstExpr = builder.makeGlobalSet(pick(globals), pop);
         }
+        break;
       }
       case 3: {
         if (wasm.functions.empty()) {
@@ -2740,6 +2743,7 @@ private:
           // we failed to find something
           firstExpr = builder.makeDrop(pop);
         }
+        break;
       }
     }
 
