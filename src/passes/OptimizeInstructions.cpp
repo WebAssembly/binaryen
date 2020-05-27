@@ -748,35 +748,33 @@ struct OptimizeInstructions
       }
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
+          Builder builder(*getModule());
           bool isPartially64bits =
             select->type == Type::i64 && select->condition->type == Type::i32;
-          auto extendIfNeeded = [=](Builder* builder, Expression* expression) {
+          auto extendIfNeeded = [&](Expression* expression) {
             return isPartially64bits
-                     ? builder->makeUnary(ExtendUInt32, expression)
+                     ? builder.makeUnary(ExtendUInt32, expression)
                      : expression;
           };
           if (select->type == Type::i32 || isPartially64bits) {
             if (constTrue->type == constFalse->type &&
                 constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
-              Builder builder(*getModule());
               // !x ? 1 : 0   ==>   !x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
-                  return extendIfNeeded(&builder, condition);
+                  return extendIfNeeded(condition);
                 }
               }
               // x <=> y ? 1 : 0   ==>   x <=> y
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 if (condition->isRelational()) {
-                  return extendIfNeeded(&builder, condition);
+                  return extendIfNeeded(condition);
                 }
               }
               // expr ? 1 : 0   ==>   expr != 0
-              return extendIfNeeded(
-                &builder,
-                builder.makeBinary(
-                  NeInt32, select->condition, builder.makeConst(Literal(0))));
+              return extendIfNeeded(builder.makeBinary(
+                NeInt32, select->condition, builder.makeConst(Literal(0))));
             } else if (constTrue->type == constFalse->type &&
                        constTrue->value.getInteger() == 0LL &&
                        constFalse->value.getInteger() == 1LL) {
@@ -784,11 +782,9 @@ struct OptimizeInstructions
               // !x ? 0 : 1   ==>   !!x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
-                  return extendIfNeeded(
-                    &builder,
-                    builder.makeUnary(
-                      Abstract::getUnary(select->type, Abstract::EqZ),
-                      condition->value));
+                  return extendIfNeeded(builder.makeUnary(
+                    Abstract::getUnary(select->type, Abstract::EqZ),
+                    condition->value));
                 }
               }
               // x <=> y ? 1 : 0   ==>   !(x <=> y)
@@ -796,12 +792,12 @@ struct OptimizeInstructions
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
                   condition->op = op;
-                  return extendIfNeeded(&builder, condition);
+                  return extendIfNeeded(condition);
                 }
               }
               // expr ? 0 : 1   ==>   !expr
               return extendIfNeeded(
-                &builder, builder.makeUnary(EqZInt32, select->condition));
+                builder.makeUnary(EqZInt32, select->condition));
             }
           }
         }
