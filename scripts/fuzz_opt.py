@@ -889,7 +889,7 @@ Make sure to verify by eye that the output says
 should be 0: 0
 should be 1: 1
 
-You can also read "%(reduce_sh)s which" has been filled out for you and includes
+You can also read "%(reduce_sh)s" which has been filled out for you and includes
 docs and suggestions.
 
 After reduction, the reduced file will be in %(working_wasm)s
