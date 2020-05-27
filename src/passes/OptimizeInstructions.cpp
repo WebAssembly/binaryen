@@ -214,6 +214,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case EqZInt64:
         return 1;
       case WrapInt64:
+      case ExtendSInt32:
+      case ExtendUInt32:
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       default: {}
     }
