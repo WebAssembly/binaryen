@@ -647,7 +647,7 @@ struct OptimizeInstructions
     } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          // Try return inversed relational opertations using De Morgan's law
+          // Try to inverse a relational operation using De Morgan's law
           auto op = inversedRelationalOp(inner->op);
           if (op != inner->op) {
             inner->op = op;
@@ -749,8 +749,8 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           if (select->type == Type::i32) {
-            if (constTrue->value.geti32() == int32_t(1) &&
-                constFalse->value.geti32() == int32_t(0)) {
+            if (constTrue->value.geti32() == 1 &&
+                constFalse->value.geti32() == 0) {
               // [i32]->[i32]:   !x ? 1 : 0   ==>   !x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
@@ -766,13 +766,13 @@ struct OptimizeInstructions
               // [i32]->[i32]:   expr ? 1 : 0   ==>   expr != 0
               return Builder(*getModule())
                 .makeBinary(NeInt32, select->condition, constFalse);
-            } else if (constTrue->value.geti32() == int32_t(0) &&
-                       constFalse->value.geti32() == int32_t(1)) {
-              // [i32]->[i32]:   !x ? 0 : 1   ==>   x != 0
+            } else if (constTrue->value.geti32() == 0 &&
+                       constFalse->value.geti32() == 1) {
+              // [i32]->[i32]:   !x ? 0 : 1   ==>   !!x
               if (auto* condition = select->condition->dynCast<Unary>()) {
                 if (condition->isRelational()) {
                   return Builder(*getModule())
-                    .makeBinary(NeInt32, condition->value, constTrue);
+                    .makeUnary(EqZInt32, condition->value);
                 }
               }
               // [i32]->[i32]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
@@ -783,14 +783,14 @@ struct OptimizeInstructions
                   return condition;
                 }
               }
-              // [i32]->[i32]:   expr ? 0 : 1   ==>   expr == 0
+              // [i32]->[i32]:   expr ? 0 : 1   ==>   !expr
               return Builder(*getModule())
                 .makeUnary(EqZInt32, select->condition);
             }
           } else if (select->type == Type::i64) {
             if (select->condition->type == Type::i32) {
-              if (constTrue->value.geti64() == int64_t(1) &&
-                  constFalse->value.geti64() == int64_t(0)) {
+              if (constTrue->value.geti64() == 1LL &&
+                  constFalse->value.geti64() == 0LL) {
                 // [i32]->[i64]:   !x ? 1 : 0   ==>   !x
                 if (auto* condition = select->condition->dynCast<Unary>()) {
                   if (condition->isRelational()) {
@@ -812,15 +812,15 @@ struct OptimizeInstructions
                   builder.makeBinary(NeInt32,
                                      select->condition,
                                      builder.makeConst(Literal(int32_t(0)))));
-              } else if (constTrue->value.geti64() == int64_t(0) &&
-                         constFalse->value.geti64() == int64_t(1)) {
-                // [i32]->[i64]:   !x ? 0 : 1   ==>   x != 0
+              } else if (constTrue->value.geti64() == 0LL &&
+                         constFalse->value.geti64() == 1LL) {
+                // [i32]->[i64]:   !x ? 0 : 1   ==>   !!x
                 if (auto* condition = select->condition->dynCast<Unary>()) {
                   if (condition->isRelational()) {
                     Builder builder(*getModule());
                     return builder.makeUnary(
                       ExtendUInt32,
-                      builder.makeBinary(NeInt64, condition->value, constTrue));
+                      builder.makeUnary(EqZInt64, condition->value));
                   }
                 }
                 // [i32]->[i64]:   x <=> y ? 1 : 0   ==>   !(x <=> y)
