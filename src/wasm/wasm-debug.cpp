@@ -732,6 +732,9 @@ static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
   assert(yamlValue == yamlList.end());
 }
 
+// Updates a YAML entry from a DWARF DIE. Also updates LocationUpdater
+// associating each .debug_loc entry with the base address of its corresponding
+// compilation unit.
 static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
