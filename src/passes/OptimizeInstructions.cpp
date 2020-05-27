@@ -67,10 +67,10 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case AddInt32:
       case SubInt32:
       case MulInt32:
-      case DivSInt32:
-      case DivUInt32:
-      case RemSInt32:
-      case RemUInt32:
+      case DivSInt32: // TODO: could more precise if rhs is constant
+      case DivUInt32: // TODO: could more precise if rhs is constant
+      case RemSInt32: // TODO: could more precise if rhs is constant
+      case RemUInt32: // TODO: could more precise if rhs is constant
       case RotLInt32:
       case RotRInt32:
         return 32;
@@ -112,7 +112,55 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
         }
         return 32;
       }
-      // 64-bit TODO
+
+      case AddInt64:
+      case SubInt64:
+      case MulInt64:
+      case DivSInt64: // TODO: could more precise if rhs is constant
+      case DivUInt64: // TODO: could more precise if rhs is constant
+      case RemSInt64: // TODO: could more precise if rhs is constant
+      case RemUInt64: // TODO: could more precise if rhs is constant
+      case RotLInt64:
+      case RotRInt64:
+        return 64;
+      case AndInt64:
+        return std::min(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
+      case OrInt64:
+      case XorInt64:
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
+      case ShlInt64: {
+        if (auto* shifts = binary->right->dynCast<Const>()) {
+          return std::min(Index(64),
+                          getMaxBits(binary->left, localInfoProvider) +
+                            Bits::getEffectiveShifts(shifts));
+        }
+        return 64;
+      }
+      case ShrUInt64: {
+        if (auto* shift = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto shifts =
+            std::min(Index(Bits::getEffectiveShifts(shift)),
+                     maxBits); // can ignore more shifts than zero us out
+          return std::max(Index(0), maxBits - shifts);
+        }
+        return 64;
+      }
+      case ShrSInt64: {
+        if (auto* shift = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          if (maxBits == 64) {
+            return 64;
+          }
+          auto shifts =
+            std::min(Index(Bits::getEffectiveShifts(shift)),
+                     maxBits); // can ignore more shifts than zero us out
+          return std::max(Index(0), maxBits - shifts);
+        }
+        return 64;
+      }
       // comparisons
       case EqInt32:
       case NeInt32:
@@ -124,6 +172,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case GtUInt32:
       case GeSInt32:
       case GeUInt32:
+
       case EqInt64:
       case NeInt64:
       case LtSInt64:
@@ -134,12 +183,14 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case GtUInt64:
       case GeSInt64:
       case GeUInt64:
+
       case EqFloat32:
       case NeFloat32:
       case LtFloat32:
       case LeFloat32:
       case GtFloat32:
       case GeFloat32:
+
       case EqFloat64:
       case NeFloat64:
       case LtFloat64:
