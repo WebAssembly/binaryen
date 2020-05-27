@@ -18,7 +18,7 @@
 // Instrument the wasm to convert NaN values at runtime into 0s. That is, every
 // operation that might produce a NaN will go through a helper function which
 // filters out NaNs (replacing them with 0). This ensures that NaNs are never
-// consumed by any instructions, which is useful when fuzzin between VMs that
+// consumed by any instructions, which is useful when fuzzing between VMs that
 // differ on wasm's nondeterminism around NaNs.
 //
 
