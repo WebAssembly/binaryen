@@ -473,6 +473,10 @@ struct LocationUpdater {
   // Map start of line tables in the debug_line section to their new locations.
   std::map<BinaryLocation, BinaryLocation> debugLineMap;
 
+  // Map offset of location list entries in the debug_loc section to the base
+  // address of the compilation units referencing them.
+  std::map<BinaryLocation, BinaryLocation> debugLocToUnitMap;
+
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -610,6 +614,10 @@ struct LocationUpdater {
   BinaryLocation getNewDebugLineLocation(BinaryLocation old) const {
     return debugLineMap.at(old);
   }
+
+  BinaryLocation getLocationBaseAddress(BinaryLocation offset) const {
+    return debugLocToUnitMap.at(offset);
+  }
 };
 
 // Update debug lines, and update the locationUpdater with debug line offset
@@ -724,10 +732,14 @@ static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
   assert(yamlValue == yamlList.end());
 }
 
+// Updates a YAML entry from a DWARF DIE. Also updates LocationUpdater
+// associating each .debug_loc entry with the base address of its corresponding
+// compilation unit.
 static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
-                      const LocationUpdater& locationUpdater) {
+                      LocationUpdater& locationUpdater,
+                      BinaryLocation compilationUnitBaseAddress) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -761,6 +773,11 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         // This is an offset into the debug line section.
         yamlValue.Value =
           locationUpdater.getNewDebugLineLocation(yamlValue.Value);
+      } else if (attr == llvm::dwarf::DW_AT_location &&
+                 attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
+        BinaryLocation locOffset = yamlValue.Value;
+        locationUpdater.debugLocToUnitMap[locOffset] =
+          compilationUnitBaseAddress;
       }
     });
   // Next, process the high_pcs.
@@ -801,7 +818,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
-                               const LocationUpdater& locationUpdater) {
+                               LocationUpdater& locationUpdater) {
   // The context has the high-level information we need, and the YAML is where
   // we write changes. First, iterate over the compile units.
   iterContextAndYAML(
@@ -820,7 +837,13 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            updateDIE(DIE, yamlEntry, abbrevDecl, locationUpdater);
+            BinaryLocation compilationUnitBaseAddress =
+              CU->getBaseAddress() ? CU->getBaseAddress()->Address : 0;
+            updateDIE(DIE,
+                      yamlEntry,
+                      abbrevDecl,
+                      locationUpdater,
+                      compilationUnitBaseAddress);
           }
         });
     });
@@ -874,9 +897,14 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
   // Locations have an optional base.
+  bool atStart = true;
   BinaryLocation base = 0;
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
+    if (atStart) {
+      base = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      atStart = false;
+    }
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
@@ -887,6 +915,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
     } else if (newStart == 0 && newEnd == 0) {
       // This is an end marker, this list is done.
       base = 0;
+      atStart = true;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
