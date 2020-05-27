@@ -133,13 +133,13 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
       for (auto x : entry.Loc) {
         loc.Location.push_back(x);
       }
-      loc.Offset = locListOffset; // XXX BINARYEN
+      loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
       Y.Locs.push_back(loc);
     }
     DWARFYAML::Loc loc;
     loc.Start = 0;
     loc.End = 0;
-    loc.Offset = locListOffset; // XXX BINARYEN
+    loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
     Y.Locs.push_back(loc);
   }
 }

@@ -899,9 +899,9 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   for (size_t i = 0; i < yaml.Locs.size(); i++) {
     auto& loc = yaml.Locs[i];
     if (atStart) {
-      base = locationUpdater.getLocationBaseAddress(loc.Offset);
+      base = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      atStart = false;
     }
-    atStart = false;
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
     if (newStart == BinaryLocation(-1)) {
       // This is a new base.
