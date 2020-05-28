@@ -1411,6 +1411,8 @@ private:
           return right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
           // (unsigned)x < -1   ==>   x != -1
+          // friendlier to JS emitting as we don't need to write an unsigned
+          // -1 value which is large.
           binary->op = Abstract::getBinary(type, Abstract::Ne);
           return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
@@ -1427,8 +1429,6 @@ private:
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (unsigned)x <= -1   ==>   1
-          // friendlier to JS emitting as we don't need to write an unsigned
-          // -1 value which is large.
           right->value = Literal::makeFromInt32(1, Type::i32);
           right->finalize();
           return right;
