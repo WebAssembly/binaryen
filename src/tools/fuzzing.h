@@ -2678,14 +2678,14 @@ private:
     // exnref.pop is a pseudo instruction that should follow 'catch'
     Expression* pop = builder.makePop(Type::exnref);
 
-    // With a small probability, just rethrow it and get done
+    // With a small probability, just rethrow it and finish
     if (oneIn(10)) {
       return builder.makeRethrow(pop);
     }
 
     // Make a block. Note that we don't insert this break in breakableStack:
     // Because 'exnref.pop' should follow 'catch' and we don't support blocks
-    // taking values yet, if there are instructions that break to this block,
+    // taking values yet. If there are instructions that break to this block,
     // this block cannot be removed when writing binary, which will be a
     // problem. We also don't make a label for this block.
     auto* ret = builder.makeBlock();
