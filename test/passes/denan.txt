@@ -1,0 +1,44 @@
+(module
+ (type $f32_=>_f32 (func (param f32) (result f32)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
+ (global $global$1 (mut f32) (f32.const 0))
+ (global $global$2 (mut f32) (f32.const 12.34000015258789))
+ (func $foo32 (param $x f32) (result f32)
+  (call $deNan32
+   (call $foo32
+    (call $deNan32
+     (local.get $x)
+    )
+   )
+  )
+ )
+ (func $foo64 (param $x f64) (result f64)
+  (call $deNan64
+   (call $foo64
+    (call $deNan64
+     (local.get $x)
+    )
+   )
+  )
+ )
+ (func $deNan32 (param $0 f32) (result f32)
+  (if (result f32)
+   (f32.eq
+    (local.get $0)
+    (local.get $0)
+   )
+   (local.get $0)
+   (f32.const 0)
+  )
+ )
+ (func $deNan64 (param $0 f64) (result f64)
+  (if (result f64)
+   (f64.eq
+    (local.get $0)
+    (local.get $0)
+   )
+   (local.get $0)
+   (f64.const 0)
+  )
+ )
+)

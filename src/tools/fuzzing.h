@@ -183,8 +183,6 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void setAllowNaNs(bool allowNaNs_) { allowNaNs = allowNaNs_; }
-
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
 
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
@@ -206,9 +204,6 @@ public:
     }
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
-    }
-    if (!allowNaNs) {
-      addDeNanSupport();
     }
     finalizeTable();
   }
@@ -252,11 +247,6 @@ private:
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
   static const int HANG_LIMIT = 10;
-
-  // Optionally remove NaNs, which are a source of nondeterminism (which makes
-  // cross-VM comparisons harder)
-  // TODO: de-NaN SIMD values
-  bool allowNaNs = true;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
@@ -497,34 +487,6 @@ private:
         builder.makeBinary(BinaryOp::SubInt32,
                            builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32),
                            builder.makeConst(Literal(int32_t(1))))));
-  }
-
-  void addDeNanSupport() {
-    auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto* func = new Function;
-      func->name = name;
-      func->sig = Signature(type, type);
-      func->body = builder.makeIf(
-        builder.makeBinary(
-          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
-        builder.makeLocalGet(0, type),
-        builder.makeConst(literal));
-      wasm.addFunction(func);
-    };
-    add("deNan32", Type::f32, Literal(float(0)), EqFloat32);
-    add("deNan64", Type::f64, Literal(double(0)), EqFloat64);
-  }
-
-  Expression* makeDeNanOp(Expression* expr) {
-    if (allowNaNs) {
-      return expr;
-    }
-    if (expr->type == Type::f32) {
-      return builder.makeCall("deNan32", {expr}, Type::f32);
-    } else if (expr->type == Type::f64) {
-      return builder.makeCall("deNan64", {expr}, Type::f64);
-    }
-    return expr; // unreachable etc. is fine
   }
 
   // function generation state
@@ -1538,7 +1500,7 @@ private:
     return store;
   }
 
-  Literal makeArbitraryLiteral(Type type) {
+  Literal makeLiteral(Type type) {
     if (type == Type::v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
@@ -1767,14 +1729,6 @@ private:
     WASM_UNREACHABLE("invalide value");
   }
 
-  Literal makeLiteral(Type type) {
-    auto ret = makeArbitraryLiteral(type);
-    if (!allowNaNs && ret.isNaN()) {
-      ret = Literal::makeFromInt32(0, type);
-    }
-    return ret;
-  }
-
   Expression* makeConst(Type type) {
     if (type.isRef()) {
       assert(wasm.features.hasReferenceTypes());
@@ -1814,8 +1768,7 @@ private:
     assert(!type.isMulti());
     if (type == Type::unreachable) {
       if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
-        return makeDeNanOp(
-          builder.makeUnary(unary->op, make(Type::unreachable)));
+        return builder.makeUnary(unary->op, make(Type::unreachable));
       }
       // give up
       return makeTrivial(type);
@@ -1923,50 +1876,50 @@ private:
       case Type::f32: {
         switch (upTo(4)) {
           case 0:
-            return makeDeNanOp(buildUnary({pick(NegFloat32,
-                                                AbsFloat32,
-                                                CeilFloat32,
-                                                FloorFloat32,
-                                                TruncFloat32,
-                                                NearestFloat32,
-                                                SqrtFloat32),
-                                           make(Type::f32)}));
+            return buildUnary({pick(NegFloat32,
+                                    AbsFloat32,
+                                    CeilFloat32,
+                                    FloorFloat32,
+                                    TruncFloat32,
+                                    NearestFloat32,
+                                    SqrtFloat32),
+                               make(Type::f32)});
           case 1:
-            return makeDeNanOp(buildUnary({pick(ConvertUInt32ToFloat32,
-                                                ConvertSInt32ToFloat32,
-                                                ReinterpretInt32),
-                                           make(Type::i32)}));
+            return buildUnary({pick(ConvertUInt32ToFloat32,
+                                    ConvertSInt32ToFloat32,
+                                    ReinterpretInt32),
+                               make(Type::i32)});
           case 2:
-            return makeDeNanOp(
-              buildUnary({pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32),
-                          make(Type::i64)}));
+            return buildUnary(
+              {pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32),
+               make(Type::i64)});
           case 3:
-            return makeDeNanOp(buildUnary({DemoteFloat64, make(Type::f64)}));
+            return buildUnary({DemoteFloat64, make(Type::f64)});
         }
         WASM_UNREACHABLE("invalid value");
       }
       case Type::f64: {
         switch (upTo(4)) {
           case 0:
-            return makeDeNanOp(buildUnary({pick(NegFloat64,
-                                                AbsFloat64,
-                                                CeilFloat64,
-                                                FloorFloat64,
-                                                TruncFloat64,
-                                                NearestFloat64,
-                                                SqrtFloat64),
-                                           make(Type::f64)}));
+            return buildUnary({pick(NegFloat64,
+                                    AbsFloat64,
+                                    CeilFloat64,
+                                    FloorFloat64,
+                                    TruncFloat64,
+                                    NearestFloat64,
+                                    SqrtFloat64),
+                               make(Type::f64)});
           case 1:
-            return makeDeNanOp(
-              buildUnary({pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64),
-                          make(Type::i32)}));
+            return buildUnary(
+              {pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64),
+               make(Type::i32)});
           case 2:
-            return makeDeNanOp(buildUnary({pick(ConvertUInt64ToFloat64,
-                                                ConvertSInt64ToFloat64,
-                                                ReinterpretInt64),
-                                           make(Type::i64)}));
+            return buildUnary({pick(ConvertUInt64ToFloat64,
+                                    ConvertSInt64ToFloat64,
+                                    ReinterpretInt64),
+                               make(Type::i64)});
           case 3:
-            return makeDeNanOp(buildUnary({PromoteFloat32, make(Type::f32)}));
+            return buildUnary({PromoteFloat32, make(Type::f32)});
         }
         WASM_UNREACHABLE("invalid value");
       }
@@ -2035,8 +1988,8 @@ private:
     if (type == Type::unreachable) {
       if (auto* binary =
             makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
-        return makeDeNanOp(buildBinary(
-          {binary->op, make(Type::unreachable), make(Type::unreachable)}));
+        return buildBinary(
+          {binary->op, make(Type::unreachable), make(Type::unreachable)});
       }
       // give up
       return makeTrivial(type);
@@ -2131,26 +2084,26 @@ private:
                             make(Type::i64)});
       }
       case Type::f32: {
-        return makeDeNanOp(buildBinary({pick(AddFloat32,
-                                             SubFloat32,
-                                             MulFloat32,
-                                             DivFloat32,
-                                             CopySignFloat32,
-                                             MinFloat32,
-                                             MaxFloat32),
-                                        make(Type::f32),
-                                        make(Type::f32)}));
+        return buildBinary({pick(AddFloat32,
+                                 SubFloat32,
+                                 MulFloat32,
+                                 DivFloat32,
+                                 CopySignFloat32,
+                                 MinFloat32,
+                                 MaxFloat32),
+                            make(Type::f32),
+                            make(Type::f32)});
       }
       case Type::f64: {
-        return makeDeNanOp(buildBinary({pick(AddFloat64,
-                                             SubFloat64,
-                                             MulFloat64,
-                                             DivFloat64,
-                                             CopySignFloat64,
-                                             MinFloat64,
-                                             MaxFloat64),
-                                        make(Type::f64),
-                                        make(Type::f64)}));
+        return buildBinary({pick(AddFloat64,
+                                 SubFloat64,
+                                 MulFloat64,
+                                 DivFloat64,
+                                 CopySignFloat64,
+                                 MinFloat64,
+                                 MaxFloat64),
+                            make(Type::f64),
+                            make(Type::f64)});
       }
       case Type::v128: {
         assert(wasm.features.hasSIMD());
@@ -2270,8 +2223,7 @@ private:
   Expression* makeSelect(Type type) {
     Type subType1 = getSubType(type);
     Type subType2 = getSubType(type);
-    return makeDeNanOp(
-      buildSelect({make(Type::i32), make(subType1), make(subType2)}, type));
+    return buildSelect({make(Type::i32), make(subType1), make(subType2)}, type);
   }
 
   Expression* makeSwitch(Type type) {
