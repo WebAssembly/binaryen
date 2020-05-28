@@ -1407,7 +1407,7 @@ private:
                       .hasSideEffects()) {
           // (unsigned)x > -1   ==>   0
           right->value = Literal::makeSingleZero(Type::i32);
-          right->finalize();
+          right->type = Type::i32;
           return right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
           // (unsigned)x < -1   ==>   x != -1
@@ -1418,9 +1418,10 @@ private:
         } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
           // (unsigned)x / -1   ==>   x == -1
           binary->op = Abstract::getBinary(type, Abstract::Eq);
+          binary->type = Type::i32;
           return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
-          // (signed)x * -1   ==>   0 - x
+          // x * -1   ==>   0 - x
           binary->op = Abstract::getBinary(type, Abstract::Sub);
           right->value = Literal::makeSingleZero(type);
           std::swap(binary->left, binary->right);
@@ -1430,7 +1431,7 @@ private:
                       .hasSideEffects()) {
           // (unsigned)x <= -1   ==>   1
           right->value = Literal::makeFromInt32(1, Type::i32);
-          right->finalize();
+          right->type = Type::i32;
           return right;
         }
       }
