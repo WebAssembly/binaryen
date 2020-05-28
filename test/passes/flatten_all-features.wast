@@ -1040,3 +1040,17 @@
     )
   )
 )
+(module
+ (func $0 (param $0 i64) (param $1 f32)
+  (nop)
+ )
+ (func "test" (result i32)
+  (call $0
+   (unreachable) ;; the unreachable should be handled properly, and not be
+                 ;; reordered with the return
+   (return
+    (i32.const -111)
+   )
+  )
+ )
+)
