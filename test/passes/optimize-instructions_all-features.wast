@@ -3675,6 +3675,26 @@
       (select
         (i32.const 1)
         (i32.const 0)
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
         (i32.ge_s
           (local.get $x)
           (i32.const 0)

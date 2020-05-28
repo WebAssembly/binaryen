@@ -3168,6 +3168,18 @@
    )
   )
   (drop
+   (i32.gt_s
+    (local.get $x)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.le_s
+    (local.get $x)
+    (i32.const 0)
+   )
+  )
+  (drop
    (i32.ge_s
     (local.get $x)
     (i32.const 0)

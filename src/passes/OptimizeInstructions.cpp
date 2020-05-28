@@ -788,7 +788,7 @@ struct OptimizeInstructions
                     condition->value));
                 }
               }
-              // x <=> y ? 1 : 0   ==>   !(x <=> y)
+              // x <=> y ? 0 : 1   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
                 if (op != condition->op) {
