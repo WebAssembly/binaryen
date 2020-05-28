@@ -714,16 +714,6 @@ struct OptimizeInstructions
       }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
-      auto* condition = select->condition->dynCast<Unary>();
-      if (condition && condition->op == EqZInt32) {
-        // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-        if (!ifTrue.invalidates(ifFalse)) {
-          select->condition = condition->value;
-          std::swap(select->ifTrue, select->ifFalse);
-        }
-      }
       if (auto* c = select->condition->dynCast<Const>()) {
         // constant condition, we can just pick the right side (barring side
         // effects)
@@ -743,6 +733,17 @@ struct OptimizeInstructions
             Builder builder(*getModule());
             return builder.makeSequence(builder.makeDrop(select->ifTrue),
                                         select->ifFalse);
+          }
+        }
+      }
+      if (auto* condition = select->condition->dynCast<Unary>()) {
+        if (condition->op == EqZInt32) {
+          // flip select to remove eqz, if we can reorder
+          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
           }
         }
       }
