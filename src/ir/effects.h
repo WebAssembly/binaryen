@@ -111,7 +111,12 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool branches() const {
+  // Check whether this may transfer control flow to somewhere outside of this
+  // expression (aside from just flowing out normally). That includes a break
+  // or a throw (if a throw is not inside a catch scope then it cannot transfer
+  // control flow inside the function, which would be interesting info for
+  // some passes, but that requires looking at the outer scope too).
+  bool transfersControlFlow() const {
     return branchesOut || throws || hasExternalBreakTargets();
   }
 
@@ -120,7 +125,7 @@ struct EffectAnalyzer
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches() ||
+    return hasGlobalSideEffects() || localsWritten.size() > 0 || transfersControlFlow() ||
            implicitTrap;
   }
   bool hasAnything() const {
@@ -138,8 +143,8 @@ struct EffectAnalyzer
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if ((branches() && other.hasSideEffects()) ||
-        (other.branches() && hasSideEffects()) ||
+    if ((transfersControlFlow() && other.hasSideEffects()) ||
+        (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
@@ -176,8 +181,8 @@ struct EffectAnalyzer
       }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.branches()) ||
-        (other.implicitTrap && branches())) {
+    if ((implicitTrap && other.transfersControlFlow()) ||
+        (other.implicitTrap && transfersControlFlow())) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
@@ -497,7 +502,7 @@ struct EffectAnalyzer
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (branches()) {
+    if (transfersControlFlow()) {
       effects |= SideEffects::Branches;
     }
     if (calls) {

@@ -163,6 +163,8 @@ private:
     cumulativeEffects.analyze(list[pushPoint]);
     // it is ok to ignore the branching here, that is the crucial point of this
     // opt
+    // TODO: it would be ok to ignore thrown exceptions here, if we know they
+    //       could not be caught and must go outside of the function
     cumulativeEffects.ignoreBranches();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
