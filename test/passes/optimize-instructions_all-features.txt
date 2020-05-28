@@ -2673,7 +2673,7 @@
   )
   (drop
    (call $div-32-power-2
-    (i32.ne
+    (i32.eq
      (local.get $x)
      (i32.const -1)
     )
@@ -3409,15 +3409,15 @@
    (i64.const 1)
   )
   (drop
-   (i32.shr_u
+   (i32.le_s
     (local.get $x)
-    (i32.const 31)
+    (i32.const -1)
    )
   )
   (drop
-   (i64.shr_u
+   (i64.le_s
     (local.get $y)
-    (i64.const 63)
+    (i64.const -1)
    )
   )
  )

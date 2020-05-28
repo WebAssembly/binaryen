@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <type_traits>
 
 #include <ir/abstract.h>
 #include <ir/cost.h>
@@ -1286,32 +1287,35 @@ private:
   //  * Often shifts are more common than muls.
   //  * The constant is smaller.
   template<typename T> Expression* optimizePowerOf2Mul(Binary* binary, T c) {
-    int32_t shifts = CountTrailingZeroes<T>(c);
-    binary->op = sizeof(T) <= 4 ? ShlInt32 : ShlInt64;
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    auto shifts = CountTrailingZeroes<T>(c);
+    binary->op = std::is_same<T, uint32_t>::value ? ShlInt32 : ShlInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
 
-  // Optimize an unsigned divide by a power of two on the right
+  // Optimize an unsigned divide / remainder by a power of two on the right
   // This doesn't shrink code size, and VMs likely optimize it anyhow,
   // but it's still worth doing since
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
   template<typename T> Expression* optimizePowerOf2UDiv(Binary* binary, T c) {
-    int32_t shifts = CountTrailingZeroes<T>(c);
-    binary->op = sizeof(T) <= 4 ? ShrUInt32 : ShrUInt64;
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    auto shifts = CountTrailingZeroes<T>(c);
+    binary->op = std::is_same<T, uint32_t>::value ? ShrUInt32 : ShrUInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
 
-  // Optimize an unsigned divide by a power of two on the right,
-  // which can be an AND mask
-  // This doesn't shrink code size, and VMs likely optimize it anyhow,
-  // but it's still worth doing since
-  //  * Usually ands are more common than urems.
-  //  * The constant is slightly smaller.
   template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
-    binary->op = sizeof(T) <= 4 ? AndInt32 : AndInt64;
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    binary->op = std::is_same<T, uint32_t>::value ? AndInt32 : AndInt64;
     binary->right->cast<Const>()->value = Literal(c - 1);
     return binary;
   }
@@ -1385,49 +1389,41 @@ private:
         } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
-          // x & -1   ==>   -1
+          // x | -1   ==>   -1
           return binary->right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
           // x - (-1)   ==>   x + 1
-          Builder builder(*getModule());
-          return builder.makeBinary(
-            Abstract::getBinary(type, Abstract::Add),
-            binary->left,
-            builder.makeConst(Literal::makeFromInt32(1, type)));
+          binary->op = Abstract::getBinary(type, Abstract::Add);
+          right->value = Literal::makeFromInt32(1, type);
+          return binary;
         } else if ((binary->op == Abstract::getBinary(type, Abstract::RemS) ||
-                    binary->op == GtUInt32 || binary->op == GtUInt64) &&
+                    binary->op == Abstract::getBinary(type, Abstract::GtU)) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (signed)x % -1     ==>   0
           // (unsigned)x > -1   ==>   0
-          return LiteralUtils::makeZero(type, *getModule());
-        } else if (binary->op == LtUInt32 || binary->op == LtUInt64 ||
-                   binary->op == Abstract::getBinary(type, Abstract::DivU)) {
-          // (unsigned)x / -1   ==>   x != -1
+          right->value = Literal::makeSingleZero(type);
+          return right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
           // (unsigned)x < -1   ==>   x != -1
-          return Builder(*getModule())
-            .makeBinary(Abstract::getBinary(type, Abstract::Ne),
-                        binary->left,
-                        binary->right);
+          binary->op = Abstract::getBinary(type, Abstract::Ne);
+          return binary;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+          // (unsigned)x / -1   ==>   x == -1
+          binary->op = Abstract::getBinary(type, Abstract::Eq);
+          return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
           // (signed)x * -1   ==>   -x
-          Builder builder(*getModule());
-          return builder.makeBinary(
-            Abstract::getBinary(type, Abstract::Sub),
-            builder.makeConst(Literal::makeFromInt32(0, type)),
-            binary->left);
-        } else if ((binary->op == LeUInt32 || binary->op == LeUInt64) &&
+          binary->op = Abstract::getBinary(type, Abstract::Sub);
+          right->value = Literal::makeSingleZero(type);
+          std::swap(binary->left, binary->right);
+          return binary;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (unsigned)x <= -1   ==>   1
-          return LiteralUtils::makeFromInt32(1, type, *getModule());
-        } else if (binary->op == LeSInt32 || binary->op == LeSInt64) {
-          // (signed)x <= -1   ==>   (unsigned)x >> sizeof(bits) - 1
-          Builder builder(*getModule());
-          return builder.makeBinary(Abstract::getBinary(type, Abstract::ShrU),
-                                    binary->left,
-                                    builder.makeConst(Literal::makeFromInt32(
-                                      type.getByteSize() * 8 - 1, type)));
+          right->value = Literal::makeFromInt32(1, type);
+          return right;
         }
       }
       // wasm binary encoding uses signed LEBs, which slightly favor negative

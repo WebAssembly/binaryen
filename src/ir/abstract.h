@@ -46,6 +46,14 @@ enum Op {
   // Relational
   Eq,
   Ne,
+  LtS,
+  LtU,
+  LeS,
+  LeU,
+  GtS,
+  GtU,
+  GeS,
+  GeU
 };
 
 // Provide a wasm type and an abstract op and get the concrete one. For example,
@@ -126,6 +134,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt32;
         case Ne:
           return NeInt32;
+        case LtS:
+          return LtSInt32;
+        case LtU:
+          return LtUInt32;
+        case LeS:
+          return LeSInt32;
+        case LeU:
+          return LeUInt32;
+        case GtS:
+          return GtSInt32;
+        case GtU:
+          return GtUInt32;
+        case GeS:
+          return GeSInt32;
+        case GeU:
+          return GeUInt32;
         default:
           return InvalidBinary;
       }
@@ -163,6 +187,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt64;
         case Ne:
           return NeInt64;
+        case LtS:
+          return LtSInt64;
+        case LtU:
+          return LtUInt64;
+        case LeS:
+          return LeSInt64;
+        case LeU:
+          return LeUInt64;
+        case GtS:
+          return GtSInt64;
+        case GtU:
+          return GtUInt64;
+        case GeS:
+          return GeSInt64;
+        case GeU:
+          return GeUInt64;
         default:
           return InvalidBinary;
       }

@@ -537,11 +537,11 @@
    (local.set $0
     (block $do-once (result i32)
      (if
-      (i32.shr_u
+      (i32.le_s
        (i32.load offset=76
         (local.get $0)
        )
-       (i32.const 31)
+       (i32.const -1)
       )
       (br $do-once
        (call $___fflush_unlocked
