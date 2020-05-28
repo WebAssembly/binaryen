@@ -607,7 +607,7 @@ private:
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for recombine
-        if (containsChild<Pop>(curr, 2)) {
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         exprsByType[curr->type].push_back(curr);
@@ -653,7 +653,7 @@ private:
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for the replacement
-        if (containsChild<Pop>(curr, 2)) {
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         if (parent.oneIn(10)) {
@@ -685,7 +685,7 @@ private:
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for the mutation
-        if (containsChild<Pop>(curr, 2)) {
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         if (parent.oneIn(10)) {
@@ -2739,9 +2739,12 @@ private:
               args.push_back(make(target->sig.params.expand()[i]));
             }
             firstExpr = builder.makeCall(target->name, args, type, false);
+            break;
           }
-          // we failed to find something
-          firstExpr = builder.makeDrop(pop);
+          // We failed to find something, so just drop it.
+          if (!firstExpr) {
+            firstExpr = builder.makeDrop(pop);
+          }
         }
         break;
       }

@@ -82,33 +82,6 @@ public:
   Iterator end() const { return Iterator(*this, children.size()); }
 };
 
-// Returns true if the current expression contains a certain kind of expression,
-// within the given depth of BFS. If depth is -1, this searches all children.
-template<typename T> bool containsChild(Expression* curr, int depth = -1) {
-  std::vector<Expression*> exprs;
-  std::vector<Expression*> nextExprs;
-  if (curr->is<T>()) {
-    return true;
-  }
-  exprs.push_back(curr);
-  while (!exprs.empty() && depth > 0) {
-    for (auto* expr : exprs) {
-      for (auto* child : ChildIterator(expr)) {
-        if (child->is<T>()) {
-          return true;
-        }
-        nextExprs.push_back(child);
-      }
-    }
-    exprs.swap(nextExprs);
-    nextExprs.clear();
-    if (depth > 0) {
-      depth--;
-    }
-  }
-  return false;
-}
-
 } // namespace wasm
 
 #endif // wasm_ir_iteration_h

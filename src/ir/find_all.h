@@ -17,6 +17,7 @@
 #ifndef wasm_ir_find_all_h
 #define wasm_ir_find_all_h
 
+#include "ir/iteration.h"
 #include <wasm-traversal.h>
 
 namespace wasm {
@@ -67,6 +68,31 @@ template<typename T> struct FindAllPointers {
     finder.walk(ast);
   }
 };
+
+// Returns true if the current expression contains a certain kind of expression,
+// within the given depth of BFS.
+template<typename T> bool contains(Expression* curr, int depth) {
+  std::vector<Expression*> exprs;
+  std::vector<Expression*> nextExprs;
+  if (curr->is<T>()) {
+    return true;
+  }
+  exprs.push_back(curr);
+  while (!exprs.empty() && depth > 0) {
+    for (auto* expr : exprs) {
+      for (auto* child : ChildIterator(expr)) {
+        if (child->is<T>()) {
+          return true;
+        }
+        nextExprs.push_back(child);
+      }
+    }
+    exprs.swap(nextExprs);
+    nextExprs.clear();
+    depth--;
+  }
+  return false;
+}
 
 } // namespace wasm
 
