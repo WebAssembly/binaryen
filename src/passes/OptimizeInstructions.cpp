@@ -1415,10 +1415,9 @@ private:
           // -1 value which is large.
           binary->op = Abstract::getBinary(type, Abstract::Ne);
           return binary;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+        } else if (binary->op == DivUInt32) {
           // (unsigned)x / -1   ==>   x == -1
           binary->op = Abstract::getBinary(type, Abstract::Eq);
-          binary->type = Type::i32;
           return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
           // x * -1   ==>   0 - x
