@@ -3386,7 +3386,7 @@
    (i32.const 0)
   )
   (drop
-   (i64.const 0)
+   (i32.const 0)
   )
   (drop
    (i32.gt_s
@@ -3400,13 +3400,18 @@
     (i64.const -1)
    )
   )
+  (drop
+   (i64.extend_i32_s
+    (i32.const 0)
+   )
+  )
  )
  (func $less-on-equal-than-neg-one (param $x i32) (param $y i64)
   (drop
    (i32.const 1)
   )
   (drop
-   (i64.const 1)
+   (i32.const 1)
   )
   (drop
    (i32.le_s

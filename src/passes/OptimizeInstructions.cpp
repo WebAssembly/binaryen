@@ -1396,13 +1396,18 @@ private:
           binary->op = Abstract::getBinary(type, Abstract::Add);
           right->value = Literal::makeFromInt32(1, type);
           return binary;
-        } else if ((binary->op == Abstract::getBinary(type, Abstract::RemS) ||
-                    binary->op == Abstract::getBinary(type, Abstract::GtU)) &&
+        } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (signed)x % -1     ==>   0
-          // (unsigned)x > -1   ==>   0
           right->value = Literal::makeSingleZero(type);
+          return right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (unsigned)x > -1   ==>   0
+          right->value = Literal::makeSingleZero(Type::i32);
+          right->finalize();
           return right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
           // (unsigned)x < -1   ==>   x != -1
@@ -1422,7 +1427,8 @@ private:
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           // (unsigned)x <= -1   ==>   1
-          right->value = Literal::makeFromInt32(1, type);
+          right->value = Literal::makeFromInt32(1, Type::i32);
+          right->finalize();
           return right;
         }
       }

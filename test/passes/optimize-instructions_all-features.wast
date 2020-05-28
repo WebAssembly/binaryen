@@ -3848,6 +3848,12 @@
       (local.get $y)
       (i64.const -1)
     ))
+    (drop (i64.extend_i32_s
+      (i64.gt_u
+        (i64.const 0)
+        (i64.const -1)
+      )
+    ))
   )
   (func $less-on-equal-than-neg-one (param $x i32) (param $y i64)
     ;; (unsigned)x <= -1   ==>   1
