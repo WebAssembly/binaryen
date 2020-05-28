@@ -125,8 +125,8 @@ struct EffectAnalyzer
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || transfersControlFlow() ||
-           implicitTrap;
+    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
+           transfersControlFlow() || implicitTrap;
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
