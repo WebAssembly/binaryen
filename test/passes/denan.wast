@@ -1,0 +1,10 @@
+(module
+  (global $global$1 (mut f32) (f32.const nan))
+  (global $global$2 (mut f32) (f32.const 12.34))
+  (func $foo32 (param $x f32) (result f32)
+    (call $foo32 (local.get $x))
+  )
+  (func $foo64 (param $x f64) (result f64)
+    (call $foo64 (local.get $x))
+  )
+)

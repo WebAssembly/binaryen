@@ -56,9 +56,10 @@ var Asyncify = {
           (function(module, i) {
             ret[module][i] = function() {
               if (!Asyncify.sleeping) {
-                // Sleep if asyncify support is present, and at a certain
-                // probability.
-                if (exports.asyncify_start_unwind && 
+                // Sleep if asyncify support is present (which also requires
+                // that the memory be exported), and at a certain probability.
+                if (exports.asyncify_start_unwind &&
+                    view &&
                     detrand() < 0.5) {
                   // We are called in order to start a sleep/unwind.
                   console.log('asyncify: sleep in ' + i + '...');
