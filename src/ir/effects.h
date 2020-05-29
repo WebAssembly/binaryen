@@ -113,9 +113,11 @@ struct EffectAnalyzer
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
-  // or a throw (if a throw is not inside a catch scope then it cannot transfer
-  // control flow inside the function, which would be interesting info for
-  // some passes, but that requires looking at the outer scope too).
+  // or a throw (if the throw is not known to be caught inside this expression;
+  // note that if the throw is not caught in this expression then it might be
+  // caught in this function but outside of this expression, or it might not be
+  // caught in the function at all, which would mean control flow cannot be
+  // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
     return branchesOut || throws || hasExternalBreakTargets();
   }
