@@ -1232,8 +1232,8 @@ private:
           switch (left->op) {
             case EqInt32: {
               switch (right->op) {
-                //   (x >  y) | (x == y)   ==>    x >= y
-                //   (x >= y) | (x == y)   ==>    x >= y
+                //   (x == y) | (x >  y)   ==>    x >= y
+                //   (x == y) | (x >= y)   ==>    x >= y
                 case GtSInt32:
                 case GeSInt32: {
                   left->op = GeSInt32;
@@ -1244,8 +1244,8 @@ private:
                   left->op = GeUInt32;
                   return left;
                 }
-                //   (x  < y) | (x == y)    ==>    x <= y
-                //   (x <= y) | (x == y)    ==>    x <= y
+                //   (x == y) | (x  < y)    ==>    x <= y
+                //   (x == y) | (x <= y)    ==>    x <= y
                 case LtSInt32:
                 case LeSInt32: {
                   left->op = LeSInt32;
@@ -1256,7 +1256,7 @@ private:
                   left->op = LeUInt32;
                   return left;
                 }
-                //   (x != y) | (x == y)   ==>    1
+                //   (x == y) | (x != y)   ==>    1
                 case NeInt32: {
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
@@ -1266,17 +1266,31 @@ private:
               }
               break;
             }
-            case LtSInt32:
+            case LtSInt32: {
+              switch (right->op) {
+                //   (x < y) | (x > y)    ==>    x != y
+                case GtSInt32: {
+                  left->op = NeInt32;
+                  return left;
+                }
+                //   (x < y) | (x >= y)    ==>    1
+                case GeSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default: {
+                }
+              }
+              break;
+            }
             case LtUInt32: {
               switch (right->op) {
-                //   (x > y) | (x < y)    ==>    x != y
-                case GtSInt32:
+                //   (x < y) | (x > y)    ==>    x != y
                 case GtUInt32: {
                   left->op = NeInt32;
                   return left;
                 }
-                //   (x >= y) | (x < y)    ==>    1
-                case GeSInt32:
+                //   (x < y) | (x >= y)    ==>    1
                 case GeUInt32: {
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
@@ -1286,14 +1300,25 @@ private:
               }
               break;
             }
-            case LeSInt32:
+            case LeSInt32: {
+              switch (right->op) {
+                //   (x <= y) | (x >= y)    ==>    1
+                //   (x <= y) | (x >  y)    ==>    1
+                case GeSInt32:
+                case GtSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default: {
+                }
+              }
+              break;
+            }
             case LeUInt32: {
               switch (right->op) {
-                //   (x >= y) | (x <= y)    ==>    1
-                //   (x >  y) | (x <= y)    ==>    1
-                case GeSInt32:
+                //   (x <= y) | (x >= y)    ==>    1
+                //   (x <= y) | (x >  y)    ==>    1
                 case GeUInt32:
-                case GtSInt32:
                 case GtUInt32: {
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
@@ -1301,6 +1326,7 @@ private:
                 default: {
                 }
               }
+              break;
             }
             default: {}
           }
