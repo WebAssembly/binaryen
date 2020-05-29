@@ -497,7 +497,9 @@ struct OptimizeInstructions
             // 0x7FFFFFFF > (signed)x => x != 0x7FFFFFFF
             binary->op = NeInt32;
             return binary;
-          } else if (constValue == int32_t(0x80000000)) {
+          } else if (constValue == int32_t(0x80000000) &&
+                     !EffectAnalyzer(options, features, binary->right)
+                        .hasSideEffects()) {
             // 0x80000000 > (signed)x => 0
             return LiteralUtils::makeZero(Type::i32, *getModule());
           }
