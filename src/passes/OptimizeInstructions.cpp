@@ -1275,6 +1275,12 @@ private:
                   left->op = NeInt32;
                   return left;
                 }
+                //   (x >= y) | (x < y)    ==>    1
+                case GeSInt32:
+                case GeUInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
                 default: {
                 }
               }
@@ -1284,8 +1290,11 @@ private:
             case LeUInt32: {
               switch (right->op) {
                 //   (x >= y) | (x <= y)    ==>    1
+                //   (x >  y) | (x <= y)    ==>    1
+                case GeSInt32:
                 case GeUInt32:
-                case GeSInt32: {
+                case GtSInt32:
+                case GtUInt32: {
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }

@@ -4090,6 +4090,71 @@
         (call $ne0)
       )
     ))
+    ;;
+    ;; x >= y | x < y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x > y | x <= y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x <= y | x > y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x < y | x >= y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x <= y | x >= y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
   )
   (func $combine-or (param $x i32) (param $y i32)
     (drop (i32.or

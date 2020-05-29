@@ -3567,6 +3567,21 @@
     )
    )
   )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
  )
  (func $combine-or (param $x i32) (param $y i32)
   (drop
