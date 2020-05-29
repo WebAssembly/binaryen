@@ -7482,9 +7482,9 @@
      )
     )
     (if
-     (i32.shr_u
+     (i32.lt_s
       (local.get $3)
-      (i32.const 31)
+      (i32.const 0)
      )
      (block
       (local.set $12
@@ -8567,7 +8567,7 @@
   )
   (drop
    (if (result i32)
-    (i32.shr_u
+    (i32.lt_s
      (i32.add
       (call $_fwrite
        (call $_strlen)
@@ -8575,7 +8575,7 @@
       )
       (i32.const -1)
      )
-     (i32.const 31)
+     (i32.const 0)
     )
     (i32.const 1)
     (block $do-once (result i32)
@@ -8669,14 +8669,14 @@
   )
   (local.set $0
    (if (result i32)
-    (i32.shr_u
+    (i32.lt_s
      (call $___syscall_ret
       (call $___syscall140
        (i32.const 140)
        (local.get $3)
       )
      )
-     (i32.const 31)
+     (i32.const 0)
     )
     (block (result i32)
      (i32.store offset=20

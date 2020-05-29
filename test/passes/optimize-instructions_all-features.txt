@@ -637,9 +637,9 @@
  )
  (func $compare-with-consts (param $x i32)
   (drop
-   (i32.lt_s
+   (i32.shr_u
     (local.get $x)
-    (i32.const 0)
+    (i32.const 31)
    )
   )
   (drop
@@ -869,7 +869,7 @@
    )
   )
   (drop
-   (i32.lt_s
+   (i32.shr_u
     (i32.shr_s
      (i32.shl
       (local.get $0)
@@ -877,7 +877,7 @@
      )
      (i32.const 24)
     )
-    (i32.const 0)
+    (i32.const 31)
    )
   )
  )

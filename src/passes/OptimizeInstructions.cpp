@@ -464,9 +464,10 @@ struct OptimizeInstructions
         if (auto* c = binary->right->dynCast<Const>()) {
           auto constValue = c->value.geti32();
           if (constValue == 0) {
-            // this may increase size for compressed binaryes so it apply
-            // only for non-zero shrinkLevel levels
-            if (options.optimizeLevel >= 2 && options.shrinkLevel <= 1) {
+            // this may increase size for compressed binaries
+            // but it could be faster on some runtimes.
+            // Also it canonical form produced by LLVM codegen
+            if (options.shrinkLevel == 0) {
               // (signed)x < 0 => (unsigned)x >> 31
               binary->op = ShrUInt32;
               c->value = Literal(int32_t(31));
