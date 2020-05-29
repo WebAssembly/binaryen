@@ -963,11 +963,12 @@ private:
           if (num->value.geti32() == 0) {
             return binary->left;
           }
+          // TODO: Perhaps use it for separate final pass?
           // x != -1   ==>    x ^ -1
-          if (num->value.geti32() == -1) {
-            binary->op = XorInt32;
-            return binary;
-          }
+          // if (num->value.geti32() == -1) {
+          //   binary->op = XorInt32;
+          //   return binary;
+          // }
         }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {

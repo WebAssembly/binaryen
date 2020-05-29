@@ -10242,7 +10242,7 @@
               (local.get $1)
              )
              (br_if $__rjti$13
-              (i32.xor
+              (i32.ne
                (local.get $1)
                (i32.const -1)
               )
@@ -10259,7 +10259,7 @@
           (br $label$break$L279)
          )
          (if
-          (i32.xor
+          (i32.ne
            (local.tee $1
             (call $_sbrk
              (i32.const 0)
@@ -10439,7 +10439,7 @@
          )
         )
         (if
-         (i32.xor
+         (i32.ne
           (local.get $3)
           (i32.const -1)
          )
