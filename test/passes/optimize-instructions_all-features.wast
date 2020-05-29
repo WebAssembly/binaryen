@@ -4091,7 +4091,20 @@
       )
     ))
     ;;
-    ;; x >= y | x < y    ==>    pass
+    ;; x != y | x == y   -->    pass
+    ;;
+    (drop (i32.or
+      (i32.ne
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x >= y | x < y    -->    pass
     ;;
     (drop (i32.or
       (i32.ge_s
@@ -4104,7 +4117,7 @@
       )
     ))
     ;;
-    ;; x > y | x <= y    ==>    pass
+    ;; x > y | x <= y    -->    pass
     ;;
     (drop (i32.or
       (i32.gt_s
@@ -4117,7 +4130,7 @@
       )
     ))
     ;;
-    ;; x <= y | x > y    ==>    pass
+    ;; x <= y | x > y    -->    pass
     ;;
     (drop (i32.or
       (i32.le_s
@@ -4130,7 +4143,7 @@
       )
     ))
     ;;
-    ;; x < y | x >= y    ==>    pass
+    ;; x < y | x >= y    -->    pass
     ;;
     (drop (i32.or
       (i32.lt_s
@@ -4143,7 +4156,7 @@
       )
     ))
     ;;
-    ;; x <= y | x >= y    ==>    pass
+    ;; x <= y | x >= y    -->    pass
     ;;
     (drop (i32.or
       (i32.le_s
@@ -4155,7 +4168,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (signed)x < y | (unsigned)x > y
+    ;; mixed (signed)x < y | (unsigned)x > y   -->   skip
     (drop (i32.or
       (i32.lt_s
         (local.get $x)
@@ -4166,7 +4179,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (unsigned)x < y | (signed)x > y
+    ;; mixed (unsigned)x < y | (signed)x > y   -->   skip
     (drop (i32.or
       (i32.lt_u
         (local.get $x)
@@ -4177,7 +4190,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (unsigned)x > y | (signed)x < y
+    ;; mixed (unsigned)x > y | (signed)x < y   -->   skip
     (drop (i32.or
       (i32.gt_u
         (local.get $x)
@@ -4188,7 +4201,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (signed)x > y | (unsigned)x < y
+    ;; mixed (signed)x > y | (unsigned)x < y   -->   skip
     (drop (i32.or
       (i32.gt_s
         (local.get $x)
@@ -4199,7 +4212,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (unsigned)x >= y | (signed)x < y
+    ;; mixed (unsigned)x >= y | (signed)x < y   -->   skip
     (drop (i32.or
       (i32.ge_u
         (local.get $x)
@@ -4210,7 +4223,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (signed)x >= y | (unsigned)x < y
+    ;; mixed (signed)x >= y | (unsigned)x < y   -->   skip
     (drop (i32.or
       (i32.ge_s
         (local.get $x)
@@ -4221,7 +4234,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (unsigned)x > y | (signed)x <= y
+    ;; mixed (unsigned)x > y | (signed)x <= y   -->   skip
     (drop (i32.or
       (i32.gt_u
         (local.get $x)
@@ -4232,7 +4245,7 @@
         (local.get $y)
       )
     ))
-    ;; mixed (signed)x > y | (unsigned)x <= y
+    ;; mixed (signed)x > y | (unsigned)x <= y   -->   skip
     (drop (i32.or
       (i32.gt_s
         (local.get $x)

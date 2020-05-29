@@ -1266,6 +1266,18 @@ private:
               }
               break;
             }
+            case NeInt32: {
+              switch (right->op) {
+                //   (x != y) | (x == y)   ==>    1
+                case EqInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default: {
+                }
+              }
+              break;
+            }
             case LtSInt32: {
               switch (right->op) {
                 //   (x < y) | (x > y)    ==>    x != y

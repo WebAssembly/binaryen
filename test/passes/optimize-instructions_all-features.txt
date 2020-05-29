@@ -3583,6 +3583,9 @@
    (i32.const 1)
   )
   (drop
+   (i32.const 1)
+  )
+  (drop
    (i32.or
     (i32.lt_s
      (local.get $x)
