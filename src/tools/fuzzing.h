@@ -2669,7 +2669,9 @@ private:
 
   Expression* makeTry(Type type) {
     hangStack.push_back(nullptr);
-    auto* ret = builder.makeTry(makeMaybeBlock(type), makeCatch(type), type);
+    auto* tryBody = makeMaybeBlock(type);
+    auto* catchBody = makeCatch(type);
+    auto* ret = builder.makeTry(tryBody, catchBody, type);
     hangStack.pop_back();
     return ret;
   }
