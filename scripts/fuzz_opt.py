@@ -585,7 +585,11 @@ def test_one(random_input, opts, given_wasm):
     print()
 
     if given_wasm:
-        shutil.copyfile(given_wasm, 'a.wasm')
+        # if given a wasm file we want to use it as is, but we also want to
+        # apply properties like not having any NaNs, which the original fuzz
+        # wasm had applied. that is, we need to preserve properties like not
+        # having nans through reduction.
+        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS)
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
