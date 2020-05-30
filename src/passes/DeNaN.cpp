@@ -77,13 +77,15 @@ struct DeNaN : public WalkerPass<
     auto num = func->getNumParams();
     for (Index i = 0; i < num; i++) {
       if (func->getLocalType(i) == Type::f32) {
-        fixes.push_back(builder.makeLocalSet(i,
-          builder.makeCall("deNan32", {builder.makeLocalGet(i, Type::f32)}, Type::f32)
-        ));
+        fixes.push_back(builder.makeLocalSet(
+          i,
+          builder.makeCall(
+            "deNan32", {builder.makeLocalGet(i, Type::f32)}, Type::f32)));
       } else if (func->getLocalType(i) == Type::f64) {
-        fixes.push_back(builder.makeLocalSet(i,
-          builder.makeCall("deNan64", {builder.makeLocalGet(i, Type::f64)}, Type::f64)
-        ));
+        fixes.push_back(builder.makeLocalSet(
+          i,
+          builder.makeCall(
+            "deNan64", {builder.makeLocalGet(i, Type::f64)}, Type::f64)));
       }
     }
     if (!fixes.empty()) {
