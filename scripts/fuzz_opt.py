@@ -637,7 +637,7 @@ def test_one(random_input, opts, given_wasm):
 
         # let the testcase handler handle this testcase however it wants. in this case we give it
         # the input and both wasms.
-        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FEATURE_OPTS)
         print('')
 
     return bytes
