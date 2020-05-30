@@ -539,10 +539,14 @@ class Asyncify(TestCaseHandler):
 
         def do_asyncify(wasm):
             cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
-            if random.random() < 0.5:
-                cmd += ['--optimize-level=%d' % random.randint(1, 3)]
-            if random.random() < 0.5:
-                cmd += ['--shrink-level=%d' % random.randint(1, 2)]
+            # if we allow NaNs, running binaryen optimizations and then
+            # executing in d8 may lead to different results due to NaN
+            # nondeterminism between VMs.
+            if not NANS:
+                if random.random() < 0.5:
+                    cmd += ['--optimize-level=%d' % random.randint(1, 3)]
+                if random.random() < 0.5:
+                    cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
             out = run_d8('async.t.wasm')
