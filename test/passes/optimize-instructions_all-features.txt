@@ -3246,6 +3246,25 @@
     )
    )
   )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (select
+    (local.get $x)
+    (i32.const 2)
+    (local.get $x)
+   )
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (i64.const 2)
+  )
  )
  (func $getFallthrough
   (local $x0 i32)

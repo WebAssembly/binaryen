@@ -934,11 +934,21 @@ private:
   Expression* optimizeBoolean(Expression* boolean) {
     // TODO use a general getFallthroughs
     if (auto* unary = boolean->dynCast<Unary>()) {
-      if (unary && unary->op == EqZInt32) {
-        auto* unary2 = unary->value->dynCast<Unary>();
-        if (unary2 && unary2->op == EqZInt32) {
-          // double eqz
-          return unary2->value;
+      if (unary) {
+        if (unary->op == EqZInt32 || unary->op == EqZInt64) {
+          if (unary->op == EqZInt32) {
+            auto* unary2 = unary->value->dynCast<Unary>();
+            if (unary2 && unary2->op == EqZInt32) {
+              // double eqz
+              return unary2->value;
+            }
+          }
+          if (auto* c = unary->value->dynCast<Const>()) {
+            // [i32 | i64] !C => eval C ? 0 : 1
+            c->value = Literal(int32_t(c->value.getInteger() ? 0 : 1));
+            c->type = Type::i32;
+            return unary->value;
+          }
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {

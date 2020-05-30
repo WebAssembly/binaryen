@@ -3773,6 +3773,54 @@
         )
       )
     )
+    ;; optimize boolean
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 0)
+        (i32.eqz
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 2)
+        (i32.eqz
+          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 2)
+        (i32.eqz
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $y)
+        (i64.const 0)
+        (i64.eqz
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $y)
+        (i64.const 2)
+        (i64.eqz
+          (i64.const 2)
+        )
+      )
+    )
   )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
