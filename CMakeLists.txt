@@ -72,6 +72,10 @@ endfunction()
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
+if (MSVC)
+  # We don't have dllexport declarations set up for windows yet.
+  set(BUILD_STATIC_LIB ON)
+endif()
 
 # For now, don't include full DWARF support in JS builds, for size.
 if (NOT EMSCRIPTEN)
