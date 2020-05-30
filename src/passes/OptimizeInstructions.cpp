@@ -960,12 +960,13 @@ private:
           }
         }
       }
-      if (binary->op == OrInt32) {
+      if (binary->op == OrInt32 || binary->op == XorInt32) {
         // an or flowing into a boolean context can consider each input as
         // boolean
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
-      } else if (binary->op == NeInt32) {
+      }
+      if (binary->op == NeInt32) {
         if (auto* num = binary->right->dynCast<Const>()) {
           // x != 0 is just x if it's used as a bool
           if (num->value.geti32() == 0) {
