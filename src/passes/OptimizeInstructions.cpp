@@ -649,7 +649,7 @@ struct OptimizeInstructions
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to inverse a relational operation using De Morgan's law
           auto op = inversedRelationalOp(inner->op);
-          if (op != inner->op) {
+          if (op != InvalidBinary) {
             inner->op = op;
             return inner;
           }
@@ -791,7 +791,7 @@ struct OptimizeInstructions
               // x <=> y ? 0 : 1   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
                 auto op = inversedRelationalOp(condition->op);
-                if (op != condition->op) {
+                if (op != InvalidBinary) {
                   condition->op = op;
                   return extendIfNeeded(condition);
                 }
@@ -1574,7 +1574,7 @@ private:
         return EqFloat64;
 
       default:
-        return op;
+        return InvalidBinary;
     }
   }
 };
