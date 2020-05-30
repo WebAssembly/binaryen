@@ -750,14 +750,12 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           Builder builder(*getModule());
-          bool isPartially64bits =
-            select->type == Type::i64 && select->condition->type == Type::i32;
+          bool is64bits = select->type == Type::i64;
           auto extendIfNeeded = [&](Expression* expression) {
-            return isPartially64bits
-                     ? builder.makeUnary(ExtendUInt32, expression)
-                     : expression;
+            return is64bits ? builder.makeUnary(ExtendUInt32, expression)
+                            : expression;
           };
-          if (select->type == Type::i32 || isPartially64bits) {
+          if (select->type == Type::i32 || is64bits) {
             if (constTrue->type == constFalse->type &&
                 constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
