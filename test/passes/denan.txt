@@ -1,23 +1,110 @@
 (module
  (type $f32_=>_f32 (func (param f32) (result f32)))
  (type $f64_=>_f64 (func (param f64) (result f64)))
+ (type $i32_f32_i64_f64_=>_none (func (param i32 f32 i64 f64)))
+ (type $f32_f64_=>_none (func (param f32 f64)))
  (global $global$1 (mut f32) (f32.const 0))
  (global $global$2 (mut f32) (f32.const 12.34000015258789))
  (func $foo32 (param $x f32) (result f32)
+  (local.set $x
+   (call $deNan32
+    (local.get $x)
+   )
+  )
   (call $deNan32
    (call $foo32
-    (call $deNan32
-     (local.get $x)
-    )
+    (local.get $x)
    )
   )
  )
  (func $foo64 (param $x f64) (result f64)
+  (local.set $x
+   (call $deNan64
+    (local.get $x)
+   )
+  )
   (call $deNan64
    (call $foo64
-    (call $deNan64
-     (local.get $x)
+    (local.get $x)
+   )
+  )
+ )
+ (func $various (param $x i32) (param $y f32) (param $z i64) (param $w f64)
+  (local.set $y
+   (call $deNan32
+    (local.get $y)
+   )
+  )
+  (local.set $w
+   (call $deNan64
+    (local.get $w)
+   )
+  )
+  (nop)
+ )
+ (func $ignore-local.get (param $f f32) (param $d f64)
+  (local.set $f
+   (call $deNan32
+    (local.get $f)
+   )
+  )
+  (local.set $d
+   (call $deNan64
+    (local.get $d)
+   )
+  )
+  (block
+   (drop
+    (local.get $f)
+   )
+   (drop
+    (local.get $d)
+   )
+   (local.set $f
+    (local.get $f)
+   )
+   (local.set $d
+    (local.get $d)
+   )
+   (drop
+    (local.get $f)
+   )
+   (drop
+    (local.get $d)
+   )
+   (drop
+    (call $deNan32
+     (f32.abs
+      (local.get $f)
+     )
     )
+   )
+   (drop
+    (call $deNan64
+     (f64.abs
+      (local.get $d)
+     )
+    )
+   )
+   (local.set $f
+    (call $deNan32
+     (f32.abs
+      (local.get $f)
+     )
+    )
+   )
+   (local.set $d
+    (call $deNan64
+     (f64.abs
+      (local.get $d)
+     )
+    )
+   )
+   (drop
+    (local.get $f)
+   )
+   (drop
+    (local.get $d)
    )
   )
  )
