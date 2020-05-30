@@ -69,6 +69,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case AddInt32:
       case SubInt32:
       case MulInt32:
+        return 32;
       case RemSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
@@ -153,6 +154,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case AddInt64:
       case SubInt64:
       case MulInt64:
+        return 64;
       case RemSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
