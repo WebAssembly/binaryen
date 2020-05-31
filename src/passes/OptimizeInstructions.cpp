@@ -1270,7 +1270,7 @@ private:
               }
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
-            //   ~(C - x)   ==>   ~C + x
+            //   (C - x) ^ -1   ==>   ~C + x
             if (auto* constLeft = left->left->dynCast<Const>()) {
               auto value = constLeft->value.getInteger();
               constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
@@ -1279,7 +1279,7 @@ private:
               return left;
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Add)) {
-            //   ~(x + C)   ==>   ~C - x
+            //   (x + C) ^ -1   ==>   ~C - x
             if (auto* constRight = left->right->dynCast<Const>()) {
               auto value = constRight->value.getInteger();
               constRight->value = type == Type::i32 ? Literal(int32_t(~value))
