@@ -1239,8 +1239,8 @@ private:
           if (left->op == Abstract::getBinary(type, Abstract::ShrS)) {
             if (auto* constLeft = left->left->dynCast<Const>()) {
               int64_t value = constLeft->value.getInteger();
-              constLeft->value = type == Type::i32
-                ? Literal(int32_t(~value)) : Literal(int64_t(~value));
+              constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
+                                                   : Literal(int64_t(~value));
               if (value < 0LL) {
                 left->op = Abstract::getBinary(type, Abstract::ShrU);
               }
