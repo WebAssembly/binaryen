@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <limits>
 
 #include <ir/abstract.h>
 #include <ir/cost.h>
@@ -1223,8 +1224,8 @@ private:
     if (auto* constRigth = binary->right->dynCast<Const>()) {
       if (constRigth->value.getInteger() == -1LL) {
         if (auto* left = binary->left->dynCast<Binary>()) {
-          //   (1 << x) ^ -1    ==>    rotl(-2, x)
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
+            //   (1 << x) ^ -1    ==>    rotl(-2, x)
             if (auto* constLeft = left->left->dynCast<Const>()) {
               if (constLeft->value.getInteger() == 1LL) {
                 left->op = Abstract::getBinary(type, Abstract::RotL);
@@ -1232,11 +1233,10 @@ private:
                 return left;
               }
             }
-          }
-          //   ((signed)C >> x) ^ -1   ==>
-          // if C >= 0:   (signed)~C >> x
-          // if C  < 0: (unsigned)~C >> x
-          if (left->op == Abstract::getBinary(type, Abstract::ShrS)) {
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrS)) {
+            //   ((signed)C >> x) ^ -1   ==>
+            // if C >= 0:     (signed)~C >> x
+            // if C  < 0:   (unsigned)~C >> x
             if (auto* constLeft = left->left->dynCast<Const>()) {
               int64_t value = constLeft->value.getInteger();
               constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
@@ -1245,6 +1245,27 @@ private:
                 left->op = Abstract::getBinary(type, Abstract::ShrU);
               }
               return left;
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrU)) {
+            //   ((unsigned)C >> x) ^ -1   ==>
+            // if C <= (signed)max:   (signed)~C >> x
+            // if C >  (signed)max:   skip
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              if (type == Type::i32) {
+                uint32_t value = uint32_t(constLeft->value.geti32());
+                if (value <= uint32_t(std::numeric_limits<int32_t>::max())) {
+                  constLeft->value = Literal(uint32_t(~value));
+                  left->op = ShrSInt32;
+                  return left;
+                }
+              } else {
+                uint64_t value = uint64_t(constLeft->value.geti64());
+                if (value <= uint64_t(std::numeric_limits<int64_t>::max())) {
+                  constLeft->value = Literal(uint64_t(~value));
+                  left->op = ShrSInt64;
+                  return left;
+                }
+              }
             }
           }
         }

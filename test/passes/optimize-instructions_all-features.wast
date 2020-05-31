@@ -3808,16 +3808,9 @@
         (local.get $y)
       )
     ))
-    ;; ~(C >> x) patterns
+    ;; signed: ~(C >> x) patterns
     (drop (i32.xor
       (i32.shr_s
-        (i32.const 10)
-        (local.get $x)
-      )
-      (i32.const -1)
-    ))
-    (drop (i32.xor
-      (i32.shr_u
         (i32.const 10)
         (local.get $x)
       )
@@ -3826,13 +3819,6 @@
     (drop (i32.xor
       (i32.shr_s
         (i32.const -2147483648)
-        (local.get $x)
-      )
-      (i32.const -1)
-    ))
-    (drop (i32.xor
-      (i32.shr_u
-        (i32.const -1)
         (local.get $x)
       )
       (i32.const -1)
@@ -3854,6 +3840,56 @@
     (drop (i64.xor
       (i64.shr_s
         (i64.const 0)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    ;; unsigned: ~(C >> x) patterns
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const 10)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const -1) ;; should skip
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const 2147483647)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const 2147483648) ;; should skip
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const 4294967295) ;; should skip
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.shr_u
+        (i64.const 9223372036854775807)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    (drop (i64.xor
+      (i64.shr_u
+        (i64.const -1) ;; should skip
         (local.get $y)
       )
       (i64.const -1)
