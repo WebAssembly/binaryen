@@ -631,7 +631,7 @@ struct OptimizeInstructions
         }
       }
       if (binary->op == XorInt32 || binary->op == XorInt64) {
-        if (auto* ret = complementaryShift(binary)) {
+        if (auto* ret = optimizeComplementary(binary)) {
           return ret;
         }
       }
@@ -1216,13 +1216,14 @@ private:
 
   // We try detect and simplify patterns like:
   // ~(1 << shift)
-  Expression* complementaryShift(Binary* binary) {
+  // ~(С >> shift)
+  Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
-    //   (1 << shift) ^ -1    ==>    rotl(-2, shift)
-    auto type = binary->type;
+    Type type = binary->type;
     if (auto* constRigth = binary->right->dynCast<Const>()) {
       if (constRigth->value.getInteger() == -1LL) {
         if (auto* left = binary->left->dynCast<Binary>()) {
+          //   (1 << x) ^ -1    ==>    rotl(-2, x)
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
             if (auto* constLeft = left->left->dynCast<Const>()) {
               if (constLeft->value.getInteger() == 1LL) {
@@ -1230,6 +1231,20 @@ private:
                 constLeft->value = Literal::makeFromInt32(-2, type);
                 return left;
               }
+            }
+          }
+          //   ((signed)C >> x) ^ -1   ==>
+          // if C >= 0:   (signed)~C >> x
+          // if C  < 0: (unsigned)~C >> x
+          if (left->op == Abstract::getBinary(type, Abstract::ShrS)) {
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              int64_t value = constLeft->value.getInteger();
+              constLeft->value = type == Type::i32
+                ? Literal(int32_t(~value)) : Literal(int64_t(~value));
+              if (value < 0LL) {
+                left->op = Abstract::getBinary(type, Abstract::ShrU);
+              }
+              return left;
             }
           }
         }

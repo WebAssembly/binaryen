@@ -3778,7 +3778,7 @@
     ))
     ;; TODO: more stuff here
   )
-  (func $complementary-shift (param $x i32) (param $y i64)
+  (func $complementary (param $x i32) (param $y i64)
     ;; ~(1 << x) patterns
     (drop (i32.xor
       (i32.shl
@@ -3807,6 +3807,56 @@
         (i64.const 1)
         (local.get $y)
       )
+    ))
+    ;; ~(C >> x) patterns
+    (drop (i32.xor
+      (i32.shr_s
+        (i32.const 10)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const 10)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_s
+        (i32.const -2147483648)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.shr_u
+        (i32.const -1)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor ;; should reduce to 0
+      (i32.shr_s
+        (i32.const -1)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor ;; should reduce to 0
+      (i64.shr_s
+        (i64.const -1)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    (drop (i64.xor
+      (i64.shr_s
+        (i64.const 0)
+        (local.get $y)
+      )
+      (i64.const -1)
     ))
   )
   (func $select-into-arms (param $x i32) (param $y i32)
