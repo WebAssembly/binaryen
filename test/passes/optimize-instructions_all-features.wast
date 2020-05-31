@@ -3894,6 +3894,78 @@
       )
       (i64.const -1)
     ))
+    ;; ~(C - x)
+    (drop (i32.xor
+      (i32.sub
+        (i32.const 0)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.sub
+        (i64.const 0)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    (drop (i32.xor
+      (i32.sub
+        (i32.const -2)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.sub
+        (i32.const 2147483649)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.sub
+        (i64.const 9223372036854775807)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    ;; ~(C + x)
+    (drop (i32.xor
+      (i32.add
+        (i32.const 0)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.add
+        (i64.const 0)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    (drop (i64.xor
+      (i64.add
+        (i64.const -2)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    (drop (i32.xor
+      (i32.add
+        (i32.const 2147483649)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.add
+        (i64.const 9223372036854775807)
+        (local.get $y)
+      )
+      (i64.const -1)
+    ))
   )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if

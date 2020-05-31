@@ -1216,8 +1216,10 @@ private:
   }
 
   // We try detect and simplify patterns like:
-  // ~(1 << shift)
-  // ~(С >> shift)
+  // ~(1 << x)
+  // ~(С >> x)
+  // ~(C -  x)
+  // ~(C +  x)
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
     Type type = binary->type;
@@ -1266,6 +1268,25 @@ private:
                   return left;
                 }
               }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            //   ~(C - x)   ==>   ~C + x
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              auto value = constLeft->value.getInteger();
+              constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
+                                                   : Literal(int64_t(~value));
+              left->op = Abstract::getBinary(type, Abstract::Add);
+              return left;
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+            //   ~(x + C)   ==>   ~C - x
+            if (auto* constRight = left->right->dynCast<Const>()) {
+              auto value = constRight->value.getInteger();
+              constRight->value = type == Type::i32 ? Literal(int32_t(~value))
+                                                    : Literal(int64_t(~value));
+              left->op = Abstract::getBinary(type, Abstract::Sub);
+              std::swap(left->left, left->right);
+              return left;
             }
           }
         }
