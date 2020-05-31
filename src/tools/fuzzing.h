@@ -610,8 +610,10 @@ private:
 
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
-        // consider this as a candidate for recombine
-        if (contains<Pop>(curr, 2)) {
+        // consider this as a candidate for recombine. 'makeCatch' ensures all
+        // generated 'exnref.pop's are at depth 1 (= immediate child) within
+        // 'catch'.
+        if (contains<Pop>(curr, 1)) {
           return;
         }
         exprsByType[curr->type].push_back(curr);
@@ -656,8 +658,10 @@ private:
 
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
-        // consider this as a candidate for the replacement
-        if (contains<Pop>(curr, 2)) {
+        // consider this as a candidate for replacement. 'makeCatch' ensures all
+        // generated 'exnref.pop's are at depth 1 (= immediate child) within
+        // 'catch'.
+        if (contains<Pop>(curr, 1)) {
           return;
         }
         if (parent.oneIn(10)) {
@@ -688,8 +692,10 @@ private:
 
       void visitExpression(Expression* curr) {
         // If this expression can possibly contain a dangling pop, don't
-        // consider this as a candidate for the mutation
-        if (contains<Pop>(curr, 2)) {
+        // consider this as a candidate for mutation. 'makeCatch' ensures all
+        // generated 'exnref.pop's are at depth 1 (= immediate child) within
+        // 'catch'.
+        if (contains<Pop>(curr, 1)) {
           return;
         }
         if (parent.oneIn(10)) {
