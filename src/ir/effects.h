@@ -42,19 +42,20 @@ struct EffectAnalyzer
   FeatureSet features;
 
   void analyze(Expression* ast) {
-    breakNames.clear();
+    breakTargets.clear();
     walk(ast);
-    // if we are left with breaks, they are external
-    if (breakNames.size() > 0) {
-      branches = true;
-    }
     assert(tryDepth == 0);
   }
 
   // Core effect tracking
 
-  // branches out of this expression, returns, infinite loops, etc
-  bool branches = false;
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut = false;
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -110,28 +111,36 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool transfersControlFlow() const { return branches || throws; }
+  // Check whether this may transfer control flow to somewhere outside of this
+  // expression (aside from just flowing out normally). That includes a break
+  // or a throw (if the throw is not known to be caught inside this expression;
+  // note that if the throw is not caught in this expression then it might be
+  // caught in this function but outside of this expression, or it might not be
+  // caught in the function at all, which would mean control flow cannot be
+  // transferred inside the function, but this expression does not know that).
+  bool transfersControlFlow() const {
+    return branchesOut || throws || hasExternalBreakTargets();
+  }
 
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap;
+    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
+           transfersControlFlow() || implicitTrap;
   }
   bool hasAnything() const {
-    return calls || accessesLocal() || readsMemory || writesMemory ||
-           accessesGlobal() || implicitTrap || isAtomic ||
-           transfersControlFlow();
+    return hasSideEffects() || accessesLocal() || readsMemory ||
+           accessesGlobal() || isAtomic;
   }
 
-  bool noticesGlobalSideEffects() {
+  bool noticesGlobalSideEffects() const {
     return calls || readsMemory || isAtomic || globalsRead.size();
   }
 
   // check if we break to anything external from ourselves
-  bool hasExternalBreakTargets() { return !breakNames.empty(); }
+  bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
@@ -187,7 +196,7 @@ struct EffectAnalyzer
   }
 
   void mergeIn(EffectAnalyzer& other) {
-    branches = branches || other.branches;
+    branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
@@ -206,6 +215,9 @@ struct EffectAnalyzer
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
     }
+    for (auto i : other.breakTargets) {
+      breakTargets.insert(i);
+    }
   }
 
   // the checks above happen after the node's children were processed, in the
@@ -213,7 +225,7 @@ struct EffectAnalyzer
   // the children, i.e., loops
   bool checkPre(Expression* curr) {
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
       return true;
     }
     return false;
@@ -222,22 +234,22 @@ struct EffectAnalyzer
   bool checkPost(Expression* curr) {
     visit(curr);
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
     }
     return hasAnything();
   }
 
-  std::set<Name> breakNames;
+  std::set<Name> breakTargets;
 
   void visitBlock(Block* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
   }
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
     // if the loop is unreachable, then there is branching control flow:
     //  (1) if the body is unreachable because of a (return), uncaught (br)
@@ -249,15 +261,15 @@ struct EffectAnalyzer
     //      consider that a branching side effect (note how the same logic does
     //      not apply to blocks).
     if (curr->type == Type::unreachable) {
-      branches = true;
+      branchesOut = true;
     }
   }
-  void visitBreak(Break* curr) { breakNames.insert(curr->name); }
+  void visitBreak(Break* curr) { breakTargets.insert(curr->name); }
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      breakNames.insert(name);
+      breakTargets.insert(name);
     }
-    breakNames.insert(curr->default_);
+    breakTargets.insert(curr->default_);
   }
 
   void visitCall(Call* curr) {
@@ -267,13 +279,13 @@ struct EffectAnalyzer
       throws = true;
     }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
       // move code around them
       // FIXME: we could check if the call is to an import
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
@@ -282,7 +294,7 @@ struct EffectAnalyzer
       throws = true;
     }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
@@ -424,7 +436,7 @@ struct EffectAnalyzer
   }
   void visitSelect(Select* curr) {}
   void visitDrop(Drop* curr) {}
-  void visitReturn(Return* curr) { branches = true; }
+  void visitReturn(Return* curr) { branchesOut = true; }
   void visitHost(Host* curr) {
     calls = true;
     // memory.grow modifies the set of valid addresses, and thus can be modeled
@@ -451,13 +463,13 @@ struct EffectAnalyzer
     }
   }
   void visitBrOnExn(BrOnExn* curr) {
-    breakNames.insert(curr->name);
+    breakTargets.insert(curr->name);
     if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
       implicitTrap = true;
     }
   }
   void visitNop(Nop* curr) {}
-  void visitUnreachable(Unreachable* curr) { branches = true; }
+  void visitUnreachable(Unreachable* curr) { branchesOut = true; }
   void visitPop(Pop* curr) { calls = true; }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
@@ -492,7 +504,7 @@ struct EffectAnalyzer
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (branches) {
+    if (transfersControlFlow()) {
       effects |= SideEffects::Branches;
     }
     if (calls) {
@@ -526,6 +538,11 @@ struct EffectAnalyzer
       effects |= SideEffects::Throws;
     }
     return effects;
+  }
+
+  void ignoreBranches() {
+    branchesOut = false;
+    breakTargets.clear();
   }
 };
 
