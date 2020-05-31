@@ -191,12 +191,9 @@
        (i32.store
         (i32.const 1208)
         (i32.and
-         (i32.xor
-          (i32.shl
-           (i32.const 1)
-           (local.get $3)
-          )
-          (i32.const -1)
+         (i32.rotl
+          (i32.const -2)
+          (local.get $3)
          )
          (local.get $12)
         )
@@ -424,12 +421,9 @@
           (i32.store
            (i32.const 1208)
            (i32.and
-            (i32.xor
-             (i32.shl
-              (i32.const 1)
-              (local.get $5)
-             )
-             (i32.const -1)
+            (i32.rotl
+             (i32.const -2)
+             (local.get $5)
             )
             (local.get $12)
            )
@@ -1017,12 +1011,9 @@
                 (i32.load
                  (i32.const 1212)
                 )
-                (i32.xor
-                 (i32.shl
-                  (i32.const 1)
-                  (local.get $0)
-                 )
-                 (i32.const -1)
+                (i32.rotl
+                 (i32.const -2)
+                 (local.get $0)
                 )
                )
               )
@@ -2072,12 +2063,9 @@
                    (i32.load
                     (i32.const 1212)
                    )
-                   (i32.xor
-                    (i32.shl
-                     (i32.const 1)
-                     (local.get $0)
-                    )
-                    (i32.const -1)
+                   (i32.rotl
+                    (i32.const -2)
+                    (local.get $0)
                    )
                   )
                  )
@@ -3878,12 +3866,9 @@
                         (i32.load
                          (i32.const 1208)
                         )
-                        (i32.xor
-                         (i32.shl
-                          (i32.const 1)
-                          (local.get $3)
-                         )
-                         (i32.const -1)
+                        (i32.rotl
+                         (i32.const -2)
+                         (local.get $3)
                         )
                        )
                       )
@@ -4129,12 +4114,9 @@
                         (i32.load
                          (i32.const 1212)
                         )
-                        (i32.xor
-                         (i32.shl
-                          (i32.const 1)
-                          (local.get $0)
-                         )
-                         (i32.const -1)
+                        (i32.rotl
+                         (i32.const -2)
+                         (local.get $0)
                         )
                        )
                       )
@@ -5854,12 +5836,9 @@
           (i32.load
            (i32.const 1208)
           )
-          (i32.xor
-           (i32.shl
-            (i32.const 1)
-            (local.get $11)
-           )
-           (i32.const -1)
+          (i32.rotl
+           (i32.const -2)
+           (local.get $11)
           )
          )
         )
@@ -6115,12 +6094,9 @@
             (i32.load
              (i32.const 1212)
             )
-            (i32.xor
-             (i32.shl
-              (i32.const 1)
-              (local.get $4)
-             )
-             (i32.const -1)
+            (i32.rotl
+             (i32.const -2)
+             (local.get $4)
             )
            )
           )
@@ -6483,12 +6459,9 @@
            (i32.load
             (i32.const 1208)
            )
-           (i32.xor
-            (i32.shl
-             (i32.const 1)
-             (local.get $4)
-            )
-            (i32.const -1)
+           (i32.rotl
+            (i32.const -2)
+            (local.get $4)
            )
           )
          )
@@ -6737,12 +6710,9 @@
                (i32.load
                 (i32.const 1212)
                )
-               (i32.xor
-                (i32.shl
-                 (i32.const 1)
-                 (local.get $0)
-                )
-                (i32.const -1)
+               (i32.rotl
+                (i32.const -2)
+                (local.get $0)
                )
               )
              )

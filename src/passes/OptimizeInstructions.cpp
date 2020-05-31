@@ -630,7 +630,7 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      if (binary->op == XorInt32) {
+      if (binary->op == XorInt32 || binary->op == XorInt64) {
         if (auto* ret = complementaryShift(binary)) {
           return ret;
         }
@@ -1215,8 +1215,44 @@ private:
   }
 
   // We try detect and simplify patterns like:
-  // ~(1 << shift)   ==>   rot(-2, shift)
+  // ~(1 << shift)
   Expression* complementaryShift(Binary* binary) {
+    assert(binary->op == XorInt32 || binary->op == XorInt64);
+    //   (1 << shift) ^ -1    ==>    rotl(-2, shift)
+    if (binary->type == Type::i32) {
+      if (auto* constRigth = binary->right->dynCast<Const>()) {
+        if (constRigth->value.geti32() == -1) {
+          if (auto* left = binary->left->dynCast<Binary>()) {
+            if (left->op == ShlInt32) {
+              if (auto* constLeft = left->left->dynCast<Const>()) {
+                if (constLeft->value.geti32() == 1) {
+                  left->op = RotLInt32;
+                  constLeft->value = Literal(int32_t(-2));
+                  return left;
+                }
+              }
+            }
+          }
+        }
+      }
+    } else {
+      if (auto* constRigth = binary->right->dynCast<Const>()) {
+        if (constRigth->value.geti64() == -1LL) {
+          if (auto* left = binary->left->dynCast<Binary>()) {
+            if (left->op == ShlInt64) {
+              if (auto* constLeft = left->left->dynCast<Const>()) {
+                if (constLeft->value.geti64() == 1LL) {
+                  left->op = RotLInt64;
+                  constLeft->value = Literal(int64_t(-2));
+                  return left;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 
   // We can combine `or` operations, e.g.
