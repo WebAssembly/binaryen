@@ -1278,6 +1278,14 @@ private:
               left->op = Abstract::getBinary(type, Abstract::Add);
               return left;
             }
+            //   (x - C) ^ -1   ==>   (C - 1) - x
+            if (auto* constRight = left->right->dynCast<Const>()) {
+              auto value = constRight->value.getInteger();
+              constRight->value = type == Type::i32 ? Literal(int32_t(value - 1))
+                                                    : Literal(int64_t(value - 1));
+              std::swap(left->left, left->right);
+              return left;
+            }
           } else if (left->op == Abstract::getBinary(type, Abstract::Add)) {
             //   (x + C) ^ -1   ==>   ~C - x
             if (auto* constRight = left->right->dynCast<Const>()) {

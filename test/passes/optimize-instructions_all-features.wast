@@ -3930,6 +3930,42 @@
       )
       (i64.const -1)
     ))
+    ;; ~(x - C)
+    (drop (i32.xor
+      (i32.sub
+        (local.get $x)
+        (i32.const 0)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.sub
+        (local.get $x)
+        (i32.const -2)
+      )
+      (i32.const -1)
+    ))
+    (drop (i32.xor
+      (i32.sub
+        (local.get $x)
+        (i32.const 2147483649)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.sub
+        (local.get $y)
+        (i64.const 0)
+      )
+      (i64.const -1)
+    ))
+    (drop (i64.xor
+      (i64.sub
+        (local.get $y)
+        (i64.const 9223372036854775807)
+      )
+      (i64.const -1)
+    ))
     ;; ~(C + x)
     (drop (i32.xor
       (i32.add

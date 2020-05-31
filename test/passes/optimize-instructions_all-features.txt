@@ -3464,6 +3464,36 @@
    )
   )
   (drop
+   (i32.sub
+    (i32.const -3)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.sub
+    (i32.const -2147483648)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.sub
+    (i64.const -1)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i64.sub
+    (i64.const 9223372036854775806)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.xor
+    (local.get $x)
+    (i32.const -1)
+   )
+  )
+  (drop
    (i64.sub
     (i64.const -1)
     (local.get $y)
