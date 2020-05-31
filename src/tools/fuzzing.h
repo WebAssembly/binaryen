@@ -192,10 +192,6 @@ public:
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
 
   void build() {
-    if (wasm.features.hasExceptionHandling()) {
-      assert(wasm.features.hasReferenceTypes() &&
-             "Exception handling requires reference types to be enabled");
-    }
     if (allowMemory) {
       setupMemory();
     }
