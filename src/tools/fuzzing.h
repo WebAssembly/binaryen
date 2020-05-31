@@ -2746,7 +2746,7 @@ private:
             for (unsigned i = 1; i < target->sig.params.size(); i++) {
               args.push_back(make(target->sig.params.expand()[i]));
             }
-            firstExpr = builder.makeCall(target->name, args, type, false);
+            firstExpr = builder.makeCall(target->name, args, Type::none, false);
             break;
           }
           // We failed to find something, so just drop it.
