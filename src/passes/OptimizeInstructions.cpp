@@ -630,6 +630,11 @@ struct OptimizeInstructions
           return ret;
         }
       }
+      if (binary->op == XorInt32) {
+        if (auto* ret = complementaryShift(binary)) {
+          return ret;
+        }
+      }
       // relation/comparisons allow for math optimizations
       if (binary->isRelational()) {
         if (auto* ret = optimizeRelational(binary)) {
@@ -1207,6 +1212,11 @@ private:
       return builder.makeIf(
         left, right, builder.makeConst(Literal(int32_t(0))));
     }
+  }
+
+  // We try detect and simplify patterns like:
+  // ~(1 << shift)   ==>   rot(-2, shift)
+  Expression* complementaryShift(Binary* binary) {
   }
 
   // We can combine `or` operations, e.g.
