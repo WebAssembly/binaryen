@@ -33,6 +33,7 @@
  (event $event$1 (attr 0) (param))
  (export "hashMemory" (func $hashMemory))
  (export "memory" (memory $0))
+ (export "func_8" (func $func_8))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $hashMemory (result i32)
   (local $0 i32)
@@ -279,7 +280,7 @@
      (global.get $hangLimit)
     )
     (return
-     (ref.null)
+     (local.get $4)
     )
    )
    (global.set $hangLimit
@@ -290,78 +291,7 @@
    )
   )
   (block $label$0 (result anyref)
-   (loop $label$1
-    (block
-     (if
-      (i32.eqz
-       (global.get $hangLimit)
-      )
-      (return
-       (local.get $4)
-      )
-     )
-     (global.set $hangLimit
-      (i32.sub
-       (global.get $hangLimit)
-       (i32.const 1)
-      )
-     )
-    )
-    (block
-     (block $label$2
-      (nop)
-      (f64.store offset=3
-       (i32.and
-        (local.tee $3
-         (i32.const -8388608)
-        )
-        (i32.const 15)
-       )
-       (block $label$23 (result f64)
-        (if
-         (i32.eqz
-          (tuple.extract 0
-           (tuple.make
-            (i32.const 507658265)
-            (ref.func $log-f64)
-           )
-          )
-         )
-         (block $label$24
-          (local.set $3
-           (local.get $3)
-          )
-          (br_if $label$24
-           (local.get $3)
-          )
-         )
-         (call $log-i64
-          (block $label$25 (result i64)
-           (nop)
-           (i64.const -42)
-          )
-         )
-        )
-        (tuple.extract 3
-         (tuple.make
-          (local.get $3)
-          (ref.null)
-          (v128.const i32x4 0x01008181 0xd1000402 0x7b00ff00 0xa54800ff)
-          (f64.const 1)
-          (i64.const -81)
-         )
-        )
-       )
-      )
-     )
-     (br_if $label$1
-      (local.tee $3
-       (i32.const -131072)
-      )
-     )
-     (nop)
-    )
-   )
+   (nop)
    (local.get $4)
   )
  )

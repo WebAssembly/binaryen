@@ -608,8 +608,9 @@ private:
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for recombine. 'makeCatch' ensures all
         // generated 'exnref.pop's are at depth 1 (= immediate child) within
-        // 'catch'.
-        if (contains<Pop>(curr, 1)) {
+        // 'catch', and we need 2 here because there is an implicit block within
+        // a catch body, which should not be selected either.
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         exprsByType[curr->type].push_back(curr);
@@ -656,8 +657,9 @@ private:
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for replacement. 'makeCatch' ensures all
         // generated 'exnref.pop's are at depth 1 (= immediate child) within
-        // 'catch'.
-        if (contains<Pop>(curr, 1)) {
+        // 'catch', and we need 2 here because there is an implicit block within
+        // a catch body, which should not be selected either.
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         if (parent.oneIn(10)) {
@@ -690,8 +692,9 @@ private:
         // If this expression can possibly contain a dangling pop, don't
         // consider this as a candidate for mutation. 'makeCatch' ensures all
         // generated 'exnref.pop's are at depth 1 (= immediate child) within
-        // 'catch'.
-        if (contains<Pop>(curr, 1)) {
+        // 'catch', and we need 2 here because there is an implicit block within
+        // a catch body, which should not be selected either.
+        if (contains<Pop>(curr, 2)) {
           return;
         }
         if (parent.oneIn(10)) {
