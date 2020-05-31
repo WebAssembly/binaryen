@@ -619,6 +619,28 @@ struct OptimizeInstructions
           }
         }
       }
+      if (binary->op == AndInt32 || binary->op == AndInt64) {
+        // (x ^ -1) & x   ==>    0
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
+            if (ExpressionAnalyzer::equal(left->left, binary->right) &&
+                !EffectAnalyzer(getPassOptions(), features, left->left)
+                   .hasSideEffects()) {
+              return LiteralUtils::makeZero(binary->type, *getModule());
+            }
+          }
+        }
+        // x & (x ^ -1)   ==>    0
+        if (auto* right = binary->right->dynCast<Binary>()) {
+          if (right->op == Abstract::getBinary(right->type, Abstract::Xor)) {
+            if (ExpressionAnalyzer::equal(binary->left, right->left) &&
+                !EffectAnalyzer(getPassOptions(), features, binary->left)
+                   .hasSideEffects()) {
+              return LiteralUtils::makeZero(binary->type, *getModule());
+            }
+          }
+        }
+      }
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
         if (auto* ret = conditionalizeExpensiveOnBitwise(binary)) {
@@ -1219,6 +1241,7 @@ private:
   // ~(1 << x)
   // ~(С >> x)
   // ~(C -  x)
+  // ~(x -  C)
   // ~(C +  x)
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
@@ -1281,8 +1304,9 @@ private:
             //   (x - C) ^ -1   ==>   (C - 1) - x
             if (auto* constRight = left->right->dynCast<Const>()) {
               auto value = constRight->value.getInteger();
-              constRight->value = type == Type::i32 ? Literal(int32_t(value - 1))
-                                                    : Literal(int64_t(value - 1));
+              constRight->value = type == Type::i32
+                                    ? Literal(int32_t(value - 1))
+                                    : Literal(int64_t(value - 1));
               std::swap(left->left, left->right);
               return left;
             }

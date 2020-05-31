@@ -3518,6 +3518,41 @@
    )
   )
  )
+ (func $self-complementary (param $x i32) (param $y i64)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.xor
+     (i32.const 2)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.xor
+    (local.get $x)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+ )
  (func $select-into-arms (param $x i32) (param $y i32)
   (if
    (select

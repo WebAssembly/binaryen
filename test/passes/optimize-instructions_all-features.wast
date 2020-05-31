@@ -4003,6 +4003,66 @@
       (i64.const -1)
     ))
   )
+  (func $self-complementary (param $x i32) (param $y i64)
+    ;; (x ^ -1) & x
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (local.get $x)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const -1) ;; mirror
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    (drop (i64.and
+      (i64.xor
+        (local.get $y)
+        (i64.const -1)
+      )
+      (local.get $y)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const 2)  ;; skip
+        (i32.const -1)
+      )
+      (local.get $x)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.const -1)   ;; skip
+    ))
+    ;; x & (x ^ -1)
+    (drop (i32.and
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+    ))
+    (drop (i32.and
+      (local.get $x)
+      (i32.xor
+        (i32.const -1) ;; mirror
+        (local.get $x)
+      )
+    ))
+    (drop (i64.and
+      (local.get $y)
+      (i64.xor
+        (local.get $y)
+        (i64.const -1)
+      )
+    ))
+  )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if
       (select
