@@ -1,5 +1,5 @@
 console.log("SideEffects.None=" + binaryen.SideEffects.None);
-console.log("SideEffects.Branches=" + binaryen.SideEffects.Branches);
+console.log("SideEffects.TransfersControlFlow=" + binaryen.SideEffects.TransfersControlFlow);
 console.log("SideEffects.Calls=" + binaryen.SideEffects.Calls);
 console.log("SideEffects.ReadsLocal=" + binaryen.SideEffects.ReadsLocal);
 console.log("SideEffects.WritesLocal=" + binaryen.SideEffects.WritesLocal);
@@ -25,7 +25,7 @@ assert(
     module.br("test")
   )
   ==
-  binaryen.SideEffects.Branches
+  binaryen.SideEffects.TransfersControlFlow
 );
 assert(
   binaryen.getSideEffects(
@@ -95,12 +95,13 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-var module_all_features = new binaryen.Module();
-module_all_features.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32),
+    module.getFeatures()
   )
   ==
-  binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
+  binaryen.SideEffects.TransfersControlFlow | binaryen.SideEffects.Calls |
+  binaryen.SideEffects.Throws
 );

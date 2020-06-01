@@ -489,7 +489,7 @@ struct EffectAnalyzer
 
   enum SideEffects : uint32_t {
     None = 0,
-    Branches = 1 << 0,
+    TransfersControlFlow = 1 << 0,
     Calls = 1 << 1,
     ReadsLocal = 1 << 2,
     WritesLocal = 1 << 3,
@@ -505,7 +505,7 @@ struct EffectAnalyzer
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
     if (transfersControlFlow()) {
-      effects |= SideEffects::Branches;
+      effects |= SideEffects::TransfersControlFlow;
     }
     if (calls) {
       effects |= SideEffects::Calls;

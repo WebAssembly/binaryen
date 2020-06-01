@@ -1569,7 +1569,7 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
 typedef uint32_t BinaryenSideEffects;
 
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectNone(void);
-BINARYEN_API BinaryenSideEffects BinaryenSideEffectBranches(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectTransfersControlFlow(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectCalls(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsLocal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesLocal(void);

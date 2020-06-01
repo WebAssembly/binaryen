@@ -2856,9 +2856,9 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
 BinaryenSideEffects BinaryenSideEffectNone(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::None);
 }
-BinaryenSideEffects BinaryenSideEffectBranches(void) {
+BinaryenSideEffects BinaryenSideEffectTransfersControlFlow(void) {
   return static_cast<BinaryenSideEffects>(
-    EffectAnalyzer::SideEffects::Branches);
+    EffectAnalyzer::SideEffects::TransfersControlFlow);
 }
 BinaryenSideEffects BinaryenSideEffectCalls(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Calls);
