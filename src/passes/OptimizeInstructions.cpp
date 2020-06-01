@@ -618,24 +618,33 @@ struct OptimizeInstructions
           }
         }
       }
-      if (binary->op == AndInt32 || binary->op == AndInt64) {
+      if (binary->op == Abstract::getBinary(binary->type, Abstract::And)) {
+        Type type = binary->type;
         // (x ^ -1) & x   ==>    0
         if (auto* left = binary->left->dynCast<Binary>()) {
-          if (left->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
-            if (ExpressionAnalyzer::equal(left->left, binary->right) &&
-                !EffectAnalyzer(getPassOptions(), features, left->left)
-                   .hasSideEffects()) {
-              return LiteralUtils::makeZero(binary->type, *getModule());
+          if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
+            if (auto* c = left->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                if (ExpressionAnalyzer::equal(left->left, binary->right) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->right)
+                      .hasSideEffects()) {
+                  return LiteralUtils::makeZero(type, *getModule());
+                }
+              }
             }
           }
         }
         // x & (x ^ -1)   ==>    0
         if (auto* right = binary->right->dynCast<Binary>()) {
-          if (right->op == Abstract::getBinary(right->type, Abstract::Xor)) {
-            if (ExpressionAnalyzer::equal(binary->left, right->left) &&
-                !EffectAnalyzer(getPassOptions(), features, binary->left)
-                   .hasSideEffects()) {
-              return LiteralUtils::makeZero(binary->type, *getModule());
+          if (right->op == Abstract::getBinary(type, Abstract::Xor)) {
+            if (auto* c = right->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                if (ExpressionAnalyzer::equal(binary->left, right->left) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+                  return LiteralUtils::makeZero(type, *getModule());
+                }
+              }
             }
           }
         }
