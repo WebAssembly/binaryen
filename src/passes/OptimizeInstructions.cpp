@@ -1252,7 +1252,8 @@ private:
       if (constRigth->value.getInteger() == -1LL) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
-            //   (C_pot << x) ^ -1    ==>    rotl(~C_pot, x),  where 'C_pot' is pow of two
+            //   (C_pot << x) ^ -1    ==>    rotl(~C_pot, x),
+            // where 'C_pot' is pow of two
             if (auto* constLeft = left->left->dynCast<Const>()) {
               auto value = constLeft->value.getInteger();
               if (IsPowerOf2(value)) {
