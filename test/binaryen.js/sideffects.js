@@ -107,7 +107,7 @@ assert(
 
 assert(
   binaryen.getSideEffects(
-    module.local.set(0, module_all.exnref.pop()),
+    module.local.set(0, module.exnref.pop()),
     module.getFeatures()
   )
   ==
