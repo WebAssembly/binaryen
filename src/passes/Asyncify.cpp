@@ -258,6 +258,7 @@
 //      of their original range.
 //
 
+#include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
@@ -1095,8 +1096,9 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     if (!analyzer->needsInstrumentation(func)) {
       return;
     }
-    // Note the locals we want to preserve, before we add any more helpers.
-    numPreservableLocals = func->getNumLocals();
+    // Find the locals that we actually need to load and save: any local that is
+    // alive at a relevant call site must be handled, but others can be ignored.
+    findRelevantLiveLocals(func);
     // The new function body has a prelude to load locals if rewinding,
     // then the actual main body, which does all its unwindings by breaking
     // to the unwind block, which then handles pushing the call index, as
@@ -1144,16 +1146,45 @@ private:
   std::unique_ptr<AsyncifyBuilder> builder;
 
   Index rewindIndex;
-  Index numPreservableLocals;
   std::map<Type, Index> fakeCallLocals;
+  std::set<Index> relevantLiveLocals;
+
+  void findRelevantLiveLocals(Function* func) {
+    struct RelevantLiveLocalsWalker : public LivenessWalker<RelevantLiveLocalsWalker, Visitor<RelevantLiveLocalsWalker>> {
+      void visitCall(Call* curr) {
+        if (!currBasicBlock) {
+          return;
+        }
+        // Note places where we might unwind/rewind, all of which have a
+        // possible call to ASYNCIFY_UNWIND.
+        if (curr->target == ASYNCIFY_UNWIND) {
+          currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
+        }
+      }
+    };
+
+    RelevantLiveLocalsWalker walker;
+    walker.walkFunction(func);
+    // The relevant live locals are ones that are alive at an unwind/rewind
+    // location. TODO look more precisely inside basic blocks.
+    for (auto* block : walker.liveBlocks) {
+      for (auto local : block->contents.start) {
+        relevantLiveLocals.insert(local);
+      }
+    }
+  }
 
   Expression* makeLocalLoading() {
-    if (numPreservableLocals == 0) {
+    if (relevantLiveLocals.empty()) {
       return builder->makeNop();
     }
     auto* func = getFunction();
+    auto numLocals = func->getNumLocals();
     Index total = 0;
-    for (Index i = 0; i < numPreservableLocals; i++) {
+    for (Index i = 0; i < numLocals; i++) {
+      if (!relevantLiveLocals.count(i)) {
+        continue;
+      }
       total += func->getLocalType(i).getByteSize();
     }
     auto* block = builder->makeBlock();
@@ -1162,7 +1193,10 @@ private:
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
-    for (Index i = 0; i < numPreservableLocals; i++) {
+    for (Index i = 0; i < numLocals; i++) {
+      if (!relevantLiveLocals.count(i)) {
+        continue;
+      }
       const auto& types = func->getLocalType(i).expand();
       SmallVector<Expression*, 1> loads;
       for (Index j = 0; j < types.size(); j++) {
@@ -1194,16 +1228,20 @@ private:
   }
 
   Expression* makeLocalSaving() {
-    if (numPreservableLocals == 0) {
+    if (relevantLiveLocals.empty()) {
       return builder->makeNop();
     }
     auto* func = getFunction();
+    auto numLocals = func->getNumLocals();
     auto* block = builder->makeBlock();
     auto tempIndex = builder->addVar(func, Type::i32);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
-    for (Index i = 0; i < numPreservableLocals; i++) {
+    for (Index i = 0; i < numLocals; i++) {
+      if (!relevantLiveLocals.count(i)) {
+        continue;
+      }
       auto localType = func->getLocalType(i);
       const auto& types = localType.expand();
       for (Index j = 0; j < types.size(); j++) {
