@@ -1307,8 +1307,8 @@ private:
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::And)) {
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
-              //   ((x ^ -1) & (y ^ -1)) ^ -1   ==>   x | y
               if (auto* leftRight = left->right->dynCast<Binary>()) {
+                //   ((x ^ -1) & (y ^ -1)) ^ -1   ==>   x | y
                 auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
                 if (constLeftLeftRight &&
                     constLeftLeftRight->value.getInteger() == -1LL) {
@@ -1323,9 +1323,9 @@ private:
                   }
                 }
               }
-              //   ((x ^ -1) & y) ^ -1   ==>   x | (y ^ -1)
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
+                //   ((x ^ -1) & y) ^ -1   ==>   x | (y ^ -1)
                 if (constLeftLeftRight->value.getInteger() == -1LL) {
                   // ((y ^ -1) & x) ^ -1
                   std::swap(leftLeft->left, left->right);
@@ -1337,9 +1337,8 @@ private:
                   return left;
                 }
               }
-            }
-            //   (x & (y ^ -1)) ^ -1   ==>   (x ^ -1) | y
-            if (auto* leftRight = left->right->dynCast<Binary>()) {
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              //   (x & (y ^ -1)) ^ -1   ==>   (x ^ -1) | y
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
                 if (constLeftRightRight->value.getInteger() == -1LL) {
@@ -1356,8 +1355,8 @@ private:
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Or)) {
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
-              //   ((x ^ -1) | (y ^ -1)) ^ -1   ==>   x & y
               if (auto* leftRight = left->right->dynCast<Binary>()) {
+                //   ((x ^ -1) | (y ^ -1)) ^ -1   ==>   x & y
                 auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
                 if (constLeftLeftRight &&
                     constLeftLeftRight->value.getInteger() == -1LL) {
@@ -1372,9 +1371,9 @@ private:
                   }
                 }
               }
-              //   ((x ^ -1) | y) ^ -1   ==>   x & (y ^ -1)
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
+                //   ((x ^ -1) | y) ^ -1   ==>   x & (y ^ -1)
                 if (constLeftLeftRight->value.getInteger() == -1LL) {
                   // ((y ^ -1) | x) ^ -1
                   std::swap(leftLeft->left, left->right);
@@ -1386,9 +1385,8 @@ private:
                   return left;
                 }
               }
-            }
-            //   (x | (y ^ -1)) ^ -1   ==>   (x ^ -1) & y
-            if (auto* leftRight = left->right->dynCast<Binary>()) {
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              //   (x | (y ^ -1)) ^ -1   ==>   (x ^ -1) & y
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
                 if (constLeftRightRight->value.getInteger() == -1LL) {
@@ -1404,17 +1402,16 @@ private:
               }
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
-            //   (C - x) ^ -1   ==>   x + ~C
             if (auto* constLeft = left->left->dynCast<Const>()) {
+              //   (C - x) ^ -1   ==>   x + ~C
               auto value = constLeft->value.getInteger();
               constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
                                                    : Literal(int64_t(~value));
               left->op = Abstract::getBinary(type, Abstract::Add);
               std::swap(left->left, left->right);
               return left;
-            }
-            //   ((x ^ -1) - (y ^ -1)) ^ -1   ==>   x + (y ^ -1)
-            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+            } else if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              //   ((x ^ -1) - (y ^ -1)) ^ -1   ==>   x + (y ^ -1)
               auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
               if (constLeftLeftRight &&
                   constLeftLeftRight->value.getInteger() == -1LL) {
@@ -1430,20 +1427,9 @@ private:
                   }
                 }
               }
-            }
-            //   (x - C) ^ -1   ==>   (C - 1) - x
-            if (auto* constRight = left->right->dynCast<Const>()) {
-              auto value = constRight->value.getInteger();
-              constRight->value = type == Type::i32
-                                    ? Literal(int32_t(value - 1))
-                                    : Literal(int64_t(value - 1));
-              std::swap(left->left, left->right);
-              return left;
-            }
-            //   ((x ^ -1) - y) ^ -1   ==>   x + y
-            if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
+                //   ((x ^ -1) - y) ^ -1   ==>   x + y
                 if (constLeftLeftRight->value.getInteger() == -1LL) {
                   return Builder(*getModule())
                     .makeBinary(Abstract::getBinary(type, Abstract::Add),
@@ -1451,19 +1437,26 @@ private:
                                 left->right);
                 }
               }
+            } else if (auto* constRight = left->right->dynCast<Const>()) {
+              //   (x - C) ^ -1   ==>   (C - 1) - x
+              auto value = constRight->value.getInteger();
+              constRight->value = type == Type::i32
+                                    ? Literal(int32_t(value - 1))
+                                    : Literal(int64_t(value - 1));
+              std::swap(left->left, left->right);
+              return left;
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Add)) {
-            //   (x + C) ^ -1   ==>   ~C - x
             if (auto* constRight = left->right->dynCast<Const>()) {
+              //   (x + C) ^ -1   ==>   ~C - x
               auto value = constRight->value.getInteger();
               constRight->value = type == Type::i32 ? Literal(int32_t(~value))
                                                     : Literal(int64_t(~value));
               left->op = Abstract::getBinary(type, Abstract::Sub);
               std::swap(left->left, left->right);
               return left;
-            }
-            //   ((x ^ -1) + (y ^ -1)) ^ -1   ==>   x - (y ^ -1)
-            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+            } else if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              //   ((x ^ -1) + (y ^ -1)) ^ -1   ==>   x - (y ^ -1)
               auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
               if (constLeftLeftRight &&
                   constLeftLeftRight->value.getInteger() == -1LL) {
@@ -1479,11 +1472,9 @@ private:
                   }
                 }
               }
-            }
-            //   ((x ^ -1) + y) ^ -1   ==>   x - y
-            if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
+                //   ((x ^ -1) + y) ^ -1   ==>   x - y
                 if (constLeftLeftRight->value.getInteger() == -1LL) {
                   return Builder(*getModule())
                     .makeBinary(Abstract::getBinary(type, Abstract::Sub),
@@ -1491,9 +1482,8 @@ private:
                                 left->right);
                 }
               }
-            }
-            //   (x + (y ^ -1)) ^ -1   ==>   y - x
-            if (auto* leftRight = left->right->dynCast<Binary>()) {
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              //   (x + (y ^ -1)) ^ -1   ==>   y - x
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
                 if (constLeftRightRight->value.getInteger() == -1LL) {
@@ -1504,8 +1494,7 @@ private:
                 }
               }
             }
-          }
-          if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
+          } else if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
             //   (x ^ -1) ^ -1   ==>   x
             if (auto* constLeftRigth = left->right->dynCast<Const>()) {
               if (constLeftRigth->value.getInteger() == -1LL) {
@@ -1515,9 +1504,8 @@ private:
           }
         }
       }
-    }
-    //  (x ^ -1) ^ (y ^ -1)   ==>   x ^ y
-    if (auto* left = binary->left->dynCast<Binary>()) {
+    } else if (auto* left = binary->left->dynCast<Binary>()) {
+      //  (x ^ -1) ^ (y ^ -1)   ==>   x ^ y
       if (auto* right = binary->right->dynCast<Binary>()) {
         if (auto* constLeftRight = left->right->dynCast<Const>()) {
           if (constLeftRight->value.getInteger() == -1LL) {
