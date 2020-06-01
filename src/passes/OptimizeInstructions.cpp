@@ -618,7 +618,7 @@ struct OptimizeInstructions
           }
         }
       }
-      if (binary->op == Abstract::getBinary(binary->type, Abstract::And)) {
+      if (binary->op == AndInt32 || binary->op == AndInt64) {
         Type type = binary->type;
         // (x ^ -1) & x   ==>    0
         if (auto* left = binary->left->dynCast<Binary>()) {
@@ -661,7 +661,7 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      if (binary->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
+      if (binary->op == XorInt32 || binary->op == XorInt64) {
         if (auto* ret = optimizeComplementary(binary)) {
           return ret;
         }
