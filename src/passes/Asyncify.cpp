@@ -1153,11 +1153,14 @@ private:
     struct RelevantLiveLocalsWalker
       : public LivenessWalker<RelevantLiveLocalsWalker,
                               Visitor<RelevantLiveLocalsWalker>> {
+      // Basic blocks that have a possible unwind/rewind in them.
+      std::set<BasicBlock*> relevantBasicBlocks;
+
       void visitCall(Call* curr) {
         if (!currBasicBlock) {
           return;
         }
-        // Note places where we might unwind/rewind, all of which have a
+        // Note blocks where we might unwind/rewind, all of which have a
         // possible call to ASYNCIFY_UNWIND.
         // Note that each relevant original call was turned into a sequence of
         // instructions, one of which is an if and then a call to this special
@@ -1165,19 +1168,21 @@ private:
         // original call, it also would be in all that sequence of instructions,
         // and in particular at the call we look for here.
         if (curr->target == ASYNCIFY_UNWIND) {
-          currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
+          relevantBasicBlocks.insert(currBasicBlock);
         }
       }
     };
 
     RelevantLiveLocalsWalker walker;
-    walker.setModule(getModule());
-    walker.walkFunction(func);
+    walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
-    // location. TODO look more precisely inside basic blocks.
+    // location. TODO look more precisely inside basic blocks, as one might stop
+    // being live in the middle
     for (auto* block : walker.liveBlocks) {
-      for (auto local : block->contents.start) {
-        relevantLiveLocals.insert(local);
+      if (walker.relevantBasicBlocks.count(block)) {
+        for (auto local : block->contents.start) {
+          relevantLiveLocals.insert(local);
+        }
       }
     }
   }
