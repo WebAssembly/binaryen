@@ -3778,7 +3778,7 @@
     ))
     ;; TODO: more stuff here
   )
-  (func $complementary (param $x i32) (param $y i64)
+  (func $complementary (param $x i32) (param $y i64) (param $z i32) (param $w i64)
     ;; ~(1 << x) patterns
     (drop (i32.xor
       (i32.shl
@@ -3999,6 +3999,99 @@
       (i64.add
         (i64.const 9223372036854775807)
         (local.get $y)
+      )
+      (i64.const -1)
+    ))
+    ;;
+    ;;  ((x ^ -1) - z) ^ -1
+    ;;
+    (drop (i32.xor ;; pass
+      (i32.sub
+        (i32.xor
+          (local.get $x)
+          (i32.const -1)
+        )
+        (local.get $z)
+      )
+      (i32.const -1)
+    ))
+    ;;  (x - (z ^ -1)) ^ -1
+    (drop (i32.xor ;; skip
+      (i32.sub
+        (local.get $x)
+        (i32.xor
+          (local.get $z)
+          (i32.const -1)
+        )
+      )
+      (i32.const -1)
+    ))
+    ;;  ((x ^ -1) - z) ^ -1
+    (drop (i64.xor ;; pass
+      (i64.sub
+        (i64.xor
+          (local.get $y)
+          (i64.const -1)
+        )
+        (local.get $w)
+      )
+      (i64.const -1)
+    ))
+    ;;  (x - (z ^ -1)) ^ -1
+    (drop (i64.xor ;; skip
+      (i64.sub
+        (local.get $y)
+        (i64.xor
+          (local.get $w)
+          (i64.const -1)
+        )
+      )
+      (i64.const -1)
+    ))
+    ;;
+    ;;  ((x ^ -1) + z) ^ -1
+    ;;  (x + (z ^ -1)) ^ -1
+    ;;
+    (drop (i32.xor ;; pass
+      (i32.add
+        (i32.xor
+          (local.get $x)
+          (i32.const -1)
+        )
+        (local.get $z)
+      )
+      (i32.const -1)
+    ))
+    ;;  (x + (z ^ -1)) ^ -1
+    (drop (i32.xor ;; pass
+      (i32.add
+        (local.get $x)
+        (i32.xor
+          (local.get $z)
+          (i32.const -1)
+        )
+      )
+      (i32.const -1)
+    ))
+    ;;  ((x ^ -1) + z) ^ -1
+    (drop (i64.xor ;; pass
+      (i64.add
+        (i64.xor
+          (local.get $y)
+          (i64.const -1)
+        )
+        (local.get $w)
+      )
+      (i64.const -1)
+    ))
+    ;;  (x + (z ^ -1)) ^ -1
+    (drop (i64.xor ;; pass
+      (i64.add
+        (local.get $y)
+        (i64.xor
+          (local.get $w)
+          (i64.const -1)
+        )
       )
       (i64.const -1)
     ))

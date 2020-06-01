@@ -10,6 +10,7 @@
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
+ (type $i32_i64_i32_i64_=>_none (func (param i32 i64 i32 i64)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3324,7 +3325,7 @@
    )
   )
  )
- (func $complementary (param $x i32) (param $y i64)
+ (func $complementary (param $x i32) (param $y i64) (param $z i32) (param $w i64)
   (drop
    (i32.rotl
     (i32.const -2)
@@ -3514,6 +3515,66 @@
   (drop
    (i64.sub
     (i64.const -9223372036854775808)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.add
+    (local.get $x)
+    (local.get $z)
+   )
+  )
+  (drop
+   (i32.xor
+    (i32.sub
+     (local.get $x)
+     (i32.xor
+      (local.get $z)
+      (i32.const -1)
+     )
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i64.add
+    (local.get $y)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.xor
+    (i64.sub
+     (local.get $y)
+     (i64.xor
+      (local.get $w)
+      (i64.const -1)
+     )
+    )
+    (i64.const -1)
+   )
+  )
+  (drop
+   (i32.sub
+    (local.get $x)
+    (local.get $z)
+   )
+  )
+  (drop
+   (i32.sub
+    (local.get $z)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.sub
+    (local.get $y)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.sub
+    (local.get $w)
     (local.get $y)
    )
   )
