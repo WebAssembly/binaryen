@@ -1245,6 +1245,7 @@ private:
   // ~(~x + y) and ~(x + ~y)
   // ~(~x & ~y) and ~(~x | ~y)
   // ~(~x &  y) and ~( x | ~y)
+  // ~x ^ ~y
   // ~~x
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
@@ -1464,6 +1465,22 @@ private:
             if (auto* constLeftRigth = left->right->dynCast<Const>()) {
               if (constLeftRigth->value.getInteger() == -1LL) {
                 return left->left;
+              }
+            }
+          }
+        }
+      }
+    }
+    //  (x ^ -1) ^ (y ^ -1)   ==>   x ^ y
+    if (auto* left = binary->left->dynCast<Binary>()) {
+      if (auto* right = binary->right->dynCast<Binary>()) {
+        if (auto* constLeftRight = left->right->dynCast<Const>()) {
+          if (constLeftRight->value.getInteger() == -1LL) {
+            if (auto* constRightRight = right->right->dynCast<Const>()) {
+              if (constRightRight->value.getInteger() == -1LL) {
+                binary->left = left->left;
+                binary->right = right->left;
+                return binary;
               }
             }
           }

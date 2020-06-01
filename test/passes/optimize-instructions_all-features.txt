@@ -3644,6 +3644,18 @@
   (drop
    (local.get $y)
   )
+  (drop
+   (i32.xor
+    (local.get $x)
+    (local.get $z)
+   )
+  )
+  (drop
+   (i64.xor
+    (local.get $y)
+    (local.get $w)
+   )
+  )
  )
  (func $self-complementary (param $x i32) (param $y i64)
   (drop

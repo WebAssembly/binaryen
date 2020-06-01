@@ -4218,6 +4218,29 @@
       )
       (i64.const -1)
     ))
+    ;;
+    ;;  (x ^ -1) ^ (z ^ -1)
+    ;;
+    (drop (i32.xor
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.xor
+        (local.get $z)
+        (i32.const -1)
+      )
+    ))
+    (drop (i64.xor
+      (i64.xor
+        (local.get $y)
+        (i64.const -1)
+      )
+      (i64.xor
+        (local.get $w)
+        (i64.const -1)
+      )
+    ))
   )
   (func $self-complementary (param $x i32) (param $y i64)
     ;; (x ^ -1) & x
