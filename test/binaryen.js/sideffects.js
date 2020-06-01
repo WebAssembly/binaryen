@@ -96,11 +96,10 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-var module_all = new binaryen.Module();
-module_all.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module_all.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32)
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
@@ -108,7 +107,8 @@ assert(
 
 assert(
   binaryen.getSideEffects(
-    module_all.local.set(0, module_all.exnref.pop()),
+    module.local.set(0, module_all.exnref.pop()),
+    module.getFeatures()
   )
   ==
   binaryen.SideEffects.DanglingPop
