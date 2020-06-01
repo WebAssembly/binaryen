@@ -1242,7 +1242,7 @@ private:
   // ~(С >> x)
   // ~(C -  x)
   // ~(x -  C)
-  // ~(C +  x)
+  // ~(x +  C)
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
     Type type = binary->type;
@@ -1293,12 +1293,13 @@ private:
               }
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
-            //   (C - x) ^ -1   ==>   ~C + x
+            //   (C - x) ^ -1   ==>   x + ~C
             if (auto* constLeft = left->left->dynCast<Const>()) {
               auto value = constLeft->value.getInteger();
               constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
                                                    : Literal(int64_t(~value));
               left->op = Abstract::getBinary(type, Abstract::Add);
+              std::swap(left->left, left->right);
               return left;
             }
             //   (x - C) ^ -1   ==>   (C - 1) - x
