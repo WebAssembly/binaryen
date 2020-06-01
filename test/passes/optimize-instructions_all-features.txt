@@ -3581,6 +3581,18 @@
   (drop
    (i32.or
     (local.get $x)
+    (local.get $z)
+   )
+  )
+  (drop
+   (i64.or
+    (local.get $y)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
     (i32.xor
      (local.get $z)
      (i32.const -1)
@@ -3594,6 +3606,18 @@
      (i32.const -1)
     )
     (local.get $z)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $z)
+   )
+  )
+  (drop
+   (i64.and
+    (local.get $y)
+    (local.get $w)
    )
   )
   (drop
