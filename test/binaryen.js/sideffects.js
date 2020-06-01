@@ -10,6 +10,7 @@ console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
+console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -103,4 +104,12 @@ assert(
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
+);
+
+assert(
+  binaryen.getSideEffects(
+    module.local.set(0, module.exnref.pop()),
+  )
+  ==
+  binaryen.SideEffects.DanglingPop
 );
