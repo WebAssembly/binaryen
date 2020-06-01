@@ -1237,7 +1237,7 @@ private:
   }
 
   // We try detect and simplify patterns like:
-  // ~(1 << x)
+  // ~(C_pot << x)
   // ~(С >> x)
   // ~(C -  x) and ~(x -  C)
   // ~(x +  C)
@@ -1252,11 +1252,13 @@ private:
       if (constRigth->value.getInteger() == -1LL) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
-            //   (1 << x) ^ -1    ==>    rotl(-2, x)
+            //   (C_pot << x) ^ -1    ==>    rotl(~C_pot, x),  where 'C_pot' is pow of two
             if (auto* constLeft = left->left->dynCast<Const>()) {
-              if (constLeft->value.getInteger() == 1LL) {
+              auto value = constLeft->value.getInteger();
+              if (IsPowerOf2(value)) {
                 left->op = Abstract::getBinary(type, Abstract::RotL);
-                constLeft->value = Literal::makeFromInt32(-2, type);
+                constLeft->value = type == Type::i32 ? Literal(int32_t(~value))
+                                                     : Literal(int64_t(~value));
                 return left;
               }
             }
