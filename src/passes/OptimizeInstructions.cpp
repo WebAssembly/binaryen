@@ -627,7 +627,7 @@ struct OptimizeInstructions
               if (c->value.getInteger() == -1LL) {
                 if (ExpressionAnalyzer::equal(left->left, binary->right) &&
                     !EffectAnalyzer(getPassOptions(), features, binary->right)
-                      .hasSideEffects()) {
+                       .hasSideEffects()) {
                   return LiteralUtils::makeZero(type, *getModule());
                 }
               }
@@ -641,7 +641,7 @@ struct OptimizeInstructions
               if (c->value.getInteger() == -1LL) {
                 if (ExpressionAnalyzer::equal(binary->left, right->left) &&
                     !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                       .hasSideEffects()) {
                   return LiteralUtils::makeZero(type, *getModule());
                 }
               }
