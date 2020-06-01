@@ -1244,6 +1244,7 @@ private:
   // ~(~x - y)
   // ~(~x + y) and ~(x + ~y)
   // ~(~x & y) and ~(x | ~y)
+  // ~~x
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
     Type type = binary->type;
@@ -1294,7 +1295,7 @@ private:
               }
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::And)) {
-            //   ((x ^ -1) & y) ^ -1 ==> x | (y ^ -1)
+            //   ((x ^ -1) & y) ^ -1   ==>   x | (y ^ -1)
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
@@ -1310,7 +1311,7 @@ private:
                 }
               }
             }
-            //   (x & (y ^ -1)) ^ -1 ==> (x ^ -1) | y
+            //   (x & (y ^ -1)) ^ -1   ==>   (x ^ -1) | y
             if (auto* leftRight = left->right->dynCast<Binary>()) {
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
@@ -1327,7 +1328,7 @@ private:
               }
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Or)) {
-            //   ((x ^ -1) | y) ^ -1 ==> x & (y ^ -1)
+            //   ((x ^ -1) | y) ^ -1   ==>   x & (y ^ -1)
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
@@ -1343,7 +1344,7 @@ private:
                 }
               }
             }
-            //   (x | (y ^ -1)) ^ -1 ==> (x ^ -1) & y
+            //   (x | (y ^ -1)) ^ -1   ==>   (x ^ -1) & y
             if (auto* leftRight = left->right->dynCast<Binary>()) {
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
@@ -1378,7 +1379,7 @@ private:
               std::swap(left->left, left->right);
               return left;
             }
-            //   ((x ^ -1) - y) ^ -1 ==> x + y
+            //   ((x ^ -1) - y) ^ -1   ==>   x + y
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
@@ -1400,7 +1401,7 @@ private:
               std::swap(left->left, left->right);
               return left;
             }
-            //   ((x ^ -1) + y) ^ -1 ==> x - y
+            //   ((x ^ -1) + y) ^ -1   ==>   x - y
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
               if (auto* constLeftLeftRight =
                     leftLeft->right->dynCast<Const>()) {
@@ -1412,7 +1413,7 @@ private:
                 }
               }
             }
-            //   (x + (y ^ -1)) ^ -1 ==> y - x
+            //   (x + (y ^ -1)) ^ -1   ==>   y - x
             if (auto* leftRight = left->right->dynCast<Binary>()) {
               if (auto* constLeftRightRight =
                     leftRight->right->dynCast<Const>()) {
@@ -1422,6 +1423,14 @@ private:
                                 leftRight->left,
                                 left->left);
                 }
+              }
+            }
+          }
+          if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
+            //   (x ^ -1) ^ -1   ==>   x
+            if (auto* constLeftRigth = left->right->dynCast<Const>()) {
+              if (constLeftRigth->value.getInteger() == -1LL) {
+                return left->left;
               }
             }
           }

@@ -3614,6 +3614,12 @@
     (local.get $z)
    )
   )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $y)
+  )
  )
  (func $self-complementary (param $x i32) (param $y i64)
   (drop
