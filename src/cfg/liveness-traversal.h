@@ -118,7 +118,6 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(
@@ -127,14 +126,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   static void doVisitLocalSet(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<LocalSet>();
-    // if in unreachable code, we don't need the tee (but might need the value,
-    // if it has side effects)
+    // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      if (curr->isTee()) {
-        *currp = curr->value;
-      } else {
-        *currp = Builder(*self->getModule()).makeDrop(curr->value);
-      }
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(

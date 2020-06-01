@@ -1159,6 +1159,11 @@ private:
         }
         // Note places where we might unwind/rewind, all of which have a
         // possible call to ASYNCIFY_UNWIND.
+        // Note that each relevant original call was turned into a sequence of
+        // instructions, one of which is an if and then a call to this special
+        // intrinsic. We rely on the fact that if a local was live at the
+        // original call, it also would be in all that sequence of instructions,
+        // and in particular at the call we look for here.
         if (curr->target == ASYNCIFY_UNWIND) {
           currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
         }
