@@ -510,7 +510,6 @@ struct ExceptionPackage {
   }
 };
 
-
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
