@@ -208,6 +208,10 @@ bool Literal::operator==(const Literal& other) const {
         func == other.func) {
       return true;
     }
+    if (type == Type::exnref && other.type == Type::exnref &&
+        *exn == *other.exn) {
+      return true;
+    }
     return false;
   }
   if (type != other.type) {

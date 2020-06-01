@@ -505,7 +505,11 @@ public:
 struct ExceptionPackage {
   Name event;
   Literals values;
+  bool operator==(const ExceptionPackage& other) const {
+    return event == other.event && values == other.values;
+  }
 };
+
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
