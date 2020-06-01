@@ -1171,6 +1171,7 @@ private:
     };
 
     RelevantLiveLocalsWalker walker;
+    walker.setModule(getModule());
     walker.walkFunction(func);
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks.
