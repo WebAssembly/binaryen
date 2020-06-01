@@ -1243,6 +1243,7 @@ private:
   // ~(x +  C)
   // ~(~x - y)
   // ~(~x + y) and ~(x + ~y)
+  // ~(~x & y) and ~(x | ~y)
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
     Type type = binary->type;
