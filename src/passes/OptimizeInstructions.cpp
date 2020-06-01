@@ -1413,6 +1413,24 @@ private:
               std::swap(left->left, left->right);
               return left;
             }
+            //   ((x ^ -1) - (y ^ -1)) ^ -1   ==>   x + (y ^ -1)
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+              if (constLeftLeftRight &&
+                  constLeftLeftRight->value.getInteger() == -1LL) {
+                if (auto* leftRight = left->right->dynCast<Binary>()) {
+                  auto* constLeftRightRight =
+                    leftRight->right->dynCast<Const>();
+                  if (constLeftRightRight &&
+                      constLeftRightRight->value.getInteger() == -1LL) {
+                    return Builder(*getModule())
+                      .makeBinary(Abstract::getBinary(type, Abstract::Add),
+                                  leftLeft->left,
+                                  leftRight);
+                  }
+                }
+              }
+            }
             //   (x - C) ^ -1   ==>   (C - 1) - x
             if (auto* constRight = left->right->dynCast<Const>()) {
               auto value = constRight->value.getInteger();
@@ -1443,6 +1461,24 @@ private:
               left->op = Abstract::getBinary(type, Abstract::Sub);
               std::swap(left->left, left->right);
               return left;
+            }
+            //   ((x ^ -1) + (y ^ -1)) ^ -1   ==>   x - (y ^ -1)
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+              if (constLeftLeftRight &&
+                  constLeftLeftRight->value.getInteger() == -1LL) {
+                if (auto* leftRight = left->right->dynCast<Binary>()) {
+                  auto* constLeftRightRight =
+                    leftRight->right->dynCast<Const>();
+                  if (constLeftRightRight &&
+                      constLeftRightRight->value.getInteger() == -1LL) {
+                    return Builder(*getModule())
+                      .makeBinary(Abstract::getBinary(type, Abstract::Sub),
+                                  leftLeft->left,
+                                  leftRight);
+                  }
+                }
+              }
             }
             //   ((x ^ -1) + y) ^ -1   ==>   x - y
             if (auto* leftLeft = left->left->dynCast<Binary>()) {
