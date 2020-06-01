@@ -1292,6 +1292,72 @@ private:
                 }
               }
             }
+          } else if (left->op == Abstract::getBinary(type, Abstract::And)) {
+            //   ((x ^ -1) & y) ^ -1 ==> x | (y ^ -1)
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (auto* constLeftLeftRight =
+                    leftLeft->right->dynCast<Const>()) {
+                if (constLeftLeftRight->value.getInteger() == -1LL) {
+                  // ((y ^ -1) & x) ^ -1
+                  std::swap(leftLeft->left, left->right);
+                  // ((y ^ -1) | x) ^ -1
+                  left->op = Abstract::getBinary(type, Abstract::Or);
+                  // (x | (y ^ -1)) ^ -1
+                  std::swap(left->left, left->right);
+                  // => x | (y ^ -1)
+                  return left;
+                }
+              }
+            }
+            //   (x & (y ^ -1)) ^ -1 ==> (x ^ -1) | y
+            if (auto* leftRight = left->right->dynCast<Binary>()) {
+              if (auto* constLeftRightRight =
+                    leftRight->right->dynCast<Const>()) {
+                if (constLeftRightRight->value.getInteger() == -1LL) {
+                  // (y & (x ^ -1)) ^ -1
+                  std::swap(left->left, leftRight->left);
+                  // (y | (x ^ -1)) ^ -1
+                  left->op = Abstract::getBinary(type, Abstract::Or);
+                  // ((x ^ -1) | y) ^ -1
+                  std::swap(left->left, left->right);
+                  // => (x ^ -1) | y
+                  return left;
+                }
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Or)) {
+            //   ((x ^ -1) | y) ^ -1 ==> x & (y ^ -1)
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (auto* constLeftLeftRight =
+                    leftLeft->right->dynCast<Const>()) {
+                if (constLeftLeftRight->value.getInteger() == -1LL) {
+                  // ((y ^ -1) | x) ^ -1
+                  std::swap(leftLeft->left, left->right);
+                  // ((y ^ -1) & x) ^ -1
+                  left->op = Abstract::getBinary(type, Abstract::And);
+                  // (x & (y ^ -1)) ^ -1
+                  std::swap(left->left, left->right);
+                  // => x & (y ^ -1)
+                  return left;
+                }
+              }
+            }
+            //   (x | (y ^ -1)) ^ -1 ==> (x ^ -1) & y
+            if (auto* leftRight = left->right->dynCast<Binary>()) {
+              if (auto* constLeftRightRight =
+                    leftRight->right->dynCast<Const>()) {
+                if (constLeftRightRight->value.getInteger() == -1LL) {
+                  // (y | (x ^ -1)) ^ -1
+                  std::swap(left->left, leftRight->left);
+                  // (y & (x ^ -1)) ^ -1
+                  left->op = Abstract::getBinary(type, Abstract::And);
+                  // ((x ^ -1) & y) ^ -1
+                  std::swap(left->left, left->right);
+                  // => (x ^ -1) & y
+                  return left;
+                }
+              }
+            }
           } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
             //   (C - x) ^ -1   ==>   x + ~C
             if (auto* constLeft = left->left->dynCast<Const>()) {

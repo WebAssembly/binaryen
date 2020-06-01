@@ -3578,6 +3578,42 @@
     (local.get $y)
    )
   )
+  (drop
+   (i32.or
+    (local.get $x)
+    (i32.xor
+     (local.get $z)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+    (local.get $z)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.xor
+     (local.get $z)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+    (local.get $z)
+   )
+  )
  )
  (func $self-complementary (param $x i32) (param $y i64)
   (drop

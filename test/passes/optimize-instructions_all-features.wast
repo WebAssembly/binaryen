@@ -4095,6 +4095,54 @@
       )
       (i64.const -1)
     ))
+    ;;
+    ;;  ((x ^ -1) & y) ^ -1
+    ;;
+    (drop (i32.xor ;; pass
+      (i32.and
+        (i32.xor
+          (local.get $x)
+          (i32.const -1)
+        )
+        (local.get $z)
+      )
+      (i32.const -1)
+    ))
+    ;;  (x & (z ^ -1)) ^ -1
+    (drop (i32.xor ;; pass
+      (i32.and
+        (local.get $x)
+        (i32.xor
+          (local.get $z)
+          (i32.const -1)
+        )
+      )
+      (i32.const -1)
+    ))
+    ;;
+    ;;  ((x ^ -1) | y) ^ -1
+    ;;
+    (drop (i32.xor ;; pass
+      (i32.or
+        (i32.xor
+          (local.get $x)
+          (i32.const -1)
+        )
+        (local.get $z)
+      )
+      (i32.const -1)
+    ))
+    ;;  (x | (z ^ -1)) ^ -1
+    (drop (i32.xor ;; pass
+      (i32.or
+        (local.get $x)
+        (i32.xor
+          (local.get $z)
+          (i32.const -1)
+        )
+      )
+      (i32.const -1)
+    ))
   )
   (func $self-complementary (param $x i32) (param $y i64)
     ;; (x ^ -1) & x
