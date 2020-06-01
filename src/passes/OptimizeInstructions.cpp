@@ -661,7 +661,7 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      if (binary->op == XorInt32 || binary->op == XorInt64) {
+      if (binary->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
         if (auto* ret = optimizeComplementary(binary)) {
           return ret;
         }
