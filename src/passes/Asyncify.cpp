@@ -1150,7 +1150,9 @@ private:
   std::set<Index> relevantLiveLocals;
 
   void findRelevantLiveLocals(Function* func) {
-    struct RelevantLiveLocalsWalker : public LivenessWalker<RelevantLiveLocalsWalker, Visitor<RelevantLiveLocalsWalker>> {
+    struct RelevantLiveLocalsWalker
+      : public LivenessWalker<RelevantLiveLocalsWalker,
+                              Visitor<RelevantLiveLocalsWalker>> {
       void visitCall(Call* curr) {
         if (!currBasicBlock) {
           return;
