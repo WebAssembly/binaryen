@@ -19,7 +19,6 @@
 //
 
 #include <algorithm>
-#include <limits>
 
 #include <ir/abstract.h>
 #include <ir/cost.h>
@@ -1273,19 +1272,19 @@ private:
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::ShrU)) {
             //   ((unsigned)C >> x) ^ -1   ==>
-            // if C <= (signed)max:   (signed)~C >> x
-            // if C >  (signed)max:   skip
+            // if (signed)C >= 0:   (signed)~C >> x
+            // if (signed)C <  0:   skip
             if (auto* constLeft = left->left->dynCast<Const>()) {
               if (type == Type::i32) {
-                uint32_t value = uint32_t(constLeft->value.geti32());
-                if (value <= uint32_t(std::numeric_limits<int32_t>::max())) {
+                auto value = constLeft->value.geti32();
+                if (value >= 0) {
                   constLeft->value = Literal(uint32_t(~value));
                   left->op = ShrSInt32;
                   return left;
                 }
               } else {
-                uint64_t value = uint64_t(constLeft->value.geti64());
-                if (value <= uint64_t(std::numeric_limits<int64_t>::max())) {
+                auto value = constLeft->value.geti64();
+                if (value >= 0) {
                   constLeft->value = Literal(uint64_t(~value));
                   left->op = ShrSInt64;
                   return left;
