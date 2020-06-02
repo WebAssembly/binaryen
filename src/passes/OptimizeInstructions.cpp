@@ -1216,6 +1216,7 @@ private:
   //   (x <= y) | (x == y)    ==>    x <= y
   //   (x >  y) | (x <  y)    ==>    x != y
   //   (x != y) | (x == y)    ==>    1
+  //   (x <= y) | (x >= y)    ==>    1
   //   (x >= y) | (x <= y)    ==>    1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
@@ -1261,8 +1262,8 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
@@ -1273,8 +1274,8 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
@@ -1290,8 +1291,8 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
@@ -1307,8 +1308,8 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
@@ -1321,8 +1322,8 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
@@ -1335,12 +1336,41 @@ private:
                   return LiteralUtils::makeFromInt32(
                     1, Type::i32, *getModule());
                 }
-                default: {
-                }
+                default:
+                  break;
               }
               break;
             }
-            default: {}
+            case GeSInt32: {
+              switch (right->op) {
+                //   (x >= y) | (x <= y)    ==>    1
+                //   (x >= y) | (x <  y)    ==>    1
+                case LeSInt32:
+                case LtSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            case GeUInt32: {
+              switch (right->op) {
+                //   (x >= y) | (x <= y)    ==>    1
+                //   (x >= y) | (x <  y)    ==>    1
+                case LeUInt32:
+                case LtUInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            default:
+              break;
           }
         }
       }
