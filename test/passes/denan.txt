@@ -106,6 +106,34 @@
    (local.get $d)
   )
  )
+ (func $tees (param $x f32) (result f32)
+  (local.set $x
+   (call $deNan32
+    (local.get $x)
+   )
+  )
+  (local.tee $x
+   (local.tee $x
+    (local.tee $x
+     (local.tee $x
+      (local.get $x)
+     )
+    )
+   )
+  )
+ )
+ (func $select (param $x f32) (result f32)
+  (local.set $x
+   (call $deNan32
+    (local.get $x)
+   )
+  )
+  (select
+   (local.get $x)
+   (local.get $x)
+   (i32.const 1)
+  )
+ )
  (func $deNan32 (param $0 f32) (result f32)
   (if (result f32)
    (f32.eq

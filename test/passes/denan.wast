@@ -23,4 +23,15 @@
     (drop (local.get $f))
     (drop (local.get $d))
   )
+  (func $tees (param $x f32) (result f32)
+    (local.tee $x
+      (local.tee $x
+        (local.tee $x
+          (local.tee $x
+            (local.get $x))))))
+  (func $select (param $x f32) (result f32)
+    (select
+      (local.get $x)
+      (local.get $x)
+      (i32.const 1)))
 )

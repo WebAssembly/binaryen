@@ -22,6 +22,7 @@
 // differ on wasm's nondeterminism around NaNs.
 //
 
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -38,6 +39,11 @@ struct DeNaN : public WalkerPass<
     // ran this pass more than once (the added functions use gets, and we don't
     // want to instrument them).
     if (expr->is<LocalGet>()) {
+      return;
+    }
+    // If the result just falls through without being modified, then we've
+    // already fixed it up earlier.
+    if (Properties::isResultFallthrough(expr)) {
       return;
     }
     Builder builder(*getModule());
