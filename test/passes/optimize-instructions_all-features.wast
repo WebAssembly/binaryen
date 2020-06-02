@@ -3821,7 +3821,7 @@
     (i32.const 2)
    )
   )
-  (func $rhs-is-neg-one (param $x i32) (param $y i64)
+  (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
       (local.get $x)
       (i32.const -1)
@@ -3877,6 +3877,14 @@
     (drop (i64.mul
       (local.get $y)
       (i64.const -1)
+    ))
+    (drop (f32.mul    ;; skip
+      (local.get $fx)
+      (f32.const -1)
+    ))
+    (drop (f64.mul    ;; skip
+      (local.get $fy)
+      (f64.const -1)
     ))
     ;; (unsigned)x / -1
     (drop (i32.div_u
