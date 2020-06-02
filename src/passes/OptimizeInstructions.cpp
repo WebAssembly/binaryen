@@ -1381,8 +1381,7 @@ private:
         }
       }
       // operations on all 1s
-      if (right->value == Literal(int32_t(-1)) ||
-          right->value == Literal(int64_t(-1))) {
+      if (right->value.getInteger() == -1LL) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
           // x & -1   ==>   x
           return binary->left;
@@ -1391,11 +1390,6 @@ private:
                       .hasSideEffects()) {
           // x | -1   ==>   -1
           return binary->right;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-          // x - (-1)   ==>   x + 1
-          binary->op = Abstract::getBinary(type, Abstract::Add);
-          right->value = Literal::makeFromInt32(1, type);
-          return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
