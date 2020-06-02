@@ -3422,6 +3422,18 @@
    )
   )
   (drop
+   (i32.sub
+    (i32.const 0)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.sub
+    (i64.const 0)
+    (local.get $y)
+   )
+  )
+  (drop
    (i32.eq
     (local.get $x)
     (i32.const -1)
