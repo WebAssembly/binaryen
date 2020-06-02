@@ -70,6 +70,27 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case SubInt32:
       case MulInt32:
         return 32;
+      case DivSInt32: {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          if (maxBits == 32) {
+            return 32;
+          }
+          auto value = c->value.geti32();
+          return std::max(Index(0),
+                          maxBits - (31 - Index(CountLeadingZeroes(value))));
+        }
+        return 32;
+      }
+      case DivUInt32: {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto value = c->value.geti32();
+          return std::max(Index(0),
+                          maxBits - (31 - Index(CountLeadingZeroes(value))));
+        }
+        return 32;
+      }
       case RemSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
@@ -86,27 +107,6 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti32();
           return std::min(maxBits, 32 - Index(CountLeadingZeroes(value - 1)));
-        }
-        return 32;
-      }
-      case DivUInt32: {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          auto value = c->value.geti32();
-          return std::max(Index(0),
-                          maxBits - (31 - Index(CountLeadingZeroes(value))));
-        }
-        return 32;
-      }
-      case DivSInt32: {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          if (maxBits == 32) {
-            return 32;
-          }
-          auto value = c->value.geti32();
-          return std::max(Index(0),
-                          maxBits - (31 - Index(CountLeadingZeroes(value))));
         }
         return 32;
       }
@@ -148,13 +148,33 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
         }
         return 32;
       }
-
       case RotLInt64:
       case RotRInt64:
       case AddInt64:
       case SubInt64:
       case MulInt64:
         return 64;
+      case DivSInt64: {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          if (maxBits == 64) {
+            return 64;
+          }
+          auto value = c->value.geti64();
+          return std::max(Index(0),
+                          maxBits - (63 - Index(CountLeadingZeroes(value))));
+        }
+        return 64;
+      }
+      case DivUInt64: {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          auto value = c->value.geti64();
+          return std::max(Index(0),
+                          maxBits - (63 - Index(CountLeadingZeroes(value))));
+        }
+        return 64;
+      }
       case RemSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
@@ -171,27 +191,6 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti64();
           return std::min(maxBits, 64 - Index(CountLeadingZeroes(value - 1)));
-        }
-        return 64;
-      }
-      case DivUInt64: {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          auto value = c->value.geti64();
-          return std::max(Index(0),
-                          maxBits - (63 - Index(CountLeadingZeroes(value))));
-        }
-        return 64;
-      }
-      case DivSInt64: {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          if (maxBits == 64) {
-            return 64;
-          }
-          auto value = c->value.geti64();
-          return std::max(Index(0),
-                          maxBits - (63 - Index(CountLeadingZeroes(value))));
         }
         return 64;
       }
