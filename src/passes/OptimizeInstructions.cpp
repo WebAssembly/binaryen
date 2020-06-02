@@ -1507,13 +1507,15 @@ private:
     } else if (auto* left = binary->left->dynCast<Binary>()) {
       //  (x ^ -1) ^ (y ^ -1)   ==>   x ^ y
       if (auto* right = binary->right->dynCast<Binary>()) {
-        if (auto* constLeftRight = left->right->dynCast<Const>()) {
-          if (constLeftRight->value.getInteger() == -1LL) {
-            if (auto* constRightRight = right->right->dynCast<Const>()) {
-              if (constRightRight->value.getInteger() == -1LL) {
-                binary->left = left->left;
-                binary->right = right->left;
-                return binary;
+        if (left->right->type == right->right->type) {
+          if (auto* constLeftRight = left->right->dynCast<Const>()) {
+            if (constLeftRight->value.getInteger() == -1LL) {
+              if (auto* constRightRight = right->right->dynCast<Const>()) {
+                if (constRightRight->value.getInteger() == -1LL) {
+                  binary->left = left->left;
+                  binary->right = right->left;
+                  return binary;
+                }
               }
             }
           }
