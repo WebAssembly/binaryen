@@ -1,5 +1,5 @@
 console.log("SideEffects.None=" + binaryen.SideEffects.None);
-console.log("SideEffects.TransfersControlFlow=" + binaryen.SideEffects.TransfersControlFlow);
+console.log("SideEffects.Branches=" + binaryen.SideEffects.Branches);
 console.log("SideEffects.Calls=" + binaryen.SideEffects.Calls);
 console.log("SideEffects.ReadsLocal=" + binaryen.SideEffects.ReadsLocal);
 console.log("SideEffects.WritesLocal=" + binaryen.SideEffects.WritesLocal);
@@ -25,7 +25,7 @@ assert(
     module.br("test")
   )
   ==
-  binaryen.SideEffects.TransfersControlFlow
+  binaryen.SideEffects.Branches
 );
 assert(
   binaryen.getSideEffects(
@@ -102,6 +102,5 @@ assert(
     module.getFeatures()
   )
   ==
-  binaryen.SideEffects.TransfersControlFlow | binaryen.SideEffects.Calls |
-  binaryen.SideEffects.Throws
+  binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
 );

@@ -474,7 +474,7 @@ function initializeConstants() {
   // Expression side effects
   Module['SideEffects'] = {};
   [ 'None',
-    'TransfersControlFlow',
+    'Branches',
     'Calls',
     'ReadsLocal',
     'WritesLocal',

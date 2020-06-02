@@ -1,5 +1,5 @@
 SideEffects.None=0
-SideEffects.TransfersControlFlow=1
+SideEffects.Branches=1
 SideEffects.Calls=2
 SideEffects.ReadsLocal=4
 SideEffects.WritesLocal=8
