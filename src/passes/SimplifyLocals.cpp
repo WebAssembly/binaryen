@@ -411,8 +411,8 @@ struct SimplifyLocals
     if (set->isTee()) {
       return false;
     }
-    // We cannot move expression containing exnref.pops that are not enclosed in
-    // 'catch', because 'exnref.pop' should follow right after 'catch'.
+    // We cannot move expressions containing exnref.pops that are not enclosed
+    // in 'catch', because 'exnref.pop' should follow right after 'catch'.
     if (EffectAnalyzer(
           this->getPassOptions(), this->getModule()->features, set->value)
           .danglingPop) {

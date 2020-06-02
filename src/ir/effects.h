@@ -485,8 +485,7 @@ struct EffectAnalyzer
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branchesOut = true; }
   void visitPop(Pop* curr) {
-    // When EH is enabled, any call can throw.
-    if (features.hasExceptionHandling() && catchDepth == 0) {
+    if (catchDepth == 0) {
       danglingPop = true;
     }
   }
