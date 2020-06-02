@@ -1161,13 +1161,16 @@ private:
           return;
         }
         // Note blocks where we might unwind/rewind, all of which have a
-        // possible call to ASYNCIFY_UNWIND.
+        // possible call to ASYNCIFY_CHECK_CALL_INDEX emitted right before the
+        // actual call.
         // Note that each relevant original call was turned into a sequence of
         // instructions, one of which is an if and then a call to this special
         // intrinsic. We rely on the fact that if a local was live at the
         // original call, it also would be in all that sequence of instructions,
-        // and in particular at the call we look for here.
-        if (curr->target == ASYNCIFY_UNWIND) {
+        // and in particular at the call we look for here (which is right before
+        // the call, and so anything that has its final use at the call is still
+        // live here).
+        if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
           relevantBasicBlocks.insert(currBasicBlock);
         }
       }
