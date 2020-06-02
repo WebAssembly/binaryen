@@ -99,7 +99,8 @@ assert(
 module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32),
+    module.getFeatures()
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws

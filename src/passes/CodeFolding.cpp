@@ -304,13 +304,26 @@ private:
         // anything exiting that is in all targets is something bad
         return false;
       }
-      // Currently pop instructions are only used for exnref.pop, which is a
-      // pseudo instruction following a catch. We cannot move expressions
-      // containing pops if they are not enclosed in a 'catch' body, because a
-      // pop instruction should follow right after 'catch'.
-      if (EffectAnalyzer(getPassOptions(), getModule()->features, item)
-            .danglingPop) {
-        return false;
+      if (getModule()->features.hasExceptionHandling()) {
+        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
+        // Currently pop instructions are only used for exnref.pop, which is a
+        // pseudo instruction following a catch. We cannot move expressions
+        // containing pops if they are not enclosed in a 'catch' body, because a
+        // pop instruction should follow right after 'catch'.
+        if (effects.danglingPop) {
+          return false;
+        }
+        // When an expression can throw and it is within a try scope, taking it
+        // out of the try scope changes the program's behavior, because the
+        // expression that would otherwise have been caught by the try now
+        // throws up to the next try scope or even up to the caller. We restrict
+        // the move if 'outOf' contains a 'try' anywhere in it. This is a
+        // conservative approximation because there can be cases that 'try' is
+        // within the expression that may throw so it is safe to take the
+        // expression out.
+        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
+          return false;
+        }
       }
     }
     return true;
