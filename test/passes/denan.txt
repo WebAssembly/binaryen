@@ -53,59 +53,57 @@
     (local.get $d)
    )
   )
-  (block
-   (drop
-    (local.get $f)
-   )
-   (drop
-    (local.get $d)
-   )
-   (local.set $f
-    (local.get $f)
-   )
-   (local.set $d
-    (local.get $d)
-   )
-   (drop
-    (local.get $f)
-   )
-   (drop
-    (local.get $d)
-   )
-   (drop
-    (call $deNan32
-     (f32.abs
-      (local.get $f)
-     )
+  (drop
+   (local.get $f)
+  )
+  (drop
+   (local.get $d)
+  )
+  (local.set $f
+   (local.get $f)
+  )
+  (local.set $d
+   (local.get $d)
+  )
+  (drop
+   (local.get $f)
+  )
+  (drop
+   (local.get $d)
+  )
+  (drop
+   (call $deNan32
+    (f32.abs
+     (local.get $f)
     )
    )
-   (drop
-    (call $deNan64
-     (f64.abs
-      (local.get $d)
-     )
+  )
+  (drop
+   (call $deNan64
+    (f64.abs
+     (local.get $d)
     )
    )
-   (local.set $f
-    (call $deNan32
-     (f32.abs
-      (local.get $f)
-     )
+  )
+  (local.set $f
+   (call $deNan32
+    (f32.abs
+     (local.get $f)
     )
    )
-   (local.set $d
-    (call $deNan64
-     (f64.abs
-      (local.get $d)
-     )
+  )
+  (local.set $d
+   (call $deNan64
+    (f64.abs
+     (local.get $d)
     )
    )
-   (drop
-    (local.get $f)
-   )
-   (drop
-    (local.get $d)
-   )
+  )
+  (drop
+   (local.get $f)
+  )
+  (drop
+   (local.get $d)
   )
  )
  (func $deNan32 (param $0 f32) (result f32)

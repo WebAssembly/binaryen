@@ -91,6 +91,11 @@ struct DeNaN : public WalkerPass<
     if (!fixes.empty()) {
       fixes.push_back(func->body);
       func->body = builder.makeBlock(fixes);
+      // Merge blocks so we don't add an unnecessary one.
+      PassRunner runner(getModule(), getPassOptions());
+      runner.setIsNested(true);
+      runner.add("merge-blocks");
+      runner.run();
     }
   }
 
