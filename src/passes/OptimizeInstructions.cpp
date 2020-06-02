@@ -1212,7 +1212,7 @@ private:
   // We can combine `or` operations, e.g.
   //   (x  >  y) | (x   <  y)   ==>   x != y
   //   (x <=> y) | (x  ==  y)   ==>   x <=> y
-  //   (x <=> y) | (x <!=> y)   ==>   1
+  //   (x <=> y) | (x >!=< y)   ==>   1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
     FeatureSet features = getModule()->features;
