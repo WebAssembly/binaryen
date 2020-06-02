@@ -1259,8 +1259,8 @@ private:
   Expression* optimizeComplementary(Binary* binary) {
     assert(binary->op == XorInt32 || binary->op == XorInt64);
     Type type = binary->type;
-    if (auto* constRigth = binary->right->dynCast<Const>()) {
-      if (constRigth->value.getInteger() == -1LL) {
+    if (auto* constRight = binary->right->dynCast<Const>()) {
+      if (constRight->value.getInteger() == -1LL) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
             //   (1 << x) ^ -1    ==>    rotl(-2, x)
@@ -1476,8 +1476,8 @@ private:
             }
           } else if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
             //   (x ^ -1) ^ -1   ==>   x
-            if (auto* constLeftRigth = left->right->dynCast<Const>()) {
-              if (constLeftRigth->value.getInteger() == -1LL) {
+            if (auto* constLeftRight = left->right->dynCast<Const>()) {
+              if (constLeftRight->value.getInteger() == -1LL) {
                 return left->left;
               }
             }
