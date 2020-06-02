@@ -413,8 +413,9 @@ struct SimplifyLocals
     }
     // We cannot move expressions containing exnref.pops that are not enclosed
     // in 'catch', because 'exnref.pop' should follow right after 'catch'.
-    if (EffectAnalyzer(
-          this->getPassOptions(), this->getModule()->features, set->value)
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), features, set->value)
           .danglingPop) {
       return false;
     }
