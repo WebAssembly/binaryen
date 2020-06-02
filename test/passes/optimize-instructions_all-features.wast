@@ -3869,6 +3869,15 @@
       (local.get $y)
       (i64.const -1)
     ))
+    ;; x * -1
+    (drop (i32.mul
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.mul
+      (local.get $y)
+      (i64.const -1)
+    ))
     ;; (unsigned)x / -1
     (drop (i32.div_u
       (local.get $x)
