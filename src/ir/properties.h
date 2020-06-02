@@ -257,12 +257,8 @@ inline bool isResultFallthrough(Expression* curr) {
   // Note that we don't check if there is a return value here; the node may be
   // unreachable, for example, but then there is no meaningful answer to give
   // anyhow.
-  return curr->is<LocalSet>() ||
-         curr->is<Block>() ||
-         curr->is<If>() ||
-         curr->is<Loop>() ||
-         curr->is<Try>() ||
-         curr->is<Select>() ||
+  return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
+         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
          curr->is<Break>();
 }
 
