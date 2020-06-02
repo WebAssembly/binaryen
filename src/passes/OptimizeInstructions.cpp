@@ -1426,8 +1426,7 @@ private:
                 auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
                 if (constLeftLeftRight &&
                     constLeftLeftRight->value.getInteger() == -1LL) {
-                  //   ((x ^ -1) - y) ^ -1          ==>   x + y
-                  //   ((x ^ -1) - (y ^ -1)) ^ -1   ==>   x + (y ^ -1)
+                  //   ((x ^ -1) - y) ^ -1   ==>   x + y
                   return Builder(*getModule())
                     .makeBinary(Abstract::getBinary(type, Abstract::Add),
                                 leftLeft->left,
@@ -1454,8 +1453,7 @@ private:
                 auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
                 if (constLeftLeftRight &&
                     constLeftLeftRight->value.getInteger() == -1LL) {
-                  //   ((x ^ -1) + y) ^ -1          ==>   x - y
-                  //   ((x ^ -1) + (y ^ -1)) ^ -1   ==>   x - (y ^ -1)
+                  //   ((x ^ -1) + y) ^ -1   ==>   x - y
                   return Builder(*getModule())
                     .makeBinary(Abstract::getBinary(type, Abstract::Sub),
                                 leftLeft->left,
