@@ -504,7 +504,7 @@ struct EffectAnalyzer
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (transfersControlFlow()) {
+    if (branchesOut || hasExternalBreakTargets()) {
       effects |= SideEffects::Branches;
     }
     if (calls) {
