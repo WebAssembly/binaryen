@@ -95,11 +95,11 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-var module_all_features = new binaryen.Module();
-module_all_features.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32),
+    module.getFeatures()
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
