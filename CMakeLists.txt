@@ -69,6 +69,30 @@ function(ADD_LINK_FLAG value)
   ENDFOREACH(variable)
 endfunction()
 
+function(binaryen_setup_rpath name)
+  if(CMAKE_INSTALL_RPATH)
+    return()
+  endif()
+
+  if (APPLE)
+    set(_install_name_dir INSTALL_NAME_DIR "@rpath")
+    set(_install_rpath "@loader_path/../lib")
+  elseif(UNIX)
+    set(_install_rpath "\$ORIGIN/../lib")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "(FreeBSD|DragonFly)")
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
+                   LINK_FLAGS " -Wl,-z,origin ")
+    endif()
+  else()
+    return()
+  endif()
+
+  set_target_properties(${name} PROPERTIES
+                        BUILD_WITH_INSTALL_RPATH On
+                        INSTALL_RPATH "${_install_rpath}"
+                        ${_install_name_dir})
+endfunction()
+
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
@@ -237,6 +261,8 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
+
+
 # Static libraries
 # Current (partial) dependency structure is as follows:
 # passes -> wasm -> asmjs -> support
@@ -290,6 +316,7 @@ function(binaryen_add_executable name sources)
   target_link_libraries(${name} binaryen)
   set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
   set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endfunction()
 
