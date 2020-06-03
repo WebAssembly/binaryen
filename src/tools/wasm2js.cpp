@@ -18,6 +18,7 @@
 // wasm2js console tool
 //
 
+#include "wasm2js.h"
 #include "optimization-options.h"
 #include "pass.h"
 #include "support/colors.h"

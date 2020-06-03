@@ -101,13 +101,6 @@ cashew::IString WASM_I64_UDIV("__wasm_i64_udiv");
 cashew::IString WASM_I64_SREM("__wasm_i64_srem");
 cashew::IString WASM_I64_UREM("__wasm_i64_urem");
 
-cashew::IString ASM_FUNC("asmFunc");
-cashew::IString ABORT_FUNC("abort");
-cashew::IString FUNCTION_TABLE("FUNCTION_TABLE");
-cashew::IString NO_RESULT("wasm2js$noresult"); // no result at all
-// result in an expression, no temp var
-cashew::IString EXPRESSION_RESULT("wasm2js$expresult");
-
 namespace ABI {
 namespace wasm2js {
 
