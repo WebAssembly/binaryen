@@ -1580,6 +1580,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(

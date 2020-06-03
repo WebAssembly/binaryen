@@ -305,12 +305,12 @@ private:
         return false;
       }
       if (getModule()->features.hasExceptionHandling()) {
+        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
         // Currently pop instructions are only used for exnref.pop, which is a
-        // pseudo instruction following a catch. We check if the current
-        // expression has a pop child. This can be overly conservative, because
-        // this can also exclude whole try-catches that contain a pop within
-        // them.
-        if (!FindAll<Pop>(item).list.empty()) {
+        // pseudo instruction following a catch. We cannot move expressions
+        // containing pops if they are not enclosed in a 'catch' body, because a
+        // pop instruction should follow right after 'catch'.
+        if (effects.danglingPop) {
           return false;
         }
         // When an expression can throw and it is within a try scope, taking it
@@ -321,9 +321,7 @@ private:
         // conservative approximation because there can be cases that 'try' is
         // within the expression that may throw so it is safe to take the
         // expression out.
-        if (EffectAnalyzer(getPassOptions(), getModule()->features, item)
-              .throws &&
-            !FindAll<Try>(outOf).list.empty()) {
+        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
           return false;
         }
       }
