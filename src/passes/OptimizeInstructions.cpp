@@ -638,15 +638,13 @@ struct OptimizeInstructions
                         Abstract::getBinary(binary->type, Abstract::Xor)) {
                       if (auto* c = right->right->dynCast<Const>()) {
                         if (c->value.getInteger() == -1LL) {
-                          Builder builder(*getModule());
-                          return builder.makeBinary(
-                            Abstract::getBinary(binary->type, Abstract::Xor),
-                            builder.makeBinary(
-                              Abstract::getBinary(binary->type, Abstract::Or),
-                              left->left,
-                              right->left),
-                            builder.makeConst(
-                              Literal::makeFromInt32(-1, binary->type)));
+                          // reuse one иштфкн, drop the other
+                          auto* leftValue = left->left;
+                          left->left = binary;
+                          binary->left = leftValue;
+                          binary->right = right->left;
+                          binary->op = Abstract::getBinary(binary->type, Abstract::Or);
+                          return left;
                         }
                       }
                     }
