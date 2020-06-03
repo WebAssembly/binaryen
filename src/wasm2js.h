@@ -52,13 +52,6 @@ namespace wasm {
 
 using namespace cashew;
 
-IString ASM_FUNC("asmFunc");
-IString ABORT_FUNC("abort");
-IString FUNCTION_TABLE("FUNCTION_TABLE");
-IString NO_RESULT("wasm2js$noresult"); // no result at all
-// result in an expression, no temp var
-IString EXPRESSION_RESULT("wasm2js$expresult");
-
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
