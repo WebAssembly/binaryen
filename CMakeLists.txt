@@ -261,8 +261,6 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-
-
 # Static libraries
 # Current (partial) dependency structure is as follows:
 # passes -> wasm -> asmjs -> support
