@@ -3,12 +3,13 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
+ (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
@@ -3322,6 +3323,115 @@
     (local.get $x)
     (local.get $y)
    )
+  )
+ )
+ (func $simplify-complements-with-and (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (drop
+   (i32.xor
+    (i32.or
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.xor
+    (i32.or
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i64.xor
+    (i64.or
+     (local.get $z)
+     (local.get $w)
+    )
+    (i64.const -1)
+   )
+  )
+  (drop
+   (i64.xor
+    (i64.or
+     (local.get $z)
+     (local.get $w)
+    )
+    (i64.const -1)
+   )
+  )
+ )
+ (func $self-complement-with-and (param $x i32) (param $y i64)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (call $ne0)
+     (i32.const -1)
+    )
+    (call $ne0)
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (call $ne0)
+     (i32.const -1)
+    )
+    (call $ne0)
+   )
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.xor
+     (i32.const 2)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.xor
+    (local.get $x)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.and
+    (call $ne0)
+    (i32.xor
+     (call $ne0)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (call $ne0)
+    (i32.xor
+     (call $ne0)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i64.const 0)
   )
  )
  (func $select-into-arms (param $x i32) (param $y i32)

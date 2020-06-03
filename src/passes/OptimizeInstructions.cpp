@@ -594,7 +594,7 @@ struct OptimizeInstructions
         }
       }
       // bitwise operations
-      if (binary->op == AndInt32) {
+      if (binary->op == AndInt32 || binary->op == AndInt64) {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
@@ -602,17 +602,70 @@ struct OptimizeInstructions
         // would already optimize with the eqz anyhow, unless propagating).
         // But for AND, the left is true iff X and Y are each all zero bits,
         // and the right is true if the union of their bits is zero; same.
-        if (auto* left = binary->left->dynCast<Unary>()) {
-          if (left->op == EqZInt32) {
-            if (auto* right = binary->right->dynCast<Unary>()) {
-              if (right->op == EqZInt32) {
-                // reuse one unary, drop the other
-                auto* leftValue = left->value;
-                left->value = binary;
-                binary->left = leftValue;
-                binary->right = right->value;
-                binary->op = OrInt32;
-                return left;
+        if (binary->op == AndInt32) {
+          if (auto* left = binary->left->dynCast<Unary>()) {
+            if (left->op == EqZInt32) {
+              if (auto* right = binary->right->dynCast<Unary>()) {
+                if (right->op == EqZInt32) {
+                  // reuse one unary, drop the other
+                  auto* leftValue = left->value;
+                  left->value = binary;
+                  binary->left = leftValue;
+                  binary->right = right->value;
+                  binary->op = OrInt32;
+                  return left;
+                }
+              }
+            }
+          }
+        }
+        // (x ^ -1) & x   ==>    0
+        // (x ^ -1) & (y ^ -1)   ==>    (x | y) ^ -1
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
+            if (auto* c = left->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                // (x ^ -1) & x   ==>    0
+                if (ExpressionAnalyzer::equal(left->left, binary->right) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->right)
+                       .hasSideEffects()) {
+                  return LiteralUtils::makeZero(binary->type, *getModule());
+                }
+                // (x ^ -1) & (y ^ -1)   ==>    (x | y) ^ -1
+                if (auto* right = binary->right->dynCast<Binary>()) {
+                  if (left->type == right->type && left->type == binary->type) {
+                    if (right->op ==
+                        Abstract::getBinary(binary->type, Abstract::Xor)) {
+                      if (auto* c = right->right->dynCast<Const>()) {
+                        if (c->value.getInteger() == -1LL) {
+                          Builder builder(*getModule());
+                          return builder.makeBinary(
+                            Abstract::getBinary(binary->type, Abstract::Xor),
+                            builder.makeBinary(
+                              Abstract::getBinary(binary->type, Abstract::Or),
+                              left->left,
+                              right->left),
+                            builder.makeConst(
+                              Literal::makeFromInt32(-1, binary->type)));
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        // x & (x ^ -1)   ==>    0
+        if (auto* right = binary->right->dynCast<Binary>()) {
+          if (right->op == Abstract::getBinary(binary->type, Abstract::Xor)) {
+            if (auto* c = right->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                if (ExpressionAnalyzer::equal(binary->left, right->left) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->left)
+                       .hasSideEffects()) {
+                  return LiteralUtils::makeZero(binary->type, *getModule());
+                }
               }
             }
           }
