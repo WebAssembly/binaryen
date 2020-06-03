@@ -643,7 +643,8 @@ struct OptimizeInstructions
                           left->left = binary;
                           binary->left = leftValue;
                           binary->right = right->left;
-                          binary->op = Abstract::getBinary(binary->type, Abstract::Or);
+                          binary->op =
+                            Abstract::getBinary(binary->type, Abstract::Or);
                           return left;
                         }
                       }
