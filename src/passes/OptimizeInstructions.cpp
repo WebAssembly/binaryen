@@ -639,9 +639,9 @@ struct OptimizeInstructions
                       if (auto* c = right->right->dynCast<Const>()) {
                         if (c->value.getInteger() == -1LL) {
                           // reuse one binary, drop the other
-                          auto* leftValue = left->left;
+                          auto* leftLeft = left->left;
                           left->left = binary;
-                          binary->left = leftValue;
+                          binary->left = leftLeft;
                           binary->right = right->left;
                           binary->op =
                             Abstract::getBinary(binary->type, Abstract::Or);
