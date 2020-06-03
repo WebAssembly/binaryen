@@ -76,6 +76,11 @@ struct EffectAnalyzer
   // inner try, we don't mark it as 'throws', because it will be caught by an
   // inner catch.
   size_t tryDepth = 0;
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
+  // If this expression contains 'exnref.pop's that are not enclosed in 'catch'
+  // body. For example, (drop (exnref.pop)) should set this to true.
+  bool danglingPop = false;
 
   static void scan(EffectAnalyzer* self, Expression** currp) {
     Expression* curr = *currp;
@@ -83,6 +88,7 @@ struct EffectAnalyzer
     // separately
     if (curr->is<Try>()) {
       self->pushTask(doVisitTry, currp);
+      self->pushTask(doEndCatch, currp);
       self->pushTask(scan, &curr->cast<Try>()->catchBody);
       self->pushTask(doStartCatch, currp);
       self->pushTask(scan, &curr->cast<Try>()->body);
@@ -100,6 +106,12 @@ struct EffectAnalyzer
   static void doStartCatch(EffectAnalyzer* self, Expression** currp) {
     assert(self->tryDepth > 0 && "try depth cannot be negative");
     self->tryDepth--;
+    self->catchDepth++;
+  }
+
+  static void doEndCatch(EffectAnalyzer* self, Expression** currp) {
+    assert(self->catchDepth > 0 && "catch depth cannot be negative");
+    self->catchDepth--;
   }
 
   // Helper functions to check for various effect types
@@ -128,7 +140,7 @@ struct EffectAnalyzer
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 ||
-           transfersControlFlow() || implicitTrap;
+           transfersControlFlow() || implicitTrap || danglingPop;
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
@@ -148,7 +160,8 @@ struct EffectAnalyzer
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls))) {
+        (accessesMemory() && (other.writesMemory || other.calls)) ||
+        (danglingPop || other.danglingPop)) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
@@ -203,6 +216,7 @@ struct EffectAnalyzer
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
     throws = throws || other.throws;
+    danglingPop = danglingPop || other.danglingPop;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -470,7 +484,11 @@ struct EffectAnalyzer
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branchesOut = true; }
-  void visitPop(Pop* curr) { calls = true; }
+  void visitPop(Pop* curr) {
+    if (catchDepth == 0) {
+      danglingPop = true;
+    }
+  }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
 
@@ -500,7 +518,8 @@ struct EffectAnalyzer
     ImplicitTrap = 1 << 8,
     IsAtomic = 1 << 9,
     Throws = 1 << 10,
-    Any = (1 << 11) - 1
+    DanglingPop = 1 << 11,
+    Any = (1 << 12) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -536,6 +555,9 @@ struct EffectAnalyzer
     }
     if (throws) {
       effects |= SideEffects::Throws;
+    }
+    if (danglingPop) {
+      effects |= SideEffects::DanglingPop;
     }
     return effects;
   }
