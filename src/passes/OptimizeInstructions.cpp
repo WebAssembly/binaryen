@@ -936,21 +936,9 @@ private:
         }
       }
     }
-    // do the same for unary
     if (auto* left = binary->left->dynCast<Unary>()) {
       if (left->value->is<Const>()) {
-        bool shouldSwap = true;
-        if (auto* right = binary->right->dynCast<Binary>()) {
-          if (auto rightRightConst = right->right->dynCast<Const>()) {
-            auto value = rightRightConst->value.getInteger();
-            if (value == -1LL || value == 0LL) {
-              shouldSwap = false;
-            }
-          }
-        }
-        if (shouldSwap) {
-          return maybeSwap();
-        }
+        return maybeSwap();
       }
     }
     // Prefer a get on the right.
