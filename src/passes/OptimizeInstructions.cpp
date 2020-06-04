@@ -917,6 +917,10 @@ private:
     if (binary->right->is<Const>()) {
       return;
     }
+    // Prefer a get on the right.
+    if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
+      return maybeSwap();
+    }
     // Prefer subexpressions with constants on the right as well.
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (left->right->is<Const>()) {
@@ -925,9 +929,11 @@ private:
         // which equal to -1 or 0
         if (auto* right = binary->right->dynCast<Binary>()) {
           if (auto rightRightConst = right->right->dynCast<Const>()) {
-            auto value = rightRightConst->value.getInteger();
-            if (value == -1LL || value == 0LL) {
-              shouldSwap = false;
+            if (rightRightConst->type.isInteger()) {
+              auto value = rightRightConst->value.getInteger();
+              if (value == -1LL || value == 0LL) {
+                shouldSwap = false;
+              }
             }
           }
         }
@@ -936,15 +942,17 @@ private:
         }
       }
     }
-    // doe the same for unary
+    // do the same for unary
     if (auto* left = binary->left->dynCast<Unary>()) {
       if (left->value->is<Const>()) {
         bool shouldSwap = true;
         if (auto* right = binary->right->dynCast<Binary>()) {
           if (auto rightRightConst = right->right->dynCast<Const>()) {
-            auto value = rightRightConst->value.getInteger();
-            if (value == -1LL || value == 0LL) {
-              shouldSwap = false;
+            if (rightRightConst->type.isInteger()) {
+              auto value = rightRightConst->value.getInteger();
+              if (value == -1LL || value == 0LL) {
+                shouldSwap = false;
+              }
             }
           }
         }
@@ -952,10 +960,6 @@ private:
           return maybeSwap();
         }
       }
-    }
-    // Prefer a get on the right.
-    if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
-      return maybeSwap();
     }
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {
