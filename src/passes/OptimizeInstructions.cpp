@@ -921,10 +921,11 @@ private:
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (left->right->is<Const>()) {
         bool shouldSwap = true;
-        // don't swap if another expression also contain const which equal -1
+        // don't swap if another expression also contain const which equal -1 or 0
         if (auto* right = binary->right->dynCast<Binary>()) {
           if (auto rightRightConst = right->right->dynCast<Const>()) {
-            if (rightRightConst->value.getInteger() == -1LL) {
+            auto value = rightRightConst->value.getInteger();
+            if (value == -1LL || value == 0LL) {
               shouldSwap = false;
             }
           }
