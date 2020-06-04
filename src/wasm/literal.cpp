@@ -208,8 +208,10 @@ bool Literal::operator==(const Literal& other) const {
         func == other.func) {
       return true;
     }
+    // We don't compare event names, which are subject to change after
+    // roundtripping
     if (type == Type::exnref && other.type == Type::exnref &&
-        *exn == *other.exn) {
+        exn->values == other.exn->values) {
       return true;
     }
     return false;
@@ -348,7 +350,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "nullref";
       break;
     case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      o << "exnref(" << literal.getExceptionPackage().values << ")";
       break;
     case Type::anyref:
     case Type::unreachable:
@@ -371,10 +373,6 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
     }
     return o << ')';
   }
-}
-
-std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn) {
-  return o << exn.event << " " << exn.values;
 }
 
 Literal Literal::countLeadingZeroes() const {
