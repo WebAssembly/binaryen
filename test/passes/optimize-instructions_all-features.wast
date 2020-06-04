@@ -437,6 +437,74 @@
     (drop (i32.add (i32.ctz (local.get $y)) (i32.ctz (local.get $x))))
     (drop (i32.add (i32.ctz (local.get $x)) (i32.eqz (local.get $y))))
     (drop (i32.add (i32.eqz (local.get $x)) (i32.ctz (local.get $y))))
+    ;; canonize subexpressions
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.xor
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.xor
+        (i32.const 22)
+        (i32.const 21)
+      )
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const -1)
+        (local.get $x)
+      )
+      (i32.xor
+        (local.get $x)
+        (i32.const 21)
+      )
+    ))
+    (drop (i32.and
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 0)
+      )
+      (i32.xor
+        (i32.const 0)
+        (local.get $x)
+      )
+    ))
+    (drop (i32.and
+      (i32.eqz
+        (local.get $x)
+      )
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+    ))
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.eqz
+        (local.get $x)
+      )
+    ))
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.eqz
+        (i32.const -1)
+      )
+    ))
   )
   (func $ne0 (result i32)
     (if (i32.ne (call $ne0) (i32.const 0))

@@ -603,6 +603,84 @@
     )
    )
   )
+  (drop
+   (i32.and
+    (i32.xor
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (i32.const 22)
+     (i32.const 21)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (local.get $x)
+     (i32.const 21)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.gt_s
+     (local.get $x)
+     (i32.const 0)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.eqz
+     (local.get $x)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.eqz
+     (local.get $x)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.eqz
+     (i32.const -1)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
  )
  (func $ne0 (result i32)
   (if
