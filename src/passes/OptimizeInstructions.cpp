@@ -918,14 +918,23 @@ private:
       return;
     }
     // Prefer subexpressions with constants on the right as well.
-    if (!(binary->right->is<Unary>() || binary->right->is<Binary>())) {
-      if (auto* left = binary->left->dynCast<Unary>()) {
-        if (left->value->is<Const>()) {
-          return maybeSwap();
-        }
+    if (auto* left = binary->left->dynCast<Unary>()) {
+      if (left->value->is<Const>()) {
+        return maybeSwap();
       }
-      if (auto* left = binary->left->dynCast<Binary>()) {
-        if (left->right->is<Const>() || left->left->is<Const>()) {
+    }
+    if (auto* left = binary->left->dynCast<Binary>()) {
+      if (left->right->is<Const>() || left->left->is<Const>()) {
+        bool shouldSwap = true;
+        // don't swap if another expression also contain const which equal -1
+        if (auto* right = binary->right->dynCast<Binary>()) {
+          if (auto rightRightConst = right->right->dynCast<Const>()) {
+            if (rightRightConst->value.getInteger() == -1LL) {
+              shouldSwap = false;
+            }
+          }
+        }
+        if (shouldSwap) {
           return maybeSwap();
         }
       }

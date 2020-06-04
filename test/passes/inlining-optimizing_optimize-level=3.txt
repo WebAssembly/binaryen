@@ -3336,16 +3336,16 @@
                                          )
                                          (local.get $11)
                                          (i32.and
+                                          (i32.ne
+                                           (local.get $9)
+                                           (i32.const 0)
+                                          )
                                           (i32.eq
                                            (i32.and
                                             (local.get $11)
                                             (i32.const 15)
                                            )
                                            (i32.const 3)
-                                          )
-                                          (i32.ne
-                                           (local.get $9)
-                                           (i32.const 0)
                                           )
                                          )
                                         )
@@ -6703,13 +6703,13 @@
                    (local.tee $11
                     (i32.or
                      (i32.ne
-                      (i32.load
+                      (i32.load offset=4
                        (local.get $13)
                       )
                       (i32.const 0)
                      )
                      (i32.ne
-                      (i32.load offset=4
+                      (i32.load
                        (local.get $13)
                       )
                       (i32.const 0)
