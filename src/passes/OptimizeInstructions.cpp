@@ -918,13 +918,8 @@ private:
       return;
     }
     // Prefer subexpressions with constants on the right as well.
-    if (auto* left = binary->left->dynCast<Unary>()) {
-      if (left->value->is<Const>()) {
-        return maybeSwap();
-      }
-    }
     if (auto* left = binary->left->dynCast<Binary>()) {
-      if (left->right->is<Const>() || left->left->is<Const>()) {
+      if (left->right->is<Const>()) {
         bool shouldSwap = true;
         // don't swap if another expression also contain const which equal -1
         if (auto* right = binary->right->dynCast<Binary>()) {
@@ -937,6 +932,11 @@ private:
         if (shouldSwap) {
           return maybeSwap();
         }
+      }
+    }
+    if (auto* left = binary->left->dynCast<Unary>()) {
+      if (left->value->is<Const>()) {
+        return maybeSwap();
       }
     }
     // Prefer a get on the right.

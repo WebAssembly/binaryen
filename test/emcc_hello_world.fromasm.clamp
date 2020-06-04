@@ -8722,13 +8722,6 @@
                (i32.add
                 (local.tee $0
                  (i32.add
-                  (i32.shr_u
-                   (i32.shl
-                    (local.get $0)
-                    (local.get $2)
-                   )
-                   (i32.const 15)
-                  )
                   (i32.sub
                    (i32.const 14)
                    (i32.or
@@ -8738,6 +8731,13 @@
                     )
                     (local.get $2)
                    )
+                  )
+                  (i32.shr_u
+                   (i32.shl
+                    (local.get $0)
+                    (local.get $2)
+                   )
+                   (i32.const 15)
                   )
                  )
                 )
@@ -9683,13 +9683,6 @@
                         (i32.add
                          (local.tee $0
                           (i32.add
-                           (i32.shr_u
-                            (i32.shl
-                             (local.get $0)
-                             (local.get $3)
-                            )
-                            (i32.const 15)
-                           )
                            (i32.sub
                             (i32.const 14)
                             (i32.or
@@ -9699,6 +9692,13 @@
                              )
                              (local.get $3)
                             )
+                           )
+                           (i32.shr_u
+                            (i32.shl
+                             (local.get $0)
+                             (local.get $3)
+                            )
+                            (i32.const 15)
                            )
                           )
                          )
@@ -11606,13 +11606,6 @@
                        (i32.add
                         (local.tee $0
                          (i32.add
-                          (i32.shr_u
-                           (i32.shl
-                            (local.get $0)
-                            (local.get $2)
-                           )
-                           (i32.const 15)
-                          )
                           (i32.sub
                            (i32.const 14)
                            (i32.or
@@ -11622,6 +11615,13 @@
                             )
                             (local.get $2)
                            )
+                          )
+                          (i32.shr_u
+                           (i32.shl
+                            (local.get $0)
+                            (local.get $2)
+                           )
+                           (i32.const 15)
                           )
                          )
                         )
@@ -12273,13 +12273,6 @@
                    (i32.add
                     (local.tee $1
                      (i32.add
-                      (i32.shr_u
-                       (i32.shl
-                        (local.get $1)
-                        (local.get $3)
-                       )
-                       (i32.const 15)
-                      )
                       (i32.sub
                        (i32.const 14)
                        (i32.or
@@ -12289,6 +12282,13 @@
                         )
                         (local.get $3)
                        )
+                      )
+                      (i32.shr_u
+                       (i32.shl
+                        (local.get $1)
+                        (local.get $3)
+                       )
+                       (i32.const 15)
                       )
                      )
                     )
@@ -14159,13 +14159,6 @@
              (i32.add
               (local.tee $0
                (i32.add
-                (i32.shr_u
-                 (i32.shl
-                  (local.get $0)
-                  (local.get $5)
-                 )
-                 (i32.const 15)
-                )
                 (i32.sub
                  (i32.const 14)
                  (i32.or
@@ -14175,6 +14168,13 @@
                   )
                   (local.get $5)
                  )
+                )
+                (i32.shr_u
+                 (i32.shl
+                  (local.get $0)
+                  (local.get $5)
+                 )
+                 (i32.const 15)
                 )
                )
               )
