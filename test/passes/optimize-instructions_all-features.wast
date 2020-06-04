@@ -514,6 +514,15 @@
         (i32.const -1)
       )
     ))
+    (drop (i32.and
+      (i32.eqz
+        (i32.const -1)
+      )
+      (i32.xor
+        (local.get $x)
+        (i32.const 2)
+      )
+    ))
   )
   (func $ne0 (result i32)
     (if (i32.ne (call $ne0) (i32.const 0))
