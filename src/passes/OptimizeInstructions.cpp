@@ -921,7 +921,8 @@ private:
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (left->right->is<Const>()) {
         bool shouldSwap = true;
-        // don't swap if another expression also contain const which equal -1 or 0
+        // don't swap if another expression also contain constant
+        // which equal to -1 or 0
         if (auto* right = binary->right->dynCast<Binary>()) {
           if (auto rightRightConst = right->right->dynCast<Const>()) {
             auto value = rightRightConst->value.getInteger();
