@@ -2898,6 +2898,10 @@ BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
 BinaryenSideEffects BinaryenSideEffectThrows(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Throws);
 }
+BinaryenSideEffects BinaryenSideEffectDanglingPop(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::DanglingPop);
+}
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
