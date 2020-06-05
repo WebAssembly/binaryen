@@ -780,6 +780,18 @@ struct PrintExpressionContents
       case SqrtVecF32x4:
         o << "f32x4.sqrt";
         break;
+      case CeilVecF32x4:
+        o << "f32x4.ceil";
+        break;
+      case FloorVecF32x4:
+        o << "f32x4.floor";
+        break;
+      case TruncVecF32x4:
+        o << "f32x4.trunc";
+        break;
+      case NearestVecF32x4:
+        o << "f32x4.nearest";
+        break;
       case AbsVecF64x2:
         o << "f64x2.abs";
         break;
@@ -788,6 +800,18 @@ struct PrintExpressionContents
         break;
       case SqrtVecF64x2:
         o << "f64x2.sqrt";
+        break;
+      case CeilVecF64x2:
+        o << "f64x2.ceil";
+        break;
+      case FloorVecF64x2:
+        o << "f64x2.floor";
+        break;
+      case TruncVecF64x2:
+        o << "f64x2.trunc";
+        break;
+      case NearestVecF64x2:
+        o << "f64x2.nearest";
         break;
       case TruncSatSVecF32x4ToVecI32x4:
         o << "i32x4.trunc_sat_f32x4_s";
