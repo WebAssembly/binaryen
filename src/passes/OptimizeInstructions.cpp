@@ -949,8 +949,8 @@ private:
       return maybeSwap();
     }
     // Prefer subexpressions with constants on the right.
-    if (hasConstantOnRight(binary->left) >= SwapResult::Normal &&
-        hasConstantOnRight(binary->right) != SwapResult::Forced) {
+    if (hasConstantOnRight(binary->right) != SwapResult::Forced &&
+        hasConstantOnRight(binary->left) >= SwapResult::Normal) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
