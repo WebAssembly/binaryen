@@ -38,6 +38,12 @@
 
 namespace wasm {
 
+enum SwapResult {
+  Never,
+  Normal,
+  Forced,
+};
+
 Name I32_EXPR = "i32.expr";
 Name I64_EXPR = "i64.expr";
 Name F32_EXPR = "f32.expr";
@@ -910,6 +916,27 @@ private:
         swap();
       }
     };
+    auto hasConstantOnRight = [](Expression* expr) {
+      // check is expression has constant on a right. Values such as -1 or 0
+      // always prefer on a right since commonly found in pattern matching
+      if (auto* binary = expr->dynCast<Binary>()) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->type.isInteger()) {
+            auto value = c->value.getInteger();
+            if (value == -1LL || value == 0LL) {
+              return SwapResult::Forced;
+            }
+          }
+          return SwapResult::Normal;
+        }
+      }
+      if (auto* unary = expr->dynCast<Unary>()) {
+        if (unary->value->is<Const>()) {
+          return SwapResult::Normal;
+        }
+      }
+      return SwapResult::Never;
+    };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
       return swap();
@@ -921,45 +948,10 @@ private:
     if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
       return maybeSwap();
     }
-    // Prefer subexpressions with constants on the right as well.
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (left->right->is<Const>()) {
-        bool shouldSwap = true;
-        // don't swap if another expression also contain constant
-        // which equal to -1 or 0
-        if (auto* right = binary->right->dynCast<Binary>()) {
-          if (auto rightRightConst = right->right->dynCast<Const>()) {
-            if (rightRightConst->type.isInteger()) {
-              auto value = rightRightConst->value.getInteger();
-              if (value == -1LL || value == 0LL) {
-                shouldSwap = false;
-              }
-            }
-          }
-        }
-        if (shouldSwap) {
-          return maybeSwap();
-        }
-      }
-    }
-    // do the same for unary
-    if (auto* left = binary->left->dynCast<Unary>()) {
-      if (left->value->is<Const>()) {
-        bool shouldSwap = true;
-        if (auto* right = binary->right->dynCast<Binary>()) {
-          if (auto rightRightConst = right->right->dynCast<Const>()) {
-            if (rightRightConst->type.isInteger()) {
-              auto value = rightRightConst->value.getInteger();
-              if (value == -1LL || value == 0LL) {
-                shouldSwap = false;
-              }
-            }
-          }
-        }
-        if (shouldSwap) {
-          return maybeSwap();
-        }
-      }
+    // Prefer subexpressions with constants on the right.
+    if (hasConstantOnRight(binary->left) >= SwapResult::Normal &&
+        hasConstantOnRight(binary->right) != SwapResult::Forced) {
+      return maybeSwap();
     }
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {
