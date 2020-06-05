@@ -38,10 +38,10 @@
 
 namespace wasm {
 
-enum SwapResult {
+enum TriState {
+  Unknown = -1,
   Never,
-  Normal,
-  Forced,
+  Always,
 };
 
 Name I32_EXPR = "i32.expr";
@@ -924,18 +924,18 @@ private:
           if (c->type.isInteger()) {
             auto value = c->value.getInteger();
             if (value == -1LL || value == 0LL) {
-              return SwapResult::Forced;
+              return TriState::Always;
             }
           }
-          return SwapResult::Normal;
+          return TriState::Unknown;
         }
       }
       if (auto* unary = expr->dynCast<Unary>()) {
         if (unary->value->is<Const>()) {
-          return SwapResult::Normal;
+          return TriState::Unknown;
         }
       }
-      return SwapResult::Never;
+      return TriState::Never;
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
@@ -949,8 +949,8 @@ private:
       return maybeSwap();
     }
     // Prefer subexpressions with constants on the right.
-    if (hasConstantOnRight(binary->right) != SwapResult::Forced &&
-        hasConstantOnRight(binary->left) >= SwapResult::Normal) {
+    if (hasConstantOnRight(binary->right) != TriState::Always &&
+        hasConstantOnRight(binary->left) != TriState::Never) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
