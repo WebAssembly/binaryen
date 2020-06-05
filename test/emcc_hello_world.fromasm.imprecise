@@ -4772,9 +4772,12 @@
                                   (select
                                    (f64.const 9007199254740994)
                                    (f64.const 9007199254740992)
-                                   (i32.div_u
-                                    (local.get $23)
-                                    (local.get $8)
+                                   (i32.and
+                                    (i32.div_u
+                                     (local.get $23)
+                                     (local.get $8)
+                                    )
+                                    (i32.const 1)
                                    )
                                   )
                                  )
