@@ -68,7 +68,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case RotRInt32:
       case AddInt32:
       case SubInt32:
-         return 32;
+        return 32;
       case MulInt32: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (maxBitsLeft == 32) {
@@ -159,7 +159,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case RotRInt64:
       case AddInt64:
       case SubInt64:
-         return 64;
+        return 64;
       case MulInt64: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (maxBitsLeft == 64) {
