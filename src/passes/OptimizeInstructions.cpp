@@ -245,7 +245,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
           if (maxBits == 0) {
             return 0;
           }
-          return std::min(Index(64), Bits::getEffectiveShifts(shifts) + maxBits);
+          return std::min(Index(64),
+                          Bits::getEffectiveShifts(shifts) + maxBits);
         }
         return 64;
       }
