@@ -423,6 +423,10 @@ function initializeConstants() {
     'MaxVecF32x4',
     'PMinVecF32x4',
     'PMaxVecF32x4',
+    'CeilVecF32x4',
+    'FloorVecF32x4',
+    'TruncVecF32x4',
+    'NearestVecF32x4',
     'AbsVecF64x2',
     'NegVecF64x2',
     'SqrtVecF64x2',
@@ -436,6 +440,10 @@ function initializeConstants() {
     'MaxVecF64x2',
     'PMinVecF64x2',
     'PMaxVecF64x2',
+    'CeilVecF64x2',
+    'FloorVecF64x2',
+    'TruncVecF64x2',
+    'NearestVecF64x2',
     'TruncSatSVecF32x4ToVecI32x4',
     'TruncSatUVecF32x4ToVecI32x4',
     'TruncSatSVecF64x2ToVecI64x2',
@@ -1918,6 +1926,18 @@ function wrapModule(module, self) {
     'pmax': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMaxVecF32x4'], left, right);
     },
+    'ceil': function(value) {
+      return Module['_BinaryenUnary'](module, Module['CeilVecF32x4'], value);
+    },
+    'floor': function(value) {
+      return Module['_BinaryenUnary'](module, Module['FloorVecF32x4'], value);
+    },
+    'trunc': function(value) {
+      return Module['_BinaryenUnary'](module, Module['TruncVecF32x4'], value);
+    },
+    'nearest': function(value) {
+      return Module['_BinaryenUnary'](module, Module['NearestVecF32x4'], value);
+    },
     'convert_i32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI32x4ToVecF32x4'], value);
     },
@@ -1992,6 +2012,18 @@ function wrapModule(module, self) {
     },
     'pmax': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMaxVecF64x2'], left, right);
+    },
+    'ceil': function(value) {
+      return Module['_BinaryenUnary'](module, Module['CeilVecF64x2'], value);
+    },
+    'floor': function(value) {
+      return Module['_BinaryenUnary'](module, Module['FloorVecF64x2'], value);
+    },
+    'trunc': function(value) {
+      return Module['_BinaryenUnary'](module, Module['TruncVecF64x2'], value);
+    },
+    'nearest': function(value) {
+      return Module['_BinaryenUnary'](module, Module['NearestVecF64x2'], value);
     },
     'convert_i64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI64x2ToVecF64x2'], value);

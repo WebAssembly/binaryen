@@ -4194,6 +4194,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = SqrtVecF32x4;
       break;
+    case BinaryConsts::F32x4Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF32x4;
+      break;
+    case BinaryConsts::F32x4Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF32x4;
+      break;
+    case BinaryConsts::F32x4Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF32x4;
+      break;
+    case BinaryConsts::F32x4Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF32x4;
+      break;
     case BinaryConsts::F64x2Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF64x2;
@@ -4205,6 +4221,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2Sqrt:
       curr = allocator.alloc<Unary>();
       curr->op = SqrtVecF64x2;
+      break;
+    case BinaryConsts::F64x2Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF64x2;
+      break;
+    case BinaryConsts::F64x2Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF64x2;
+      break;
+    case BinaryConsts::F64x2Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF64x2;
+      break;
+    case BinaryConsts::F64x2Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF64x2;
       break;
     case BinaryConsts::I32x4TruncSatSF32x4:
       curr = allocator.alloc<Unary>();

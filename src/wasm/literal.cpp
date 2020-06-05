@@ -1531,6 +1531,18 @@ Literal Literal::negF32x4() const {
 Literal Literal::sqrtF32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::sqrt>(*this);
 }
+Literal Literal::ceilF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::ceil>(*this);
+}
+Literal Literal::floorF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::floor>(*this);
+}
+Literal Literal::truncF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::trunc>(*this);
+}
+Literal Literal::nearestF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::nearbyint>(*this);
+}
 Literal Literal::absF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::abs>(*this);
 }
@@ -1539,6 +1551,18 @@ Literal Literal::negF64x2() const {
 }
 Literal Literal::sqrtF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::sqrt>(*this);
+}
+Literal Literal::ceilF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::ceil>(*this);
+}
+Literal Literal::floorF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::floor>(*this);
+}
+Literal Literal::truncF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::trunc>(*this);
+}
+Literal Literal::nearestF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::nearbyint>(*this);
 }
 Literal Literal::truncSatToSI32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToSI32>(*this);
