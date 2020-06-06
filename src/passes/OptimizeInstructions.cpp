@@ -78,6 +78,9 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
           return 0;
         }
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        if (maxBitsLeft == 0) {
+          return 0;
+        }
         return std::min(Index(32), maxBitsLeft + maxBitsRight);
       }
       case DivSInt32: {
@@ -200,6 +203,9 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
           return 0;
         }
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        if (maxBitsLeft == 0) {
+          return 0;
+        }
         return std::min(Index(64), maxBitsLeft + maxBitsRight);
       }
       case DivSInt64: {
