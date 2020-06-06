@@ -862,6 +862,15 @@ enum ASTNodes {
   F32x4PMin = 0xea,
   F32x4PMax = 0xeb,
 
+  F32x4Ceil = 0xd8,
+  F32x4Floor = 0xd9,
+  F32x4Trunc = 0xda,
+  F32x4Nearest = 0xdb,
+  F64x2Ceil = 0xdc,
+  F64x2Floor = 0xdd,
+  F64x2Trunc = 0xde,
+  F64x2Nearest = 0xdf,
+
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
   F64x2Sqrt = 0xef,
