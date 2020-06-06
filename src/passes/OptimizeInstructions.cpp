@@ -917,8 +917,9 @@ private:
       }
     };
     auto hasConstantOnRight = [](Expression* expr) {
-      // check is expression has constant on a right. Values such as -1 or 0
-      // always prefer on a right since commonly found in pattern matching
+      // Check if expression has constant on the right.
+      // Values such as -1 or 0 always prefer on a right since commonly
+      // found in pattern matching
       if (auto* binary = expr->dynCast<Binary>()) {
         if (auto* c = binary->right->dynCast<Const>()) {
           if (c->type.isInteger()) {
