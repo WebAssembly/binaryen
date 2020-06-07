@@ -914,8 +914,8 @@ private:
       // Calculate cost of expression to determine proper order for swapping
       // Costs (from high to low):
       // 3 - bitwise not, arithmetic negative, logical not
-      // 2 - converions form i32 ot i64 and wise versa
-      // 1 - has lhs or rhs constant
+      // 2 - converions from i32 or i64 and vise versa
+      // 1 - lhs or rhs has a constant
       // 0 - otherwise
       int32_t hasConst = false;
       if (auto* binary = expr->dynCast<Binary>()) {
