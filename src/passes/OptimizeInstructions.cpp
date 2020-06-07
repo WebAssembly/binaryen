@@ -910,7 +910,7 @@ private:
         swap();
       }
     };
-    auto getSubexpressionPriority = [](Expression* expr) {
+    auto computeExpressionCost = [](Expression* expr) {
       // Check if expression has constant on the right.
       // Negative / bitwise not operations have higher priority and always swap.
       int32_t hasConst = false;
@@ -964,8 +964,8 @@ private:
       return maybeSwap();
     }
     // Prefer subexpressions with constants, not / neg on the right.
-    if (getSubexpressionPriority(binary->left) >
-        getSubexpressionPriority(binary->right)) {
+    if (computeExpressionCost(binary->left) >
+        computeExpressionCost(binary->right)) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
