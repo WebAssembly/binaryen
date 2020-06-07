@@ -38,12 +38,6 @@
 
 namespace wasm {
 
-enum TriState {
-  Unknown = -1,
-  Never,
-  Always,
-};
-
 Name I32_EXPR = "i32.expr";
 Name I64_EXPR = "i64.expr";
 Name F32_EXPR = "f32.expr";
@@ -916,27 +910,46 @@ private:
         swap();
       }
     };
-    auto hasConstantOnRight = [](Expression* expr) {
+    auto getSubexpressionPriority = [](Expression* expr) {
       // Check if expression has constant on the right.
-      // Values such as -1 or 0 always prefer on a right since commonly
-      // found in pattern matching
+      // Negative / bitwise not operations have higher priority and always swap.
+      int32_t hasConst = false;
       if (auto* binary = expr->dynCast<Binary>()) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (c->type.isInteger()) {
+          // detect bitwise not
+          if (binary->op == XorInt32 || binary->op == XorInt64) {
             auto value = c->value.getInteger();
-            if (value == -1LL || value == 0LL) {
-              return TriState::Always;
+            if (value == -1LL) {
+              return 3;
             }
           }
-          return TriState::Unknown;
+          hasConst = true;
+        }
+        if (auto* c = binary->left->dynCast<Const>()) {
+          // detect integer negative
+          if (binary->op == SubInt32 || binary->op == SubInt64) {
+            auto value = c->value.getInteger();
+            if (value == 0LL) {
+              return 3;
+            }
+          }
+          hasConst = true;
         }
       }
       if (auto* unary = expr->dynCast<Unary>()) {
+        // detect logical not
+        if (unary->op == EqZInt32 || unary->op == EqZInt64) {
+          return 3;
+        }
+        // detect conversion operations
+        if (unary->op == WrapInt64 || unary->op == ExtendSInt32 || unary->op == ExtendUInt32) {
+          return 2;
+        }
         if (unary->value->is<Const>()) {
-          return TriState::Unknown;
+          hasConst = true;
         }
       }
-      return TriState::Never;
+      return hasConst ? 1 : 0;
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
@@ -949,9 +962,9 @@ private:
     if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
       return maybeSwap();
     }
-    // Prefer subexpressions with constants on the right.
-    if (hasConstantOnRight(binary->right) != TriState::Always &&
-        hasConstantOnRight(binary->left) != TriState::Never) {
+    // Prefer subexpressions with constants, not / neg on the right.
+    if (getSubexpressionPriority(binary->left) >
+        getSubexpressionPriority(binary->right)) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.

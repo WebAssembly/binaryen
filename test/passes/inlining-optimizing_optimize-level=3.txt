@@ -3963,6 +3963,10 @@
                               (local.set $14
                                (if (result f64)
                                 (i32.or
+                                 (i32.gt_u
+                                  (local.get $6)
+                                  (i32.const 11)
+                                 )
                                  (i32.eqz
                                   (local.tee $5
                                    (i32.sub
@@ -3970,10 +3974,6 @@
                                     (local.get $6)
                                    )
                                   )
-                                 )
-                                 (i32.gt_u
-                                  (local.get $6)
-                                  (i32.const 11)
                                  )
                                 )
                                 (local.get $24)

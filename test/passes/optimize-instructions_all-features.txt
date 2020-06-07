@@ -541,13 +541,13 @@
   )
   (drop
    (i32.and
-    (i32.gt_u
-     (i32.const 18)
-     (i32.const 19)
-    )
     (i32.gt_s
      (i32.const 16)
      (i32.const 17)
+    )
+    (i32.gt_u
+     (i32.const 18)
+     (i32.const 19)
     )
    )
   )
@@ -699,6 +699,42 @@
      (i32.const 2)
     )
     (i32.eqz
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (local.get $x)
+     (i32.const 2)
+    )
+    (i32.xor
+     (local.get $x)
+     (i32.const -1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.xor
+     (local.get $x)
+     (i32.const 2)
+    )
+    (i32.sub
+     (i32.const 0)
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.sub
+     (i32.const 0)
+     (local.get $x)
+    )
+    (i32.xor
+     (local.get $x)
      (i32.const -1)
     )
    )
@@ -1283,21 +1319,21 @@
  (func $linear-sums (param $0 i32) (param $1 i32)
   (drop
    (i32.add
-    (local.get $1)
     (i32.shl
      (local.get $0)
      (i32.const 4)
     )
+    (local.get $1)
    )
   )
   (drop
    (i32.add
     (i32.add
+     (local.get $1)
      (i32.shl
       (local.get $0)
       (i32.const 3)
      )
-     (local.get $1)
     )
     (i32.const 12)
    )
@@ -2570,11 +2606,11 @@
   )
   (drop
    (i32.and
-    (i32.eqz
-     (local.get $x)
-    )
     (i32.wrap_i64
      (i64.const 2)
+    )
+    (i32.eqz
+     (local.get $x)
     )
    )
   )
@@ -2899,7 +2935,7 @@
    (i32.eq
     (i32.add
      (local.get $x32)
-     (i32.const -10)
+     (i32.const 10)
     )
     (local.get $x32)
    )
@@ -2912,15 +2948,6 @@
   )
   (drop
    (i32.eq
-    (i32.add
-     (local.get $x32)
-     (i32.const 30)
-    )
-    (local.get $x32)
-   )
-  )
-  (drop
-   (i32.eq
     (i32.sub
      (local.get $x32)
      (i32.const 30)
@@ -2932,7 +2959,16 @@
    (i32.eq
     (i32.sub
      (local.get $x32)
-     (i32.const -10)
+     (i32.const 30)
+    )
+    (local.get $x32)
+   )
+  )
+  (drop
+   (i32.eq
+    (i32.sub
+     (local.get $x32)
+     (i32.const 10)
     )
     (local.get $x32)
    )
