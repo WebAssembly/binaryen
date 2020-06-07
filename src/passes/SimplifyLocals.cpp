@@ -411,6 +411,14 @@ struct SimplifyLocals
     if (set->isTee()) {
       return false;
     }
+    // We cannot move expressions containing exnref.pops that are not enclosed
+    // in 'catch', because 'exnref.pop' should follow right after 'catch'.
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), features, set->value)
+          .danglingPop) {
+      return false;
+    }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
     // use as that would make a tee
     if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) {

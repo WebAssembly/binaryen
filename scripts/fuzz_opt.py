@@ -538,10 +538,14 @@ class Asyncify(TestCaseHandler):
 
         def do_asyncify(wasm):
             cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
-            if random.random() < 0.5:
-                cmd += ['--optimize-level=%d' % random.randint(1, 3)]
-            if random.random() < 0.5:
-                cmd += ['--shrink-level=%d' % random.randint(1, 2)]
+            # if we allow NaNs, running binaryen optimizations and then
+            # executing in d8 may lead to different results due to NaN
+            # nondeterminism between VMs.
+            if not NANS:
+                if random.random() < 0.5:
+                    cmd += ['--optimize-level=%d' % random.randint(1, 3)]
+                if random.random() < 0.5:
+                    cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
             out = run_d8('async.t.wasm')
@@ -585,7 +589,11 @@ def test_one(random_input, given_wasm):
     print()
 
     if given_wasm:
-        shutil.copyfile(given_wasm, 'a.wasm')
+        # if given a wasm file we want to use it as is, but we also want to
+        # apply properties like not having any NaNs, which the original fuzz
+        # wasm had applied. that is, we need to preserve properties like not
+        # having nans through reduction.
+        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS)
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
@@ -637,7 +645,7 @@ def test_one(random_input, given_wasm):
 
         # let the testcase handler handle this testcase however it wants. in this case we give it
         # the input and both wasms.
-        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FEATURE_OPTS)
         print('')
 
     return bytes

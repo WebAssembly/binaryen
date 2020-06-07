@@ -69,9 +69,37 @@ function(ADD_LINK_FLAG value)
   ENDFOREACH(variable)
 endfunction()
 
+function(binaryen_setup_rpath name)
+  if(CMAKE_INSTALL_RPATH)
+    return()
+  endif()
+
+  if (APPLE)
+    set(_install_name_dir INSTALL_NAME_DIR "@rpath")
+    set(_install_rpath "@loader_path/../lib")
+  elseif(UNIX)
+    set(_install_rpath "\$ORIGIN/../lib")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "(FreeBSD|DragonFly)")
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
+                   LINK_FLAGS " -Wl,-z,origin ")
+    endif()
+  else()
+    return()
+  endif()
+
+  set_target_properties(${name} PROPERTIES
+                        BUILD_WITH_INSTALL_RPATH On
+                        INSTALL_RPATH "${_install_rpath}"
+                        ${_install_name_dir})
+endfunction()
+
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
+if (MSVC)
+  # We don't have dllexport declarations set up for windows yet.
+  set(BUILD_STATIC_LIB ON)
+endif()
 
 # For now, don't include full DWARF support in JS builds, for size.
 if (NOT EMSCRIPTEN)
@@ -280,95 +308,27 @@ install(TARGETS binaryen
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-set(wasm-shell_SOURCES
-  src/tools/wasm-shell.cpp
-)
-add_executable(wasm-shell ${wasm-shell_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-shell ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-shell PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endfunction()
 
-set(wasm-opt_SOURCES
-  src/tools/wasm-opt.cpp
-)
-add_executable(wasm-opt ${wasm-opt_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-opt ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
+binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
+binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
+binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
+binaryen_add_executable(asm2wasm src/tools/asm2wasm.cpp)
+binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
+binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
+binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
+binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
+binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
+binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
 
-set(wasm-metadce_SOURCES
-  src/tools/wasm-metadce.cpp
-)
-add_executable(wasm-metadce ${wasm-metadce_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-metadce ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-metadce DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(asm2wasm_SOURCES
-  src/tools/asm2wasm.cpp
-)
-add_executable(asm2wasm ${asm2wasm_SOURCES} ${binaryen_objs})
-target_link_libraries(asm2wasm ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET asm2wasm PROPERTY CXX_STANDARD 14)
-set_property(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm2js_SOURCES
-  src/tools/wasm2js.cpp
-)
-add_executable(wasm2js ${wasm2js_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm2js ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm2js PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm2js PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm2js DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm-emscripten-finalize_SOURCES
-  src/tools/wasm-emscripten-finalize.cpp
-)
-add_executable(wasm-emscripten-finalize ${wasm-emscripten-finalize_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-emscripten-finalize ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm_as_SOURCES
-  src/tools/wasm-as.cpp
-)
-add_executable(wasm-as ${wasm_as_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-as ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-as PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm_dis_SOURCES
-  src/tools/wasm-dis.cpp
-)
-add_executable(wasm-dis ${wasm_dis_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-dis ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-dis PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm-ctor-eval_SOURCES
-  src/tools/wasm-ctor-eval.cpp
-)
-add_executable(wasm-ctor-eval ${wasm-ctor-eval_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-ctor-eval ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-ctor-eval DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm-reduce_SOURCES
-  src/tools/wasm-reduce.cpp
-)
-add_executable(wasm-reduce ${wasm-reduce_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-reduce ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # binaryen.js
 #

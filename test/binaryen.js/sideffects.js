@@ -10,6 +10,7 @@ console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
+console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -95,12 +96,21 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-var module_all_features = new binaryen.Module();
-module_all_features.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32),
+    module.getFeatures()
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
+);
+
+assert(
+  binaryen.getSideEffects(
+    module.drop(module.exnref.pop()),
+    module.getFeatures()
+  )
+  ==
+  binaryen.SideEffects.DanglingPop
 );
