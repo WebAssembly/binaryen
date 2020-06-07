@@ -953,10 +953,11 @@ private:
       return hasConst ? 1 : 0;
     };
     // Prefer a const on the right.
-    if (binary->left->is<Const>() && !binary->right->is<Const>()) {
-      return swap();
-    }
-    if (binary->right->is<Const>()) {
+    if (!binary->right->is<Const>()) {
+      if (binary->left->is<Const>()) {
+        return swap();
+      }
+    } else {
       return;
     }
     // Prefer a get on the right.
