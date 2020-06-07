@@ -942,7 +942,8 @@ private:
           return 3;
         }
         // detect conversion operations
-        if (unary->op == WrapInt64 || unary->op == ExtendSInt32 || unary->op == ExtendUInt32) {
+        if (unary->op == WrapInt64 || unary->op == ExtendSInt32 ||
+            unary->op == ExtendUInt32) {
           return 2;
         }
         if (unary->value->is<Const>()) {
