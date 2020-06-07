@@ -911,8 +911,12 @@ private:
       }
     };
     auto computeExpressionCost = [](Expression* expr) {
-      // Check if expression has constant on the right.
-      // Negative / bitwise not operations have higher priority and always swap.
+      // Calculate cost of expression to determine proper order for swapping
+      // Costs (from high to low):
+      // 3 - bitwise not, arithmetic negative, logical not
+      // 2 - converions form i32 ot i64 and wise versa
+      // 1 - has lhs or rhs constant
+      // 0 - otherwise
       int32_t hasConst = false;
       if (auto* binary = expr->dynCast<Binary>()) {
         if (auto* c = binary->right->dynCast<Const>()) {
