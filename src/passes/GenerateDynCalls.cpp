@@ -34,10 +34,12 @@
 namespace wasm {
 
 struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
+  GenerateDynCalls(bool onlyI64) : onlyI64(onlyI64) {}
 
   void visitTable(Table* table) {
     if (table->segments.size() > 0) {
       EmscriptenGlueGenerator generator(*getModule());
+      generator.onlyI64DynCalls = onlyI64;
       std::vector<Name> tableSegmentData;
       for (const auto& indirectFunc : table->segments[0].data) {
         generator.generateDynCallThunk(
@@ -45,8 +47,11 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
       }
     }
   }
+
+  bool onlyI64;
 };
 
-Pass* createGenerateDynCallsPass() { return new GenerateDynCalls; }
+Pass* createGenerateDynCallsPass() { return new GenerateDynCalls(false); }
+Pass* createGenerateI64DynCallsPass() { return new GenerateDynCalls(true); }
 
 } // namespace wasm
