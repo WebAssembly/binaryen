@@ -99,7 +99,7 @@ BINARYEN_API BinaryenType BinaryenTypeFloat32(void);
 BINARYEN_API BinaryenType BinaryenTypeFloat64(void);
 BINARYEN_API BinaryenType BinaryenTypeVec128(void);
 BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
-BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
+BINARYEN_API BinaryenType BinaryenTypeExternref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullref(void);
 BINARYEN_API BinaryenType BinaryenTypeExnref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);

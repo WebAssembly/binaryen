@@ -57,7 +57,7 @@ Name get_i64("get_i64");
 Name get_f32("get_f32");
 Name get_f64("get_f64");
 Name get_funcref("get_funcref");
-Name get_anyref("get_anyref");
+Name get_externref("get_externref");
 Name get_nullref("get_nullref");
 Name get_exnref("get_exnref");
 
@@ -66,7 +66,7 @@ Name set_i64("set_i64");
 Name set_f32("set_f32");
 Name set_f64("set_f64");
 Name set_funcref("set_funcref");
-Name set_anyref("set_anyref");
+Name set_externref("set_externref");
 Name set_nullref("set_nullref");
 Name set_exnref("set_exnref");
 
@@ -91,8 +91,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::funcref:
         import = get_funcref;
         break;
-      case Type::anyref:
-        import = get_anyref;
+      case Type::externref:
+        import = get_externref;
         break;
       case Type::nullref:
         import = get_nullref;
@@ -139,8 +139,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::funcref:
         import = set_funcref;
         break;
-      case Type::anyref:
-        import = set_anyref;
+      case Type::externref:
+        import = set_externref;
         break;
       case Type::nullref:
         import = set_nullref;
@@ -180,10 +180,14 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_funcref,
                 {Type::i32, Type::i32, Type::funcref},
                 Type::funcref);
-      addImport(
-        curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
-      addImport(
-        curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      addImport(curr,
+                get_externref,
+                {Type::i32, Type::i32, Type::externref},
+                Type::externref);
+      addImport(curr,
+                set_externref,
+                {Type::i32, Type::i32, Type::externref},
+                Type::externref);
       addImport(curr,
                 get_nullref,
                 {Type::i32, Type::i32, Type::nullref},

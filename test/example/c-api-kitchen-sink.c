@@ -199,11 +199,11 @@ void test_types() {
   BinaryenTypeExpand(funcref, &valueType);
   assert(valueType == funcref);
 
-  BinaryenType anyref = BinaryenTypeAnyref();
-  printf("  // BinaryenTypeAnyref: %d\n", anyref);
-  assert(BinaryenTypeArity(anyref) == 1);
-  BinaryenTypeExpand(anyref, &valueType);
-  assert(valueType == anyref);
+  BinaryenType externref = BinaryenTypeExternref();
+  printf("  // BinaryenTypeExternref: %d\n", externref);
+  assert(BinaryenTypeArity(externref) == 1);
+  BinaryenTypeExpand(externref, &valueType);
+  assert(valueType == externref);
 
   BinaryenType nullref = BinaryenTypeNullref();
   printf("  // BinaryenTypeNullref: %d\n", nullref);
@@ -747,7 +747,7 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeFloat32()),
     BinaryenPop(module, BinaryenTypeFloat64()),
     BinaryenPop(module, BinaryenTypeFuncref()),
-    BinaryenPop(module, BinaryenTypeAnyref()),
+    BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, BinaryenTypeNullref()),
     BinaryenPop(module, BinaryenTypeExnref()),
     BinaryenPop(module, BinaryenTypeFuncref()),

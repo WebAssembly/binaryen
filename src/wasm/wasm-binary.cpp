@@ -1132,8 +1132,8 @@ Type WasmBinaryBuilder::getType() {
       return Type::v128;
     case BinaryConsts::EncodedType::funcref:
       return Type::funcref;
-    case BinaryConsts::EncodedType::anyref:
-      return Type::anyref;
+    case BinaryConsts::EncodedType::externref:
+      return Type::externref;
     case BinaryConsts::EncodedType::nullref:
       return Type::nullref;
     case BinaryConsts::EncodedType::exnref:

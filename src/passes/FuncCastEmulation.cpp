@@ -66,7 +66,7 @@ static Expression* toABI(Expression* value, Module* module) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted to i64");
@@ -110,7 +110,7 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted from i64");

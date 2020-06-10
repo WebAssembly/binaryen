@@ -54,7 +54,7 @@ AsmType wasmToAsmType(Type type) {
     case Type::v128:
       assert(false && "v128 not implemented yet");
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
       assert(false && "reference types are not supported by asm2wasm");
@@ -80,8 +80,8 @@ char getSig(Type type) {
       return 'V';
     case Type::funcref:
       return 'F';
-    case Type::anyref:
-      return 'A';
+    case Type::externref:
+      return 'X';
     case Type::nullref:
       return 'N';
     case Type::exnref:
