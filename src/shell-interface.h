@@ -115,7 +115,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case Type::v128:
             assert(false && "v128 not implemented yet");
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
             globals[import->name] = {Literal::makeNullref()};

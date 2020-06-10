@@ -68,8 +68,8 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128));
 
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref));
+  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
+  console.log("  //", binaryen.expandType(binaryen.externref));
 
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
   console.log("  //", binaryen.expandType(binaryen.exnref));
@@ -561,7 +561,7 @@ function test_core() {
     module.f32.pop(),
     module.f64.pop(),
     module.v128.pop(),
-    module.anyref.pop(),
+    module.externref.pop(),
     module.funcref.pop(),
     module.nullref.pop(),
     module.exnref.pop(),

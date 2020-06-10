@@ -39,7 +39,7 @@ function initializeConstants() {
     ['f64', 'Float64'],
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
-    ['anyref', 'Anyref'],
+    ['externref', 'Externref'],
     ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
     ['unreachable', 'Unreachable'],
@@ -2071,9 +2071,9 @@ function wrapModule(module, self) {
     }
   };
 
-  self['anyref'] = {
+  self['externref'] = {
     'pop': function() {
-      return Module['_BinaryenPop'](module, Module['anyref']);
+      return Module['_BinaryenPop'](module, Module['externref']);
     }
   };
 

@@ -1,44 +1,48 @@
-;; reftype :: anyref | funcref | exnref | nullref
+;; reftype :: externref | funcref | exnref | nullref
 
-;; t <: anyref for all reftypes t
-;; nullref <: anyref, nullref <: funcref and nullref <: exnref
+;; t <: externref for all reftypes t
+;; nullref <: externref, nullref <: funcref and nullref <: exnref
+;; TODO: the subtyping relationship has been removed from the current proposal
+;; so it also needs to be removed from Binaryen still both in the tests but
+;; also inside the validation, fuzzing, etc.
+;; https://github.com/WebAssembly/reference-types/pull/87
 
 (module
-  (type $sig_anyref (func (param anyref)))
+  (type $sig_externref (func (param externref)))
   (type $sig_funcref (func (param funcref)))
   (type $sig_exnref (func (param exnref)))
   (type $sig_nullref (func (param nullref)))
 
-  (func $take_anyref (param anyref))
+  (func $take_externref (param externref))
   (func $take_funcref (param funcref))
   (func $take_exnref (param exnref))
   (func $take_nullref (param nullref))
   (func $foo)
 
-  (table funcref (elem $take_anyref $take_funcref $take_exnref $take_nullref))
+  (table funcref (elem $take_externref $take_funcref $take_exnref $take_nullref))
 
-  (import "env" "import_func" (func $import_func (param anyref) (result funcref)))
-  (import "env" "import_global" (global $import_global anyref))
-  (export "export_func" (func $import_func (param anyref) (result funcref)))
+  (import "env" "import_func" (func $import_func (param externref) (result funcref)))
+  (import "env" "import_global" (global $import_global externref))
+  (export "export_func" (func $import_func (param externref) (result funcref)))
   (export "export_global" (global $import_global))
 
   ;; Test subtype relationship in global initializer expressions
-  (global $global_anyref (mut anyref) (ref.null))
+  (global $global_externref (mut externref) (ref.null))
   (global $global_funcref (mut funcref) (ref.null))
   (global $global_exnref (mut exnref) (ref.null))
   (global $global_nullref (mut nullref) (ref.null))
-  (global $global_anyref2 (mut anyref) (ref.func $foo))
+  (global $global_externref2 (mut externref) (ref.func $foo))
   (global $global_funcref2 (mut funcref) (ref.func $foo))
 
-  (func $test (local $local_anyref anyref) (local $local_funcref funcref)
+  (func $test (local $local_externref externref) (local $local_funcref funcref)
         (local $local_exnref exnref) (local $local_nullref nullref)
     ;; Test subtype relationship for local.set & Test types for local.get
-    (local.set $local_anyref (local.get $local_anyref))
-    (local.set $local_anyref (local.get $local_funcref))
-    (local.set $local_anyref (local.get $local_exnref))
-    (local.set $local_anyref (local.get $local_nullref))
-    (local.set $local_anyref (ref.null))
-    (local.set $local_anyref (ref.func $foo))
+    (local.set $local_externref (local.get $local_externref))
+    (local.set $local_externref (local.get $local_funcref))
+    (local.set $local_externref (local.get $local_exnref))
+    (local.set $local_externref (local.get $local_nullref))
+    (local.set $local_externref (ref.null))
+    (local.set $local_externref (ref.func $foo))
     (local.set $local_funcref (local.get $local_funcref))
     (local.set $local_funcref (ref.null))
     (local.set $local_funcref (ref.func $foo))
@@ -48,12 +52,12 @@
     (local.set $local_nullref (ref.null))
 
     ;; Test subtype relationship for global.set & Test types for global.get
-    (global.set $global_anyref (global.get $global_anyref))
-    (global.set $global_anyref (global.get $global_funcref))
-    (global.set $global_anyref (global.get $global_exnref))
-    (global.set $global_anyref (global.get $global_nullref))
-    (global.set $global_anyref (ref.null))
-    (global.set $global_anyref (ref.func $foo))
+    (global.set $global_externref (global.get $global_externref))
+    (global.set $global_externref (global.get $global_funcref))
+    (global.set $global_externref (global.get $global_exnref))
+    (global.set $global_externref (global.get $global_nullref))
+    (global.set $global_externref (ref.null))
+    (global.set $global_externref (ref.func $foo))
     (global.set $global_funcref (global.get $global_funcref))
     (global.set $global_funcref (ref.null))
     (global.set $global_funcref (ref.func $foo))
@@ -63,14 +67,14 @@
     (global.set $global_nullref (ref.null))
 
     ;; Test subtype relationship for function call / call_indirect params
-    (call $take_anyref (local.get $local_anyref))
-    (call $take_anyref (local.get $local_funcref))
-    (call $take_anyref (local.get $local_exnref))
-    (call $take_anyref (ref.null))
-    (call_indirect (type $sig_anyref) (local.get $local_anyref) (i32.const 0))
-    (call_indirect (type $sig_anyref) (local.get $local_funcref) (i32.const 0))
-    (call_indirect (type $sig_anyref) (local.get $local_exnref) (i32.const 0))
-    (call_indirect (type $sig_anyref) (ref.null) (i32.const 0))
+    (call $take_externref (local.get $local_externref))
+    (call $take_externref (local.get $local_funcref))
+    (call $take_externref (local.get $local_exnref))
+    (call $take_externref (ref.null))
+    (call_indirect (type $sig_externref) (local.get $local_externref) (i32.const 0))
+    (call_indirect (type $sig_externref) (local.get $local_funcref) (i32.const 0))
+    (call_indirect (type $sig_externref) (local.get $local_exnref) (i32.const 0))
+    (call_indirect (type $sig_externref) (ref.null) (i32.const 0))
     (call_indirect (type $sig_funcref) (local.get $local_funcref) (i32.const 1))
     (call_indirect (type $sig_funcref) (ref.null) (i32.const 1))
     (call_indirect (type $sig_exnref) (local.get $local_exnref) (i32.const 2))
@@ -80,22 +84,22 @@
 
     ;; Test subtype relationship for block return type
     (drop
-      (block (result anyref)
-        (br_if 0 (local.get $local_anyref) (i32.const 1))
+      (block (result externref)
+        (br_if 0 (local.get $local_externref) (i32.const 1))
       )
     )
     (drop
-      (block (result anyref)
+      (block (result externref)
         (br_if 0 (local.get $local_funcref) (i32.const 1))
       )
     )
     (drop
-      (block (result anyref)
+      (block (result externref)
         (br_if 0 (local.get $local_exnref) (i32.const 1))
       )
     )
     (drop
-      (block (result anyref)
+      (block (result externref)
         (br_if 0 (ref.null) (i32.const 1))
       )
     )
@@ -117,22 +121,22 @@
 
     ;; Test subtype relationship for loop return type
     (drop
-      (loop (result anyref)
-        (local.get $local_anyref)
+      (loop (result externref)
+        (local.get $local_externref)
       )
     )
     (drop
-      (loop (result anyref)
+      (loop (result externref)
         (local.get $local_funcref)
       )
     )
     (drop
-      (loop (result anyref)
+      (loop (result externref)
         (local.get $local_exnref)
       )
     )
     (drop
-      (loop (result anyref)
+      (loop (result externref)
         (ref.null)
       )
     )
@@ -164,14 +168,14 @@
 
     ;; Test subtype relationship for if return type
     (drop
-      (if (result anyref)
+      (if (result externref)
         (i32.const 1)
-        (local.get $local_anyref)
+        (local.get $local_externref)
         (local.get $local_exnref)
       )
     )
     (drop
-      (if (result anyref)
+      (if (result externref)
         (i32.const 1)
         (ref.func $foo)
         (ref.null)
@@ -201,9 +205,9 @@
 
     ;; Test subtype relationship for try return type
     (drop
-      (try (result anyref)
+      (try (result externref)
         (do
-          (local.get $local_anyref)
+          (local.get $local_externref)
         )
         (catch
           (exnref.pop)
@@ -211,7 +215,7 @@
       )
     )
     (drop
-      (try (result anyref)
+      (try (result externref)
         (do
           (ref.func $foo)
         )
@@ -256,28 +260,28 @@
 
     ;; Test subtype relationship for typed select
     (drop
-      (select (result anyref)
-        (local.get $local_anyref)
+      (select (result externref)
+        (local.get $local_externref)
         (ref.func $foo)
         (i32.const 1)
       )
     )
     (drop
-      (select (result anyref)
+      (select (result externref)
         (local.get $local_exnref)
-        (local.get $local_anyref)
+        (local.get $local_externref)
         (i32.const 1)
       )
     )
     (drop
-      (select (result anyref)
-        (local.get $local_anyref)
+      (select (result externref)
+        (local.get $local_externref)
         (ref.null)
         (i32.const 1)
       )
     )
     (drop
-      (select (result anyref)
+      (select (result externref)
         (ref.null)
         (ref.func $foo)
         (i32.const 1)
@@ -313,23 +317,23 @@
     )
 
     ;; ref.is_null takes any reference types
-    (drop (ref.is_null (local.get $local_anyref)))
+    (drop (ref.is_null (local.get $local_externref)))
     (drop (ref.is_null (local.get $local_exnref)))
     (drop (ref.is_null (ref.func $foo)))
     (drop (ref.is_null (ref.null)))
   )
 
   ;; Test subtype relationship in function return type
-  (func $return_anyref (result anyref) (local $local_anyref anyref)
-    (local.get $local_anyref)
+  (func $return_externref (result externref) (local $local_externref externref)
+    (local.get $local_externref)
   )
-  (func $return_anyref2 (result anyref)
+  (func $return_externref2 (result externref)
     (ref.func $foo)
   )
-  (func $return_anyref3 (result anyref) (local $local_exnref exnref)
+  (func $return_externref3 (result externref) (local $local_exnref exnref)
     (local.get $local_exnref)
   )
-  (func $return_anyref4 (result anyref)
+  (func $return_externref4 (result externref)
     (ref.null)
   )
   (func $return_funcref (result funcref)
@@ -349,9 +353,9 @@
   )
 
   ;; Test subtype relationship in returns
-  (func $return_anyref_returns (result anyref) (local $local_anyref anyref)
+  (func $return_externref_returns (result externref) (local $local_externref externref)
         (local $local_exnref exnref)
-    (return (local.get $local_anyref))
+    (return (local.get $local_externref))
     (return (local.get $local_exnref))
     (return (ref.func $foo))
     (return (ref.null))

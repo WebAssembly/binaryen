@@ -601,7 +601,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -626,7 +626,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -651,7 +651,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -676,7 +676,7 @@ struct Reducer
                 WASM_UNREACHABLE("unexpected type");
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -688,7 +688,7 @@ struct Reducer
           }
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
             continue; // not implemented yet

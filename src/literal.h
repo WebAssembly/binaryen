@@ -100,7 +100,7 @@ public:
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -561,7 +561,7 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::v128:
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
-      case wasm::Type::anyref:
+      case wasm::Type::externref:
       case wasm::Type::nullref:
       case wasm::Type::exnref:
       case wasm::Type::none:
