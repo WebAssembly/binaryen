@@ -300,7 +300,7 @@
  )
 
  (func $test
-  (local $0 anyref)
+  (local $0 externref)
   (drop
    (block $label$1 (result nullref)
     (local.set $0
@@ -308,7 +308,7 @@
     )
     ;; After --flatten, this will be assigned to a local of nullref type. After
     ;; --local-cse, even if we set (ref.null) to local $0 above, this should not
-    ;; be replaced with $0, because it is of type anyref.
+    ;; be replaced with $0, because it is of type externref.
     (ref.null)
    )
   )

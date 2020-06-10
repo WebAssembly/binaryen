@@ -1642,7 +1642,7 @@ public:
         case Type::v128:
           return Literal(load128(addr).data());
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:
@@ -1699,7 +1699,7 @@ public:
           store128(addr, value.getv128());
           break;
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:

@@ -6,7 +6,7 @@
   // BinaryenTypeFloat64: 5
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
-  // BinaryenTypeAnyref: 8
+  // BinaryenTypeExternref: 8
   // BinaryenTypeNullref: 9
   // BinaryenTypeExnref: 10
   // BinaryenTypeAuto: -1
@@ -1843,7 +1843,7 @@ BinaryenFeatureAll: 1023
        (funcref.pop)
       )
       (drop
-       (anyref.pop)
+       (externref.pop)
       )
       (drop
        (nullref.pop)
