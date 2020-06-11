@@ -1270,7 +1270,7 @@ struct Asyncify : public Pass {
     // TODO remove
     std::string ignoreListInput = runner->options.getArgumentOrDefault("asyncify-ignorelist", "");
     if (ignoreListInput.empty()) {
-      runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+      ignoreListInput = runner->options.getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split ignoreList(
       String::trim(read_possible_response_file(
@@ -1278,7 +1278,7 @@ struct Asyncify : public Pass {
       ",");
     std::string onlyListInput = runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
-      runner->options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = runner->options.getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(
