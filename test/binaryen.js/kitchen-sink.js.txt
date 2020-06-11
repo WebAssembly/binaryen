@@ -12,7 +12,7 @@
   // [ 5 ]
   // BinaryenTypeVec128: 6
   // [ 6 ]
-  // BinaryenTypeAnyref: 8
+  // BinaryenTypeExternref: 8
   // [ 8 ]
   // BinaryenTypeExnref: 10
   // [ 10 ]
@@ -1901,7 +1901,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (v128.pop)
       )
       (drop
-       (anyref.pop)
+       (externref.pop)
       )
       (drop
        (funcref.pop)
@@ -3739,7 +3739,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (v128.pop)
       )
       (drop
-       (anyref.pop)
+       (externref.pop)
       )
       (drop
        (funcref.pop)

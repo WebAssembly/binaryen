@@ -49,7 +49,7 @@ static std::string generateSpecWrapper(Module& wasm) {
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
           ret += "(ref.null)";

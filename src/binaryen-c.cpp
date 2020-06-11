@@ -72,7 +72,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -97,7 +97,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeFuncref(x.func);
     case Type::nullref:
       return Literal::makeNullref();
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -131,7 +131,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
 BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }

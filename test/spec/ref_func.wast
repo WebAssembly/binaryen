@@ -5,8 +5,8 @@
   (func $f (import "M" "f") (param i32) (result i32))
   (func $g (param $x i32) (result i32) (i32.add (local.get $x) (i32.const 1)))
 
-  (global anyref (ref.func $f))
-  (global anyref (ref.func $g))
+  (global externref (ref.func $f))
+  (global externref (ref.func $g))
   (global funcref (ref.func $f))
   (global funcref (ref.func $g))
   (global $v (mut funcref) (ref.func $f))
