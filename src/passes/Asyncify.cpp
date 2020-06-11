@@ -225,9 +225,15 @@
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
 //
+//   --pass-arg=asyncify-asserts
+//
+//      This enables extra asserts in the output, like checking if we in
+//      an unwind/rewind in an invalid place (this can be helpful for manual
+//      tweaking of the only list / ignore list).
+//
 //   --pass-arg=asyncify-ignorelist@name1,name2,name3
 //
-//      If the ignore list is provided, then the functions in it will not be
+//      If the "ignore list" is provided, then the functions in it will not be
 //      instrumented even if it looks like they need to be. This can be useful
 //      if you know things the whole-program analysis doesn't, like if you
 //      know certain indirect calls are safe and won't unwind. But if you
@@ -235,23 +241,25 @@
 //      input might reach code paths you missed during testing, so it's hard
 //      to know you got this right), so this is not recommended unless you
 //      really know what are doing, and need to optimize every bit of speed
-//      and size. '*' wildcard matching supported.
-//
-//      As with --asyncify-imports, you can use a response file here.
+//      and size.
 //
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
-//      If the only list is provided, then only the functions in the list
-//      will be instrumented. Like the ignore list, getting this wrong will
-//      break your application. '*' wildcard matching supported.
+//      If the "only list" is provided, then only the functions in the list
+//      will be instrumented, and nothing else.
 //
-//      As with --asyncify-imports, you can use a response file here.
+//   --pass-arg=asyncify-mustlist@name1,name2,name3
 //
-//  --pass-arg=asyncify-asserts
+//      If the "must list" is provided, then the functions in the list will be
+//      instrumented, even if otherwise it seems like they don't need to be. As
+//      by default everything will be instrumented in the safest way possible,
+//      this is only useful if you use ignore-indirect (that is, if you know
+//      practically all indirect calls can be ignored, then you can use that and
+//      specify here the ones that should not be ignored).
 //
-//      This enables extra asserts in the output, like checking if we in
-//      an unwind/rewind in an invalid place (this can be helpful for manual
-//      tweaking of the only list / ignore list).
+// The ignore, only, and must lists must be used carefully, as misuse can
+// break your application. You can use a response file in each of them, and
+// '*' wildcard matching is supported in them.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -465,7 +473,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    bool inOnlyList = false;
+    bool inIgnoreList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -477,12 +485,14 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& ignoreListInput,
                  const String::Split& onlyListInput,
+                 const String::Split& mustListInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       fakeGlobals(module), asserts(asserts) {
 
     PatternMatcher ignoreList("ignore", module, ignoreListInput);
     PatternMatcher onlyList("only", module, onlyListInput);
+    PatternMatcher mustList("must", module, mustListInput);
 
     // Rename the asyncify imports so their internal name matches the
     // convention. This makes replacing them with the implementations
@@ -579,7 +589,7 @@ public:
       auto* func = pair.first;
       auto& info = pair.second;
       if (ignoreList.match(func->name)) {
-        info.inOnlyList = true;
+        info.inIgnoreList = true;
         info.canChangeState = false;
       }
     }
@@ -609,7 +619,7 @@ public:
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
-                                   !info.inOnlyList;
+                                   !info.inIgnoreList;
                           },
                           [](Info& info) { info.canChangeState = true; },
                           scanner.IgnoreIndirectCalls);
@@ -625,8 +635,17 @@ public:
       }
     }
 
+    if (!mustListInput.empty()) {
+      for (auto& func : module.functions) {
+        if (!func->imported() && mustList.match(func->name)) {
+          map[func.get()].canChangeState = true;
+        }
+      }
+    }
+
     ignoreList.checkPatternsMatches();
     onlyList.checkPatternsMatches();
+    mustList.checkPatternsMatches();
   }
 
   bool needsInstrumentation(Function* func) {
@@ -1284,11 +1303,16 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         onlyListInput)),
       ",");
+    String::Split mustList(
+      String::trim(read_possible_response_file(
+        runner->options.getArgumentOrDefault("asyncify-mustlist", ""))),
+      ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
     ignoreList = handleBracketingOperators(ignoreList);
     onlyList = handleBracketingOperators(onlyList);
+    mustList = handleBracketingOperators(mustList);
 
     if (!ignoreList.empty() && !onlyList.empty()) {
       Fatal() << "It makes no sense to use both a ignore list and a only list "
@@ -1313,6 +1337,7 @@ struct Asyncify : public Pass {
                             canImportChangeState,
                             ignoreIndirect,
                             ignoreList,
+                            mustList,
                             onlyList,
                             asserts);
 
