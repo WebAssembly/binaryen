@@ -225,10 +225,10 @@
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
 //
-//   --pass-arg=asyncify-blacklist@name1,name2,name3
+//   --pass-arg=asyncify-ignorelist@name1,name2,name3
 //
-//      If the blacklist is provided, then the functions in it will not be
-//      instrumented even if it looks like they need to. This can be useful
+//      If the ignore list is provided, then the functions in it will not be
+//      instrumented even if it looks like they need to be. This can be useful
 //      if you know things the whole-program analysis doesn't, like if you
 //      know certain indirect calls are safe and won't unwind. But if you
 //      get the list wrong things will break (and in a production build user
@@ -239,10 +239,10 @@
 //
 //      As with --asyncify-imports, you can use a response file here.
 //
-//   --pass-arg=asyncify-whitelist@name1,name2,name3
+//   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
-//      If the whitelist is provided, then only the functions in the list
-//      will be instrumented. Like the blacklist, getting this wrong will
+//      If the only list is provided, then only the functions in the list
+//      will be instrumented. Like the ignore list, getting this wrong will
 //      break your application. '*' wildcard matching supported.
 //
 //      As with --asyncify-imports, you can use a response file here.
@@ -251,7 +251,7 @@
 //
 //      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
-//      tweaking of the whitelist/blacklist).
+//      tweaking of the only list / ignore list).
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -465,7 +465,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    bool inBlacklist = false;
+    bool inOnlyList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -475,14 +475,14 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
-                 const String::Split& blacklistInput,
-                 const String::Split& whitelistInput,
+                 const String::Split& ignoreListInput,
+                 const String::Split& onlyListInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       fakeGlobals(module), asserts(asserts) {
 
-    PatternMatcher blacklist("black", module, blacklistInput);
-    PatternMatcher whitelist("white", module, whitelistInput);
+    PatternMatcher ignoreList("ignore", module, ignoreListInput);
+    PatternMatcher onlyList("only", module, onlyListInput);
 
     // Rename the asyncify imports so their internal name matches the
     // convention. This makes replacing them with the implementations
@@ -574,12 +574,12 @@ public:
         }
       });
 
-    // Functions in the blacklist are assumed to not change the state.
+    // Functions in the ignore list are assumed to not change the state.
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
-      if (blacklist.match(func->name)) {
-        info.inBlacklist = true;
+      if (ignoreList.match(func->name)) {
+        info.inOnlyList = true;
         info.canChangeState = false;
       }
     }
@@ -609,24 +609,24 @@ public:
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
-                                   !info.inBlacklist;
+                                   !info.inOnlyList;
                           },
                           [](Info& info) { info.canChangeState = true; },
                           scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
 
-    if (!whitelistInput.empty()) {
-      // Only the functions in the whitelist can change the state.
+    if (!onlyListInput.empty()) {
+      // Only the functions in the only list can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          map[func.get()].canChangeState = whitelist.match(func->name);
+          map[func.get()].canChangeState = onlyList.match(func->name);
         }
       }
     }
 
-    blacklist.checkPatternsMatches();
-    whitelist.checkPatternsMatches();
+    ignoreList.checkPatternsMatches();
+    onlyList.checkPatternsMatches();
   }
 
   bool needsInstrumentation(Function* func) {
@@ -977,7 +977,7 @@ private:
   }
 
   // Given a function that is not instrumented - because we proved it doesn't
-  // need it, or depending on the whitelist/blacklist - add assertions that
+  // need it, or depending on the only list / ignore list - add assertions that
   // verify that property at runtime.
   // Note that it is ok to run code while sleeping (if you are careful not
   // to break assumptions in the program!) - so what is actually
@@ -1266,22 +1266,32 @@ struct Asyncify : public Pass {
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect = runner->options.getArgumentOrDefault(
                             "asyncify-ignore-indirect", "") == "";
-    String::Split blacklist(
+    // Support old names for lists for now to avoid immediate breakage
+    // TODO remove
+    std::string ignoreListInput = runner->options.getArgumentOrDefault("asyncify-ignorelist", "");
+    if (ignoreListInput.empty()) {
+      runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+    }
+    String::Split ignoreList(
       String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
+        ignoreListInput)),
       ",");
-    String::Split whitelist(
+    std::string onlyListInput = runner->options.getArgumentOrDefault("asyncify-onlylist", "");
+    if (onlyListInput.empty()) {
+      runner->options.getArgumentOrDefault("asyncify-whitelist", "");
+    }
+    String::Split onlyList(
       String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
+        onlyListInput)),
       ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
-    blacklist = handleBracketingOperators(blacklist);
-    whitelist = handleBracketingOperators(whitelist);
+    ignoreList = handleBracketingOperators(ignoreList);
+    onlyList = handleBracketingOperators(onlyList);
 
-    if (!blacklist.empty() && !whitelist.empty()) {
-      Fatal() << "It makes no sense to use both a blacklist and a whitelist "
+    if (!ignoreList.empty() && !onlyList.empty()) {
+      Fatal() << "It makes no sense to use both a ignore list and a only list "
                  "with asyncify.";
     }
 
@@ -1302,8 +1312,8 @@ struct Asyncify : public Pass {
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
                             ignoreIndirect,
-                            blacklist,
-                            whitelist,
+                            ignoreList,
+                            onlyList,
                             asserts);
 
     // Add necessary globals before we emit code to use them.
