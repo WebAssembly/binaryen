@@ -1222,7 +1222,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   wasm.features.iterFeatures([&](FeatureSet::Feature f) {
     meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
   });
-  meta << "\n  ],\n";
+  meta << "\n  ]";
 
   // In normal mode we attempt to determine if main takes argumnts or not
   // In standalone mode we export _start instead and rely on the presence
@@ -1247,7 +1247,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
         }
       }
     }
-    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
+    meta << ",\n  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
+  } else {
+    meta << "\n";
   }
 
   meta << "}\n";
