@@ -592,14 +592,14 @@
   (call $illegalParam
    (local.get $0)
    (i64.or
+    (i64.extend_i32_u
+     (local.get $1)
+    )
     (i64.shl
      (i64.extend_i32_u
       (local.get $2)
      )
      (i64.const 32)
-    )
-    (i64.extend_i32_u
-     (local.get $1)
     )
    )
    (local.get $3)

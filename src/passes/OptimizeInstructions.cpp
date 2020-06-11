@@ -924,7 +924,7 @@ private:
           if (binary->op == XorInt32 || binary->op == XorInt64) {
             auto value = c->value.getInteger();
             if (value == -1LL) {
-              return 3;
+              return 2;
             }
           }
           hasConst = true;
@@ -934,7 +934,7 @@ private:
           if (binary->op == SubInt32 || binary->op == SubInt64) {
             auto value = c->value.getInteger();
             if (value == 0LL) {
-              return 3;
+              return 2;
             }
           }
           hasConst = true;
@@ -943,11 +943,6 @@ private:
       if (auto* unary = expr->dynCast<Unary>()) {
         // detect logical not
         if (unary->op == EqZInt32 || unary->op == EqZInt64) {
-          return 3;
-        }
-        // detect conversion operations
-        if (unary->op == WrapInt64 || unary->op == ExtendSInt32 ||
-            unary->op == ExtendUInt32) {
           return 2;
         }
         if (unary->value->is<Const>()) {
