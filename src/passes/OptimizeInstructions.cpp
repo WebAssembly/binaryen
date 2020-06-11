@@ -913,9 +913,9 @@ private:
     auto computeExpressionCost = [](Expression* expr) {
       // Calculate cost of expression to determine proper order for swapping
       // Costs (from high to low):
-      // 3 - bitwise not, arithmetic negative, logical not
-      // 2 - converions from i32 or i64 and vise versa
-      // 1 - lhs or rhs has a constant
+      // 2 - bitwise not, arithmetic negative, logical not
+      // 1 - lhs or rhs of binary has a constant
+      // 1 - value of unary has a constant
       // 0 - otherwise
       int32_t hasConst = false;
       if (auto* binary = expr->dynCast<Binary>()) {
