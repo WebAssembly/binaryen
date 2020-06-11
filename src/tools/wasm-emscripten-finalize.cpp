@@ -241,11 +241,7 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
-  if (!standaloneWasm) {
-    // This is also not needed in standalone mode since standalone mode uses
-    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
-    generator.renameMainArgcArgv();
-  }
+  generator.fixMainNameMangling();
 
   PassRunner passRunner(&wasm, options.passOptions);
   passRunner.setDebug(options.debug);

@@ -40,7 +40,7 @@ cashew::IString EM_JS_PREFIX("__em_js__");
 static Name STACK_INIT("stack$init");
 static Name POST_INSTANTIATE("__post_instantiate");
 
-void addExportedFunction(Module& wasm, Function* function) {
+static void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
   auto export_ = new Export;
   export_->name = export_->value = function->name;
@@ -49,7 +49,7 @@ void addExportedFunction(Module& wasm, Function* function) {
 }
 
 // TODO(sbc): There should probably be a better way to do this.
-bool isExported(Module& wasm, Name name) {
+static bool isExported(Module& wasm, Name name) {
   for (auto& ex : wasm.exports) {
     if (ex->value == name) {
       return true;
@@ -725,7 +725,7 @@ void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   }
 }
 
-void printSignatures(std::ostream& o, const std::set<Signature>& c) {
+static void printSignatures(std::ostream& o, const std::set<Signature>& c) {
   o << "[";
   bool first = true;
   for (auto& sig : c) {
@@ -737,6 +737,44 @@ void printSignatures(std::ostream& o, const std::set<Signature>& c) {
     o << '"' << getSig(sig.results, sig.params) << '"';
   }
   o << "]";
+}
+
+bool EmscriptenGlueGenerator::mainReadsParams() {
+  // In the new llvm name mangling scheme for `main` there are
+  // two possible ways that main is handled:
+  // 1. Main take two args and gets mangled to `__main_argc_argv`
+  // 2. Main take no args and it not mangled but an alaias is
+  //    added called `__main_void`
+
+  // If we have a __main_void` alias that means we know that
+  // main take no args so we are done.
+  if (hasMainVoid) {
+    return false;
+  }
+
+  auto* exp = wasm.getExportOrNull("main");
+  // No main exported.
+  if (!exp || exp->kind != ExternalKind::Function) {
+    return false;
+  }
+
+  // If main take no args then we we are done.
+  auto* main = wasm.getFunction(exp->value);
+  if (main->sig.params == Type::none) {
+    return false;
+  }
+
+  // If main take args it might just be simple wrapper than than calls
+  // the no-arg main.
+  if (auto* call = main->body->dynCast<Call>()) {
+    if (call->operands.empty()) {
+      return false;
+    }
+  }
+
+  // We have not proved that main doesn't use any args we have to report that
+  // it does.
+  return true;
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
@@ -869,25 +907,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // of the __wasi_args_get and __wasi_args_sizes_get syscalls allow us to
   // DCE to the argument handling JS code instead.
   if (!standalone) {
-    auto mainReadsParams = false;
-    auto* exp = wasm.getExportOrNull("main");
-    if (!exp) {
-      exp = wasm.getExportOrNull("__main_argc_argv");
-    }
-    if (exp) {
-      if (exp->kind == ExternalKind::Function) {
-        auto* main = wasm.getFunction(exp->value);
-        mainReadsParams = true;
-        // If main does not read its parameters, it will just be a stub that
-        // calls __original_main (which has no parameters).
-        if (auto* call = main->body->dynCast<Call>()) {
-          if (call->operands.empty()) {
-            mainReadsParams = false;
-          }
-        }
-      }
-    }
-    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << ",\n";
+    meta << "  \"mainReadsParams\": " << int(mainReadsParams()) << ",\n";
   }
 
   meta << "  \"features\": [";
@@ -925,16 +945,26 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
   wasm.memory.segments.clear();
 }
 
-void EmscriptenGlueGenerator::renameMainArgcArgv() {
-  // If an export call ed __main_argc_argv exists rename it to main
+void EmscriptenGlueGenerator::fixMainNameMangling() {
+  // If an export called __main_argc_argv exists rename it to main
   Export* ex = wasm.getExportOrNull("__main_argc_argv");
-  if (!ex) {
-    BYN_TRACE("renameMain: __main_argc_argv not found\n");
-    return;
+  if (ex) {
+    BYN_TRACE("fixMainMangling: renaming __main_argc_argv\n");
+    hasMainArgcArgv = true;
+    ex->name = "main";
+    wasm.updateMaps();
+    ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
   }
-  ex->name = "main";
-  wasm.updateMaps();
-  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
+
+  // Sadly llvm marks the __main_void a "used" alias of main which causes
+  // it to exported because with emscripten llvm we equate llvm's concept
+  // "used" with exporting.
+  // In order to avoid thie extra export we simply remove it here.
+  if (wasm.getExportOrNull("__main_void")) {
+    hasMainVoid = true;
+    BYN_TRACE("fixMainMangling: removing __main_void\n");
+    wasm.removeExport("__main_void");
+  }
 }
 
 } // namespace wasm
