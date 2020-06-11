@@ -1217,13 +1217,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   });
   meta << "\n  ],\n";
 
-  meta << "  \"features\": [";
-  commaFirst = true;
-  wasm.features.iterFeatures([&](FeatureSet::Feature f) {
-    meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
-  });
-  meta << "\n  ],\n";
-
   // In normal mode we attempt to determine if main takes argumnts or not
   // In standalone mode we export _start instead and rely on the presence
   // of the __wasi_args_get and __wasi_args_sizes_get syscalls allow us to
@@ -1247,8 +1240,15 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
         }
       }
     }
-    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
+    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << ",\n";
   }
+
+  meta << "  \"features\": [";
+  commaFirst = true;
+  wasm.features.iterFeatures([&](FeatureSet::Feature f) {
+    meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
+  });
+  meta << "\n  ]\n";
 
   meta << "}\n";
 
