@@ -41,15 +41,15 @@ class AsyncifyTest(utils.BinaryenTestCase):
 
     def test_asyncify_list_bad(self):
         for arg, warning in [
-            ('--pass-arg=asyncify-ignorelist@nonexistent', 'nonexistent'),
+            ('--pass-arg=asyncify-removelist@nonexistent', 'nonexistent'),
             ('--pass-arg=asyncify-onlylist@nonexistent', 'nonexistent'),
-            ('--pass-arg=asyncify-ignorelist@main', None),
+            ('--pass-arg=asyncify-removelist@main', None),
             ('--pass-arg=asyncify-onlylist@main', None),
-            ('--pass-arg=asyncify-ignorelist@m*n', None),
+            ('--pass-arg=asyncify-removelist@m*n', None),
             ('--pass-arg=asyncify-onlylist@m*n', None),
             ('--pass-arg=asyncify-onlylist@main*', None),
             ('--pass-arg=asyncify-onlylist@*main', None),
-            ('--pass-arg=asyncify-ignorelist@non*existent', 'non*existent'),
+            ('--pass-arg=asyncify-removelist@non*existent', 'non*existent'),
             ('--pass-arg=asyncify-onlylist@non*existent', 'non*existent'),
             ('--pass-arg=asyncify-onlylist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
         ]:
@@ -61,10 +61,10 @@ class AsyncifyTest(utils.BinaryenTestCase):
             else:
                 self.assertNotIn('warning', err)
 
-    def test_asyncify_ignorelist_and_onlylist(self):
-        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '--pass-arg=asyncify-onlylist@main', '--pass-arg=asyncify-ignorelist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    def test_asyncify_removelist_and_onlylist(self):
+        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '--pass-arg=asyncify-onlylist@main', '--pass-arg=asyncify-removelist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
         self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
-        self.assertIn('It makes no sense to use both a ignorelist and a only list with asyncify', proc.stdout)
+        self.assertIn('It makes no sense to use both a removelist and a only list with asyncify', proc.stdout)
 
     def test_asyncify_imports(self):
         def test(args):

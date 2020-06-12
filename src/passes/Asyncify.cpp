@@ -231,17 +231,22 @@
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only list / ignore list).
 //
-//   --pass-arg=asyncify-ignorelist@name1,name2,name3
+// For manual fine-tuning of which functions are instrumented, there are lists
+// that you can set. These must be used carefully, as misuse can break your
+// application - for example, if a function is called that should be
+// instrumented but isn't because of these options, then bad things can happen.
+// Note that even if you test this locally then users running your code in
+// production may reach other code paths. Use these carefully!
 //
-//      If the "ignore list" is provided, then the functions in it will not be
+// Each of the lists can be used with a response file (@filename, which is then
+// loaded from the file). You can also use '*' wildcard matching in the lists.
+//
+//   --pass-arg=asyncify-removelist@name1,name2,name3
+//
+//      If the "remove list" is provided, then the functions in it will not be
 //      instrumented even if it looks like they need to be. This can be useful
 //      if you know things the whole-program analysis doesn't, like if you
-//      know certain indirect calls are safe and won't unwind. But if you
-//      get the list wrong things will break (and in a production build user
-//      input might reach code paths you missed during testing, so it's hard
-//      to know you got this right), so this is not recommended unless you
-//      really know what are doing, and need to optimize every bit of speed
-//      and size.
+//      know certain indirect calls are safe and won't unwind.
 //
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
@@ -257,9 +262,6 @@
 //      practically all indirect calls can be ignored, then you can use that and
 //      specify here the ones that should not be ignored).
 //
-// The ignore, only, and must lists must be used carefully, as misuse can
-// break your application. You can use a response file in each of them, and
-// '*' wildcard matching is supported in them.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -473,7 +475,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    bool inIgnoreList = false;
+    bool inRemoveList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -483,14 +485,14 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
-                 const String::Split& ignoreListInput,
+                 const String::Split& removeListInput,
                  const String::Split& onlyListInput,
                  const String::Split& mustListInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       fakeGlobals(module), asserts(asserts) {
 
-    PatternMatcher ignoreList("ignore", module, ignoreListInput);
+    PatternMatcher removeList("remove", module, removeListInput);
     PatternMatcher onlyList("only", module, onlyListInput);
     PatternMatcher mustList("must", module, mustListInput);
 
@@ -584,12 +586,12 @@ public:
         }
       });
 
-    // Functions in the ignore list are assumed to not change the state.
+    // Functions in the remove list are assumed to not change the state.
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
-      if (ignoreList.match(func->name)) {
-        info.inIgnoreList = true;
+      if (removeList.match(func->name)) {
+        info.inRemoveList = true;
         info.canChangeState = false;
       }
     }
@@ -619,7 +621,7 @@ public:
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
-                                   !info.inIgnoreList;
+                                   !info.inRemoveList;
                           },
                           [](Info& info) { info.canChangeState = true; },
                           scanner.IgnoreIndirectCalls);
@@ -643,7 +645,7 @@ public:
       }
     }
 
-    ignoreList.checkPatternsMatches();
+    removeList.checkPatternsMatches();
     onlyList.checkPatternsMatches();
     mustList.checkPatternsMatches();
   }
@@ -996,7 +998,7 @@ private:
   }
 
   // Given a function that is not instrumented - because we proved it doesn't
-  // need it, or depending on the only list / ignore list - add assertions that
+  // need it, or depending on the only list / remove list - add assertions that
   // verify that property at runtime.
   // Note that it is ok to run code while sleeping (if you are careful not
   // to break assumptions in the program!) - so what is actually
@@ -1287,13 +1289,13 @@ struct Asyncify : public Pass {
                             "asyncify-ignore-indirect", "") == "";
     // Support old names for lists for now to avoid immediate breakage
     // TODO remove
-    std::string ignoreListInput = runner->options.getArgumentOrDefault("asyncify-ignorelist", "");
-    if (ignoreListInput.empty()) {
-      ignoreListInput = runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+    std::string removeListInput = runner->options.getArgumentOrDefault("asyncify-removelist", "");
+    if (removeListInput.empty()) {
+      removeListInput = runner->options.getArgumentOrDefault("asyncify-blacklist", "");
     }
-    String::Split ignoreList(
+    String::Split removeList(
       String::trim(read_possible_response_file(
-        ignoreListInput)),
+        removeListInput)),
       ",");
     std::string onlyListInput = runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
@@ -1310,12 +1312,12 @@ struct Asyncify : public Pass {
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
-    ignoreList = handleBracketingOperators(ignoreList);
+    removeList = handleBracketingOperators(removeList);
     onlyList = handleBracketingOperators(onlyList);
     mustList = handleBracketingOperators(mustList);
 
-    if (!ignoreList.empty() && !onlyList.empty()) {
-      Fatal() << "It makes no sense to use both a ignore list and a only list "
+    if (!removeList.empty() && !onlyList.empty()) {
+      Fatal() << "It makes no sense to use both a remove list and a only list "
                  "with asyncify.";
     }
 
@@ -1336,9 +1338,9 @@ struct Asyncify : public Pass {
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
                             ignoreIndirect,
-                            ignoreList,
-                            mustList,
+                            removeList,
                             onlyList,
+                            mustList,
                             asserts);
 
     // Add necessary globals before we emit code to use them.
