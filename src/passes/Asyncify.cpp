@@ -1319,7 +1319,7 @@ struct Asyncify : public Pass {
     onlyList = handleBracketingOperators(onlyList);
 
     if (!removeList.empty() && !onlyList.empty()) {
-      Fatal() << "It makes no sense to use both a remove list and a only list "
+      Fatal() << "It makes no sense to use both a remove list and an only list "
                  "with asyncify.";
     }
 
