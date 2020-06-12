@@ -229,7 +229,7 @@
 //
 //      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
-//      tweaking of the only-list / ignore list).
+//      tweaking of the only-list / remove-list, see later).
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
