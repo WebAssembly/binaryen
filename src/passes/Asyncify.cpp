@@ -231,7 +231,7 @@
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only list / ignore list).
 //
-// For manual fine-tuning of which functions are instrumented, there are lists
+// For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
 // application - for example, if a function is called that should be
 // instrumented but isn't because of these options, then bad things can happen.
@@ -243,25 +243,27 @@
 //
 //   --pass-arg=asyncify-removelist@name1,name2,name3
 //
-//      If the "remove list" is provided, then the functions in it will not be
-//      instrumented even if it looks like they need to be. This can be useful
-//      if you know things the whole-program analysis doesn't, like if you
-//      know certain indirect calls are safe and won't unwind.
+//      If the "remove list" is provided, then the functions in it will be
+//      *removed* from the list of instrumented functions. That is, they won't
+//      be instrumented even if it looks like they need to be. This can be
+//      useful if you know things the safe whole-program analysis doesn't, e.g.
+//      that certain code paths will not be taken, where certain indirect calls
+//      will go, etc.
+//
+//   --pass-arg=asyncify-addlist@name1,name2,name3
+//
+//      If the "add list" is provided, then the functions in the list will be
+//      *added* to the list of instrumented functions, that is, they will be
+//      instrumented even if otherwise we think they don't need to be. As by
+//      default everything will be instrumented in the safest way possible,
+//      this is only useful if you use ignore-indirect and use this to fix up
+//      some indirect calls that *do* need to be instrumented, or if you will
+//      do some later transform of the code that adds more call paths, etc.
 //
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
-//      If the "only list" is provided, then only the functions in the list
+//      If the "only list" is provided, then *only* the functions in the list
 //      will be instrumented, and nothing else.
-//
-//   --pass-arg=asyncify-mustlist@name1,name2,name3
-//
-//      If the "must list" is provided, then the functions in the list will be
-//      instrumented, even if otherwise it seems like they don't need to be. As
-//      by default everything will be instrumented in the safest way possible,
-//      this is only useful if you use ignore-indirect (that is, if you know
-//      practically all indirect calls can be ignored, then you can use that and
-//      specify here the ones that should not be ignored).
-//
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -486,15 +488,15 @@ public:
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
                  const String::Split& removeListInput,
+                 const String::Split& addListInput,
                  const String::Split& onlyListInput,
-                 const String::Split& mustListInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       fakeGlobals(module), asserts(asserts) {
 
     PatternMatcher removeList("remove", module, removeListInput);
+    PatternMatcher addList("add", module, addListInput);
     PatternMatcher onlyList("only", module, onlyListInput);
-    PatternMatcher mustList("must", module, mustListInput);
 
     // Rename the asyncify imports so their internal name matches the
     // convention. This makes replacing them with the implementations
@@ -637,17 +639,17 @@ public:
       }
     }
 
-    if (!mustListInput.empty()) {
+    if (!addListInput.empty()) {
       for (auto& func : module.functions) {
-        if (!func->imported() && mustList.match(func->name)) {
+        if (!func->imported() && addList.match(func->name)) {
           map[func.get()].canChangeState = true;
         }
       }
     }
 
     removeList.checkPatternsMatches();
+    addList.checkPatternsMatches();
     onlyList.checkPatternsMatches();
-    mustList.checkPatternsMatches();
   }
 
   bool needsInstrumentation(Function* func) {
@@ -1297,6 +1299,10 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         removeListInput)),
       ",");
+    String::Split addList(
+      String::trim(read_possible_response_file(
+        runner->options.getArgumentOrDefault("asyncify-addlist", ""))),
+      ",");
     std::string onlyListInput = runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       onlyListInput = runner->options.getArgumentOrDefault("asyncify-whitelist", "");
@@ -1305,16 +1311,12 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         onlyListInput)),
       ",");
-    String::Split mustList(
-      String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-mustlist", ""))),
-      ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
     removeList = handleBracketingOperators(removeList);
+    addList = handleBracketingOperators(addList);
     onlyList = handleBracketingOperators(onlyList);
-    mustList = handleBracketingOperators(mustList);
 
     if (!removeList.empty() && !onlyList.empty()) {
       Fatal() << "It makes no sense to use both a remove list and a only list "
@@ -1339,8 +1341,8 @@ struct Asyncify : public Pass {
                             canImportChangeState,
                             ignoreIndirect,
                             removeList,
+                            addList,
                             onlyList,
-                            mustList,
                             asserts);
 
     // Add necessary globals before we emit code to use them.
