@@ -1291,26 +1291,26 @@ struct Asyncify : public Pass {
                             "asyncify-ignore-indirect", "") == "";
     // Support old names for lists for now to avoid immediate breakage
     // TODO remove
-    std::string removeListInput = runner->options.getArgumentOrDefault("asyncify-removelist", "");
+    std::string removeListInput =
+      runner->options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
-      removeListInput = runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput =
+        runner->options.getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
-      String::trim(read_possible_response_file(
-        removeListInput)),
-      ",");
+      String::trim(read_possible_response_file(removeListInput)), ",");
     String::Split addList(
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
-    std::string onlyListInput = runner->options.getArgumentOrDefault("asyncify-onlylist", "");
+    std::string onlyListInput =
+      runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
-      onlyListInput = runner->options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput =
+        runner->options.getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
-      String::trim(read_possible_response_file(
-        onlyListInput)),
-      ",");
+      String::trim(read_possible_response_file(onlyListInput)), ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
