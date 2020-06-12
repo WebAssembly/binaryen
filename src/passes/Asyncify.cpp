@@ -1289,11 +1289,10 @@ struct Asyncify : public Pass {
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect = runner->options.getArgumentOrDefault(
                             "asyncify-ignore-indirect", "") == "";
-    // Support old names for lists for now to avoid immediate breakage
-    // TODO remove
     std::string removeListInput =
       runner->options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
+      // Support old name for now to avoid immediate breakage TODO remove
       removeListInput =
         runner->options.getArgumentOrDefault("asyncify-blacklist", "");
     }
@@ -1306,6 +1305,7 @@ struct Asyncify : public Pass {
     std::string onlyListInput =
       runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
+      // Support old name for now to avoid immediate breakage TODO remove
       onlyListInput =
         runner->options.getArgumentOrDefault("asyncify-whitelist", "");
     }
