@@ -229,7 +229,7 @@
 //
 //      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
-//      tweaking of the only list / ignore list).
+//      tweaking of the only-list / ignore list).
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -243,7 +243,7 @@
 //
 //   --pass-arg=asyncify-removelist@name1,name2,name3
 //
-//      If the "remove list" is provided, then the functions in it will be
+//      If the "remove-list" is provided, then the functions in it will be
 //      *removed* from the list of instrumented functions. That is, they won't
 //      be instrumented even if it looks like they need to be. This can be
 //      useful if you know things the safe whole-program analysis doesn't, e.g.
@@ -252,7 +252,7 @@
 //
 //   --pass-arg=asyncify-addlist@name1,name2,name3
 //
-//      If the "add list" is provided, then the functions in the list will be
+//      If the "add-list" is provided, then the functions in the list will be
 //      *added* to the list of instrumented functions, that is, they will be
 //      instrumented even if otherwise we think they don't need to be. As by
 //      default everything will be instrumented in the safest way possible,
@@ -262,7 +262,7 @@
 //
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
-//      If the "only list" is provided, then *only* the functions in the list
+//      If the "only-list" is provided, then *only* the functions in the list
 //      will be instrumented, and nothing else.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
@@ -588,7 +588,7 @@ public:
         }
       });
 
-    // Functions in the remove list are assumed to not change the state.
+    // Functions in the remove-list are assumed to not change the state.
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
@@ -631,7 +631,7 @@ public:
     map.swap(scanner.map);
 
     if (!onlyListInput.empty()) {
-      // Only the functions in the only list can change the state.
+      // Only the functions in the only-list can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
           map[func.get()].canChangeState = onlyList.match(func->name);
@@ -1000,7 +1000,7 @@ private:
   }
 
   // Given a function that is not instrumented - because we proved it doesn't
-  // need it, or depending on the only list / remove list - add assertions that
+  // need it, or depending on the only-list / remove-list - add assertions that
   // verify that property at runtime.
   // Note that it is ok to run code while sleeping (if you are careful not
   // to break assumptions in the program!) - so what is actually
@@ -1318,9 +1318,9 @@ struct Asyncify : public Pass {
     addList = handleBracketingOperators(addList);
     onlyList = handleBracketingOperators(onlyList);
 
-    if (!removeList.empty() && !onlyList.empty()) {
-      Fatal() << "It makes no sense to use both a remove list and an only list "
-                 "with asyncify.";
+    if (!onlyList.empty() && (!removeList.empty() || !addList.empty())) {
+      Fatal() << "It makes no sense to use both an asyncify only-list together "
+                 "with another list.";
     }
 
     auto canImportChangeState = [&](Name module, Name base) {

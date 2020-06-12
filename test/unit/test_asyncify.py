@@ -61,10 +61,18 @@ class AsyncifyTest(utils.BinaryenTestCase):
             else:
                 self.assertNotIn('warning', err)
 
-    def test_asyncify_removelist_and_onlylist(self):
-        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '--pass-arg=asyncify-onlylist@main', '--pass-arg=asyncify-removelist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
-        self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
-        self.assertIn('It makes no sense to use both a remove list and an only list with asyncify', proc.stdout)
+    def test_asyncify_onlylist_and_other(self):
+        def test(list_name):
+            args = shared.WASM_OPT + [self.input_path('asyncify-pure.wat'),
+                                      '--asyncify',
+                                      '--pass-arg=asyncify-onlylist@main',
+                                      '--pass-arg=asyncify-%slist@main' % list_name]
+            proc = shared.run_process(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+            self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
+            self.assertIn('It makes no sense to use both an asyncify only-list together with another list', proc.stdout)
+
+        test('remove')
+        test('add')
 
     def test_asyncify_imports(self):
         def test(args):
