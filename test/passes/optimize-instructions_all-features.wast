@@ -3789,8 +3789,8 @@
     )
   )
   ;; Tests when if arms are subtype of if's type
-  (func $if-arms-subtype (result anyref)
-    (if (result anyref)
+  (func $if-arms-subtype (result externref)
+    (if (result externref)
       (i32.const 0)
       (ref.null)
       (ref.null)

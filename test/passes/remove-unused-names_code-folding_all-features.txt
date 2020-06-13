@@ -3,6 +3,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_exnref (func (result exnref)))
  (event $e (attr 0) (param))
  (func $ifs
   (if
@@ -1709,7 +1710,7 @@
    (i32.const 2)
   )
  )
- (func $exnref_pop_test
+ (func $exnref_pop-test
   (local $exn exnref)
   (block $folding-inner0
    (try
@@ -1746,7 +1747,7 @@
   )
   (unreachable)
  )
- (func $br_on_exn_target_block
+ (func $br_on_exn-target-block
   (local $exn exnref)
   (block $x
    (if
@@ -1785,6 +1786,61 @@
     (i32.const 2)
    )
    (br $x)
+  )
+ )
+ (func $foo
+  (nop)
+ )
+ (func $try-call-optimize-terminating-tails (result exnref)
+  (try
+   (do
+    (call $foo)
+    (call $foo)
+    (call $foo)
+    (call $foo)
+    (return
+     (ref.null)
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (call $foo)
+    (call $foo)
+    (call $foo)
+    (call $foo)
+    (return
+     (ref.null)
+    )
+   )
+  )
+  (ref.null)
+ )
+ (func $try-call-optimize-expression-tails
+  (local $exn exnref)
+  (block $x
+   (try
+    (do
+     (local.set $exn
+      (exnref.pop)
+     )
+     (call $foo)
+     (call $foo)
+     (call $foo)
+     (br $x)
+    )
+    (catch
+     (local.set $exn
+      (exnref.pop)
+     )
+     (call $foo)
+     (call $foo)
+     (call $foo)
+     (br $x)
+    )
+   )
+   (unreachable)
   )
  )
 )

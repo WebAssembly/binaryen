@@ -302,6 +302,20 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
+    // Expressions that may throw cannot be sinked into 'try'. At the start of
+    // 'try', we drop all sinkables that may throw.
+    if (curr->is<Try>()) {
+      std::vector<Index> invalidated;
+      for (auto& sinkable : self->sinkables) {
+        if (sinkable.second.effects.throws) {
+          invalidated.push_back(sinkable.first);
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
     EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
@@ -409,6 +423,14 @@ struct SimplifyLocals
   bool canSink(LocalSet* set) {
     // we can never move a tee
     if (set->isTee()) {
+      return false;
+    }
+    // We cannot move expressions containing exnref.pops that are not enclosed
+    // in 'catch', because 'exnref.pop' should follow right after 'catch'.
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), features, set->value)
+          .danglingPop) {
       return false;
     }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1

@@ -229,7 +229,7 @@ V8_OPTS = [
     '--wasm-staging',
     '--experimental-wasm-eh',
     '--experimental-wasm-simd',
-    '--experimental-wasm-anyref',
+    '--experimental-wasm-reftypes',
     '--experimental-wasm-compilation-hints',
     '--experimental-wasm-return-call'
 ]

@@ -68,8 +68,8 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128));
 
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref));
+  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
+  console.log("  //", binaryen.expandType(binaryen.externref));
 
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
   console.log("  //", binaryen.expandType(binaryen.exnref));
@@ -391,6 +391,10 @@ function test_core() {
     module.f32x4.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.pmin(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.pmax(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.ceil(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.floor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.trunc(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.nearest(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -399,6 +403,10 @@ function test_core() {
     module.f64x2.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.pmin(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.pmax(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.ceil(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.floor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.trunc(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.nearest(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.narrow_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.narrow_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -553,7 +561,7 @@ function test_core() {
     module.f32.pop(),
     module.f64.pop(),
     module.v128.pop(),
-    module.anyref.pop(),
+    module.externref.pop(),
     module.funcref.pop(),
     module.nullref.pop(),
     module.exnref.pop(),

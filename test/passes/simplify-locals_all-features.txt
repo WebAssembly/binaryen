@@ -1894,7 +1894,9 @@
 )
 (module
  (type $none_=>_none (func))
+ (type $i32_exnref_=>_none (func (param i32 exnref)))
  (type $exnref_=>_none (func (param exnref)))
+ (type $none_=>_i32 (func (result i32)))
  (type $none_=>_exnref (func (result exnref)))
  (event $event$0 (attr 0) (param))
  (event $event$1 (attr 0) (param exnref))
@@ -1934,6 +1936,85 @@
      )
     )
     (i32.const 0)
+   )
+  )
+ )
+ (func $foo (param $0 i32) (param $1 exnref)
+  (nop)
+ )
+ (func $pop-cannot-be-sinked
+  (local $0 exnref)
+  (try
+   (do
+    (nop)
+   )
+   (catch
+    (local.set $0
+     (exnref.pop)
+    )
+    (call $foo
+     (i32.const 3)
+     (local.get $0)
+    )
+   )
+  )
+ )
+ (func $pop-within-catch-can-be-sinked
+  (local $0 exnref)
+  (try
+   (do
+    (nop)
+   )
+   (catch
+    (nop)
+    (call $foo
+     (i32.const 3)
+     (try (result exnref)
+      (do
+       (ref.null)
+      )
+      (catch
+       (exnref.pop)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $bar (result i32)
+  (i32.const 3)
+ )
+ (func $call-cannot-be-sinked-into-try
+  (local $0 i32)
+  (local.set $0
+   (call $bar)
+  )
+  (try
+   (do
+    (drop
+     (local.get $0)
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+ )
+ (func $non-call-can-be-sinked-into-try
+  (local $0 i32)
+  (nop)
+  (try
+   (do
+    (drop
+     (i32.const 3)
+    )
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
    )
   )
  )

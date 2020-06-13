@@ -77,9 +77,9 @@
   "invokeFuncs": [
     "invoke_ffd"
   ],
+  "mainReadsParams": 1,
   "features": [
-  ],
-  "mainReadsParams": 1
+  ]
 }
 -- END METADATA --
 ;)

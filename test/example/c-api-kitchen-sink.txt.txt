@@ -1739,7 +1739,7 @@
        (funcref.pop)
       )
       (push
-       (anyref.pop)
+       (externref.pop)
       )
       (push
        (nullref.pop)

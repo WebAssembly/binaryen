@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 from . import shared
 from . import support
@@ -43,18 +44,26 @@ def run_test(input_path):
         })
     for ext, args in extension_arg_map.items():
         expected_file = input_path + ext
-        if ext != '.out' and not os.path.exists(expected_file):
-            continue
+        if not os.path.exists(expected_file):
+            if ext == '.out':
+                shared.fail_with_error('output ' + expected_file +
+                                       ' does not exist')
+            else:
+                continue
 
         cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [input_path, '-S'] + args
         cmd += args_for_finalize(os.path.basename(input_path))
         actual = support.run_command(cmd)
 
-        if not os.path.exists(expected_file):
-            print(actual)
-            shared.fail_with_error('output ' + expected_file +
-                                   ' does not exist')
         shared.fail_if_not_identical_to_file(actual, expected_file)
+        if ext == '.out':
+            start = actual.find('--BEGIN METADATA --\n')
+            end = actual.find('-- END METADATA --\n')
+            if start == -1 or end == -1:
+                shared.fail_with_error('json metadata tags not found')
+            the_json = actual[start + len('--BEGIN METADATA --\n'):end]
+            json.loads(the_json)
+
         if ext == '.mem.out':
             with open(mem_file) as mf:
                 mem = mf.read()

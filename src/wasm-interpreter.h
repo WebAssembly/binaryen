@@ -495,12 +495,28 @@ public:
         return value.negF32x4();
       case SqrtVecF32x4:
         return value.sqrtF32x4();
+      case CeilVecF32x4:
+        return value.ceilF32x4();
+      case FloorVecF32x4:
+        return value.floorF32x4();
+      case TruncVecF32x4:
+        return value.truncF32x4();
+      case NearestVecF32x4:
+        return value.nearestF32x4();
       case AbsVecF64x2:
         return value.absF64x2();
       case NegVecF64x2:
         return value.negF64x2();
       case SqrtVecF64x2:
         return value.sqrtF64x2();
+      case CeilVecF64x2:
+        return value.ceilF64x2();
+      case FloorVecF64x2:
+        return value.floorF64x2();
+      case TruncVecF64x2:
+        return value.truncF64x2();
+      case NearestVecF64x2:
+        return value.nearestF64x2();
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
@@ -1626,7 +1642,7 @@ public:
         case Type::v128:
           return Literal(load128(addr).data());
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:
@@ -1683,7 +1699,7 @@ public:
           store128(addr, value.getv128());
           break;
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:
