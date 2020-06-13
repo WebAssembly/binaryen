@@ -225,33 +225,45 @@
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
 //
-//   --pass-arg=asyncify-blacklist@name1,name2,name3
-//
-//      If the blacklist is provided, then the functions in it will not be
-//      instrumented even if it looks like they need to. This can be useful
-//      if you know things the whole-program analysis doesn't, like if you
-//      know certain indirect calls are safe and won't unwind. But if you
-//      get the list wrong things will break (and in a production build user
-//      input might reach code paths you missed during testing, so it's hard
-//      to know you got this right), so this is not recommended unless you
-//      really know what are doing, and need to optimize every bit of speed
-//      and size. '*' wildcard matching supported.
-//
-//      As with --asyncify-imports, you can use a response file here.
-//
-//   --pass-arg=asyncify-whitelist@name1,name2,name3
-//
-//      If the whitelist is provided, then only the functions in the list
-//      will be instrumented. Like the blacklist, getting this wrong will
-//      break your application. '*' wildcard matching supported.
-//
-//      As with --asyncify-imports, you can use a response file here.
-//
-//  --pass-arg=asyncify-asserts
+//   --pass-arg=asyncify-asserts
 //
 //      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
-//      tweaking of the whitelist/blacklist).
+//      tweaking of the only-list / remove-list, see later).
+//
+// For manual fine-tuning of the list of instrumented functions, there are lists
+// that you can set. These must be used carefully, as misuse can break your
+// application - for example, if a function is called that should be
+// instrumented but isn't because of these options, then bad things can happen.
+// Note that even if you test this locally then users running your code in
+// production may reach other code paths. Use these carefully!
+//
+// Each of the lists can be used with a response file (@filename, which is then
+// loaded from the file). You can also use '*' wildcard matching in the lists.
+//
+//   --pass-arg=asyncify-removelist@name1,name2,name3
+//
+//      If the "remove-list" is provided, then the functions in it will be
+//      *removed* from the list of instrumented functions. That is, they won't
+//      be instrumented even if it looks like they need to be. This can be
+//      useful if you know things the safe whole-program analysis doesn't, e.g.
+//      that certain code paths will not be taken, where certain indirect calls
+//      will go, etc.
+//
+//   --pass-arg=asyncify-addlist@name1,name2,name3
+//
+//      If the "add-list" is provided, then the functions in the list will be
+//      *added* to the list of instrumented functions, that is, they will be
+//      instrumented even if otherwise we think they don't need to be. As by
+//      default everything will be instrumented in the safest way possible,
+//      this is only useful if you use ignore-indirect and use this to fix up
+//      some indirect calls that *do* need to be instrumented, or if you will
+//      do some later transform of the code that adds more call paths, etc.
+//
+//   --pass-arg=asyncify-onlylist@name1,name2,name3
+//
+//      If the "only-list" is provided, then *only* the functions in the list
+//      will be instrumented, and nothing else.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -465,7 +477,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    bool inBlacklist = false;
+    bool inRemoveList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -475,14 +487,16 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
-                 const String::Split& blacklistInput,
-                 const String::Split& whitelistInput,
+                 const String::Split& removeListInput,
+                 const String::Split& addListInput,
+                 const String::Split& onlyListInput,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       fakeGlobals(module), asserts(asserts) {
 
-    PatternMatcher blacklist("black", module, blacklistInput);
-    PatternMatcher whitelist("white", module, whitelistInput);
+    PatternMatcher removeList("remove", module, removeListInput);
+    PatternMatcher addList("add", module, addListInput);
+    PatternMatcher onlyList("only", module, onlyListInput);
 
     // Rename the asyncify imports so their internal name matches the
     // convention. This makes replacing them with the implementations
@@ -574,12 +588,12 @@ public:
         }
       });
 
-    // Functions in the blacklist are assumed to not change the state.
+    // Functions in the remove-list are assumed to not change the state.
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
-      if (blacklist.match(func->name)) {
-        info.inBlacklist = true;
+      if (removeList.match(func->name)) {
+        info.inRemoveList = true;
         info.canChangeState = false;
       }
     }
@@ -609,24 +623,33 @@ public:
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
-                                   !info.inBlacklist;
+                                   !info.inRemoveList;
                           },
                           [](Info& info) { info.canChangeState = true; },
                           scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
 
-    if (!whitelistInput.empty()) {
-      // Only the functions in the whitelist can change the state.
+    if (!onlyListInput.empty()) {
+      // Only the functions in the only-list can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          map[func.get()].canChangeState = whitelist.match(func->name);
+          map[func.get()].canChangeState = onlyList.match(func->name);
         }
       }
     }
 
-    blacklist.checkPatternsMatches();
-    whitelist.checkPatternsMatches();
+    if (!addListInput.empty()) {
+      for (auto& func : module.functions) {
+        if (!func->imported() && addList.match(func->name)) {
+          map[func.get()].canChangeState = true;
+        }
+      }
+    }
+
+    removeList.checkPatternsMatches();
+    addList.checkPatternsMatches();
+    onlyList.checkPatternsMatches();
   }
 
   bool needsInstrumentation(Function* func) {
@@ -977,7 +1000,7 @@ private:
   }
 
   // Given a function that is not instrumented - because we proved it doesn't
-  // need it, or depending on the whitelist/blacklist - add assertions that
+  // need it, or depending on the only-list / remove-list - add assertions that
   // verify that property at runtime.
   // Note that it is ok to run code while sleeping (if you are careful not
   // to break assumptions in the program!) - so what is actually
@@ -1266,23 +1289,38 @@ struct Asyncify : public Pass {
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect = runner->options.getArgumentOrDefault(
                             "asyncify-ignore-indirect", "") == "";
-    String::Split blacklist(
+    std::string removeListInput =
+      runner->options.getArgumentOrDefault("asyncify-removelist", "");
+    if (removeListInput.empty()) {
+      // Support old name for now to avoid immediate breakage TODO remove
+      removeListInput =
+        runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+    }
+    String::Split removeList(
+      String::trim(read_possible_response_file(removeListInput)), ",");
+    String::Split addList(
       String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
+        runner->options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
-    String::Split whitelist(
-      String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
-      ",");
+    std::string onlyListInput =
+      runner->options.getArgumentOrDefault("asyncify-onlylist", "");
+    if (onlyListInput.empty()) {
+      // Support old name for now to avoid immediate breakage TODO remove
+      onlyListInput =
+        runner->options.getArgumentOrDefault("asyncify-whitelist", "");
+    }
+    String::Split onlyList(
+      String::trim(read_possible_response_file(onlyListInput)), ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
-    blacklist = handleBracketingOperators(blacklist);
-    whitelist = handleBracketingOperators(whitelist);
+    removeList = handleBracketingOperators(removeList);
+    addList = handleBracketingOperators(addList);
+    onlyList = handleBracketingOperators(onlyList);
 
-    if (!blacklist.empty() && !whitelist.empty()) {
-      Fatal() << "It makes no sense to use both a blacklist and a whitelist "
-                 "with asyncify.";
+    if (!onlyList.empty() && (!removeList.empty() || !addList.empty())) {
+      Fatal() << "It makes no sense to use both an asyncify only-list together "
+                 "with another list.";
     }
 
     auto canImportChangeState = [&](Name module, Name base) {
@@ -1302,8 +1340,9 @@ struct Asyncify : public Pass {
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
                             ignoreIndirect,
-                            blacklist,
-                            whitelist,
+                            removeList,
+                            addList,
+                            onlyList,
                             asserts);
 
     // Add necessary globals before we emit code to use them.
