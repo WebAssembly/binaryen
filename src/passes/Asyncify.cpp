@@ -224,15 +224,6 @@
 //      will never need to be unwound with an indirect call somewhere in it.
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
-//      Note that this does not apply to indirect calls from functions in the
-//      only-list or add-list, see below: even if you ignore indirect calls in
-//      general, adding a function explicitly to be instrumented implies that
-//      you want full support there. This is necessary if you are manually
-//      adding certain functions then for an indirect call to work we need
-//      support on both sides - in the function itself, and in places that call
-//      it (where we don't know which function is being called). In other words,
-//      you can add functions to the list both to add support for being called,
-//      and for calling.
 //
 //   --pass-arg=asyncify-asserts
 //
@@ -273,6 +264,27 @@
 //
 //      If the "only-list" is provided, then *only* the functions in the list
 //      will be instrumented, and nothing else.
+//
+// Note that there are two types of instrumentation that happen for each
+// function: if foo() can be part of a pause/resume operation, then we need to
+// instrument code inside it to support pausing and resuming, but also, we need
+// callers of the function to instrument calls to it. Normally this is already
+// taken care of, as the callers need to instrumented as well anyhow. However,
+// the ignore-indirect option makes things more complicated, since we can't tell
+// where all the calls to foo() are - all we see a indirect calls, that do not
+// refer to foo() by name. To make it possible for you to use the add-list or
+// only-list with ignore-indirect, those lists affect *both* kinds of
+// instrumentation. That is, if parent() calls foo() indirectly, and you add
+// parent() to the add-list, then the indirect calls in parent() will be
+// instrumented to support pausing/resuming, even if ignore-indirect is set.
+// Typically you don't need to think about this, and just add all the functions
+// that can be on the stack while pausing - what this means is that when you do
+// so, indirect calls will just work. (The cost is that an instrumented function
+// will check for pausing at all indirect calls, which may be unnecessary in
+// some cases; but this is an instrumented function anyhow, and indirect calls
+// are slower anyhow, so this simple model seems good enough - a more complex
+// model where you can specify "instrument, but not indirect calls from me"
+// would likely have little benefit.)
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
