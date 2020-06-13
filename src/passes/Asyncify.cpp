@@ -700,9 +700,7 @@ public:
           canChangeState = true;
         }
       }
-      void visitCallIndirect(CallIndirect* curr) {
-        hasIndirectCall = true;
-      }
+      void visitCallIndirect(CallIndirect* curr) { hasIndirectCall = true; }
       Module* module;
       ModuleAnalyzer* analyzer;
       Map* map;
@@ -724,7 +722,8 @@ public:
     // state. This allows adding functions to actually let some indirect calls
     // work (as the support needs to be on both sides, the caller and the
     // callee).
-    if (walker.hasIndirectCall && (canIndirectChangeState || map[func].addedFromList)) {
+    if (walker.hasIndirectCall &&
+        (canIndirectChangeState || map[func].addedFromList)) {
       walker.canChangeState = true;
     }
     return walker.canChangeState;
@@ -883,7 +882,8 @@ private:
           i++;
         } else {
           Index end = i + 1;
-          while (end < list.size() && !analyzer->canChangeState(list[end], func)) {
+          while (end < list.size() &&
+                 !analyzer->canChangeState(list[end], func)) {
             end++;
           }
           // We have a range of [i, end) in which the state cannot change,
