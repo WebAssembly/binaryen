@@ -511,6 +511,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
   add("directize");
+}
+
+void PassRunner::addDefaultPreWritingPasses() {
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
