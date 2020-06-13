@@ -224,6 +224,15 @@
 //      will never need to be unwound with an indirect call somewhere in it.
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
+//      Note that this does not apply to indirect calls from functions in the
+//      only-list or add-list, see below: even if you ignore indirect calls in
+//      general, adding a function explicitly to be instrumented implies that
+//      you want full support there. This is necessary if you are manually
+//      adding certain functions then for an indirect call to work we need
+//      support on both sides - in the function itself, and in places that call
+//      it (where we don't know which function is being called). In other words,
+//      you can add functions to the list both to add support for being called,
+//      and for calling.
 //
 //   --pass-arg=asyncify-asserts
 //
@@ -478,6 +487,7 @@ class ModuleAnalyzer {
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
     bool inRemoveList = false;
+    bool addedFromList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -634,7 +644,12 @@ public:
       // Only the functions in the only-list can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          map[func.get()].canChangeState = onlyList.match(func->name);
+          auto& info = map[func.get()];
+          bool matched = onlyList.match(func->name);
+          info.canChangeState = matched;
+          if (matched) {
+            info.addedFromList = true;
+          }
         }
       }
     }
@@ -642,7 +657,9 @@ public:
     if (!addListInput.empty()) {
       for (auto& func : module.functions) {
         if (!func->imported() && addList.match(func->name)) {
-          map[func.get()].canChangeState = true;
+          auto& info = map[func.get()];
+          info.canChangeState = true;
+          info.addedFromList = true;
         }
       }
     }
@@ -657,7 +674,7 @@ public:
     return info.canChangeState && !info.isTopMostRuntime;
   }
 
-  bool canChangeState(Expression* curr) {
+  bool canChangeState(Expression* curr, Function* func) {
     // Look inside to see if we call any of the things we know can change the
     // state.
     // TODO: caching, this is O(N^2)
@@ -684,15 +701,12 @@ public:
         }
       }
       void visitCallIndirect(CallIndirect* curr) {
-        if (canIndirectChangeState) {
-          canChangeState = true;
-        }
-        // TODO optimize the other case, at least by type
+        hasIndirectCall = true;
       }
       Module* module;
       ModuleAnalyzer* analyzer;
       Map* map;
-      bool canIndirectChangeState;
+      bool hasIndirectCall = false;
       bool canChangeState = false;
       bool isBottomMostRuntime = false;
     };
@@ -700,9 +714,17 @@ public:
     walker.module = &module;
     walker.analyzer = this;
     walker.map = &map;
-    walker.canIndirectChangeState = canIndirectChangeState;
     walker.walk(curr);
     if (walker.isBottomMostRuntime) {
+      walker.canChangeState = false;
+    }
+    // An indirect call is normally ignored if we are ignoring indirect calls.
+    // However, if the function we are inside was specifically added by the user
+    // (in the only-list or the add-list) then we assume it may change the
+    // state. This allows adding functions to actually let some indirect calls
+    // work (as the support needs to be on both sides, the caller and the
+    // callee).
+    if (walker.hasIndirectCall && (canIndirectChangeState || map[func].addedFromList)) {
       walker.canChangeState = false;
     }
     return walker.canChangeState;
