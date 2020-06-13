@@ -725,7 +725,7 @@ public:
     // work (as the support needs to be on both sides, the caller and the
     // callee).
     if (walker.hasIndirectCall && (canIndirectChangeState || map[func].addedFromList)) {
-      walker.canChangeState = false;
+      walker.canChangeState = true;
     }
     return walker.canChangeState;
   }
@@ -836,7 +836,7 @@ private:
   Index callIndex = 0;
 
   Expression* process(Expression* curr) {
-    if (!analyzer->canChangeState(curr)) {
+    if (!analyzer->canChangeState(curr, func)) {
       return makeMaybeSkip(curr);
     }
     // The IR is in flat form, which makes this much simpler: there are no
@@ -878,12 +878,12 @@ private:
       Index i = 0;
       auto& list = block->list;
       while (i < list.size()) {
-        if (analyzer->canChangeState(list[i])) {
+        if (analyzer->canChangeState(list[i], func)) {
           list[i] = process(list[i]);
           i++;
         } else {
           Index end = i + 1;
-          while (end < list.size() && !analyzer->canChangeState(list[end])) {
+          while (end < list.size() && !analyzer->canChangeState(list[end], func)) {
             end++;
           }
           // We have a range of [i, end) in which the state cannot change,
@@ -908,7 +908,7 @@ private:
     } else if (auto* iff = curr->dynCast<If>()) {
       // The state change cannot be in the condition due to flat form, so it
       // must be in one of the children.
-      assert(!analyzer->canChangeState(iff->condition));
+      assert(!analyzer->canChangeState(iff->condition, func));
       // We must linearize this, which means we pass through both arms if we
       // are rewinding.
       if (!iff->ifFalse) {
