@@ -199,6 +199,11 @@ struct PassRunner {
   // afterwards.
   void addDefaultGlobalOptimizationPostPasses();
 
+  // Adds optimizations that should only be run immediately prior to module
+  // writing. After these passes the module may be in Poppy IR. This is not
+  // called as part of `addDefaultOptimizationPasses`.
+  void addDefaultPreWritingPasses();
+
   // Run the passes on the module
   void run();
 

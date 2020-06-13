@@ -208,11 +208,28 @@ struct OptimizationOptions : public ToolOptions {
     if (debug) {
       passRunner.setDebug(true);
     }
-    for (auto& pass : passes) {
+    // If the last thing to do is inspect the module, do it after the
+    // pre-writing passes
+    // TODO: Make this less hacky?
+    int preWritingIndex = -1;
+    if (runningDefaultOptimizationPasses()) {
+      preWritingIndex = passes.size() - 1;
+      while (preWritingIndex > 0 &&
+             (passes[preWritingIndex] == "print" ||
+              passes[preWritingIndex] == "print-stack-ir" ||
+              passes[preWritingIndex] == "metrics")) {
+        --preWritingIndex;
+      }
+    }
+    for (int i = 0, size = passes.size(); i < size; ++i) {
+      auto& pass = passes[i];
       if (pass == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();
       } else {
         passRunner.add(pass);
+      }
+      if (i == preWritingIndex) {
+        passRunner.addDefaultPreWritingPasses();
       }
     }
     passRunner.run();

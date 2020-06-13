@@ -329,6 +329,7 @@ int main(int argc, const char* argv[]) {
       }
     };
     runPasses();
+    // TODO: Fix this to read the binary at the beginning of every round.
     if (converge) {
       // Keep on running passes to convergence, defined as binary
       // size no longer decreasing.

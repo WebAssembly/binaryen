@@ -1719,6 +1719,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // do final global optimizations after all function work is done
     // (e.g. duplicate funcs may appear thanks to that work)
     passRunner.addDefaultGlobalOptimizationPostPasses();
+    passRunner.addDefaultPreWritingPasses();
   }
   passRunner.run();
 
