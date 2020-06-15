@@ -729,11 +729,10 @@ public:
       walker.canChangeState = false;
     }
     // An indirect call is normally ignored if we are ignoring indirect calls.
-    // However, if the function we are inside was specifically added by the user
-    // (in the only-list or the add-list) then we assume it may change the
-    // state. This allows adding functions to actually let some indirect calls
-    // work (as the support needs to be on both sides, the caller and the
-    // callee).
+    // However, see the docs at the top: if the function we are inside was
+    // specifically added by the user (in the only-list or the add-list) then we
+    // instrument indirect calls from it (this allows specifically allowing some
+    // indirect calls but not others).
     if (walker.hasIndirectCall &&
         (canIndirectChangeState || map[func].addedFromList)) {
       walker.canChangeState = true;
