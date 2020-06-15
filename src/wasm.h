@@ -589,7 +589,7 @@ public:
     return (const T*)this;
   }
 
-  // Print the expression to stderr. Meant for use from debuggers.
+  // Print the expression to stderr. Meant for use while debugging.
   void dump();
 };
 
