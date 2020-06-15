@@ -269,7 +269,7 @@
 // function: if foo() can be part of a pause/resume operation, then we need to
 // instrument code inside it to support pausing and resuming, but also, we need
 // callers of the function to instrument calls to it. Normally this is already
-// taken care of, as the callers need to instrumented as well anyhow. However,
+// taken care of as the callers need to be instrumented as well anyhow. However,
 // the ignore-indirect option makes things more complicated, since we can't tell
 // where all the calls to foo() are - all we see a indirect calls, that do not
 // refer to foo() by name. To make it possible for you to use the add-list or
