@@ -588,6 +588,9 @@ public:
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
+
+  // Print the expression to stderr. Meant for use from debuggers.
+  void dump();
 };
 
 const char* getExpressionName(Expression* curr);
