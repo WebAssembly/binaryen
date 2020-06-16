@@ -9,5 +9,6 @@
     (local.set $x (i32.atomic.load16_u (i32.const 1028)))
     (local.set $x (i32.atomic.load (i32.const 1028)))
     (i32.atomic.store (i32.const 100) (i32.const 200))
+    (local.set $x (i32.atomic.wait (i32.const 4) (i32.const 8) (i64.const -1)))
   )
 )

@@ -1,3 +1,4 @@
+import { wasm2js_atomic_wait_i32 } from 'env';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -20,6 +21,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var wasm2js_atomic_wait_i32 = env.wasm2js_atomic_wait_i32;
  function $0() {
   Atomics.compareExchange(HEAP8, 1024, 1, 2) | 0;
   Atomics.compareExchange(HEAP16, 512, 1, 2) | 0;
@@ -28,6 +30,7 @@ function asmFunc(global, env, buffer) {
   Atomics.load(HEAPU16, 514);
   Atomics.load(HEAP32, 257);
   Atomics.store(HEAP32, 25, 200);
+  wasm2js_atomic_wait_i32(4, 8, -1, -1) | 0;
  }
  
  var FUNCTION_TABLE = [];
@@ -41,5 +44,5 @@ function asmFunc(global, env, buffer) {
 }
 
 var memasmFunc = new ArrayBuffer(16777216);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },wasm2js_atomic_wait_i32},memasmFunc);
 export var atomic_cmpxchg = retasmFunc.atomic_cmpxchg;
