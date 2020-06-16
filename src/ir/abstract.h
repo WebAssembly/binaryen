@@ -89,7 +89,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -254,7 +254,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:

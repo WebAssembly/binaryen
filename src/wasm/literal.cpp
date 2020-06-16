@@ -59,7 +59,7 @@ Literal& Literal::operator=(const Literal& other) {
     case Type::none:
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -191,7 +191,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::funcref:
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -346,7 +346,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     case Type::exnref:
       o << "exnref(" << literal.getExceptionPackage() << ")";
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -569,7 +569,7 @@ Literal Literal::eqz() const {
       return eq(Literal(double(0)));
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -591,7 +591,7 @@ Literal Literal::neg() const {
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -613,7 +613,7 @@ Literal Literal::abs() const {
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -718,7 +718,7 @@ Literal Literal::add(const Literal& other) const {
       return Literal(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -740,7 +740,7 @@ Literal Literal::sub(const Literal& other) const {
       return Literal(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -833,7 +833,7 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -1071,7 +1071,7 @@ Literal Literal::eq(const Literal& other) const {
       return Literal(getf64() == other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -1093,7 +1093,7 @@ Literal Literal::ne(const Literal& other) const {
       return Literal(getf64() != other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -1531,6 +1531,18 @@ Literal Literal::negF32x4() const {
 Literal Literal::sqrtF32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::sqrt>(*this);
 }
+Literal Literal::ceilF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::ceil>(*this);
+}
+Literal Literal::floorF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::floor>(*this);
+}
+Literal Literal::truncF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::trunc>(*this);
+}
+Literal Literal::nearestF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::nearbyint>(*this);
+}
 Literal Literal::absF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::abs>(*this);
 }
@@ -1539,6 +1551,18 @@ Literal Literal::negF64x2() const {
 }
 Literal Literal::sqrtF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::sqrt>(*this);
+}
+Literal Literal::ceilF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::ceil>(*this);
+}
+Literal Literal::floorF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::floor>(*this);
+}
+Literal Literal::truncF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::trunc>(*this);
+}
+Literal Literal::nearestF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::nearbyint>(*this);
 }
 Literal Literal::truncSatToSI32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToSI32>(*this);

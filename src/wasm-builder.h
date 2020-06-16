@@ -818,7 +818,7 @@ public:
         break;
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
         return ExpressionManipulator::refNull(curr);

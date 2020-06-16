@@ -173,9 +173,17 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
+      case CeilVecF32x4:
+      case FloorVecF32x4:
+      case TruncVecF32x4:
+      case NearestVecF32x4:
       case AbsVecF64x2:
       case NegVecF64x2:
       case SqrtVecF64x2:
+      case CeilVecF64x2:
+      case FloorVecF64x2:
+      case TruncVecF64x2:
+      case NearestVecF64x2:
       case TruncSatSVecF32x4ToVecI32x4:
       case TruncSatUVecF32x4ToVecI32x4:
       case TruncSatSVecF64x2ToVecI64x2:

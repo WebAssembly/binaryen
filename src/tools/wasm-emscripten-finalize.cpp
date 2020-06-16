@@ -277,6 +277,9 @@ int main(int argc, const char* argv[]) {
   } else {
     // If not standalone wasm then JS is relevant and we need dynCalls.
     generator.generateDynCallThunks();
+    // This is also not needed in standalone mode since standalone mode uses
+    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
+    generator.renameMainArgcArgv();
   }
 
   // Legalize the wasm, if BigInts don't make that moot.

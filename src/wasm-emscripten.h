@@ -60,6 +60,12 @@ public:
 
   void enforceStackLimit();
 
+  // clang uses name mangling to rename the argc/argv form of main to
+  // __main_argc_argv.  Emscripten in non-standalone mode expects that function
+  // to be exported as main.  This function renames __main_argc_argv to main
+  // as expected by emscripten.
+  void renameMainArgcArgv();
+
   void exportWasiStart();
 
   // Emits the data segments to a file. The file contains data from address base

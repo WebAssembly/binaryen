@@ -41,7 +41,7 @@ public:
     f64,
     v128,
     funcref,
-    anyref,
+    externref,
     nullref,
     exnref,
     _last_value_type = exnref

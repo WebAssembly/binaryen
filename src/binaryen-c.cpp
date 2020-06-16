@@ -72,7 +72,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -97,7 +97,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeFuncref(x.func);
     case Type::nullref:
       return Literal::makeNullref();
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -131,7 +131,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
 BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
@@ -682,6 +682,10 @@ BinaryenOp BinaryenDivVecF32x4(void) { return DivVecF32x4; }
 BinaryenOp BinaryenMinVecF32x4(void) { return MinVecF32x4; }
 BinaryenOp BinaryenMaxVecF32x4(void) { return MaxVecF32x4; }
 BinaryenOp BinaryenPMinVecF32x4(void) { return PMinVecF32x4; }
+BinaryenOp BinaryenCeilVecF32x4(void) { return CeilVecF32x4; }
+BinaryenOp BinaryenFloorVecF32x4(void) { return FloorVecF32x4; }
+BinaryenOp BinaryenTruncVecF32x4(void) { return TruncVecF32x4; }
+BinaryenOp BinaryenNearestVecF32x4(void) { return NearestVecF32x4; }
 BinaryenOp BinaryenPMaxVecF32x4(void) { return PMaxVecF32x4; }
 BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
 BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
@@ -696,6 +700,10 @@ BinaryenOp BinaryenMinVecF64x2(void) { return MinVecF64x2; }
 BinaryenOp BinaryenMaxVecF64x2(void) { return MaxVecF64x2; }
 BinaryenOp BinaryenPMinVecF64x2(void) { return PMinVecF64x2; }
 BinaryenOp BinaryenPMaxVecF64x2(void) { return PMaxVecF64x2; }
+BinaryenOp BinaryenCeilVecF64x2(void) { return CeilVecF64x2; }
+BinaryenOp BinaryenFloorVecF64x2(void) { return FloorVecF64x2; }
+BinaryenOp BinaryenTruncVecF64x2(void) { return TruncVecF64x2; }
+BinaryenOp BinaryenNearestVecF64x2(void) { return NearestVecF64x2; }
 BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
   return TruncSatSVecF32x4ToVecI32x4;
 }
@@ -2897,6 +2905,10 @@ BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
 }
 BinaryenSideEffects BinaryenSideEffectThrows(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Throws);
+}
+BinaryenSideEffects BinaryenSideEffectDanglingPop(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::DanglingPop);
 }
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);

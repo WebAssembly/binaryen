@@ -128,7 +128,7 @@
    )
   )
  )
- (func $mv-if (result i32 i64 anyref)
+ (func $mv-if (result i32 i64 externref)
   (if (result i32 i64 nullref)
    (i32.const 1)
    (tuple.make

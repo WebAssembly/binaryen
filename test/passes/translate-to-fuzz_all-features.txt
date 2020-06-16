@@ -11,7 +11,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i64_v128_=>_f32 (func (param i64 v128) (result f32)))
  (type $f32_=>_f64 (func (param f32) (result f64)))
- (type $none_=>_anyref (func (result anyref)))
+ (type $none_=>_externref (func (result externref)))
  (type $f64_=>_nullref (func (param f64) (result nullref)))
  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
  (import "fuzzing-support" "log-i64" (func $log-i64 (param i64)))
@@ -271,12 +271,12 @@
   )
   (local.get $0)
  )
- (func $func_8 (result anyref)
+ (func $func_8 (result externref)
   (local $0 i64)
   (local $1 exnref)
   (local $2 nullref)
   (local $3 i32)
-  (local $4 anyref)
+  (local $4 externref)
   (local $5 nullref)
   (local $6 f32)
   (block
@@ -295,7 +295,7 @@
     )
    )
   )
-  (block $label$0 (result anyref)
+  (block $label$0 (result externref)
    (loop $label$1
     (block
      (if
@@ -389,7 +389,7 @@
           )
           (local.tee $3
            (ref.is_null
-            (loop $label$13 (result anyref)
+            (loop $label$13 (result externref)
              (block
               (if
                (i32.eqz
@@ -407,7 +407,7 @@
               )
              )
              (local.tee $4
-              (loop $label$14 (result anyref)
+              (loop $label$14 (result externref)
                (block
                 (if
                  (i32.eqz
@@ -595,7 +595,7 @@
  (func $func_9 (param $0 f64) (result nullref)
   (local $1 nullref)
   (local $2 f32)
-  (local $3 anyref)
+  (local $3 externref)
   (local $4 exnref)
   (block
    (if
@@ -616,7 +616,7 @@
   (local.get $1)
  )
  (func $func_10 (param $0 f32) (result f64)
-  (local $1 anyref)
+  (local $1 externref)
   (local $2 v128)
   (local $3 i32)
   (local $4 v128)
@@ -627,7 +627,7 @@
   (local $9 nullref)
   (local $10 exnref)
   (local $11 exnref)
-  (local $12 anyref)
+  (local $12 externref)
   (local $13 nullref)
   (local $14 (v128 i32 exnref v128))
   (local $15 i64)

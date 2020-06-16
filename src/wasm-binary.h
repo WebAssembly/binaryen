@@ -345,8 +345,8 @@ enum EncodedType {
   v128 = -0x5, // 0x7b
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque reference type
-  anyref = -0x11, // 0x6f
+  // opaque host reference type
+  externref = -0x11, // 0x6f
   // null reference type
   nullref = -0x12, // 0x6e
   // exception reference type
@@ -862,6 +862,15 @@ enum ASTNodes {
   F32x4PMin = 0xea,
   F32x4PMax = 0xeb,
 
+  F32x4Ceil = 0xd8,
+  F32x4Floor = 0xd9,
+  F32x4Trunc = 0xda,
+  F32x4Nearest = 0xdb,
+  F64x2Ceil = 0xdc,
+  F64x2Floor = 0xdd,
+  F64x2Trunc = 0xde,
+  F64x2Nearest = 0xdf,
+
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
   F64x2Sqrt = 0xef,
@@ -952,8 +961,8 @@ inline S32LEB binaryType(Type type) {
     case Type::funcref:
       ret = BinaryConsts::EncodedType::funcref;
       break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
+    case Type::externref:
+      ret = BinaryConsts::EncodedType::externref;
       break;
     case Type::nullref:
       ret = BinaryConsts::EncodedType::nullref;

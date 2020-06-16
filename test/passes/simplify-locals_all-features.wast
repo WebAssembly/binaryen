@@ -1711,4 +1711,74 @@
       )
     )
   )
+
+  (func $foo (param i32 exnref))
+  (func $pop-cannot-be-sinked (local $0 exnref)
+    (try
+      (do)
+      (catch
+        ;; This (local.set $0) of (exnref.pop) cannot be sinked to
+        ;; (local.get $0) below, because exnref.pop should follow right after
+        ;; 'catch'.
+        (local.set $0 (exnref.pop))
+        (call $foo
+          (i32.const 3)
+          (local.get $0)
+        )
+      )
+    )
+  )
+
+  (func $pop-within-catch-can-be-sinked (local $0 exnref)
+    (try
+      (do)
+      (catch
+        ;; This whole 'try' body can be sinked to eliminate local.set /
+        ;; local.get. Even though it contains a pop, it is enclosed within
+        ;; try-catch, so it is OK.
+        (local.set $0
+          (try (result exnref)
+            (do (ref.null))
+            (catch (exnref.pop))
+          )
+        )
+        (call $foo
+          (i32.const 3)
+          (local.get $0)
+        )
+      )
+    )
+  )
+
+  (func $bar (result i32) (i32.const 3))
+  (func $call-cannot-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee should NOT be sinked into 'try' below, because it may
+      ;; throw
+      (local.tee $0 (call $bar))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
+
+  (func $non-call-can-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee can be sinked into 'try' below, because it cannot throw
+      (local.tee $0 (i32.const 3))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
 )
