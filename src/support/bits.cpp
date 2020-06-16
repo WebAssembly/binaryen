@@ -108,8 +108,6 @@ uint32_t Log2(uint32_t v) {
   }
 }
 
-uint32_t Pow2(uint32_t v) {
-  return 1 << v;
-}
+uint32_t Pow2(uint32_t v) { return 1 << v; }
 
 } // namespace wasm
