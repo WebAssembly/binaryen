@@ -54,6 +54,21 @@ template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
   return v;
 }
 
+template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
+  // See Stanford bithacks, count the consecutive zero bits (trailing) on the
+  // right with multiply and lookup:
+  // http://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightMultLookup
+  static const uint8_t tbl[32] = {0,  1,  28, 2,  29, 14, 24, 3,  30, 22, 20,
+                                  15, 25, 17, 4,  8,  31, 27, 13, 23, 21, 19,
+                                  16, 7,  26, 12, 18, 6,  11, 5,  10, 9};
+  return v ? (int)tbl[((uint32_t)((v & -v) * 0x077CB531U)) >> 27] : 32;
+}
+
+template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
+  return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
+                     : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
+}
+
 template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -72,15 +87,6 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);
-}
-
-template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
-  return 32 - CountLeadingZeroes(~v & (v - 1));
-}
-
-template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
-  return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
-                     : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
 }
 
 uint32_t Log2(uint32_t v) {
