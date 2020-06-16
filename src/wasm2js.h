@@ -1838,11 +1838,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           abort();
         }
       }
-      Ref ret = ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE),
-            ValueBuilder::makeName(heap), ptr, expected, replacement);
-      );
-      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      Ref call = ValueBuilder::makeCall(
+        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE));
+      ValueBuilder::appendToCall(call, ValueBuilder::makeName(heap));
+      ValueBuilder::appendToCall(call, ptr);
+      ValueBuilder::appendToCall(call, expected);
+      ValueBuilder::appendToCall(call, replacement);
+      return call; // coercion?      return makeAsmCoercion(call, wasmToAsmType(curr->type));
     }
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);

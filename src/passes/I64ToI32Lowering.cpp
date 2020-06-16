@@ -437,7 +437,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    assert(false && "AtomicCmpxchg not implemented");
+    assert(curr->type != Type::i64 && "64-bit AtomicCmpxchg not implemented");
   }
 
   void visitConst(Const* curr) {
