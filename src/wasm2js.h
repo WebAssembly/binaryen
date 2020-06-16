@@ -1347,6 +1347,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           abort();
         }
       }
+      if (curr->isAtomic) {
+        Ref call = ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), STORE));
+        ValueBuilder::appendToCall(call, ret[1]);
+        ValueBuilder::appendToCall(call, ret[2]);
+        ValueBuilder::appendToCall(call, value);
+        return call;
+      }
       return ValueBuilder::makeBinary(ret, SET, value);
     }
 

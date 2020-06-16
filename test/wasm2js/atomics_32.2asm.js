@@ -27,6 +27,7 @@ function asmFunc(global, env, buffer) {
   Atomics.load(HEAPU8, 1028 >> 0) | 0;
   Atomics.load(HEAPU16, 1028 >> 1) | 0;
   Atomics.load(HEAP32, 1028 >> 2) | 0;
+  Atomics.store(HEAP32, 100 >> 2, 200);
  }
  
  var FUNCTION_TABLE = [];
