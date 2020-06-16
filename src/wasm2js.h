@@ -1890,6 +1890,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
+      // TODO
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
