@@ -1239,16 +1239,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
-        case Type::f32:
-          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
-                                      ValueBuilder::makePtrShift(ptr, 2));
-          break;
-        case Type::f64:
-          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
-                                      ValueBuilder::makePtrShift(ptr, 3));
-          break;
         default: {
-          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
+          std::cerr << "Unhandled type in cmpxchg: " << curr->type << std::endl;
           abort();
         }
       }
@@ -1844,7 +1836,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       ValueBuilder::appendToCall(call, ptr);
       ValueBuilder::appendToCall(call, expected);
       ValueBuilder::appendToCall(call, replacement);
-      return call; // coercion?      return makeAsmCoercion(call, wasmToAsmType(curr->type));
+      return makeAsmCoercion(call, wasmToAsmType(curr->type));
     }
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);
