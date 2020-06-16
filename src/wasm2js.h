@@ -2414,6 +2414,17 @@ void Wasm2JSGlue::emitSpecialSupport() {
     return f64ScratchView[0];
   }
       )";
+    } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
+      out << R"(
+  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
+    assert(timeoutLow == -1 && timeoutHigh == -1);
+    var result = Atomic.wait(HEAP32, ptr, expected);
+    if (result == 'ok') return 0;
+    if (result == 'not-equal') return 1;
+    if (result == 'timed-out') return 2;
+    throw 'bad result ' + result;
+  }
+      )";
     }
   });
   out << '\n';

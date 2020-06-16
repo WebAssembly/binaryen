@@ -84,7 +84,8 @@ inline bool isHelper(cashew::IString name) {
   return name == SCRATCH_LOAD_I32 || name == SCRATCH_STORE_I32 ||
          name == SCRATCH_LOAD_I64 || name == SCRATCH_STORE_I64 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
-         name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64;
+         name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||
+         name == ATOMIC_WAIT_I32;
 }
 
 } // namespace wasm2js
