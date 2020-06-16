@@ -1239,8 +1239,16 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
+        case Type::f32:
+          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
+                                      ValueBuilder::makePtrShift(ptr, 2));
+          break;
+        case Type::f64:
+          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
+                                      ValueBuilder::makePtrShift(ptr, 3));
+          break;
         default: {
-          std::cerr << "Unhandled type in cmpxchg: " << curr->type << std::endl;
+          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
           abort();
         }
       }
@@ -1824,16 +1832,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
           break;
         }
-        case Type::f32:
-          heap = HEAPF32;
-          ptr = ValueBuilder::makePtrShift(ptr, 2);
-          break;
-        case Type::f64:
-          heap = HEAPF64;
-          ptr = ValueBuilder::makePtrShift(ptr, 3);
-          break;
         default: {
-          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
+          std::cerr << "Unhandled type in cmpxchg: " << curr->type << std::endl;
           abort();
         }
       }
