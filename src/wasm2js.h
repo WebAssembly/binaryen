@@ -275,7 +275,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
-  ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
+  ABI::wasm2js::ensureHelpers(wasm);
 
   // Process the code, and optimize if relevant.
   // First, do the lowering to a JS-friendly subset.
@@ -496,7 +496,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
   // The scratch memory helpers are emitted in the glue, see code and comments
   // below.
-  if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+  if (ABI::wasm2js::isHelper(import->base)) {
     return;
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -1419,9 +1419,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 L_NOT, visit(curr->value, EXPRESSION_RESULT));
             }
             case ReinterpretFloat32: {
-              ABI::wasm2js::ensureScratchMemoryHelpers(
+              ABI::wasm2js::ensureHelpers(
                 module, ABI::wasm2js::SCRATCH_STORE_F32);
-              ABI::wasm2js::ensureScratchMemoryHelpers(
+              ABI::wasm2js::ensureHelpers(
                 module, ABI::wasm2js::SCRATCH_LOAD_I32);
 
               Ref store =
@@ -1497,9 +1497,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
-              ABI::wasm2js::ensureScratchMemoryHelpers(
+              ABI::wasm2js::ensureHelpers(
                 module, ABI::wasm2js::SCRATCH_STORE_I32);
-              ABI::wasm2js::ensureScratchMemoryHelpers(
+              ABI::wasm2js::ensureHelpers(
                 module, ABI::wasm2js::SCRATCH_LOAD_F32);
 
               Ref store =
@@ -2128,7 +2128,7 @@ private:
   void emitMemory(std::string buffer,
                   std::string segmentWriter,
                   std::function<std::string(std::string)> accessGlobal);
-  void emitScratchMemorySupport();
+  void emitSpecialSupport();
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -2138,7 +2138,7 @@ void Wasm2JSGlue::emitPre() {
     emitPreES6();
   }
 
-  emitScratchMemorySupport();
+  emitSpecialSupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
@@ -2168,9 +2168,9 @@ void Wasm2JSGlue::emitPreES6() {
   ModuleUtils::iterImportedGlobals(
     wasm, [&](Global* import) { noteImport(import->module, import->base); });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    // The scratch memory helpers are emitted in the glue, see code and comments
+    // The special helpers are emitted in the glue, see code and comments
     // below.
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
     noteImport(import->module, import->base);
@@ -2253,9 +2253,9 @@ void Wasm2JSGlue::emitPostES6() {
   out << "abort:function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    // The scratch memory helpers are emitted in the glue, see code and comments
+    // The special helpers are emitted in the glue, see code and comments
     // below.
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
     out << "," << asmangle(import->base.str);
@@ -2341,18 +2341,18 @@ void Wasm2JSGlue::emitMemory(
   }
 }
 
-void Wasm2JSGlue::emitScratchMemorySupport() {
+void Wasm2JSGlue::emitSpecialSupport() {
   // The scratch memory helpers are emitted here the glue. We may also want to
   // emit them inline at some point. (The reason they are imports is so that
   // they appear as "intrinsics" placeholders, and not normal functions that
   // the optimizer might want to do something with.)
-  bool needScratchMemory = false;
+  bool need = false;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
-      needScratchMemory = true;
+    if (ABI::wasm2js::isHelper(import->base)) {
+      need = true;
     }
   });
-  if (!needScratchMemory) {
+  if (!need) {
     return;
   }
 

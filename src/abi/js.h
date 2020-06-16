@@ -44,13 +44,15 @@ extern cashew::IString SCRATCH_LOAD_F32;
 extern cashew::IString SCRATCH_STORE_F32;
 extern cashew::IString SCRATCH_LOAD_F64;
 extern cashew::IString SCRATCH_STORE_F64;
+extern cashew::IString ATOMIC_WAIT_I32;
 
-// The wasm2js scratch memory helpers let us read and write to scratch memory
-// for purposes of implementing things like reinterpret, etc.
+// The wasm2js helpers let us do things that can't be done without special help,
+// like read and write to scratch memory for purposes of implementing things
+// like reinterpret, etc.
 // The optional "specific" parameter is a specific function we want. If not
 // provided, we create them all.
 inline void
-ensureScratchMemoryHelpers(Module* wasm,
+ensureHelpers(Module* wasm,
                            cashew::IString specific = cashew::IString()) {
   auto ensureImport = [&](Name name, Type params, Type results) {
     if (wasm->getFunctionOrNull(name)) {
@@ -75,9 +77,10 @@ ensureScratchMemoryHelpers(Module* wasm,
   ensureImport(SCRATCH_STORE_F32, {Type::f32}, Type::none);
   ensureImport(SCRATCH_LOAD_F64, {}, Type::f64);
   ensureImport(SCRATCH_STORE_F64, {Type::f64}, Type::none);
+  ensureImport(ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
 }
 
-inline bool isScratchMemoryHelper(cashew::IString name) {
+inline bool isHelper(cashew::IString name) {
   return name == SCRATCH_LOAD_I32 || name == SCRATCH_STORE_I32 ||
          name == SCRATCH_LOAD_I64 || name == SCRATCH_STORE_I64 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||

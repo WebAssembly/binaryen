@@ -433,11 +433,19 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
-    assert(false && "AtomicRMW not implemented");
+    assert(curr->type != Type::i64 && "64-bit AtomicRMW not implemented");
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     assert(curr->type != Type::i64 && "64-bit AtomicCmpxchg not implemented");
+  }
+
+  void visitAtomicWait(AtomicWait* curr) {
+    // The last parameter is an i64, so we cannot leave it as it is
+    assert(curr->offset == 0);
+    replaceCurrent(
+      builder->makeCall(ABI::wasm2js::ATOMIC_WAIT_I32, {curr->ptr, curr->expected, curr->timeout, builder->makeLocalGet(fetchOutParam(curr->timeout), Type::i32)}, Type::i32)
+    );
   }
 
   void visitConst(Const* curr) {
@@ -521,7 +529,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
+    ABI::wasm2js::ensureHelpers(getModule());
   }
 
   void lowerReinterpretInt64(Unary* curr) {
@@ -539,7 +547,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, Type::f64));
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
+    ABI::wasm2js::ensureHelpers(getModule());
   }
 
   void lowerTruncFloatToInt(Unary* curr) {
