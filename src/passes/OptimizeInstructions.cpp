@@ -1363,8 +1363,9 @@ private:
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
     if (type.isInteger()) {
+      auto constRight = right->value.getInteger();
       // operations on zero
-      if (right->value == Literal::makeFromInt32(0, type)) {
+      if (constRight == 0LL) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
@@ -1380,8 +1381,18 @@ private:
           return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
         }
       }
+      // operations on one
+      if (constRight == 1LL) {
+        // (signed)x % 1   ==>   0
+        if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
+            !EffectAnalyzer(getPassOptions(), features, binary->left)
+               .hasSideEffects()) {
+          right->value = Literal::makeSingleZero(type);
+          return right;
+        }
+      }
       // operations on all 1s
-      if (right->value.getInteger() == -1LL) {
+      if (constRight == -1LL) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
           // x & -1   ==>   x
           return binary->left;
@@ -1436,7 +1447,7 @@ private:
       // subtractions than the more common additions).
       if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
           binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-        auto value = right->value.getInteger();
+        auto value = constRight;
         if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
             value == 0x8000000 || value == 0x400000000LL ||
             value == 0x20000000000LL || value == 0x1000000000000LL ||

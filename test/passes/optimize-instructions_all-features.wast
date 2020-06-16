@@ -3082,7 +3082,27 @@
         )
       )
     )
+    ;; (unsigned)x % 1
+    (drop
+      (call $urem-32-power-2
+        (i32.rem_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+    )
     (unreachable)
+  )
+  (func $srem-by-1 (param $x i32) (param $y i64)
+    ;; (signed)x % 1
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const 1)
+    ))
+    (drop (i64.rem_s
+      (local.get $y)
+      (i64.const 1)
+    ))
   )
   (func $orZero (param $0 i32) (result i32)
     (i32.or

@@ -3,9 +3,9 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
@@ -2735,7 +2735,20 @@
     )
    )
   )
+  (drop
+   (call $urem-32-power-2
+    (i32.const 0)
+   )
+  )
   (unreachable)
+ )
+ (func $srem-by-1 (param $x i32) (param $y i64)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
  )
  (func $orZero (param $0 i32) (result i32)
   (local.get $0)
