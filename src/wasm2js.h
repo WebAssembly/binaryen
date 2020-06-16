@@ -1244,6 +1244,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           abort();
         }
       }
+      if (curr->isAtomic) {
+        Ref call = ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), LOAD));
+        ValueBuilder::appendToCall(call, ret[1]);
+        ValueBuilder::appendToCall(call, ret[2]);
+        ret = call;
+      }
       // Coercions are not actually needed, as if the user reads beyond valid
       // memory, it's undefined behavior anyhow, and so we don't care much about
       // slowness of undefined values etc.
