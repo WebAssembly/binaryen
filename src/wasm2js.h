@@ -1799,8 +1799,50 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      Ref ptr = makePointer(curr->ptr, curr->offset);
+      Ref expected = visit(curr->expected, EXPRESSION_RESULT);
+      Ref replacement = visit(curr->replacement, EXPRESSION_RESULT);
+      IString heap;
+      switch (curr->type.getSingle()) {
+        case Type::i32: {
+          switch (curr->bytes) {
+            case 1:
+              heap = HEAP8;
+              break;
+            case 2:
+              heap = HEAP16;
+              ptr = ValueBuilder::makePtrShift(ptr, 1);
+              break;
+            case 4:
+              heap = HEAP32;
+              ptr = ValueBuilder::makePtrShift(ptr, 2);
+              break;
+            default: {
+              std::cerr << "Unhandled number of bytes in i32 load: "
+                        << curr->bytes << std::endl;
+              abort();
+            }
+          }
+          break;
+        }
+        case Type::f32:
+          heap = HEAPF32;
+          ptr = ValueBuilder::makePtrShift(ptr, 2);
+          break;
+        case Type::f64:
+          heap = HEAPF64;
+          ptr = ValueBuilder::makePtrShift(ptr, 3);
+          break;
+        default: {
+          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
+          abort();
+        }
+      }
+      Ref ret = ValueBuilder::makeCall(
+        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE),
+            ValueBuilder::makeName(heap), ptr, expected, replacement);
+      );
+      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);

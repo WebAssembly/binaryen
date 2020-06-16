@@ -103,6 +103,8 @@ IString ARRAY("array");
 IString OBJECT("object");
 IString THROW("throw");
 IString SET("=");
+IString ATOMICS("Atomics");
+IString COMPARE_EXCHANGE("compareExchange");
 
 IStringSet
   keywords("var const function if else do while for break continue return "

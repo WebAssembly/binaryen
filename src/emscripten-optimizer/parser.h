@@ -120,6 +120,8 @@ extern IString ARRAY;
 extern IString OBJECT;
 extern IString THROW;
 extern IString SET;
+extern IString ATOMICS;
+extern IString COMPARE_EXCHANGE;
 
 extern IStringSet keywords;
 
