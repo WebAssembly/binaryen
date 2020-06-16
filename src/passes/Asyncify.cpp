@@ -271,7 +271,7 @@
 // callers of the function to instrument calls to it. Normally this is already
 // taken care of as the callers need to be instrumented as well anyhow. However,
 // the ignore-indirect option makes things more complicated, since we can't tell
-// where all the calls to foo() are - all we see a indirect calls, that do not
+// where all the calls to foo() are - all we see are indirect calls that do not
 // refer to foo() by name. To make it possible for you to use the add-list or
 // only-list with ignore-indirect, those lists affect *both* kinds of
 // instrumentation. That is, if parent() calls foo() indirectly, and you add
