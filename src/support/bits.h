@@ -70,14 +70,16 @@ template<typename T> bool IsPowerOf2(T v) {
 }
 
 template<typename T, typename U> inline static T RotateLeft(T val, U count) {
-  T mask = sizeof(T) * CHAR_BIT - 1;
+  auto value = typename std::make_unsigned<T>::type(val);
+  U mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
-  return (val << count) | (val >> (-count & mask));
+  return (value << count) | (value >> (-count & mask));
 }
 template<typename T, typename U> inline static T RotateRight(T val, U count) {
-  T mask = sizeof(T) * CHAR_BIT - 1;
+  auto value = typename std::make_unsigned<T>::type(val);
+  U mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
-  return (val >> count) | (val << (-count & mask));
+  return (value >> count) | (value << (-count & mask));
 }
 
 extern uint32_t Log2(uint32_t v);
