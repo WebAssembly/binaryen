@@ -59,7 +59,7 @@ template<> int PopCount<uint64_t>(uint64_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__) || defined(_MSC_VER)
   return (int)__builtin_popcountll(v);
 #else
-  return PopCount((uint32_t)v) + (v >> 32 ? PopCount((uint32_t)(v >> 32)) : 0);
+  return PopCount((uint32_t)v) + PopCount((uint32_t)(v >> 32));
 #endif
 }
 
