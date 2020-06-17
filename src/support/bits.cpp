@@ -79,7 +79,7 @@ template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanForward(&count, v);
-  return count;
+  return (int)count;
 #else
   // See Stanford bithacks, count the consecutive zero bits (trailing) on the
   // right with multiply and lookup:
@@ -100,7 +100,7 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanForward64(&count, v);
-  return count;
+  return (int)count;
 #else
   return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
                      : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
@@ -116,7 +116,7 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanReverse(&count, v);
-  return count;
+  return (int)count;
 #else
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -142,7 +142,7 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanReverse64(&count, v);
-  return count;
+  return (int)count;
 #else
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);
