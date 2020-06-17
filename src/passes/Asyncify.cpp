@@ -725,9 +725,6 @@ public:
     walker.analyzer = this;
     walker.map = &map;
     walker.walk(curr);
-    if (walker.isBottomMostRuntime) {
-      walker.canChangeState = false;
-    }
     // An indirect call is normally ignored if we are ignoring indirect calls.
     // However, see the docs at the top: if the function we are inside was
     // specifically added by the user (in the only-list or the add-list) then we
@@ -737,7 +734,8 @@ public:
         (canIndirectChangeState || map[func].addedFromList)) {
       walker.canChangeState = true;
     }
-    return walker.canChangeState;
+    // The bottom-most runtime can never change the state.
+    return walker.canChangeState && !walker.isBottomMostRuntime;
   }
 
   FakeGlobalHelper fakeGlobals;
