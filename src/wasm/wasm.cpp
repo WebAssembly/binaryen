@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "wasm-printing.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -92,6 +93,13 @@ Name EVENT("event");
 Name ATTR("attr");
 
 // Expressions
+
+void Expression::dump() {
+  WasmPrinter::printExpression(this,
+                               std::cerr,
+                               /*minify=*/false,
+                               /*full=*/true);
+}
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
