@@ -223,6 +223,9 @@ def fix_output(out):
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
+    # ignore some VM warnings that don't matter, like if a newer V8 has removed
+    # a flag that is no longer needed
+    out = '\n'.join([x for x in out.splitlines() if 'Warning: unknown flag' not in x and 'Try --help for options' not in x])
     # exceptions may differ when optimizing, but an exception should occur. so ignore their types
     # also js engines print them out slightly differently
     return '\n'.join(map(lambda x: '     *exception*' if 'exception' in x else x, out.splitlines()))
