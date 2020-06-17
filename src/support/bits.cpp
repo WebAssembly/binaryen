@@ -71,8 +71,9 @@ template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
 }
 
 template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
-  if (v == 0)
+  if (v == 0) {
     return 32;
+  }
 #if __has_builtin(__builtin_ctz) || defined(__GNUC__)
   return __builtin_ctz(v);
 #elif defined(_MSC_VER)
@@ -91,8 +92,9 @@ template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
 }
 
 template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
-  if (v == 0)
+  if (v == 0) {
     return 64;
+  }
 #if __has_builtin(__builtin_ctzll) || defined(__GNUC__)
   return __builtin_ctzll(v);
 #elif defined(_MSC_VER)
@@ -106,8 +108,9 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
 }
 
 template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
-  if (v == 0)
+  if (v == 0) {
     return 32;
+  }
 #if __has_builtin(__builtin_clz) || defined(__GNUC__)
   return __builtin_clz(v);
 #elif defined(_MSC_VER)
@@ -131,8 +134,9 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 }
 
 template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
-  if (v == 0)
+  if (v == 0) {
     return 64;
+  }
 #if __has_builtin(__builtin_clzll) || defined(__GNUC__)
   return __builtin_clzll(v);
 #elif defined(_MSC_VER)
