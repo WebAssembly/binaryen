@@ -2478,7 +2478,9 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::MEMORY_FILL) {
       out << R"(
   function wasm2js_memory_fill(dest, value, size) {
-    // TODO: traps on invalid things
+    dest = dest >>> 0;
+    size = size >>> 0;
+    if (dest + size >= bufferView.length) throw "trap: invalid memory.fill";
     bufferView.fill(value, dest, size);
   }
       )";
