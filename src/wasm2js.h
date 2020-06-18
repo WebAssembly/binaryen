@@ -1903,8 +1903,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(
+        module, ABI::wasm2js::MEMORY_COPY);
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_COPY,
+        visit(curr->dest, EXPRESSION_RESULT),
+        visit(curr->source, EXPRESSION_RESULT),
+        visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitMemoryFill(MemoryFill* curr) {
       ABI::wasm2js::ensureHelpers(
@@ -2461,6 +2465,13 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_memory_fill(dest, value, size) {
     // TODO: traps on invalid things
     bufferView.fill(value, dest, size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::MEMORY_COPY) {
+      out << R"(
+  function wasm2js_memory_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    bufferView.copyWithin(dest, source, source + size);
   }
       )";
     }

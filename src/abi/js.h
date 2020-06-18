@@ -47,6 +47,7 @@ extern cashew::IString SCRATCH_STORE_F64;
 extern cashew::IString ATOMIC_WAIT_I32;
 extern cashew::IString MEMORY_INIT;
 extern cashew::IString MEMORY_FILL;
+extern cashew::IString MEMORY_COPY;
 
 // The wasm2js helpers let us do things that can't be done without special help,
 // like read and write to scratch memory for purposes of implementing things
@@ -82,6 +83,7 @@ ensureHelpers(Module* wasm,
   ensureImport(ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
   ensureImport(MEMORY_INIT, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_FILL, {Type::i32, Type::i32, Type::i32}, Type::none);
+  ensureImport(MEMORY_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
 }
 
 inline bool isHelper(cashew::IString name) {
@@ -89,7 +91,7 @@ inline bool isHelper(cashew::IString name) {
          name == SCRATCH_LOAD_I64 || name == SCRATCH_STORE_I64 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
          name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||
-         name == ATOMIC_WAIT_I32 || name == MEMORY_INIT || name == MEMORY_FILL;
+         name == ATOMIC_WAIT_I32 || name == MEMORY_INIT || name == MEMORY_FILL || name == MEMORY_COPY;
 }
 
 } // namespace wasm2js
