@@ -1890,9 +1890,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
-      // TODO
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT, 
+        ValueBuilder::makeNum(curr->segment),
+        visit(curr->dest, EXPRESSION_RESULT),
+        visit(curr->offset, EXPRESSION_RESULT),
+        visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitDataDrop(DataDrop* curr) {
       unimplemented(curr);
@@ -2424,6 +2426,12 @@ void Wasm2JSGlue::emitSpecialSupport() {
     if (result == 'not-equal') return 1;
     if (result == 'timed-out') return 2;
     throw 'bad result ' + result;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
+      out << R"(
+  function wasm2js_memory_init(segment, dest, offset, size) {
+    // ?
   }
       )";
     }
