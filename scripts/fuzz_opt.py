@@ -223,14 +223,13 @@ def fix_output(out):
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
-    # ignore some VM warnings that don't matter, like if a newer V8 has removed
-    # a flag that is no longer needed
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
         if 'Warning: unknown flag' in line or 'Try --help for options' in line:
-            # print the line to the console so the developer can see it, but
-            # skip it when comparing VMs
+            # ignore some VM warnings that don't matter, like if a newer V8 has
+            # removed a flag that is no longer needed. but print the line to the
+            # so the developer can see it
             print(line)
             lines[i] = None
         elif 'exception' in line:
