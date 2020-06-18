@@ -2,7 +2,7 @@
   (memory (shared 256 256))
   (data passive "hello,")
   (data passive "world!")
-  (func "atomic-cmpxchg"
+  (func "test"
     (local $x i32)
     (local.set $x (i32.atomic.rmw8.cmpxchg_u (i32.const 1024) (i32.const 1) (i32.const 2)))
     (local.set $x (i32.atomic.rmw16.cmpxchg_u (i32.const 1024) (i32.const 1) (i32.const 2)))

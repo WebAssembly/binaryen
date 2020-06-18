@@ -6,7 +6,7 @@
   var f64ScratchView = new Float64Array(scratchBuffer);
   
   function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
-    assert(timeoutLow == -1 && timeoutHigh == -1);
+    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
     var result = Atomic.wait(HEAP32, ptr, expected);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
@@ -14,8 +14,11 @@
     throw 'bad result ' + result;
   }
       
+  var passiveSegments = [];
+
   function wasm2js_memory_init(segment, dest, offset, size) {
-    // ?
+    // TODO: traps on invalid things
+    bufferView.set(passiveSegments[segment].subarray(offset, offset + size), dest);
   }
       
 function asmFunc(global, env, buffer) {
@@ -58,7 +61,7 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "atomic_cmpxchg": $0
+  "test": $0
  };
 }
 
@@ -82,8 +85,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     }
     return uint8Array; 
   }var bufferView = new Uint8Array(memasmFunc);
-var passiveSegments = [];
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "aGVsbG8s");
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "d29ybGQh");
+passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "aGVsbG8s"));
+passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "d29ybGQh"));
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var atomic_cmpxchg = retasmFunc.atomic_cmpxchg;
+export var test = retasmFunc.test;

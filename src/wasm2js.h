@@ -2345,10 +2345,6 @@ void Wasm2JSGlue::emitMemory(
 
   out << "var bufferView = new Uint8Array(" << buffer << ");\n";
 
-  if (wasm.features.hasBulkMemory()) {
-    out << "var passiveSegments = [];\n";
-  }
-
   for (auto& seg : wasm.memory.segments) {
     if (!seg.isPassive) {
       // Plain active segments are decoded directly into the main memory.
@@ -2439,7 +2435,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
       out << R"(
   function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
-    assert(timeoutLow == -1 && timeoutHigh == -1);
+    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
     var result = Atomic.wait(HEAP32, ptr, expected);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
@@ -2449,8 +2445,11 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
       out << R"(
+  var passiveSegments = [];
+
   function wasm2js_memory_init(segment, dest, offset, size) {
-    // ?
+    // TODO: traps on invalid things
+    bufferView.set(passiveSegments[segment].subarray(offset, offset + size), dest);
   }
       )";
     }

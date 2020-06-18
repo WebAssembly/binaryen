@@ -65,7 +65,6 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     }
     return uint8Array; 
   }var bufferView = new Uint8Array(wasmMemory.buffer);
-var passiveSegments = [];
 base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 return asmFunc({
     'Int8Array': Int8Array,
