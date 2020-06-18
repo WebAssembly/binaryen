@@ -121,6 +121,7 @@ cashew::IString SCRATCH_LOAD_F64("wasm2js_scratch_load_f64");
 cashew::IString SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
 cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
 cashew::IString MEMORY_INIT("wasm2js_memory_init");
+cashew::IString MEMORY_FILL("wasm2js_memory_fill");
 
 } // namespace wasm2js
 } // namespace ABI

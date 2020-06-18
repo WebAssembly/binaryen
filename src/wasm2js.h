@@ -1892,7 +1892,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitMemoryInit(MemoryInit* curr) {
       ABI::wasm2js::ensureHelpers(
         module, ABI::wasm2js::MEMORY_INIT);
-      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT, 
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
         ValueBuilder::makeNum(curr->segment),
         visit(curr->dest, EXPRESSION_RESULT),
         visit(curr->offset, EXPRESSION_RESULT),
@@ -1907,8 +1907,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryFill(MemoryFill* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(
+        module, ABI::wasm2js::MEMORY_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_FILL,
+        visit(curr->dest, EXPRESSION_RESULT),
+        visit(curr->value, EXPRESSION_RESULT),
+        visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitRefNull(RefNull* curr) {
       unimplemented(curr);
@@ -2450,6 +2454,13 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
     bufferView.set(passiveSegments[segment].subarray(offset, offset + size), dest);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::MEMORY_FILL) {
+      out << R"(
+  function wasm2js_memory_fill(dest, value, size) {
+    // TODO: traps on invalid things
+    bufferView.fill(value, dest, size);
   }
       )";
     }
