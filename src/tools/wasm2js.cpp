@@ -567,7 +567,7 @@ private:
                      Element& e,
                      Name testFuncName,
                      Name asmModule);
-  bool isInvoke(Element& e);
+  bool isInvokeHandled(Element& e);
   bool isAssertHandled(Element& e);
   void fixCalls(Ref asmjs, Name asmModule);
 
@@ -712,7 +712,7 @@ Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
   return jsFunc;
 }
 
-bool AssertionEmitter::isInvoke(Element& e) {
+bool AssertionEmitter::isInvokeHandled(Element& e) {
   return e.isList() && e.size() >= 2 && e[0]->isStr() &&
          e[0]->str() == Name("invoke");
 }
@@ -823,11 +823,12 @@ void AssertionEmitter::emit() {
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
-    if (!isInvoke(e) && !isAssertHandled(e)) {
+    if (!isInvokeHandled(e) && !isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
     }
     Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isInvoke = (e[0]->str() == Name("invoke"));
     bool isReturn = (e[0]->str() == Name("assert_return"));
     bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
     Element* assertOp;
@@ -841,9 +842,10 @@ void AssertionEmitter::emit() {
     (*assertOp)[0]->setString(IString("call"), false, false);
     // Need to claim dollared to get string as function target
     (*assertOp)[1]->setString((*assertOp)[1]->str(), /*dollared=*/true, false);
-    if (isInvoke(e)) {
+    if (isInvoke) {
       emitInvokeFunc(wasmBuilder, e, testFuncName, asmModule);
       out << testFuncName.str << "();\n";
+      continue;
     }
     // Otherwise, this is some form of assertion.
     if (isReturn) {
