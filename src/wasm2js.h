@@ -2363,6 +2363,7 @@ void Wasm2JSGlue::emitMemory(
       // later copying.
       out << "passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(" << seg.data.size() << ")"
           << ", 0, \"" << base64Encode(seg.data) << "\"));\n";
+list of passive must include the others too. list of all segments.
     }
   }
 }
@@ -2388,6 +2389,8 @@ void Wasm2JSGlue::emitSpecialSupport() {
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   )";
+
+  bool needPassiveSegments = false;
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
@@ -2452,9 +2455,8 @@ void Wasm2JSGlue::emitSpecialSupport() {
   }
       )";
     } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
+      needPassiveSegments = true;
       out << R"(
-  var passiveSegments = [];
-
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
     bufferView.set(passiveSegments[segment].subarray(offset, offset + size), dest);
@@ -2474,8 +2476,23 @@ void Wasm2JSGlue::emitSpecialSupport() {
     bufferView.copyWithin(dest, source, source + size);
   }
       )";
+    } else if (import->base == ABI::wasm2js::DATA_DROP) {
+      needPassiveSegments = true;
+      out << R"(
+  function wasm2js_data_drop(segment) {
+    // TODO: traps on invalid things
+    passiveSegments[segment] = new Uint8Array(0);
+  }
+      )";
     }
   });
+
+  if (needPassiveSegments) {
+    out << R"(
+  var passiveSegments = [];
+    )";
+  }
+
   out << '\n';
 }
 

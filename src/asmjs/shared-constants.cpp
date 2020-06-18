@@ -123,6 +123,7 @@ cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
 cashew::IString MEMORY_INIT("wasm2js_memory_init");
 cashew::IString MEMORY_FILL("wasm2js_memory_fill");
 cashew::IString MEMORY_COPY("wasm2js_memory_copy");
+cashew::IString DATA_DROP("wasm2js_data_drop");
 
 } // namespace wasm2js
 } // namespace ABI
