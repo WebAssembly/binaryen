@@ -228,7 +228,7 @@ def fix_output(out):
         line = lines[i]
         if 'Warning: unknown flag' in line or 'Try --help for options' in line:
             # ignore some VM warnings that don't matter, like if a newer V8 has
-            # removed a flag that is no longer needed. but print the line to the
+            # removed a flag that is no longer needed. but print the line so the
             # so the developer can see it
             print(line)
             lines[i] = None
