@@ -2310,6 +2310,10 @@ void Wasm2JSGlue::emitMemory(
   std::string buffer,
   std::string segmentWriter,
   std::function<std::string(std::string)> accessGlobal) {
+  if (!wasm.memory.exists) {
+    return;
+  }
+  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
   if (wasm.memory.segments.empty()) {
     return;
   }
