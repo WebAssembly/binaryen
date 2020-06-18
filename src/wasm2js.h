@@ -1890,6 +1890,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
+      ABI::wasm2js::ensureHelpers(
+        module, ABI::wasm2js::MEMORY_INIT);
       return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT, 
         ValueBuilder::makeNum(curr->segment),
         visit(curr->dest, EXPRESSION_RESULT),
@@ -2302,7 +2304,7 @@ void Wasm2JSGlue::emitMemory(
     return;
   }
 
-  auto expr =
+  out <<
     R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -2319,9 +2321,15 @@ void Wasm2JSGlue::emitMemory(
       uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
-    }
+    })";
+  if (wasm.features.hasBulkMemory()) {
+    // Passive segments in bulk memory are initialized into new arrays that are
+    // passed into here, and we need to return them.
+    out << R"(
+    return uint8Array;)";
+  }
+  out << R"( 
   })";
-  out << expr << '\n';
 
   auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -2337,10 +2345,21 @@ void Wasm2JSGlue::emitMemory(
 
   out << "var bufferView = new Uint8Array(" << buffer << ");\n";
 
+  if (wasm.features.hasBulkMemory()) {
+    out << "var passiveSegments = [];\n";
+  }
+
   for (auto& seg : wasm.memory.segments) {
-    assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "base64DecodeToExistingUint8Array(bufferView, " << globalOffset(seg)
-        << ", \"" << base64Encode(seg.data) << "\");\n";
+    if (!seg.isPassive) {
+      // Plain active segments are decoded directly into the main memory.
+      out << "base64DecodeToExistingUint8Array(bufferView, " << globalOffset(seg)
+          << ", \"" << base64Encode(seg.data) << "\");\n";
+    } else {
+      // Fancy passive segments are decoded into typed arrays on the side, for
+      // later copying.
+      out << "passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(" << seg.data.size() << ")"
+          << ", \"" << base64Encode(seg.data) << "\"));\n";
+    }
   }
 }
 
