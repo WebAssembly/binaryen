@@ -265,6 +265,27 @@
 //      If the "only-list" is provided, then *only* the functions in the list
 //      will be instrumented, and nothing else.
 //
+// Note that there are two types of instrumentation that happen for each
+// function: if foo() can be part of a pause/resume operation, then we need to
+// instrument code inside it to support pausing and resuming, but also, we need
+// callers of the function to instrument calls to it. Normally this is already
+// taken care of as the callers need to be instrumented as well anyhow. However,
+// the ignore-indirect option makes things more complicated, since we can't tell
+// where all the calls to foo() are - all we see are indirect calls that do not
+// refer to foo() by name. To make it possible for you to use the add-list or
+// only-list with ignore-indirect, those lists affect *both* kinds of
+// instrumentation. That is, if parent() calls foo() indirectly, and you add
+// parent() to the add-list, then the indirect calls in parent() will be
+// instrumented to support pausing/resuming, even if ignore-indirect is set.
+// Typically you don't need to think about this, and just add all the functions
+// that can be on the stack while pausing - what this means is that when you do
+// so, indirect calls will just work. (The cost is that an instrumented function
+// will check for pausing at all indirect calls, which may be unnecessary in
+// some cases; but this is an instrumented function anyhow, and indirect calls
+// are slower anyhow, so this simple model seems good enough - a more complex
+// model where you can specify "instrument, but not indirect calls from me"
+// would likely have little benefit.)
+//
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
 //      of their original range.
@@ -478,6 +499,7 @@ class ModuleAnalyzer {
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
     bool inRemoveList = false;
+    bool addedFromList = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -634,7 +656,12 @@ public:
       // Only the functions in the only-list can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          map[func.get()].canChangeState = onlyList.match(func->name);
+          auto& info = map[func.get()];
+          bool matched = onlyList.match(func->name);
+          info.canChangeState = matched;
+          if (matched) {
+            info.addedFromList = true;
+          }
         }
       }
     }
@@ -642,7 +669,9 @@ public:
     if (!addListInput.empty()) {
       for (auto& func : module.functions) {
         if (!func->imported() && addList.match(func->name)) {
-          map[func.get()].canChangeState = true;
+          auto& info = map[func.get()];
+          info.canChangeState = true;
+          info.addedFromList = true;
         }
       }
     }
@@ -657,7 +686,7 @@ public:
     return info.canChangeState && !info.isTopMostRuntime;
   }
 
-  bool canChangeState(Expression* curr) {
+  bool canChangeState(Expression* curr, Function* func) {
     // Look inside to see if we call any of the things we know can change the
     // state.
     // TODO: caching, this is O(N^2)
@@ -683,16 +712,11 @@ public:
           canChangeState = true;
         }
       }
-      void visitCallIndirect(CallIndirect* curr) {
-        if (canIndirectChangeState) {
-          canChangeState = true;
-        }
-        // TODO optimize the other case, at least by type
-      }
+      void visitCallIndirect(CallIndirect* curr) { hasIndirectCall = true; }
       Module* module;
       ModuleAnalyzer* analyzer;
       Map* map;
-      bool canIndirectChangeState;
+      bool hasIndirectCall = false;
       bool canChangeState = false;
       bool isBottomMostRuntime = false;
     };
@@ -700,12 +724,18 @@ public:
     walker.module = &module;
     walker.analyzer = this;
     walker.map = &map;
-    walker.canIndirectChangeState = canIndirectChangeState;
     walker.walk(curr);
-    if (walker.isBottomMostRuntime) {
-      walker.canChangeState = false;
+    // An indirect call is normally ignored if we are ignoring indirect calls.
+    // However, see the docs at the top: if the function we are inside was
+    // specifically added by the user (in the only-list or the add-list) then we
+    // instrument indirect calls from it (this allows specifically allowing some
+    // indirect calls but not others).
+    if (walker.hasIndirectCall &&
+        (canIndirectChangeState || map[func].addedFromList)) {
+      walker.canChangeState = true;
     }
-    return walker.canChangeState;
+    // The bottom-most runtime can never change the state.
+    return walker.canChangeState && !walker.isBottomMostRuntime;
   }
 
   FakeGlobalHelper fakeGlobals;
@@ -814,7 +844,7 @@ private:
   Index callIndex = 0;
 
   Expression* process(Expression* curr) {
-    if (!analyzer->canChangeState(curr)) {
+    if (!analyzer->canChangeState(curr, func)) {
       return makeMaybeSkip(curr);
     }
     // The IR is in flat form, which makes this much simpler: there are no
@@ -856,12 +886,13 @@ private:
       Index i = 0;
       auto& list = block->list;
       while (i < list.size()) {
-        if (analyzer->canChangeState(list[i])) {
+        if (analyzer->canChangeState(list[i], func)) {
           list[i] = process(list[i]);
           i++;
         } else {
           Index end = i + 1;
-          while (end < list.size() && !analyzer->canChangeState(list[end])) {
+          while (end < list.size() &&
+                 !analyzer->canChangeState(list[end], func)) {
             end++;
           }
           // We have a range of [i, end) in which the state cannot change,
@@ -886,7 +917,7 @@ private:
     } else if (auto* iff = curr->dynCast<If>()) {
       // The state change cannot be in the condition due to flat form, so it
       // must be in one of the children.
-      assert(!analyzer->canChangeState(iff->condition));
+      assert(!analyzer->canChangeState(iff->condition, func));
       // We must linearize this, which means we pass through both arms if we
       // are rewinding.
       if (!iff->ifFalse) {
