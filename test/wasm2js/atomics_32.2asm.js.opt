@@ -85,7 +85,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     }
     return uint8Array; 
   }var bufferView = new Uint8Array(memasmFunc);
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "aGVsbG8s"));
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), "d29ybGQh"));
+passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s"));
+passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh"));
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var test = retasmFunc.test;

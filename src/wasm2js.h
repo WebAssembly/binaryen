@@ -2354,7 +2354,7 @@ void Wasm2JSGlue::emitMemory(
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
       out << "passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(" << seg.data.size() << ")"
-          << ", \"" << base64Encode(seg.data) << "\"));\n";
+          << ", 0, \"" << base64Encode(seg.data) << "\"));\n";
     }
   }
 }
