@@ -14,13 +14,13 @@
     throw 'bad result ' + result;
   }
       
-  var passiveSegments = [];
-
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
-    bufferView.set(passiveSegments[segment].subarray(offset, offset + size), dest);
+    bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
+  var memorySegments = {};
+    
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
@@ -85,7 +85,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     }
     return uint8Array; 
   }var bufferView = new Uint8Array(memasmFunc);
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s"));
-passiveSegments.push(base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh"));
+memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s");
+memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh");
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var test = retasmFunc.test;
