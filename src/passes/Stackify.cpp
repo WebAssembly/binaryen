@@ -55,123 +55,289 @@ struct Stackifier : BinaryenIRWriter<Stackifier> {
   MixedArena& allocator;
   std::vector<Scope> scopeStack;
 
-  Stackifier(Function* func, MixedArena& allocator)
-    : BinaryenIRWriter<Stackifier>(func), allocator(allocator) {
-    // Start with a scope to emit top-level instructions into
-    scopeStack.emplace_back(Scope::Func);
-  }
+  // Maps tuple locals to the new locals that will hold their elements
+  std::unordered_map<Index, std::vector<Index>> tupleVars;
 
-  void patchInstrs(Expression*& expr, const std::vector<Expression*>& instrs) {
-    if (instrs.size() == 1) {
-      expr = instrs[0];
-    } else if (auto* block = expr->dynCast<Block>()) {
-      block->list.set(instrs);
-    } else {
-      expr = Builder(allocator).makeBlock(instrs);
-    }
-  }
+  // Records the scratch local to be used for tuple.extracts of each type
+  std::unordered_map<Type, Index> scratchLocals;
 
-  void emit(Expression* curr) {
-    // Control flow structures introduce new scopes. The instructions collected
-    // for the new scope will be patched back into the original Expression when
-    // the scope ends.
-    if (Properties::isControlFlowStructure(curr)) {
-      Scope::Kind kind;
-      switch (curr->_id) {
-        case Expression::BlockId:
-          kind = Scope::Block;
-          break;
-        case Expression::LoopId:
-          kind = Scope::Loop;
-          break;
-        case Expression::IfId:
-          // The condition has already been emitted
-          curr->cast<If>()->condition = Builder(allocator).makePop(Type::i32);
-          kind = Scope::If;
-          break;
-        case Expression::TryId:
-          kind = Scope::Try;
-          break;
-        default:
-          WASM_UNREACHABLE("Unexpected control flow structure");
-      }
-      scopeStack.emplace_back(kind);
-    } else {
-      // TODO: Lower tuple instructions
-      // Replace all children (which have already been emitted) with pops and
-      // emit the current instruction into the current scope.
-      Poppifier(allocator).poppify(curr);
-      scopeStack.back().instrs.push_back(curr);
-    }
-  };
+  Stackifier(Function* func, MixedArena& allocator);
 
+  Index getScratchLocal(Type type);
+  void patchInstrs(Expression*& expr);
+
+  // BinaryIRWriter methods
+  void emit(Expression* curr);
   void emitHeader() {}
+  void emitIfElse(If* curr);
+  void emitCatch(Try* curr);
+  void emitScopeEnd(Expression* curr);
+  void emitFunctionEnd();
+  void emitUnreachable();
+  void emitDebugLocation(Expression* curr) {}
 
-  void emitIfElse(If* curr) {
-    auto& scope = scopeStack.back();
-    assert(scope.kind == Scope::If);
-    patchInstrs(curr->ifTrue, scope.instrs);
-    scope.instrs.clear();
-    scope.kind = Scope::Else;
-  }
+  // Tuple lowering methods
+  void emitTupleExtract(TupleExtract* curr);
+  void emitDrop(Drop* curr);
+  void emitLocalGet(LocalGet* curr);
+  void emitLocalSet(LocalSet* curr);
+  void emitGlobalGet(GlobalGet* curr);
+  void emitGlobalSet(GlobalSet* curr);
+};
 
-  void emitCatch(Try* curr) {
-    auto& scope = scopeStack.back();
-    assert(scope.kind == Scope::Try);
-    patchInstrs(curr->body, scope.instrs);
-    scope.instrs.clear();
-    scope.kind = Scope::Catch;
-  }
+Stackifier::Stackifier(Function* func, MixedArena& allocator)
+  : BinaryenIRWriter<Stackifier>(func), allocator(allocator) {
+  // Start with a scope to emit top-level instructions into
+  scopeStack.emplace_back(Scope::Func);
 
-  void emitScopeEnd(Expression* curr) {
-    auto& scope = scopeStack.back();
-    switch (scope.kind) {
-      case Scope::Block:
-        patchInstrs(curr, scope.instrs);
-        break;
-      case Scope::Loop:
-        patchInstrs(curr->cast<Loop>()->body, scope.instrs);
-        break;
-      case Scope::If:
-        patchInstrs(curr->cast<If>()->ifTrue, scope.instrs);
-        break;
-      case Scope::Else:
-        patchInstrs(curr->cast<If>()->ifFalse, scope.instrs);
-        break;
-      case Scope::Catch:
-        patchInstrs(curr->cast<Try>()->catchBody, scope.instrs);
-        break;
-      case Scope::Try:
-        WASM_UNREACHABLE("try without catch");
-      case Scope::Func:
-        WASM_UNREACHABLE("unexpected end of function");
+  // Map each tuple local to a set of expanded locals
+  for (size_t i = 0, end = func->vars.size(); i < end; ++i) {
+    if (func->vars[i].isMulti()) {
+      auto& vars = tupleVars[Index(i)];
+      for (auto type : func->vars[i].expand()) {
+        vars.push_back(Builder(allocator).addVar(func, type));
+      }
     }
-    scopeStack.pop_back();
+  }
+}
+
+Index Stackifier::getScratchLocal(Type type) {
+  // If there is no scratch local for `type`, allocate a new one
+  auto insert = scratchLocals.insert({type, Index(-1)});
+  if (insert.second) {
+    insert.first->second = Builder(allocator).addVar(func, type);
+  }
+  return insert.first->second;
+}
+
+void Stackifier::patchInstrs(Expression*& expr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  if (auto* block = expr->dynCast<Block>()) {
+    // Conservatively keep blocks to avoid dropping important labels, but do
+    // not patch a block into itself, which would otherwise happen when
+    // emitting if/else or try/catch arms and function bodies.
+    if (instrs.size() != 1 || instrs[0] != block) {
+      block->list.set(instrs);
+    }
+  } else if (instrs.size() == 1) {
+    // Otherwise do not insert blocks containing single instructions
+    assert(expr == instrs[0] && "not actually sure about this");
+    expr = instrs[0];
+  } else {
+    expr = builder.makeBlock(instrs, expr->type);
+  }
+  instrs.clear();
+}
+
+void Stackifier::emit(Expression* curr) {
+  Builder builder(allocator);
+  // Control flow structures introduce new scopes. The instructions collected
+  // for the new scope will be patched back into the original Expression when
+  // the scope ends.
+  if (Properties::isControlFlowStructure(curr)) {
+    Scope::Kind kind;
+    switch (curr->_id) {
+      case Expression::BlockId:
+        kind = Scope::Block;
+        break;
+      case Expression::LoopId:
+        kind = Scope::Loop;
+        break;
+      case Expression::IfId:
+        // The condition has already been emitted
+        curr->cast<If>()->condition = builder.makePop(Type::i32);
+        kind = Scope::If;
+        break;
+      case Expression::TryId:
+        kind = Scope::Try;
+        break;
+      default:
+        WASM_UNREACHABLE("Unexpected control flow structure");
+    }
+    scopeStack.emplace_back(kind);
+  } else if (curr->is<TupleMake>()) {
+    // Turns into nothing when stackified
+    return;
+  } else if (auto* extract = curr->dynCast<TupleExtract>()) {
+    emitTupleExtract(extract);
+  } else if (auto* drop = curr->dynCast<Drop>()) {
+    emitDrop(drop);
+  } else if (auto* get = curr->dynCast<LocalGet>()) {
+    emitLocalGet(get);
+  } else if (auto* set = curr->dynCast<LocalSet>()) {
+    emitLocalSet(set);
+  } else if (auto* get = curr->dynCast<GlobalGet>()) {
+    emitGlobalGet(get);
+  } else if (auto* set = curr->dynCast<GlobalSet>()) {
+    emitGlobalSet(set);
+  } else {
+    // Replace all children (which have already been emitted) with pops and
+    // emit the current instruction into the current scope.
+    Poppifier(allocator).poppify(curr);
     scopeStack.back().instrs.push_back(curr);
   }
-
-  void emitFunctionEnd() {
-    auto& scope = scopeStack.back();
-    assert(scope.kind == Scope::Func);
-    // If there is only one instruction, it must already be the body so patching
-    // it into itself could cause a cycle in the IR. But if there are multiple
-    // instructions because the top-level expression in the original IR was not
-    // a block, they need to be injected into a new block.
-    if (scope.instrs.size() > 1) {
-      patchInstrs(func->body, scope.instrs);
-    } else if (scope.instrs.size() == 1) {
-      assert(func->body == scope.instrs[0] ||
-             (func->body->cast<Block>()->list.size() == 1 &&
-              func->body->cast<Block>()->list[0] == scope.instrs[0]));
-    }
-  }
-
-  void emitUnreachable() {
-    scopeStack.back().instrs.push_back(Builder(allocator).makeUnreachable());
-  }
-
-  void emitDebugLocation(Expression* curr) {}
 };
+
+void Stackifier::emitIfElse(If* curr) {
+  auto& scope = scopeStack.back();
+  assert(scope.kind == Scope::If);
+  patchInstrs(curr->ifTrue);
+  scope.kind = Scope::Else;
+}
+
+void Stackifier::emitCatch(Try* curr) {
+  auto& scope = scopeStack.back();
+  assert(scope.kind == Scope::Try);
+  patchInstrs(curr->body);
+  scope.kind = Scope::Catch;
+}
+
+void Stackifier::emitScopeEnd(Expression* curr) {
+  auto& scope = scopeStack.back();
+  switch (scope.kind) {
+    case Scope::Block:
+      patchInstrs(curr);
+      break;
+    case Scope::Loop:
+      patchInstrs(curr->cast<Loop>()->body);
+      break;
+    case Scope::If:
+      patchInstrs(curr->cast<If>()->ifTrue);
+      break;
+    case Scope::Else:
+      patchInstrs(curr->cast<If>()->ifFalse);
+      break;
+    case Scope::Catch:
+      patchInstrs(curr->cast<Try>()->catchBody);
+      break;
+    case Scope::Try:
+      WASM_UNREACHABLE("try without catch");
+    case Scope::Func:
+      WASM_UNREACHABLE("unexpected end of function");
+  }
+  scopeStack.pop_back();
+  scopeStack.back().instrs.push_back(curr);
+}
+
+void Stackifier::emitFunctionEnd() {
+  auto& scope = scopeStack.back();
+  assert(scope.kind == Scope::Func);
+  // // If there is only one instruction, it must already be the body so
+  // patching
+  // // it into itself could cause a cycle in the IR. But if there are multiple
+  // // instructions because the top-level expression in the original IR was not
+  // // a block, they need to be injected into a new block.
+  // if (scope.instrs.size() > 1) {
+  //   patchInstrs(func->body);
+  // } else if (scope.instrs.size() == 1) {
+  //   assert(func->body == scope.instrs[0] ||
+  //          (func->body->cast<Block>()->list.size() == 1 &&
+  //           func->body->cast<Block>()->list[0] == scope.instrs[0]));
+  // }
+  patchInstrs(func->body);
+}
+
+void Stackifier::emitUnreachable() {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  instrs.push_back(builder.makeUnreachable());
+}
+
+void Stackifier::emitTupleExtract(TupleExtract* curr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  const auto& types = curr->tuple->type.expand();
+  // Drop all the values after the one we want
+  for (size_t i = types.size() - 1; i > curr->index; --i) {
+    instrs.push_back(builder.makeDrop(builder.makePop(types[i])));
+  }
+  // If the extracted value is the only one left, we're done
+  if (curr->index == 0) {
+    return;
+  }
+  // Otherwise, save it to a scratch local and drop the others values
+  auto type = types[curr->index];
+  Index scratch = getScratchLocal(type);
+  instrs.push_back(builder.makeLocalSet(scratch, builder.makePop(type)));
+  for (size_t i = curr->index - 1; i != size_t(-1); --i) {
+    instrs.push_back(builder.makeDrop(builder.makePop(types[i])));
+  }
+  // Retrieve the saved value
+  instrs.push_back(builder.makeLocalGet(scratch, type));
+}
+
+void Stackifier::emitDrop(Drop* curr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  if (curr->value->type.isMulti()) {
+    // Drop each element individually
+    const auto& types = curr->value->type.expand();
+    for (auto it = types.rbegin(), end = types.rend(); it != end; ++it) {
+      instrs.push_back(builder.makeDrop(builder.makePop(*it)));
+    }
+  } else {
+    curr->value = builder.makePop(curr->value->type);
+    instrs.push_back(curr);
+  }
+}
+
+void Stackifier::emitLocalGet(LocalGet* curr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  if (curr->type.isMulti()) {
+    const auto& types = curr->type.expand();
+    const auto& elems = tupleVars[curr->index];
+    for (size_t i = 0; i < types.size(); ++i) {
+      instrs.push_back(builder.makeLocalGet(elems[i], types[i]));
+    }
+  } else {
+    instrs.push_back(curr);
+  }
+}
+
+void Stackifier::emitLocalSet(LocalSet* curr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  if (curr->value->type.isMulti()) {
+    const auto& types = curr->value->type.expand();
+    const auto& elems = tupleVars[curr->index];
+    // Add the unconditional sets
+    for (size_t i = types.size() - 1; i >= 1; --i) {
+      instrs.push_back(
+        builder.makeLocalSet(elems[i], builder.makePop(types[i])));
+    }
+    if (curr->isTee()) {
+      // Use a tee followed by gets to retrieve the tuple
+      instrs.push_back(
+        builder.makeLocalTee(elems[0], builder.makePop(types[0]), types[0]));
+      for (size_t i = 1; i < types.size(); ++i) {
+        instrs.push_back(builder.makeLocalGet(elems[i], types[i]));
+      }
+    } else {
+      // Otherwise just add the last set
+      instrs.push_back(
+        builder.makeLocalSet(elems[0], builder.makePop(types[0])));
+    }
+  } else {
+    curr->value = builder.makePop(curr->value->type);
+    instrs.push_back(curr);
+  }
+}
+
+void Stackifier::emitGlobalGet(GlobalGet* curr) {
+  auto& instrs = scopeStack.back().instrs;
+  assert(!curr->type.isMulti() && "not implemented for tuples");
+  instrs.push_back(curr);
+}
+
+void Stackifier::emitGlobalSet(GlobalSet* curr) {
+  Builder builder(allocator);
+  auto& instrs = scopeStack.back().instrs;
+  assert(!curr->value->type.isMulti() && "not implemented for tuples");
+  curr->value = builder.makePop(curr->value->type);
+  instrs.push_back(curr);
+}
 
 } // anonymous namespace
 
