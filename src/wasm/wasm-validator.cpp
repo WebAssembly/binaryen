@@ -454,7 +454,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
     }
   }
-  if (curr->list.size() > 0) {
+  if (curr->list.size() > 0 && !getFunction()->isStacky) {
     auto backType = curr->list.back()->type;
     if (!curr->type.isConcrete()) {
       shouldBeFalse(backType.isConcrete(),
