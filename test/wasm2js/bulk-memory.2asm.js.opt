@@ -36,8 +36,10 @@ var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32
   var f64ScratchView = new Float64Array(scratchBuffer);
   
   function wasm2js_memory_fill(dest, value, size) {
-    // TODO: traps on invalid things
-    bufferView.fill(value, dest, size);
+    dest = dest >>> 0;
+    size = size >>> 0;
+    if (dest + size > bufferView.length) throw "trap: invalid memory.fill";
+    bufferView.fill(value, dest, dest + size);
   }
       
 function asmFunc(global, env, buffer) {
