@@ -1807,69 +1807,90 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
-    // TODO's
+    // Atomics
 
-    Ref visitAtomicRMW(AtomicRMW* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      Ref ptr = makePointer(curr->ptr, curr->offset);
-      Ref expected = visit(curr->expected, EXPRESSION_RESULT);
-      Ref replacement = visit(curr->replacement, EXPRESSION_RESULT);
+    struct HeapAndPointer {
+      Ref heap;
+      Ref ptr;
+    };
+
+    HeapAndPointer getHeapAndAdjustedPointer(Index bytes, Expression* ptr, Index offset) {
       IString heap;
-      switch (curr->type.getSingle()) {
-        case Type::i32: {
-          switch (curr->bytes) {
-            case 1:
-              heap = HEAP8;
-              break;
-            case 2:
-              heap = HEAP16;
-              ptr = ValueBuilder::makePtrShift(ptr, 1);
-              break;
-            case 4:
-              heap = HEAP32;
-              ptr = ValueBuilder::makePtrShift(ptr, 2);
-              break;
-            default: {
-              std::cerr << "Unhandled number of bytes in i32 load: "
-                        << curr->bytes << std::endl;
-              abort();
-            }
-          }
+      Ref adjustedPtr = makePointer(ptr, offset);
+      switch (bytes) {
+        case 1:
+          heap = HEAP8;
           break;
-        }
+        case 2:
+          heap = HEAP16;
+          adjustedPtr = ValueBuilder::makePtrShift(adjustedPtr, 1);
+          break;
+        case 4:
+          heap = HEAP32;
+          adjustedPtr = ValueBuilder::makePtrShift(adjustedPtr, 2);
+          break;
         default: {
-          std::cerr << "Unhandled type in cmpxchg: " << curr->type << std::endl;
-          abort();
+          WASM_UNREACHABLE("unimp");
         }
       }
+      return { ValueBuilder::makeName(heap), adjustedPtr };
+    }
+
+    Ref visitAtomicRMW(AtomicRMW* curr) {
+      auto hap = getHeapAndAdjustedPointer(curr->bytes, curr->ptr, curr->offset);
+      IString target;
+      switch (curr->op) {
+        case AtomicRMWOp::Add: target = IString("add"); break;
+        case AtomicRMWOp::Sub: target = IString("sub"); break;
+        case AtomicRMWOp::And: target = IString("and"); break;
+        case AtomicRMWOp::Or: target = IString("or"); break;
+        case AtomicRMWOp::Xor: target = IString("xor"); break;
+        case AtomicRMWOp::Xchg: target = IString("exchange"); break;
+        default: WASM_UNREACHABLE("unimp");
+      }
+      Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
+        ValueBuilder::makeName(ATOMICS), target));
+      ValueBuilder::appendToCall(call, hap.heap);
+      ValueBuilder::appendToCall(call, hap.ptr);
+      ValueBuilder::appendToCall(call, visit(curr->value, EXPRESSION_RESULT));
+      return call;
+    }
+
+    Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      auto hap = getHeapAndAdjustedPointer(curr->bytes, curr->ptr, curr->offset);
+      Ref expected = visit(curr->expected, EXPRESSION_RESULT);
+      Ref replacement = visit(curr->replacement, EXPRESSION_RESULT);
       Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
         ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE));
-      ValueBuilder::appendToCall(call, ValueBuilder::makeName(heap));
-      ValueBuilder::appendToCall(call, ptr);
+      ValueBuilder::appendToCall(call, hap.heap);
+      ValueBuilder::appendToCall(call, hap.ptr);
       ValueBuilder::appendToCall(call, expected);
       ValueBuilder::appendToCall(call, replacement);
       return makeAsmCoercion(call, wasmToAsmType(curr->type));
     }
+
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+
     Ref visitAtomicNotify(AtomicNotify* curr) {
       Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
         ValueBuilder::makeName(ATOMICS), IString("notify")));
       ValueBuilder::appendToCall(call, ValueBuilder::makeName(HEAP32));
-      ValueBuilder::appendToCall(call, makePointer(curr->ptr, curr->offset));
+      ValueBuilder::appendToCall(call, ValueBuilder::makePtrShift(makePointer(curr->ptr, curr->offset), 2));
       ValueBuilder::appendToCall(call,
                                  visit(curr->notifyCount, EXPRESSION_RESULT));
       return call;
     }
+
     Ref visitAtomicFence(AtomicFence* curr) {
       // Sequentially consistent fences can be lowered to no operation
       return ValueBuilder::makeToplevel();
     }
+
+    // TODOs
+
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
