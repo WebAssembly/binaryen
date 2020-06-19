@@ -14,5 +14,7 @@
     (local.set $x (i32.atomic.wait (i32.const 4) (i32.const 8) (i64.const -1)))
     (memory.init 0 (i32.const 512) (i32.const 0) (i32.const 4))
     (memory.init 1 (i32.const 1024) (i32.const 4) (i32.const 2))
+    (local.set $x (atomic.notify (i32.const 4) (i32.const 2)))
+    (local.set $x (atomic.notify offset=20 (i32.const 4) (i32.const 2)))
   )
 )

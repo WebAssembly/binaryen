@@ -53,6 +53,8 @@ function asmFunc(global, env, buffer) {
   wasm2js_atomic_wait_i32(4 | 0, 8 | 0, -1 | 0, -1 | 0) | 0;
   wasm2js_memory_init(0, 512, 0, 4);
   wasm2js_memory_init(1, 1024, 4, 2);
+  Atomics.notify(HEAP32, 4, 2);
+  Atomics.notify(HEAP32, 4 + 20 | 0, 2);
  }
  
  var FUNCTION_TABLE = [];
