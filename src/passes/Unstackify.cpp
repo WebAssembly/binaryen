@@ -132,14 +132,12 @@ Expression* Unstackifier::popNonVoidExpression() {
 Expression* Unstackifier::popExpression(Type type) {
   if (type == Type::none || type == Type::unreachable) {
     auto* ret = popExpression();
-    assert(Type::isSubType(ret->type, type) ||
-           ret->type == Type::unreachable);
+    assert(Type::isSubType(ret->type, type) || ret->type == Type::unreachable);
     return ret;
   }
   if (type.isSingle()) {
     auto* ret = popNonVoidExpression();
-    assert(Type::isSubType(ret->type, type) ||
-           ret->type == Type::unreachable);
+    assert(Type::isSubType(ret->type, type) || ret->type == Type::unreachable);
     return ret;
   }
 
@@ -182,7 +180,6 @@ void Unstackifier::doPreVisitExpression(Unstackifier* self,
 void Unstackifier::startScope() {
   scopeStack.push_back(expressionStack.size());
 }
-
 
 size_t Unstackifier::endScope() {
   assert(scopeStack.size() > 0);
@@ -230,7 +227,6 @@ void Unstackifier::visitExpression(Expression* curr) {
     if (block->type.isConcrete()) {
       results = popExpression(block->type);
     }
-
 
     auto numExpressions = endScope();
     assert(expressionStack.size() >= numExpressions);
