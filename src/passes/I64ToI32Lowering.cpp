@@ -443,9 +443,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitAtomicWait(AtomicWait* curr) {
     // The last parameter is an i64, so we cannot leave it as it is
     assert(curr->offset == 0);
-    replaceCurrent(
-      builder->makeCall(ABI::wasm2js::ATOMIC_WAIT_I32, {curr->ptr, curr->expected, curr->timeout, builder->makeLocalGet(fetchOutParam(curr->timeout), Type::i32)}, Type::i32)
-    );
+    replaceCurrent(builder->makeCall(
+      ABI::wasm2js::ATOMIC_WAIT_I32,
+      {curr->ptr,
+       curr->expected,
+       curr->timeout,
+       builder->makeLocalGet(fetchOutParam(curr->timeout), Type::i32)},
+      Type::i32));
   }
 
   void visitConst(Const* curr) {

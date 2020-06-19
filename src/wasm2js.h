@@ -1419,10 +1419,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 L_NOT, visit(curr->value, EXPRESSION_RESULT));
             }
             case ReinterpretFloat32: {
-              ABI::wasm2js::ensureHelpers(
-                module, ABI::wasm2js::SCRATCH_STORE_F32);
-              ABI::wasm2js::ensureHelpers(
-                module, ABI::wasm2js::SCRATCH_LOAD_I32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_STORE_F32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_LOAD_I32);
 
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
@@ -1497,10 +1497,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
-              ABI::wasm2js::ensureHelpers(
-                module, ABI::wasm2js::SCRATCH_STORE_I32);
-              ABI::wasm2js::ensureHelpers(
-                module, ABI::wasm2js::SCRATCH_LOAD_F32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_STORE_I32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_LOAD_F32);
 
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
@@ -1845,8 +1845,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           abort();
         }
       }
-      Ref call = ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE));
+      Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
+        ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE));
       ValueBuilder::appendToCall(call, ValueBuilder::makeName(heap));
       ValueBuilder::appendToCall(call, ptr);
       ValueBuilder::appendToCall(call, expected);
@@ -1890,35 +1890,31 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
-      ABI::wasm2js::ensureHelpers(
-        module, ABI::wasm2js::MEMORY_INIT);
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_INIT);
       return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
-        ValueBuilder::makeNum(curr->segment),
-        visit(curr->dest, EXPRESSION_RESULT),
-        visit(curr->offset, EXPRESSION_RESULT),
-        visit(curr->size, EXPRESSION_RESULT));
+                                    ValueBuilder::makeNum(curr->segment),
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->offset, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitDataDrop(DataDrop* curr) {
-      ABI::wasm2js::ensureHelpers(
-        module, ABI::wasm2js::DATA_DROP);
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::DATA_DROP);
       return ValueBuilder::makeCall(ABI::wasm2js::DATA_DROP,
-        ValueBuilder::makeNum(curr->segment));
+                                    ValueBuilder::makeNum(curr->segment));
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
-      ABI::wasm2js::ensureHelpers(
-        module, ABI::wasm2js::MEMORY_COPY);
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_COPY);
       return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_COPY,
-        visit(curr->dest, EXPRESSION_RESULT),
-        visit(curr->source, EXPRESSION_RESULT),
-        visit(curr->size, EXPRESSION_RESULT));
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->source, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitMemoryFill(MemoryFill* curr) {
-      ABI::wasm2js::ensureHelpers(
-        module, ABI::wasm2js::MEMORY_FILL);
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_FILL);
       return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_FILL,
-        visit(curr->dest, EXPRESSION_RESULT),
-        visit(curr->value, EXPRESSION_RESULT),
-        visit(curr->size, EXPRESSION_RESULT));
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitRefNull(RefNull* curr) {
       unimplemented(curr);
@@ -2363,12 +2359,14 @@ void Wasm2JSGlue::emitMemory(
     auto& seg = wasm.memory.segments[i];
     if (!seg.isPassive) {
       // Plain active segments are decoded directly into the main memory.
-      out << "base64DecodeToExistingUint8Array(bufferView, " << globalOffset(seg)
-          << ", \"" << base64Encode(seg.data) << "\");\n";
+      out << "base64DecodeToExistingUint8Array(bufferView, "
+          << globalOffset(seg) << ", \"" << base64Encode(seg.data) << "\");\n";
     } else {
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
-      out << "memorySegments[" << i << "] = base64DecodeToExistingUint8Array(new Uint8Array(" << seg.data.size() << ")"
+      out << "memorySegments[" << i
+          << "] = base64DecodeToExistingUint8Array(new Uint8Array("
+          << seg.data.size() << ")"
           << ", 0, \"" << base64Encode(seg.data) << "\");\n";
     }
   }

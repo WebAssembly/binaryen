@@ -55,9 +55,8 @@ extern cashew::IString DATA_DROP;
 // like reinterpret, etc.
 // The optional "specific" parameter is a specific function we want. If not
 // provided, we create them all.
-inline void
-ensureHelpers(Module* wasm,
-                           cashew::IString specific = cashew::IString()) {
+inline void ensureHelpers(Module* wasm,
+                          cashew::IString specific = cashew::IString()) {
   auto ensureImport = [&](Name name, Type params, Type results) {
     if (wasm->getFunctionOrNull(name)) {
       return;
@@ -81,8 +80,10 @@ ensureHelpers(Module* wasm,
   ensureImport(SCRATCH_STORE_F32, {Type::f32}, Type::none);
   ensureImport(SCRATCH_LOAD_F64, {}, Type::f64);
   ensureImport(SCRATCH_STORE_F64, {Type::f64}, Type::none);
-  ensureImport(ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
-  ensureImport(MEMORY_INIT, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::none);
+  ensureImport(
+    ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+  ensureImport(
+    MEMORY_INIT, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_FILL, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(DATA_DROP, {Type::i32}, Type::none);
@@ -93,7 +94,8 @@ inline bool isHelper(cashew::IString name) {
          name == SCRATCH_LOAD_I64 || name == SCRATCH_STORE_I64 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
          name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||
-         name == ATOMIC_WAIT_I32 || name == MEMORY_INIT || name == MEMORY_FILL || name == MEMORY_COPY || name == DATA_DROP;
+         name == ATOMIC_WAIT_I32 || name == MEMORY_INIT ||
+         name == MEMORY_FILL || name == MEMORY_COPY || name == DATA_DROP;
 }
 
 } // namespace wasm2js
