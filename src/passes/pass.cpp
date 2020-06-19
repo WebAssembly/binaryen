@@ -353,6 +353,12 @@ void PassRegistry::registerPasses() {
   registerPass("stackify",
                "Unfold all expressions into a flat stack machine format",
                createStackifyPass);
+  registerPass("stack-dce",
+               "Remove unreachable code in a stackified module",
+               createStackDCEPass);
+  registerPass("stack-remove-blocks",
+               "Remove unneeded blocks in a stackified module",
+               createStackRemoveBlocksPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",

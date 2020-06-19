@@ -58,7 +58,9 @@ set(passes_SOURCES
   PrintFunctionMap.cpp
   RoundTrip.cpp
   Stackify.cpp
+  StackDCE.cpp
   StackIR.cpp
+  StackRemoveBlocks.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
