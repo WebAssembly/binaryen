@@ -1858,12 +1858,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicNotify(AtomicNotify* curr) {
-      Ref call = ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS),
-        IString("notify")));
+      Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
+        ValueBuilder::makeName(ATOMICS), IString("notify")));
       ValueBuilder::appendToCall(call, ValueBuilder::makeName(HEAP32));
       ValueBuilder::appendToCall(call, makePointer(curr->ptr, curr->offset));
-      ValueBuilder::appendToCall(call, visit(curr->notifyCount, EXPRESSION_RESULT));
+      ValueBuilder::appendToCall(call,
+                                 visit(curr->notifyCount, EXPRESSION_RESULT));
       return call;
     }
     Ref visitAtomicFence(AtomicFence* curr) {
