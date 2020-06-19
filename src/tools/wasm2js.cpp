@@ -563,6 +563,11 @@ private:
                          Element& e,
                          Name testFuncName,
                          Name asmModule);
+  Ref emitInvokeFunc(Builder& wasmBuilder,
+                     Element& e,
+                     Name testFuncName,
+                     Name asmModule);
+  bool isInvokeHandled(Element& e);
   bool isAssertHandled(Element& e);
   void fixCalls(Ref asmjs, Name asmModule);
 
@@ -690,6 +695,28 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
   return outerFunc;
 }
 
+Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
+                                     Element& e,
+                                     Name testFuncName,
+                                     Name asmModule) {
+  Expression* body = sexpBuilder.parseExpression(e);
+  std::unique_ptr<Function> testFunc(
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             body->type,
+                             std::vector<NameType>{},
+                             body));
+  Ref jsFunc = processFunction(testFunc.get());
+  fixCalls(jsFunc, asmModule);
+  emitFunction(jsFunc);
+  return jsFunc;
+}
+
+bool AssertionEmitter::isInvokeHandled(Element& e) {
+  return e.isList() && e.size() >= 2 && e[0]->isStr() &&
+         e[0]->str() == Name("invoke");
+}
+
 bool AssertionEmitter::isAssertHandled(Element& e) {
   return e.isList() && e.size() >= 2 && e[0]->isStr() &&
          (e[0]->str() == Name("assert_return") ||
@@ -796,19 +823,31 @@ void AssertionEmitter::emit() {
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
-    if (!isAssertHandled(e)) {
+    if (!isInvokeHandled(e) && !isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
     }
     Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isInvoke = (e[0]->str() == Name("invoke"));
     bool isReturn = (e[0]->str() == Name("assert_return"));
     bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
-    Element& testOp = *e[1];
+    Element* assertOp;
+    // An assertion of an invoke has the invoke inside the assert.
+    if (isAssertHandled(e)) {
+      assertOp = e[1];
+    } else {
+      assertOp = &e;
+    }
     // Replace "invoke" with "call"
-    testOp[0]->setString(IString("call"), false, false);
+    (*assertOp)[0]->setString(IString("call"), false, false);
     // Need to claim dollared to get string as function target
-    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
-
+    (*assertOp)[1]->setString((*assertOp)[1]->str(), /*dollared=*/true, false);
+    if (isInvoke) {
+      emitInvokeFunc(wasmBuilder, e, testFuncName, asmModule);
+      out << testFuncName.str << "();\n";
+      continue;
+    }
+    // Otherwise, this is some form of assertion.
     if (isReturn) {
       emitAssertReturnFunc(wasmBuilder, e, testFuncName, asmModule);
     } else if (isReturnNan) {
