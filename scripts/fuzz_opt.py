@@ -828,6 +828,7 @@ opt_choices = [
     ["--simplify-locals-notee"],
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
+    ["--stackify", "--unstackify"],
     ["--vacuum"],
 ]
 
@@ -851,6 +852,10 @@ def randomize_opt_flags():
     if random.random() < 0.5:
         pos = random.randint(0, len(flag_groups))
         flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+    # maybe add an extra stackification round trip
+    if True:
+        pos = random.randint(0, len(flag_groups))
+        flag_groups = flag_groups[:pos] + [['--stackify', '--unstackify']] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
