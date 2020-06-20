@@ -926,6 +926,16 @@ private:
     if (binary->right->is<Const>()) {
       return;
     }
+    if (auto* binaryLeft = binary->left->dynCast<Binary>()) {
+      if (Properties::isSymmetric(binaryLeft)) {
+        return canonicalize(binaryLeft);
+      }
+    }
+    if (auto* binaryRight = binary->right->dynCast<Binary>()) {
+      if (Properties::isSymmetric(binaryRight)) {
+        return canonicalize(binaryRight);
+      }
+    }
     // Prefer a get on the right.
     if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
       return maybeSwap();

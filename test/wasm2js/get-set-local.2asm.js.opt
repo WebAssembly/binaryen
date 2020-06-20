@@ -21,7 +21,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function legalstub$1($0, $1, $2) {
-  return !$2 & ($0 | 0) == ($1 | 0);
+  return ($0 | 0) == ($1 | 0) & !$2;
  }
  
  var FUNCTION_TABLE = [];

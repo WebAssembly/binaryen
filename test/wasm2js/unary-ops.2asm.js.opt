@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
  function $7($0) {
   $0 = $0 | 0;
   if ($0) {
-   $0 = 31 - Math_clz32($0 + -1 ^ $0) | 0
+   $0 = 31 - Math_clz32($0 ^ $0 + -1) | 0
   } else {
    $0 = 32
   }
@@ -49,7 +49,7 @@ function asmFunc(global, env, buffer) {
   var $4 = 0;
   $4 = Math_clz32($0) + 32 | 0;
   $0 = Math_clz32($1_1);
-  return !$3 & ((($0 | 0) == 32 ? $4 : $0) | 0) == ($2 | 0);
+  return ((($0 | 0) == 32 ? $4 : $0) | 0) == ($2 | 0) & !$3;
  }
  
  function legalstub$2($0, $1_1, $2, $3) {
@@ -57,7 +57,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$3($0, $1_1, $2) {
-  return !$2 & ($0 | 0) == ($1_1 | 0);
+  return ($0 | 0) == ($1_1 | 0) & !$2;
  }
  
  function legalstub$4($0, $1_1, $2) {

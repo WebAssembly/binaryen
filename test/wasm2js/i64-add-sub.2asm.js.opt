@@ -40,7 +40,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$2($0, $1_1, $2, $3, $4, $5) {
-  return ($4 | 0) == ($0 - $2 | 0) & ($5 | 0) == ($1_1 - (($0 >>> 0 < $2 >>> 0) + $3 | 0) | 0);
+  return ($0 - $2 | 0) == ($4 | 0) & ($5 | 0) == ($1_1 - (($0 >>> 0 < $2 >>> 0) + $3 | 0) | 0);
  }
  
  var FUNCTION_TABLE = [];
