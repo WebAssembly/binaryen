@@ -2435,66 +2435,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
     memorySegments[segment] = new Uint8Array(0);
   }
       )";
-    } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
-      out << R"(
-  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
-    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
-    var result = Atomics.wait(HEAP32, ptr, expected);
-    if (result == 'ok') return 0;
-    if (result == 'not-equal') return 1;
-    if (result == 'timed-out') return 2;
-    throw 'bad result ' + result;
-  }
-      )";
-    } else if (import->base == ABI::wasm2js::ATOMIC_RMW_I64) {
-      out << R"(
-  function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
-    assert(bytes == 8); // TODO
-    var view = new BigInt64Array(bufferView.buffer); // TODO cache
-    ptr = (ptr + offset) >> 3;
-    var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));
-    var result;
-    switch (op) {
-      case 0: { // Add
-        result = Atomics.add(view, ptr, value);
-        break;
-      }
-      case 1: { // Sub
-        result = Atomics.sub(view, ptr, value);
-        break;
-      }
-      case 2: { // And
-        result = Atomics.and(view, ptr, value);
-        break;
-      }
-      case 3: { // Or
-        result = Atomics.or(view, ptr, value);
-        break;
-      }
-      case 4: { // Xor
-        result = Atomics.xor(view, ptr, value);
-        break;
-      }
-      case 5: { // Xchg
-        result = Atomics.exchange(view, ptr, value);
-        break;
-      }
-      default: throw 'bad op';
-    }
-    var low = Number(result & BigInt(0xffffffff)) | 0;
-    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
-    stashedBits = high;
-    return low;
-  }
-      )";
-    } else if (import->base == ABI::wasm2js::GET_STASHED_BITS) {
-      out << R"(
-  var stashedBits = 0;
-
-  function wasm2js_get_stashed_bits() {
-    return stashedBits;
-  }
-      )";
     }
   });
 
