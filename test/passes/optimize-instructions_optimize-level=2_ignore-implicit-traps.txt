@@ -29,13 +29,13 @@
        (i32.rem_s
         (i32.add
          (i32.mul
-          (local.get $0)
           (local.tee $7
            (i32.add
             (local.get $0)
             (i32.const 2)
            )
           )
+          (local.get $0)
          )
          (i32.const 17)
         )
@@ -115,10 +115,10 @@
         (i32.rem_s
          (i32.add
           (i32.mul
-           (local.get $0)
            (local.tee $7
             (local.get $0)
            )
+           (local.get $0)
           )
           (i32.const 17)
          )
@@ -208,10 +208,10 @@
         (i32.rem_s
          (i32.add
           (i32.mul
-           (local.get $0)
            (i32.eqz
             (local.get $0)
            )
+           (local.get $0)
           )
           (i32.const 17)
          )

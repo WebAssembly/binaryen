@@ -361,8 +361,11 @@
    )
   )
   (drop
-   (i32.eqz
-    (i32.const 1000)
+   (i32.and
+    (i32.const 1)
+    (i32.eqz
+     (i32.const 1000)
+    )
    )
   )
   (drop
@@ -417,8 +420,8 @@
   )
   (drop
    (i32.and
-    (local.get $x)
     (i32.const 4)
+    (local.get $x)
    )
   )
   (drop
@@ -429,16 +432,16 @@
   )
   (drop
    (i32.and
-    (local.get $x)
     (local.get $y)
+    (local.get $x)
    )
   )
   (drop
    (i32.and
+    (local.get $y)
     (local.tee $x
      (i32.const -4)
     )
-    (local.get $y)
    )
   )
   (drop
@@ -451,10 +454,10 @@
   )
   (drop
    (i32.and
+    (local.get $x)
     (block $block4 (result i32)
      (i32.const -6)
     )
-    (local.get $x)
    )
   )
   (drop
@@ -469,33 +472,33 @@
   )
   (drop
    (i32.and
-    (block $block7 (result i32)
-     (i32.const 8)
-    )
     (loop $loop-in6 (result i32)
      (i32.const 7)
+    )
+    (block $block7 (result i32)
+     (i32.const 8)
     )
    )
   )
   (drop
    (i32.and
-    (block $block9 (result i32)
-     (i32.const 10)
-    )
     (loop $loop-in8 (result i32)
      (call $and-pos1)
      (i32.const 9)
     )
+    (block $block9 (result i32)
+     (i32.const 10)
+    )
    )
   )
   (drop
    (i32.and
+    (loop $loop-in10 (result i32)
+     (i32.const 11)
+    )
     (block $block11 (result i32)
      (call $and-pos1)
      (i32.const 12)
-    )
-    (loop $loop-in10 (result i32)
-     (i32.const 11)
     )
    )
   )
@@ -533,10 +536,10 @@
   )
   (drop
    (i32.and
+    (local.get $x)
     (block $block17 (result i32)
      (i32.const 15)
     )
-    (local.get $x)
    )
   )
   (drop
@@ -553,14 +556,14 @@
   )
   (drop
    (i32.and
-    (i32.gt_s
-     (i32.const 22)
-     (i32.const 23)
-    )
     (i32.gt_u
      (i32.const 20)
      (i32.const 21)
     )
+    (i32.gt_s
+     (i32.const 22)
+     (i32.const 23)
+    )
    )
   )
   (drop
@@ -595,11 +598,11 @@
   )
   (drop
    (i32.add
-    (i32.ctz
-     (local.get $y)
-    )
     (i32.eqz
      (local.get $x)
+    )
+    (i32.ctz
+     (local.get $y)
     )
    )
   )
@@ -610,25 +613,34 @@
    (nop)
   )
   (if
-   (call $ne0)
+   (i32.ne
+    (i32.const 0)
+    (call $ne0)
+   )
    (nop)
   )
   (if
    (i32.or
-    (call $ne0)
-    (call $ne0)
+    (i32.ne
+     (i32.const 0)
+     (call $ne0)
+    )
+    (i32.ne
+     (i32.const 0)
+     (call $ne0)
+    )
    )
    (nop)
   )
   (if
    (i32.and
     (i32.ne
-     (call $ne0)
      (i32.const 0)
+     (call $ne0)
     )
     (i32.ne
-     (call $ne0)
      (i32.const 0)
+     (call $ne0)
     )
    )
    (nop)
@@ -673,15 +685,15 @@
   )
   (i32.store offset=2
    (i32.add
-    (local.get $0)
     (i32.const 7)
+    (local.get $0)
    )
    (local.get $0)
   )
   (i32.store offset=2
    (i32.add
-    (local.get $0)
     (i32.const -11)
+    (local.get $0)
    )
    (local.get $0)
   )
@@ -733,8 +745,8 @@
   )
   (i32.load offset=2
    (i32.add
-    (local.get $0)
     (i32.const 10)
+    (local.get $0)
    )
   )
  )
@@ -1168,11 +1180,11 @@
    (i32.shr_s
     (i32.shl
      (i32.xor
-      (local.get $0)
       (i32.le_u
        (local.get $0)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (i32.const 24)
     )
@@ -1183,11 +1195,11 @@
  (func $linear-sums (param $0 i32) (param $1 i32)
   (drop
    (i32.add
+    (local.get $1)
     (i32.shl
      (local.get $0)
      (i32.const 4)
     )
-    (local.get $1)
    )
   )
   (drop
@@ -1253,8 +1265,8 @@
   (drop
    (i32.add
     (i32.mul
-     (local.get $0)
      (i32.const 10)
+     (local.get $0)
     )
     (i32.const 14)
    )
@@ -1298,17 +1310,20 @@
   )
   (drop
    (i32.and
-    (local.get $0)
     (i32.and
      (local.get $0)
      (i32.const 11)
     )
+    (local.get $0)
    )
   )
   (drop
    (i32.and
-    (local.get $0)
-    (i32.const 8)
+    (i32.and
+     (i32.const 11)
+     (local.get $0)
+    )
+    (i32.const 200)
    )
   )
   (drop
@@ -1864,8 +1879,8 @@
   )
   (return
    (i32.eq
-    (local.get $$e)
     (local.get $$conv)
+    (local.get $$e)
    )
   )
  )
@@ -1925,13 +1940,13 @@
   )
   (drop
    (i32.eq
-    (i32.load8_u
-     (local.get $0)
-    )
     (i32.and
      (local.get $1)
      (i32.const 255)
     )
+    (i32.load8_u
+     (local.get $0)
+    )
    )
   )
   (drop
@@ -1964,9 +1979,6 @@
   )
   (drop
    (i32.eq
-    (i32.load8_u
-     (local.get $0)
-    )
     (i32.shr_s
      (i32.shl
       (local.get $1)
@@ -1974,19 +1986,22 @@
      )
      (i32.const 24)
     )
+    (i32.load8_u
+     (local.get $0)
+    )
    )
   )
   (drop
    (i32.eq
-    (i32.load8_s
-     (local.get $0)
-    )
     (i32.shr_s
      (i32.shl
       (local.get $1)
       (i32.const 16)
      )
      (i32.const 16)
+    )
+    (i32.load8_s
+     (local.get $0)
     )
    )
   )
@@ -2236,41 +2251,53 @@
  (func $zero-shifts-is-not-sign-ext
   (drop
    (i32.eq
-    (i32.load16_s align=1
-     (i32.const 790656516)
-    )
     (i32.const -5431187)
+    (i32.add
+     (i32.const 0)
+     (i32.load16_s align=1
+      (i32.const 790656516)
+     )
+    )
    )
   )
   (drop
    (i32.eq
-    (i32.shl
-     (i32.load16_s align=1
-      (i32.const 790656516)
-     )
-     (i32.const 1)
-    )
     (i32.const -5431187)
+    (i32.add
+     (i32.const 0)
+     (i32.shl
+      (i32.load16_s align=1
+       (i32.const 790656516)
+      )
+      (i32.const 1)
+     )
+    )
    )
   )
  )
  (func $zero-ops (result i32)
   (return
    (i32.eq
-    (i32.load16_s align=1
-     (i32.const 790656516)
-    )
     (i32.const -1337)
+    (i32.add
+     (i32.const 0)
+     (i32.load16_s align=1
+      (i32.const 790656516)
+     )
+    )
    )
   )
  )
  (func $sign-ext-1-and-ne (result i32)
   (i32.ne
-   (i32.and
-    (call $sign-ext-1-and-ne)
-    (i32.const 2147483647)
+   (i32.const 1333788672)
+   (i32.shr_s
+    (i32.shl
+     (call $sign-ext-1-and-ne)
+     (i32.const 1)
+    )
+    (i32.const 1)
    )
-   (i32.const -2147483648)
   )
  )
  (func $neg-shifts-and-255 (result i32)
@@ -2454,18 +2481,18 @@
   )
   (drop
    (i32.and
-    (local.get $y)
     (i32.eqz
      (local.get $x)
     )
+    (local.get $y)
    )
   )
   (drop
    (i32.and
+    (local.get $x)
     (i32.eqz
      (local.get $y)
     )
-    (local.get $x)
    )
   )
   (drop
@@ -2480,11 +2507,11 @@
   )
   (drop
    (i32.and
-    (i32.eqz
-     (local.get $y)
-    )
     (i32.wrap_i64
      (i64.const 1)
+    )
+    (i32.eqz
+     (local.get $y)
     )
    )
   )
@@ -2643,7 +2670,10 @@
  )
  (func $abstract-additions (param $x32 i32) (param $x64 i64) (param $y32 f32) (param $y64 f64)
   (drop
-   (local.get $x32)
+   (i32.or
+    (i32.const 0)
+    (local.get $x32)
+   )
   )
   (drop
    (local.get $x32)
@@ -2655,7 +2685,10 @@
    (local.get $x32)
   )
   (drop
-   (local.get $x64)
+   (i64.or
+    (i64.const 0)
+    (local.get $x64)
+   )
   )
   (drop
    (local.get $x64)
@@ -2791,17 +2824,20 @@
   )
   (drop
    (i32.eq
-    (local.get $x32)
-    (i32.const 10)
-   )
-  )
-  (drop
-   (i32.eq
+    (i32.const 20)
     (i32.add
      (local.get $x32)
      (i32.const 10)
     )
+   )
+  )
+  (drop
+   (i32.eq
     (local.get $x32)
+    (i32.add
+     (local.get $x32)
+     (i32.const 10)
+    )
    )
   )
   (drop
@@ -2812,29 +2848,29 @@
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.sub
      (local.get $x32)
      (i32.const 30)
     )
-    (local.get $x32)
    )
   )
   (drop
    (i32.eq
-    (i32.sub
+    (local.get $x32)
+    (i32.add
      (local.get $x32)
      (i32.const 30)
     )
-    (local.get $x32)
    )
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.sub
      (local.get $x32)
      (i32.const 10)
     )
-    (local.get $x32)
    )
   )
   (drop
@@ -3256,39 +3292,51 @@
  )
  (func $pre-combine-or (param $x i32) (param $y i32)
   (drop
-   (i32.ge_s
-    (local.get $x)
-    (local.get $y)
-   )
-  )
-  (drop
-   (i32.ge_s
-    (local.get $x)
-    (local.get $y)
+   (i32.or
+    (i32.gt_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.eq
+     (local.get $y)
+     (local.get $x)
+    )
    )
   )
   (drop
    (i32.or
+    (i32.eq
+     (local.get $y)
+     (local.get $x)
+    )
+    (i32.gt_s
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.gt_s
+     (local.get $x)
+     (local.get $y)
+    )
     (i32.eq
      (local.get $x)
      (i32.const 1)
     )
-    (i32.gt_s
-     (local.get $x)
-     (local.get $y)
-    )
    )
   )
   (drop
    (i32.or
-    (i32.eq
-     (local.get $x)
-     (local.get $y)
-    )
     (i32.gt_s
      (local.get $x)
      (i32.const 1)
     )
+    (i32.eq
+     (local.get $x)
+     (local.get $y)
+    )
    )
   )
   (drop
@@ -3310,17 +3358,23 @@
      (call $ne0)
     )
     (i32.eq
-     (call $ne0)
      (local.get $y)
+     (call $ne0)
     )
    )
   )
  )
  (func $combine-or (param $x i32) (param $y i32)
   (drop
-   (i32.ge_s
-    (local.get $x)
-    (local.get $y)
+   (i32.or
+    (i32.gt_s
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.eq
+     (local.get $x)
+     (local.get $y)
+    )
    )
   )
  )

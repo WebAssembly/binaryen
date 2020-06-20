@@ -388,10 +388,10 @@
   (i32.add
    (i32.add
     (i32.add
+     (local.get $0)
      (call $lb
       (i32.const 3)
      )
-     (local.get $0)
     )
     (block (result i32)
      (drop

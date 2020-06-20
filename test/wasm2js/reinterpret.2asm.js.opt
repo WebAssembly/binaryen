@@ -52,7 +52,7 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $1($0) {
   $0 = $0 | 0;
-  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(0, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(0)) | 0) == ($0 | 0) | 0;
+  return ($0 | 0) == ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(0, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(0)) | 0) | 0;
  }
  
  function $2($0, $1_1) {

@@ -280,9 +280,18 @@ struct OptimizeInstructions
   : public WalkerPass<
       PostWalker<OptimizeInstructions,
                  UnifiedExpressionVisitor<OptimizeInstructions>>> {
+
+  bool normalize = false;
+  bool finalize = false;
+
+  OptimizeInstructions(bool normalize, bool finalize)
+    : normalize(normalize), finalize(finalize) {}
+
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeInstructions; }
+  Pass* create() override {
+    return new OptimizeInstructions(normalize, finalize);
+  }
 
   void prepareToRun(PassRunner* runner, Module* module) override {
 #if 0
@@ -345,7 +354,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary)) {
+      if (normalize && Properties::isSymmetric(binary)) {
         canonicalize(binary);
       }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
@@ -1522,6 +1531,14 @@ private:
   }
 };
 
-Pass* createOptimizeInstructionsPass() { return new OptimizeInstructions(); }
+Pass* createOptimizeInstructionsPass() {
+  return new OptimizeInstructions(false, false);
+}
+Pass* createPreOptimizeInstructionsPass() {
+  return new OptimizeInstructions(true, false);
+}
+Pass* createPostOptimizeInstructionsPass() {
+  return new OptimizeInstructions(false, true);
+}
 
 } // namespace wasm

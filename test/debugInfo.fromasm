@@ -90,8 +90,8 @@
    ;;@ fib.c:4:0
    (local.set $4
     (i32.add
-     (local.get $2)
      (local.get $3)
+     (local.get $2)
     )
    )
    ;;@ fib.c:3:0
@@ -184,8 +184,8 @@
     )
    )
    (i32.add
-    (local.get $0)
     (local.get $1)
+    (local.get $0)
    )
   )
  )

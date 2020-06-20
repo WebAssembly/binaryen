@@ -229,6 +229,9 @@ void PassRegistry::registerPasses() {
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
+  registerPass("post-optimize-instructions",
+               "optimizes all instruction combinations",
+               createPostOptimizeInstructionsPass);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
                createPrecomputePass);
@@ -236,6 +239,9 @@ void PassRegistry::registerPasses() {
                "computes compile-time evaluatable expressions and propagates "
                "them through locals",
                createPrecomputePropagatePass);
+  registerPass("pre-optimize-instructions",
+               "optimizes and canonicalizes instruction combinations",
+               createPreOptimizeInstructionsPass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified",
                "print in minified s-expression format",
@@ -388,7 +394,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("dce");
   add("remove-unused-brs");
   add("remove-unused-names");
-  add("optimize-instructions");
+  add("pre-optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("pick-load-signs");
   }
@@ -444,10 +450,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
+    add("post-optimize-instructions");
   } else {
     add("precompute");
+    add("optimize-instructions");
   }
-  add("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }

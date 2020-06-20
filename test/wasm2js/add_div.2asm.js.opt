@@ -22,7 +22,7 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function foo($0) {
   $0 = $0 | 0;
-  return (($0 | 0) / -100 | 0) + (($0 >>> 0) / 100 | 0) | 0;
+  return (($0 >>> 0) / 100 | 0) + (($0 | 0) / -100 | 0) | 0;
  }
  
  var FUNCTION_TABLE = [];
