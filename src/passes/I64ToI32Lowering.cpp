@@ -452,7 +452,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
        curr->value,
        builder->makeLocalGet(fetchOutParam(curr->value), Type::i32)},
       Type::i32);
-    auto* getHigh = builder->makeCall(GET_TEMP_RET0, {}, Type::i32);
+    auto* getHigh = builder->makeCall(ABI::wasm2js::GET_STASHED_BITS, {}, Type::i32);
     auto* setLow = builder->makeLocalSet(lowBits, getLow);
     auto* setHigh = builder->makeLocalSet(highBits, getHigh);
     auto* finalGet = builder->makeLocalGet(lowBits, Type::i32);
