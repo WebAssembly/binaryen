@@ -452,13 +452,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
        curr->value,
        builder->makeLocalGet(fetchOutParam(curr->value), Type::i32)},
       Type::i32);
-    auto* getHigh = builder->makeCall(ABI::wasm2js::GET_STASHED_BITS, {}, Type::i32);
+    auto* getHigh =
+      builder->makeCall(ABI::wasm2js::GET_STASHED_BITS, {}, Type::i32);
     auto* setLow = builder->makeLocalSet(lowBits, getLow);
     auto* setHigh = builder->makeLocalSet(highBits, getHigh);
     auto* finalGet = builder->makeLocalGet(lowBits, Type::i32);
-    auto* result = builder->makeBlock({
-      setLow, setHigh, finalGet
-    });
+    auto* result = builder->makeBlock({setLow, setHigh, finalGet});
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
