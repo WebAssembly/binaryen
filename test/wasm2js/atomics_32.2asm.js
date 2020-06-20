@@ -48,7 +48,7 @@
       default: throw 'bad op';
     }
     var low = Number(result & BigInt(0xffffffff)) | 0;
-    var high = Number(result >>> BigInt(32)) | 0;
+    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
     stashedBits = high;
     return low;
   }

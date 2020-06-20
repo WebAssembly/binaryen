@@ -2555,7 +2555,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
     assert(bytes == 8); // TODO
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
     ptr = (ptr + offset) >> 3;
-    var value = BigInt(valueLow) | (BigInt(valueHigh) << BigInt(32));
+    var value = BigInt(valueLow | 0) | (BigInt(valueHigh | 0) << BigInt(32));
     var result;
     switch (op) {
       case 0: { // Add
@@ -2585,7 +2585,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
       default: throw 'bad op';
     }
     var low = Number(result & BigInt(0xffffffff)) | 0;
-    var high = Number(result >>> BigInt(32)) | 0;
+    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
     stashedBits = high;
     return low;
   }
