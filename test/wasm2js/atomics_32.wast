@@ -26,5 +26,6 @@
     (local.set $x (i32.atomic.rmw8.add_u (i32.const 8) (i32.const 12)))
     (local.set $x (i32.atomic.rmw16.sub_u (i32.const 8) (i32.const 12)))
     (local.set $y (i64.atomic.rmw.add (i32.const 8) (i64.const 16)))
+    (local.set $y (i64.atomic.rmw.xor offset=32 (i32.const 8) (i64.const -1)))
   )
 )

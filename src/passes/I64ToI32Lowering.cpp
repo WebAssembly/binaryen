@@ -441,13 +441,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
     // We cannot break this up into smaller operations as it must be atomic.
     // Lower to an instrinsic function that wasm2js will implement.
-    assert(curr->offset == 0);
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
     auto* getLow = builder->makeCall(
       ABI::wasm2js::ATOMIC_RMW_I64,
       {builder->makeConst(Literal(int32_t(curr->op))),
        builder->makeConst(Literal(int32_t(curr->bytes))),
+       builder->makeConst(Literal(int32_t(curr->offset))),
        curr->ptr,
        curr->value,
        builder->makeLocalGet(fetchOutParam(curr->value), Type::i32)},

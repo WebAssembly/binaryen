@@ -2551,10 +2551,10 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     } else if (import->base == ABI::wasm2js::ATOMIC_RMW_I64) {
       out << R"(
-  function wasm2js_atomic_rmw_i64(op, bytes, ptr, valueLow, valueHigh) {
+  function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
     assert(bytes == 8); // TODO
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
-    ptr >>= 3;
+    ptr = (ptr + offset) >> 3;
     var value = BigInt(valueLow) | (BigInt(valueHigh) << BigInt(32));
     var result;
     switch (op) {

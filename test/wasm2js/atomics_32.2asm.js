@@ -14,10 +14,10 @@
     throw 'bad result ' + result;
   }
       
-  function wasm2js_atomic_rmw_i64(op, bytes, ptr, valueLow, valueHigh) {
+  function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
     assert(bytes == 8); // TODO
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
-    ptr >>= 3;
+    ptr = (ptr + offset) >> 3;
     var value = BigInt(valueLow) | (BigInt(valueHigh) << BigInt(32));
     var result;
     switch (op) {
@@ -88,7 +88,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0;
   Atomics.compareExchange(HEAP8, 1024, 1, 2) | 0;
   Atomics.compareExchange(HEAP16, 1024 >> 1, 1, 2) | 0;
   Atomics.compareExchange(HEAP32, 1024 >> 2, 1, 2) | 0;
@@ -111,8 +111,11 @@ function asmFunc(global, env, buffer) {
   Atomics.add(HEAP8, 8, 12);
   Atomics.sub(HEAP16, 8 >> 1, 12);
   i64toi32_i32$0 = 0;
-  i64toi32_i32$1 = wasm2js_atomic_rmw_i64(0 | 0, 8 | 0, 8 | 0, 16 | 0, i64toi32_i32$0 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_atomic_rmw_i64(0 | 0, 8 | 0, 0 | 0, 8 | 0, 16 | 0, i64toi32_i32$0 | 0) | 0;
   i64toi32_i32$2 = wasm2js_get_stashed_bits() | 0;
+  i64toi32_i32$2 = -1;
+  i64toi32_i32$1 = wasm2js_atomic_rmw_i64(4 | 0, 8 | 0, 32 | 0, 8 | 0, -1 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$0 = wasm2js_get_stashed_bits() | 0;
  }
  
  var FUNCTION_TABLE = [];

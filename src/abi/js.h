@@ -90,7 +90,7 @@ inline void ensureHelpers(Module* wasm,
   ensureImport(
     ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
   ensureImport(
-    ATOMIC_RMW_I64, {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+    ATOMIC_RMW_I64, {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
   ensureImport(
     GET_STASHED_BITS, {}, Type::i32);
 }
