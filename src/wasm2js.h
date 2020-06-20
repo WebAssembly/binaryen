@@ -2593,7 +2593,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::GET_STASHED_BITS) {
       out << R"(
   var stashedBits = 0;
-  
+
   function wasm2js_get_stashed_bits() {
     return stashedBits;
   }

@@ -4,6 +4,7 @@
   (data passive "world!")
   (func "test"
     (local $x i32)
+    (local $y i64)
     (local.set $x (i32.atomic.rmw8.cmpxchg_u (i32.const 1024) (i32.const 1) (i32.const 2)))
     (local.set $x (i32.atomic.rmw16.cmpxchg_u (i32.const 1024) (i32.const 1) (i32.const 2)))
     (local.set $x (i32.atomic.rmw.cmpxchg (i32.const 1024) (i32.const 1) (i32.const 2)))
@@ -24,5 +25,6 @@
     (local.set $x (i32.atomic.rmw.xchg (i32.const 8) (i32.const 12)))
     (local.set $x (i32.atomic.rmw8.add_u (i32.const 8) (i32.const 12)))
     (local.set $x (i32.atomic.rmw16.sub_u (i32.const 8) (i32.const 12)))
+    (local.set $y (i64.atomic.rmw.add (i32.const 8) (i64.const 16)))
   )
 )

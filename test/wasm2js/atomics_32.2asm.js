@@ -14,6 +14,51 @@
     throw 'bad result ' + result;
   }
       
+  function wasm2js_atomic_rmw_i64(op, bytes, ptr, valueLow, valueHigh) {
+    assert(bytes == 8); // TODO
+    var view = new BigInt64Array(bufferView.buffer); // TODO cache
+    ptr >>= 3;
+    var value = BigInt(valueLow) | (BigInt(valueHigh) << BigInt(32));
+    var result;
+    switch (op) {
+      case 0: { // Add
+        result = Atomics.add(view, ptr, value);
+        break;
+      }
+      case 1: { // Sub
+        result = Atomics.sub(view, ptr, value);
+        break;
+      }
+      case 2: { // And
+        result = Atomics.and(view, ptr, value);
+        break;
+      }
+      case 3: { // Or
+        result = Atomics.or(view, ptr, value);
+        break;
+      }
+      case 4: { // Xor
+        result = Atomics.xor(view, ptr, value);
+        break;
+      }
+      case 5: { // Xchg
+        result = Atomics.exchange(view, ptr, value);
+        break;
+      }
+      default: throw 'bad op';
+    }
+    var low = Number(result) | 0;
+    var high = Number(result >> BigInt(32)) | 0;
+    stashedBits = high;
+    return low;
+  }
+      
+  var stashedBits = 0;
+
+  function wasm2js_get_stashed_bits() {
+    return stashedBits;
+  }
+      
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
@@ -43,6 +88,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0;
   Atomics.compareExchange(HEAP8, 1024, 1, 2) | 0;
   Atomics.compareExchange(HEAP16, 1024 >> 1, 1, 2) | 0;
   Atomics.compareExchange(HEAP32, 1024 >> 2, 1, 2) | 0;
@@ -50,7 +96,8 @@ function asmFunc(global, env, buffer) {
   Atomics.load(HEAPU16, 1028 >> 1) | 0;
   Atomics.load(HEAP32, 1028 >> 2) | 0;
   Atomics.store(HEAP32, 100 >> 2, 200);
-  wasm2js_atomic_wait_i32(4 | 0, 8 | 0, -1 | 0, -1 | 0) | 0;
+  i64toi32_i32$0 = -1;
+  wasm2js_atomic_wait_i32(4 | 0, 8 | 0, -1 | 0, i64toi32_i32$0 | 0) | 0;
   wasm2js_memory_init(0, 512, 0, 4);
   wasm2js_memory_init(1, 1024, 4, 2);
   Atomics.notify(HEAP32, 4 >> 2, 2);
@@ -63,6 +110,9 @@ function asmFunc(global, env, buffer) {
   Atomics.exchange(HEAP32, 8 >> 2, 12);
   Atomics.add(HEAP8, 8, 12);
   Atomics.sub(HEAP16, 8 >> 1, 12);
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$1 = wasm2js_atomic_rmw_i64(0 | 0, 8 | 0, 8 | 0, 16 | 0, i64toi32_i32$0 | 0) | 0;
+  i64toi32_i32$2 = wasm2js_get_stashed_bits() | 0;
  }
  
  var FUNCTION_TABLE = [];
