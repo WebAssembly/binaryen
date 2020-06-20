@@ -353,6 +353,12 @@ void PassRegistry::registerPasses() {
   registerPass("stackify",
                "Unfold all expressions into a flat stack machine format",
                createStackifyPass);
+  registerPass("stackify-locals",
+               "Remove unnecessary local accesses in a stackified module",
+               createStackifyLocalsPass);
+  registerPass("stackify-drops",
+               "Remove dropped values from a stackified module",
+               createStackifyDropsPass);
   registerPass("stack-dce",
                "Remove unreachable code in a stackified module",
                createStackDCEPass);

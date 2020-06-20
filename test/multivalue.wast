@@ -52,16 +52,16 @@
   )
  )
 
- ;; Test multivalue globals
- (func $global (result i32 i64)
-  (global.set $g1
-   (tuple.make
-    (i32.const 42)
-    (i64.const 7)
-   )
-  )
-  (global.get $g2)
- )
+ ;; ;; Test multivalue globals
+ ;; (func $global (result i32 i64)
+ ;;  (global.set $g1
+ ;;   (tuple.make
+ ;;    (i32.const 42)
+ ;;    (i64.const 7)
+ ;;   )
+ ;;  )
+ ;;  (global.get $g2)
+ ;; )
 
  ;; Test lowering of multivalue drops
  (func $drop-call

@@ -58,6 +58,8 @@ set(passes_SOURCES
   PrintFunctionMap.cpp
   RoundTrip.cpp
   Stackify.cpp
+  StackifyDrops.cpp
+  StackifyLocals.cpp
   StackDCE.cpp
   StackIR.cpp
   StackRemoveBlocks.cpp

@@ -113,6 +113,8 @@ Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStackCheckPass();
 Pass* createStackifyPass();
+Pass* createStackifyLocalsPass();
+Pass* createStackifyDropsPass();
 Pass* createStackDCEPass();
 Pass* createStackRemoveBlocksPass();
 Pass* createStripDebugPass();
