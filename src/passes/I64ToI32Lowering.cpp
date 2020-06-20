@@ -521,7 +521,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
+    ABI::wasm2js::ensureHelpers(getModule());
   }
 
   void lowerReinterpretInt64(Unary* curr) {
@@ -539,7 +539,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, Type::f64));
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
+    ABI::wasm2js::ensureHelpers(getModule());
   }
 
   void lowerTruncFloatToInt(Unary* curr) {

@@ -275,7 +275,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
-  ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
+  ABI::wasm2js::ensureHelpers(wasm);
 
   // Process the code, and optimize if relevant.
   // First, do the lowering to a JS-friendly subset.
@@ -496,7 +496,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
   // The scratch memory helpers are emitted in the glue, see code and comments
   // below.
-  if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+  if (ABI::wasm2js::isHelper(import->base)) {
     return;
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -1404,10 +1404,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 L_NOT, visit(curr->value, EXPRESSION_RESULT));
             }
             case ReinterpretFloat32: {
-              ABI::wasm2js::ensureScratchMemoryHelpers(
-                module, ABI::wasm2js::SCRATCH_STORE_F32);
-              ABI::wasm2js::ensureScratchMemoryHelpers(
-                module, ABI::wasm2js::SCRATCH_LOAD_I32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_STORE_F32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_LOAD_I32);
 
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
@@ -1482,10 +1482,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
-              ABI::wasm2js::ensureScratchMemoryHelpers(
-                module, ABI::wasm2js::SCRATCH_STORE_I32);
-              ABI::wasm2js::ensureScratchMemoryHelpers(
-                module, ABI::wasm2js::SCRATCH_LOAD_F32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_STORE_I32);
+              ABI::wasm2js::ensureHelpers(module,
+                                          ABI::wasm2js::SCRATCH_LOAD_F32);
 
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
@@ -1839,20 +1839,31 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_INIT);
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
+                                    ValueBuilder::makeNum(curr->segment),
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->offset, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitDataDrop(DataDrop* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::DATA_DROP);
+      return ValueBuilder::makeCall(ABI::wasm2js::DATA_DROP,
+                                    ValueBuilder::makeNum(curr->segment));
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_COPY);
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_COPY,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->source, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitMemoryFill(MemoryFill* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_FILL,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitRefNull(RefNull* curr) {
       unimplemented(curr);
@@ -2077,7 +2088,7 @@ private:
   void emitMemory(std::string buffer,
                   std::string segmentWriter,
                   std::function<std::string(std::string)> accessGlobal);
-  void emitScratchMemorySupport();
+  void emitSpecialSupport();
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -2087,7 +2098,7 @@ void Wasm2JSGlue::emitPre() {
     emitPreES6();
   }
 
-  emitScratchMemorySupport();
+  emitSpecialSupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
@@ -2117,9 +2128,9 @@ void Wasm2JSGlue::emitPreES6() {
   ModuleUtils::iterImportedGlobals(
     wasm, [&](Global* import) { noteImport(import->module, import->base); });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    // The scratch memory helpers are emitted in the glue, see code and comments
+    // The special helpers are emitted in the glue, see code and comments
     // below.
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
     noteImport(import->module, import->base);
@@ -2202,9 +2213,9 @@ void Wasm2JSGlue::emitPostES6() {
   out << "abort:function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    // The scratch memory helpers are emitted in the glue, see code and comments
+    // The special helpers are emitted in the glue, see code and comments
     // below.
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
     out << "," << asmangle(import->base.str);
@@ -2244,11 +2255,15 @@ void Wasm2JSGlue::emitMemory(
   std::string buffer,
   std::string segmentWriter,
   std::function<std::string(std::string)> accessGlobal) {
+  if (!wasm.memory.exists) {
+    return;
+  }
+  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
   if (wasm.memory.segments.empty()) {
     return;
   }
 
-  auto expr =
+  out <<
     R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -2265,9 +2280,15 @@ void Wasm2JSGlue::emitMemory(
       uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
-    }
+    })";
+  if (wasm.features.hasBulkMemory()) {
+    // Passive segments in bulk memory are initialized into new arrays that are
+    // passed into here, and we need to return them.
+    out << R"(
+    return uint8Array;)";
+  }
+  out << R"( 
   })";
-  out << expr << '\n';
 
   auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -2283,25 +2304,35 @@ void Wasm2JSGlue::emitMemory(
 
   out << "var bufferView = new Uint8Array(" << buffer << ");\n";
 
-  for (auto& seg : wasm.memory.segments) {
-    assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "base64DecodeToExistingUint8Array(bufferView, " << globalOffset(seg)
-        << ", \"" << base64Encode(seg.data) << "\");\n";
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    auto& seg = wasm.memory.segments[i];
+    if (!seg.isPassive) {
+      // Plain active segments are decoded directly into the main memory.
+      out << "base64DecodeToExistingUint8Array(bufferView, "
+          << globalOffset(seg) << ", \"" << base64Encode(seg.data) << "\");\n";
+    } else {
+      // Fancy passive segments are decoded into typed arrays on the side, for
+      // later copying.
+      out << "memorySegments[" << i
+          << "] = base64DecodeToExistingUint8Array(new Uint8Array("
+          << seg.data.size() << ")"
+          << ", 0, \"" << base64Encode(seg.data) << "\");\n";
+    }
   }
 }
 
-void Wasm2JSGlue::emitScratchMemorySupport() {
+void Wasm2JSGlue::emitSpecialSupport() {
   // The scratch memory helpers are emitted here the glue. We may also want to
   // emit them inline at some point. (The reason they are imports is so that
   // they appear as "intrinsics" placeholders, and not normal functions that
   // the optimizer might want to do something with.)
-  bool needScratchMemory = false;
+  bool need = false;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
-      needScratchMemory = true;
+    if (ABI::wasm2js::isHelper(import->base)) {
+      need = true;
     }
   });
-  if (!needScratchMemory) {
+  if (!need) {
     return;
   }
 
@@ -2311,6 +2342,15 @@ void Wasm2JSGlue::emitScratchMemorySupport() {
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   )";
+
+  // If we have passive memory segments, or bulk memory operations that operate
+  // on segment indexes, we need to store those.
+  bool needMemorySegmentsList = false;
+  for (auto& seg : wasm.memory.segments) {
+    if (seg.isPassive) {
+      needMemorySegmentsList = true;
+    }
+  }
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
@@ -2363,8 +2403,107 @@ void Wasm2JSGlue::emitScratchMemorySupport() {
     return f64ScratchView[0];
   }
       )";
+    } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
+      needMemorySegmentsList = true;
+      out << R"(
+  function wasm2js_memory_init(segment, dest, offset, size) {
+    // TODO: traps on invalid things
+    bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::MEMORY_FILL) {
+      out << R"(
+  function wasm2js_memory_fill(dest, value, size) {
+    dest = dest >>> 0;
+    size = size >>> 0;
+    if (dest + size > bufferView.length) throw "trap: invalid memory.fill";
+    bufferView.fill(value, dest, dest + size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::MEMORY_COPY) {
+      out << R"(
+  function wasm2js_memory_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    bufferView.copyWithin(dest, source, source + size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::DATA_DROP) {
+      needMemorySegmentsList = true;
+      out << R"(
+  function wasm2js_data_drop(segment) {
+    // TODO: traps on invalid things
+    memorySegments[segment] = new Uint8Array(0);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
+      out << R"(
+  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
+    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
+    var result = Atomics.wait(HEAP32, ptr, expected);
+    if (result == 'ok') return 0;
+    if (result == 'not-equal') return 1;
+    if (result == 'timed-out') return 2;
+    throw 'bad result ' + result;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::ATOMIC_RMW_I64) {
+      out << R"(
+  function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
+    assert(bytes == 8); // TODO
+    var view = new BigInt64Array(bufferView.buffer); // TODO cache
+    ptr = (ptr + offset) >> 3;
+    var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));
+    var result;
+    switch (op) {
+      case 0: { // Add
+        result = Atomics.add(view, ptr, value);
+        break;
+      }
+      case 1: { // Sub
+        result = Atomics.sub(view, ptr, value);
+        break;
+      }
+      case 2: { // And
+        result = Atomics.and(view, ptr, value);
+        break;
+      }
+      case 3: { // Or
+        result = Atomics.or(view, ptr, value);
+        break;
+      }
+      case 4: { // Xor
+        result = Atomics.xor(view, ptr, value);
+        break;
+      }
+      case 5: { // Xchg
+        result = Atomics.exchange(view, ptr, value);
+        break;
+      }
+      default: throw 'bad op';
+    }
+    var low = Number(result & BigInt(0xffffffff)) | 0;
+    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
+    stashedBits = high;
+    return low;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::GET_STASHED_BITS) {
+      out << R"(
+  var stashedBits = 0;
+
+  function wasm2js_get_stashed_bits() {
+    return stashedBits;
+  }
+      )";
     }
   });
+
+  if (needMemorySegmentsList) {
+    out << R"(
+  var memorySegments = {};
+    )";
+  }
+
   out << '\n';
 }
 
