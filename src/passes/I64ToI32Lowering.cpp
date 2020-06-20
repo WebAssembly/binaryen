@@ -433,7 +433,34 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
-    assert(curr->type != Type::i64 && "64-bit AtomicRMW not implemented");
+    if (handleUnreachable(curr)) {
+      return;
+    }
+    if (curr->type != Type::i64) {
+      return;
+    }
+    // We cannot break this up into smaller operations as it must be atomic.
+    // Lower to an instrinsic function that wasm2js will implement.
+    assert(curr->offset == 0);
+    TempVar lowBits = getTemp();
+    TempVar highBits = getTemp();
+    auto* getLow = builder->makeCall(
+      ABI::wasm2js::ATOMIC_RMW_I64,
+      {builder->makeConst(Literal(int32_t(curr->op))),
+       builder->makeConst(Literal(int32_t(curr->bytes))),
+       curr->ptr,
+       curr->value,
+       builder->makeLocalGet(fetchOutParam(curr->value), Type::i32)},
+      Type::i32);
+    auto* getHigh = builder->makeCall(GET_TEMP_RET0, {}, Type::i32);
+    auto* setLow = builder->makeLocalSet(lowBits, getLow);
+    auto* setHigh = builder->makeLocalSet(highBits, getHigh);
+    auto* finalGet = builder->makeLocalGet(lowBits, Type::i32);
+    auto* result = builder->makeBlock({
+      setLow, setHigh, finalGet
+    });
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
