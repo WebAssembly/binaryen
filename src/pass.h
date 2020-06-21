@@ -153,6 +153,12 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  // But we can make it easy to create a nested runner
+  // TODO: Go through and use this in more places
+  explicit PassRunner(const PassRunner* runner)
+    : wasm(runner->wasm), allocator(runner->allocator),
+      options(runner->options), isNested(true) {}
+
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging
