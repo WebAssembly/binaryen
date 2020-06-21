@@ -24,6 +24,10 @@ namespace wasm {
 
 namespace {
 
+Name getGlobalElem(Name global, Index i) {
+  return Name(std::string(global.c_str()) + '$' + std::to_string(i));
+}
+
 struct Poppifier : PostWalker<Poppifier> {
   bool scanned = false;
   MixedArena& allocator;
@@ -223,18 +227,6 @@ void Stackifier::emitScopeEnd(Expression* curr) {
 void Stackifier::emitFunctionEnd() {
   auto& scope = scopeStack.back();
   assert(scope.kind == Scope::Func);
-  // // If there is only one instruction, it must already be the body so
-  // patching
-  // // it into itself could cause a cycle in the IR. But if there are multiple
-  // // instructions because the top-level expression in the original IR was not
-  // // a block, they need to be injected into a new block.
-  // if (scope.instrs.size() > 1) {
-  //   patchInstrs(func->body);
-  // } else if (scope.instrs.size() == 1) {
-  //   assert(func->body == scope.instrs[0] ||
-  //          (func->body->cast<Block>()->list.size() == 1 &&
-  //           func->body->cast<Block>()->list[0] == scope.instrs[0]));
-  // }
   patchInstrs(func->body);
 }
 
@@ -326,22 +318,35 @@ void Stackifier::emitLocalSet(LocalSet* curr) {
 }
 
 void Stackifier::emitGlobalGet(GlobalGet* curr) {
+  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
-  assert(!curr->type.isMulti() && "not implemented for tuples");
-  instrs.push_back(curr);
+  if (curr->type.isMulti()) {
+    const auto& types = curr->type.expand();
+    for (Index i = 0; i < types.size(); ++i) {
+      instrs.push_back(
+        builder.makeGlobalGet(getGlobalElem(curr->name, i), types[i]));
+    }
+  } else {
+    instrs.push_back(curr);
+  }
 }
 
 void Stackifier::emitGlobalSet(GlobalSet* curr) {
   Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
-  assert(!curr->value->type.isMulti() && "not implemented for tuples");
-  curr->value = builder.makePop(curr->value->type);
-  instrs.push_back(curr);
+  if (curr->value->type.isMulti()) {
+    const auto& types = curr->value->type.expand();
+    for (Index i = types.size(); i > 0; --i) {
+      instrs.push_back(builder.makeGlobalSet(getGlobalElem(curr->name, i - 1),
+                                             builder.makePop(types[i - 1])));
+    }
+  } else {
+    curr->value = builder.makePop(curr->value->type);
+    instrs.push_back(curr);
+  }
 }
 
-} // anonymous namespace
-
-class StackifyPass : public Pass {
+class StackifyFunctionsPass : public Pass {
   bool isFunctionParallel() override { return true; }
   void
   runOnFunction(PassRunner* runner, Module* module, Function* func) override {
@@ -350,9 +355,42 @@ class StackifyPass : public Pass {
       func->isStacky = true;
     }
   }
-  Pass* create() override { return new StackifyPass(); }
+  Pass* create() override { return new StackifyFunctionsPass(); }
 };
 
-Pass* createStackifyPass() { return new StackifyPass(); }
+} // anonymous namespace
+
+class StackifyPass : public Pass {
+  void run(PassRunner* runner, Module* module) {
+    lowerTupleGlobals(module);
+    PassRunner subRunner(runner);
+    subRunner.add(std::make_unique<StackifyFunctionsPass>());
+    subRunner.run();
+  }
+
+  void lowerTupleGlobals(Module* module) {
+    Builder builder(*module);
+    for (int g = module->globals.size() - 1; g >= 0; --g) {
+      auto& global = *module->globals[g];
+      if (global.type.isMulti()) {
+        assert(!global.imported());
+        const auto& types = global.type.expand();
+        for (Index i = 0; i < types.size(); ++i) {
+          Expression* init = global.init == nullptr
+                               ? nullptr
+                               : global.init->cast<TupleMake>()->operands[i];
+          auto mutability =
+            global.mutable_ ? Builder::Mutable : Builder::Immutable;
+          auto* elem = builder.makeGlobal(
+            getGlobalElem(global.name, i), types[i], init, mutability);
+          module->addGlobal(elem);
+        }
+        module->removeGlobal(global.name);
+      }
+    }
+  }
+};
+
+Pass* createStackifyPass() { return new StackifyPass; }
 
 } // namespace wasm
