@@ -62,7 +62,7 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
 template<typename T> static void printJS(Ref ast, T& output) {
   JSPrinter jser(true, true, ast);
   jser.printAst();
-  output << jser.buffer << std::endl;
+  output << jser.buffer << '\n';
 }
 
 // Traversals

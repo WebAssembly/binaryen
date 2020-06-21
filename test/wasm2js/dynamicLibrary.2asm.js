@@ -69,7 +69,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
     return uint8Array; 
-  }var bufferView = new Uint8Array(memasmFunc);
-base64DecodeToExistingUint8Array(bufferView, memoryBase, "ZHluYW1pYyBkYXRh");
+  }
+  base64DecodeToExistingUint8Array(bufferView, memoryBase, "ZHluYW1pYyBkYXRh");
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var baz = retasmFunc.baz;
