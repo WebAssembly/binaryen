@@ -2258,7 +2258,15 @@ void Wasm2JSGlue::emitMemory(
   if (!wasm.memory.exists) {
     return;
   }
-  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+  // Create a helper bufferView to access the buffer if we need one. We use it
+  // for creating memory segments if we have any (we may not if the segments are
+  // shipped in a side .mem file, for example), and also in bulk memory
+  // operations.
+  if (!wasm.memory.segments.empty() || wasm.features.hasBulkMemory()) {
+    out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+  }
+  // If there are no memory segments, we don't need to emit any support code for
+  // segment creation.
   if (wasm.memory.segments.empty()) {
     return;
   }
