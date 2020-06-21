@@ -452,6 +452,9 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   addHeap(HEAPU32, UINT32ARRAY);
   addHeap(HEAPF32, FLOAT32ARRAY);
   addHeap(HEAPF64, FLOAT64ARRAY);
+  if (wasm.features.hasAtomics()) {
+    addHeap(HEAPB64, BIGINT64ARRAY);
+  }
   // core asm.js imports
   auto addMath = [&](IString name, IString base) {
     Ref theVar = ValueBuilder::makeVar();
