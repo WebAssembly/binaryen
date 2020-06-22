@@ -2361,7 +2361,15 @@ void Wasm2JSGlue::emitMemory(
   if (!wasm.memory.exists) {
     return;
   }
-  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+  // Create a helper bufferView to access the buffer if we need one. We use it
+  // for creating memory segments if we have any (we may not if the segments are
+  // shipped in a side .mem file, for example), and also in bulk memory
+  // operations.
+  if (!wasm.memory.segments.empty() || wasm.features.hasBulkMemory()) {
+    out << "var bufferView = new Uint8Array(" << buffer << ");\n";
+  }
+  // If there are no memory segments, we don't need to emit any support code for
+  // segment creation.
   if (wasm.memory.segments.empty()) {
     return;
   }
@@ -2391,7 +2399,8 @@ void Wasm2JSGlue::emitMemory(
     return uint8Array;)";
   }
   out << R"( 
-  })";
+  }
+  )";
 
   auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -2404,8 +2413,6 @@ void Wasm2JSGlue::emitMemory(
     }
     Fatal() << "non-constant offsets aren't supported yet\n";
   };
-
-  out << "var bufferView = new Uint8Array(" << buffer << ");\n";
 
   for (Index i = 0; i < wasm.memory.segments.size(); i++) {
     auto& seg = wasm.memory.segments[i];
@@ -2425,10 +2432,8 @@ void Wasm2JSGlue::emitMemory(
 }
 
 void Wasm2JSGlue::emitSpecialSupport() {
-  // The scratch memory helpers are emitted here the glue. We may also want to
-  // emit them inline at some point. (The reason they are imports is so that
-  // they appear as "intrinsics" placeholders, and not normal functions that
-  // the optimizer might want to do something with.)
+  // The special support functions are emitted as part of the JS glue, if we
+  // need them.
   bool need = false;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (ABI::wasm2js::isHelper(import->base)) {
