@@ -46,6 +46,7 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+var bufferView = new Uint8Array(wasmMemory.buffer);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -63,9 +64,9 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
+    return uint8Array; 
   }
-var bufferView = new Uint8Array(wasmMemory.buffer);
-base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
+  base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 return asmFunc({
     'Int8Array': Int8Array,
     'Int16Array': Int16Array,
