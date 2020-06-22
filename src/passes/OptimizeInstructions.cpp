@@ -618,6 +618,37 @@ struct OptimizeInstructions
           }
         }
       }
+      if (binary->op == AndInt32 || binary->op == AndInt64) {
+        Type type = binary->type;
+        // (x ^ -1) & x   ==>    0
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
+            if (auto* c = left->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                if (ExpressionAnalyzer::equal(left->left, binary->right) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->right)
+                       .hasSideEffects()) {
+                  return LiteralUtils::makeZero(type, *getModule());
+                }
+              }
+            }
+          }
+        }
+        // x & (x ^ -1)   ==>    0
+        if (auto* right = binary->right->dynCast<Binary>()) {
+          if (right->op == Abstract::getBinary(type, Abstract::Xor)) {
+            if (auto* c = right->right->dynCast<Const>()) {
+              if (c->value.getInteger() == -1LL) {
+                if (ExpressionAnalyzer::equal(binary->left, right->left) &&
+                    !EffectAnalyzer(getPassOptions(), features, binary->left)
+                       .hasSideEffects()) {
+                  return LiteralUtils::makeZero(type, *getModule());
+                }
+              }
+            }
+          }
+        }
+      }
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
         if (auto* ret = conditionalizeExpensiveOnBitwise(binary)) {
@@ -627,6 +658,11 @@ struct OptimizeInstructions
       // for or, we can potentially combine
       if (binary->op == OrInt32) {
         if (auto* ret = combineOr(binary)) {
+          return ret;
+        }
+      }
+      if (binary->op == XorInt32 || binary->op == XorInt64) {
+        if (auto* ret = optimizeComplementary(binary)) {
           return ret;
         }
       }
@@ -1207,6 +1243,268 @@ private:
       return builder.makeIf(
         left, right, builder.makeConst(Literal(int32_t(0))));
     }
+  }
+
+  // We try detect and simplify patterns like:
+  // ~(1 << x)
+  // ~(С >> x)
+  // ~(C -  x) and ~(x -  C)
+  // ~(x +  C)
+  // ~(~x - y)
+  // ~(~x + y) and ~(x + ~y)
+  // ~(~x & ~y) and ~(~x | ~y)
+  // ~(~x &  y) and ~( x | ~y)
+  // ~x ^ ~y
+  // ~~x
+  Expression* optimizeComplementary(Binary* binary) {
+    assert(binary->op == XorInt32 || binary->op == XorInt64);
+    Type type = binary->type;
+    if (auto* constRight = binary->right->dynCast<Const>()) {
+      if (constRight->value.getInteger() == -1LL) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
+            //   (1 << x) ^ -1    ==>    rotl(-2, x)
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              if (constLeft->value.getInteger() == 1LL) {
+                left->op = Abstract::getBinary(type, Abstract::RotL);
+                constLeft->value = Literal::makeFromInt32(-2, type);
+                return left;
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrS)) {
+            //   ((signed)C >> x) ^ -1   ==>
+            // if C >= 0:     (signed)~C >> x
+            // if C  < 0:   (unsigned)~C >> x
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              int64_t value = constLeft->value.getInteger();
+              constLeft->value =
+                constLeft->value.xor_(Literal::makeFromInt32(-1, type));
+              if (value < 0LL) {
+                left->op = Abstract::getBinary(type, Abstract::ShrU);
+              }
+              return left;
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrU)) {
+            //   ((unsigned)C >> x) ^ -1   ==>
+            // if (signed)C >= 0:   (signed)~C >> x
+            // if (signed)C <  0:   skip
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              if (type == Type::i32) {
+                auto value = constLeft->value.geti32();
+                if (value >= 0) {
+                  constLeft->value = Literal(uint32_t(~value));
+                  left->op = ShrSInt32;
+                  return left;
+                }
+              } else {
+                auto value = constLeft->value.geti64();
+                if (value >= 0) {
+                  constLeft->value = Literal(uint64_t(~value));
+                  left->op = ShrSInt64;
+                  return left;
+                }
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::And)) {
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (auto* leftRight = left->right->dynCast<Binary>()) {
+                //   ((x ^ -1) & (y ^ -1)) ^ -1   ==>   x | y
+                if (leftLeft->left->type == leftRight->left->type) {
+                  auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+                  if (constLeftLeftRight &&
+                      constLeftLeftRight->value.getInteger() == -1LL) {
+                    auto* constLeftRightRight =
+                      leftRight->right->dynCast<Const>();
+                    if (constLeftRightRight &&
+                        constLeftRightRight->value.getInteger() == -1LL) {
+                      return Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(type, Abstract::Or),
+                                    leftLeft->left,
+                                    leftRight->left);
+                    }
+                  }
+                }
+              }
+              if (leftLeft->left->type == left->right->type) {
+                if (auto* constLeftLeftRight =
+                      leftLeft->right->dynCast<Const>()) {
+                  //   ((x ^ -1) & y) ^ -1   ==>   x | (y ^ -1)
+                  if (constLeftLeftRight->value.getInteger() == -1LL) {
+                    // ((y ^ -1) & x) ^ -1
+                    std::swap(leftLeft->left, left->right);
+                    // ((y ^ -1) | x) ^ -1
+                    left->op = Abstract::getBinary(type, Abstract::Or);
+                    // (x | (y ^ -1)) ^ -1
+                    std::swap(left->left, left->right);
+                    // => x | (y ^ -1)
+                    return left;
+                  }
+                }
+              }
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              //   (x & (y ^ -1)) ^ -1   ==>   (x ^ -1) | y
+              if (left->left->type == leftRight->left->type) {
+                if (auto* constLeftRightRight =
+                      leftRight->right->dynCast<Const>()) {
+                  if (constLeftRightRight->value.getInteger() == -1LL) {
+                    // (y & (x ^ -1)) ^ -1
+                    std::swap(left->left, leftRight->left);
+                    // (y | (x ^ -1)) ^ -1
+                    left->op = Abstract::getBinary(type, Abstract::Or);
+                    // ((x ^ -1) | y) ^ -1
+                    std::swap(left->left, left->right);
+                    // => (x ^ -1) | y
+                    return left;
+                  }
+                }
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Or)) {
+            if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (auto* leftRight = left->right->dynCast<Binary>()) {
+                //   ((x ^ -1) | (y ^ -1)) ^ -1   ==>   x & y
+                if (leftLeft->left->type == leftRight->left->type) {
+                  auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+                  if (constLeftLeftRight &&
+                      constLeftLeftRight->value.getInteger() == -1LL) {
+                    auto* constLeftRightRight =
+                      leftRight->right->dynCast<Const>();
+                    if (constLeftRightRight &&
+                        constLeftRightRight->value.getInteger() == -1LL) {
+                      return Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(type, Abstract::And),
+                                    leftLeft->left,
+                                    leftRight->left);
+                    }
+                  }
+                }
+              }
+              if (leftLeft->left->type == left->right->type) {
+                if (auto* constLeftLeftRight =
+                      leftLeft->right->dynCast<Const>()) {
+                  //   ((x ^ -1) | y) ^ -1   ==>   x & (y ^ -1)
+                  if (constLeftLeftRight->value.getInteger() == -1LL) {
+                    // ((y ^ -1) | x) ^ -1
+                    std::swap(leftLeft->left, left->right);
+                    // ((y ^ -1) & x) ^ -1
+                    left->op = Abstract::getBinary(type, Abstract::And);
+                    // (x & (y ^ -1)) ^ -1
+                    std::swap(left->left, left->right);
+                    // => x & (y ^ -1)
+                    return left;
+                  }
+                }
+              }
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              //   (x | (y ^ -1)) ^ -1   ==>   (x ^ -1) & y
+              if (left->left->type == leftRight->left->type) {
+                if (auto* constLeftRightRight =
+                      leftRight->right->dynCast<Const>()) {
+                  if (constLeftRightRight->value.getInteger() == -1LL) {
+                    // (y | (x ^ -1)) ^ -1
+                    std::swap(left->left, leftRight->left);
+                    // (y & (x ^ -1)) ^ -1
+                    left->op = Abstract::getBinary(type, Abstract::And);
+                    // ((x ^ -1) & y) ^ -1
+                    std::swap(left->left, left->right);
+                    // => (x ^ -1) & y
+                    return left;
+                  }
+                }
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            if (auto* constLeft = left->left->dynCast<Const>()) {
+              //   (C - x) ^ -1   ==>   x + ~C
+              constLeft->value =
+                constLeft->value.xor_(Literal::makeFromInt32(-1, type));
+              left->op = Abstract::getBinary(type, Abstract::Add);
+              std::swap(left->left, left->right);
+              return left;
+            } else if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (leftLeft->left->type == left->right->type) {
+                auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+                if (constLeftLeftRight &&
+                    constLeftLeftRight->value.getInteger() == -1LL) {
+                  //   ((x ^ -1) - y) ^ -1   ==>   x + y
+                  return Builder(*getModule())
+                    .makeBinary(Abstract::getBinary(type, Abstract::Add),
+                                leftLeft->left,
+                                left->right);
+                }
+              }
+            } else if (auto* constRight = left->right->dynCast<Const>()) {
+              //   (x - C) ^ -1   ==>   (C - 1) - x
+              constRight->value =
+                constRight->value.sub(Literal::makeFromInt32(1, type));
+              std::swap(left->left, left->right);
+              return left;
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+            if (auto* constRight = left->right->dynCast<Const>()) {
+              //   (x + C) ^ -1   ==>   ~C - x
+              constRight->value =
+                constRight->value.xor_(Literal::makeFromInt32(-1, type));
+              left->op = Abstract::getBinary(type, Abstract::Sub);
+              std::swap(left->left, left->right);
+              return left;
+            } else if (auto* leftLeft = left->left->dynCast<Binary>()) {
+              if (leftLeft->left->type == left->right->type) {
+                auto* constLeftLeftRight = leftLeft->right->dynCast<Const>();
+                if (constLeftLeftRight &&
+                    constLeftLeftRight->value.getInteger() == -1LL) {
+                  //   ((x ^ -1) + y) ^ -1   ==>   x - y
+                  return Builder(*getModule())
+                    .makeBinary(Abstract::getBinary(type, Abstract::Sub),
+                                leftLeft->left,
+                                left->right);
+                }
+              }
+            } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+              if (left->left->type == leftRight->left->type) {
+                //   (x + (y ^ -1)) ^ -1   ==>   y - x
+                if (auto* constLeftRightRight =
+                      leftRight->right->dynCast<Const>()) {
+                  if (constLeftRightRight->value.getInteger() == -1LL) {
+                    return Builder(*getModule())
+                      .makeBinary(Abstract::getBinary(type, Abstract::Sub),
+                                  leftRight->left,
+                                  left->left);
+                  }
+                }
+              }
+            }
+          } else if (left->op == Abstract::getBinary(type, Abstract::Xor)) {
+            //   (x ^ -1) ^ -1   ==>   x
+            if (auto* constLeftRight = left->right->dynCast<Const>()) {
+              if (constLeftRight->value.getInteger() == -1LL) {
+                return left->left;
+              }
+            }
+          }
+        }
+      }
+    } else if (auto* left = binary->left->dynCast<Binary>()) {
+      //  (x ^ -1) ^ (y ^ -1)   ==>   x ^ y
+      if (auto* right = binary->right->dynCast<Binary>()) {
+        if (left->left->type == right->left->type) {
+          if (auto* constLeftRight = left->right->dynCast<Const>()) {
+            if (constLeftRight->value.getInteger() == -1LL) {
+              if (auto* constRightRight = right->right->dynCast<Const>()) {
+                if (left->right->type == right->right->type) {
+                  if (constRightRight->value.getInteger() == -1LL) {
+                    binary->left = left->left;
+                    binary->right = right->left;
+                    return binary;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 
   // We can combine `or` operations, e.g.
