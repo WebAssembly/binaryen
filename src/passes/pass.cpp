@@ -537,8 +537,8 @@ void PassRunner::addDefaultPreWritingPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     char* useStackifyVar = getenv("BINARYEN_USE_STACKIFY");
     int useStackify = useStackifyVar ? atoi(useStackifyVar) : 0;
-    if (useStackify) {
-      std::cerr << "Using new stackify pipeline\n";
+    if (useStackify == 1) {
+      std::cerr << "Using new stackify pipeline to match Stack IR\n";
       add("stackify");
       add("stack-dce");
       if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
@@ -548,6 +548,16 @@ void PassRunner::addDefaultPreWritingPasses() {
       add("stack-dce");
       // Generate stack IR so print-stack-ir tests can't tell the difference
       // add("generate-stack-ir");
+    } else if (useStackify >= 2) {
+      std::cerr << "Using new stackify pipeline\n";
+      add("stackify");
+      add("stack-dce");
+      add("stack-remove-blocks");
+      add("stack-dce");
+      add("stackify-drops");
+      add("stackify-locals");
+      // TODO: Coalesce-locals doesn't remove unused locals from the function
+      add("coalesce-locals");
     } else {
       std::cerr << "Using old StackIR pipeline\n";
       add("generate-stack-ir");

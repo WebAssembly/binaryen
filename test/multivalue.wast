@@ -1,7 +1,9 @@
 (module
  (import "env" "pair" (func $pair (result i32 i64)))
+ (import "env" "triple" (func $triple-imported (result i32 i64 f32)))
  (global $g1 (mut (i32 i64)) (tuple.make (i32.const 0) (i64.const 0)))
  (global $g2 (i32 i64) (tuple.make (i32.const 0) (i64.const 0)))
+ (export "reverse" (func $reverse (result f32 i64 i32)))
  ;; Test basic lowering of tuple.make, tuple.extract, and tuple variables
  (func $triple (result i32 i64 f32)
   (tuple.make
@@ -28,7 +30,7 @@
  (func $reverse (result f32 i64 i32)
   (local $x (i32 i64 f32))
   (local.set $x
-   (call $triple)
+   (call $triple-imported)
   )
   (tuple.make
    (tuple.extract 2

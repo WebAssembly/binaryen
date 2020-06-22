@@ -37,6 +37,15 @@ struct StackifyDropsPass : public WalkerPass<PostWalker<StackifyDropsPass>> {
       if (!allDrops) {
         continue;
       }
+      if (auto* set = expr->dynCast<LocalSet>()) {
+        if (set->isTee()) {
+          set->makeSet();
+          if (auto* drop = dests.begin()->expr) {
+            ExpressionManipulator::nop(drop);
+          }
+        }
+        continue;
+      }
       // TODO: downgrade tees to gets if their values aren't used
       if (EffectAnalyzer(getPassOptions(), getModule()->features, expr)
             .hasSideEffects()) {
