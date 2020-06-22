@@ -37,6 +37,7 @@ struct StackifyDropsPass : public WalkerPass<PostWalker<StackifyDropsPass>> {
       if (!allDrops) {
         continue;
       }
+      // TODO: downgrade tees to gets if their values aren't used
       if (EffectAnalyzer(getPassOptions(), getModule()->features, expr)
             .hasSideEffects()) {
         continue;

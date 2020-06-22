@@ -16,6 +16,7 @@
 
 // TODO: documentation
 
+#include "ir/properties.h"
 #include "pass.h"
 
 namespace wasm {
@@ -26,7 +27,16 @@ struct StackDCEPass : public WalkerPass<PostWalker<StackDCEPass>> {
   void visitBlock(Block* curr) {
     for (size_t i = 0, size = curr->list.size(); i < size; ++i) {
       if (curr->list[i]->type == Type::unreachable) {
-        curr->list.resize(i + 1);
+        if (Properties::isControlFlowStructure(curr->list[i])) {
+          // Conservatively keep the following `unreachable` for proper typing
+          // TODO: Add a pass to re-type blocks and remove these unreachables
+          assert(i + 1 < curr->list.size() &&
+                 curr->list[i + 1]->is<Unreachable>() &&
+                 "Expected an unreachable after unreachable control flow");
+          curr->list.resize(i + 2);
+        } else {
+          curr->list.resize(i + 1);
+        }
         return;
       }
     }

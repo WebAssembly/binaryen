@@ -851,7 +851,12 @@ public:
     }
     writer.emitFunctionEnd();
   }
-  void emitUnreachable() { writer.emitUnreachable(); }
+  void emitUnreachable() {
+    // Stacky code already explicitly contains these guard unreachables
+    if (!func->isStacky) {
+      writer.emitUnreachable();
+    }
+  }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {
       parent.writeDebugLocation(curr, func);

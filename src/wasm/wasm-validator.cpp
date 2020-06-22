@@ -428,7 +428,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
       shouldBeTrue(
         info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
-      if (curr->list.size() > 0) {
+      if (curr->list.size() > 0 && !getFunction()->isStacky) {
         auto last = curr->list.back()->type;
         if (last == Type::none) {
           shouldBeTrue(info.arity == Index(0),

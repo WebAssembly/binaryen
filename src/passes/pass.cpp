@@ -535,8 +535,24 @@ void PassRunner::addDefaultPreWritingPasses() {
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("generate-stack-ir");
-    add("optimize-stack-ir");
+    char* useStackifyVar = getenv("BINARYEN_USE_STACKIFY");
+    int useStackify = useStackifyVar ? atoi(useStackifyVar) : 0;
+    if (useStackify) {
+      std::cerr << "Using new stackify pipeline\n";
+      add("stackify");
+      add("stack-dce");
+      if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+        add("stackify-locals");
+      }
+      add("stack-remove-blocks");
+      add("stack-dce");
+      // Generate stack IR so print-stack-ir tests can't tell the difference
+      // add("generate-stack-ir");
+    } else {
+      std::cerr << "Using old StackIR pipeline\n";
+      add("generate-stack-ir");
+      add("optimize-stack-ir");
+    }
   }
 }
 

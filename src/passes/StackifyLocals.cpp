@@ -39,10 +39,11 @@ struct StackifyLocalsPass : public WalkerPass<PostWalker<StackifyLocalsPass>> {
     std::unordered_map<LocalSet*, Index> localSets;
     for (Index i = 0; i < curr->list.size(); ++i) {
       if (auto* set = curr->list[i]->dynCast<LocalSet>()) {
-        localSets.emplace(set, i);
-        continue;
-      }
-      if (auto* get = curr->list[i]->dynCast<LocalGet>()) {
+        // Tees can't be stackified, so ignore them
+        if (!set->isTee()) {
+          localSets.emplace(set, i);
+        }
+      } else if (auto* get = curr->list[i]->dynCast<LocalGet>()) {
         // Check that there is a single set providing this value
         auto& sets = localGraph->getSetses[get];
         if (sets.size() != 1) {
