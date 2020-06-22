@@ -130,8 +130,8 @@ var asmLibraryArg = {
     console.log('get_f64 ' + [loc, index, value]);
     return value;
   },
-  get_anyref: function(loc, index, value) {
-    console.log('get_anyref ' + [loc, index, value]);
+  get_externref: function(loc, index, value) {
+    console.log('get_externref ' + [loc, index, value]);
     return value;
   },
   get_exnref: function(loc, index, value) {
@@ -155,8 +155,8 @@ var asmLibraryArg = {
     console.log('set_f64 ' + [loc, index, value]);
     return value;
   },
-  set_anyref: function(loc, index, value) {
-    console.log('set_anyref ' + [loc, index, value]);
+  set_externref: function(loc, index, value) {
+    console.log('set_externref ' + [loc, index, value]);
     return value;
   },
   set_exnref: function(loc, index, value) {

@@ -2856,9 +2856,9 @@
      )
     )
   )
-  (func $mul-power-2 (param $x i32) (result i32)
+  (func $mul-32-power-2 (param $x i32) (result i32)
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 4)
@@ -2866,7 +2866,7 @@
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 5)
@@ -2874,7 +2874,7 @@
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 1)
@@ -2882,7 +2882,7 @@
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 0)
@@ -2890,15 +2890,15 @@
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
-          (call $mul-power-2 (i32.const 123)) ;; side effects
+          (call $mul-32-power-2 (i32.const 123)) ;; side effects
           (i32.const 0)
         )
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 0xffffffff)
@@ -2906,7 +2906,7 @@
       )
     )
     (drop
-      (call $mul-power-2
+      (call $mul-32-power-2
         (i32.mul
           (local.get $x)
           (i32.const 0x80000000)
@@ -2915,9 +2915,127 @@
     )
     (unreachable)
   )
-  (func $urem-power-2 (param $x i32) (result i32)
+    (func $mul-64-power-2 (param $x i64) (result i64)
     (drop
-      (call $urem-power-2
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 4)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 5)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 1)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (call $mul-64-power-2 (i64.const 123)) ;; side effects
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 0xffffffffffffffff)
+        )
+      )
+    )
+    (drop
+      (call $mul-64-power-2
+        (i64.mul
+          (local.get $x)
+          (i64.const 0x8000000000000000)
+        )
+      )
+    )
+    (unreachable)
+  )
+  (func $div-32-power-2 (param $x i32) (result i32)
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 4)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 5)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (call $div-32-power-2 (i32.const 123)) ;; side effects
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0xffffffff)
+        )
+      )
+    )
+    (drop
+      (call $div-32-power-2
+        (i32.div_u
+          (local.get $x)
+          (i32.const 0x80000000)
+        )
+      )
+    )
+    (unreachable)
+  )
+  (func $urem-32-power-2 (param $x i32) (result i32)
+    (drop
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 4)
@@ -2925,7 +3043,7 @@
       )
     )
     (drop
-      (call $urem-power-2
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 5)
@@ -2933,7 +3051,7 @@
       )
     )
     (drop
-      (call $urem-power-2
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 1)
@@ -2941,7 +3059,7 @@
       )
     )
     (drop
-      (call $urem-power-2
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 0)
@@ -2949,7 +3067,7 @@
       )
     )
     (drop
-      (call $urem-power-2
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 0xffffffff)
@@ -2957,14 +3075,34 @@
       )
     )
     (drop
-      (call $urem-power-2
+      (call $urem-32-power-2
         (i32.rem_u
           (local.get $x)
           (i32.const 0x80000000)
         )
       )
     )
+    ;; (unsigned)x % 1
+    (drop
+      (call $urem-32-power-2
+        (i32.rem_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+    )
     (unreachable)
+  )
+  (func $srem-by-1 (param $x i32) (param $y i64)
+    ;; (signed)x % 1
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const 1)
+    ))
+    (drop (i64.rem_s
+      (local.get $y)
+      (i64.const 1)
+    ))
   )
   (func $orZero (param $0 i32) (result i32)
     (i32.or
@@ -3897,6 +4035,81 @@
     (i32.const 2)
    )
   )
+  (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
+    (drop (i32.sub
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.sub
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (i32.gt_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.gt_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.gt_s
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (i64.extend_i32_s
+      (i64.gt_u
+        (i64.const 0)
+        (i64.const -1)
+      )
+    ))
+    ;; (unsigned)x <= -1   ==>   1
+    (drop (i32.le_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.le_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.le_s
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; x * -1
+    (drop (i32.mul
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.mul
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (f32.mul    ;; skip
+      (local.get $fx)
+      (f32.const -1)
+    ))
+    (drop (f64.mul    ;; skip
+      (local.get $fy)
+      (f64.const -1)
+    ))
+    ;; (unsigned)x / -1
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+  )
   (func $pre-combine-or (param $x i32) (param $y i32)
     (drop (i32.or
       (i32.gt_s
@@ -3983,8 +4196,8 @@
     )
   )
   ;; Tests when if arms are subtype of if's type
-  (func $if-arms-subtype (result anyref)
-    (if (result anyref)
+  (func $if-arms-subtype (result externref)
+    (if (result externref)
       (i32.const 0)
       (ref.null)
       (ref.null)

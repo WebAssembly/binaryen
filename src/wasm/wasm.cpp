@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "wasm-printing.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -92,6 +93,13 @@ Name EVENT("event");
 Name ATTR("attr");
 
 // Expressions
+
+void Expression::dump() {
+  WasmPrinter::printExpression(this,
+                               std::cerr,
+                               /*minify=*/false,
+                               /*full=*/true);
+}
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
@@ -746,9 +754,17 @@ void Unary::finalize() {
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:
+    case CeilVecF32x4:
+    case FloorVecF32x4:
+    case TruncVecF32x4:
+    case NearestVecF32x4:
     case AbsVecF64x2:
     case NegVecF64x2:
     case SqrtVecF64x2:
+    case CeilVecF64x2:
+    case FloorVecF64x2:
+    case TruncVecF64x2:
+    case NearestVecF64x2:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
     case TruncSatSVecF64x2ToVecI64x2:

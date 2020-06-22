@@ -1217,28 +1217,38 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   });
   meta << "\n  ],\n";
 
+  // In normal mode we attempt to determine if main takes argumnts or not
+  // In standalone mode we export _start instead and rely on the presence
+  // of the __wasi_args_get and __wasi_args_sizes_get syscalls allow us to
+  // DCE to the argument handling JS code instead.
+  if (!standalone) {
+    auto mainReadsParams = false;
+    auto* exp = wasm.getExportOrNull("main");
+    if (!exp) {
+      exp = wasm.getExportOrNull("__main_argc_argv");
+    }
+    if (exp) {
+      if (exp->kind == ExternalKind::Function) {
+        auto* main = wasm.getFunction(exp->value);
+        mainReadsParams = true;
+        // If main does not read its parameters, it will just be a stub that
+        // calls __original_main (which has no parameters).
+        if (auto* call = main->body->dynCast<Call>()) {
+          if (call->operands.empty()) {
+            mainReadsParams = false;
+          }
+        }
+      }
+    }
+    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << ",\n";
+  }
+
   meta << "  \"features\": [";
   commaFirst = true;
   wasm.features.iterFeatures([&](FeatureSet::Feature f) {
     meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
   });
-  meta << "\n  ],\n";
-
-  auto mainReadsParams = false;
-  if (auto* exp = wasm.getExportOrNull("main")) {
-    if (exp->kind == ExternalKind::Function) {
-      auto* main = wasm.getFunction(exp->value);
-      mainReadsParams = true;
-      // If main does not read its parameters, it will just be a stub that
-      // calls __original_main (which has no parameters).
-      if (auto* call = main->body->dynCast<Call>()) {
-        if (call->operands.empty()) {
-          mainReadsParams = false;
-        }
-      }
-    }
-  }
-  meta << "  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
+  meta << "\n  ]\n";
 
   meta << "}\n";
 
@@ -1266,6 +1276,18 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
+}
+
+void EmscriptenGlueGenerator::renameMainArgcArgv() {
+  // If an export call ed __main_argc_argv exists rename it to main
+  Export* ex = wasm.getExportOrNull("__main_argc_argv");
+  if (!ex) {
+    BYN_TRACE("renameMain: __main_argc_argv not found\n");
+    return;
+  }
+  ex->name = "main";
+  wasm.updateMaps();
+  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
 }
 
 void EmscriptenGlueGenerator::exportWasiStart() {

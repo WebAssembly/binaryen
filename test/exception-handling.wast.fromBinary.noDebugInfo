@@ -1,10 +1,10 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $anyref_=>_none (func (param anyref)))
+ (type $externref_=>_none (func (param externref)))
  (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $event$0 (attr 0) (param i32))
- (event $event$1 (attr 0) (param anyref))
+ (event $event$1 (attr 0) (param externref))
  (func $0 (param $0 exnref) (result exnref)
   (local.get $0)
  )

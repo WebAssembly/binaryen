@@ -128,9 +128,9 @@
 )
 ;; Reference type tests
 (module
-  (import "env" "global-1" (global $g1 anyref))
-  (global $g2 (mut anyref) (global.get $g1))
-  (global $g3 anyref (ref.null))
+  (import "env" "global-1" (global $g1 externref))
+  (global $g2 (mut externref) (global.get $g1))
+  (global $g3 externref (ref.null))
   (func $test1
     (drop (global.get $g1))
     (drop (global.get $g2))

@@ -101,6 +101,13 @@ cashew::IString WASM_I64_UDIV("__wasm_i64_udiv");
 cashew::IString WASM_I64_SREM("__wasm_i64_srem");
 cashew::IString WASM_I64_UREM("__wasm_i64_urem");
 
+cashew::IString ASM_FUNC("asmFunc");
+cashew::IString ABORT_FUNC("abort");
+cashew::IString FUNCTION_TABLE("FUNCTION_TABLE");
+cashew::IString NO_RESULT("wasm2js$noresult"); // no result at all
+// result in an expression, no temp var
+cashew::IString EXPRESSION_RESULT("wasm2js$expresult");
+
 namespace ABI {
 namespace wasm2js {
 
@@ -112,6 +119,13 @@ cashew::IString SCRATCH_LOAD_F32("wasm2js_scratch_load_f32");
 cashew::IString SCRATCH_STORE_F32("wasm2js_scratch_store_f32");
 cashew::IString SCRATCH_LOAD_F64("wasm2js_scratch_load_f64");
 cashew::IString SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
+cashew::IString MEMORY_INIT("wasm2js_memory_init");
+cashew::IString MEMORY_FILL("wasm2js_memory_fill");
+cashew::IString MEMORY_COPY("wasm2js_memory_copy");
+cashew::IString DATA_DROP("wasm2js_data_drop");
+cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
+cashew::IString ATOMIC_RMW_I64("wasm2js_atomic_rmw_i64");
+cashew::IString GET_STASHED_BITS("wasm2js_get_stashed_bits");
 
 } // namespace wasm2js
 } // namespace ABI

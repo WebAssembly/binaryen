@@ -1192,7 +1192,7 @@
     )
   )
 
-  (func $exnref_pop_test (local $exn exnref)
+  (func $exnref_pop-test (local $exn exnref)
     (try
       (do
         (try
@@ -1219,7 +1219,7 @@
   )
 
   (event $e (attr 0)) ;; exception with no param
-  (func $br_on_exn_target_block (local $exn exnref)
+  (func $br_on_exn-target-block (local $exn exnref)
     ;; Here this block $x is targeted by br_on_exn, so code folding out of this
     ;; block should NOT happen.
     (block $x
@@ -1242,6 +1242,52 @@
       (drop (i32.const 1))
       (drop (i32.const 2))
       (br $x)
+    )
+  )
+
+  (func $foo)
+  (func $try-call-optimize-terminating-tails (result exnref)
+    (try
+      (do
+        ;; Expressions that can throw should NOT be taken out of 'try' scope.
+        (call $foo)
+        (call $foo)
+        (call $foo)
+        (call $foo)
+        (return (ref.null))
+      )
+      (catch
+        (drop (exnref.pop))
+        (call $foo)
+        (call $foo)
+        (call $foo)
+        (call $foo)
+        (return (ref.null))
+      )
+    )
+    (ref.null)
+  )
+
+  (func $try-call-optimize-expression-tails (local $exn exnref)
+    (block $x
+      (try
+        (do
+          ;; Expressions that can throw should NOT be taken out of 'try' scope.
+          (local.set $exn (exnref.pop))
+          (call $foo)
+          (call $foo)
+          (call $foo)
+          (br $x)
+        )
+        (catch
+          (local.set $exn (exnref.pop))
+          (call $foo)
+          (call $foo)
+          (call $foo)
+          (br $x)
+        )
+      )
+      (unreachable)
     )
   )
 )
