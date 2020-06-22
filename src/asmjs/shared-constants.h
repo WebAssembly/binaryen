@@ -35,7 +35,6 @@ extern cashew::IString UINT16ARRAY;
 extern cashew::IString UINT32ARRAY;
 extern cashew::IString FLOAT32ARRAY;
 extern cashew::IString FLOAT64ARRAY;
-extern cashew::IString BIGINT64ARRAY;
 extern cashew::IString ARRAY_BUFFER;
 extern cashew::IString ASM_MODULE;
 extern cashew::IString IMPOSSIBLE_CONTINUE;

@@ -101,7 +101,6 @@ extern IString HEAPU8;
 extern IString HEAPU16;
 extern IString HEAPU32;
 extern IString HEAPF64;
-extern IString HEAPB64;
 extern IString F0;
 extern IString EMPTY;
 extern IString FUNCTION;

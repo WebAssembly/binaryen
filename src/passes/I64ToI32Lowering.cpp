@@ -368,7 +368,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     assert(!curr->isAtomic && "64-bit atomic load not implemented");
-    need helper
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
     TempVar ptrTemp = getTemp();

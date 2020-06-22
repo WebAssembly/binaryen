@@ -84,7 +84,6 @@ IString HEAPU8("HEAPU8");
 IString HEAPU16("HEAPU16");
 IString HEAPU32("HEAPU32");
 IString HEAPF64("HEAPF64");
-IString HEAPB64("HEAPB64");
 IString F0("f0");
 IString EMPTY("");
 IString FUNCTION("function");

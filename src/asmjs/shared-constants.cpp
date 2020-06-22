@@ -32,7 +32,6 @@ cashew::IString UINT16ARRAY("Uint16Array");
 cashew::IString UINT32ARRAY("Uint32Array");
 cashew::IString FLOAT32ARRAY("Float32Array");
 cashew::IString FLOAT64ARRAY("Float64Array");
-cashew::IString BIGINT64ARRAY("BigInt64Array");
 cashew::IString ARRAY_BUFFER("ArrayBuffer");
 cashew::IString ASM_MODULE("asmModule");
 cashew::IString IMPOSSIBLE_CONTINUE("impossible-continue");
