@@ -113,8 +113,6 @@ namespace wasm2js {
 
 cashew::IString SCRATCH_LOAD_I32("wasm2js_scratch_load_i32");
 cashew::IString SCRATCH_STORE_I32("wasm2js_scratch_store_i32");
-cashew::IString SCRATCH_LOAD_I64("wasm2js_scratch_load_i64");
-cashew::IString SCRATCH_STORE_I64("wasm2js_scratch_store_i64");
 cashew::IString SCRATCH_LOAD_F32("wasm2js_scratch_load_f32");
 cashew::IString SCRATCH_STORE_F32("wasm2js_scratch_store_f32");
 cashew::IString SCRATCH_LOAD_F64("wasm2js_scratch_load_f64");
