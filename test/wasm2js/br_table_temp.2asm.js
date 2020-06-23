@@ -206,7 +206,6 @@ function asmFunc(global, env, buffer) {
  
  function $15($0) {
   $0 = $0 | 0;
-  var $2_1 = 0;
   block : {
    switch ($0 | 0) {
    case 0:
@@ -12588,7 +12587,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $22() {
-  var $1_1 = 0, $4_1 = 0, $2_1 = 0;
+  var $1_1 = 0;
   fake_return_waka123 : {
    dummy();
    $1_1 = 5;

@@ -20,16 +20,13 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1_1, $2) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2 = $2 | 0;
-  return !$2 & ($0 | 0) == ($1_1 | 0);
+ function legalstub$1($0, $1, $2) {
+  return !$2 & ($0 | 0) == ($1 | 0);
  }
  
  var FUNCTION_TABLE = [];
  return {
-  "check_extend_ui32": $1
+  "check_extend_ui32": legalstub$1
  };
 }
 
