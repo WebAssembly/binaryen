@@ -6,13 +6,10 @@
 ;; (aka inlining and whatnot)
 ;;
 ;; LOCAL MODS done by hand afterwards:
-;;  * Remove hardcoded address 1024 (apparently a free memory location rustc
-;;    thinks is ok to use?); add intrinsic functions, which load/store to
-;;    special scratch space, wasm2js_scratch_load_i32 etc.
+;;  * Remove hardcoded address 1024 which was used for temporary data; instead
+;;    add $wasm-intrinsics-temp-i64 global for that.
 ;;  * Fix function type of __wasm_ctz_i64, which was wrong somehow,
 ;;    i32, i32 => i32 instead of i64 => i64
-;;  * Add $wasm-intrinsics-temp-i64 global to avoid a 64-bit import
-;;    wasm2js_scratch_load_i64/store
 ;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
