@@ -545,6 +545,10 @@ class Asyncify(TestCaseHandler):
             print('ignoring due to pre-asyncify difference')
             return
 
+        # TODO: also something that actually does async sleeps in the code, say
+        # on the logging commands?
+        # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
+
         def do_asyncify(wasm):
             cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
             # if we allow NaNs, running binaryen optimizations and then
