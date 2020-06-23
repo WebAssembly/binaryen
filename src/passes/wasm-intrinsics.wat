@@ -6,9 +6,8 @@
 ;; (aka inlining and whatnot)
 ;;
 ;; LOCAL MODS done by hand afterwards:
-;;  * Remove hardcoded address 1024 (apparently a free memory location rustc
-;;    thinks is ok to use?); add intrinsic functions, which load/store to
-;;    special scratch space, wasm2js_scratch_load_i32 etc.
+;;  * Remove hardcoded address 1024 which was used for temporary data; instead
+;;    add $wasm-intrinsics-temp-i64 global for that.
 ;;  * Fix function type of __wasm_ctz_i64, which was wrong somehow,
 ;;    i32, i32 => i32 instead of i64 => i64
 ;;
@@ -22,8 +21,6 @@
  (type $4 (func (param i32 i32) (result i32)))
  (type $5 (func (param i64) (result i64)))
  (import "env" "memory" (memory $0 17))
- (import "env" "wasm2js_scratch_load_i64" (func $wasm2js_scratch_load_i64 (result i64)))
- (import "env" "wasm2js_scratch_store_i64" (func $wasm2js_scratch_store_i64 (param i64)))
  (export "__wasm_i64_sdiv" (func $__wasm_i64_sdiv))
  (export "__wasm_i64_udiv" (func $__wasm_i64_udiv))
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))
@@ -41,6 +38,7 @@
  (export "__wasm_nearest_f64" (func $__wasm_nearest_f64))
  (export "__wasm_popcnt_i32" (func $__wasm_popcnt_i32))
  (export "__wasm_popcnt_i64" (func $__wasm_popcnt_i64))
+ (global $__wasm-intrinsics-temp-i64 (mut i64) (i64.const 0))
 
  ;; lowering of the i32.popcnt instruction, counts the number of bits set in the
  ;; input and returns the result
@@ -137,7 +135,7 @@
     (local.get $var$1)
    )
   )
-  (call $wasm2js_scratch_load_i64)
+  (global.get $__wasm-intrinsics-temp-i64)
  )
  ;; lowering of the i64.mul instruction, return $var0 * $var$1
  (func $__wasm_i64_mul (; 4 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
@@ -578,7 +576,7 @@
                (i64.const 4294967296)
               )
              )
-             (call $wasm2js_scratch_store_i64
+             (global.set $__wasm-intrinsics-temp-i64
               (i64.extend_i32_u
                (i32.sub
                 (local.tee $var$2
@@ -639,7 +637,7 @@
               (local.get $var$3)
              )
             )
-            (call $wasm2js_scratch_store_i64
+            (global.set $__wasm-intrinsics-temp-i64
              (i64.or
               (i64.shl
                (i64.extend_i32_u
@@ -719,7 +717,7 @@
          )
          (br $label$3)
         )
-        (call $wasm2js_scratch_store_i64
+        (global.set $__wasm-intrinsics-temp-i64
          (i64.shl
           (i64.extend_i32_u
            (i32.sub
@@ -761,7 +759,7 @@
        )
        (br $label$2)
       )
-      (call $wasm2js_scratch_store_i64
+      (global.set $__wasm-intrinsics-temp-i64
        (i64.extend_i32_u
         (i32.and
          (local.get $var$4)
@@ -892,7 +890,7 @@
       )
      )
     )
-    (call $wasm2js_scratch_store_i64
+    (global.set $__wasm-intrinsics-temp-i64
      (local.get $var$5)
     )
     (return
@@ -905,7 +903,7 @@
      )
     )
    )
-   (call $wasm2js_scratch_store_i64
+   (global.set $__wasm-intrinsics-temp-i64
     (local.get $var$0)
    )
    (local.set $var$0

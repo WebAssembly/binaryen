@@ -283,6 +283,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   {
     PassRunner runner(wasm, options);
     runner.add(make_unique<AutoDrop>());
+    // TODO: only legalize if necessary - emscripten would already do so, and
+    //       likely other toolchains. but spec test suite needs that.
     runner.add("legalize-js-interface");
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
@@ -2471,20 +2473,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
       out << R"(
   function wasm2js_scratch_load_i32(index) {
     return i32ScratchView[index];
-  }
-      )";
-    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_I64) {
-      out << R"(
-  function legalimport$wasm2js_scratch_store_i64(low, high) {
-    i32ScratchView[0] = low;
-    i32ScratchView[1] = high;
-  }
-      )";
-    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I64) {
-      out << R"(
-  function legalimport$wasm2js_scratch_load_i64() {
-    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
-    return i32ScratchView[0];
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
