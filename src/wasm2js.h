@@ -283,7 +283,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   {
     PassRunner runner(wasm, options);
     runner.add(make_unique<AutoDrop>());
-    runner.add("legalize-js-interface"); // if not emscripten? just for tests?
+    // TODO: only legalize if necessary - emscripten would already do so, and
+    //       likely other toolchains. but spec test suite needs that.
+    runner.add("legalize-js-interface");
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
     // This may inject intrinsics which use i64 so it needs to be run before the
