@@ -3842,6 +3842,18 @@
    )
   )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
+    (drop (i32.and
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.and
+      (local.get $y)
+      (i64.const -1)
+    ))
+    (drop (i64.and    ;; skip
+      (local.get $y)
+      (i64.const 4294967295)
+    ))
     (drop (i32.sub
       (local.get $x)
       (i32.const -1)
@@ -3880,6 +3892,10 @@
     (drop (i64.le_u
       (local.get $y)
       (i64.const -1)
+    ))
+    (drop (i64.le_u    ;; skip
+      (local.get $y)
+      (i64.const 4294967295)
     ))
     (drop (i32.le_s
       (local.get $x)
