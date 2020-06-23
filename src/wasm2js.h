@@ -250,6 +250,7 @@ private:
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
+  void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
   void addMemoryFuncs(Ref ast, Module* wasm);
@@ -426,7 +427,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   }
 
   addTable(asmFunc[3], wasm);
-  // memory XXX
+  addStart(asmFunc[3], wasm);
   addExports(asmFunc[3], wasm);
   return ret;
 }
@@ -570,6 +571,13 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
           ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top)))));
       }
     }
+  }
+}
+
+void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
+  if (wasm->start.is()) {
+    ast->push_back(
+      ValueBuilder::makeCall(fromName(wasm->start, NameScope::Top)));
   }
 }
 
