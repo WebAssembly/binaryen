@@ -1,4 +1,3 @@
-import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,11 +20,10 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(i) {
   i = i | 0;
-  var j = 0;
+  var j = 0, $7_1 = 0;
   j = 100;
   switch_ : {
    $7 : {
@@ -58,7 +56,7 @@ function asmFunc(global, env, buffer) {
  function $1(i, i$hi) {
   i = i | 0;
   i$hi = i$hi | 0;
-  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7_1 = 0, $7$hi = 0, j = 0, j$hi = 0;
+  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7_1 = 0, $7$hi = 0, j = 0, j$hi = 0, $10$hi = 0, $10 = 0;
   j = 100;
   j$hi = 0;
   switch_ : {
@@ -137,62 +135,17 @@ function asmFunc(global, env, buffer) {
   return 1 | 0;
  }
  
- function legalstub$1($0_2, $1_2) {
-  $0_2 = $0_2 | 0;
-  $1_2 = $1_2 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_2 = 0, $2$hi = 0;
-  i64toi32_i32$0 = 0;
-  $4 = $0_2;
-  $4$hi = i64toi32_i32$0;
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_2;
-  i64toi32_i32$1 = 0;
-  i64toi32_i32$3 = 32;
-  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
-  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   $12 = 0;
-  } else {
-   i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-   $12 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-  }
-  $7$hi = i64toi32_i32$1;
-  i64toi32_i32$1 = $4$hi;
-  i64toi32_i32$0 = $4;
-  i64toi32_i32$2 = $7$hi;
-  i64toi32_i32$3 = $12;
-  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
-  i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_2 = i64toi32_i32$2;
-  $2$hi = i64toi32_i32$0;
-  i64toi32_i32$1 = i64toi32_i32$2;
-  i64toi32_i32$2 = 0;
-  i64toi32_i32$3 = 32;
-  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
-  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$2 = 0;
-   $13 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-  } else {
-   i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-   $13 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
-  }
-  setTempRet0($13 | 0);
-  i64toi32_i32$2 = $2$hi;
-  return $2_2 | 0;
- }
- 
  var FUNCTION_TABLE = [];
  return {
   "stmt": $0, 
-  "expr": legalstub$1, 
+  "expr": $1, 
   "arg": $2, 
   "corner": $3
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var stmt = retasmFunc.stmt;
 export var expr = retasmFunc.expr;
 export var arg = retasmFunc.arg;

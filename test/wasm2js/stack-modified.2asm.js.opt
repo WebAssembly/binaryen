@@ -1,4 +1,3 @@
-import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,7 +20,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0($0_1, $1) {
   $0_1 = $0_1 | 0;
@@ -44,12 +42,6 @@ function asmFunc(global, env, buffer) {
   return $3 | 0;
  }
  
- function legalstub$0($0_1, $1) {
-  $0_1 = $0($0_1, $1);
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
- }
- 
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE($0_1, $1, $2, $3) {
   var $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0;
   $4 = $2 >>> 16 | 0;
@@ -68,16 +60,16 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "fac_expr": legalstub$0, 
-  "fac_stack": legalstub$0, 
-  "fac_stack_raw": legalstub$0, 
-  "fac_mixed": legalstub$0, 
-  "fac_mixed_raw": legalstub$0
+  "fac_expr": $0, 
+  "fac_stack": $0, 
+  "fac_stack_raw": $0, 
+  "fac_mixed": $0, 
+  "fac_mixed_raw": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var fac_expr = retasmFunc.fac_expr;
 export var fac_stack = retasmFunc.fac_stack;
 export var fac_stack_raw = retasmFunc.fac_stack_raw;

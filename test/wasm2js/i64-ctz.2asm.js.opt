@@ -1,4 +1,3 @@
-import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,18 +20,18 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var setTempRet0 = env.setTempRet0;
- var i64toi32_i32$HIGH_BITS = 0;
- function legalstub$popcnt64($0, $1) {
+ function popcnt64($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $0 = __wasm_popcnt_i64($0, $1);
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $0 | 0;
  }
  
- function legalstub$ctz64($0, $1) {
+ function ctz64($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $0 = __wasm_ctz_i64($0, $1);
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $0 | 0;
  }
  
  function __wasm_ctz_i64($0, $1) {
@@ -45,20 +44,15 @@ function asmFunc(global, env, buffer) {
    }
    $2 = Math_clz32($0 ^ $2) + 32 | 0;
    $0 = Math_clz32($1 ^ $3);
-   $0 = ($0 | 0) == 32 ? $2 : $0;
-   $1 = 63 - $0 | 0;
-   i64toi32_i32$HIGH_BITS = 0 - (63 < $0 >>> 0) | 0;
-   return $1;
+   return 63 - (($0 | 0) == 32 ? $2 : $0) | 0;
   }
-  i64toi32_i32$HIGH_BITS = 0;
   return 64;
  }
  
  function __wasm_popcnt_i64($0, $1) {
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0;
+  var $2 = 0, $3 = 0, $4 = 0;
   while (1) {
-   $5 = $3;
-   $2 = $4;
+   $2 = $3;
    if ($0 | $1) {
     $2 = $0;
     $0 = $2 - 1 & $2;
@@ -72,18 +66,17 @@ function asmFunc(global, env, buffer) {
    }
    break;
   };
-  i64toi32_i32$HIGH_BITS = $2;
-  return $5;
+  return $2;
  }
  
  var FUNCTION_TABLE = [];
  return {
-  "a": legalstub$popcnt64, 
-  "b": legalstub$ctz64
+  "a": popcnt64, 
+  "b": ctz64
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var a = retasmFunc.a;
 export var b = retasmFunc.b;

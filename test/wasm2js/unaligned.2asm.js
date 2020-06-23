@@ -1,4 +1,3 @@
-import { setTempRet0 } from 'env';
 
 
   var scratchBuffer = new ArrayBuffer(8);
@@ -51,7 +50,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   var $0_1 = 0;
@@ -135,28 +133,6 @@ function asmFunc(global, env, buffer) {
   HEAP8[($1_1 + 7 | 0) >> 0] = $3_1 >>> 24 | 0;
  }
  
- function legalstub$1() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $1() | 0;
-  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  $0_1 = i64toi32_i32$0;
-  $0$hi = i64toi32_i32$1;
-  i64toi32_i32$2 = i64toi32_i32$0;
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$3 = 32;
-  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
-  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$0 = 0;
-   $7_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
-  } else {
-   i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
-   $7_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
-  }
-  setTempRet0($7_1 | 0);
-  i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
- }
- 
  var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
@@ -164,7 +140,7 @@ function asmFunc(global, env, buffer) {
  
  return {
   "i32_load": $0, 
-  "i64_load": legalstub$1, 
+  "i64_load": $1, 
   "f32_load": $2, 
   "f64_load": $3, 
   "i32_store": $4, 
@@ -176,7 +152,7 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var i32_load = retasmFunc.i32_load;
 export var i64_load = retasmFunc.i64_load;
 export var f32_load = retasmFunc.f32_load;

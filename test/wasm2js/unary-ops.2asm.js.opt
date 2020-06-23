@@ -26,6 +26,34 @@ function asmFunc(global, env, buffer) {
   return __wasm_popcnt_i32($0) | 0;
  }
  
+ function $2($0, $1_1, $2_1, $3_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
+  $3_1 = $3_1 | 0;
+  return (__wasm_popcnt_i64($0, $1_1) | 0) == ($2_1 | 0) & ($3_1 | 0) == (i64toi32_i32$HIGH_BITS | 0);
+ }
+ 
+ function $3($0, $1_1, $2_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
+  return !$2_1 & ($0 | 0) == ($1_1 | 0);
+ }
+ 
+ function $4($0, $1_1, $2_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
+  return ($0 | 0) == ($1_1 | 0) & ($2_1 | 0) == $0 >> 31;
+ }
+ 
+ function $5($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  return !($0 | $1_1) | 0;
+ }
+ 
  function $6($0) {
   $0 = $0 | 0;
   return Math_clz32($0) | 0;
@@ -41,52 +69,36 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $8($0, $1_1, $2, $3) {
+ function $8($0, $1_1, $2_1, $3_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  $2 = $2 | 0;
-  $3 = $3 | 0;
-  var $4 = 0;
-  $4 = Math_clz32($0) + 32 | 0;
+  $2_1 = $2_1 | 0;
+  $3_1 = $3_1 | 0;
+  var $4_1 = 0;
+  $4_1 = Math_clz32($0) + 32 | 0;
   $0 = Math_clz32($1_1);
-  return !$3 & ($2 | 0) == ((($0 | 0) == 32 ? $4 : $0) | 0);
+  return !$3_1 & ($2_1 | 0) == ((($0 | 0) == 32 ? $4_1 : $0) | 0);
  }
  
- function legalstub$2($0, $1_1, $2, $3) {
-  return (__wasm_popcnt_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
- }
- 
- function legalstub$3($0, $1_1, $2) {
-  return !$2 & ($0 | 0) == ($1_1 | 0);
- }
- 
- function legalstub$4($0, $1_1, $2) {
-  return ($0 | 0) == ($1_1 | 0) & ($2 | 0) == $0 >> 31;
- }
- 
- function legalstub$5($0, $1_1) {
-  return !($0 | $1_1);
- }
- 
- function legalstub$8($0, $1_1, $2, $3) {
-  return $8($0, $1_1, $2, $3);
- }
- 
- function legalstub$9($0, $1_1, $2, $3) {
-  return (__wasm_ctz_i64($0, $1_1) | 0) == ($2 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
+ function $9($0, $1_1, $2_1, $3_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
+  $3_1 = $3_1 | 0;
+  return (__wasm_ctz_i64($0, $1_1) | 0) == ($2_1 | 0) & ($3_1 | 0) == (i64toi32_i32$HIGH_BITS | 0);
  }
  
  function __wasm_ctz_i64($0, $1_1) {
-  var $2 = 0, $3 = 0;
+  var $2_1 = 0, $3_1 = 0;
   if ($0 | $1_1) {
-   $3 = $1_1 + -1 | 0;
-   $2 = $0 + -1 | 0;
-   if (($2 | 0) != -1) {
-    $3 = $3 + 1 | 0
+   $3_1 = $1_1 + -1 | 0;
+   $2_1 = $0 + -1 | 0;
+   if (($2_1 | 0) != -1) {
+    $3_1 = $3_1 + 1 | 0
    }
-   $2 = Math_clz32($0 ^ $2) + 32 | 0;
-   $0 = Math_clz32($1_1 ^ $3);
-   $0 = ($0 | 0) == 32 ? $2 : $0;
+   $2_1 = Math_clz32($0 ^ $2_1) + 32 | 0;
+   $0 = Math_clz32($1_1 ^ $3_1);
+   $0 = ($0 | 0) == 32 ? $2_1 : $0;
    $1_1 = 63 - $0 | 0;
    i64toi32_i32$HIGH_BITS = 0 - (63 < $0 >>> 0) | 0;
    return $1_1;
@@ -96,9 +108,9 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_popcnt_i32($0) {
-  var $1_1 = 0, $2 = 0;
+  var $1_1 = 0, $2_1 = 0;
   while (1) {
-   $2 = $1_1;
+   $2_1 = $1_1;
    if ($0) {
     $0 = $0 - 1 & $0;
     $1_1 = $1_1 + 1 | 0;
@@ -106,42 +118,42 @@ function asmFunc(global, env, buffer) {
    }
    break;
   };
-  return $2;
+  return $2_1;
  }
  
  function __wasm_popcnt_i64($0, $1_1) {
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0;
+  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
   while (1) {
-   $5 = $3;
-   $2 = $4;
+   $5_1 = $3_1;
+   $2_1 = $4_1;
    if ($0 | $1_1) {
-    $2 = $0;
-    $0 = $2 - 1 & $2;
-    $1_1 = $1_1 - ($2 >>> 0 < 1) & $1_1;
-    $2 = $3 + 1 | 0;
-    if ($2 >>> 0 < 1) {
-     $4 = $4 + 1 | 0
+    $2_1 = $0;
+    $0 = $2_1 - 1 & $2_1;
+    $1_1 = $1_1 - ($2_1 >>> 0 < 1) & $1_1;
+    $2_1 = $3_1 + 1 | 0;
+    if ($2_1 >>> 0 < 1) {
+     $4_1 = $4_1 + 1 | 0
     }
-    $3 = $2;
+    $3_1 = $2_1;
     continue;
    }
    break;
   };
-  i64toi32_i32$HIGH_BITS = $2;
-  return $5;
+  i64toi32_i32$HIGH_BITS = $2_1;
+  return $5_1;
  }
  
  var FUNCTION_TABLE = [];
  return {
   "i32_popcnt": $1, 
-  "check_popcnt_i64": legalstub$2, 
-  "check_extend_ui32": legalstub$3, 
-  "check_extend_si32": legalstub$4, 
-  "check_eqz_i64": legalstub$5, 
+  "check_popcnt_i64": $2, 
+  "check_extend_ui32": $3, 
+  "check_extend_si32": $4, 
+  "check_eqz_i64": $5, 
   "i32_clz": $6, 
   "i32_ctz": $7, 
-  "check_clz_i64": legalstub$8, 
-  "check_ctz_i64": legalstub$9
+  "check_clz_i64": $8, 
+  "check_ctz_i64": $9
  };
 }
 

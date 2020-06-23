@@ -66,14 +66,10 @@ function asmFunc(global, env, buffer) {
   return (wasm2js_scratch_load_i32(0) | 0) == ($0 | 0) & ($1_1 | 0) == ($2_1 | 0);
  }
  
- function legalstub$2($0, $1_1) {
-  return $2($0, $1_1);
- }
- 
  var FUNCTION_TABLE = [];
  return {
   "i32_roundtrip": $1, 
-  "i64_roundtrip": legalstub$2
+  "i64_roundtrip": $2
  };
 }
 

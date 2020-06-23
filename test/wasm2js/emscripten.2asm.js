@@ -167,6 +167,7 @@ function asmFunc(global, env, buffer) {
  
  function bools(x) {
   x = x | 0;
+  var $32 = 0;
   bools((HEAPU8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
   bools((HEAP8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
   bools((HEAPU16[0 >> 1] | 0) & 1 | 0 | 0) | 0;

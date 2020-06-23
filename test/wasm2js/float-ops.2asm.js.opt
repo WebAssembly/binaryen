@@ -244,6 +244,30 @@ function asmFunc(global, env, buffer) {
   return ~~$0 >>> 0 | 0;
  }
  
+ function $43($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($1_1 | 0)));
+ }
+ 
+ function $44($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  return +(+($0 >>> 0) + 4294967296.0 * +($1_1 | 0));
+ }
+ 
+ function $45($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($1_1 >>> 0)));
+ }
+ 
+ function $46($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  return +(+($0 >>> 0) + 4294967296.0 * +($1_1 >>> 0));
+ }
+ 
  function $47($0) {
   $0 = Math_fround($0);
   return !(~~$0 >>> 0 | (Math_fround(Math_abs($0)) >= Math_fround(1.0) ? ($0 > Math_fround(0.0) ? ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 / Math_fround(4294967296.0)))), Math_fround(4294967296.0))) >>> 0 : ~~Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0) : 0)) | 0;
@@ -252,22 +276,6 @@ function asmFunc(global, env, buffer) {
  function $48($0) {
   $0 = +$0;
   return !(~~$0 >>> 0 | (Math_abs($0) >= 1.0 ? ($0 > 0.0 ? ~~Math_min(Math_floor($0 / 4294967296.0), 4294967295.0) >>> 0 : ~~Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0) : 0)) | 0;
- }
- 
- function legalstub$43($0, $1_1) {
-  return Math_fround(+($0 >>> 0) + 4294967296.0 * +($1_1 | 0));
- }
- 
- function legalstub$44($0, $1_1) {
-  return +($0 >>> 0) + 4294967296.0 * +($1_1 | 0);
- }
- 
- function legalstub$45($0, $1_1) {
-  return Math_fround(+($0 >>> 0) + 4294967296.0 * +($1_1 >>> 0));
- }
- 
- function legalstub$46($0, $1_1) {
-  return +($0 >>> 0) + 4294967296.0 * +($1_1 >>> 0);
  }
  
  var FUNCTION_TABLE = [];
@@ -312,10 +320,10 @@ function asmFunc(global, env, buffer) {
   "f64_to_i32": $40, 
   "f32_to_u32": $41, 
   "f64_to_u32": $42, 
-  "i64_to_f32": legalstub$43, 
-  "i64_to_f64": legalstub$44, 
-  "u64_to_f32": legalstub$45, 
-  "u64_to_f64": legalstub$46, 
+  "i64_to_f32": $43, 
+  "i64_to_f64": $44, 
+  "u64_to_f32": $45, 
+  "u64_to_f64": $46, 
   "f32_to_i64": $47, 
   "f64_to_i64": $48, 
   "f32_to_u64": $47, 
