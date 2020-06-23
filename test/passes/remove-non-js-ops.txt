@@ -8,21 +8,17 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
- (type $i64_=>_none (func (param i64)))
  (type $f32_=>_none (func (param f32)))
  (type $f64_=>_none (func (param f64)))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32) (result i32)))
- (type $none_=>_i64 (func (result i64)))
  (type $none_=>_f32 (func (result f32)))
  (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
  (type $none_=>_f64 (func (result f64)))
  (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "env" "wasm2js_scratch_load_i32" (func $wasm2js_scratch_load_i32 (param i32) (result i32)))
  (import "env" "wasm2js_scratch_store_i32" (func $wasm2js_scratch_store_i32 (param i32 i32)))
- (import "env" "wasm2js_scratch_load_i64" (func $wasm2js_scratch_load_i64 (result i64)))
- (import "env" "wasm2js_scratch_store_i64" (func $wasm2js_scratch_store_i64 (param i64)))
  (import "env" "wasm2js_scratch_load_f32" (func $wasm2js_scratch_load_f32 (result f32)))
  (import "env" "wasm2js_scratch_store_f32" (func $wasm2js_scratch_store_f32 (param f32)))
  (import "env" "wasm2js_scratch_load_f64" (func $wasm2js_scratch_load_f64 (result f64)))
@@ -35,6 +31,7 @@
  (import "env" "wasm2js_atomic_rmw_i64" (func $wasm2js_atomic_rmw_i64 (param i32 i32 i32 i32 i32 i32) (result i32)))
  (import "env" "wasm2js_get_stashed_bits" (func $wasm2js_get_stashed_bits (result i32)))
  (memory $0 1)
+ (global $__wasm-intrinsics-temp-i64 (mut i64) (i64.const 0))
  (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
   (f64.reinterpret_i64
    (i64.or
@@ -426,7 +423,7 @@
                (i64.const 4294967296)
               )
              )
-             (call $wasm2js_scratch_store_i64
+             (global.set $__wasm-intrinsics-temp-i64
               (i64.extend_i32_u
                (i32.sub
                 (local.tee $var$2
@@ -487,7 +484,7 @@
               (local.get $var$3)
              )
             )
-            (call $wasm2js_scratch_store_i64
+            (global.set $__wasm-intrinsics-temp-i64
              (i64.or
               (i64.shl
                (i64.extend_i32_u
@@ -567,7 +564,7 @@
          )
          (br $label$3)
         )
-        (call $wasm2js_scratch_store_i64
+        (global.set $__wasm-intrinsics-temp-i64
          (i64.shl
           (i64.extend_i32_u
            (i32.sub
@@ -609,7 +606,7 @@
        )
        (br $label$2)
       )
-      (call $wasm2js_scratch_store_i64
+      (global.set $__wasm-intrinsics-temp-i64
        (i64.extend_i32_u
         (i32.and
          (local.get $var$4)
@@ -740,7 +737,7 @@
       )
      )
     )
-    (call $wasm2js_scratch_store_i64
+    (global.set $__wasm-intrinsics-temp-i64
      (local.get $var$5)
     )
     (return
@@ -753,7 +750,7 @@
      )
     )
    )
-   (call $wasm2js_scratch_store_i64
+   (global.set $__wasm-intrinsics-temp-i64
     (local.get $var$0)
    )
    (local.set $var$0
@@ -813,7 +810,7 @@
     (local.get $var$1)
    )
   )
-  (call $wasm2js_scratch_load_i64)
+  (global.get $__wasm-intrinsics-temp-i64)
  )
  (func $__wasm_nearest_f32 (param $var$0 f32) (result f32)
   (local $var$1 f32)

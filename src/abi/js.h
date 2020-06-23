@@ -38,8 +38,6 @@ namespace wasm2js {
 
 extern cashew::IString SCRATCH_LOAD_I32;
 extern cashew::IString SCRATCH_STORE_I32;
-extern cashew::IString SCRATCH_LOAD_I64;
-extern cashew::IString SCRATCH_STORE_I64;
 extern cashew::IString SCRATCH_LOAD_F32;
 extern cashew::IString SCRATCH_STORE_F32;
 extern cashew::IString SCRATCH_LOAD_F64;
@@ -76,8 +74,6 @@ inline void ensureHelpers(Module* wasm,
 
   ensureImport(SCRATCH_LOAD_I32, {Type::i32}, Type::i32);
   ensureImport(SCRATCH_STORE_I32, {Type::i32, Type::i32}, Type::none);
-  ensureImport(SCRATCH_LOAD_I64, {}, Type::i64);
-  ensureImport(SCRATCH_STORE_I64, {Type::i64}, Type::none);
   ensureImport(SCRATCH_LOAD_F32, {}, Type::f32);
   ensureImport(SCRATCH_STORE_F32, {Type::f32}, Type::none);
   ensureImport(SCRATCH_LOAD_F64, {}, Type::f64);
@@ -98,7 +94,6 @@ inline void ensureHelpers(Module* wasm,
 
 inline bool isHelper(cashew::IString name) {
   return name == SCRATCH_LOAD_I32 || name == SCRATCH_STORE_I32 ||
-         name == SCRATCH_LOAD_I64 || name == SCRATCH_STORE_I64 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
          name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||
          name == ATOMIC_WAIT_I32 || name == MEMORY_INIT ||
