@@ -241,9 +241,10 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line.
+    // Zero values imply we can ignore this line, unless it has something
+    // special we must emit.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return line != 0 && addr != 0;
+    return (line != 0 && addr != 0) || endSequence;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
