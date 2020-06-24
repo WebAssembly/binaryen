@@ -1262,6 +1262,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           abort();
         }
       }
+      if (curr->isAtomic) {
+        Ref call = ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), LOAD));
+        ValueBuilder::appendToCall(call, ret[1]);
+        ValueBuilder::appendToCall(call, ret[2]);
+        ret = call;
+      }
       // Coercions are not actually needed, as if the user reads beyond valid
       // memory, it's undefined behavior anyhow, and so we don't care much about
       // slowness of undefined values etc.
@@ -1349,6 +1356,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                     << std::endl;
           abort();
         }
+      }
+      if (curr->isAtomic) {
+        Ref call = ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), STORE));
+        ValueBuilder::appendToCall(call, ret[1]);
+        ValueBuilder::appendToCall(call, ret[2]);
+        ValueBuilder::appendToCall(call, value);
+        return call;
       }
       return ValueBuilder::makeBinary(ret, SET, value);
     }
@@ -1802,28 +1817,108 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
-    // TODO's
+    // Atomics
+
+    struct HeapAndPointer {
+      Ref heap;
+      Ref ptr;
+    };
+
+    HeapAndPointer
+    getHeapAndAdjustedPointer(Index bytes, Expression* ptr, Index offset) {
+      IString heap;
+      Ref adjustedPtr = makePointer(ptr, offset);
+      switch (bytes) {
+        case 1:
+          heap = HEAP8;
+          break;
+        case 2:
+          heap = HEAP16;
+          adjustedPtr = ValueBuilder::makePtrShift(adjustedPtr, 1);
+          break;
+        case 4:
+          heap = HEAP32;
+          adjustedPtr = ValueBuilder::makePtrShift(adjustedPtr, 2);
+          break;
+        default: {
+          WASM_UNREACHABLE("unimp");
+        }
+      }
+      return {ValueBuilder::makeName(heap), adjustedPtr};
+    }
 
     Ref visitAtomicRMW(AtomicRMW* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      auto hap =
+        getHeapAndAdjustedPointer(curr->bytes, curr->ptr, curr->offset);
+      IString target;
+      switch (curr->op) {
+        case AtomicRMWOp::Add:
+          target = IString("add");
+          break;
+        case AtomicRMWOp::Sub:
+          target = IString("sub");
+          break;
+        case AtomicRMWOp::And:
+          target = IString("and");
+          break;
+        case AtomicRMWOp::Or:
+          target = IString("or");
+          break;
+        case AtomicRMWOp::Xor:
+          target = IString("xor");
+          break;
+        case AtomicRMWOp::Xchg:
+          target = IString("exchange");
+          break;
+        default:
+          WASM_UNREACHABLE("unimp");
+      }
+      Ref call = ValueBuilder::makeCall(
+        ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), target));
+      ValueBuilder::appendToCall(call, hap.heap);
+      ValueBuilder::appendToCall(call, hap.ptr);
+      ValueBuilder::appendToCall(call, visit(curr->value, EXPRESSION_RESULT));
+      return call;
     }
+
     Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      auto hap =
+        getHeapAndAdjustedPointer(curr->bytes, curr->ptr, curr->offset);
+      Ref expected = visit(curr->expected, EXPRESSION_RESULT);
+      Ref replacement = visit(curr->replacement, EXPRESSION_RESULT);
+      Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
+        ValueBuilder::makeName(ATOMICS), COMPARE_EXCHANGE));
+      ValueBuilder::appendToCall(call, hap.heap);
+      ValueBuilder::appendToCall(call, hap.ptr);
+      ValueBuilder::appendToCall(call, expected);
+      ValueBuilder::appendToCall(call, replacement);
+      return makeAsmCoercion(call, wasmToAsmType(curr->type));
     }
+
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+
     Ref visitAtomicNotify(AtomicNotify* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
+        ValueBuilder::makeName(ATOMICS), IString("notify")));
+      ValueBuilder::appendToCall(call, ValueBuilder::makeName(HEAP32));
+      ValueBuilder::appendToCall(
+        call,
+        ValueBuilder::makePtrShift(makePointer(curr->ptr, curr->offset), 2));
+      ValueBuilder::appendToCall(call,
+                                 visit(curr->notifyCount, EXPRESSION_RESULT));
+      return call;
     }
+
     Ref visitAtomicFence(AtomicFence* curr) {
       // Sequentially consistent fences can be lowered to no operation
       return ValueBuilder::makeToplevel();
     }
+
+    // TODOs
+
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2434,6 +2529,67 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_data_drop(segment) {
     // TODO: traps on invalid things
     memorySegments[segment] = new Uint8Array(0);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
+      out << R"(
+  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
+    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
+    var view = new Int32Array(bufferView.buffer); // TODO cache
+    var result = Atomics.wait(view, ptr, expected);
+    if (result == 'ok') return 0;
+    if (result == 'not-equal') return 1;
+    if (result == 'timed-out') return 2;
+    throw 'bad result ' + result;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::ATOMIC_RMW_I64) {
+      out << R"(
+  function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
+    assert(bytes == 8); // TODO: support 1, 2, 4 as well
+    var view = new BigInt64Array(bufferView.buffer); // TODO cache
+    ptr = (ptr + offset) >> 3;
+    var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));
+    var result;
+    switch (op) {
+      case 0: { // Add
+        result = Atomics.add(view, ptr, value);
+        break;
+      }
+      case 1: { // Sub
+        result = Atomics.sub(view, ptr, value);
+        break;
+      }
+      case 2: { // And
+        result = Atomics.and(view, ptr, value);
+        break;
+      }
+      case 3: { // Or
+        result = Atomics.or(view, ptr, value);
+        break;
+      }
+      case 4: { // Xor
+        result = Atomics.xor(view, ptr, value);
+        break;
+      }
+      case 5: { // Xchg
+        result = Atomics.exchange(view, ptr, value);
+        break;
+      }
+      default: throw 'bad op';
+    }
+    var low = Number(result & BigInt(0xffffffff)) | 0;
+    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
+    stashedBits = high;
+    return low;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::GET_STASHED_BITS) {
+      out << R"(
+  var stashedBits = 0;
+
+  function wasm2js_get_stashed_bits() {
+    return stashedBits;
   }
       )";
     }
