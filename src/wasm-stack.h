@@ -853,7 +853,7 @@ public:
   }
   void emitUnreachable() {
     // Stacky code already explicitly contains these guard unreachables
-    if (!func->isStacky) {
+    if (func->profile == IRProfile::Normal) {
       writer.emitUnreachable();
     }
   }

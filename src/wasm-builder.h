@@ -35,10 +35,13 @@ struct NameType {
 
 class Builder {
   MixedArena& allocator;
+  IRProfile profile;
 
 public:
-  Builder(MixedArena& allocator) : allocator(allocator) {}
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(MixedArena& allocator, IRProfile profile = IRProfile::Normal)
+    : allocator(allocator), profile(profile) {}
+  Builder(Module& wasm, IRProfile profile = IRProfile::Normal)
+    : allocator(wasm.allocator), profile(profile) {}
 
   // make* functions, other globals
 
@@ -94,20 +97,20 @@ public:
     auto* ret = allocator.alloc<Block>();
     if (first) {
       ret->list.push_back(first);
-      ret->finalize();
+      ret->finalize(profile);
     }
     return ret;
   }
   Block* makeBlock(Name name, Expression* first = nullptr) {
     auto* ret = makeBlock(first);
     ret->name = name;
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const std::vector<Expression*>& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const std::vector<Expression*>& items, Type type) {
@@ -119,7 +122,7 @@ public:
   Block* makeBlock(const ExpressionList& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const ExpressionList& items, Type type) {
@@ -132,7 +135,7 @@ public:
     auto* ret = allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(Name name, const ExpressionList& items, Type type) {

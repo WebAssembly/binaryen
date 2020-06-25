@@ -16,6 +16,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/stack-utils.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -46,7 +47,16 @@ void ReFinalize::visitBlock(Block* curr) {
   }
   // Get the least upper bound type of the last element and all branch return
   // values
-  curr->type = curr->list.back()->type;
+  if (profile == IRProfile::Normal) {
+    curr->type = curr->list.back()->type;
+  } else {
+    assert(profile == IRProfile::Stacky);
+    StackUtils::StackSignature sig(curr->list.begin(), curr->list.end());
+    curr->type = sig.results;
+    if (curr->type == Type::none) {
+      curr->type = sig.unreachable ? Type::unreachable : Type::none;
+    }
+  }
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
     if (iter != breakValues.end()) {

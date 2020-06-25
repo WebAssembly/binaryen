@@ -62,6 +62,8 @@ struct Address {
   }
 };
 
+enum class IRProfile { Normal, Stacky };
+
 // Operators
 
 enum UnaryOp {
@@ -626,7 +628,7 @@ public:
 
   // set the type purely based on its contents. this scans the block, so it is
   // not fast.
-  void finalize();
+  void finalize(IRProfile profile = IRProfile::Normal);
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional
@@ -1274,7 +1276,7 @@ public:
   // stack IR. The Pass system will throw away Stack IR if a pass is run
   // that declares it may modify Binaryen IR.
   std::unique_ptr<StackIR> stackIR;
-  bool isStacky = false;
+  IRProfile profile = IRProfile::Normal;
 
   // local names. these are optional.
   std::map<Index, Name> localNames;

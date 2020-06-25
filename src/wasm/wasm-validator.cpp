@@ -388,6 +388,7 @@ void FunctionValidator::noteLabelName(Name name) {
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
+  // TODO: factor out and implement stacky validation
   if (!getModule()->features.hasMultivalue()) {
     shouldBeTrue(!curr->type.isMulti(),
                  curr,
@@ -428,7 +429,8 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
       shouldBeTrue(
         info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
-      if (curr->list.size() > 0 && !getFunction()->isStacky) {
+      if (curr->list.size() > 0 &&
+          getFunction()->profile != IRProfile::Stacky) {
         auto last = curr->list.back()->type;
         if (last == Type::none) {
           shouldBeTrue(info.arity == Index(0),
@@ -440,7 +442,7 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakInfos.erase(iter);
   }
-  if (curr->list.size() > 1 && !getFunction()->isStacky) {
+  if (curr->list.size() > 1 && getFunction()->profile != IRProfile::Stacky) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),
@@ -454,7 +456,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
     }
   }
-  if (curr->list.size() > 0 && !getFunction()->isStacky) {
+  if (curr->list.size() > 0 && getFunction()->profile != IRProfile::Stacky) {
     auto backType = curr->list.back()->type;
     if (!curr->type.isConcrete()) {
       shouldBeFalse(backType.isConcrete(),
@@ -2094,7 +2096,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       // check if a node type is 'stale', i.e., we forgot to finalize() the
       // node.
       auto oldType = curr->type;
-      ReFinalizeNode().visit(curr);
+      auto profile = getFunction() ? getFunction()->profile : IRProfile::Normal;
+      ReFinalizeNode(profile).visit(curr);
       auto newType = curr->type;
       if (newType != oldType) {
         // We accept concrete => undefined,

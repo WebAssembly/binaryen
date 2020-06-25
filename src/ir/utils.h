@@ -104,7 +104,11 @@ struct ReFinalize
 
   Pass* create() override { return new ReFinalize; }
 
-  ReFinalize() { name = "refinalize"; }
+  IRProfile profile;
+
+  ReFinalize(IRProfile profile = IRProfile::Normal) : profile(profile) {
+    name = "refinalize";
+  }
 
   // block finalization is O(bad) if we do each block by itself, so do it in
   // bulk, tracking break value types so we just do a linear pass
@@ -179,7 +183,9 @@ private:
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
 struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
-  void visitBlock(Block* curr) { curr->finalize(); }
+  IRProfile profile;
+  ReFinalizeNode(IRProfile profile = IRProfile::Normal) : profile(profile) {}
+  void visitBlock(Block* curr) { curr->finalize(profile); }
   void visitIf(If* curr) { curr->finalize(); }
   void visitLoop(Loop* curr) { curr->finalize(); }
   void visitBreak(Break* curr) { curr->finalize(); }

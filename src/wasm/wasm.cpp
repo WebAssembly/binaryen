@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "ir/stack-utils.h"
 #include "wasm-printing.h"
 #include "wasm-traversal.h"
 
@@ -232,13 +233,48 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
 
 // core AST type checking
 
+static void finalizeNormalBlock(Block* block) {
+  if (block->list.size() == 0) {
+    block->type = Type::none;
+    return;
+  }
+  // normally the type is the type of the final child and even if we have an
+  // unreachable child somewhere, we still mark ourselves as having that type.
+  // (block (result i32)
+  //  (return)
+  //  (i32.const 10)
+  // )
+  block->type = block->list.back()->type;
+  // The exception is for blocks that produce no values, which are
+  // unreachable if any child is unreachable.
+  if (block->type == Type::none) {
+    for (auto* child : block->list) {
+      if (child->type == Type::unreachable) {
+        block->type = Type::unreachable;
+        break;
+      }
+    }
+  }
+}
+
+static void finalizeStackyBlock(Block* block) {
+  // Similar rules apply to stacky blocks, although the type they produce
+  // is not just the type of their last instruction.
+  StackUtils::StackSignature sig(block->list.begin(), block->list.end());
+  block->type = sig.results;
+  if (block->type == Type::none) {
+    block->type = sig.unreachable ? Type::unreachable : Type::none;
+  }
+}
+
 struct TypeSeeker : public PostWalker<TypeSeeker> {
   Expression* target; // look for this one
   Name targetName;
+  IRProfile profile;
   std::vector<Type> types;
 
-  TypeSeeker(Expression* target, Name targetName)
-    : target(target), targetName(targetName) {
+  TypeSeeker(Expression* target, Name targetName, IRProfile profile)
+    : target(target), targetName(targetName), profile(profile) {
     Expression* temp = target;
     walk(temp);
   }
@@ -268,11 +304,13 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBlock(Block* curr) {
     if (curr == target) {
-      if (curr->list.size() > 0) {
-        types.push_back(curr->list.back()->type);
+      if (profile == IRProfile::Normal) {
+        finalizeNormalBlock(curr);
       } else {
-        types.push_back(Type::none);
+        assert(profile == IRProfile::Stacky);
+        finalizeStackyBlock(curr);
       }
+      types.push_back(curr->type);
     } else if (curr->name == targetName) {
       // ignore all breaks til now, they were captured by someone with the same
       // name
@@ -324,42 +362,24 @@ static void handleUnreachable(Block* block,
   }
 }
 
-void Block::finalize() {
-  if (!name.is()) {
-    if (list.size() > 0) {
-      // nothing branches here, so this is easy
-      // normally the type is the type of the final child
-      type = list.back()->type;
-      // and even if we have an unreachable child somewhere,
-      // we still mark ourselves as having that type,
-      // (block (result i32)
-      //  (return)
-      //  (i32.const 10)
-      // )
-      if (type.isConcrete()) {
-        return;
-      }
-      // if we are unreachable, we are done
-      if (type == Type::unreachable) {
-        return;
-      }
-      // we may still be unreachable if we have an unreachable
-      // child
-      for (auto* child : list) {
-        if (child->type == Type::unreachable) {
-          type = Type::unreachable;
-          return;
-        }
-      }
-    } else {
-      type = Type::none;
+void Block::finalize(IRProfile profile) {
+  if (name.is()) {
+    TypeSeeker seeker(this, this->name, profile);
+    type = Type::mergeTypes(seeker.types);
+    handleUnreachable(this);
+  } else {
+    // nothing branches here, so this is easy
+    switch (profile) {
+      case IRProfile::Normal:
+        finalizeNormalBlock(this);
+        break;
+      case IRProfile::Stacky:
+        finalizeStackyBlock(this);
+        break;
+      default:
+        WASM_UNREACHABLE("Unknown profile");
     }
-    return;
   }
-
-  TypeSeeker seeker(this, this->name);
-  type = Type::mergeTypes(seeker.types);
-  handleUnreachable(this);
 }
 
 void Block::finalize(Type type_) {

@@ -1960,7 +1960,7 @@ private:
       : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
         scope(scope) {}
 
-    bool isStacky() { return scope.function->isStacky; }
+    bool isStacky() { return scope.function->profile == IRProfile::Stacky; }
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
