@@ -982,6 +982,14 @@ private:
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
+      if (binary->op == SubInt32) {
+        if (auto* num = binary->left->dynCast<Const>()) {
+          if (num->value.geti32() == 0) {
+            // 0 - x   ==>   x
+            return binary->right;
+          }
+        }
+      }
       if (binary->op == OrInt32) {
         // an or flowing into a boolean context can consider each input as
         // boolean
