@@ -30,15 +30,15 @@ Name getGlobalElem(Name global, Index i) {
 
 struct Poppifier : PostWalker<Poppifier> {
   bool scanned = false;
-  MixedArena& allocator;
-  Poppifier(MixedArena& allocator) : allocator(allocator) {}
+  Builder builder;
+  Poppifier(Builder& builder) : builder(builder) {}
 
   static void scan(Poppifier* self, Expression** currp) {
     if (!self->scanned) {
       self->scanned = true;
       PostWalker<Poppifier>::scan(self, currp);
     } else {
-      *currp = Builder(self->allocator).makePop((*currp)->type);
+      *currp = self->builder.makePop((*currp)->type);
     }
   }
 
@@ -56,7 +56,7 @@ struct Scope {
 };
 
 struct Stackifier : BinaryenIRWriter<Stackifier> {
-  MixedArena& allocator;
+  Builder builder;
   std::vector<Scope> scopeStack;
 
   // Maps tuple locals to the new locals that will hold their elements
@@ -90,16 +90,18 @@ struct Stackifier : BinaryenIRWriter<Stackifier> {
 };
 
 Stackifier::Stackifier(Function* func, MixedArena& allocator)
-  : BinaryenIRWriter<Stackifier>(func), allocator(allocator) {
+  : BinaryenIRWriter<Stackifier>(func), builder(allocator, IRProfile::Stacky) {
   // Start with a scope to emit top-level instructions into
   scopeStack.emplace_back(Scope::Func);
 
   // Map each tuple local to a set of expanded locals
-  for (size_t i = 0, end = func->vars.size(); i < end; ++i) {
-    if (func->vars[i].isMulti()) {
-      auto& vars = tupleVars[Index(i)];
-      for (auto type : func->vars[i].expand()) {
-        vars.push_back(Builder(allocator).addVar(func, type));
+  for (Index i = func->getNumParams(), end = func->getNumLocals(); i < end;
+       ++i) {
+    Type localType = func->getLocalType(i);
+    if (localType.isMulti()) {
+      auto& vars = tupleVars[i];
+      for (auto type : localType.expand()) {
+        vars.push_back(builder.addVar(func, type));
       }
     }
   }
@@ -109,33 +111,30 @@ Index Stackifier::getScratchLocal(Type type) {
   // If there is no scratch local for `type`, allocate a new one
   auto insert = scratchLocals.insert({type, Index(-1)});
   if (insert.second) {
-    insert.first->second = Builder(allocator).addVar(func, type);
+    insert.first->second = builder.addVar(func, type);
   }
   return insert.first->second;
 }
 
 void Stackifier::patchInstrs(Expression*& expr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (auto* block = expr->dynCast<Block>()) {
-    // Conservatively keep blocks to avoid dropping important labels, but do
-    // not patch a block into itself, which would otherwise happen when
-    // emitting if/else or try/catch arms and function bodies.
+    // Reuse blocks, but do not patch a block into itself, which would otherwise
+    // happen when emitting if/else or try/catch arms and function bodies.
     if (instrs.size() != 1 || instrs[0] != block) {
       block->list.set(instrs);
     }
-  } else if (instrs.size() == 1) {
-    // Otherwise do not insert blocks containing single instructions
-    assert(expr == instrs[0] && "not actually sure about this");
-    expr = instrs[0];
   } else {
+    // Otherwise create a new block, even if we have just a single
+    // expression. We want blocks in every new scope rather than other
+    // instructions because stacky optimizations only look at the children of
+    // blocks.
     expr = builder.makeBlock(instrs, expr->type);
   }
   instrs.clear();
 }
 
 void Stackifier::emit(Expression* curr) {
-  Builder builder(allocator);
   // Control flow structures introduce new scopes. The instructions collected
   // for the new scope will be patched back into the original Expression when
   // the scope ends.
@@ -178,7 +177,7 @@ void Stackifier::emit(Expression* curr) {
   } else {
     // Replace all children (which have already been emitted) with pops and
     // emit the current instruction into the current scope.
-    Poppifier(allocator).poppify(curr);
+    Poppifier(builder).poppify(curr);
     scopeStack.back().instrs.push_back(curr);
   }
 };
@@ -231,13 +230,11 @@ void Stackifier::emitFunctionEnd() {
 }
 
 void Stackifier::emitUnreachable() {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   instrs.push_back(builder.makeUnreachable());
 }
 
 void Stackifier::emitTupleExtract(TupleExtract* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   const auto& types = curr->tuple->type.expand();
   // Drop all the values after the one we want
@@ -260,7 +257,6 @@ void Stackifier::emitTupleExtract(TupleExtract* curr) {
 }
 
 void Stackifier::emitDrop(Drop* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (curr->value->type.isMulti()) {
     // Drop each element individually
@@ -275,7 +271,6 @@ void Stackifier::emitDrop(Drop* curr) {
 }
 
 void Stackifier::emitLocalGet(LocalGet* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (curr->type.isMulti()) {
     const auto& types = curr->type.expand();
@@ -289,7 +284,6 @@ void Stackifier::emitLocalGet(LocalGet* curr) {
 }
 
 void Stackifier::emitLocalSet(LocalSet* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (curr->value->type.isMulti()) {
     const auto& types = curr->value->type.expand();
@@ -318,7 +312,6 @@ void Stackifier::emitLocalSet(LocalSet* curr) {
 }
 
 void Stackifier::emitGlobalGet(GlobalGet* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (curr->type.isMulti()) {
     const auto& types = curr->type.expand();
@@ -332,7 +325,6 @@ void Stackifier::emitGlobalGet(GlobalGet* curr) {
 }
 
 void Stackifier::emitGlobalSet(GlobalSet* curr) {
-  Builder builder(allocator);
   auto& instrs = scopeStack.back().instrs;
   if (curr->value->type.isMulti()) {
     const auto& types = curr->value->type.expand();
@@ -350,9 +342,9 @@ class StackifyFunctionsPass : public Pass {
   bool isFunctionParallel() override { return true; }
   void
   runOnFunction(PassRunner* runner, Module* module, Function* func) override {
-    if (!func->isStacky) {
+    if (func->profile != IRProfile::Stacky) {
       Stackifier(func, module->allocator).write();
-      func->isStacky = true;
+      func->profile = IRProfile::Stacky;
     }
   }
   Pass* create() override { return new StackifyFunctionsPass(); }

@@ -26,7 +26,7 @@ struct StackRemoveBlocksPass
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new StackRemoveBlocksPass; }
   void visitBlock(Block* curr) {
-    for (size_t i = 0; i < curr->list.size(); ++i) {
+    for (size_t i = 0; i < curr->list.size();) {
       if (auto* block = curr->list[i]->dynCast<Block>()) {
         if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO: implement `insert` on arena vectors directly
@@ -35,8 +35,10 @@ struct StackRemoveBlocksPass
           insts.insert(
             insts.begin() + i, block->list.begin(), block->list.end());
           curr->list.set(insts);
+          continue;
         }
       }
+      ++i;
     }
   }
 };

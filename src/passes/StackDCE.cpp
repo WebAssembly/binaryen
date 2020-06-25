@@ -17,6 +17,7 @@
 // TODO: documentation
 
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 
 namespace wasm {
@@ -24,21 +25,30 @@ namespace wasm {
 struct StackDCEPass : public WalkerPass<PostWalker<StackDCEPass>> {
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new StackDCEPass; }
+  bool changed = false;
+
   void visitBlock(Block* curr) {
     for (size_t i = 0, size = curr->list.size(); i < size; ++i) {
       if (curr->list[i]->type == Type::unreachable) {
-        if (Properties::isControlFlowStructure(curr->list[i])) {
-          // Conservatively keep the following `unreachable` for proper typing
-          // TODO: Add a pass to re-type blocks and remove these unreachables
-          assert(i + 1 < curr->list.size() &&
-                 curr->list[i + 1]->is<Unreachable>() &&
-                 "Expected an unreachable after unreachable control flow");
+        // Conservatively keep any `unreachable` following block structures to
+        // guarantee proper typing. TODO: Add a pass to re-type blocks and
+        // remove these unreachables
+        if (Properties::isControlFlowStructure(curr->list[i]) && i < size - 1 &&
+            curr->list[i + 1]->is<Unreachable>()) {
           curr->list.resize(i + 2);
         } else {
           curr->list.resize(i + 1);
         }
+        changed = true;
         return;
       }
+    }
+  }
+
+  void doWalkFunction(Function* func) {
+    super::doWalkFunction(func);
+    if (changed) {
+      ReFinalize(IRProfile::Stacky).walkFunctionInModule(func, getModule());
     }
   }
 };

@@ -268,9 +268,9 @@ class UnstackifyPass : public Pass {
   bool isFunctionParallel() override { return true; }
   void
   runOnFunction(PassRunner* runner, Module* module, Function* func) override {
-    if (func->isStacky) {
+    if (func->profile != IRProfile::Normal) {
       Unstackifier(func, module->allocator).unstackify(func->body);
-      func->isStacky = false;
+      func->profile = IRProfile::Normal;
     }
   }
   Pass* create() override { return new UnstackifyPass(); }

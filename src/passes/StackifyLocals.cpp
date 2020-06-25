@@ -57,9 +57,9 @@ struct StackifyLocalsPass : public WalkerPass<PostWalker<StackifyLocalsPass>> {
         }
         auto setIndex = it->second;
         // Check that the intervening instructions are stack neutral
-        auto sig = StackUtils::getStackSignature(
-          curr->list.begin() + setIndex + 1, curr->list.begin() + i);
-        if (sig != Signature()) {
+        StackUtils::StackSignature sig(curr->list.begin() + setIndex + 1,
+                                       curr->list.begin() + i);
+        if (sig.params != Type::none || sig.results != Type::none) {
           continue;
         }
         // Check how many uses there are to determine how to optimize

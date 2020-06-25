@@ -80,7 +80,9 @@ private:
       if (!inst) {
         continue;
       }
-      if (inUnreachableCode) {
+      if (insts[i]->origin->is<Nop>()) {
+        removeAt(i);
+      } else if (inUnreachableCode) {
         // Does the unreachable code end here?
         if (isControlFlowBarrier(inst)) {
           inUnreachableCode = false;
@@ -238,6 +240,8 @@ private:
         continue;
       }
       if (auto* block = inst->origin->dynCast<Block>()) {
+        // This can be suboptimal because the branch might have been DCEd out of
+        // the Stack IR but not the original IR.
         if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
           inst = nullptr;
