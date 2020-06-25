@@ -280,6 +280,16 @@
       )
     )
     (drop
+      (if (result i32)
+        (i64.ne
+          (local.get $i2)
+          (i64.const 0)
+        )
+        (i32.const 11)
+        (i32.const 12)
+      )
+    )
+    (drop
       (select
         (local.tee $i1
           (i32.const 103)

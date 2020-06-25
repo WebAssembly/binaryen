@@ -767,6 +767,18 @@ struct OptimizeInstructions
     } else if (auto* iff = curr->dynCast<If>()) {
       iff->condition = optimizeBoolean(iff->condition);
       if (iff->ifFalse) {
+        if (auto* binary = iff->condition->dynCast<Binary>()) {
+          if (binary->op == NeInt64) {
+            if (auto* c = binary->right->dynCast<Const>()) {
+              if (c->value.geti64() == 0LL) {
+                // if(x != 0) y else z  ==>  if(!x) z else y
+                iff->condition =
+                  Builder(*getModule()).makeUnary(EqZInt64, binary->left);
+                std::swap(iff->ifTrue, iff->ifFalse);
+              }
+            }
+          }
+        }
         if (auto* unary = iff->condition->dynCast<Unary>()) {
           if (unary->op == EqZInt32) {
             // flip if-else arms to get rid of an eqz
