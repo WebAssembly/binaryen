@@ -123,11 +123,17 @@ struct LineState {
   bool basicBlock = false;
   bool prologueEnd = false;
   bool epilogueBegin = false;
-  bool endSequence = false;
+  // Each instruction is part of a sequence, all of which get the same ID. The
+  // order within a sequence may change if binaryen reorders things, which means
+  // that we can't track the end_sequence location and assume it is at the end -
+  // we must track sequences and then emit an end for each one.
+  // -1 is an invalid marker value (note that this assumes we can fit all ids
+  // into just under 32 bits).
+  uint32_t sequenceId = -1;
 
   LineState(const LineState& other) = default;
-  LineState(const llvm::DWARFYAML::LineTable& table)
-    : isStmt(table.DefaultIsStmt) {}
+  LineState(const llvm::DWARFYAML::LineTable& table, uint32_t sequenceId)
+    : isStmt(table.DefaultIsStmt), sequenceId(sequenceId) {}
 
   LineState& operator=(const LineState& other) = default;
 
@@ -143,7 +149,6 @@ struct LineState {
             break;
           }
           case llvm::dwarf::DW_LNE_end_sequence: {
-            endSequence = true;
             return true;
           }
           case llvm::dwarf::DW_LNE_set_discriminator: {
@@ -244,14 +249,15 @@ struct LineState {
     // Zero values imply we can ignore this line, unless it has something
     // special we must emit.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return (line != 0 && addr != 0) || endSequence;
+    return line != 0 && addr != 0;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
   // table entry (that will be emitted in the updated DWARF debug line section).
   void emitDiff(const LineState& old,
                 std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
-                const llvm::DWARFYAML::LineTable& table) {
+                const llvm::DWARFYAML::LineTable& table,
+                bool endSequence) const {
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -299,8 +305,7 @@ struct LineState {
       assert(basicBlock);
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
-    if (prologueEnd != old.prologueEnd) {
-      assert(prologueEnd);
+    if (prologueEnd) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_prologue_end));
     }
     if (epilogueBegin != old.epilogueBegin) {
@@ -314,27 +319,24 @@ struct LineState {
       if (endSequence) {
         // len = 1 (subopcode)
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
-        // Reset the state.
-        *this = LineState(table);
       } else {
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
       }
     }
-    resetAfterLine();
   }
 
   // Some flags are automatically reset after each debug line.
   void resetAfterLine() { prologueEnd = false; }
 
 private:
-  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) {
+  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) const {
     llvm::DWARFYAML::LineTableOpcode item = {};
     item.Opcode = opcode;
     return item;
   }
 
   llvm::DWARFYAML::LineTableOpcode
-  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) {
+  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) const {
     auto item = makeItem(llvm::dwarf::LineNumberOps(0));
     // All the length after the len field itself, including the subopcode
     // (1 byte).
@@ -626,8 +628,9 @@ struct LocationUpdater {
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
                              LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
+    uint32_t sequenceId = 0;
     // Parse the original opcodes and emit new ones.
-    LineState state(table);
+    LineState state(table, sequenceId);
     // All the addresses we need to write out.
     std::vector<BinaryLocation> newAddrs;
     std::unordered_map<BinaryLocation, LineState> newAddrInfo;
@@ -645,7 +648,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           omittingRange = true;
         }
         if (omittingRange) {
-          state = LineState(table);
+          state = LineState(table, sequenceId);
           continue;
         }
         // An expression may not exist for this line table item, if we optimized
@@ -682,7 +685,10 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
-          state = LineState(table);
+          sequenceId++;
+          // We assume the number of sequences can fit in 32 bits.
+          assert(sequenceId != uint32_t(-1));
+          state = LineState(table, sequenceId);
         }
       }
     }
@@ -692,14 +698,20 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     // Emit a new line table.
     {
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
-      LineState state(table);
-      for (BinaryLocation addr : newAddrs) {
-        LineState oldState(state);
-        state = newAddrInfo.at(addr);
-        if (state.needToEmit()) {
-          state.emitDiff(oldState, newOpcodes, table);
-        } else {
-          state = oldState;
+      for (size_t i = 0; i < newAddrs.size(); i++) {
+        LineState state = newAddrInfo.at(newAddrs[i]);
+        // This line ends a sequence if there is no next line after it, or if
+        // the next line is in a different sequence.
+        bool endSequence = i + 1 == newAddrs.size() || newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
+        if (state.needToEmit() || endSequence) {
+          LineState lastState(table, -1);
+          // This line ends a sequence if there is no line before it, or if
+          // the previous line is in a different sequence.
+          bool startSequence = i == 0 || newAddrInfo.at(newAddrs[i - 1]).sequenceId != state.sequenceId;
+          if (!startSequence) {
+            lastState = newAddrInfo.at(newAddrs[i - 1]);
+          }
+          state.emitDiff(lastState, newOpcodes, table, endSequence);
         }
       }
       table.Opcodes.swap(newOpcodes);
