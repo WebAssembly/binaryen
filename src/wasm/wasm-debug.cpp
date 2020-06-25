@@ -701,8 +701,6 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
       for (size_t i = 0; i < newAddrs.size(); i++) {
         LineState state = newAddrInfo.at(newAddrs[i]);
-        // This line ends a sequence if there is no next line after it, or if
-        // the next line is in a different sequence.
         assert(state.needToEmit());
         LineState lastState(table, -1);
         if (i != 0) {
@@ -713,6 +711,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
             lastState = LineState(table, -1);
           }
         }
+        // This line ends a sequence if there is no next line after it, or if
+        // the next line is in a different sequence.
         bool endSequence =
           i + 1 == newAddrs.size() ||
           newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
