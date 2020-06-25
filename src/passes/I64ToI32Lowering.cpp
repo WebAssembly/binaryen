@@ -367,7 +367,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (curr->type != Type::i64) {
       return;
     }
-    assert(!curr->isAtomic && "atomic load not implemented");
+    assert(!curr->isAtomic && "64-bit atomic load not implemented");
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
     TempVar ptrTemp = getTemp();
@@ -433,11 +433,49 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
-    assert(false && "AtomicRMW not implemented");
+    if (handleUnreachable(curr)) {
+      return;
+    }
+    if (curr->type != Type::i64) {
+      return;
+    }
+    // We cannot break this up into smaller operations as it must be atomic.
+    // Lower to an instrinsic function that wasm2js will implement.
+    TempVar lowBits = getTemp();
+    TempVar highBits = getTemp();
+    auto* getLow = builder->makeCall(
+      ABI::wasm2js::ATOMIC_RMW_I64,
+      {builder->makeConst(Literal(int32_t(curr->op))),
+       builder->makeConst(Literal(int32_t(curr->bytes))),
+       builder->makeConst(Literal(int32_t(curr->offset))),
+       curr->ptr,
+       curr->value,
+       builder->makeLocalGet(fetchOutParam(curr->value), Type::i32)},
+      Type::i32);
+    auto* getHigh =
+      builder->makeCall(ABI::wasm2js::GET_STASHED_BITS, {}, Type::i32);
+    auto* setLow = builder->makeLocalSet(lowBits, getLow);
+    auto* setHigh = builder->makeLocalSet(highBits, getHigh);
+    auto* finalGet = builder->makeLocalGet(lowBits, Type::i32);
+    auto* result = builder->makeBlock({setLow, setHigh, finalGet});
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    assert(false && "AtomicCmpxchg not implemented");
+    assert(curr->type != Type::i64 && "64-bit AtomicCmpxchg not implemented");
+  }
+
+  void visitAtomicWait(AtomicWait* curr) {
+    // The last parameter is an i64, so we cannot leave it as it is
+    assert(curr->offset == 0);
+    replaceCurrent(builder->makeCall(
+      ABI::wasm2js::ATOMIC_WAIT_I32,
+      {curr->ptr,
+       curr->expected,
+       curr->timeout,
+       builder->makeLocalGet(fetchOutParam(curr->timeout), Type::i32)},
+      Type::i32));
   }
 
   void visitConst(Const* curr) {

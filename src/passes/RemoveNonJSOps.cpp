@@ -107,6 +107,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       neededFunctions.clear();
     }
 
+    // Copy all the globals in the intrinsics module
+    for (auto& global : intrinsicsModule.globals) {
+      ModuleUtils::copyGlobal(global.get(), *module);
+    }
+
     // Intrinsics may use memory, so ensure the module has one.
     MemoryUtils::ensureExists(module->memory);
 
