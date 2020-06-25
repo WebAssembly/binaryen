@@ -3700,14 +3700,20 @@
    )
   )
   (if
-   (local.get $x)
+   (i32.sub
+    (i32.const 0)
+    (local.get $x)
+   )
    (unreachable)
   )
   (drop
    (select
     (local.get $x)
     (local.get $y)
-    (local.get $x)
+    (i32.sub
+     (i32.const 0)
+     (local.get $x)
+    )
    )
   )
  )
