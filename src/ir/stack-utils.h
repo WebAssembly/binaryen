@@ -18,6 +18,7 @@
 #define wasm_ir_stack_h
 
 #include "ir/properties.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -27,41 +28,46 @@ namespace StackUtils {
 // Iterate through `block` and remove nops.
 void compact(Block* block);
 
-// Compute the input and output types of an instruction. If the instruction does
-// not return, the output type will be `unreachable`.
-Signature getStackSignature(Expression* curr);
+// Stack signatures are like regular function signatures, but they are used to
+// represent the stack parameters and results of arbitrary sequences of stacky
+// instructions. They have to record whether they cover an unreachable
+// instruction because their composition takes into account the polymorphic
+// results of unreachable instructions.
+struct StackSignature {
+  Type params;
+  Type results;
+  bool unreachable;
 
-// Compute the input and output types of a sequence of instructions. If an
-// instruction in the sequence does not return, the input type will represent
-// all values consumed up to that point and the output type will be
-// `unreachable`.
-template<class InputIt>
-Signature getStackSignature(InputIt first, InputIt last) {
-  // The input types for this region, constructed in reverse
-  std::vector<Type> inputs;
-  std::vector<Type> stack;
-  for (InputIt expr = first; expr != last; ++expr) {
-    auto sig = getStackSignature(*expr);
-    const auto& params = sig.params.expand();
-    for (auto type = params.rbegin(); type != params.rend(); ++type) {
-      if (stack.size() == 0) {
-        inputs.push_back(*type);
-      } else {
-        assert(stack.back() == *type);
-        stack.pop_back();
-      }
-    }
-    if (sig.results == Type::unreachable) {
-      std::reverse(inputs.begin(), inputs.end());
-      return Signature(Type(inputs), Type::unreachable);
-    }
-    for (auto type : sig.results.expand()) {
-      stack.push_back(type);
+  StackSignature()
+    : params(Type::none), results(Type::none), unreachable(false) {}
+  StackSignature(Type params, Type results, bool unreachable = false)
+    : params(params), results(results), unreachable(unreachable) {}
+
+  StackSignature(const StackSignature&) = default;
+  StackSignature& operator=(const StackSignature&) = default;
+
+  // Get the stack signature of `expr`
+  explicit StackSignature(Expression* expr);
+
+  // Get the stack signature of the range of instructions [first, last). The
+  // sequence of instructions is assumed to be valid, i.e. their signatures
+  // compose.
+  template<class InputIt>
+  explicit StackSignature(InputIt first, InputIt last)
+    : params(Type::none), results(Type::none), unreachable(false) {
+    // TODO: It would be more efficient to build the params in reverse order
+    while (first != last) {
+      *this += StackSignature(*first++);
     }
   }
-  std::reverse(inputs.begin(), inputs.end());
-  return Signature(Type(inputs), Type(stack));
-}
+
+  // Return `true` iff `next` composes after this stack signature.
+  bool composes(const StackSignature& next) const;
+
+  // Compose stack signatures. Assumes they actually compose.
+  StackSignature& operator+=(const StackSignature& next);
+  StackSignature operator+(const StackSignature& next) const;
+};
 
 // Calculates stack machine data flow, associating the sources and destinations
 // of all values in a block.

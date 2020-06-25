@@ -30,28 +30,78 @@ void compact(Block* block) {
   block->list.resize(newIndex);
 }
 
-Signature getStackSignature(Expression* curr) {
-  Type input = Type::none;
-  if (Properties::isControlFlowStructure(curr)) {
-    if (curr->is<If>()) {
-      input = Type::i32;
+StackSignature::StackSignature(Expression* expr) {
+  params = Type::none;
+  if (Properties::isControlFlowStructure(expr)) {
+    if (expr->is<If>()) {
+      params = Type::i32;
     }
   } else {
     std::vector<Type> inputs;
-    for (auto* child : ChildIterator(curr)) {
+    for (auto* child : ChildIterator(expr)) {
+      // Children might be tuple pops, so expand their types
       const auto& types = child->type.expand();
       inputs.insert(inputs.end(), types.begin(), types.end());
     }
-    input = Type(inputs);
+    params = Type(inputs);
   }
-  return Signature(input, curr->type);
+  if (expr->type == Type::unreachable) {
+    unreachable = true;
+    results = Type::none;
+  } else {
+    unreachable = false;
+    results = expr->type;
+  }
+}
+
+bool StackSignature::composes(const StackSignature& next) const {
+  // TODO
+  return true;
+}
+
+StackSignature& StackSignature::operator+=(const StackSignature& next) {
+  assert(composes(next));
+  std::vector<Type> stack = results.expand();
+  size_t required = next.params.size();
+  // Consume stack values according to next's parameters
+  if (stack.size() >= required) {
+    stack.resize(stack.size() - required);
+  } else {
+    if (!unreachable) {
+      const std::vector<Type>& currParams = params.expand();
+      const std::vector<Type>& nextParams = next.params.expand();
+      // Prepend the unsatisfied params of `next` to the current params
+      size_t unsatisfied = required - stack.size();
+      std::vector<Type> newParams(nextParams.begin(),
+                                  nextParams.begin() + unsatisfied);
+      newParams.insert(newParams.end(), currParams.begin(), currParams.end());
+      params = Type(newParams);
+    }
+    stack.clear();
+  }
+  // Add stack values according to next's results
+  if (next.unreachable) {
+    results = next.results;
+    unreachable = true;
+  } else {
+    const auto& nextResults = next.results.expand();
+    stack.insert(stack.end(), nextResults.begin(), nextResults.end());
+    results = Type(stack);
+  }
+  return *this;
+}
+
+StackSignature StackSignature::operator+(const StackSignature& next) const {
+  StackSignature sig = *this;
+  sig += next;
+  return sig;
 }
 
 StackFlow::StackFlow(Block* curr) {
   std::vector<Location> values;
   bool unreachable = false;
   for (auto* expr : curr->list) {
-    size_t consumed = getStackSignature(expr).params.size();
+    size_t consumed = StackSignature(expr).params.size();
     size_t produced = expr->type == Type::unreachable ? 0 : expr->type.size();
     srcs[expr] = std::vector<Location>(consumed);
     dests[expr] = std::vector<Location>(produced);
