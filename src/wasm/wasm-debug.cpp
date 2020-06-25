@@ -246,8 +246,7 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line, unless it has something
-    // special we must emit.
+    // Zero values imply we can ignore this line.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
     return line != 0 && addr != 0;
   }
@@ -669,7 +668,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
           newAddr = locationUpdater.getNewDelimiter(oldAddr);
         }
-        if (newAddr) {
+        if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
           if (newAddrInfo.count(newAddr)) {
@@ -702,17 +701,18 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         LineState state = newAddrInfo.at(newAddrs[i]);
         // This line ends a sequence if there is no next line after it, or if
         // the next line is in a different sequence.
-        bool endSequence = i + 1 == newAddrs.size() || newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
-        if (state.needToEmit() || endSequence) {
-          LineState lastState(table, -1);
-          // This line ends a sequence if there is no line before it, or if
-          // the previous line is in a different sequence.
-          bool startSequence = i == 0 || newAddrInfo.at(newAddrs[i - 1]).sequenceId != state.sequenceId;
-          if (!startSequence) {
-            lastState = newAddrInfo.at(newAddrs[i - 1]);
+        assert(state.needToEmit());
+        LineState lastState(table, -1);
+        if (i != 0) {
+          lastState = newAddrInfo.at(newAddrs[i - 1]);
+          // If the last line is in another sequence, clear the old state, as
+          // there is nothing to diff to.
+          if (lastState.sequenceId != state.sequenceId) {
+            lastState = LineState(table, -1);
           }
-          state.emitDiff(lastState, newOpcodes, table, endSequence);
         }
+        bool endSequence = i + 1 == newAddrs.size() || newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
+        state.emitDiff(lastState, newOpcodes, table, endSequence);
       }
       table.Opcodes.swap(newOpcodes);
     }
