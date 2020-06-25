@@ -67,7 +67,9 @@ struct CoalesceLocals
   // returns a vector of oldIndex => newIndex
   virtual void pickIndices(std::vector<Index>& indices);
 
-  void applyIndices(std::vector<Index>& indices, Expression* root);
+  void applyIndices(std::vector<Index>& indices,
+                    Expression* root,
+                    IRProfile profile);
 
   // interference state
 
@@ -109,7 +111,7 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   std::vector<Index> indices;
   pickIndices(indices);
   // apply indices
-  applyIndices(indices, func->body);
+  applyIndices(indices, func->body, func->profile);
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to
@@ -360,7 +362,8 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
 }
 
 void CoalesceLocals::applyIndices(std::vector<Index>& indices,
-                                  Expression* root) {
+                                  Expression* root,
+                                  IRProfile profile) {
   assert(indices.size() == numLocals);
   for (auto& curr : basicBlocks) {
     auto& actions = curr->contents.actions;
@@ -381,16 +384,20 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
         }
         // remove ineffective actions
         if (!action.effective) {
-          // value may have no side effects, further optimizations can eliminate
-          // it
-          *action.origin = set->value;
-          if (!set->isTee()) {
-            // we need to drop it
-            Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
-            drop->value = *action.origin;
-            *action.origin = drop;
+          if (set->isTee()) {
+            if (profile == IRProfile::Normal) {
+              // value may have no side effects, further optimizations can
+              // eliminate it
+              *action.origin = set->value;
+            } else {
+              // pass the value through unchanged
+              assert(profile == IRProfile::Stacky);
+              ExpressionManipulator::nop(set);
+            }
+          } else {
+            // we need to drop the value to continue consuming it
+            ExpressionManipulator::drop(set, set->value);
           }
-          continue;
         }
       }
     }

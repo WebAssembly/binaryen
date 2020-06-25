@@ -104,6 +104,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     typename CFGWalker<SubType, VisitorType, Liveness>::BasicBlock BasicBlock;
 
   Index numLocals;
+  IRProfile profile;
   std::unordered_set<BasicBlock*> liveBlocks;
   // canonicalized - accesses should check (low, high)
   // TODO: use a map for high N, as this tends to be sparse? or don't look at
@@ -118,6 +119,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
+      // TODO: This probably needs to be adjusted for Stacky code as well
       *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
@@ -131,9 +133,14 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // if it has side effects)
     if (!self->currBasicBlock) {
       if (curr->isTee()) {
-        *currp = curr->value;
+        if (self->profile == IRProfile::Normal) {
+          *currp = curr->value;
+        } else {
+          assert(self->profile == IRProfile::Stacky);
+          ExpressionManipulator::nop(curr);
+        }
       } else {
-        *currp = Builder(*self->getModule()).makeDrop(curr->value);
+        ExpressionManipulator::drop(curr, curr->value);
       }
       return;
     }
@@ -190,6 +197,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
+    profile = func->profile;
     assert(canRun(func));
     copies.resize(numLocals * numLocals);
     std::fill(copies.begin(), copies.end(), 0);
