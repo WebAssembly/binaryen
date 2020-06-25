@@ -340,7 +340,15 @@
            (f32.const 71)
           )
          )
-         (i32.const 0)
+         (i64.eqz
+          (select
+           (i64.const 58)
+           (i64.const -982757)
+           (i64.eqz
+            (i64.const 0)
+           )
+          )
+         )
         )
        )
       )

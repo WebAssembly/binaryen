@@ -959,12 +959,6 @@ private:
               return unary2->value;
             }
           }
-          if (auto* c = unary->value->dynCast<Const>()) {
-            // [i32 | i64] !C => eval C ? 0 : 1
-            c->value = Literal(int32_t(c->value.getInteger() ? 0 : 1));
-            c->type = Type::i32;
-            return unary->value;
-          }
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
