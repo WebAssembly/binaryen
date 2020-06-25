@@ -328,7 +328,8 @@ struct LineState {
   void resetAfterLine() { prologueEnd = false; }
 
 private:
-  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) const {
+  llvm::DWARFYAML::LineTableOpcode
+  makeItem(llvm::dwarf::LineNumberOps opcode) const {
     llvm::DWARFYAML::LineTableOpcode item = {};
     item.Opcode = opcode;
     return item;
@@ -711,7 +712,9 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
             lastState = LineState(table, -1);
           }
         }
-        bool endSequence = i + 1 == newAddrs.size() || newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
+        bool endSequence =
+          i + 1 == newAddrs.size() ||
+          newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
         state.emitDiff(lastState, newOpcodes, table, endSequence);
       }
       table.Opcodes.swap(newOpcodes);
