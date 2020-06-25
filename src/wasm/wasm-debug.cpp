@@ -686,7 +686,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
           sequenceId++;
-          // We assume the number of sequences can fit in 32 bits.
+          // We assume the number of sequences can fit in 32 bits, and -1 is
+          // an invalid value.
           assert(sequenceId != uint32_t(-1));
           state = LineState(table, sequenceId);
         }
