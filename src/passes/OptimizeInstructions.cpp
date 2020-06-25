@@ -780,14 +780,15 @@ struct OptimizeInstructions
             if (constTrue->type == constFalse->type &&
                 constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
-              if (Properties::emitsBoolean(select->condition)) {
+              auto* condition = select->condition;
+              if (Properties::emitsBoolean(condition)) {
                 // !x ? 1 : 0   ==>   !x
                 // x <=> y ? 1 : 0   ==>   x <=> y
-                return extendIfNeeded(select->condition);
+                return extendIfNeeded(condition);
               } else {
                 // expr ? 1 : 0   ==>   expr != 0
                 return extendIfNeeded(builder.makeBinary(
-                  NeInt32, select->condition, builder.makeConst(Literal(0))));
+                  NeInt32, condition, builder.makeConst(Literal(0))));
               }
             } else if (constTrue->type == constFalse->type &&
                        constTrue->value.getInteger() == 0LL &&
