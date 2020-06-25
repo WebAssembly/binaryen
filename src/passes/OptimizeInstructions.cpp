@@ -780,21 +780,15 @@ struct OptimizeInstructions
             if (constTrue->type == constFalse->type &&
                 constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
-              // !x ? 1 : 0   ==>   !x
-              if (auto* condition = select->condition->dynCast<Unary>()) {
-                if (condition->isRelational()) {
-                  return extendIfNeeded(condition);
-                }
+              if (Properties::emitsBoolean(select->condition)) {
+                // !x ? 1 : 0   ==>   !x
+                // x <=> y ? 1 : 0   ==>   x <=> y
+                return extendIfNeeded(select->condition);
+              } else {
+                // expr ? 1 : 0   ==>   expr != 0
+                return extendIfNeeded(builder.makeBinary(
+                  NeInt32, select->condition, builder.makeConst(Literal(0))));
               }
-              // x <=> y ? 1 : 0   ==>   x <=> y
-              if (auto* condition = select->condition->dynCast<Binary>()) {
-                if (condition->isRelational()) {
-                  return extendIfNeeded(condition);
-                }
-              }
-              // expr ? 1 : 0   ==>   expr != 0
-              return extendIfNeeded(builder.makeBinary(
-                NeInt32, select->condition, builder.makeConst(Literal(0))));
             } else if (constTrue->type == constFalse->type &&
                        constTrue->value.getInteger() == 0LL &&
                        constFalse->value.getInteger() == 1LL) {
