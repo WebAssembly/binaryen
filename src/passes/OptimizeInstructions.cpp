@@ -809,14 +809,32 @@ struct OptimizeInstructions
       }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
-      auto* condition = select->condition->dynCast<Unary>();
-      if (condition && condition->op == EqZInt32) {
-        // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-        if (!ifTrue.invalidates(ifFalse)) {
-          select->condition = condition->value;
-          std::swap(select->ifTrue, select->ifFalse);
+      if (auto* condition = select->condition->dynCast<Binary>()) {
+        if (condition->op == NeInt64) {
+          if (auto* c = condition->right->dynCast<Const>()) {
+            if (c->value.geti64() == 0LL) {
+              // x != 0 ? y : z  ==>  !x ? z : y
+              EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+              EffectAnalyzer ifFalse(
+                getPassOptions(), features, select->ifFalse);
+              if (!ifTrue.invalidates(ifFalse)) {
+                select->condition =
+                  Builder(*getModule()).makeUnary(EqZInt64, condition->left);
+                std::swap(select->ifTrue, select->ifFalse);
+              }
+            }
+          }
+        }
+      }
+      if (auto* condition = select->condition->dynCast<Unary>()) {
+        if (condition->op == EqZInt32) {
+          // flip select to remove eqz, if we can reorder
+          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
+          }
         }
       }
       if (auto* c = select->condition->dynCast<Const>()) {

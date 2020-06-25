@@ -271,6 +271,16 @@
     )
     (drop
       (select
+        (i32.const 11)
+        (i32.const 12)
+        (i64.ne
+          (local.get $i2)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
         (local.tee $i1
           (i32.const 103)
         ) ;; these conflict

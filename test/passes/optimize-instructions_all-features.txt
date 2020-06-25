@@ -240,6 +240,15 @@
   )
   (drop
    (select
+    (i32.const 12)
+    (i32.const 11)
+    (i64.eqz
+     (local.get $i2)
+    )
+   )
+  )
+  (drop
+   (select
     (local.tee $i1
      (i32.const 103)
     )
