@@ -402,20 +402,22 @@ collectSignatures(Module& wasm,
     struct TypeCounter
       : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
       Counts& counts;
+      Function* func;
 
-      TypeCounter(Counts& counts) : counts(counts) {}
+      TypeCounter(Counts& counts, Function* func)
+        : counts(counts), func(func) {}
       void visitExpression(Expression* curr) {
         if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
-          if (curr->type.isMulti()) {
+          if (curr->type.isMulti() && curr != func->body) {
             counts[Signature(Type::none, curr->type)]++;
           }
         }
       }
     };
-    TypeCounter(counts).walk(func->body);
+    TypeCounter(counts, func).walk(func->body);
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
