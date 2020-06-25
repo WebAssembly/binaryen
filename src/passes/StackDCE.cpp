@@ -53,6 +53,6 @@ struct StackDCEPass : public WalkerPass<PostWalker<StackDCEPass>> {
   }
 };
 
-Pass* createStackDCEPass() { return new StackDCEPass(); }
+Pass* createStackDCEPass() { return new StackDCEPass; }
 
 } // namespace wasm

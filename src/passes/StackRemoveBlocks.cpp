@@ -17,6 +17,7 @@
 // TODO: documentation
 
 #include "ir/branch-utils.h"
+#include "ir/utils.h"
 #include "pass.h"
 
 namespace wasm {
@@ -25,6 +26,8 @@ struct StackRemoveBlocksPass
   : public WalkerPass<PostWalker<StackRemoveBlocksPass>> {
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new StackRemoveBlocksPass; }
+  bool changed = false;
+
   void visitBlock(Block* curr) {
     for (size_t i = 0; i < curr->list.size();) {
       if (auto* block = curr->list[i]->dynCast<Block>()) {
@@ -35,14 +38,22 @@ struct StackRemoveBlocksPass
           insts.insert(
             insts.begin() + i, block->list.begin(), block->list.end());
           curr->list.set(insts);
+          changed = true;
           continue;
         }
       }
       ++i;
     }
   }
+
+  void doWalkFunction(Function* func) {
+    super::doWalkFunction(func);
+    if (changed) {
+      ReFinalize(IRProfile::Stacky).walkFunctionInModule(func, getModule());
+    }
+  }
 };
 
-Pass* createStackRemoveBlocksPass() { return new StackRemoveBlocksPass(); }
+Pass* createStackRemoveBlocksPass() { return new StackRemoveBlocksPass; }
 
 } // namespace wasm
