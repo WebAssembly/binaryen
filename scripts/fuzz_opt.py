@@ -68,9 +68,11 @@ def random_size():
     return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
-def run(cmd):
+def run(cmd, env_extension={}):
+    env = dict(os.environ)
+    env.update(env_extension)
     print(' '.join(cmd))
-    return subprocess.check_output(cmd, text=True)
+    return subprocess.check_output(cmd, text=True, env=env)
 
 
 def run_unchecked(cmd):
@@ -689,6 +691,30 @@ class Asyncify(TestCaseHandler):
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue']])
 
+class StackifyCodeSizeChecker(TestCaseHandler):
+    frequency = 1.0
+
+    def handle(self, wasm):
+      stack_ir = 'stackir.wasm'
+      stackify = 'stackify.wasm'
+      stackify_future = 'stackify-future.wasm'
+
+      stack_ir_command = [in_bin('wasm-opt'), wasm, '--generate-stack-ir', '--optimize-stack-ir', '--optimize-level=3', '-o', stack_ir]
+      stackify_command = [in_bin('wasm-opt'), wasm, '--stackify', '--stack-dce', '--stackify-locals', '--stack-remove-blocks', '--stack-dce', '--coalesce-locals', '--optimize-level=3', '-o', stackify]
+      # stackify_future_command = [in_bin('wasm-opt'), wasm, '--stackify', '--stack-dce', '--stackify-locals', '--stack-remove-blocks', '--stack-dce', '--optimize-level=3']
+
+      run(stack_ir_command, {'BINARYEN_USE_STACKIFY': '0'})
+      run(stackify_command, {'BINARYEN_USE_STACKIFY': '1'})
+      # run(stackify_future_command, {'BINARYEN_USE_STACKIFY': '2'})
+
+      stack_ir_size = os.stat(stack_ir).st_size
+      stackify_size = os.stat(stackify).st_size
+      # stackify_future_size = os.stat(stackify_future).st_size
+
+      print("sizes:", stack_ir_size, stackify_size)
+      assert stackify_size <= stack_ir_size, "Stackify not as good as Stack IR"
+      # assert stackify_future_size <= stackify_size, "New pipeline is not as good"
+
 
 # The global list of all test case handlers
 testcase_handlers = [
@@ -697,6 +723,7 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
+    StackifyCodeSizeChecker(),
 ]
 
 
