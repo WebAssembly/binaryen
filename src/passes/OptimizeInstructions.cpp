@@ -768,14 +768,7 @@ struct OptimizeInstructions
       iff->condition = optimizeBoolean(iff->condition);
       if (iff->ifFalse) {
         if (auto* binary = iff->condition->dynCast<Binary>()) {
-          if (binary->op == NeInt32) {
-            if (auto* c = binary->right->dynCast<Const>()) {
-              if (c->value.geti32() == 0) {
-                // if((int32)x != 0) y else z  ==>  if(x) y else z
-                iff->condition = binary->left;
-              }
-            }
-          } else if (binary->op == NeInt64) {
+          if (binary->op == NeInt64) {
             if (auto* c = binary->right->dynCast<Const>()) {
               if (c->value.geti64() == 0LL) {
                 // if((int64)x != 0) y else z  ==>  if(!x) z else y
