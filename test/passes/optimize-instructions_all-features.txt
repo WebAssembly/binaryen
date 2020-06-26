@@ -257,6 +257,13 @@
    )
   )
   (drop
+   (if (result i32)
+    (local.get $i1)
+    (i32.const 1)
+    (i32.const 2)
+   )
+  )
+  (drop
    (select
     (local.tee $i1
      (i32.const 103)
@@ -469,7 +476,7 @@
   )
   (drop
    (i32.and
-    (block $block5 (result i32)
+    (block $block6 (result i32)
      (i32.const -6)
     )
     (local.get $x)
@@ -477,7 +484,7 @@
   )
   (drop
    (i32.and
-    (block $block6 (result i32)
+    (block $block7 (result i32)
      (i32.const 5)
     )
     (loop $loop-in (result i32)
@@ -487,20 +494,20 @@
   )
   (drop
    (i32.and
-    (block $block8 (result i32)
+    (block $block9 (result i32)
      (i32.const 8)
     )
-    (loop $loop-in7 (result i32)
+    (loop $loop-in8 (result i32)
      (i32.const 7)
     )
    )
   )
   (drop
    (i32.and
-    (block $block10 (result i32)
+    (block $block11 (result i32)
      (i32.const 10)
     )
-    (loop $loop-in9 (result i32)
+    (loop $loop-in10 (result i32)
      (call $and-pos1)
      (i32.const 9)
     )
@@ -508,34 +515,34 @@
   )
   (drop
    (i32.and
-    (block $block12 (result i32)
+    (block $block13 (result i32)
      (call $and-pos1)
      (i32.const 12)
     )
-    (loop $loop-in11 (result i32)
+    (loop $loop-in12 (result i32)
      (i32.const 11)
     )
    )
   )
   (drop
    (i32.and
-    (loop $loop-in13 (result i32)
+    (loop $loop-in14 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
-    (block $block14 (result i32)
-     (call $and-pos1)
-     (i32.const 14)
-    )
-   )
-  )
-  (drop
-   (i32.and
     (block $block15 (result i32)
      (call $and-pos1)
      (i32.const 14)
     )
-    (loop $loop-in16 (result i32)
+   )
+  )
+  (drop
+   (i32.and
+    (block $block16 (result i32)
+     (call $and-pos1)
+     (i32.const 14)
+    )
+    (loop $loop-in17 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
@@ -543,7 +550,7 @@
   )
   (drop
    (i32.and
-    (block $block17 (result i32)
+    (block $block18 (result i32)
      (i32.const 15)
     )
     (local.get $x)
@@ -551,7 +558,7 @@
   )
   (drop
    (i32.and
-    (block $block18 (result i32)
+    (block $block19 (result i32)
      (i32.const 15)
     )
     (local.get $x)
