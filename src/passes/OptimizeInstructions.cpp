@@ -772,6 +772,7 @@ struct OptimizeInstructions
             if (auto* c = binary->right->dynCast<Const>()) {
               if (c->value.geti64() == 0LL) {
                 // if((int64)x != 0) y else z  ==>  if(!x) z else y
+                // (int32)x != 0 already handled by optimizeBoolean
                 iff->condition =
                   Builder(*getModule()).makeUnary(EqZInt64, binary->left);
                 std::swap(iff->ifTrue, iff->ifFalse);
