@@ -985,7 +985,7 @@ private:
       if (binary->op == SubInt32) {
         if (auto* num = binary->left->dynCast<Const>()) {
           if (num->value.geti32() == 0) {
-            // 0 - x   ==>   x
+            // bool(0 - x)   ==>   bool(x)
             return binary->right;
           }
         }
