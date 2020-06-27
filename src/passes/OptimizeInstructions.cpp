@@ -826,7 +826,8 @@ struct OptimizeInstructions
         if (condition->op == NeInt64) {
           if (auto* c = condition->right->dynCast<Const>()) {
             if (c->value.geti64() == 0LL) {
-              // x != 0 ? y : z  ==>  !x ? z : y
+              // (int64)x != 0 ? y : z  ==>  !x ? z : y
+              // (int32)x != 0 already handled by optimizeBoolean
               EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
               EffectAnalyzer ifFalse(
                 getPassOptions(), features, select->ifFalse);
