@@ -770,15 +770,12 @@ struct OptimizeInstructions
       }
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
-          Builder builder(*getModule());
-          if ((select->type == Type::i32 || select->type == Type::i64) &&
-              constTrue->type == constFalse->type) {
-
+          if (select->type == Type::i32 || select->type == Type::i64) {
             auto trueValue = constTrue->value.getInteger();
             auto falseValue = constFalse->value.getInteger();
-
             if ((trueValue == 1LL && falseValue == 0LL) ||
                 (trueValue == 0LL && falseValue == 1LL)) {
+              Builder builder(*getModule());
               // canonicalize "expr ? 0 : 1" to "!expr ? 1 : 0"
               if (trueValue == 0LL) {
                 select->condition = optimizeBoolean(
