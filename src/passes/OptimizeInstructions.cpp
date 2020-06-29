@@ -776,9 +776,10 @@ struct OptimizeInstructions
             return isI64 ? builder.makeUnary(ExtendUInt32, expression)
                          : expression;
           };
-          if ((select->type == Type::i32 || isI64) && constTrue->type == constFalse->type) {
+          if ((select->type == Type::i32 || isI64) &&
+              constTrue->type == constFalse->type) {
 
-            auto trueValue  = constTrue->value.getInteger();
+            auto trueValue = constTrue->value.getInteger();
             auto falseValue = constFalse->value.getInteger();
 
             if ((trueValue == 1LL && falseValue == 0LL) ||
@@ -791,9 +792,11 @@ struct OptimizeInstructions
                     select->condition = condition->value;
                   } else if (condition->op == EqZInt64) {
                     // (int64)!x ? 0 : 1  ==>  !!x ? 1 : 0
-                    select->condition = builder.makeUnary(EqZInt32, select->condition);
+                    select->condition =
+                      builder.makeUnary(EqZInt32, select->condition);
                   }
-                } else if (auto* condition = select->condition->dynCast<Binary>()) {
+                } else if (auto* condition =
+                             select->condition->dynCast<Binary>()) {
                   auto op = inverseBinaryOp(condition->op);
                   // is relational and inversable?
                   if (op != InvalidBinary) {
@@ -801,11 +804,13 @@ struct OptimizeInstructions
                     condition->op = op;
                   } else {
                     // expr ? 0 : 1  ==>  !expr ? 1 : 0
-                    select->condition = builder.makeUnary(EqZInt32, select->condition);
+                    select->condition =
+                      builder.makeUnary(EqZInt32, select->condition);
                   }
                 } else {
                   // x ? 0 : 1  ==>  !x
-                  select->condition = builder.makeUnary(EqZInt32, select->condition);
+                  select->condition =
+                    builder.makeUnary(EqZInt32, select->condition);
                 }
               }
               if (Properties::emitsBoolean(select->condition)) {
