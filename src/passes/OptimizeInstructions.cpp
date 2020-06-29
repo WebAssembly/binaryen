@@ -776,9 +776,51 @@ struct OptimizeInstructions
             return isI64 ? builder.makeUnary(ExtendUInt32, expression)
                          : expression;
           };
-          if (select->type == Type::i32 || isI64) {
-            if (constTrue->type == constFalse->type &&
-                constTrue->value.getInteger() == 1LL &&
+          if ((select->type == Type::i32 || isI64) && constTrue->type == constFalse->type) {
+
+            auto trueValue  = constTrue->value.getInteger();
+            auto falseValue = constFalse->value.getInteger();
+
+            if ((trueValue == 1LL && falseValue == 0LL) ||
+                (trueValue == 0LL && falseValue == 1LL)) {
+              // canonicalize "expr ? 0 : 1" to "!expr ? 1 : 0"
+              if (trueValue == 0LL) {
+                if (auto* condition = select->condition->dynCast<Unary>()) {
+                  if (condition->op == EqZInt32) {
+                    // (int32)!x ? 0 : 1  ==>  x ? 1 : 0
+                    select->condition = condition->value;
+                  } else if (condition->op == EqZInt64) {
+                    // (int64)!x ? 0 : 1  ==>  !!x ? 1 : 0
+                    select->condition = builder.makeUnary(EqZInt32, select->condition);
+                  }
+                } else if (auto* condition = select->condition->dynCast<Binary>()) {
+                  auto op = inverseBinaryOp(condition->op);
+                  // is relational and inversable?
+                  if (op != InvalidBinary) {
+                    // x <=> y ? 0 : 1  ==>  !(x <=> y) ? 1 : 0
+                    condition->op = op;
+                  } else {
+                    // expr ? 0 : 1  ==>  !expr ? 1 : 0
+                    select->condition = builder.makeUnary(EqZInt32, select->condition);
+                  }
+                } else {
+                  // x ? 0 : 1  ==>  !x
+                  select->condition = builder.makeUnary(EqZInt32, select->condition);
+                }
+              }
+              if (Properties::emitsBoolean(select->condition)) {
+                // !x ? 1 : 0   ==>   !x
+                // x <=> y ? 1 : 0   ==>   x <=> y
+                return extendIfNeeded(select->condition);
+              } else {
+                // expr ? 1 : 0   ==>   !!expr
+                return extendIfNeeded(builder.makeUnary(
+                  EqZInt32, builder.makeUnary(EqZInt32, select->condition)));
+              }
+            }
+
+            /*
+            if (constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
               auto* condition = select->condition;
               if (Properties::emitsBoolean(condition)) {
@@ -790,8 +832,7 @@ struct OptimizeInstructions
                 return extendIfNeeded(builder.makeUnary(
                   EqZInt32, builder.makeUnary(EqZInt32, condition)));
               }
-            } else if (constTrue->type == constFalse->type &&
-                       constTrue->value.getInteger() == 0LL &&
+            } else if (constTrue->value.getInteger() == 0LL &&
                        constFalse->value.getInteger() == 1LL) {
               Builder builder(*getModule());
               // !x ? 0 : 1   ==>   !!x
@@ -815,6 +856,7 @@ struct OptimizeInstructions
               return extendIfNeeded(
                 builder.makeUnary(EqZInt32, select->condition));
             }
+            */
           }
         }
       }

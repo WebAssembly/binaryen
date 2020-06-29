@@ -3337,8 +3337,10 @@
   )
   (drop
    (i64.extend_i32_u
-    (i64.eqz
-     (local.get $y)
+    (i32.eqz
+     (i64.eqz
+      (local.get $y)
+     )
     )
    )
   )
