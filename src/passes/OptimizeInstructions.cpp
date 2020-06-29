@@ -771,12 +771,7 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           Builder builder(*getModule());
-          bool isI64 = select->type == Type::i64;
-          auto extendIfNeeded = [&](Expression* expression) {
-            return isI64 ? builder.makeUnary(ExtendUInt32, expression)
-                         : expression;
-          };
-          if ((select->type == Type::i32 || isI64) &&
+          if ((select->type == Type::i32 || select->type == Type::i64) &&
               constTrue->type == constFalse->type) {
 
             auto trueValue = constTrue->value.getInteger();
@@ -789,22 +784,26 @@ struct OptimizeInstructions
                 select->condition = optimizeBoolean(
                   builder.makeUnary(EqZInt32, select->condition));
               }
+              Expression* result = nullptr;
               if (Properties::emitsBoolean(select->condition)) {
                 // !x ? 1 : 0   ==>   !x
                 // x <=> y ? 1 : 0   ==>   x <=> y
-                return extendIfNeeded(select->condition);
+                result = select->condition;
               } else {
                 // expr ? 1 : 0   ==>   !!expr
                 if (getPassOptions().shrinkLevel > 0) {
-                  return extendIfNeeded(builder.makeUnary(
-                    EqZInt32, builder.makeUnary(EqZInt32, select->condition)));
+                  result = builder.makeUnary(
+                    EqZInt32, builder.makeUnary(EqZInt32, select->condition));
                 } else {
-                  return extendIfNeeded(
+                  result =
                     builder.makeBinary(NeInt32,
                                        select->condition,
-                                       builder.makeConst(Literal(int32_t(0)))));
+                                       builder.makeConst(Literal(int32_t(0))));
                 }
               }
+              return select->type == Type::i64
+                       ? builder.makeUnary(ExtendUInt32, result)
+                       : result;
             }
           }
         }
