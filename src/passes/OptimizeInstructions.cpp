@@ -786,32 +786,8 @@ struct OptimizeInstructions
                 (trueValue == 0LL && falseValue == 1LL)) {
               // canonicalize "expr ? 0 : 1" to "!expr ? 1 : 0"
               if (trueValue == 0LL) {
-                if (auto* condition = select->condition->dynCast<Unary>()) {
-                  if (condition->op == EqZInt32) {
-                    // (int32)!x ? 0 : 1  ==>  x ? 1 : 0
-                    select->condition = condition->value;
-                  } else if (condition->op == EqZInt64) {
-                    // (int64)!x ? 0 : 1  ==>  !!x ? 1 : 0
-                    select->condition =
-                      builder.makeUnary(EqZInt32, select->condition);
-                  }
-                } else if (auto* condition =
-                             select->condition->dynCast<Binary>()) {
-                  auto op = inverseBinaryOp(condition->op);
-                  // is relational and inversable?
-                  if (op != InvalidBinary) {
-                    // x <=> y ? 0 : 1  ==>  !(x <=> y) ? 1 : 0
-                    condition->op = op;
-                  } else {
-                    // expr ? 0 : 1  ==>  !expr ? 1 : 0
-                    select->condition =
-                      builder.makeUnary(EqZInt32, select->condition);
-                  }
-                } else {
-                  // x ? 0 : 1  ==>  !x
-                  select->condition =
-                    builder.makeUnary(EqZInt32, select->condition);
-                }
+                select->condition = optimizeBoolean(
+                  builder.makeUnary(EqZInt32, select->condition));
               }
               if (Properties::emitsBoolean(select->condition)) {
                 // !x ? 1 : 0   ==>   !x
@@ -823,45 +799,6 @@ struct OptimizeInstructions
                   EqZInt32, builder.makeUnary(EqZInt32, select->condition)));
               }
             }
-
-            /*
-            if (constTrue->value.getInteger() == 1LL &&
-                constFalse->value.getInteger() == 0LL) {
-              auto* condition = select->condition;
-              if (Properties::emitsBoolean(condition)) {
-                // !x ? 1 : 0   ==>   !x
-                // x <=> y ? 1 : 0   ==>   x <=> y
-                return extendIfNeeded(condition);
-              } else {
-                // x ? 1 : 0   ==>   !!x
-                return extendIfNeeded(builder.makeUnary(
-                  EqZInt32, builder.makeUnary(EqZInt32, condition)));
-              }
-            } else if (constTrue->value.getInteger() == 0LL &&
-                       constFalse->value.getInteger() == 1LL) {
-              Builder builder(*getModule());
-              // !x ? 0 : 1   ==>   !!x
-              if (auto* condition = select->condition->dynCast<Unary>()) {
-                if (condition->op ==
-                    Abstract::getUnary(select->type, Abstract::EqZ)) {
-                  return extendIfNeeded(builder.makeUnary(
-                    Abstract::getUnary(select->type, Abstract::EqZ),
-                    condition->value));
-                }
-              }
-              // x <=> y ? 0 : 1   ==>   !(x <=> y)
-              if (auto* condition = select->condition->dynCast<Binary>()) {
-                auto op = inverseBinaryOp(condition->op);
-                if (op != InvalidBinary) {
-                  condition->op = op;
-                  return extendIfNeeded(condition);
-                }
-              }
-              // x ? 0 : 1   ==>   !x
-              return extendIfNeeded(
-                builder.makeUnary(EqZInt32, select->condition));
-            }
-            */
           }
         }
       }
@@ -1005,6 +942,14 @@ private:
             if (unary2 && unary2->op == EqZInt32) {
               // double eqz
               return unary2->value;
+            }
+            if (auto* binary = unary->value->dynCast<Binary>()) {
+              // !(x <=> y)   ==>   x <!=> y
+              auto op = inverseBinaryOp(binary->op);
+              if (op != InvalidBinary) {
+                binary->op = op;
+                return binary;
+              }
             }
           }
         }
