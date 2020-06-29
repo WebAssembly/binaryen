@@ -795,8 +795,15 @@ struct OptimizeInstructions
                 return extendIfNeeded(select->condition);
               } else {
                 // expr ? 1 : 0   ==>   !!expr
-                return extendIfNeeded(builder.makeUnary(
-                  EqZInt32, builder.makeUnary(EqZInt32, select->condition)));
+                if (getPassOptions().shrinkLevel > 0) {
+                  return extendIfNeeded(builder.makeUnary(
+                    EqZInt32, builder.makeUnary(EqZInt32, select->condition)));
+                } else {
+                  return extendIfNeeded(
+                    builder.makeBinary(NeInt32,
+                                       select->condition,
+                                       builder.makeConst(Literal(int32_t(0)))));
+                }
               }
             }
           }
