@@ -669,7 +669,7 @@ struct OptimizeInstructions
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to inverse a relational operation using De Morgan's law
-          auto op = inversedRelationalOp(inner->op);
+          auto op = inverseBinaryOp(inner->op);
           if (op != InvalidBinary) {
             inner->op = op;
             return inner;
@@ -771,12 +771,12 @@ struct OptimizeInstructions
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           Builder builder(*getModule());
-          bool is64bits = select->type == Type::i64;
+          bool isI64 = select->type == Type::i64;
           auto extendIfNeeded = [&](Expression* expression) {
-            return is64bits ? builder.makeUnary(ExtendUInt32, expression)
-                            : expression;
+            return isI64 ? builder.makeUnary(ExtendUInt32, expression)
+                         : expression;
           };
-          if (select->type == Type::i32 || is64bits) {
+          if (select->type == Type::i32 || isI64) {
             if (constTrue->type == constFalse->type &&
                 constTrue->value.getInteger() == 1LL &&
                 constFalse->value.getInteger() == 0LL) {
@@ -786,9 +786,9 @@ struct OptimizeInstructions
                 // x <=> y ? 1 : 0   ==>   x <=> y
                 return extendIfNeeded(condition);
               } else {
-                // expr ? 1 : 0   ==>   expr != 0
-                return extendIfNeeded(builder.makeBinary(
-                  NeInt32, condition, builder.makeConst(Literal(0))));
+                // x ? 1 : 0   ==>   !!x
+                return extendIfNeeded(builder.makeUnary(
+                  EqZInt32, builder.makeUnary(EqZInt32, condition)));
               }
             } else if (constTrue->type == constFalse->type &&
                        constTrue->value.getInteger() == 0LL &&
@@ -796,7 +796,8 @@ struct OptimizeInstructions
               Builder builder(*getModule());
               // !x ? 0 : 1   ==>   !!x
               if (auto* condition = select->condition->dynCast<Unary>()) {
-                if (condition->isRelational()) {
+                if (condition->op ==
+                    Abstract::getUnary(select->type, Abstract::EqZ)) {
                   return extendIfNeeded(builder.makeUnary(
                     Abstract::getUnary(select->type, Abstract::EqZ),
                     condition->value));
@@ -804,13 +805,13 @@ struct OptimizeInstructions
               }
               // x <=> y ? 0 : 1   ==>   !(x <=> y)
               if (auto* condition = select->condition->dynCast<Binary>()) {
-                auto op = inversedRelationalOp(condition->op);
+                auto op = inverseBinaryOp(condition->op);
                 if (op != InvalidBinary) {
                   condition->op = op;
                   return extendIfNeeded(condition);
                 }
               }
-              // expr ? 0 : 1   ==>   !expr
+              // x ? 0 : 1   ==>   !x
               return extendIfNeeded(
                 builder.makeUnary(EqZInt32, select->condition));
             }
@@ -1591,7 +1592,7 @@ private:
     }
   }
 
-  BinaryOp inversedRelationalOp(BinaryOp op) {
+  BinaryOp inverseBinaryOp(BinaryOp op) {
     // use de-morgan's laws
     switch (op) {
       case EqInt32:
