@@ -134,7 +134,7 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
-        FeatureSet optionsFeatures = FeatureSet::MVP;
+        FeatureSet optionsFeatures;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);
         if (module.features != optionsFeatures) {

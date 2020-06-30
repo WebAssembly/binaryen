@@ -1490,7 +1490,7 @@ public:
   // respected regardless of the value of`hasFeaturesSection`.
   // `hasFeaturesSection` means we read a features section and will emit one
   // too.
-  FeatureSet features = FeatureSet::MVP;
+  FeatureSet features;
   bool hasFeaturesSection = false;
 
   MixedArena allocator;

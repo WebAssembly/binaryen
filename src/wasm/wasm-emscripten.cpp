@@ -1246,7 +1246,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"features\": [";
   commaFirst = true;
   wasm.features.iterFeatures([&](FeatureSet::Feature f) {
-    meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
+    if (!(f & FeatureSet::Default)) {
+      meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
+    }
   });
   meta << "\n  ]\n";
 
