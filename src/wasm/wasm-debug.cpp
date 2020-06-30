@@ -791,7 +791,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           newValue = locationUpdater.getNewFuncStart(oldValue);
           // Per the DWARF spec, "The base address of a compile unit is
           // defined as the value of the DW_AT_low_pc attribute, if present."
-          locationUpdater.compileUnitBases[compileUnitIndex] = LocationUpdater::OldToNew{oldValue, newValue};
+          locationUpdater.compileUnitBases[compileUnitIndex] =
+            LocationUpdater::OldToNew{oldValue, newValue};
         } else if (tag == llvm::dwarf::DW_TAG_subprogram) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
         } else {
@@ -869,11 +870,8 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            updateDIE(DIE,
-                      yamlEntry,
-                      abbrevDecl,
-                      locationUpdater,
-                      compileUnitIndex);
+            updateDIE(
+              DIE, yamlEntry, abbrevDecl, locationUpdater, compileUnitIndex);
           }
         });
       compileUnitIndex++;
@@ -945,7 +943,8 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   for (size_t i = 0; i < locs.size(); i++) {
     auto& loc = locs[i];
     if (atStart) {
-      std::tie(oldBase, newBase) = locationUpdater.getCompileUnitBasesForLoc(loc.CompileUnitOffset);
+      std::tie(oldBase, newBase) =
+        locationUpdater.getCompileUnitBasesForLoc(loc.CompileUnitOffset);
       atStart = false;
     }
     // By default we copy values over, unless we modify them below.
