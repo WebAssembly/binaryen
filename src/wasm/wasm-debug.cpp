@@ -907,59 +907,80 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
 // would indicate an end or a base in .debug_loc).
 static const BinaryLocation IGNOREABLE_LOCATION = 1;
 
+static bool isNewBaseLoc(const llvm::DWARFYAML::Loc& loc) {
+  return loc.Start == BinaryLocation(-1);
+}
+
+static bool isEndMarkerLoc(const llvm::DWARFYAML::Loc& loc) {
+  return loc.Start == 0 && loc.End == 0;
+}
+
 // Update the .debug_loc section.
 static void updateLoc(llvm::DWARFYAML::Data& yaml,
                       const LocationUpdater& locationUpdater) {
   // Similar to ranges, try to update the start and end. Note that here we
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
-  // Locations have an optional base.
   bool atStart = true;
-  BinaryLocation base = 0;
-  for (size_t i = 0; i < yaml.Locs.size(); i++) {
-    auto& loc = yaml.Locs[i];
+  // Locations have an optional base. If we see one, we will emit a base as well
+  // as we need to keep positions in the .debug_loc section identical to before,
+  // but we may change the base (as after moving instructions around, the old
+  // base may not be smaller than all the values relative to it).
+  BinaryLocation oldBase, newBase;
+  auto& locs = yaml.Locs;
+  for (size_t i = 0; i < locs.size(); i++) {
+    auto& loc = locs[i];
     if (atStart) {
-      base = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      oldBase = newBase = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
       atStart = false;
     }
+    // By default we copy values over, unless we modify them below.
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
-    if (newStart == BinaryLocation(-1)) {
+    if (isNewBaseLoc(loc)) {
       // This is a new base.
       // Note that the base is not the address of an instruction, necessarily -
       // it's just a number (seems like it could always be an instruction, but
       // that's not what LLVM emits).
-      base = newEnd;
-    } else if (newStart == 0 && newEnd == 0) {
-      // This is an end marker, this list is done.
-      base = 0;
+      // We must look forward at everything relative to this base, so that we
+      // can emit a new proper base (as mentioned earlier, the original base may
+      // not be valid if instructions moved to a position before it - they must
+      // be positive offsets from it).
+      oldBase = newBase = newEnd;
+      BinaryLocation smallest = -1;
+      for (size_t j = i + 1; j < locs.size(); j++) {
+        auto& futureLoc = locs[j];
+        if (isNewBaseLoc(futureLoc) || isEndMarkerLoc(futureLoc)) {
+          break;
+        }
+        auto updatedStart = locationUpdater.getNewStart(futureLoc.Start + oldBase);
+        // If we found a valid mapping, this is a relevant value for us. If the
+        // optimizer removed it, it's a 0, and we can ignore it here - we will
+        // emit IGNOREABLE_LOCATION for it later anyhow.
+        if (updatedStart != 0) {
+          smallest = std::min(smallest, updatedStart);
+        }
+      }
+      if (smallest != BinaryLocation(-1)) {
+        newBase = newEnd = smallest;
+      }
+    } else if (isEndMarkerLoc(loc)) {
+      // This is an end marker, this list is done; reset the base.
       atStart = true;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
       // a new address for it.
-      newStart = locationUpdater.getNewStart(loc.Start + base);
-      newEnd = locationUpdater.getNewEnd(loc.End + base);
+      newStart = locationUpdater.getNewStart(loc.Start + oldBase);
+      newEnd = locationUpdater.getNewEnd(loc.End + oldBase);
       if (newStart == 0 || newEnd == 0) {
         // This part of the loc no longer has a mapping, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
-        // See if we can relativize it against the base. If things moved around
-        // so that the base is no longer before the start or the end, then we
-        // must skip this. That is, if we had something like
-        //
-        //    [base]  [start]      [end]
-        //
-        // (where the X axis is the offset) and transforms led to
-        //
-        //    [start]     [base] [end]
-        //
-        // or such, then give up TODO: perhaps remap with a new base?
-        if (newStart >= base && newEnd >= base) {
-          newStart -= base;
-          newEnd -= base;
-        } else {
-          newStart = newEnd = IGNOREABLE_LOCATION;
-        }
+        // We picked a new base that ensures it is smaller than the values we
+        // will relativize to it.
+        assert(newStart >= newBase && newEnd >= newBase);
+        newStart -= newBase;
+        newEnd -= newBase;
       }
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no

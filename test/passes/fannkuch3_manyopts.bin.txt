@@ -2558,7 +2558,7 @@ Abbrev table for offset: 0x00000000
 
 0x000000b4:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x00000007): 
                      [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000014c] = "maxflips")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2567,15 +2567,15 @@ Abbrev table for offset: 0x00000000
 
 0x000000c3:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000001d: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x00000000): 
                      [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                     [0x00000041,  0x00000046): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+                     [0x00000047,  0x0000004c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_consts +1, DW_OP_stack_value
-                     [0x00000110,  0x0000011a): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                     [0x00000116,  0x00000120): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                     [0x00000239,  0x00000244): DW_OP_consts +0, DW_OP_stack_value
+                     [0x0000023f,  0x0000024a): DW_OP_consts +0, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_consts +1, DW_OP_stack_value
-                     [0x0000028d,  0x00000297): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                     [0x00000293,  0x0000029d): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d6] = "i")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2584,7 +2584,7 @@ Abbrev table for offset: 0x00000000
 
 0x000000d2:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000000a5: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x00000011): 
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dc] = "n")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2593,7 +2593,7 @@ Abbrev table for offset: 0x00000000
 
 0x000000e1:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000000c3: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x0000001a): 
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000013e] = "perm1")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2602,7 +2602,7 @@ Abbrev table for offset: 0x00000000
 
 0x000000f0:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000000e1: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x00000020): 
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000196] = "perm")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2611,7 +2611,7 @@ Abbrev table for offset: 0x00000000
 
 0x000000ff:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000000ff: 
-                     [0xffffffff,  0x00000006): 
+                     [0xffffffff,  0x00000026): 
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000144] = "count")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
@@ -2620,9 +2620,9 @@ Abbrev table for offset: 0x00000000
 
 0x0000010e:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000011d: 
-                     [0xffffffff,  0x00000006): 
-                     [0x000001bf,  0x000001c4): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
-                     [0x0000033c,  0x00000341): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
+                     [0xffffffff,  0x000001c5): 
+                     [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
+                     [0x0000017d,  0x00000182): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000014a] = "r")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(30)
@@ -2630,13 +2630,13 @@ Abbrev table for offset: 0x00000000
 
 0x0000011d:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000149: 
-                     [0xffffffff,  0x00000006): 
-                     [0x000000b4,  0x000000c7): DW_OP_consts +0, DW_OP_stack_value
+                     [0xffffffff,  0x00000000): 
+                     [0x000000ba,  0x000000cd): DW_OP_consts +0, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +13, DW_OP_stack_value
-                     [0x00000139,  0x00000141): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-                     [0x00000239,  0x00000244): DW_OP_consts +0, DW_OP_stack_value
+                     [0x0000013f,  0x00000147): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                     [0x0000023f,  0x0000024a): DW_OP_consts +0, DW_OP_stack_value
                      [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +10, DW_OP_stack_value
-                     [0x000002b6,  0x000002be): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
+                     [0x000002bc,  0x000002c4): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000155] = "flips")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(30)
@@ -2644,9 +2644,9 @@ Abbrev table for offset: 0x00000000
 
 0x0000012c:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000001ab: 
-                     [0xffffffff,  0x00000006): 
-                     [0x000000c3,  0x000000c7): DW_OP_WASM_location 0x0 +12, DW_OP_stack_value
-                     [0x00000240,  0x00000244): DW_OP_WASM_location 0x0 +16, DW_OP_stack_value)
+                     [0xffffffff,  0x000000c9): 
+                     [0x00000000,  0x00000004): DW_OP_WASM_location 0x0 +12, DW_OP_stack_value
+                     [0x0000017d,  0x00000181): DW_OP_WASM_location 0x0 +16, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000019b] = "k")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(30)
@@ -2654,11 +2654,11 @@ Abbrev table for offset: 0x00000000
 
 0x0000013b:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x000001d7: 
-                     [0xffffffff,  0x00000006): 
-                     [0x000000db,  0x000000df): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-                     [0x00000117,  0x0000011a): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-                     [0x00000258,  0x0000025c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-                     [0x00000294,  0x00000297): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                     [0xffffffff,  0x000000e1): 
+                     [0x00000000,  0x00000004): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+                     [0x0000003c,  0x0000003f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+                     [0x0000017d,  0x00000181): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+                     [0x000001b9,  0x000001bc): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000019d] = "j")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(30)
@@ -2666,11 +2666,11 @@ Abbrev table for offset: 0x00000000
 
 0x0000014a:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000021f: 
-                     [0xffffffff,  0x00000006): 
-                     [0x000000f0,  0x0000011a): DW_OP_WASM_location 0x0 +15, DW_OP_stack_value
-                     [0x0000012b,  0x00000141): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-                     [0x0000026d,  0x00000297): DW_OP_WASM_location 0x0 +14, DW_OP_stack_value
-                     [0x000002a8,  0x000002be): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                     [0xffffffff,  0x000000f6): 
+                     [0x00000000,  0x0000002a): DW_OP_WASM_location 0x0 +15, DW_OP_stack_value
+                     [0x0000003b,  0x00000051): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+                     [0x0000017d,  0x000001a7): DW_OP_WASM_location 0x0 +14, DW_OP_stack_value
+                     [0x000001b8,  0x000001ce): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000019f] = "tmp")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(30)
@@ -2841,8 +2841,8 @@ Abbrev table for offset: 0x00000000
 
 0x00000269:     DW_TAG_variable [13]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000267: 
-                     [0xffffffff,  0x0000039f): 
-                     [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
+                     [0xffffffff,  0x00000386): 
+                     [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dc] = "n")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_decl_line [DW_FORM_data1]	(153)
@@ -2861,26 +2861,26 @@ Abbrev table for offset: 0x00000000
 
 0x0000028d:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000285: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x00000000): 
                        [0x00000001,  0x00000001): DW_OP_consts +30, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01c3 => {0x000001c3} "showmax")
 
 0x00000296:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x000002a2: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x00000000): 
                        [0x00000001,  0x00000001): DW_OP_lit0, DW_OP_stack_value
-                       [0x0000025f,  0x00000277): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
+                       [0x000005fe,  0x00000616): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01ce => {0x000001ce} "args")
 
 0x0000029f:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x000002cc: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x00000000): 
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                       [0x00000036,  0x0000003b): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                       [0x000003d5,  0x000003da): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                       [0x00000075,  0x0000007a): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-                       [0x00000093,  0x00000097): DW_OP_consts +0, DW_OP_stack_value
-                       [0x000000be,  0x000000c3): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                       [0x00000414,  0x00000419): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                       [0x00000432,  0x00000436): DW_OP_consts +0, DW_OP_stack_value
+                       [0x0000045d,  0x00000462): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value)
@@ -2891,34 +2891,34 @@ Abbrev table for offset: 0x00000000
 
 0x000002ad:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000354: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x000003eb): 
                        [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01ef => {0x000001ef} "perm1")
 
 0x000002b6:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000372: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x000003f1): 
                        [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01fa => {0x000001fa} "count")
 
 0x000002bf:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000390: 
-                       [0xffffffff,  0x0000039f): 
-                       [0x0000016f,  0x00000176): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
-                       [0x0000022d,  0x00000234): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
+                       [0xffffffff,  0x0000050e): 
+                       [0x00000000,  0x00000007): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
+                       [0x000000be,  0x000000c5): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0205 => {0x00000205} "r")
 
 0x000002c8:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x000003e8: 
-                       [0xffffffff,  0x0000039f): 
+                       [0xffffffff,  0x000005e7): 
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                       [0x0000026f,  0x00000277): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
+                       [0x00000027,  0x0000002f): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0210 => {0x00000210} "maxflips")
 
 0x000002d1:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000413: 
-                       [0xffffffff,  0x0000039f): 
-                       [0x00000258,  0x00000277): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                       [0xffffffff,  0x000005f7): 
+                       [0x00000000,  0x0000001f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x021b => {0x0000021b} "flips")
 
 0x000002da:       DW_TAG_label [28]  
@@ -2932,7 +2932,7 @@ Abbrev table for offset: 0x00000000
 
 0x000002e8:         DW_TAG_variable [26]  
                       DW_AT_location [DW_FORM_sec_offset]	(0x000003bc: 
-                         [0xffffffff,  0x0000039f): 
+                         [0xffffffff,  0x00000000): 
                          [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +8, DW_OP_stack_value
                          [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +8, DW_OP_stack_value)
                       DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x022e => {0x0000022e} "p0")
@@ -3000,121 +3000,121 @@ Abbrev table for offset: 0x00000000
 
 .debug_loc contents:
 0x00000000: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x00000007): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
 
 0x0000001d: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x00000000): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x00000041,  0x00000046): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0x00000047,  0x0000004c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +1, DW_OP_stack_value
-            [0x00000110,  0x0000011a): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000116,  0x00000120): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x00000239,  0x00000244): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000023f,  0x0000024a): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +1, DW_OP_stack_value
-            [0x0000028d,  0x00000297): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000293,  0x0000029d): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
 
 0x000000a5: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x00000011): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
 
 0x000000c3: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x0000001a): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
 
 0x000000e1: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x00000020): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value
 
 0x000000ff: 
-            [0xffffffff,  0x00000006): 
+            [0xffffffff,  0x00000026): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
 
 0x0000011d: 
-            [0xffffffff,  0x00000006): 
-            [0x000001bf,  0x000001c4): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
-            [0x0000033c,  0x00000341): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
+            [0xffffffff,  0x000001c5): 
+            [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
+            [0x0000017d,  0x00000182): DW_OP_WASM_location 0x0 +2, DW_OP_stack_value
 
 0x00000149: 
-            [0xffffffff,  0x00000006): 
-            [0x000000b4,  0x000000c7): DW_OP_consts +0, DW_OP_stack_value
+            [0xffffffff,  0x00000000): 
+            [0x000000ba,  0x000000cd): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +13, DW_OP_stack_value
-            [0x00000139,  0x00000141): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-            [0x00000239,  0x00000244): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000013f,  0x00000147): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x0000023f,  0x0000024a): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +10, DW_OP_stack_value
-            [0x000002b6,  0x000002be): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x000002bc,  0x000002c4): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
 
 0x000001ab: 
-            [0xffffffff,  0x00000006): 
-            [0x000000c3,  0x000000c7): DW_OP_WASM_location 0x0 +12, DW_OP_stack_value
-            [0x00000240,  0x00000244): DW_OP_WASM_location 0x0 +16, DW_OP_stack_value
+            [0xffffffff,  0x000000c9): 
+            [0x00000000,  0x00000004): DW_OP_WASM_location 0x0 +12, DW_OP_stack_value
+            [0x0000017d,  0x00000181): DW_OP_WASM_location 0x0 +16, DW_OP_stack_value
 
 0x000001d7: 
-            [0xffffffff,  0x00000006): 
-            [0x000000db,  0x000000df): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-            [0x00000117,  0x0000011a): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-            [0x00000258,  0x0000025c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-            [0x00000294,  0x00000297): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0xffffffff,  0x000000e1): 
+            [0x00000000,  0x00000004): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0x0000003c,  0x0000003f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0x0000017d,  0x00000181): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0x000001b9,  0x000001bc): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 0x0000021f: 
-            [0xffffffff,  0x00000006): 
-            [0x000000f0,  0x0000011a): DW_OP_WASM_location 0x0 +15, DW_OP_stack_value
-            [0x0000012b,  0x00000141): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
-            [0x0000026d,  0x00000297): DW_OP_WASM_location 0x0 +14, DW_OP_stack_value
-            [0x000002a8,  0x000002be): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0xffffffff,  0x000000f6): 
+            [0x00000000,  0x0000002a): DW_OP_WASM_location 0x0 +15, DW_OP_stack_value
+            [0x0000003b,  0x00000051): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0x0000017d,  0x000001a7): DW_OP_WASM_location 0x0 +14, DW_OP_stack_value
+            [0x000001b8,  0x000001ce): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 0x00000267: 
-            [0xffffffff,  0x0000039f): 
-            [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0xffffffff,  0x00000386): 
+            [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
 
 0x00000285: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x00000000): 
             [0x00000001,  0x00000001): DW_OP_consts +30, DW_OP_stack_value
 
 0x000002a2: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x00000000): 
             [0x00000001,  0x00000001): DW_OP_lit0, DW_OP_stack_value
-            [0x0000025f,  0x00000277): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
+            [0x000005fe,  0x00000616): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
 
 0x000002cc: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x00000000): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x00000036,  0x0000003b): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x000003d5,  0x000003da): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x00000075,  0x0000007a): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-            [0x00000093,  0x00000097): DW_OP_consts +0, DW_OP_stack_value
-            [0x000000be,  0x000000c3): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000414,  0x00000419): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000432,  0x00000436): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000045d,  0x00000462): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
 
 0x00000354: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x000003eb): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 0x00000372: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x000003f1): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value
 
 0x00000390: 
-            [0xffffffff,  0x0000039f): 
-            [0x0000016f,  0x00000176): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
-            [0x0000022d,  0x00000234): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
+            [0xffffffff,  0x0000050e): 
+            [0x00000000,  0x00000007): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
+            [0x000000be,  0x000000c5): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
 
 0x000003bc: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x00000000): 
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +8, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +8, DW_OP_stack_value
 
 0x000003e8: 
-            [0xffffffff,  0x0000039f): 
+            [0xffffffff,  0x000005e7): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x0000026f,  0x00000277): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000027,  0x0000002f): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
 
 0x00000413: 
-            [0xffffffff,  0x0000039f): 
-            [0x00000258,  0x00000277): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0xffffffff,  0x000005f7): 
+            [0x00000000,  0x0000001f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 .debug_line contents:
 debug_line[0x00000000]
