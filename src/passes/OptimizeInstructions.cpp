@@ -757,17 +757,6 @@ struct OptimizeInstructions
           }
         }
       }
-      if (auto* condition = select->condition->dynCast<Unary>()) {
-        if (condition->op == EqZInt32) {
-          // flip select to remove eqz, if we can reorder
-          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-          if (!ifTrue.invalidates(ifFalse)) {
-            select->condition = condition->value;
-            std::swap(select->ifTrue, select->ifFalse);
-          }
-        }
-      }
       if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
         if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
           if (select->type == Type::i32 || select->type == Type::i64) {
@@ -802,6 +791,17 @@ struct OptimizeInstructions
                        ? builder.makeUnary(ExtendUInt32, condition)
                        : condition;
             }
+          }
+        }
+      }
+      if (auto* condition = select->condition->dynCast<Unary>()) {
+        if (condition->op == EqZInt32) {
+          // flip select to remove eqz, if we can reorder
+          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
           }
         }
       }
