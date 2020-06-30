@@ -473,12 +473,17 @@ struct LocationUpdater {
   AddrExprMap oldExprAddrMap;
   FuncAddrMap oldFuncAddrMap;
 
+  // Map offsets of location list entries in the debug_loc section to the index
+  // of their compile unit.
+  std::map<BinaryLocation, size_t> locToUnitMap;
+
   // Map start of line tables in the debug_line section to their new locations.
   std::map<BinaryLocation, BinaryLocation> debugLineMap;
 
-  // Map offset of location list entries in the debug_loc section to the base
-  // address of the compilation units referencing them.
-  std::map<BinaryLocation, BinaryLocation> debugLocToUnitMap;
+  typedef std::pair<BinaryLocation, BinaryLocation> OldToNew;
+
+  // Map of compile unit index => old or new base offsets.
+  std::map<size_t, OldToNew> compileUnitBases;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -618,8 +623,14 @@ struct LocationUpdater {
     return debugLineMap.at(old);
   }
 
-  BinaryLocation getLocationBaseAddress(BinaryLocation offset) const {
-    return debugLocToUnitMap.at(offset);
+  // Given an offset in .debug_loc, get the old and new compile unit bases.
+  OldToNew getCompileUnitBasesForLoc(size_t offset) const {
+    auto index = locToUnitMap.at(offset);
+    auto iter = compileUnitBases.find(index);
+    if (iter != compileUnitBases.end()) {
+      return iter->second;
+    }
+    return OldToNew{0, 0};
   }
 };
 
@@ -756,7 +767,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
                       LocationUpdater& locationUpdater,
-                      BinaryLocation compilationUnitBaseAddress) {
+                      size_t compileUnitIndex) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -776,8 +787,12 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
           newValue = locationUpdater.getNewExprStart(oldValue);
-        } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
-                   tag == llvm::dwarf::DW_TAG_subprogram) {
+        } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
+          newValue = locationUpdater.getNewFuncStart(oldValue);
+          // Per the DWARF spec, "The base address of a compile unit is
+          // defined as the value of the DW_AT_low_pc attribute, if present."
+          locationUpdater.compileUnitBases[compileUnitIndex] = LocationUpdater::OldToNew{oldValue, newValue};
+        } else if (tag == llvm::dwarf::DW_TAG_subprogram) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
         } else {
           Fatal() << "unknown tag with low_pc "
@@ -793,8 +808,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       } else if (attr == llvm::dwarf::DW_AT_location &&
                  attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
         BinaryLocation locOffset = yamlValue.Value;
-        locationUpdater.debugLocToUnitMap[locOffset] =
-          compilationUnitBaseAddress;
+        locationUpdater.locToUnitMap[locOffset] = compileUnitIndex;
       }
     });
   // Next, process the high_pcs.
@@ -838,6 +852,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                LocationUpdater& locationUpdater) {
   // The context has the high-level information we need, and the YAML is where
   // we write changes. First, iterate over the compile units.
+  size_t compileUnitIndex = 0;
   iterContextAndYAML(
     info.context->compile_units(),
     yaml.CompileUnits,
@@ -854,15 +869,14 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            BinaryLocation compilationUnitBaseAddress =
-              CU->getBaseAddress() ? CU->getBaseAddress()->Address : 0;
             updateDIE(DIE,
                       yamlEntry,
                       abbrevDecl,
                       locationUpdater,
-                      compilationUnitBaseAddress);
+                      compileUnitIndex);
           }
         });
+      compileUnitIndex++;
     });
 }
 
@@ -931,8 +945,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   for (size_t i = 0; i < locs.size(); i++) {
     auto& loc = locs[i];
     if (atStart) {
-      oldBase = newBase =
-        locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      std::tie(oldBase, newBase) = locationUpdater.getCompileUnitBasesForLoc(loc.CompileUnitOffset);
       atStart = false;
     }
     // By default we copy values over, unless we modify them below.
