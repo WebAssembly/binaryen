@@ -931,7 +931,8 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   for (size_t i = 0; i < locs.size(); i++) {
     auto& loc = locs[i];
     if (atStart) {
-      oldBase = newBase = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      oldBase = newBase =
+        locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
       atStart = false;
     }
     // By default we copy values over, unless we modify them below.
@@ -952,7 +953,8 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
         if (isNewBaseLoc(futureLoc) || isEndMarkerLoc(futureLoc)) {
           break;
         }
-        auto updatedStart = locationUpdater.getNewStart(futureLoc.Start + oldBase);
+        auto updatedStart =
+          locationUpdater.getNewStart(futureLoc.Start + oldBase);
         // If we found a valid mapping, this is a relevant value for us. If the
         // optimizer removed it, it's a 0, and we can ignore it here - we will
         // emit IGNOREABLE_LOCATION for it later anyhow.
