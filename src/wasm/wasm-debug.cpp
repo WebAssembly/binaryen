@@ -475,15 +475,16 @@ struct LocationUpdater {
 
   // Map offsets of location list entries in the debug_loc section to the index
   // of their compile unit.
-  std::map<BinaryLocation, size_t> locToUnitMap;
+  std::unordered_map<BinaryLocation, size_t> locToUnitMap;
 
   // Map start of line tables in the debug_line section to their new locations.
-  std::map<BinaryLocation, BinaryLocation> debugLineMap;
+  std::unordered_map<BinaryLocation, BinaryLocation> debugLineMap;
 
   typedef std::pair<BinaryLocation, BinaryLocation> OldToNew;
 
-  // Map of compile unit index => old or new base offsets.
-  std::map<size_t, OldToNew> compileUnitBases;
+  // Map of compile unit index => old and new base offsets (i.e., in the
+  // original binary and in the new one).
+  std::unordered_map<size_t, OldToNew> compileUnitBases;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -934,10 +935,11 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
   bool atStart = true;
-  // Locations have an optional base. If we see one, we will emit a base as well
-  // as we need to keep positions in the .debug_loc section identical to before,
-  // but we may change the base (as after moving instructions around, the old
-  // base may not be smaller than all the values relative to it).
+  // We need to keep positions in the .debug_loc section identical to before
+  // (or else we'd need to update their positions too) and so we need to keep
+  // base entries around (a base entry is added to every entry after it in the
+  // list). However, we may change the base's value as after moving instructions
+  // around the old base may not be smaller than all the values relative to it.
   BinaryLocation oldBase, newBase;
   auto& locs = yaml.Locs;
   for (size_t i = 0; i < locs.size(); i++) {
