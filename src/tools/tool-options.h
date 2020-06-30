@@ -150,7 +150,7 @@ struct ToolOptions : public Options {
 private:
   bool hasFeatureOptions = false;
   bool detectFeatures = false;
-  FeatureSet enabledFeatures = FeatureSet::MVP;
+  FeatureSet enabledFeatures;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };
 
