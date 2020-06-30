@@ -781,26 +781,26 @@ struct OptimizeInstructions
                 select->condition = optimizeBoolean(
                   builder.makeUnary(EqZInt32, select->condition));
               }
-              Expression* result = nullptr;
+              Expression* condition = nullptr;
               if (Properties::emitsBoolean(select->condition)) {
                 // !x ? 1 : 0   ==>   !x
                 // x <=> y ? 1 : 0   ==>   x <=> y
-                result = select->condition;
+                condition = select->condition;
               } else {
                 // expr ? 1 : 0   ==>   !!expr
                 if (getPassOptions().shrinkLevel > 0) {
-                  result = builder.makeUnary(
+                  condition = builder.makeUnary(
                     EqZInt32, builder.makeUnary(EqZInt32, select->condition));
                 } else {
-                  result =
+                  condition =
                     builder.makeBinary(NeInt32,
                                        select->condition,
                                        builder.makeConst(Literal(int32_t(0))));
                 }
               }
               return select->type == Type::i64
-                       ? builder.makeUnary(ExtendUInt32, result)
-                       : result;
+                       ? builder.makeUnary(ExtendUInt32, condition)
+                       : condition;
             }
           }
         }
