@@ -960,9 +960,13 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           smallest = std::min(smallest, updatedStart);
         }
       }
-      if (smallest != BinaryLocation(-1)) {
-        newBase = newEnd = smallest;
+      // If we found no valid values that will be relativized here, just use 0
+      // as the new (never-to-be-used) base, which is less confusing (otherwise
+      // the value looks like it means something).
+      if (smallest == BinaryLocation(-1)) {
+        smallest = 0;
       }
+      newBase = newEnd = smallest;
     } else if (isEndMarkerLoc(loc)) {
       // This is an end marker, this list is done; reset the base.
       atStart = true;
