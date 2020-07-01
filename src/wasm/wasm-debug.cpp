@@ -1001,6 +1001,13 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
         assert(newStart >= newBase && newEnd >= newBase);
         newStart -= newBase;
         newEnd -= newBase;
+        if (newStart == 0 && newEnd == 0) {
+          // After mapping to the new positions, and after relativizing to the
+          // base, if we end up with (0, 0) then we must emit something else, as
+          // that would be interpreted as the end of a list. As it is an empty
+          // span, the actual value doesn't matter, it just has to be != 0.
+          newStart = newEnd = IGNOREABLE_LOCATION;
+        }
       }
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no
