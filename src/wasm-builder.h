@@ -116,7 +116,7 @@ public:
   Block* makeBlock(const std::vector<Expression*>& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   Block* makeBlock(const ExpressionList& items) {
@@ -128,7 +128,7 @@ public:
   Block* makeBlock(const ExpressionList& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   Block* makeBlock(Name name, const ExpressionList& items) {
@@ -142,7 +142,7 @@ public:
     auto* ret = allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   If* makeIf(Expression* condition,
@@ -708,7 +708,7 @@ public:
     }
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(profile);
     }
     return block;
   }
@@ -733,7 +733,7 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(profile);
     }
     return block;
   }
@@ -743,14 +743,14 @@ public:
   Block* makeSequence(Expression* left, Expression* right) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
-    block->finalize();
+    block->finalize(profile);
     return block;
   }
 
   Block* makeSequence(Expression* left, Expression* right, Type type) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
-    block->finalize(type);
+    block->finalize(type, profile);
     return block;
   }
 
@@ -767,7 +767,7 @@ public:
       for (Index i = from; i < to; i++) {
         block->list.push_back(input->list[i]);
       }
-      block->finalize();
+      block->finalize(profile);
       ret = block;
     }
     if (to == input->list.size()) {

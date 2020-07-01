@@ -634,13 +634,14 @@ public:
   // s-expression or binary, as explicit types are given. the only additional
   // work this does is to set the type to unreachable in the cases that is
   // needed (which may require scanning the block)
-  void finalize(Type type_);
+  void finalize(Type type_, IRProfile profile = IRProfile::Normal);
 
   // set the type given you know its type, and you know if there is a break to
   // this block. this avoids the need to scan the contents of the block in the
   // case that it might be unreachable, so it is recommended if you already know
   // the type and breakability anyhow.
-  void finalize(Type type_, bool hasBreak);
+  void
+  finalize(Type type_, bool hasBreak, IRProfile profile = IRProfile::Normal);
 };
 
 class If : public SpecificExpression<Expression::IfId> {

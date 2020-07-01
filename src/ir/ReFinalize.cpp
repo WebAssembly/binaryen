@@ -68,7 +68,7 @@ void ReFinalize::visitBlock(Block* curr) {
     return;
   }
   // type is none, but we might be unreachable
-  if (curr->type == Type::none) {
+  if (curr->type == Type::none && profile == IRProfile::Normal) {
     for (auto* child : curr->list) {
       if (child->type == Type::unreachable) {
         curr->type = Type::unreachable;

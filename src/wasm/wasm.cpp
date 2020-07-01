@@ -366,7 +366,9 @@ void Block::finalize(IRProfile profile) {
   if (name.is()) {
     TypeSeeker seeker(this, this->name, profile);
     type = Type::mergeTypes(seeker.types);
-    handleUnreachable(this);
+    if (profile == IRProfile::Normal) {
+      handleUnreachable(this);
+    }
   } else {
     // nothing branches here, so this is easy
     switch (profile) {
@@ -382,16 +384,16 @@ void Block::finalize(IRProfile profile) {
   }
 }
 
-void Block::finalize(Type type_) {
+void Block::finalize(Type type_, IRProfile profile) {
   type = type_;
-  if (type == Type::none && list.size() > 0) {
+  if (type == Type::none && list.size() > 0 && profile == IRProfile::Normal) {
     handleUnreachable(this);
   }
 }
 
-void Block::finalize(Type type_, bool hasBreak) {
+void Block::finalize(Type type_, bool hasBreak, IRProfile profile) {
   type = type_;
-  if (type == Type::none && list.size() > 0) {
+  if (type == Type::none && list.size() > 0 && profile == IRProfile::Normal) {
     handleUnreachable(this, true, hasBreak);
   }
 }
