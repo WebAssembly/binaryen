@@ -233,10 +233,6 @@ void Stackifier::emitFunctionEnd() {
   auto& scope = scopeStack.back();
   assert(scope.kind == Scope::Func);
   patchInstrs(func->body);
-
-  // We are done stackifying the structure. Now eliminate redundant unreachable
-  // instructions and lower unreachable types away.
-  StackUtils::lowerUnreachables(func, module);
 }
 
 void Stackifier::emitUnreachable() {

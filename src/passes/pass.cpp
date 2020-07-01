@@ -169,6 +169,10 @@ void PassRegistry::registerPasses() {
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
+  registerPass("lower-unreachables",
+               "perform type inference to remove unreachable types from a "
+               "stackified module",
+               createLowerUnreachablesPass);
   registerPass("i64-to-i32-lowering",
                "lower all uses of i64s to use i32s instead",
                createI64ToI32LoweringPass);

@@ -802,6 +802,9 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitTupleMake(TupleMake* curr) {
   for (auto* operand : curr->operands) {
     visit(operand);
+    if (operand->type == Type::unreachable) {
+      break;
+    }
   }
   emit(curr);
   if (curr->type == Type::unreachable) {

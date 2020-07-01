@@ -29,7 +29,6 @@ struct StackDCEPass : public WalkerPass<PostWalker<StackDCEPass>> {
   void visitBlock(Block* curr) {
     for (size_t i = 0, size = curr->list.size(); i < size; ++i) {
       if (curr->list[i]->type == Type::unreachable) {
-        assert(!Properties::isControlFlowStructure(curr->list[i]));
         curr->list.resize(i + 1);
         return;
       }

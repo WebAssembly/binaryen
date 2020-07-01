@@ -59,6 +59,7 @@ Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
 Pass* createLogExecutionPass();
+Pass* createLowerUnreachablesPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLoopInvariantCodeMotionPass();
