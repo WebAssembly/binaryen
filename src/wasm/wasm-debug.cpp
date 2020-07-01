@@ -992,8 +992,9 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // a new address for it.
       newStart = locationUpdater.getNewStart(loc.Start + oldBase);
       newEnd = locationUpdater.getNewEnd(loc.End + oldBase);
-      if (newStart == 0 || newEnd == 0) {
-        // This part of the loc no longer has a mapping, so we must ignore it.
+      if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
+        // This part of the loc no longer has a mapping, or after the mapping
+        // it is no longer a proper span, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
         // We picked a new base that ensures it is smaller than the values we
