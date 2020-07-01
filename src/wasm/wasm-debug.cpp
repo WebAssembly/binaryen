@@ -973,14 +973,6 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
         // optimizer removed it, it's a 0, and we can ignore it here - we will
         // emit IGNOREABLE_LOCATION for it later anyhow.
         if (updatedStart != 0) {
-          if (futureLoc.Start == futureLoc.End) {
-            // If this is an empty span (x, x), then we must be careful to avoid
-            // (0, 0), as that would be interpreted as an end marker. To avoid
-            // that, decrease the base (which is greater than 0, so it is ok to
-            // decrease it) so that the relative result's identical start and
-            // end will be != 0.
-            updatedStart--;
-          }
           smallest = std::min(smallest, updatedStart);
         }
       }
