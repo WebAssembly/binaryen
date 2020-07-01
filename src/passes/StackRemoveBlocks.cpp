@@ -37,7 +37,6 @@ struct StackRemoveBlocksPass
           insts.insert(
             insts.begin() + i, block->list.begin(), block->list.end());
           curr->list.set(insts);
-          changed = true;
           continue;
         }
       }

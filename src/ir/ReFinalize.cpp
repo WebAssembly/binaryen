@@ -51,7 +51,7 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = curr->list.back()->type;
   } else {
     assert(profile == IRProfile::Stacky);
-    StackUtils::StackSignature sig(curr->list.begin(), curr->list.end());
+    StackSignature sig(curr->list.begin(), curr->list.end());
     curr->type = sig.results;
     if (curr->type == Type::none) {
       curr->type = sig.unreachable ? Type::unreachable : Type::none;

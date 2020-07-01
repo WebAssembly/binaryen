@@ -260,7 +260,7 @@ static void finalizeNormalBlock(Block* block) {
 static void finalizeStackyBlock(Block* block) {
   // Similar rules apply to stacky blocks, although the type they produce
   // is not just the type of their last instruction.
-  StackUtils::StackSignature sig(block->list.begin(), block->list.end());
+  StackSignature sig(block->list.begin(), block->list.end());
   block->type = sig.results;
   if (block->type == Type::none) {
     block->type = sig.unreachable ? Type::unreachable : Type::none;

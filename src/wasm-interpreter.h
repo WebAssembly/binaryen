@@ -201,7 +201,7 @@ public:
     // The stack size to restore after a control flow structure
     size_t restoreSize;
     if (isStacky() && Properties::isControlFlowStructure(curr)) {
-      StackUtils::StackSignature sig(curr);
+      StackSignature sig(curr);
       assert(valueStack.size() >= sig.params.size());
       restoreSize = valueStack.size() - sig.params.size();
     }
@@ -216,7 +216,7 @@ public:
       std::cerr << "\n";
 #endif // STACKY_DEBUG
       // Reverse the popped values so they come out in the right order
-      size_t numChildren = StackUtils::StackSignature(curr).params.size();
+      size_t numChildren = StackSignature(curr).params.size();
       std::reverse(valueStack.end() - numChildren, valueStack.end());
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);

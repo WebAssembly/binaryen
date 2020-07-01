@@ -2125,7 +2125,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         // contents.
         assert(profile == IRProfile::Stacky);
         auto* block = curr->cast<Block>();
-        StackUtils::StackSignature sig(block->list.begin(), block->list.end());
+        StackSignature sig(block->list.begin(), block->list.end());
         if (!sig.satisfies(Signature(Type::none, block->type))) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr

@@ -27,11 +27,11 @@ struct StackifyDropsPass : public WalkerPass<PostWalker<StackifyDropsPass>> {
   Pass* create() override { return new StackifyDropsPass; }
 
   void visitBlock(Block* curr) {
-    StackUtils::StackFlow flow(curr);
+    StackFlow flow(curr);
     for (auto* expr : curr->list) {
       auto& dests = flow.dests[expr];
-      bool unused = std::all_of(
-        dests.begin(), dests.end(), [](StackUtils::StackFlow::Location& loc) {
+      bool unused =
+        std::all_of(dests.begin(), dests.end(), [](StackFlow::Location& loc) {
           assert(loc.expr != nullptr);
           return loc.unreachable || loc.expr->is<Drop>();
         });

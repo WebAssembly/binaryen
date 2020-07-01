@@ -4,7 +4,7 @@ set(ir_SOURCES
   ExpressionManipulator.cpp
   LocalGraph.cpp
   ReFinalize.cpp
-  StackUtils.cpp
+  stack-utils.cpp
   ${ir_HEADERS}
 )
 add_library(ir OBJECT ${ir_SOURCES})

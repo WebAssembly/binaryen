@@ -49,6 +49,127 @@ void compact(Block* block) {
   block->list.resize(newIndex);
 }
 
+void lowerUnreachables(Function* func, Module* module) {
+  struct UnreachableLowerer
+    : Walker<UnreachableLowerer, Visitor<UnreachableLowerer>> {
+    // Implementation details
+    static void scan(UnreachableLowerer* self, Expression** currp) {
+      // Visit only control flow children, since we know all other children will
+      // be pops and we are not interested in those. Also pre-visit nodes
+      // instead of post-visiting them because type inference depends on parents
+      // being typed first.
+      Expression* curr = *currp;
+      switch (curr->_id) {
+        case Expression::Id::BlockId: {
+          // Visit children only through the first unreachable, since any
+          // further children will be discarded before we could visit them.
+          for (auto*& child : curr->cast<Block>()->list) {
+            self->pushTask(scan, &child);
+            if (child->type == Type::unreachable) {
+              break;
+            }
+          }
+          self->pushTask(doVisitBlock, currp);
+          break;
+        }
+        case Expression::Id::IfId:
+          self->maybePushTask(scan, &curr->cast<If>()->ifFalse);
+          self->pushTask(scan, &curr->cast<If>()->ifTrue);
+          self->pushTask(doVisitIf, currp);
+          break;
+        case Expression::Id::LoopId:
+          self->pushTask(scan, &curr->cast<Loop>()->body);
+          self->pushTask(doVisitLoop, currp);
+          break;
+        case Expression::Id::TryId:
+          self->pushTask(scan, &curr->cast<Try>()->catchBody);
+          self->pushTask(scan, &curr->cast<Try>()->body);
+          self->pushTask(scan, &curr->cast<Try>()->body);
+          break;
+        default:
+          break;
+      }
+    }
+    void visitBlock(Block* curr) {
+      if (curr->type == Type::unreachable) {
+      }
+      size_t numReachable = 0;
+      for (; numReachable < curr->list.size(); ++numReachable) {
+        if (curr->list[numReachable]->type == Type::unreachable) {
+          break;
+        }
+      }
+      if (numReachable == curr->list.size()) {
+        return;
+      }
+      // Keep the first unreachable child and nothing after it
+      curr->list.resize(numReachable + 1);
+      auto* unreachable = curr->list[numReachable];
+      // If it is control flow, figure out what type it should have
+      if (Properties::isControlFlowStructure(unreachable)) {
+        // If `unreachable` consumes any values (besides an i32 if it is an If)
+        // or if it produces multiple values and multivalue is not enabled, then
+        // append an `unreachable` to the list after all to make the typing work
+        // out. Otherwise, update the type accordingly.
+        // TODO: Implement control flow input types for use here.
+        StackFlow flow(curr);
+        auto sig = flow.getSignature(unreachable);
+        bool needsExtraUnreachable;
+        if (unreachable->is<If>()) {
+          needsExtraUnreachable = sig.params != Type::i32;
+        } else {
+          needsExtraUnreachable = sig.params != Type::none;
+        }
+        if (!getModule()->features.hasMultivalue() && sig.results.isMulti()) {
+          needsExtraUnreachable = true;
+        }
+        if (needsExtraUnreachable) {
+          curr->list.push_back(Builder(*getModule()).makeUnreachable());
+          unreachable->type = Type::none;
+        } else {
+          unreachable->type = sig.results;
+        }
+      }
+    }
+
+    void visitIf(If* curr) {
+      // The If type must be a supertype of the individual arm types, so just
+      // reuse it for both arms. This can save space in the type section.
+      curr->ifTrue->type = curr->type;
+      if (curr->ifFalse) {
+        curr->ifFalse->type = curr->type;
+      }
+    }
+
+    void visitLoop(Loop* curr) { curr->body->type = curr->type; }
+
+    void visitTry(Try* curr) {
+      curr->body->type = curr->type;
+      curr->catchBody->type = curr->type;
+    }
+  };
+
+  func->body->type = func->sig.results;
+  UnreachableLowerer().walkFunctionInModule(func, module);
+
+#ifndef NDEBUG
+  // Assert that only instructions that never return have unreachable type
+  struct AssertValidUnreachableTypes
+    : PostWalker<AssertValidUnreachableTypes,
+                 UnifiedExpressionVisitor<AssertValidUnreachableTypes>> {
+    void visitExpression(Expression* curr) {
+      if (curr->type == Type::unreachable) {
+        assert(StackUtils::mayBeUnreachable(curr) &&
+               "Unexpected unreachable instruction");
+      }
+    }
+  } asserter;
+  asserter.walkFunction(func);
+#endif // NDEBUG
+}
+
+} // namespace StackUtils
+
 StackSignature::StackSignature(Expression* expr) {
   params = Type::none;
   if (Properties::isControlFlowStructure(expr)) {
@@ -211,7 +332,5 @@ StackSignature StackFlow::getSignature(Expression* expr) {
   bool unreachable = expr->type == Type::unreachable;
   return StackSignature(Type(params), Type(results), unreachable);
 }
-
-} // namespace StackUtils
 
 } // namespace wasm
