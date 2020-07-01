@@ -28,6 +28,7 @@
 #include <sstream>
 
 #include "ir/module-utils.h"
+#include "ir/stack-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "wasm-builder.h"
@@ -37,6 +38,8 @@
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
 #endif
+
+// #define STACKY_DEBUG
 
 namespace wasm {
 
@@ -163,8 +166,7 @@ protected:
   Index maxLoopIterations;
 
   // Multivalue support.
-  // TODO: make this Literal instead of Literals once tuples are split up
-  std::vector<Literals> valueStack;
+  std::vector<Literal> valueStack;
 
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
@@ -196,12 +198,31 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
-    if (isStacky() && !Properties::isControlFlowStructure(curr)) {
+    // The stack size to restore after a control flow structure
+    size_t restoreSize;
+    if (isStacky() && Properties::isControlFlowStructure(curr)) {
+      StackUtils::StackSignature sig(curr);
+      assert(valueStack.size() >= sig.params.size());
+      restoreSize = valueStack.size() - sig.params.size();
+    }
+    if (isStacky() && !curr->is<Pop>()) {
+#ifdef STACKY_DEBUG
+      std::cerr << "Visiting:\n";
+      curr->dump();
+      std::cerr << "\nValue stack before: ";
+      for (auto v : valueStack) {
+        std::cerr << " " << v.type.toString();
+      }
+      std::cerr << "\n";
+#endif // STACKY_DEBUG
       // Reverse the popped values so they come out in the right order
-      Index numChildren = ChildIterator(curr).size();
+      size_t numChildren = StackUtils::StackSignature(curr).params.size();
       std::reverse(valueStack.end() - numChildren, valueStack.end());
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    if (isStacky() && Properties::isControlFlowStructure(curr)) {
+      valueStack.resize(restoreSize);
+    }
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
@@ -214,14 +235,20 @@ public:
 #endif
         assert(Type::isSubType(type, curr->type));
         if (isStacky() && !curr->is<Pop>()) {
-          // TODO: once tuples are lowered away, push results individually
-          // valueStack.insert(valueStack.cend(), ret.values.begin(),
-          //                   ret.values.end());
-          valueStack.push_back(ret.values);
+          valueStack.insert(
+            valueStack.end(), ret.values.begin(), ret.values.end());
         }
       }
     }
-    // TODO: handle removing valueStack entries when breaking
+#ifdef STACKY_DEBUG
+    if (isStacky() && !curr->is<Pop>()) {
+      std::cerr << "Value stack after:";
+      for (auto v : valueStack) {
+        std::cerr << " " << v.type.toString();
+      }
+      std::cerr << "\n\n";
+    }
+#endif // STACKY_DEBUG
     depth--;
     return ret;
   }
@@ -243,7 +270,15 @@ public:
       stack.pop_back();
       if (flow.breaking()) {
         flow.clearIf(curr->name);
+        if (!flow.breaking()) {
+          valueStack.insert(
+            valueStack.end(), flow.values.begin(), flow.values.end());
+        }
         continue;
+      }
+      if (isStacky()) {
+        valueStack.insert(
+          valueStack.end(), flow.values.begin(), flow.values.end());
       }
       auto& list = curr->list;
       for (size_t i = 0; i < list.size(); i++) {
@@ -254,8 +289,33 @@ public:
         flow = visit(list[i]);
         if (flow.breaking()) {
           flow.clearIf(curr->name);
+          if (!flow.breaking()) {
+            valueStack.insert(
+              valueStack.end(), flow.values.begin(), flow.values.end());
+          }
           break;
         }
+      }
+      if (isStacky() && !flow.breaking()) {
+        Literals vals;
+        assert(curr->type != Type::unreachable);
+        size_t newStackSize = valueStack.size() - curr->type.size();
+        for (auto it = valueStack.begin() + newStackSize;
+             it != valueStack.end();
+             ++it) {
+          vals.push_back(*it);
+        }
+        valueStack.resize(newStackSize);
+#ifdef STACKY_DEBUG
+        std::cerr << "Exiting block " << curr->name << " "
+                  << curr->type.toString() << "\n";
+        std::cerr << "Value stack:";
+        for (auto v : valueStack) {
+          std::cerr << " " << v.type.toString();
+        }
+        std::cerr << "\n";
+#endif // STACKY_DEBUG
+        flow = Flow(std::move(vals));
       }
     }
     return flow;
@@ -1259,9 +1319,10 @@ public:
   Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitPop(Pop* curr) {
     NOTE_ENTER("Pop");
-    assert(!valueStack.empty());
-    auto ret = this->valueStack.back();
-    this->valueStack.pop_back();
+    size_t numPopped = curr->type.size();
+    assert(valueStack.size() >= numPopped);
+    Literals ret(valueStack.rbegin(), valueStack.rbegin() + numPopped);
+    valueStack.resize(valueStack.size() - numPopped);
     return ret;
   }
   Flow visitRefNull(RefNull* curr) {
@@ -2248,7 +2309,7 @@ private:
           WASM_UNREACHABLE("invalid op");
       }
       load.finalize();
-      Flow flow = this->visit(&load);
+      Flow flow = this->visitLoad(&load);
       if (flow.breaking()) {
         return flow;
       }

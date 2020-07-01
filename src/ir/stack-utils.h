@@ -25,6 +25,9 @@ namespace wasm {
 
 namespace StackUtils {
 
+// Whether it is valid for `curr` to have unreachable type in Stacky IR.
+bool mayBeUnreachable(Expression* curr);
+
 // Iterate through `block` and remove nops.
 void compact(Block* block);
 
@@ -64,6 +67,9 @@ struct StackSignature {
   // Return `true` iff `next` composes after this stack signature.
   bool composes(const StackSignature& next) const;
 
+  // Whether a block with this stack signature could be typed with `sig`.
+  bool satisfies(Signature sig) const;
+
   // Compose stack signatures. Assumes they actually compose.
   StackSignature& operator+=(const StackSignature& next);
   StackSignature operator+(const StackSignature& next) const;
@@ -72,19 +78,28 @@ struct StackSignature {
 // Calculates stack machine data flow, associating the sources and destinations
 // of all values in a block.
 struct StackFlow {
-  // Either an input location or an output location. An input location
-  // represents the `index`th input into instruction `expr` and an ouput
-  // location represents the `index`th output from instruction `expr`.
+  // The input (output) location at which a value of type `type` is consumed
+  // (produced), representing the `index`th input into (output from) instruction
+  // `expr`. `unreachable` is true iff the corresponding value is consumed
+  // (produced) by the polymorphic behavior of an unreachable instruction
+  // without being used by that instruction.
   struct Location {
     Expression* expr;
     Index index;
+    Type type;
+    bool unreachable;
   };
 
-  // Maps each instruction to the set of output locations supplying its inputs.
+  // Maps each instruction to the set of output locations producing its inputs.
   std::unordered_map<Expression*, std::vector<Location>> srcs;
 
   // Maps each instruction to the set of input locations consuming its results.
   std::unordered_map<Expression*, std::vector<Location>> dests;
+
+  // Gets the effective stack signature of `expr`, which must be a child of the
+  // block. If `expr` is unreachable, the returned signature will reflect the
+  // values consumed and produced by its polymorphic unreachable behavior.
+  StackSignature getSignature(Expression* expr);
 
   // Calculates `srcs` and `dests`.
   StackFlow(Block* curr);

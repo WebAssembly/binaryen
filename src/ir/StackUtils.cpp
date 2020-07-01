@@ -20,6 +20,25 @@ namespace wasm {
 
 namespace StackUtils {
 
+bool mayBeUnreachable(Expression* curr) {
+  switch (curr->_id) {
+    case Expression::Id::BreakId:
+      return curr->cast<Break>()->condition == nullptr;
+    case Expression::Id::CallId:
+      return curr->cast<Call>()->isReturn;
+    case Expression::Id::CallIndirectId:
+      return curr->cast<CallIndirect>()->isReturn;
+    case Expression::Id::ReturnId:
+    case Expression::Id::SwitchId:
+    case Expression::Id::UnreachableId:
+    case Expression::Id::ThrowId:
+    case Expression::Id::RethrowId:
+      return true;
+    default:
+      return false;
+  }
+}
+
 void compact(Block* block) {
   size_t newIndex = 0;
   for (size_t i = 0, size = block->list.size(); i < size; ++i) {
@@ -39,6 +58,11 @@ StackSignature::StackSignature(Expression* expr) {
   } else {
     std::vector<Type> inputs;
     for (auto* child : ChildIterator(expr)) {
+      if (child->type == Type::unreachable) {
+        // This instruction won't consume values from before the unreachable
+        inputs.clear();
+        continue;
+      }
       // Children might be tuple pops, so expand their types
       const auto& types = child->type.expand();
       inputs.insert(inputs.end(), types.begin(), types.end());
@@ -57,6 +81,28 @@ StackSignature::StackSignature(Expression* expr) {
 bool StackSignature::composes(const StackSignature& next) const {
   // TODO
   return true;
+}
+
+bool StackSignature::satisfies(Signature sig) const {
+  if (unreachable) {
+    // The unreachable can consume and produce any additional types needed by
+    // `sig`, so truncate `sig`'s params and results to compare only the parts
+    // we need to match.
+    if (sig.params.size() > params.size()) {
+      size_t diff = sig.params.size() - params.size();
+      const auto& types = sig.params.expand();
+      std::vector<Type> truncatedParams(types.begin(), types.end() - diff);
+      sig.params = Type(truncatedParams);
+    }
+    if (sig.results.size() > results.size()) {
+      size_t diff = sig.results.size() - results.size();
+      const auto& types = sig.results.expand();
+      std::vector<Type> truncatedResults(types.begin() + diff, types.end());
+      sig.results = Type(truncatedResults);
+    }
+  }
+  return Type::isSubType(sig.params, params) &&
+         Type::isSubType(results, sig.results);
 }
 
 StackSignature& StackSignature::operator+=(const StackSignature& next) {
@@ -99,38 +145,71 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
 
 StackFlow::StackFlow(Block* curr) {
   std::vector<Location> values;
-  bool unreachable = false;
-  for (auto* expr : curr->list) {
-    size_t consumed = StackSignature(expr).params.size();
-    size_t produced = expr->type == Type::unreachable ? 0 : expr->type.size();
-    srcs[expr] = std::vector<Location>(consumed);
-    dests[expr] = std::vector<Location>(produced);
-    if (unreachable) {
-      continue;
-    }
-    assert(consumed <= values.size() && "block parameters not implemented");
+  Expression* lastUnreachable = nullptr;
+
+  auto process = [&](Expression* expr, StackSignature sig) {
+    const auto& params = sig.params.expand();
+    const auto& results = sig.results.expand();
+    // Unreachable instructions consume all available values
+    size_t consumed =
+      sig.unreachable ? std::max(values.size(), params.size()) : params.size();
+    // Consume values
+    assert(params.size() <= consumed);
     for (Index i = 0; i < consumed; ++i) {
-      auto& src = values[values.size() - consumed + i];
-      srcs[expr][i] = src;
-      dests[src.expr][src.index] = {expr, i};
+      bool unreachable = i < consumed - params.size();
+      if (values.size() + i < consumed) {
+        // This value comes from the polymorphic stack of the last unreachable
+        assert(consumed == params.size());
+        auto& currDests = dests[lastUnreachable];
+        Index destIndex(currDests.size());
+        Type type = params[i];
+        srcs[expr].push_back({lastUnreachable, destIndex, type, unreachable});
+        currDests.push_back({expr, i, type, unreachable});
+      } else {
+        // A normal value from the value stack
+        auto& src = values[values.size() + i - consumed];
+        srcs[expr].push_back({src.expr, src.index, src.type, unreachable});
+        dests[src.expr][src.index] = {expr, i, src.type, unreachable};
+      }
     }
-    values.resize(values.size() - consumed);
-    for (Index i = 0; i < produced; ++i) {
-      values.push_back({expr, i});
+    values.resize(values.size() >= consumed ? values.size() - consumed : 0);
+    // Produce values
+    for (Index i = 0; i < results.size(); ++i) {
+      values.push_back({expr, i, results[i], false});
     }
-    if (expr->type == Type::unreachable) {
-      unreachable = true;
+    // Update the last unreachable instruction
+    if (sig.unreachable) {
+      lastUnreachable = expr;
     }
+  };
+
+  for (auto* expr : curr->list) {
+    StackSignature sig(expr);
+    assert((sig.params.size() <= values.size() || lastUnreachable) &&
+           "Block inputs not yet supported");
+    srcs[expr] = std::vector<Location>();
+    dests[expr] = std::vector<Location>(sig.results.size());
+    process(expr, sig);
   }
-  // If the end of the block can be reached, set the block as the destination
-  // for its return values
-  if (!unreachable) {
-    assert(values.size() == curr->type.size());
-    for (Index i = 0, size = values.size(); i < size; ++i) {
-      auto& loc = values[i];
-      dests[loc.expr][loc.index] = {curr, i};
-    }
+
+  // Set the block as the destination for its return values
+  assert(curr->type != Type::unreachable);
+  process(curr, StackSignature(curr->type, Type::none));
+}
+
+StackSignature StackFlow::getSignature(Expression* expr) {
+  auto exprSrcs = srcs.find(expr);
+  auto exprDests = dests.find(expr);
+  assert(exprSrcs != srcs.end() && exprDests != dests.end());
+  std::vector<Type> params, results;
+  for (auto& src : exprSrcs->second) {
+    params.push_back(src.type);
   }
+  for (auto& dest : exprDests->second) {
+    results.push_back(dest.type);
+  }
+  bool unreachable = expr->type == Type::unreachable;
+  return StackSignature(Type(params), Type(results), unreachable);
 }
 
 } // namespace StackUtils

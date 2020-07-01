@@ -26,7 +26,6 @@ struct StackRemoveBlocksPass
   : public WalkerPass<PostWalker<StackRemoveBlocksPass>> {
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new StackRemoveBlocksPass; }
-  bool changed = false;
 
   void visitBlock(Block* curr) {
     for (size_t i = 0; i < curr->list.size();) {
@@ -43,13 +42,6 @@ struct StackRemoveBlocksPass
         }
       }
       ++i;
-    }
-  }
-
-  void doWalkFunction(Function* func) {
-    super::doWalkFunction(func);
-    if (changed) {
-      ReFinalize(IRProfile::Stacky).walkFunctionInModule(func, getModule());
     }
   }
 };

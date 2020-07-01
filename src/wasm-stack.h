@@ -852,10 +852,11 @@ public:
     writer.emitFunctionEnd();
   }
   void emitUnreachable() {
-    // Stacky code already explicitly contains these guard unreachables
-    if (func->profile == IRProfile::Normal) {
-      writer.emitUnreachable();
-    }
+    // // Stacky code already explicitly contains these guard unreachables
+    // if (func->profile == IRProfile::Normal) {
+    //   writer.emitUnreachable();
+    // }
+    writer.emitUnreachable();
   }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {

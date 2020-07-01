@@ -411,7 +411,7 @@ collectSignatures(Module& wasm,
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
-          if (curr->type.isMulti() && curr != func->body) {
+          if (curr->type.isMulti()) {
             counts[Signature(Type::none, curr->type)]++;
           }
         }

@@ -720,9 +720,9 @@ class StackifyCodeSizeChecker(TestCaseHandler):
 testcase_handlers = [
     FuzzExec(),
     CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    Asyncify(),
+    # CheckDeterminism(),
+    # Wasm2JS(),
+    # Asyncify(),
     StackifyCodeSizeChecker(),
 ]
 
@@ -755,7 +755,7 @@ def test_one(random_input, opts, given_wasm):
     print('pre wasm size:', wasm_size)
 
     # create a second wasm for handlers that want to look at pairs.
-    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + FUZZ_OPTS + opts + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
@@ -855,8 +855,17 @@ opt_choices = [
     ["--simplify-locals-notee"],
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
-    ["--stackify", "--unstackify"],
+    # ["--stackify", "--unstackify"],
     ["--vacuum"],
+]
+
+
+stack_opt_choices = [
+    ["--stack-dce"],
+    ["--stack-remove-blocks"],
+    ["--stackify-locals"],
+    ["--stackify-drops"],
+    ["--coalesce-locals"],
 ]
 
 
@@ -875,14 +884,22 @@ def randomize_opt_flags():
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break
+
+    # stacky opts
+    if random.random() < 0.5:
+        stack_opt_group = ['--stackify']
+        while len(flag_groups) <= 20 and random.random() < 0.3:
+            stack_opt_group.extend(random.choice(stack_opt_choices))
+        flag_groups.append(stack_opt_group)
+
     # maybe add an extra round trip
     if random.random() < 0.5:
         pos = random.randint(0, len(flag_groups))
         flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
     # maybe add an extra stackification round trip
-    if True:
-        pos = random.randint(0, len(flag_groups))
-        flag_groups = flag_groups[:pos] + [['--stackify', '--unstackify']] + flag_groups[pos:]
+    # if True:
+    #     pos = random.randint(0, len(flag_groups))
+    #     flag_groups = flag_groups[:pos] + [['--stackify', '--unstackify']] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):

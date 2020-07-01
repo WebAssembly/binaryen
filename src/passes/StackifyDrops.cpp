@@ -30,31 +30,34 @@ struct StackifyDropsPass : public WalkerPass<PostWalker<StackifyDropsPass>> {
     StackUtils::StackFlow flow(curr);
     for (auto* expr : curr->list) {
       auto& dests = flow.dests[expr];
-      bool allDrops = std::all_of(
+      bool unused = std::all_of(
         dests.begin(), dests.end(), [](StackUtils::StackFlow::Location& loc) {
-          return loc.expr == nullptr || loc.expr->is<Drop>();
+          assert(loc.expr != nullptr);
+          return loc.unreachable || loc.expr->is<Drop>();
         });
-      if (!allDrops) {
+      if (!unused) {
         continue;
       }
+      // Downgrade tees to sets when their stack value isn't used
+      // TODO: leave this to coalesce-locals?
       if (auto* set = expr->dynCast<LocalSet>()) {
         if (set->isTee()) {
           set->makeSet();
-          if (auto* drop = dests.begin()->expr) {
+          if (auto* drop = dests.begin()->expr->dynCast<Drop>()) {
             ExpressionManipulator::nop(drop);
           }
         }
         continue;
       }
-      // TODO: downgrade tees to gets if their values aren't used
       if (EffectAnalyzer(getPassOptions(), getModule()->features, expr)
             .hasSideEffects()) {
         continue;
       }
+      // Remove the expression and its drops
       ExpressionManipulator::nop(expr);
       for (auto& loc : dests) {
-        if (loc.expr != nullptr) {
-          ExpressionManipulator::nop(loc.expr);
+        if (auto* drop = loc.expr->dynCast<Drop>()) {
+          ExpressionManipulator::nop(drop);
         }
       }
     }

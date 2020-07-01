@@ -47,6 +47,12 @@ public:
     }
   }
 
+  template<typename InputIt> SmallVector(InputIt begin, InputIt end) {
+    while (begin != end) {
+      push_back(*begin++);
+    }
+  }
+
   T& operator[](size_t i) {
     if (i < N) {
       return fixed[i];
