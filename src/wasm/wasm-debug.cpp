@@ -1006,6 +1006,9 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           // base, if we end up with (0, 0) then we must emit something else, as
           // that would be interpreted as the end of a list. As it is an empty
           // span, the actual value doesn't matter, it just has to be != 0.
+          // This can happen if the very first span in a compile unit is an
+          // empty span, in which case relative to the base of the compile unit
+          // we would have (0, 0).
           newStart = newEnd = IGNOREABLE_LOCATION;
         }
       }
