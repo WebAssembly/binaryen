@@ -521,6 +521,12 @@ struct OptimizeInstructions
         if (ret) {
           return ret;
         }
+        // x - x  ==>  0
+        if (ExpressionAnalyzer::equal(binary->left, binary->right) &&
+            !EffectAnalyzer(getPassOptions(), features, binary->left)
+               .hasSideEffects()) {
+          return LiteralUtils::makeZero(binary->type, *getModule());
+        }
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {

@@ -3841,6 +3841,58 @@
     (i32.const 2)
    )
   )
+  (func $self-subtracts (param $x i32) (param $y i64)
+    (drop (i32.sub
+      (local.get $x)
+      (local.get $x)
+    ))
+    (drop (i64.sub
+      (local.get $y)
+      (local.get $y)
+    ))
+    (drop (i32.sub
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+      (local.get $x)
+    ))
+    (drop (i64.sub
+      (i64.add
+        (local.get $y)
+        (i64.const 1)
+      )
+      (local.get $y)
+    ))
+    (drop (i32.sub
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
+    (drop (i64.sub
+      (i64.add
+        (local.get $y)
+        (i64.const 1)
+      )
+      (i64.add
+        (local.get $y)
+        (i64.const 1)
+      )
+    ))
+    (drop (i32.sub  ;; side effect
+      (call $ne0)
+      (call $ne0)
+    ))
+    (drop (i64.sub  ;; side effect
+      (call $and-popcount64)
+      (call $and-popcount64)
+    ))
+  )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
       (local.get $x)
