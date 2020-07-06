@@ -45,7 +45,7 @@ struct Bits {
     }
     // otherwise, see if adding one turns this into a 1-bit thing, 00011111 + 1
     // => 00100000
-    if (PopCount(mask + 1) != 1) {
+    if (mask & (mask + 1)) {
       return 0;
     }
     // this is indeed a mask
