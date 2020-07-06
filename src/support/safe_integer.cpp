@@ -22,7 +22,7 @@
 
 using namespace wasm;
 
-bool wasm::isInteger(double x) { return std::isfinite(x) && trunc(x) == x; }
+bool wasm::isInteger(double x) { return trunc(x) == x && !std::isinf(x); }
 
 bool wasm::isUInteger32(double x) {
   return !std::signbit(x) && isInteger(x) &&
