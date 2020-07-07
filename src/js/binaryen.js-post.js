@@ -9,14 +9,13 @@ function preserveStack(func) {
 }
 
 function strToStack(str) {
-  if (!str) return 0;
-  return allocate(intArrayFromString(str), 'i8', ALLOC_STACK);
+  return str ? allocate(intArrayFromString(str), 'i8', ALLOC_STACK) : 0;
 }
 
 function i32sToStack(i32s) {
   var ret = stackAlloc(i32s.length << 2);
   for (var i = 0; i < i32s.length; i++) {
-    HEAP32[ret + (i << 2) >> 2] = i32s[i];
+    HEAP32[ret + (i << 2) >>> 2] = i32s[i];
   }
   return ret;
 }
@@ -557,10 +556,7 @@ function wrapModule(module, self) {
   };
   self['switch'] = function(names, defaultName, condition, value) {
     return preserveStack(function() {
-      var namei32s = [];
-      names.forEach(function(name) {
-        namei32s.push(strToStack(name));
-      });
+      var namei32s = names.map(strToStack);
       return Module['_BinaryenSwitch'](module, i32sToStack(namei32s), namei32s.length,
                                        strToStack(defaultName), condition, value);
     });
@@ -2278,14 +2274,19 @@ function wrapModule(module, self) {
     return {
       'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
       'segments': (function() {
-        var arr = [];
-        for (var i = 0, numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module); i !== numSegments; ++i) {
-          var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
-          for (var j = 0, segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i); j !== segmentLength; ++j) {
+        var numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module)
+        var arr = new Array(numSegments);
+        for (var i = 0; i !== numSegments; ++i) {
+          var segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
+          var seg = {
+            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
+            'names': new Array(segmentLength)
+          };
+          for (var j = 0; j !== segmentLength; ++j) {
             var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
-            seg['names'].push(UTF8ToString(ptr));
+            seg['names'][j] = UTF8ToString(ptr);
           }
-          arr.push(seg);
+          arr[i] = seg;
         }
         return arr;
       })()
@@ -2921,9 +2922,9 @@ Module['expandType'] = function(ty) {
     var numTypes = Module['_BinaryenTypeArity'](ty);
     var array = stackAlloc(numTypes << 2);
     Module['_BinaryenTypeExpand'](ty, array);
-    var types = [];
+    var types = new Array(numTypes);
     for (var i = 0; i < numTypes; i++) {
-      types.push(HEAPU32[(array >>> 2) + i]);
+      types[i] = HEAPU32[(array >>> 2) + i];
     }
     return types;
   });
@@ -3129,10 +3130,7 @@ Object.defineProperty(Module, 'ready', {
       } else if (runtimeInitialized) {
         resolve(Module);
       } else {
-        pendingPromises.push({
-          resolve: resolve,
-          reject: reject
-        });
+        pendingPromises.push({ resolve, reject });
       }
     });
   }
