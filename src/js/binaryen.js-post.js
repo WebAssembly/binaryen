@@ -14,17 +14,13 @@ function strToStack(str) {
 
 function i32sToStack(i32s) {
   var ret = stackAlloc(i32s.length << 2);
-  for (var i = 0; i < i32s.length; i++) {
-    HEAP32[ret + (i << 2) >>> 2] = i32s[i];
-  }
+  HEAP32.set(i32s, ret >>> 2);
   return ret;
 }
 
 function i8sToStack(i8s) {
   var ret = stackAlloc(i8s.length);
-  for (var i = 0; i < i8s.length; i++) {
-    HEAP8[ret + i] = i8s[i];
-  }
+  HEAP8.set(i8s, ret);
   return ret;
 }
 
