@@ -939,20 +939,18 @@ private:
     // TODO use a general getFallthroughs
     if (auto* unary = boolean->dynCast<Unary>()) {
       if (unary) {
-        if (unary->op == EqZInt32 || unary->op == EqZInt64) {
-          if (unary->op == EqZInt32) {
-            auto* unary2 = unary->value->dynCast<Unary>();
-            if (unary2 && unary2->op == EqZInt32) {
-              // double eqz
-              return unary2->value;
-            }
-            if (auto* binary = unary->value->dynCast<Binary>()) {
-              // !(x <=> y)   ==>   x <!=> y
-              auto op = inverseBinaryOp(binary->op);
-              if (op != InvalidBinary) {
-                binary->op = op;
-                return binary;
-              }
+        if (unary->op == EqZInt32) {
+          auto* unary2 = unary->value->dynCast<Unary>();
+          if (unary2 && unary2->op == EqZInt32) {
+            // double eqz
+            return unary2->value;
+          }
+          if (auto* binary = unary->value->dynCast<Binary>()) {
+            // !(x <=> y)   ==>   x <!=> y
+            auto op = inverseBinaryOp(binary->op);
+            if (op != InvalidBinary) {
+              binary->op = op;
+              return binary;
             }
           }
         }
