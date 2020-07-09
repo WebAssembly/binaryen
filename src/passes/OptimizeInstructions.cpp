@@ -1004,7 +1004,7 @@ private:
         }
       }
       if (binary->op == EqInt32 || binary->op == NeInt32 ||
-          binary->op == NeInt64) {
+          binary->op == EqInt64 || binary->op == NeInt64) {
         // expr == 1  ==>  expr
         // expr != 1  ==>  !expr
         // where max count of bits for "expr" equal to one
@@ -1016,6 +1016,8 @@ private:
               } else if (binary->op == NeInt32) {
                 return optimizeBoolean(
                   Builder(*getModule()).makeUnary(EqZInt32, binary->left));
+              } else if (binary->op == EqInt64) {
+                return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
               } else if (binary->op == NeInt64) {
                 return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
               }
