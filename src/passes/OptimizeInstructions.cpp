@@ -1005,20 +1005,23 @@ private:
       }
       if (binary->op == EqInt32 || binary->op == NeInt32 ||
           binary->op == EqInt64 || binary->op == NeInt64) {
-        // expr == 1  ==>  expr
-        // expr != 1  ==>  !expr
-        // where max count of bits for "expr" equal to one
+        // bool(x) == 1  ==>  bool(x)
+        // bool(x) != 1  ==>  !bool(x)
         if (auto* c = binary->right->dynCast<Const>()) {
           if (c->value.getInteger() == 1LL) {
             if (getMaxBits(binary->left, this) == 1) {
               if (binary->op == EqInt32) {
+                // bool(i32(x)) == 1  ==>  bool(i32(x))
                 return binary->left;
               } else if (binary->op == NeInt32) {
+                // bool(i32(x)) != 1  ==>  !bool(i32(x))
                 return optimizeBoolean(
                   Builder(*getModule()).makeUnary(EqZInt32, binary->left));
               } else if (binary->op == EqInt64) {
+                // bool(i64(x)) == 1  ==>  bool(i32(x))
                 return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
               } else if (binary->op == NeInt64) {
+                // bool(i64(x)) != 1  ==>  bool(i64(x)) != 0
                 return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
               }
             }
