@@ -1005,6 +1005,9 @@ private:
       }
       if (binary->op == EqInt32 || binary->op == NeInt32 ||
           binary->op == NeInt64) {
+        // expr == 1  ==>  expr
+        // expr != 1  ==>  !expr
+        // where max count of bits for "expr" equal to one
         if (auto* c = binary->right->dynCast<Const>()) {
           if (c->value.getInteger() == 1LL) {
             if (getMaxBits(binary->left, this) == 1) {
