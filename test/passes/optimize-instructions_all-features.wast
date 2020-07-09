@@ -3766,6 +3766,18 @@
       )
     )
   )
+  (func $optimize-boolean (param $x i32)
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i32.sub        ;; bool(-x) -> bool(x)
+          (i32.const 0)
+          (local.get $x)
+        )
+      )
+    )
+  )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
     (local $x1 i32)
