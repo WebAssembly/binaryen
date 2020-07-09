@@ -1003,7 +1003,8 @@ private:
           }
         }
       }
-      if (binary->op == EqInt32 || binary->op == NeInt32 || binary->op == NeInt64) {
+      if (binary->op == EqInt32 || binary->op == NeInt32 ||
+          binary->op == NeInt64) {
         if (auto* c = binary->right->dynCast<Const>()) {
           if (c->value.getInteger() == 1LL) {
             if (getMaxBits(binary->left, this) == 1) {
