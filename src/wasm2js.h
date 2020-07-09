@@ -1466,25 +1466,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             }
             case ExtendS8Int32: {
               return ValueBuilder::makeBinary(
-                ValueBuilder::makeBinary(
-                  visit(curr->value, EXPRESSION_RESULT),
-                  LSHIFT,
-                  ValueBuilder::makeNum(24)
-                ),
+                ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                         LSHIFT,
+                                         ValueBuilder::makeNum(24)),
                 RSHIFT,
-                ValueBuilder::makeNum(24)
-              );
+                ValueBuilder::makeNum(24));
             }
             case ExtendS16Int32: {
               return ValueBuilder::makeBinary(
-                ValueBuilder::makeBinary(
-                  visit(curr->value, EXPRESSION_RESULT),
-                  LSHIFT,
-                  ValueBuilder::makeNum(16)
-                ),
+                ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                         LSHIFT,
+                                         ValueBuilder::makeNum(16)),
                 RSHIFT,
-                ValueBuilder::makeNum(16)
-              );
+                ValueBuilder::makeNum(16));
             }
             default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
