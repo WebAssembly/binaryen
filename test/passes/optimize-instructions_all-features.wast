@@ -3766,7 +3766,7 @@
       )
     )
   )
-  (func $optimize-boolean (param $x i32)
+  (func $optimize-boolean (param $x i32) (param $y i64)
     (drop
       (select
         (i32.const 1)
@@ -3774,6 +3774,58 @@
         (i32.sub        ;; bool(-x) -> bool(x)
           (i32.const 0)
           (local.get $x)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i32.eq
+          (i32.and         ;; bool(i32(expr)) == 1 -> bool(expr)
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i32.ne
+          (i32.and         ;; bool(i32(expr)) != 1 -> !bool(expr)
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i64.eq
+          (i64.and         ;; bool(i64(expr)) == 1 -> bool(expr)
+            (local.get $y)
+            (i64.const 1)
+          )
+          (i64.const 1)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i64.ne
+          (i64.and         ;; bool(i64(expr)) != 1 -> !bool(expr)
+            (local.get $y)
+            (i64.const 1)
+          )
+          (i64.const 1)
         )
       )
     )

@@ -995,20 +995,20 @@ private:
         // boolean
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
-      } else if (binary->op == NeInt32) {
-        // x != 0 is just x if it's used as a bool
-        if (auto* num = binary->right->dynCast<Const>()) {
-          if (num->value.geti32() == 0) {
-            return binary->left;
-          }
-        }
       }
       if (binary->op == EqInt32 || binary->op == NeInt32 ||
           binary->op == EqInt64 || binary->op == NeInt64) {
-        // bool(x) == 1  ==>  bool(x)
-        // bool(x) != 1  ==>  !bool(x)
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (c->value.getInteger() == 1LL) {
+          auto constValue = c->value.getInteger();
+          if (constValue == 0LL) {
+            // x != 0 is just x if it's used as a bool
+            if (binary->op == NeInt32) {
+              return binary->left;
+            }
+          }
+          // bool(x) == 1  ==>  bool(x)
+          // bool(x) != 1  ==>  !bool(x)
+          if (constValue == 1LL) {
             if (getMaxBits(binary->left, this) == 1) {
               if (binary->op == EqInt32) {
                 // bool(i32(x)) == 1  ==>  bool(i32(x))
