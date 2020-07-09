@@ -1010,7 +1010,8 @@ private:
               if (binary->op == EqInt32) {
                 return binary->left;
               } else if (binary->op == NeInt32) {
-                return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
+                return optimizeBoolean(
+                  Builder(*getModule()).makeUnary(EqZInt32, binary->left));
               }
             }
           }
