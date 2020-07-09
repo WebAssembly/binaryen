@@ -1003,6 +1003,20 @@ private:
           }
         }
       }
+      if (binary->op == EqInt32 || binary->op == NeInt32) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->value.geti32() == 1) {
+            if (getMaxBits(binary->left, this) == 1) {
+              if (binary->op == EqInt32) {
+                return binary->left;
+              } else if (binary->op == NeInt32) {
+                return Builder(*getModule())
+                  .makeUnary(EqZInt32, binary->left);
+              }
+            }
+          }
+        }
+      }
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
         // anyhow
