@@ -20,11 +20,24 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
+  return $0_1 << 24 >> 24;
+ }
+ 
+ function $1($0_1) {
+  $0_1 = $0_1 | 0;
+  return $0_1 << 16 >> 16;
+ }
+ 
  var FUNCTION_TABLE = [];
  return {
-  
+  "test8": $0, 
+  "test16": $1
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var test8 = retasmFunc.test8;
+export var test16 = retasmFunc.test16;
