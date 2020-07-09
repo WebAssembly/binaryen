@@ -1003,15 +1003,17 @@ private:
           }
         }
       }
-      if (binary->op == EqInt32 || binary->op == NeInt32) {
+      if (binary->op == EqInt32 || binary->op == NeInt32 || binary->op == NeInt64) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (c->value.geti32() == 1) {
+          if (c->value.getInteger() == 1LL) {
             if (getMaxBits(binary->left, this) == 1) {
               if (binary->op == EqInt32) {
                 return binary->left;
               } else if (binary->op == NeInt32) {
                 return optimizeBoolean(
                   Builder(*getModule()).makeUnary(EqZInt32, binary->left));
+              } else if (binary->op == NeInt64) {
+                return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
               }
             }
           }
