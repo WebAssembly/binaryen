@@ -3,9 +3,9 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
@@ -3411,6 +3411,15 @@
     (i64.eqz
      (i64.const 2)
     )
+   )
+  )
+ )
+ (func $optimize-boolean (param $x i32)
+  (drop
+   (select
+    (i32.const 1)
+    (i32.const 2)
+    (local.get $x)
    )
   )
  )

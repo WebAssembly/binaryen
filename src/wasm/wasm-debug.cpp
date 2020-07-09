@@ -123,11 +123,17 @@ struct LineState {
   bool basicBlock = false;
   bool prologueEnd = false;
   bool epilogueBegin = false;
-  bool endSequence = false;
+  // Each instruction is part of a sequence, all of which get the same ID. The
+  // order within a sequence may change if binaryen reorders things, which means
+  // that we can't track the end_sequence location and assume it is at the end -
+  // we must track sequences and then emit an end for each one.
+  // -1 is an invalid marker value (note that this assumes we can fit all ids
+  // into just under 32 bits).
+  uint32_t sequenceId = -1;
 
   LineState(const LineState& other) = default;
-  LineState(const llvm::DWARFYAML::LineTable& table)
-    : isStmt(table.DefaultIsStmt) {}
+  LineState(const llvm::DWARFYAML::LineTable& table, uint32_t sequenceId)
+    : isStmt(table.DefaultIsStmt), sequenceId(sequenceId) {}
 
   LineState& operator=(const LineState& other) = default;
 
@@ -143,7 +149,6 @@ struct LineState {
             break;
           }
           case llvm::dwarf::DW_LNE_end_sequence: {
-            endSequence = true;
             return true;
           }
           case llvm::dwarf::DW_LNE_set_discriminator: {
@@ -241,17 +246,17 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line, unless it has something
-    // special we must emit.
+    // Zero values imply we can ignore this line.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return (line != 0 && addr != 0) || endSequence;
+    return line != 0 && addr != 0;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
   // table entry (that will be emitted in the updated DWARF debug line section).
   void emitDiff(const LineState& old,
                 std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
-                const llvm::DWARFYAML::LineTable& table) {
+                const llvm::DWARFYAML::LineTable& table,
+                bool endSequence) const {
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -299,8 +304,7 @@ struct LineState {
       assert(basicBlock);
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
-    if (prologueEnd != old.prologueEnd) {
-      assert(prologueEnd);
+    if (prologueEnd) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_prologue_end));
     }
     if (epilogueBegin != old.epilogueBegin) {
@@ -314,27 +318,25 @@ struct LineState {
       if (endSequence) {
         // len = 1 (subopcode)
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
-        // Reset the state.
-        *this = LineState(table);
       } else {
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
       }
     }
-    resetAfterLine();
   }
 
   // Some flags are automatically reset after each debug line.
   void resetAfterLine() { prologueEnd = false; }
 
 private:
-  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) {
+  llvm::DWARFYAML::LineTableOpcode
+  makeItem(llvm::dwarf::LineNumberOps opcode) const {
     llvm::DWARFYAML::LineTableOpcode item = {};
     item.Opcode = opcode;
     return item;
   }
 
   llvm::DWARFYAML::LineTableOpcode
-  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) {
+  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) const {
     auto item = makeItem(llvm::dwarf::LineNumberOps(0));
     // All the length after the len field itself, including the subopcode
     // (1 byte).
@@ -471,12 +473,18 @@ struct LocationUpdater {
   AddrExprMap oldExprAddrMap;
   FuncAddrMap oldFuncAddrMap;
 
-  // Map start of line tables in the debug_line section to their new locations.
-  std::map<BinaryLocation, BinaryLocation> debugLineMap;
+  // Map offsets of location list entries in the debug_loc section to the index
+  // of their compile unit.
+  std::unordered_map<BinaryLocation, size_t> locToUnitMap;
 
-  // Map offset of location list entries in the debug_loc section to the base
-  // address of the compilation units referencing them.
-  std::map<BinaryLocation, BinaryLocation> debugLocToUnitMap;
+  // Map start of line tables in the debug_line section to their new locations.
+  std::unordered_map<BinaryLocation, BinaryLocation> debugLineMap;
+
+  typedef std::pair<BinaryLocation, BinaryLocation> OldToNew;
+
+  // Map of compile unit index => old and new base offsets (i.e., in the
+  // original binary and in the new one).
+  std::unordered_map<size_t, OldToNew> compileUnitBases;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -616,8 +624,14 @@ struct LocationUpdater {
     return debugLineMap.at(old);
   }
 
-  BinaryLocation getLocationBaseAddress(BinaryLocation offset) const {
-    return debugLocToUnitMap.at(offset);
+  // Given an offset in .debug_loc, get the old and new compile unit bases.
+  OldToNew getCompileUnitBasesForLoc(size_t offset) const {
+    auto index = locToUnitMap.at(offset);
+    auto iter = compileUnitBases.find(index);
+    if (iter != compileUnitBases.end()) {
+      return iter->second;
+    }
+    return OldToNew{0, 0};
   }
 };
 
@@ -626,8 +640,9 @@ struct LocationUpdater {
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
                              LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
+    uint32_t sequenceId = 0;
     // Parse the original opcodes and emit new ones.
-    LineState state(table);
+    LineState state(table, sequenceId);
     // All the addresses we need to write out.
     std::vector<BinaryLocation> newAddrs;
     std::unordered_map<BinaryLocation, LineState> newAddrInfo;
@@ -645,7 +660,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           omittingRange = true;
         }
         if (omittingRange) {
-          state = LineState(table);
+          state = LineState(table, sequenceId);
           continue;
         }
         // An expression may not exist for this line table item, if we optimized
@@ -666,7 +681,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
           newAddr = locationUpdater.getNewDelimiter(oldAddr);
         }
-        if (newAddr) {
+        if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
           if (newAddrInfo.count(newAddr)) {
@@ -682,7 +697,11 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
-          state = LineState(table);
+          sequenceId++;
+          // We assume the number of sequences can fit in 32 bits, and -1 is
+          // an invalid value.
+          assert(sequenceId != uint32_t(-1));
+          state = LineState(table, sequenceId);
         }
       }
     }
@@ -692,15 +711,24 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     // Emit a new line table.
     {
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
-      LineState state(table);
-      for (BinaryLocation addr : newAddrs) {
-        LineState oldState(state);
-        state = newAddrInfo.at(addr);
-        if (state.needToEmit()) {
-          state.emitDiff(oldState, newOpcodes, table);
-        } else {
-          state = oldState;
+      for (size_t i = 0; i < newAddrs.size(); i++) {
+        LineState state = newAddrInfo.at(newAddrs[i]);
+        assert(state.needToEmit());
+        LineState lastState(table, -1);
+        if (i != 0) {
+          lastState = newAddrInfo.at(newAddrs[i - 1]);
+          // If the last line is in another sequence, clear the old state, as
+          // there is nothing to diff to.
+          if (lastState.sequenceId != state.sequenceId) {
+            lastState = LineState(table, -1);
+          }
         }
+        // This line ends a sequence if there is no next line after it, or if
+        // the next line is in a different sequence.
+        bool endSequence =
+          i + 1 == newAddrs.size() ||
+          newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
+        state.emitDiff(lastState, newOpcodes, table, endSequence);
       }
       table.Opcodes.swap(newOpcodes);
     }
@@ -740,7 +768,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
                       LocationUpdater& locationUpdater,
-                      BinaryLocation compilationUnitBaseAddress) {
+                      size_t compileUnitIndex) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -760,8 +788,13 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
           newValue = locationUpdater.getNewExprStart(oldValue);
-        } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
-                   tag == llvm::dwarf::DW_TAG_subprogram) {
+        } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
+          newValue = locationUpdater.getNewFuncStart(oldValue);
+          // Per the DWARF spec, "The base address of a compile unit is
+          // defined as the value of the DW_AT_low_pc attribute, if present."
+          locationUpdater.compileUnitBases[compileUnitIndex] =
+            LocationUpdater::OldToNew{oldValue, newValue};
+        } else if (tag == llvm::dwarf::DW_TAG_subprogram) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
         } else {
           Fatal() << "unknown tag with low_pc "
@@ -777,8 +810,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       } else if (attr == llvm::dwarf::DW_AT_location &&
                  attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
         BinaryLocation locOffset = yamlValue.Value;
-        locationUpdater.debugLocToUnitMap[locOffset] =
-          compilationUnitBaseAddress;
+        locationUpdater.locToUnitMap[locOffset] = compileUnitIndex;
       }
     });
   // Next, process the high_pcs.
@@ -822,6 +854,7 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                LocationUpdater& locationUpdater) {
   // The context has the high-level information we need, and the YAML is where
   // we write changes. First, iterate over the compile units.
+  size_t compileUnitIndex = 0;
   iterContextAndYAML(
     info.context->compile_units(),
     yaml.CompileUnits,
@@ -838,15 +871,11 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            BinaryLocation compilationUnitBaseAddress =
-              CU->getBaseAddress() ? CU->getBaseAddress()->Address : 0;
-            updateDIE(DIE,
-                      yamlEntry,
-                      abbrevDecl,
-                      locationUpdater,
-                      compilationUnitBaseAddress);
+            updateDIE(
+              DIE, yamlEntry, abbrevDecl, locationUpdater, compileUnitIndex);
           }
         });
+      compileUnitIndex++;
     });
 }
 
@@ -891,57 +920,96 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
 // would indicate an end or a base in .debug_loc).
 static const BinaryLocation IGNOREABLE_LOCATION = 1;
 
+static bool isNewBaseLoc(const llvm::DWARFYAML::Loc& loc) {
+  return loc.Start == BinaryLocation(-1);
+}
+
+static bool isEndMarkerLoc(const llvm::DWARFYAML::Loc& loc) {
+  return loc.Start == 0 && loc.End == 0;
+}
+
 // Update the .debug_loc section.
 static void updateLoc(llvm::DWARFYAML::Data& yaml,
                       const LocationUpdater& locationUpdater) {
   // Similar to ranges, try to update the start and end. Note that here we
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
-  // Locations have an optional base.
   bool atStart = true;
-  BinaryLocation base = 0;
-  for (size_t i = 0; i < yaml.Locs.size(); i++) {
-    auto& loc = yaml.Locs[i];
+  // We need to keep positions in the .debug_loc section identical to before
+  // (or else we'd need to update their positions too) and so we need to keep
+  // base entries around (a base entry is added to every entry after it in the
+  // list). However, we may change the base's value as after moving instructions
+  // around the old base may not be smaller than all the values relative to it.
+  BinaryLocation oldBase, newBase;
+  auto& locs = yaml.Locs;
+  for (size_t i = 0; i < locs.size(); i++) {
+    auto& loc = locs[i];
     if (atStart) {
-      base = locationUpdater.getLocationBaseAddress(loc.CompileUnitOffset);
+      std::tie(oldBase, newBase) =
+        locationUpdater.getCompileUnitBasesForLoc(loc.CompileUnitOffset);
       atStart = false;
     }
+    // By default we copy values over, unless we modify them below.
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
-    if (newStart == BinaryLocation(-1)) {
+    if (isNewBaseLoc(loc)) {
       // This is a new base.
       // Note that the base is not the address of an instruction, necessarily -
       // it's just a number (seems like it could always be an instruction, but
       // that's not what LLVM emits).
-      base = newEnd;
-    } else if (newStart == 0 && newEnd == 0) {
-      // This is an end marker, this list is done.
-      base = 0;
+      // We must look forward at everything relative to this base, so that we
+      // can emit a new proper base (as mentioned earlier, the original base may
+      // not be valid if instructions moved to a position before it - they must
+      // be positive offsets from it).
+      oldBase = newBase = newEnd;
+      BinaryLocation smallest = -1;
+      for (size_t j = i + 1; j < locs.size(); j++) {
+        auto& futureLoc = locs[j];
+        if (isNewBaseLoc(futureLoc) || isEndMarkerLoc(futureLoc)) {
+          break;
+        }
+        auto updatedStart =
+          locationUpdater.getNewStart(futureLoc.Start + oldBase);
+        // If we found a valid mapping, this is a relevant value for us. If the
+        // optimizer removed it, it's a 0, and we can ignore it here - we will
+        // emit IGNOREABLE_LOCATION for it later anyhow.
+        if (updatedStart != 0) {
+          smallest = std::min(smallest, updatedStart);
+        }
+      }
+      // If we found no valid values that will be relativized here, just use 0
+      // as the new (never-to-be-used) base, which is less confusing (otherwise
+      // the value looks like it means something).
+      if (smallest == BinaryLocation(-1)) {
+        smallest = 0;
+      }
+      newBase = newEnd = smallest;
+    } else if (isEndMarkerLoc(loc)) {
+      // This is an end marker, this list is done; reset the base.
       atStart = true;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
       // a new address for it.
-      newStart = locationUpdater.getNewStart(loc.Start + base);
-      newEnd = locationUpdater.getNewEnd(loc.End + base);
-      if (newStart == 0 || newEnd == 0) {
-        // This part of the loc no longer has a mapping, so we must ignore it.
+      newStart = locationUpdater.getNewStart(loc.Start + oldBase);
+      newEnd = locationUpdater.getNewEnd(loc.End + oldBase);
+      if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
+        // This part of the loc no longer has a mapping, or after the mapping
+        // it is no longer a proper span, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
-        // See if we can relativize it against the base. If things moved around
-        // so that the base is no longer before the start or the end, then we
-        // must skip this. That is, if we had something like
-        //
-        //    [base]  [start]      [end]
-        //
-        // (where the X axis is the offset) and transforms led to
-        //
-        //    [start]     [base] [end]
-        //
-        // or such, then give up TODO: perhaps remap with a new base?
-        if (newStart >= base && newEnd >= base) {
-          newStart -= base;
-          newEnd -= base;
-        } else {
+        // We picked a new base that ensures it is smaller than the values we
+        // will relativize to it.
+        assert(newStart >= newBase && newEnd >= newBase);
+        newStart -= newBase;
+        newEnd -= newBase;
+        if (newStart == 0 && newEnd == 0) {
+          // After mapping to the new positions, and after relativizing to the
+          // base, if we end up with (0, 0) then we must emit something else, as
+          // that would be interpreted as the end of a list. As it is an empty
+          // span, the actual value doesn't matter, it just has to be != 0.
+          // This can happen if the very first span in a compile unit is an
+          // empty span, in which case relative to the base of the compile unit
+          // we would have (0, 0).
           newStart = newEnd = IGNOREABLE_LOCATION;
         }
       }
