@@ -2036,13 +2036,13 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
   assert(IsPowerOf2(Memory::kPageSize));
 
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeAsmCoercion(ValueBuilder::makeBinary(
-                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                                            IString("byteLength")),
-                      RSHIFT,
-                      ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))),
-                    AsmType::ASM_INT)));
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(makeAsmCoercion(
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                            IString("byteLength")),
+      RSHIFT,
+      ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))),
+    AsmType::ASM_INT)));
   ast->push_back(memorySizeFunc);
 
   if (wasm->memory.max > wasm->memory.initial) {
