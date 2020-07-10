@@ -3468,7 +3468,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "add": legalstub$0, 
   "sub": legalstub$1, 

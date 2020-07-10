@@ -36,9 +36,8 @@ function asmFunc(global, env, buffer) {
   return __wasm_memory_grow(1 | 0) | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
+  return buffer.byteLength >> 16 | 0;
  }
  
  function __wasm_memory_grow(pagesToAdd) {

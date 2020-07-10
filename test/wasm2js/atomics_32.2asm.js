@@ -119,9 +119,8 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = wasm2js_get_stashed_bits() | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
+  return buffer.byteLength >> 16 | 0;
  }
  
  return {
@@ -148,7 +147,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-    return uint8Array; 
+    return uint8Array;
   }
   memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s");
 memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh");

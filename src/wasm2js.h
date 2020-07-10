@@ -428,7 +428,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
   }
 
-  addTable(asmFunc[3], wasm);
+  if (wasm->table.exists) {
+    addTable(asmFunc[3], wasm);
+  }
   addStart(asmFunc[3], wasm);
   addExports(asmFunc[3], wasm);
   return ret;
@@ -2031,13 +2033,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 }
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
+  assert(IsPowerOf2(Memory::kPageSize));
+
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
   memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
     makeAsmCoercion(ValueBuilder::makeBinary(
                       ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
                                             IString("byteLength")),
-                      DIV,
-                      ValueBuilder::makeInt(Memory::kPageSize)),
+                      RSHIFT,
+                      ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))),
                     AsmType::ASM_INT)));
   ast->push_back(memorySizeFunc);
 
@@ -2400,7 +2404,7 @@ void Wasm2JSGlue::emitMemory(
     out << R"(
     return uint8Array;)";
   }
-  out << R"( 
+  out << R"(
   }
   )";
 

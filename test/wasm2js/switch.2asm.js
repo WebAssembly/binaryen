@@ -182,7 +182,6 @@ function asmFunc(global, env, buffer) {
   return $2_2 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "stmt": $0, 
   "expr": legalstub$1, 

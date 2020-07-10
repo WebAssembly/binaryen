@@ -569,7 +569,6 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "fac_expr": legalstub$0, 
   "fac_stack": legalstub$1, 

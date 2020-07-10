@@ -43,7 +43,6 @@ function asmFunc(global, env, buffer) {
   return ($4 | 0) == ($0 - $2 | 0) & ($5 | 0) == ($1_1 - (($0 >>> 0 < $2 >>> 0) + $3 | 0) | 0);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "check_add_i64": legalstub$1, 
   "check_sub_i64": legalstub$2

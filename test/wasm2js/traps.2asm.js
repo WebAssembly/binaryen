@@ -728,7 +728,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "no_dce_i32_div_s": $0, 
   "no_dce_i32_div_u": $1, 
@@ -1455,7 +1454,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "no_dce_i32_rem_s": $0, 
   "no_dce_i32_rem_u": $1, 
@@ -1580,7 +1578,6 @@ function asmFunc(global, env, buffer) {
   ~~i64toi32_i32$0 >>> 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "no_dce_i32_trunc_f32_s": $0, 
   "no_dce_i32_trunc_f32_u": $1, 
@@ -1701,9 +1698,8 @@ function asmFunc(global, env, buffer) {
   +HEAPF64[i >> 3];
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
+  return buffer.byteLength >> 16 | 0;
  }
  
  function __wasm_memory_grow(pagesToAdd) {

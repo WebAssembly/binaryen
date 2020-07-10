@@ -597,7 +597,6 @@ function asmFunc(global, env, buffer) {
   return $1_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i64_extend_s_i32": legalstub$0, 
   "i64_extend_u_i32": legalstub$1, 

@@ -67,7 +67,6 @@ function asmFunc0(global, env, buffer) {
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "empty": $0, 
   "add": $1, 

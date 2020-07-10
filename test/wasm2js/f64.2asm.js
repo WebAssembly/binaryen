@@ -104,7 +104,6 @@ function asmFunc(global, env, buffer) {
   return +(var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0));
  }
  
- var FUNCTION_TABLE = [];
  return {
   "add": $0, 
   "sub": $1, 

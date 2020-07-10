@@ -42,7 +42,6 @@ function asmFunc(global, env, buffer) {
   return $10 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "even": even, 
   "odd": odd

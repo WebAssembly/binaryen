@@ -98,7 +98,6 @@ function asmFunc(global, env, buffer) {
   return $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_roundtrip": $1, 
   "i64_roundtrip": legalstub$2
