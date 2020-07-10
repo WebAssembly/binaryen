@@ -1383,6 +1383,8 @@ public:
 class Memory : public Importable {
 public:
   static const Address::address_t kPageSize = 64 * 1024;
+  static_assert(IsPowerOf2(kPageSize), "kPageSize should be power of two");
+
   static const Address::address_t kUnlimitedSize = Address::address_t(-1);
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
   static const Address::address_t kMaxSize =

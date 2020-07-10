@@ -2049,8 +2049,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 }
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
-  assert(IsPowerOf2(Memory::kPageSize));
-
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
   memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(makeAsmCoercion(
     ValueBuilder::makeBinary(
@@ -2067,8 +2065,6 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
-  assert(IsPowerOf2(Memory::kPageSize));
-
   Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
   ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
 
