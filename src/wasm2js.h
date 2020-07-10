@@ -2319,7 +2319,7 @@ void Wasm2JSGlue::emitPostES6() {
       << "Infinity"
       << "}, {";
 
-  out << "abort:function() { throw new Error('abort'); }";
+  out << "abort() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments

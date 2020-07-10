@@ -26,7 +26,7 @@ function asmFunc(global, env, buffer) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
 
 
   var scratchBuffer = new ArrayBuffer(8);
@@ -108,7 +108,7 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
@@ -188,7 +188,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     return uint8Array;
   }
   base64DecodeToExistingUint8Array(bufferView, 0, "qrvM3Q==");
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var copy = retasmFunc.copy;
 export var load8_u = retasmFunc.load8_u;
 
@@ -292,7 +292,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     return uint8Array;
   }
   memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
 
@@ -408,7 +408,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
   }
   memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(0), 0, "");
 base64DecodeToExistingUint8Array(bufferView, 0, "");
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var drop_passive = retasmFunc.drop_passive;
 export var init_passive = retasmFunc.init_passive;
 export var drop_active = retasmFunc.drop_active;
