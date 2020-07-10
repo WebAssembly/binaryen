@@ -83,7 +83,7 @@ function asmFunc(global, env, buffer) {
   var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
-   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newBuffer = new ArrayBuffer(newPages << 16);
    var newHEAP8 = new global.Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;
@@ -247,7 +247,7 @@ function asmFunc(global, env, buffer) {
   var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
-   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newBuffer = new ArrayBuffer(newPages << 16);
    var newHEAP8 = new global.Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;
@@ -360,7 +360,7 @@ function asmFunc(global, env, buffer) {
   var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
-   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newBuffer = new ArrayBuffer(newPages << 16);
    var newHEAP8 = new global.Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;

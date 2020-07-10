@@ -2051,6 +2051,8 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
+  assert(IsPowerOf2(Memory::kPageSize));
+
   Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
   ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
 
@@ -2100,9 +2102,10 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
     IString("newBuffer"),
     ValueBuilder::makeNew(ValueBuilder::makeCall(
       ARRAY_BUFFER,
-      ValueBuilder::makeCall(MATH_IMUL,
-                             ValueBuilder::makeName(IString("newPages")),
-                             ValueBuilder::makeInt(Memory::kPageSize)))));
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("newPages")),
+        LSHIFT,
+        ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
