@@ -445,8 +445,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
       theVar,
       name,
       ValueBuilder::makeNew(ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
-        ValueBuilder::makeName(BUFFER))));
+        ValueBuilder::makeName(view), ValueBuilder::makeName(BUFFER))));
   };
   addHeap(HEAP8, INT8ARRAY);
   addHeap(HEAP16, INT16ARRAY);
@@ -461,10 +460,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(
-      theVar,
-      name,
-      ValueBuilder::makeDot(
-        ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), MATH), base));
+      theVar, name, ValueBuilder::makeDot(ValueBuilder::makeName(MATH), base));
   };
   addMath(MATH_IMUL, IMUL);
   addMath(MATH_FROUND, FROUND);
@@ -2107,12 +2103,11 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
-  ValueBuilder::appendToVar(
-    newHEAP8,
-    IString("newHEAP8"),
-    ValueBuilder::makeNew(ValueBuilder::makeCall(
-      ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), INT8ARRAY),
-      ValueBuilder::makeName(IString("newBuffer")))));
+  ValueBuilder::appendToVar(newHEAP8,
+                            IString("newHEAP8"),
+                            ValueBuilder::makeNew(ValueBuilder::makeCall(
+                              ValueBuilder::makeName(INT8ARRAY),
+                              ValueBuilder::makeName(IString("newBuffer")))));
 
   ValueBuilder::appendToBlock(
     block,
@@ -2134,7 +2129,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
         ValueBuilder::makeName(name),
         SET,
         ValueBuilder::makeNew(ValueBuilder::makeCall(
-          ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
+          ValueBuilder::makeName(view),
           ValueBuilder::makeName(IString("newBuffer"))))));
   };
 
@@ -2266,17 +2261,7 @@ void Wasm2JSGlue::emitPostEmscripten() {
     return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
   });
 
-  out << "return asmFunc({\n"
-      << "    'Int8Array': Int8Array,\n"
-      << "    'Int16Array': Int16Array,\n"
-      << "    'Int32Array': Int32Array,\n"
-      << "    'Uint8Array': Uint8Array,\n"
-      << "    'Uint16Array': Uint16Array,\n"
-      << "    'Uint32Array': Uint32Array,\n"
-      << "    'Float32Array': Float32Array,\n"
-      << "    'Float64Array': Float64Array,\n"
-      << "    'Math': Math\n"
-      << "  },\n"
+  out << "return asmFunc({},\n"
       << "  asmLibraryArg,\n"
       << "  wasmMemory.buffer\n"
       << ")"
@@ -2304,19 +2289,8 @@ void Wasm2JSGlue::emitPostES6() {
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "var ret" << moduleName.str << " = " << moduleName.str << "({"
-      << "Math,"
-      << "Int8Array,"
-      << "Uint8Array,"
-      << "Int16Array,"
-      << "Uint16Array,"
-      << "Int32Array,"
-      << "Uint32Array,"
-      << "Float32Array,"
-      << "Float64Array"
-      << "}, {";
-
-  out << "abort() { throw new Error('abort'); }";
+  out << "var ret" << moduleName.str << " = " << moduleName.str
+      << "({}, {abort() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
