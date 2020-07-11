@@ -482,20 +482,6 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
     abortVar,
     "abort",
     ValueBuilder::makeDot(ValueBuilder::makeName(ENV), ABORT_FUNC));
-  // TODO: this shouldn't be needed once we stop generating literal asm.js code
-  // NaN and Infinity variables
-  Ref nanVar = ValueBuilder::makeVar();
-  ast->push_back(nanVar);
-  ValueBuilder::appendToVar(
-    nanVar,
-    "nan",
-    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "NaN"));
-  Ref infinityVar = ValueBuilder::makeVar();
-  ast->push_back(infinityVar);
-  ValueBuilder::appendToVar(
-    infinityVar,
-    "infinity",
-    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "Infinity"));
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
@@ -2289,8 +2275,6 @@ void Wasm2JSGlue::emitPostEmscripten() {
       << "    'Uint32Array': Uint32Array,\n"
       << "    'Float32Array': Float32Array,\n"
       << "    'Float64Array': Float64Array,\n"
-      << "    'NaN': NaN,\n"
-      << "    'Infinity': Infinity,\n"
       << "    'Math': Math\n"
       << "  },\n"
       << "  asmLibraryArg,\n"
@@ -2329,9 +2313,7 @@ void Wasm2JSGlue::emitPostES6() {
       << "Int32Array,"
       << "Uint32Array,"
       << "Float32Array,"
-      << "Float64Array,"
-      << "NaN,"
-      << "Infinity"
+      << "Float64Array"
       << "}, {";
 
   out << "abort() { throw new Error('abort'); }";

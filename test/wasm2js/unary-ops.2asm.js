@@ -18,8 +18,6 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $1($0) {
   $0 = $0 | 0;
@@ -525,7 +523,7 @@ function asmFunc(global, env, buffer) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var i32_popcnt = retasmFunc.i32_popcnt;
 export var check_popcnt_i64 = retasmFunc.check_popcnt_i64;
 export var check_extend_ui32 = retasmFunc.check_extend_ui32;

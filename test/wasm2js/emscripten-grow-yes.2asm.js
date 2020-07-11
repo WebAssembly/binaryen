@@ -20,8 +20,6 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
  // EMSCRIPTEN_START_FUNCS
 ;
  // EMSCRIPTEN_END_FUNCS
@@ -98,8 +96,6 @@ return asmFunc({
     'Uint32Array': Uint32Array,
     'Float32Array': Float32Array,
     'Float64Array': Float64Array,
-    'NaN': NaN,
-    'Infinity': Infinity,
     'Math': Math
   },
   asmLibraryArg,

@@ -18,8 +18,6 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
  function $0() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   (wasm2js_i32$0 = 0, wasm2js_i32$1 = __wasm_memory_grow(1)), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -71,7 +69,7 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array}, {abort() { throw new Error('abort'); }},memasmFunc);
 export var memory = retasmFunc.memory;
 export var f1 = retasmFunc.f1;
 export var f2 = retasmFunc.f2;

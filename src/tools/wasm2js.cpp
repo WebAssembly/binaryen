@@ -760,13 +760,6 @@ void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
 }
 
 void AssertionEmitter::emit() {
-  // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
-  // generated
-  out << R"(
-    var nan = NaN;
-    var infinity = Infinity;
-  )";
-
   // When equating floating point values in spec tests we want to use bitwise
   // equality like wasm does. Unfortunately though NaN makes this tricky. JS
   // implementations like Spidermonkey and JSC will canonicalize NaN loads from

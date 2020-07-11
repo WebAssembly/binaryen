@@ -1,7 +1,4 @@
 
-    var nan = NaN;
-    var infinity = Infinity;
-  
     function f32Equal(a, b) {
        var i = new Int32Array(1);
        var f = new Float32Array(i.buffer);
@@ -49,8 +46,6 @@ function asmFunc0(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
  function $0() {
   
  }
@@ -75,7 +70,7 @@ function asmFunc0(global, env, buffer) {
 }
 
 var memasmFunc0 = new ArrayBuffer(65536);
-var retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort() { throw new Error('abort'); }},memasmFunc0);
+var retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array}, {abort() { throw new Error('abort'); }},memasmFunc0);
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;
