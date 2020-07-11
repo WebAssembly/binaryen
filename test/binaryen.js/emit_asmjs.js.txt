@@ -24,7 +24,7 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   return $0 | 0;
  }
-
+ 
  return {
   "main": main
  };
