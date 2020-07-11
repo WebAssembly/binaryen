@@ -75,7 +75,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  function __wasm_memory_grow(pagesToAdd) {
@@ -157,7 +157,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  return {
@@ -239,7 +239,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  function __wasm_memory_grow(pagesToAdd) {
@@ -352,7 +352,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  function __wasm_memory_grow(pagesToAdd) {

@@ -65,7 +65,7 @@ template<typename T> int CountTrailingZeroes(T v) {
 template<typename T> int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
 }
-template<typename T> constexpr bool IsPowerOf2(T v) {
+template<typename T> bool IsPowerOf2(T v) {
   return v != 0 && (v & (v - 1)) == 0;
 }
 

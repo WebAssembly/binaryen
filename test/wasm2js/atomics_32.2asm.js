@@ -120,7 +120,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  return {

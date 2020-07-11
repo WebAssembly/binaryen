@@ -27,7 +27,7 @@ function asmFunc(global, env, buffer) {
  // EMSCRIPTEN_END_FUNCS
 ;
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  return {

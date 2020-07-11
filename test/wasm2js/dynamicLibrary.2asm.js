@@ -41,7 +41,7 @@ function asmFunc(global, env, buffer) {
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  function __wasm_memory_size() {
-  return buffer.byteLength >> 16 | 0;
+  return buffer.byteLength >>> 16 | 0;
  }
  
  return {

@@ -2050,13 +2050,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(makeAsmCoercion(
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                            IString("byteLength")),
-      RSHIFT,
-      ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))),
-    AsmType::ASM_INT)));
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
+    makeAsmCoercion(ValueBuilder::makeBinary(
+                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                                            IString("byteLength")),
+                      TRSHIFT,
+                      ValueBuilder::makeInt(Log2(Memory::kPageSize))),
+                    AsmType::ASM_INT)));
   ast->push_back(memorySizeFunc);
 
   if (wasm->memory.max > wasm->memory.initial) {
@@ -2117,7 +2117,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
       ValueBuilder::makeBinary(
         ValueBuilder::makeName(IString("newPages")),
         LSHIFT,
-        ValueBuilder::makeInt(31 - CountLeadingZeroes(Memory::kPageSize))))));
+        ValueBuilder::makeInt(Log2(Memory::kPageSize))))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
