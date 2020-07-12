@@ -99,7 +99,7 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
   return __builtin_ctzll(v);
 #elif defined(_MSC_VER)
   unsigned long count;
-  _BitScanForward64(&count, v);
+  _BitScanForward(&count, v);
   return (int)count;
 #else
   return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
@@ -141,7 +141,7 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
   return __builtin_clzll(v);
 #elif defined(_MSC_VER)
   unsigned long count;
-  _BitScanReverse64(&count, v);
+  _BitScanReverse(&count, v);
   return (int)count;
 #else
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
