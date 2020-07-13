@@ -10011,10 +10011,10 @@ longname4882 => zza
  (export "foo1" (func $foo1))
  (export "foo2" (func $foo2))
  (export "event1" (event $event1))
- (func $foo1 (; 5000 ;)
+ (func $foo1
   (nop)
  )
- (func $foo2 (; 5001 ;)
+ (func $foo2
   (nop)
  )
 )

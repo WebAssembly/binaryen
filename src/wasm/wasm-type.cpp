@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <array>
 #include <cassert>
 #include <shared_mutex>
 #include <sstream>
@@ -24,10 +25,12 @@
 #include "wasm-features.h"
 #include "wasm-type.h"
 
-template<> class std::hash<std::vector<wasm::Type>> {
+namespace std {
+
+template<> class hash<vector<wasm::Type>> {
 public:
-  size_t operator()(const std::vector<wasm::Type>& types) const {
-    uint32_t res = wasm::rehash(0, uint32_t(types.size()));
+  size_t operator()(const vector<wasm::Type>& types) const {
+    uint64_t res = wasm::rehash(0, uint32_t(types.size()));
     for (auto t : types) {
       res = wasm::rehash(res, t.getID());
     }
@@ -35,41 +38,41 @@ public:
   }
 };
 
-size_t std::hash<wasm::Signature>::
-operator()(const wasm::Signature& sig) const {
-  return std::hash<uint64_t>{}(uint64_t(sig.params.getID()) << 32 |
-                               uint64_t(sig.results.getID()));
+size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
+  return hash<uint64_t>{}(type.getID());
 }
+
+size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
+  return wasm::rehash(uint64_t(hash<uint64_t>{}(sig.params.getID())),
+                      uint64_t(hash<uint64_t>{}(sig.results.getID())));
+}
+
+} // namespace std
 
 namespace wasm {
 
 namespace {
 
-// TODO: switch to std::shared_mutex in C++17
-std::shared_timed_mutex mutex;
+std::mutex mutex;
 
-std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
-  std::vector<std::unique_ptr<std::vector<Type>>> lists;
+std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
+  {{},
+   {Type::unreachable},
+   {Type::i32},
+   {Type::i64},
+   {Type::f32},
+   {Type::f64},
+   {Type::v128},
+   {Type::funcref},
+   {Type::externref},
+   {Type::nullref},
+   {Type::exnref}}};
 
-  auto add = [&](std::initializer_list<Type> types) {
-    return lists.push_back(std::make_unique<std::vector<Type>>(types));
-  };
+// Track unique_ptrs for constructed types to avoid leaks
+std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
 
-  add({});
-  add({Type::unreachable});
-  add({Type::i32});
-  add({Type::i64});
-  add({Type::f32});
-  add({Type::f64});
-  add({Type::v128});
-  add({Type::funcref});
-  add({Type::anyref});
-  add({Type::nullref});
-  add({Type::exnref});
-  return lists;
-}();
-
-std::unordered_map<std::vector<Type>, uint32_t> indices = {
+// Maps from type vectors to the canonical Type ID
+std::unordered_map<std::vector<Type>, uintptr_t> indices = {
   {{}, Type::none},
   {{Type::unreachable}, Type::unreachable},
   {{Type::i32}, Type::i32},
@@ -78,7 +81,7 @@ std::unordered_map<std::vector<Type>, uint32_t> indices = {
   {{Type::f64}, Type::f64},
   {{Type::v128}, Type::v128},
   {{Type::funcref}, Type::funcref},
-  {{Type::anyref}, Type::anyref},
+  {{Type::externref}, Type::externref},
   {{Type::nullref}, Type::nullref},
   {{Type::exnref}, Type::exnref},
 };
@@ -92,31 +95,25 @@ void Type::init(const std::vector<Type>& types) {
   }
 #endif
 
-  auto lookup = [&]() {
-    auto indexIt = indices.find(types);
-    if (indexIt != indices.end()) {
-      id = indexIt->second;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  {
-    // Try to look up previously interned type
-    std::shared_lock<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
+  if (types.size() == 0) {
+    id = none;
+    return;
   }
-  {
-    // Add a new type if it hasn't been added concurrently
-    std::lock_guard<std::shared_timed_mutex> lock(mutex);
-    if (lookup()) {
-      return;
-    }
-    id = typeLists.size();
-    typeLists.push_back(std::make_unique<std::vector<Type>>(types));
+  if (types.size() == 1) {
+    *this = types[0];
+    return;
+  }
+
+  // Add a new type if it hasn't been added concurrently
+  std::lock_guard<std::mutex> lock(mutex);
+  auto indexIt = indices.find(types);
+  if (indexIt != indices.end()) {
+    id = indexIt->second;
+  } else {
+    auto vec = std::make_unique<std::vector<Type>>(types);
+    id = uintptr_t(vec.get());
+    constructedTypes.push_back(std::move(vec));
+    assert(id > _last_value_type);
     indices[types] = id;
   }
 }
@@ -128,9 +125,11 @@ Type::Type(const std::vector<Type>& types) { init(types); }
 size_t Type::size() const { return expand().size(); }
 
 const std::vector<Type>& Type::expand() const {
-  std::shared_lock<std::shared_timed_mutex> lock(mutex);
-  assert(id < typeLists.size());
-  return *typeLists[id].get();
+  if (id <= _last_value_type) {
+    return basicTypes[id];
+  } else {
+    return *(std::vector<Type>*)id;
+  }
 }
 
 bool Type::operator<(const Type& other) const {
@@ -145,28 +144,37 @@ bool Type::operator<(const Type& other) const {
 }
 
 unsigned Type::getByteSize() const {
-  assert(isSingle() && "getByteSize does not works with single types");
-  Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
-    case Type::i32:
-      return 4;
-    case Type::i64:
-      return 8;
-    case Type::f32:
-      return 4;
-    case Type::f64:
-      return 8;
-    case Type::v128:
-      return 16;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
+  // TODO: alignment?
+  auto getSingleByteSize = [](Type t) {
+    switch (t.getSingle()) {
+      case Type::i32:
+      case Type::f32:
+        return 4;
+      case Type::i64:
+      case Type::f64:
+        return 8;
+      case Type::v128:
+        return 16;
+      case Type::funcref:
+      case Type::externref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
+        break;
+    }
+    WASM_UNREACHABLE("invalid type");
+  };
+
+  if (isSingle()) {
+    return getSingleByteSize(*this);
   }
-  WASM_UNREACHABLE("invalid type");
+
+  unsigned size = 0;
+  for (auto t : expand()) {
+    size += getSingleByteSize(t);
+  }
+  return size;
 }
 
 Type Type::reinterpret() const {
@@ -183,7 +191,7 @@ Type Type::reinterpret() const {
       return i64;
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -194,21 +202,28 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  FeatureSet feats = FeatureSet::MVP;
-  for (Type t : expand()) {
+  auto getSingleFeatures = [](Type t) -> FeatureSet {
     switch (t.getSingle()) {
       case Type::v128:
-        feats |= FeatureSet::SIMD;
-        break;
-      case Type::anyref:
-        feats |= FeatureSet::ReferenceTypes;
-        break;
+        return FeatureSet::SIMD;
+      case Type::funcref:
+      case Type::externref:
+      case Type::nullref:
+        return FeatureSet::ReferenceTypes;
       case Type::exnref:
-        feats |= FeatureSet::ExceptionHandling;
-        break;
+        return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       default:
-        break;
+        return FeatureSet::MVP;
     }
+  };
+
+  if (isSingle()) {
+    return getSingleFeatures(*this);
+  }
+
+  FeatureSet feats = FeatureSet::Multivalue;
+  for (Type t : expand()) {
+    feats |= getSingleFeatures(t);
   }
   return feats;
 }
@@ -229,18 +244,31 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::Type::isSubType(Type left, Type right) {
+bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
   if (left.isRef() && right.isRef() &&
-      (right == Type::anyref || left == Type::nullref)) {
+      (right == Type::externref || left == Type::nullref)) {
+    return true;
+  }
+  if (left.isMulti() && right.isMulti()) {
+    const auto& leftElems = left.expand();
+    const auto& rightElems = right.expand();
+    if (leftElems.size() != rightElems.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < leftElems.size(); ++i) {
+      if (!isSubType(leftElems[i], rightElems[i])) {
+        return false;
+      }
+    }
     return true;
   }
   return false;
 }
 
-Type Type::Type::getLeastUpperBound(Type a, Type b) {
+Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
   }
@@ -250,8 +278,24 @@ Type Type::Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::unreachable) {
     return a;
   }
+  if (a.size() != b.size()) {
+    return Type::none; // a poison value that must not be consumed
+  }
+  if (a.isMulti()) {
+    std::vector<Type> types;
+    types.resize(a.size());
+    const auto& as = a.expand();
+    const auto& bs = b.expand();
+    for (size_t i = 0; i < types.size(); ++i) {
+      types[i] = getLeastUpperBound(as[i], bs[i]);
+      if (types[i] == Type::none) {
+        return Type::none;
+      }
+    }
+    return Type(types);
+  }
   if (!a.isRef() || !b.isRef()) {
-    return none; // a poison value that must not be consumed
+    return Type::none;
   }
   if (a == Type::nullref) {
     return b;
@@ -259,7 +303,7 @@ Type Type::Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::nullref) {
     return a;
   }
-  return Type::anyref;
+  return Type::externref;
 }
 
 namespace {
@@ -335,8 +379,8 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       case Type::funcref:
         os << "funcref";
         break;
-      case Type::anyref:
-        os << "anyref";
+      case Type::externref:
+        os << "externref";
         break;
       case Type::nullref:
         os << "nullref";

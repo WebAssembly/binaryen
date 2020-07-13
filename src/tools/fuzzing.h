@@ -183,8 +183,6 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void setAllowNaNs(bool allowNaNs_) { allowNaNs = allowNaNs_; }
-
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
 
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
@@ -207,9 +205,6 @@ public:
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
     }
-    if (!allowNaNs) {
-      addDeNanSupport();
-    }
     finalizeTable();
   }
 
@@ -227,6 +222,12 @@ private:
 
   // The maximum amount of vars in each function.
   static const int MAX_VARS = 20;
+
+  // The maximum number of globals in a module.
+  static const int MAX_GLOBALS = 20;
+
+  // The maximum number of tuple elements.
+  static const int MAX_TUPLE_SIZE = 6;
 
   // some things require luck, try them a few times
   static const int TRIES = 10;
@@ -246,11 +247,6 @@ private:
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
   static const int HANG_LIMIT = 10;
-
-  // Optionally remove NaNs, which are a source of nondeterminism (which makes
-  // cross-VM comparisons harder)
-  // TODO: de-NaN SIMD values
-  bool allowNaNs = true;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
@@ -309,22 +305,31 @@ private:
 
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
-  SmallVector<Type, 2> getSubTypes(Type type) {
-    SmallVector<Type, 2> ret;
-    ret.push_back(type); // includes itself
+  Type getSubType(Type type) {
+    if (type.isMulti()) {
+      std::vector<Type> types;
+      for (auto t : type.expand()) {
+        types.push_back(getSubType(t));
+      }
+      return Type(types);
+    }
+    SmallVector<Type, 2> options;
+    options.push_back(type); // includes itself
     switch (type.getSingle()) {
-      case Type::anyref:
-        ret.push_back(Type::funcref);
-        ret.push_back(Type::exnref);
+      case Type::externref:
+        if (wasm.features.hasExceptionHandling()) {
+          options.push_back(Type::exnref);
+        }
+        options.push_back(Type::funcref);
         // falls through
       case Type::funcref:
       case Type::exnref:
-        ret.push_back(Type::nullref);
+        options.push_back(Type::nullref);
         break;
       default:
         break;
     }
-    return ret;
+    return pick(options);
   }
 
   void setupMemory() {
@@ -406,35 +411,25 @@ private:
   std::map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
-    size_t index = 0;
-    for (auto type : getConcreteTypes()) {
-      auto num = upTo(3);
-      for (size_t i = 0; i < num; i++) {
-        auto* glob =
-          builder.makeGlobal(std::string("global$") + std::to_string(index++),
-                             type,
-                             makeConst(type),
-                             Builder::Mutable);
-        wasm.addGlobal(glob);
-        globalsByType[type].push_back(glob->name);
-      }
+    for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
+      auto type = getConcreteType();
+      auto* global =
+        builder.makeGlobal(std::string("global$") + std::to_string(index),
+                           type,
+                           makeConst(type),
+                           Builder::Mutable);
+      wasm.addGlobal(global);
+      globalsByType[type].push_back(global->name);
     }
   }
 
   void setupEvents() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      // Events should have void return type and at least one param type
-      Type type = getConcreteType();
-      std::vector<Type> params;
-      params.push_back(type);
-      Index numValues = upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues + 1; i++) {
-        params.push_back(getConcreteType());
-      }
-      auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
-                                      WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      Signature(Type(params), Type::none));
+      auto* event =
+        builder.makeEvent(std::string("event$") + std::to_string(i),
+                          WASM_EVENT_ATTRIBUTE_EXCEPTION,
+                          Signature(getControlFlowType(), Type::none));
       wasm.addEvent(event);
     }
   }
@@ -494,34 +489,6 @@ private:
                            builder.makeConst(Literal(int32_t(1))))));
   }
 
-  void addDeNanSupport() {
-    auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto* func = new Function;
-      func->name = name;
-      func->sig = Signature(type, type);
-      func->body = builder.makeIf(
-        builder.makeBinary(
-          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
-        builder.makeLocalGet(0, type),
-        builder.makeConst(literal));
-      wasm.addFunction(func);
-    };
-    add("deNan32", Type::f32, Literal(float(0)), EqFloat32);
-    add("deNan64", Type::f64, Literal(double(0)), EqFloat64);
-  }
-
-  Expression* makeDeNanOp(Expression* expr) {
-    if (allowNaNs) {
-      return expr;
-    }
-    if (expr->type == Type::f32) {
-      return builder.makeCall("deNan32", {expr}, Type::f32);
-    } else if (expr->type == Type::f64) {
-      return builder.makeCall("deNan64", {expr}, Type::f64);
-    }
-    return expr; // unreachable etc. is fine
-  }
-
   // function generation state
 
   Function* func = nullptr;
@@ -545,11 +512,11 @@ private:
     std::vector<Type> params;
     params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
-      auto type = getConcreteType();
+      auto type = getSingleConcreteType();
       typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
-    func->sig = Signature(Type(params), getReachableType());
+    func->sig = Signature(Type(params), getControlFlowType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
@@ -570,15 +537,21 @@ private:
     } else {
       func->body = make(bodyType);
     }
-    // Recombinations create duplicate code patterns.
-    recombine(func);
-    // Mutations add random small changes, which can subtly break duplicate code
-    // patterns.
-    mutate(func);
-    // TODO: liveness operations on gets, with some prob alter a get to one with
-    //       more possible sets
-    // Recombination, mutation, etc. can break validation; fix things up after.
-    fixLabels(func);
+    // Our OOB checks are already in the code, and if we recombine/mutate we
+    // may end up breaking them. TODO: do them after the fact, like with the
+    // hang limit checks.
+    if (allowOOB) {
+      // Recombinations create duplicate code patterns.
+      recombine(func);
+      // Mutations add random small changes, which can subtly break duplicate
+      // code patterns.
+      mutate(func);
+      // TODO: liveness operations on gets, with some prob alter a get to one
+      // with more possible sets.
+      // Recombination, mutation, etc. can break validation; fix things up
+      // after.
+      fixLabels(func);
+    }
     // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
       addHangLimitChecks(func);
@@ -596,7 +569,7 @@ private:
       wasm.addExport(export_);
     }
     // add some to the table
-    while (oneIn(3)) {
+    while (oneIn(3) && !finishedInput) {
       wasm.table.segments[0].data.push_back(func->name);
     }
     // cleanup
@@ -834,6 +807,11 @@ private:
     return std::string("label$") + std::to_string(labelIndex++);
   }
 
+  // Weighting for the core make* methods. Some nodes are important enough that
+  // we should do them quite often.
+  static const size_t VeryImportant = 4;
+  static const size_t Important = 2;
+
   // always call the toplevel make(type) command, not the internal specific ones
 
   int nesting = 0;
@@ -860,24 +838,13 @@ private:
     }
     nesting++;
     Expression* ret = nullptr;
-    switch (type.getSingle()) {
-      case Type::i32:
-      case Type::i64:
-      case Type::f32:
-      case Type::f64:
-      case Type::v128:
-      case Type::funcref:
-      case Type::anyref:
-      case Type::nullref:
-      case Type::exnref:
-        ret = _makeConcrete(type);
-        break;
-      case Type::none:
-        ret = _makenone();
-        break;
-      case Type::unreachable:
-        ret = _makeunreachable();
-        break;
+    if (type.isConcrete()) {
+      ret = _makeConcrete(type);
+    } else if (type == Type::none) {
+      ret = _makenone();
+    } else {
+      assert(type == Type::unreachable);
+      ret = _makeunreachable();
     }
     // we should create the right type of thing
     assert(Type::isSubType(ret->type, type));
@@ -886,51 +853,45 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    auto choice = upTo(100);
-    if (choice < 10) {
-      return makeConst(type);
-    }
-    if (choice < 30) {
-      return makeLocalSet(type);
-    }
-    if (choice < 50) {
-      return makeLocalGet(type);
-    }
-    if (choice < 60) {
-      return makeBlock(type);
-    }
-    if (choice < 70) {
-      return makeIf(type);
-    }
-    if (choice < 80) {
-      return makeLoop(type);
-    }
-    if (choice < 90) {
-      return makeBreak(type);
-    }
+    bool canMakeControlFlow =
+      !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
-                     .add(FeatureSet::MVP,
-                          &Self::makeBlock,
-                          &Self::makeIf,
-                          &Self::makeLoop,
-                          &Self::makeBreak,
-                          &Self::makeCall,
-                          &Self::makeCallIndirect,
-                          &Self::makeLocalGet,
-                          &Self::makeLocalSet,
-                          &Self::makeLoad,
-                          &Self::makeConst,
-                          &Self::makeUnary,
-                          &Self::makeBinary,
-                          &Self::makeSelect,
-                          &Self::makeGlobalGet)
-                     .add(FeatureSet::SIMD, &Self::makeSIMD);
-    if (type == Type::i32 || type == Type::i64) {
+    FeatureOptions<Expression* (Self::*)(Type)> options;
+    using WeightedOption = decltype(options)::WeightedOption;
+    options.add(FeatureSet::MVP,
+                WeightedOption{&Self::makeLocalGet, VeryImportant},
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
+                WeightedOption{&Self::makeGlobalGet, Important},
+                WeightedOption{&Self::makeConst, Important});
+    if (canMakeControlFlow) {
+      options.add(FeatureSet::MVP,
+                  WeightedOption{&Self::makeBlock, Important},
+                  WeightedOption{&Self::makeIf, Important},
+                  WeightedOption{&Self::makeLoop, Important},
+                  WeightedOption{&Self::makeBreak, Important},
+                  &Self::makeCall,
+                  &Self::makeCallIndirect);
+    }
+    if (type.isSingle()) {
+      options
+        .add(FeatureSet::MVP,
+             WeightedOption{&Self::makeUnary, Important},
+             WeightedOption{&Self::makeBinary, Important},
+             &Self::makeSelect)
+        .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
+    }
+    if (type.isSingle() && !type.isRef()) {
+      options.add(FeatureSet::MVP, {&Self::makeLoad, Important});
+      options.add(FeatureSet::SIMD, &Self::makeSIMD);
+    }
+    if (type.isInteger()) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+    }
+    if (type.isMulti()) {
+      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
     return (this->*pick(options))(type);
   }
@@ -944,75 +905,48 @@ private:
         return makeMemoryHashLogging();
       }
     }
-    choice = upTo(100);
-    if (choice < 50) {
-      return makeLocalSet(Type::none);
-    }
-    if (choice < 60) {
-      return makeBlock(Type::none);
-    }
-    if (choice < 70) {
-      return makeIf(Type::none);
-    }
-    if (choice < 80) {
-      return makeLoop(Type::none);
-    }
-    if (choice < 90) {
-      return makeBreak(Type::none);
-    }
     using Self = TranslateToFuzzReader;
-    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
-                     .add(FeatureSet::MVP,
-                          &Self::makeBlock,
-                          &Self::makeIf,
-                          &Self::makeLoop,
-                          &Self::makeBreak,
-                          &Self::makeCall,
-                          &Self::makeCallIndirect,
-                          &Self::makeLocalSet,
-                          &Self::makeStore,
-                          &Self::makeDrop,
-                          &Self::makeNop,
-                          &Self::makeGlobalSet)
-                     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-                     .add(FeatureSet::Atomics, &Self::makeAtomic);
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>();
+    using WeightedOption = decltype(options)::WeightedOption;
+    options
+      .add(FeatureSet::MVP,
+           WeightedOption{&Self::makeLocalSet, VeryImportant},
+           WeightedOption{&Self::makeBlock, Important},
+           WeightedOption{&Self::makeIf, Important},
+           WeightedOption{&Self::makeLoop, Important},
+           WeightedOption{&Self::makeBreak, Important},
+           WeightedOption{&Self::makeStore, Important},
+           &Self::makeCall,
+           &Self::makeCallIndirect,
+           &Self::makeDrop,
+           &Self::makeNop,
+           &Self::makeGlobalSet)
+      .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
+      .add(FeatureSet::Atomics, &Self::makeAtomic);
     return (this->*pick(options))(Type::none);
   }
 
   Expression* _makeunreachable() {
-    switch (upTo(15)) {
-      case 0:
-        return makeBlock(Type::unreachable);
-      case 1:
-        return makeIf(Type::Type::unreachable);
-      case 2:
-        return makeLoop(Type::unreachable);
-      case 3:
-        return makeBreak(Type::unreachable);
-      case 4:
-        return makeCall(Type::unreachable);
-      case 5:
-        return makeCallIndirect(Type::unreachable);
-      case 6:
-        return makeLocalSet(Type::unreachable);
-      case 7:
-        return makeStore(Type::unreachable);
-      case 8:
-        return makeUnary(Type::unreachable);
-      case 9:
-        return makeBinary(Type::unreachable);
-      case 10:
-        return makeSelect(Type::unreachable);
-      case 11:
-        return makeSwitch(Type::unreachable);
-      case 12:
-        return makeDrop(Type::unreachable);
-      case 13:
-        return makeReturn(Type::unreachable);
-      case 14:
-        return makeUnreachable(Type::unreachable);
-    }
-    WASM_UNREACHABLE("unexpected value");
+    using Self = TranslateToFuzzReader;
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>();
+    using WeightedOption = decltype(options)::WeightedOption;
+    options.add(FeatureSet::MVP,
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
+                WeightedOption{&Self::makeBlock, Important},
+                WeightedOption{&Self::makeIf, Important},
+                WeightedOption{&Self::makeLoop, Important},
+                WeightedOption{&Self::makeBreak, Important},
+                WeightedOption{&Self::makeStore, Important},
+                WeightedOption{&Self::makeUnary, Important},
+                WeightedOption{&Self::makeBinary, Important},
+                WeightedOption{&Self::makeUnreachable, Important},
+                &Self::makeCall,
+                &Self::makeCallIndirect,
+                &Self::makeSelect,
+                &Self::makeSwitch,
+                &Self::makeDrop,
+                &Self::makeReturn);
+    return (this->*pick(options))(Type::unreachable);
   }
 
   // make something with no chance of infinite recursion
@@ -1162,7 +1096,7 @@ private:
         hangStack.pop_back();
         return ret;
       } else if (type == Type::none) {
-        if (valueType != Type::Type::none) {
+        if (valueType != Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1171,7 +1105,7 @@ private:
         return ret;
       } else {
         assert(type == Type::unreachable);
-        if (valueType != Type::Type::none) {
+        if (valueType != Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1315,22 +1249,60 @@ private:
   }
 
   Expression* makeGlobalGet(Type type) {
-    auto& globals = globalsByType[type];
-    if (globals.empty()) {
+    auto it = globalsByType.find(type);
+    if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(globals), type);
+    return builder.makeGlobalGet(pick(it->second), type);
   }
 
   Expression* makeGlobalSet(Type type) {
     assert(type == Type::none);
     type = getConcreteType();
-    auto& globals = globalsByType[type];
-    if (globals.empty()) {
-      return makeTrivial(Type::Type::none);
+    auto it = globalsByType.find(type);
+    if (it == globalsByType.end() || it->second.empty()) {
+      return makeTrivial(Type::none);
     }
     auto* value = make(type);
-    return builder.makeGlobalSet(pick(globals), value);
+    return builder.makeGlobalSet(pick(it->second), value);
+  }
+
+  Expression* makeTupleMake(Type type) {
+    assert(wasm.features.hasMultivalue());
+    assert(type.isMulti());
+    std::vector<Expression*> elements;
+    for (auto t : type.expand()) {
+      elements.push_back(make(t));
+    }
+    return builder.makeTupleMake(std::move(elements));
+  }
+
+  Expression* makeTupleExtract(Type type) {
+    assert(wasm.features.hasMultivalue());
+    assert(type.isSingle() && type.isConcrete());
+    Type tupleType = getTupleType();
+    auto& elements = tupleType.expand();
+
+    // Find indices from which we can extract `type`
+    std::vector<size_t> extractIndices;
+    for (size_t i = 0; i < elements.size(); ++i) {
+      if (elements[i] == type) {
+        extractIndices.push_back(i);
+      }
+    }
+
+    // If there are none, inject one
+    if (extractIndices.size() == 0) {
+      auto newElements = elements;
+      size_t injected = upTo(elements.size());
+      newElements[injected] = type;
+      tupleType = Type(newElements);
+      extractIndices.push_back(injected);
+    }
+
+    Index index = pick(extractIndices);
+    Expression* child = make(tupleType);
+    return builder.makeTupleExtract(child, index);
   }
 
   Expression* makePointer() {
@@ -1392,7 +1364,7 @@ private:
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -1496,7 +1468,7 @@ private:
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -1528,7 +1500,7 @@ private:
     return store;
   }
 
-  Literal makeArbitraryLiteral(Type type) {
+  Literal makeLiteral(Type type) {
     if (type == Type::v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
@@ -1593,7 +1565,7 @@ private:
             return Literal(getDouble());
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1638,7 +1610,7 @@ private:
             return Literal(double(small));
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1706,7 +1678,7 @@ private:
             break;
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1740,7 +1712,7 @@ private:
             break;
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1755,14 +1727,6 @@ private:
       }
     }
     WASM_UNREACHABLE("invalide value");
-  }
-
-  Literal makeLiteral(Type type) {
-    auto ret = makeArbitraryLiteral(type);
-    if (!allowNaNs && ret.isNaN()) {
-      ret = Literal::makeFromInt32(0, type);
-    }
-    return ret;
   }
 
   Expression* makeConst(Type type) {
@@ -1783,6 +1747,13 @@ private:
       }
       return builder.makeRefNull();
     }
+    if (type.isMulti()) {
+      std::vector<Expression*> operands;
+      for (auto t : type.expand()) {
+        operands.push_back(makeConst(t));
+      }
+      return builder.makeTupleMake(std::move(operands));
+    }
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
     ret->type = type;
@@ -1794,10 +1765,10 @@ private:
   }
 
   Expression* makeUnary(Type type) {
+    assert(!type.isMulti());
     if (type == Type::unreachable) {
-      if (auto* unary = makeUnary(getConcreteType())->dynCast<Unary>()) {
-        return makeDeNanOp(
-          builder.makeUnary(unary->op, make(Type::unreachable)));
+      if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
+        return builder.makeUnary(unary->op, make(Type::unreachable));
       }
       // give up
       return makeTrivial(type);
@@ -1809,7 +1780,7 @@ private:
 
     switch (type.getSingle()) {
       case Type::i32: {
-        switch (getConcreteType().getSingle()) {
+        switch (getSingleConcreteType().getSingle()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -1853,7 +1824,7 @@ private:
                                make(Type::v128)});
           }
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
             return makeTrivial(type);
@@ -1905,50 +1876,50 @@ private:
       case Type::f32: {
         switch (upTo(4)) {
           case 0:
-            return makeDeNanOp(buildUnary({pick(NegFloat32,
-                                                AbsFloat32,
-                                                CeilFloat32,
-                                                FloorFloat32,
-                                                TruncFloat32,
-                                                NearestFloat32,
-                                                SqrtFloat32),
-                                           make(Type::f32)}));
+            return buildUnary({pick(NegFloat32,
+                                    AbsFloat32,
+                                    CeilFloat32,
+                                    FloorFloat32,
+                                    TruncFloat32,
+                                    NearestFloat32,
+                                    SqrtFloat32),
+                               make(Type::f32)});
           case 1:
-            return makeDeNanOp(buildUnary({pick(ConvertUInt32ToFloat32,
-                                                ConvertSInt32ToFloat32,
-                                                ReinterpretInt32),
-                                           make(Type::i32)}));
+            return buildUnary({pick(ConvertUInt32ToFloat32,
+                                    ConvertSInt32ToFloat32,
+                                    ReinterpretInt32),
+                               make(Type::i32)});
           case 2:
-            return makeDeNanOp(
-              buildUnary({pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32),
-                          make(Type::i64)}));
+            return buildUnary(
+              {pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32),
+               make(Type::i64)});
           case 3:
-            return makeDeNanOp(buildUnary({DemoteFloat64, make(Type::f64)}));
+            return buildUnary({DemoteFloat64, make(Type::f64)});
         }
         WASM_UNREACHABLE("invalid value");
       }
       case Type::f64: {
         switch (upTo(4)) {
           case 0:
-            return makeDeNanOp(buildUnary({pick(NegFloat64,
-                                                AbsFloat64,
-                                                CeilFloat64,
-                                                FloorFloat64,
-                                                TruncFloat64,
-                                                NearestFloat64,
-                                                SqrtFloat64),
-                                           make(Type::f64)}));
+            return buildUnary({pick(NegFloat64,
+                                    AbsFloat64,
+                                    CeilFloat64,
+                                    FloorFloat64,
+                                    TruncFloat64,
+                                    NearestFloat64,
+                                    SqrtFloat64),
+                               make(Type::f64)});
           case 1:
-            return makeDeNanOp(
-              buildUnary({pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64),
-                          make(Type::i32)}));
+            return buildUnary(
+              {pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64),
+               make(Type::i32)});
           case 2:
-            return makeDeNanOp(buildUnary({pick(ConvertUInt64ToFloat64,
-                                                ConvertSInt64ToFloat64,
-                                                ReinterpretInt64),
-                                           make(Type::i64)}));
+            return buildUnary({pick(ConvertUInt64ToFloat64,
+                                    ConvertSInt64ToFloat64,
+                                    ReinterpretInt64),
+                               make(Type::i64)});
           case 3:
-            return makeDeNanOp(buildUnary({PromoteFloat32, make(Type::f32)}));
+            return buildUnary({PromoteFloat32, make(Type::f32)});
         }
         WASM_UNREACHABLE("invalid value");
       }
@@ -1998,7 +1969,7 @@ private:
         WASM_UNREACHABLE("invalid value");
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2013,10 +1984,12 @@ private:
   }
 
   Expression* makeBinary(Type type) {
+    assert(!type.isMulti());
     if (type == Type::unreachable) {
-      if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
-        return makeDeNanOp(buildBinary(
-          {binary->op, make(Type::unreachable), make(Type::unreachable)}));
+      if (auto* binary =
+            makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
+        return buildBinary(
+          {binary->op, make(Type::unreachable), make(Type::unreachable)});
       }
       // give up
       return makeTrivial(type);
@@ -2111,26 +2084,26 @@ private:
                             make(Type::i64)});
       }
       case Type::f32: {
-        return makeDeNanOp(buildBinary({pick(AddFloat32,
-                                             SubFloat32,
-                                             MulFloat32,
-                                             DivFloat32,
-                                             CopySignFloat32,
-                                             MinFloat32,
-                                             MaxFloat32),
-                                        make(Type::f32),
-                                        make(Type::f32)}));
+        return buildBinary({pick(AddFloat32,
+                                 SubFloat32,
+                                 MulFloat32,
+                                 DivFloat32,
+                                 CopySignFloat32,
+                                 MinFloat32,
+                                 MaxFloat32),
+                            make(Type::f32),
+                            make(Type::f32)});
       }
       case Type::f64: {
-        return makeDeNanOp(buildBinary({pick(AddFloat64,
-                                             SubFloat64,
-                                             MulFloat64,
-                                             DivFloat64,
-                                             CopySignFloat64,
-                                             MinFloat64,
-                                             MaxFloat64),
-                                        make(Type::f64),
-                                        make(Type::f64)}));
+        return buildBinary({pick(AddFloat64,
+                                 SubFloat64,
+                                 MulFloat64,
+                                 DivFloat64,
+                                 CopySignFloat64,
+                                 MinFloat64,
+                                 MaxFloat64),
+                            make(Type::f64),
+                            make(Type::f64)});
       }
       case Type::v128: {
         assert(wasm.features.hasSIMD());
@@ -2233,7 +2206,7 @@ private:
                             make(Type::v128)});
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2248,10 +2221,9 @@ private:
   }
 
   Expression* makeSelect(Type type) {
-    Type subType1 = pick(getSubTypes(type));
-    Type subType2 = pick(getSubTypes(type));
-    return makeDeNanOp(
-      buildSelect({make(Type::i32), make(subType1), make(subType2)}, type));
+    Type subType1 = getSubType(type);
+    Type subType2 = getSubType(type);
+    return buildSelect({make(Type::i32), make(subType1), make(subType2)}, type);
   }
 
   Expression* makeSwitch(Type type) {
@@ -2262,7 +2234,7 @@ private:
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
-    Type valueType = Type::Type::unreachable;
+    Type valueType = Type::unreachable;
     while (tries-- > 0) {
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
@@ -2441,7 +2413,7 @@ private:
         break;
       case Type::v128:
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2551,7 +2523,7 @@ private:
                           ShrSVecI64x2,
                           ShrUVecI64x2);
     Expression* vec = make(Type::v128);
-    Expression* shift = make(Type::Type::i32);
+    Expression* shift = make(Type::i32);
     return builder.makeSIMDShift(op, vec, shift);
   }
 
@@ -2616,9 +2588,10 @@ private:
     assert(wasm.features.hasReferenceTypes());
     Type refType;
     if (wasm.features.hasExceptionHandling()) {
-      refType = pick(Type::funcref, Type::anyref, Type::nullref, Type::exnref);
+      refType =
+        pick(Type::funcref, Type::externref, Type::nullref, Type::exnref);
     } else {
-      refType = pick(Type::funcref, Type::anyref, Type::nullref);
+      refType = pick(Type::funcref, Type::externref, Type::nullref);
     }
     return builder.makeRefIsNull(make(refType));
   }
@@ -2678,52 +2651,58 @@ private:
   }
 
   // special getters
-
-  std::vector<Type> getReachableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP,
-             Type::i32,
-             Type::i64,
-             Type::f32,
-             Type::f64,
-             Type::none)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes,
-             Type::funcref,
-             Type::anyref,
-             Type::nullref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
-  }
-  Type getReachableType() { return pick(getReachableTypes()); }
-
-  std::vector<Type> getConcreteTypes() {
+  std::vector<Type> getSingleConcreteTypes() {
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes,
              Type::funcref,
-             Type::anyref,
+             Type::externref,
              Type::nullref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
-  Type getConcreteType() { return pick(getConcreteTypes()); }
 
-  // Get types that can be stored in memory
-  std::vector<Type> getStorableTypes() {
-    return items(
+  Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  Type getTupleType() {
+    std::vector<Type> elements;
+    size_t numElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
+    elements.resize(numElements);
+    for (size_t i = 0; i < numElements; ++i) {
+      elements[i] = getSingleConcreteType();
+    }
+    return Type(elements);
+  }
+
+  Type getConcreteType() {
+    if (wasm.features.hasMultivalue() && oneIn(5)) {
+      return getTupleType();
+    } else {
+      return getSingleConcreteType();
+    }
+  }
+
+  Type getControlFlowType() {
+    if (oneIn(10)) {
+      return Type::none;
+    } else {
+      return getConcreteType();
+    }
+  }
+
+  Type getStorableType() {
+    return pick(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128));
   }
-  Type getStorableType() { return pick(getStorableTypes()); }
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging anyref because it is opaque
+  // - there's no point in logging externref because it is opaque
+  // - don't bother logging tuples
   std::vector<Type> getLoggableTypes() {
     return items(
       FeatureOptions<Type>()
@@ -2733,6 +2712,7 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
+
   Type getLoggableType() { return pick(getLoggableTypes()); }
 
   // statistical distributions
@@ -2819,6 +2799,20 @@ private:
     template<typename... Ts>
     FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);
+      return add(feature, rest...);
+    }
+
+    struct WeightedOption {
+      T option;
+      size_t weight;
+    };
+
+    template<typename... Ts>
+    FeatureOptions<T>&
+    add(FeatureSet feature, WeightedOption weightedOption, Ts... rest) {
+      for (size_t i = 0; i < weightedOption.weight; i++) {
+        options[feature].push_back(weightedOption.option);
+      }
       return add(feature, rest...);
     }
 

@@ -20,11 +20,8 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var f = -1412567121;
- var f$hi = 305419896;
  function $1() {
-  f = 1432778632;
-  f$hi = 287454020;
+  
  }
  
  var FUNCTION_TABLE = [];

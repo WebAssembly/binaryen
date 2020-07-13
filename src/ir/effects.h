@@ -27,9 +27,11 @@ namespace wasm {
 
 struct EffectAnalyzer
   : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
-  EffectAnalyzer(const PassOptions& passOptions, Expression* ast = nullptr) {
-    ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
-    debugInfo = passOptions.debugInfo;
+  EffectAnalyzer(const PassOptions& passOptions,
+                 FeatureSet features,
+                 Expression* ast = nullptr)
+    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       analyze(ast);
     }
@@ -37,20 +39,23 @@ struct EffectAnalyzer
 
   bool ignoreImplicitTraps;
   bool debugInfo;
+  FeatureSet features;
 
   void analyze(Expression* ast) {
-    breakNames.clear();
+    breakTargets.clear();
     walk(ast);
-    // if we are left with breaks, they are external
-    if (breakNames.size() > 0) {
-      branches = true;
-    }
+    assert(tryDepth == 0);
   }
 
   // Core effect tracking
 
-  // branches out of this expression, returns, infinite loops, etc
-  bool branches = false;
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut = false;
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -66,6 +71,48 @@ struct EffectAnalyzer
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
+  bool throws = false;
+  // The nested depth of try. If an instruction that may throw is inside an
+  // inner try, we don't mark it as 'throws', because it will be caught by an
+  // inner catch.
+  size_t tryDepth = 0;
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
+  // If this expression contains 'exnref.pop's that are not enclosed in 'catch'
+  // body. For example, (drop (exnref.pop)) should set this to true.
+  bool danglingPop = false;
+
+  static void scan(EffectAnalyzer* self, Expression** currp) {
+    Expression* curr = *currp;
+    // We need to decrement try depth before catch starts, so handle it
+    // separately
+    if (curr->is<Try>()) {
+      self->pushTask(doVisitTry, currp);
+      self->pushTask(doEndCatch, currp);
+      self->pushTask(scan, &curr->cast<Try>()->catchBody);
+      self->pushTask(doStartCatch, currp);
+      self->pushTask(scan, &curr->cast<Try>()->body);
+      self->pushTask(doStartTry, currp);
+      return;
+    }
+    PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>>::scan(self,
+                                                                        currp);
+  }
+
+  static void doStartTry(EffectAnalyzer* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doStartCatch(EffectAnalyzer* self, Expression** currp) {
+    assert(self->tryDepth > 0 && "try depth cannot be negative");
+    self->tryDepth--;
+    self->catchDepth++;
+  }
+
+  static void doEndCatch(EffectAnalyzer* self, Expression** currp) {
+    assert(self->catchDepth > 0 && "catch depth cannot be negative");
+    self->catchDepth--;
+  }
 
   // Helper functions to check for various effect types
 
@@ -76,33 +123,45 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  // Check whether this may transfer control flow to somewhere outside of this
+  // expression (aside from just flowing out normally). That includes a break
+  // or a throw (if the throw is not known to be caught inside this expression;
+  // note that if the throw is not caught in this expression then it might be
+  // caught in this function but outside of this expression, or it might not be
+  // caught in the function at all, which would mean control flow cannot be
+  // transferred inside the function, but this expression does not know that).
+  bool transfersControlFlow() const {
+    return branchesOut || throws || hasExternalBreakTargets();
+  }
 
   bool hasGlobalSideEffects() const {
-    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
+    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
+           throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap;
+    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
+           transfersControlFlow() || implicitTrap || danglingPop;
   }
   bool hasAnything() const {
-    return branches || calls || accessesLocal() || readsMemory ||
-           writesMemory || accessesGlobal() || implicitTrap || isAtomic;
+    return hasSideEffects() || accessesLocal() || readsMemory ||
+           accessesGlobal() || isAtomic;
   }
 
-  bool noticesGlobalSideEffects() {
+  bool noticesGlobalSideEffects() const {
     return calls || readsMemory || isAtomic || globalsRead.size();
   }
 
   // check if we break to anything external from ourselves
-  bool hasExternalBreakTargets() { return !breakNames.empty(); }
+  bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
   bool invalidates(const EffectAnalyzer& other) {
-    if ((branches && other.hasSideEffects()) ||
-        (other.branches && hasSideEffects()) ||
+    if ((transfersControlFlow() && other.hasSideEffects()) ||
+        (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls))) {
+        (accessesMemory() && (other.writesMemory || other.calls)) ||
+        (danglingPop || other.danglingPop)) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
@@ -137,7 +196,8 @@ struct EffectAnalyzer
       }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+    if ((implicitTrap && other.transfersControlFlow()) ||
+        (other.implicitTrap && transfersControlFlow())) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
@@ -149,12 +209,14 @@ struct EffectAnalyzer
   }
 
   void mergeIn(EffectAnalyzer& other) {
-    branches = branches || other.branches;
+    branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
+    throws = throws || other.throws;
+    danglingPop = danglingPop || other.danglingPop;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -167,6 +229,9 @@ struct EffectAnalyzer
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
     }
+    for (auto i : other.breakTargets) {
+      breakTargets.insert(i);
+    }
   }
 
   // the checks above happen after the node's children were processed, in the
@@ -174,7 +239,7 @@ struct EffectAnalyzer
   // the children, i.e., loops
   bool checkPre(Expression* curr) {
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
       return true;
     }
     return false;
@@ -183,22 +248,22 @@ struct EffectAnalyzer
   bool checkPost(Expression* curr) {
     visit(curr);
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
     }
     return hasAnything();
   }
 
-  std::set<Name> breakNames;
+  std::set<Name> breakTargets;
 
   void visitBlock(Block* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
   }
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {
     if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
+      breakTargets.erase(curr->name); // these were internal breaks
     }
     // if the loop is unreachable, then there is branching control flow:
     //  (1) if the body is unreachable because of a (return), uncaught (br)
@@ -210,33 +275,40 @@ struct EffectAnalyzer
     //      consider that a branching side effect (note how the same logic does
     //      not apply to blocks).
     if (curr->type == Type::unreachable) {
-      branches = true;
+      branchesOut = true;
     }
   }
-  void visitBreak(Break* curr) { breakNames.insert(curr->name); }
+  void visitBreak(Break* curr) { breakTargets.insert(curr->name); }
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      breakNames.insert(name);
+      breakTargets.insert(name);
     }
-    breakNames.insert(curr->default_);
+    breakTargets.insert(curr->default_);
   }
 
   void visitCall(Call* curr) {
     calls = true;
+    // When EH is enabled, any call can throw.
+    if (features.hasExceptionHandling() && tryDepth == 0) {
+      throws = true;
+    }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
       // move code around them
       // FIXME: we could check if the call is to an import
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     calls = true;
+    if (features.hasExceptionHandling() && tryDepth == 0) {
+      throws = true;
+    }
     if (curr->isReturn) {
-      branches = true;
+      branchesOut = true;
     }
   }
   void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
@@ -378,7 +450,7 @@ struct EffectAnalyzer
   }
   void visitSelect(Select* curr) {}
   void visitDrop(Drop* curr) {}
-  void visitReturn(Return* curr) { branches = true; }
+  void visitReturn(Return* curr) { branchesOut = true; }
   void visitHost(Host* curr) {
     calls = true;
     // memory.grow modifies the set of valid addresses, and thus can be modeled
@@ -391,22 +463,108 @@ struct EffectAnalyzer
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitTry(Try* curr) {}
-  // We safely model throws as branches
-  void visitThrow(Throw* curr) { branches = true; }
-  void visitRethrow(Rethrow* curr) { branches = true; }
-  void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
+  void visitThrow(Throw* curr) {
+    if (tryDepth == 0) {
+      throws = true;
+    }
+  }
+  void visitRethrow(Rethrow* curr) {
+    if (tryDepth == 0) {
+      throws = true;
+    }
+    if (!ignoreImplicitTraps) { // rethrow traps when the arg is null
+      implicitTrap = true;
+    }
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    breakTargets.insert(curr->name);
+    if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
+      implicitTrap = true;
+    }
+  }
   void visitNop(Nop* curr) {}
-  void visitUnreachable(Unreachable* curr) { branches = true; }
-  void visitPush(Push* curr) { calls = true; }
-  void visitPop(Pop* curr) { calls = true; }
+  void visitUnreachable(Unreachable* curr) { branchesOut = true; }
+  void visitPop(Pop* curr) {
+    if (catchDepth == 0) {
+      danglingPop = true;
+    }
+  }
+  void visitTupleMake(TupleMake* curr) {}
+  void visitTupleExtract(TupleExtract* curr) {}
 
   // Helpers
 
-  static bool
-  canReorder(const PassOptions& passOptions, Expression* a, Expression* b) {
-    EffectAnalyzer aEffects(passOptions, a);
-    EffectAnalyzer bEffects(passOptions, b);
+  static bool canReorder(const PassOptions& passOptions,
+                         FeatureSet features,
+                         Expression* a,
+                         Expression* b) {
+    EffectAnalyzer aEffects(passOptions, features, a);
+    EffectAnalyzer bEffects(passOptions, features, b);
     return !aEffects.invalidates(bEffects);
+  }
+
+  // C-API
+
+  enum SideEffects : uint32_t {
+    None = 0,
+    Branches = 1 << 0,
+    Calls = 1 << 1,
+    ReadsLocal = 1 << 2,
+    WritesLocal = 1 << 3,
+    ReadsGlobal = 1 << 4,
+    WritesGlobal = 1 << 5,
+    ReadsMemory = 1 << 6,
+    WritesMemory = 1 << 7,
+    ImplicitTrap = 1 << 8,
+    IsAtomic = 1 << 9,
+    Throws = 1 << 10,
+    DanglingPop = 1 << 11,
+    Any = (1 << 12) - 1
+  };
+  uint32_t getSideEffects() const {
+    uint32_t effects = 0;
+    if (branchesOut || hasExternalBreakTargets()) {
+      effects |= SideEffects::Branches;
+    }
+    if (calls) {
+      effects |= SideEffects::Calls;
+    }
+    if (localsRead.size() > 0) {
+      effects |= SideEffects::ReadsLocal;
+    }
+    if (localsWritten.size() > 0) {
+      effects |= SideEffects::WritesLocal;
+    }
+    if (globalsRead.size() > 0) {
+      effects |= SideEffects::ReadsGlobal;
+    }
+    if (globalsWritten.size() > 0) {
+      effects |= SideEffects::WritesGlobal;
+    }
+    if (readsMemory) {
+      effects |= SideEffects::ReadsMemory;
+    }
+    if (writesMemory) {
+      effects |= SideEffects::WritesMemory;
+    }
+    if (implicitTrap) {
+      effects |= SideEffects::ImplicitTrap;
+    }
+    if (isAtomic) {
+      effects |= SideEffects::IsAtomic;
+    }
+    if (throws) {
+      effects |= SideEffects::Throws;
+    }
+    if (danglingPop) {
+      effects |= SideEffects::DanglingPop;
+    }
+    return effects;
+  }
+
+  void ignoreBranches() {
+    branchesOut = false;
+    breakTargets.clear();
   }
 };
 

@@ -1,16 +1,49 @@
 (module
  (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $none_=>_funcref (func (result funcref)))
- (export "test" (func $test))
- (func $foo (; 0 ;)
+ (event $e (attr 0) (param i32))
+ (export "ref_func_test" (func $ref_func_test))
+ (func $foo
   (nop)
  )
- (func $test (; 1 ;) (result funcref)
+ (func $ref_func_test (result funcref)
   (block
    (block $__inlined_func$foo
     (nop)
    )
   )
   (ref.func $foo)
+ )
+ (func $br_on_exn_name_uniquify_test
+  (local $exn exnref)
+  (local $1 exnref)
+  (drop
+   (block $l (result i32)
+    (block
+     (block $__inlined_func$func_inner
+      (local.set $1
+       (ref.null)
+      )
+      (drop
+       (block $l0 (result i32)
+        (drop
+         (br_on_exn $l0 $e
+          (local.get $1)
+         )
+        )
+        (i32.const 0)
+       )
+      )
+     )
+    )
+    (drop
+     (br_on_exn $l $e
+      (local.get $exn)
+     )
+    )
+    (i32.const 0)
+   )
+  )
  )
 )

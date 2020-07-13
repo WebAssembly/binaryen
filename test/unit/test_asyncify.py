@@ -24,25 +24,34 @@ class AsyncifyTest(utils.BinaryenTestCase):
         test(['-Os', '-g'])
 
     def test_asyncify_pure_wasm(self):
-        shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '-o', 'a.wasm'])
-        shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
-        output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
-        with open(self.input_path('asyncify-pure.txt'), 'r') as f:
-            self.assertEqual(f.read(), output)
+        def test(input_file):
+            shared.run_process(shared.WASM_OPT + [input_file, '--asyncify', '-o', 'a.wasm'])
+            shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
+            output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
+            with open(self.input_path('asyncify-pure.txt'), 'r') as f:
+                self.assertEqual(f.read(), output)
+
+        # test wat input
+        wat = self.input_path('asyncify-pure.wat')
+        test(wat)
+
+        # test wasm input
+        shared.run_process(shared.WASM_AS + [wat, '-o', 'a.wasm'])
+        test('a.wasm')
 
     def test_asyncify_list_bad(self):
         for arg, warning in [
-            ('--pass-arg=asyncify-blacklist@nonexistent', 'nonexistent'),
-            ('--pass-arg=asyncify-whitelist@nonexistent', 'nonexistent'),
-            ('--pass-arg=asyncify-blacklist@main', None),
-            ('--pass-arg=asyncify-whitelist@main', None),
-            ('--pass-arg=asyncify-blacklist@m*n', None),
-            ('--pass-arg=asyncify-whitelist@m*n', None),
-            ('--pass-arg=asyncify-whitelist@main*', None),
-            ('--pass-arg=asyncify-whitelist@*main', None),
-            ('--pass-arg=asyncify-blacklist@non*existent', 'non*existent'),
-            ('--pass-arg=asyncify-whitelist@non*existent', 'non*existent'),
-            ('--pass-arg=asyncify-whitelist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
+            ('--pass-arg=asyncify-removelist@nonexistent', 'nonexistent'),
+            ('--pass-arg=asyncify-onlylist@nonexistent', 'nonexistent'),
+            ('--pass-arg=asyncify-removelist@main', None),
+            ('--pass-arg=asyncify-onlylist@main', None),
+            ('--pass-arg=asyncify-removelist@m*n', None),
+            ('--pass-arg=asyncify-onlylist@m*n', None),
+            ('--pass-arg=asyncify-onlylist@main*', None),
+            ('--pass-arg=asyncify-onlylist@*main', None),
+            ('--pass-arg=asyncify-removelist@non*existent', 'non*existent'),
+            ('--pass-arg=asyncify-onlylist@non*existent', 'non*existent'),
+            ('--pass-arg=asyncify-onlylist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
         ]:
             print(arg, warning)
             err = shared.run_process(shared.WASM_OPT + ['-q', self.input_path('asyncify-pure.wat'), '--asyncify', arg], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.strip()
@@ -52,10 +61,18 @@ class AsyncifyTest(utils.BinaryenTestCase):
             else:
                 self.assertNotIn('warning', err)
 
-    def test_asyncify_blacklist_and_whitelist(self):
-        proc = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
-        self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
-        self.assertIn('It makes no sense to use both a blacklist and a whitelist with asyncify', proc.stdout)
+    def test_asyncify_onlylist_and_other(self):
+        def test(list_name):
+            args = shared.WASM_OPT + [self.input_path('asyncify-pure.wat'),
+                                      '--asyncify',
+                                      '--pass-arg=asyncify-onlylist@main',
+                                      '--pass-arg=asyncify-%slist@main' % list_name]
+            proc = shared.run_process(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+            self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
+            self.assertIn('It makes no sense to use both an asyncify only-list together with another list', proc.stdout)
+
+        test('remove')
+        test('add')
 
     def test_asyncify_imports(self):
         def test(args):

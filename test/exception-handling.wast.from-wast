@@ -1,24 +1,26 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $anyref_=>_none (func (param anyref)))
+ (type $externref_=>_none (func (param externref)))
  (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $e0 (attr 0) (param i32))
- (event $e1 (attr 0) (param anyref))
- (func $exnref_test (; 0 ;) (param $0 exnref) (result exnref)
+ (event $e1 (attr 0) (param externref))
+ (func $exnref_test (param $0 exnref) (result exnref)
   (local.get $0)
  )
- (func $foo (; 1 ;)
+ (func $foo
   (nop)
  )
- (func $bar (; 2 ;)
+ (func $bar
   (nop)
  )
- (func $eh_test (; 3 ;)
+ (func $eh_test
   (local $exn exnref)
   (try
-   (throw $e0
-    (i32.const 0)
+   (do
+    (throw $e0
+     (i32.const 0)
+    )
    )
    (catch
     (local.set $exn
@@ -37,14 +39,18 @@
   )
   (block $l1
    (try
-    (br $l1)
+    (do
+     (br $l1)
+    )
     (catch
      (br $l1)
     )
    )
   )
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)
@@ -52,7 +58,7 @@
    )
   )
   (try
-   (block $block
+   (do
     (call $foo)
     (call $bar)
    )
@@ -65,9 +71,11 @@
    )
   )
  )
- (func $subtype_test (; 4 ;)
+ (func $subtype_test
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (drop
      (exnref.pop)

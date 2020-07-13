@@ -1671,3 +1671,114 @@
   (local.get $1)
  )
 )
+(module
+  (event $event$0 (attr 0) (param))
+  (func $unoptimizable-br_on_exn-block (result exnref) (local $0 exnref)
+    (block $label$0
+      (local.set $0
+        ;; br_on_exn's target block cannot be optimized to have a return value
+        (br_on_exn $label$0 $event$0
+          (ref.null)
+        )
+      )
+    )
+    (local.get $0)
+  )
+
+  (event $event$1 (attr 0) (param exnref))
+  (func $br_on_exn-trap (local $0 exnref)
+    ;; This dead local.set cannot be replaced with a nop because br_on_exn can
+    ;; trap.
+    (local.set $0
+      (block $label$1 (result exnref)
+        (br_on_exn $label$1 $event$1
+          (ref.null)
+        )
+      )
+    )
+  )
+
+  (func $rethrow-trap (local $0 i32)
+    ;; This dead local.set cannot be replaced with a nop because rethrow can
+    ;; trap.
+    (local.set $0
+      (block $label$1 (result i32)
+        (try
+          (do (rethrow (ref.null)))
+          (catch)
+        )
+        (i32.const 0)
+      )
+    )
+  )
+
+  (func $foo (param i32 exnref))
+  (func $pop-cannot-be-sinked (local $0 exnref)
+    (try
+      (do)
+      (catch
+        ;; This (local.set $0) of (exnref.pop) cannot be sinked to
+        ;; (local.get $0) below, because exnref.pop should follow right after
+        ;; 'catch'.
+        (local.set $0 (exnref.pop))
+        (call $foo
+          (i32.const 3)
+          (local.get $0)
+        )
+      )
+    )
+  )
+
+  (func $pop-within-catch-can-be-sinked (local $0 exnref)
+    (try
+      (do)
+      (catch
+        ;; This whole 'try' body can be sinked to eliminate local.set /
+        ;; local.get. Even though it contains a pop, it is enclosed within
+        ;; try-catch, so it is OK.
+        (local.set $0
+          (try (result exnref)
+            (do (ref.null))
+            (catch (exnref.pop))
+          )
+        )
+        (call $foo
+          (i32.const 3)
+          (local.get $0)
+        )
+      )
+    )
+  )
+
+  (func $bar (result i32) (i32.const 3))
+  (func $call-cannot-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee should NOT be sinked into 'try' below, because it may
+      ;; throw
+      (local.tee $0 (call $bar))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
+
+  (func $non-call-can-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee can be sinked into 'try' below, because it cannot throw
+      (local.tee $0 (i32.const 3))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
+)

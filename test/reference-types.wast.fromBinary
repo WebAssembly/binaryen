@@ -1,6 +1,6 @@
 (module
- (type $anyref_=>_none (func (param anyref)))
- (type $none_=>_anyref (func (result anyref)))
+ (type $externref_=>_none (func (param externref)))
+ (type $none_=>_externref (func (result externref)))
  (type $funcref_=>_none (func (param funcref)))
  (type $nullref_=>_none (func (param nullref)))
  (type $exnref_=>_none (func (param exnref)))
@@ -8,37 +8,37 @@
  (type $none_=>_exnref (func (result exnref)))
  (type $none_=>_none (func))
  (type $none_=>_nullref (func (result nullref)))
- (type $anyref_=>_funcref (func (param anyref) (result funcref)))
- (import "env" "import_global" (global $gimport$1 anyref))
- (import "env" "import_func" (func $import_func (param anyref) (result funcref)))
+ (type $externref_=>_funcref (func (param externref) (result funcref)))
+ (import "env" "import_global" (global $gimport$1 externref))
+ (import "env" "import_func" (func $import_func (param externref) (result funcref)))
  (table $0 4 4 funcref)
- (elem (i32.const 0) $take_anyref $take_funcref $take_exnref $take_nullref)
- (global $global$0 (mut anyref) (ref.null))
+ (elem (i32.const 0) $take_externref $take_funcref $take_exnref $take_nullref)
+ (global $global$0 (mut externref) (ref.null))
  (global $global$1 (mut funcref) (ref.null))
  (global $global$2 (mut exnref) (ref.null))
  (global $global$3 (mut nullref) (ref.null))
- (global $global$4 (mut anyref) (ref.func $foo))
+ (global $global$4 (mut externref) (ref.func $foo))
  (global $global$5 (mut funcref) (ref.func $foo))
  (export "export_func" (func $import_func))
  (export "export_global" (global $gimport$1))
- (func $take_anyref (; 1 ;) (param $0 anyref)
+ (func $take_externref (param $0 externref)
   (nop)
  )
- (func $take_funcref (; 2 ;) (param $0 funcref)
+ (func $take_funcref (param $0 funcref)
   (nop)
  )
- (func $take_exnref (; 3 ;) (param $0 exnref)
+ (func $take_exnref (param $0 exnref)
   (nop)
  )
- (func $take_nullref (; 4 ;) (param $0 nullref)
+ (func $take_nullref (param $0 nullref)
   (nop)
  )
- (func $foo (; 5 ;)
+ (func $foo
   (nop)
  )
- (func $test (; 6 ;)
+ (func $test
   (local $0 funcref)
-  (local $1 anyref)
+  (local $1 externref)
   (local $2 nullref)
   (local $3 exnref)
   (local.set $1
@@ -119,31 +119,31 @@
   (global.set $global$3
    (ref.null)
   )
-  (call $take_anyref
+  (call $take_externref
    (local.get $1)
   )
-  (call $take_anyref
+  (call $take_externref
    (local.get $0)
   )
-  (call $take_anyref
+  (call $take_externref
    (local.get $3)
   )
-  (call $take_anyref
+  (call $take_externref
    (ref.null)
   )
-  (call_indirect (type $anyref_=>_none)
+  (call_indirect (type $externref_=>_none)
    (local.get $1)
    (i32.const 0)
   )
-  (call_indirect (type $anyref_=>_none)
+  (call_indirect (type $externref_=>_none)
    (local.get $0)
    (i32.const 0)
   )
-  (call_indirect (type $anyref_=>_none)
+  (call_indirect (type $externref_=>_none)
    (local.get $3)
    (i32.const 0)
   )
-  (call_indirect (type $anyref_=>_none)
+  (call_indirect (type $externref_=>_none)
    (ref.null)
    (i32.const 0)
   )
@@ -172,7 +172,7 @@
    (i32.const 3)
   )
   (drop
-   (block $label$1 (result anyref)
+   (block $label$1 (result externref)
     (br_if $label$1
      (local.get $1)
      (i32.const 1)
@@ -180,7 +180,7 @@
    )
   )
   (drop
-   (block $label$2 (result anyref)
+   (block $label$2 (result externref)
     (br_if $label$2
      (local.get $0)
      (i32.const 1)
@@ -188,7 +188,7 @@
    )
   )
   (drop
-   (block $label$3 (result anyref)
+   (block $label$3 (result externref)
     (br_if $label$3
      (local.get $3)
      (i32.const 1)
@@ -196,7 +196,7 @@
    )
   )
   (drop
-   (block $label$4 (result anyref)
+   (block $label$4 (result externref)
     (br_if $label$4
      (ref.null)
      (i32.const 1)
@@ -228,22 +228,22 @@
    )
   )
   (drop
-   (loop $label$8 (result anyref)
+   (loop $label$8 (result externref)
     (local.get $1)
    )
   )
   (drop
-   (loop $label$9 (result anyref)
+   (loop $label$9 (result externref)
     (local.get $0)
    )
   )
   (drop
-   (loop $label$10 (result anyref)
+   (loop $label$10 (result externref)
     (local.get $3)
    )
   )
   (drop
-   (loop $label$11 (result anyref)
+   (loop $label$11 (result externref)
     (ref.null)
    )
   )
@@ -273,14 +273,14 @@
    )
   )
   (drop
-   (if (result anyref)
+   (if (result externref)
     (i32.const 1)
     (local.get $1)
     (local.get $3)
    )
   )
   (drop
-   (if (result anyref)
+   (if (result externref)
     (i32.const 1)
     (ref.func $foo)
     (ref.null)
@@ -308,16 +308,20 @@
    )
   )
   (drop
-   (try (result anyref)
-    (local.get $1)
+   (try (result externref)
+    (do
+     (local.get $1)
+    )
     (catch
      (exnref.pop)
     )
    )
   )
   (drop
-   (try (result anyref)
-    (ref.func $foo)
+   (try (result externref)
+    (do
+     (ref.func $foo)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -328,7 +332,9 @@
   )
   (drop
    (try (result funcref)
-    (ref.func $foo)
+    (do
+     (ref.func $foo)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -339,7 +345,9 @@
   )
   (drop
    (try (result exnref)
-    (ref.null)
+    (do
+     (ref.null)
+    )
     (catch
      (exnref.pop)
     )
@@ -347,7 +355,9 @@
   )
   (drop
    (try (result nullref)
-    (ref.null)
+    (do
+     (ref.null)
+    )
     (catch
      (drop
       (exnref.pop)
@@ -357,28 +367,28 @@
    )
   )
   (drop
-   (select (result anyref)
+   (select (result externref)
     (local.get $1)
     (ref.func $foo)
     (i32.const 1)
    )
   )
   (drop
-   (select (result anyref)
+   (select (result externref)
     (local.get $3)
     (local.get $1)
     (i32.const 1)
    )
   )
   (drop
-   (select (result anyref)
+   (select (result externref)
     (local.get $1)
     (ref.null)
     (i32.const 1)
    )
   )
   (drop
-   (select (result anyref)
+   (select (result externref)
     (ref.null)
     (ref.func $foo)
     (i32.const 1)
@@ -433,56 +443,56 @@
    )
   )
  )
- (func $return_anyref (; 7 ;) (result anyref)
-  (local $0 anyref)
+ (func $return_externref (result externref)
+  (local $0 externref)
   (local.get $0)
  )
- (func $return_anyref2 (; 8 ;) (result anyref)
+ (func $return_externref2 (result externref)
   (ref.func $foo)
  )
- (func $return_anyref3 (; 9 ;) (result anyref)
+ (func $return_externref3 (result externref)
   (local $0 exnref)
   (local.get $0)
  )
- (func $return_anyref4 (; 10 ;) (result anyref)
+ (func $return_externref4 (result externref)
   (ref.null)
  )
- (func $return_funcref (; 11 ;) (result funcref)
+ (func $return_funcref (result funcref)
   (ref.func $foo)
  )
- (func $return_funcref2 (; 12 ;) (result funcref)
+ (func $return_funcref2 (result funcref)
   (ref.null)
  )
- (func $return_exnref (; 13 ;) (result exnref)
+ (func $return_exnref (result exnref)
   (local $0 exnref)
   (local.get $0)
  )
- (func $return_exnref2 (; 14 ;) (result exnref)
+ (func $return_exnref2 (result exnref)
   (ref.null)
  )
- (func $return_nullref (; 15 ;) (result nullref)
+ (func $return_nullref (result nullref)
   (local $0 nullref)
   (local.get $0)
  )
- (func $return_anyref_returns (; 16 ;) (result anyref)
-  (local $0 anyref)
+ (func $return_externref_returns (result externref)
+  (local $0 externref)
   (local $1 exnref)
   (return
    (local.get $0)
   )
  )
- (func $return_funcref_returns (; 17 ;) (result funcref)
+ (func $return_funcref_returns (result funcref)
   (return
    (ref.func $foo)
   )
  )
- (func $return_exnref_returns (; 18 ;) (result exnref)
+ (func $return_exnref_returns (result exnref)
   (local $0 exnref)
   (return
    (local.get $0)
   )
  )
- (func $return_nullref_returns (; 19 ;) (result nullref)
+ (func $return_nullref_returns (result nullref)
   (local $0 nullref)
   (return
    (local.get $0)

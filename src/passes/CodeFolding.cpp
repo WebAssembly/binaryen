@@ -59,6 +59,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -153,6 +154,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     }
     unoptimizables.insert(curr->default_);
   }
+
+  void visitBrOnExn(BrOnExn* curr) { unoptimizables.insert(curr->name); }
 
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
@@ -300,6 +303,27 @@ private:
       if (intersection.size() > 0) {
         // anything exiting that is in all targets is something bad
         return false;
+      }
+      if (getModule()->features.hasExceptionHandling()) {
+        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
+        // Currently pop instructions are only used for exnref.pop, which is a
+        // pseudo instruction following a catch. We cannot move expressions
+        // containing pops if they are not enclosed in a 'catch' body, because a
+        // pop instruction should follow right after 'catch'.
+        if (effects.danglingPop) {
+          return false;
+        }
+        // When an expression can throw and it is within a try scope, taking it
+        // out of the try scope changes the program's behavior, because the
+        // expression that would otherwise have been caught by the try now
+        // throws up to the next try scope or even up to the caller. We restrict
+        // the move if 'outOf' contains a 'try' anywhere in it. This is a
+        // conservative approximation because there can be cases that 'try' is
+        // within the expression that may throw so it is safe to take the
+        // expression out.
+        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
+          return false;
+        }
       }
     }
     return true;
@@ -569,7 +593,9 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(), newItem)
+                                if (EffectAnalyzer(getPassOptions(),
+                                                   getModule()->features,
+                                                   newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }

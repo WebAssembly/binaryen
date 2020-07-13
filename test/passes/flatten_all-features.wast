@@ -1027,8 +1027,8 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  (func $subtype (result anyref) (local $0 nullref)
-    (block $label0 (result anyref)
+  (func $subtype (result externref) (local $0 nullref)
+    (block $label0 (result externref)
       (block (result nullref)
         (local.tee $0
           (br_if $label0
@@ -1039,4 +1039,18 @@
       )
     )
   )
+)
+(module
+ (func $0 (param $0 i64) (param $1 f32)
+  (nop)
+ )
+ (func "test" (result i32)
+  (call $0
+   (unreachable) ;; the unreachable should be handled properly, and not be
+                 ;; reordered with the return
+   (return
+    (i32.const -111)
+   )
+  )
+ )
 )

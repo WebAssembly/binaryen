@@ -50,8 +50,9 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool DWARF = false;
-  bool isSideModule = false;
+  bool sideModule = false;
   bool legalizeJavaScriptFFI = true;
+  bool bigInt = false;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
@@ -100,8 +101,8 @@ int main(int argc, const char* argv[]) {
          "",
          "Input is an emscripten side module",
          Options::Arguments::Zero,
-         [&isSideModule](Options* o, const std::string& argument) {
-           isSideModule = true;
+         [&sideModule](Options* o, const std::string& argument) {
+           sideModule = true;
          })
     .add("--input-source-map",
          "-ism",
@@ -118,6 +119,13 @@ int main(int argc, const char* argv[]) {
          [&legalizeJavaScriptFFI](Options* o, const std::string&) {
            legalizeJavaScriptFFI = false;
          })
+    .add("--bigint",
+         "-bi",
+         "Assume JS will use wasm/JS BigInt integration, so wasm i64s will "
+         "turn into JS BigInts, and there is no need for any legalization at "
+         "all (not even minimal legalization of dynCalls)",
+         Options::Arguments::Zero,
+         [&bigInt](Options* o, const std::string&) { bigInt = true; })
     .add("--output-source-map",
          "-osm",
          "Emit source map to the specified file",
@@ -191,7 +199,7 @@ int main(int argc, const char* argv[]) {
 
   uint32_t dataSize = 0;
 
-  if (!isSideModule) {
+  if (!sideModule) {
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
@@ -215,6 +223,7 @@ int main(int argc, const char* argv[]) {
 
   EmscriptenGlueGenerator generator(wasm);
   generator.setStandalone(standaloneWasm);
+  generator.setSideModule(sideModule);
 
   generator.fixInvokeFunctionNames();
 
@@ -232,17 +241,16 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
-  if (checkStackOverflow && !isSideModule) {
+  if (checkStackOverflow && !sideModule) {
     generator.enforceStackLimit();
   }
 
-  if (isSideModule) {
+  if (sideModule) {
     BYN_TRACE("finalizing as side module\n");
     generator.replaceStackPointerGlobal();
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    generator.generateRuntimeFunctions();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
@@ -269,10 +277,13 @@ int main(int argc, const char* argv[]) {
   } else {
     // If not standalone wasm then JS is relevant and we need dynCalls.
     generator.generateDynCallThunks();
+    // This is also not needed in standalone mode since standalone mode uses
+    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
+    generator.renameMainArgcArgv();
   }
 
-  // Legalize the wasm.
-  {
+  // Legalize the wasm, if BigInts don't make that moot.
+  if (!bigInt) {
     BYN_TRACE("legalizing types\n");
     PassRunner passRunner(&wasm);
     passRunner.setOptions(options.passOptions);

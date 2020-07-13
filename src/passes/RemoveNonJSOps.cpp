@@ -52,7 +52,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   void doWalkModule(Module* module) {
     // Intrinsics may use scratch memory, ensure it.
-    ABI::wasm2js::ensureScratchMemoryHelpers(module);
+    ABI::wasm2js::ensureHelpers(module);
 
     // Discover all of the intrinsics that we need to inject, lowering all
     // operations to intrinsic calls while we're at it.
@@ -105,6 +105,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         doWalkFunction(func);
       }
       neededFunctions.clear();
+    }
+
+    // Copy all the globals in the intrinsics module
+    for (auto& global : intrinsicsModule.globals) {
+      ModuleUtils::copyGlobal(global.get(), *module);
     }
 
     // Intrinsics may use memory, so ensure the module has one.

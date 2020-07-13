@@ -264,7 +264,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     }
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
       WASM_UNREACHABLE("unexpected const type");
@@ -372,6 +372,9 @@ struct UniqueNameMapper {
       }
 
       void visitBreak(Break* curr) {
+        curr->name = mapper.sourceToUnique(curr->name);
+      }
+      void visitBrOnExn(BrOnExn* curr) {
         curr->name = mapper.sourceToUnique(curr->name);
       }
       void visitSwitch(Switch* curr) {

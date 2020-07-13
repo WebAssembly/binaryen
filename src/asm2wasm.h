@@ -457,7 +457,7 @@ private:
   void allocateGlobal(IString name, Type type, Literal value = Literal()) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     if (value.type == Type::none) {
-      value = Literal::makeZero(type);
+      value = Literal::makeSingleZero(type);
     }
     mappedGlobals.emplace(name, MappedGlobal(type));
     wasm.addGlobal(builder.makeGlobal(
@@ -2028,7 +2028,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32ToFloat64
                                                 : ConvertSInt32ToFloat64;
           conv->value = ret;
-          conv->type = Type::Type::f64;
+          conv->type = Type::f64;
           return conv;
         }
         if (ret->type == Type::f32) {
@@ -3251,6 +3251,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         (bytes == 1 && ptr->isArray(BINARY) && ptr[1] == OR &&
          ptr[3]->isNumber() && ptr[3]->getInteger() == 0)) {
       return process(ptr[2]);
+    }
+    // If there is no shift at all, process the variable directly
+    // E.g. the address variable "$4" in Atomics_compareExchange(HEAP8, $4, $7,
+    // $8);
+    if (ptr->isString()) {
+      return process(ptr);
     }
     // Otherwise do the same as processUnshifted.
     return processUnshifted(ptr, bytes);

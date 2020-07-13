@@ -62,13 +62,17 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    // Nothing to do for constants, nop, and unreachable
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
-        curr->is<Unreachable>()) {
+    // Nothing to do for constants and nop.
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
 
-    if (Flat::isControlFlowStructure(curr)) {
+    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
+        curr->is<BrOnExn>()) {
+      Fatal() << "Flatten does not support EH instructions yet";
+    }
+
+    if (Properties::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
@@ -207,7 +211,7 @@ struct Flatten
             // the return type of the block this branch is targetting, which may
             // not be the same with the innermost block's return type. For
             // example,
-            // (block $any (result anyref)
+            // (block $any (result externref)
             //   (block (result nullref)
             //     (local.tee $0
             //       (br_if $any
@@ -218,7 +222,7 @@ struct Flatten
             //   )
             // )
             // In this case we need two locals to store (ref.null); one with
-            // anyref type that's for the target block ($label0) and one more
+            // externref type that's for the target block ($label0) and one more
             // with nullref type in case for flowing out. Here we create the
             // second 'flowing out' local in case two block's types are
             // different.
@@ -291,7 +295,7 @@ struct Flatten
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !Flat::isControlFlowStructure(parent)) {
+      if (parent && !Properties::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);

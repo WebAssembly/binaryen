@@ -12,9 +12,9 @@
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
  )
- (func $used\28int\29 (; 1 ;) (param $0 i32) (result i32)
+ (func $used\28int\29 (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -126,7 +126,7 @@
    (local.get $10)
   )
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -237,7 +237,7 @@
    (local.get $8)
   )
  )
- (func $main (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   ;; code offset: 0xce
   (local.set $2
@@ -551,7 +551,7 @@ DWARF debug info
 Contains section .debug_info (175 bytes)
 Contains section .debug_ranges (32 bytes)
 Contains section .debug_abbrev (117 bytes)
-Contains section .debug_line (163 bytes)
+Contains section .debug_line (169 bytes)
 Contains section .debug_str (235 bytes)
 
 .debug_abbrev contents:
@@ -622,7 +622,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/home/alon/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000005, 0x0000005f))
+                 [0x00000005, 0x0000005b))
 
 0x00000026:   DW_TAG_variable [2]  
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b5] = "quine")
@@ -650,7 +650,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000004f:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000005a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000056)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c4] = "_Z4usedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cd] = "used")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
@@ -669,7 +669,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000075:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000005a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000d2] = "_Z6unusedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dd] = "unused")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
@@ -687,8 +687,8 @@ Abbrev table for offset: 0x00000000
 0x0000009a:     NULL
 
 0x0000009b:   DW_TAG_subprogram [8]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000060)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000064)
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000005c)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000051)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e4] = "main")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
                 DW_AT_decl_line [DW_FORM_data1]	(16)
@@ -700,7 +700,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x0000009f
+    total_length: 0x000000a5
          version: 4
  prologue_length: 0x0000001d
  min_inst_length: 1
@@ -726,65 +726,80 @@ file_names[  1]:
       dir_index: 0
        mod_time: 0x00000000
          length: 0x00000000
-0x00000027: 00 DW_LNE_set_address (0x000000000000001e)
-0x0000002e: 03 DW_LNS_advance_line (5)
-0x00000030: 05 DW_LNS_set_column (4)
-0x00000032: 0a DW_LNS_set_prologue_end
-0x00000033: 00 DW_LNE_end_sequence
-            0x000000000000001e      5      4      1   0             0  is_stmt end_sequence
+0x00000027: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002e: 03 DW_LNS_advance_line (4)
+0x00000030: 01 DW_LNS_copy
+            0x0000000000000005      4      0      1   0             0  is_stmt
 
-0x00000036: 00 DW_LNE_set_address (0x0000000000000037)
-0x0000003d: 03 DW_LNS_advance_line (6)
-0x0000003f: 05 DW_LNS_set_column (4)
-0x00000041: 0a DW_LNS_set_prologue_end
-0x00000042: 00 DW_LNE_end_sequence
-            0x0000000000000037      6      4      1   0             0  is_stmt end_sequence
 
-0x00000045: 00 DW_LNE_set_address (0x0000000000000050)
-0x0000004c: 03 DW_LNS_advance_line (7)
-0x0000004e: 05 DW_LNS_set_column (10)
-0x00000050: 0a DW_LNS_set_prologue_end
-0x00000051: 00 DW_LNE_end_sequence
-            0x0000000000000050      7     10      1   0             0  is_stmt end_sequence
+0x00000031: 00 DW_LNE_set_address (0x000000000000001e)
+0x00000038: 03 DW_LNS_advance_line (5)
+0x0000003a: 05 DW_LNS_set_column (4)
+0x0000003c: 0a DW_LNS_set_prologue_end
+0x0000003d: 01 DW_LNS_copy
+            0x000000000000001e      5      4      1   0             0  is_stmt prologue_end
+
+
+0x0000003e: 00 DW_LNE_set_address (0x0000000000000037)
+0x00000045: 03 DW_LNS_advance_line (6)
+0x00000047: 01 DW_LNS_copy
+            0x0000000000000037      6      4      1   0             0  is_stmt
+
+
+0x00000048: 00 DW_LNE_set_address (0x0000000000000050)
+0x0000004f: 03 DW_LNS_advance_line (7)
+0x00000051: 05 DW_LNS_set_column (10)
+0x00000053: 01 DW_LNS_copy
+            0x0000000000000050      7     10      1   0             0  is_stmt
+
 
 0x00000054: 00 DW_LNE_set_address (0x0000000000000057)
-0x0000005b: 03 DW_LNS_advance_line (7)
-0x0000005d: 05 DW_LNS_set_column (3)
-0x0000005f: 06 DW_LNS_negate_stmt
-0x00000060: 0a DW_LNS_set_prologue_end
-0x00000061: 00 DW_LNE_end_sequence
-            0x0000000000000057      7      3      1   0             0  end_sequence
+0x0000005b: 05 DW_LNS_set_column (3)
+0x0000005d: 06 DW_LNS_negate_stmt
+0x0000005e: 01 DW_LNS_copy
+            0x0000000000000057      7      3      1   0             0 
 
-0x00000064: 00 DW_LNE_set_address (0x0000000000000081)
-0x0000006b: 03 DW_LNS_advance_line (17)
-0x0000006d: 05 DW_LNS_set_column (10)
-0x0000006f: 0a DW_LNS_set_prologue_end
-0x00000070: 00 DW_LNE_end_sequence
-            0x0000000000000081     17     10      1   0             0  is_stmt end_sequence
 
-0x00000073: 00 DW_LNE_set_address (0x0000000000000087)
+0x0000005f: 00 DW_LNE_set_address (0x000000000000005b)
+0x00000066: 00 DW_LNE_end_sequence
+            0x000000000000005b      7      3      1   0             0  end_sequence
+
+0x00000069: 00 DW_LNE_set_address (0x000000000000005c)
+0x00000070: 03 DW_LNS_advance_line (16)
+0x00000072: 01 DW_LNS_copy
+            0x000000000000005c     16      0      1   0             0  is_stmt
+
+
+0x00000073: 00 DW_LNE_set_address (0x0000000000000081)
 0x0000007a: 03 DW_LNS_advance_line (17)
-0x0000007c: 05 DW_LNS_set_column (25)
-0x0000007e: 06 DW_LNS_negate_stmt
-0x0000007f: 0a DW_LNS_set_prologue_end
-0x00000080: 00 DW_LNE_end_sequence
-            0x0000000000000087     17     25      1   0             0  end_sequence
+0x0000007c: 05 DW_LNS_set_column (10)
+0x0000007e: 0a DW_LNS_set_prologue_end
+0x0000007f: 01 DW_LNS_copy
+            0x0000000000000081     17     10      1   0             0  is_stmt prologue_end
 
-0x00000083: 00 DW_LNE_set_address (0x0000000000000093)
-0x0000008a: 03 DW_LNS_advance_line (17)
-0x0000008c: 05 DW_LNS_set_column (19)
-0x0000008e: 06 DW_LNS_negate_stmt
-0x0000008f: 0a DW_LNS_set_prologue_end
-0x00000090: 00 DW_LNE_end_sequence
-            0x0000000000000093     17     19      1   0             0  end_sequence
 
-0x00000093: 00 DW_LNE_set_address (0x000000000000009a)
-0x0000009a: 03 DW_LNS_advance_line (17)
+0x00000080: 00 DW_LNE_set_address (0x0000000000000087)
+0x00000087: 05 DW_LNS_set_column (25)
+0x00000089: 06 DW_LNS_negate_stmt
+0x0000008a: 01 DW_LNS_copy
+            0x0000000000000087     17     25      1   0             0 
+
+
+0x0000008b: 00 DW_LNE_set_address (0x0000000000000093)
+0x00000092: 05 DW_LNS_set_column (19)
+0x00000094: 01 DW_LNS_copy
+            0x0000000000000093     17     19      1   0             0 
+
+
+0x00000095: 00 DW_LNE_set_address (0x000000000000009a)
 0x0000009c: 05 DW_LNS_set_column (3)
-0x0000009e: 06 DW_LNS_negate_stmt
-0x0000009f: 0a DW_LNS_set_prologue_end
-0x000000a0: 00 DW_LNE_end_sequence
-            0x000000000000009a     17      3      1   0             0  end_sequence
+0x0000009e: 01 DW_LNS_copy
+            0x000000000000009a     17      3      1   0             0 
+
+
+0x0000009f: 00 DW_LNE_set_address (0x00000000000000ad)
+0x000000a6: 00 DW_LNE_end_sequence
+            0x00000000000000ad     17      3      1   0             0  end_sequence
 
 
 .debug_str contents:
@@ -802,9 +817,9 @@ file_names[  1]:
 0x000000e9: "x"
 
 .debug_ranges contents:
-00000000 00000005 0000005f
+00000000 00000005 0000005b
 00000000 <End of list>
-00000010 00000060 000000c4
+00000010 0000005c 000000ad
 00000010 <End of list>
 (module
  (type $none_=>_none (func))
@@ -820,9 +835,9 @@ file_names[  1]:
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 0 ;)
+ (func $__wasm_call_ctors
  )
- (func $used\28int\29 (; 1 ;) (param $0 i32) (result i32)
+ (func $used\28int\29 (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -934,7 +949,7 @@ file_names[  1]:
    (local.get $10)
   )
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -1045,7 +1060,7 @@ file_names[  1]:
    (local.get $8)
   )
  )
- (func $main (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   ;; code offset: 0xb3
   (local.set $2
@@ -1061,7 +1076,7 @@ file_names[  1]:
  ;; custom section ".debug_info", size 175
  ;; custom section ".debug_ranges", size 32
  ;; custom section ".debug_abbrev", size 117
- ;; custom section ".debug_line", size 163
+ ;; custom section ".debug_line", size 169
  ;; custom section ".debug_str", size 235
  ;; custom section "producers", size 180
 )

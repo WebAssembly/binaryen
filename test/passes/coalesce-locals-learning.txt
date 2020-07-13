@@ -6,20 +6,20 @@
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
  (memory $0 10)
- (func $nothing-to-do (; 1 ;)
+ (func $nothing-to-do
   (local $0 i32)
   (nop)
  )
- (func $merge (; 2 ;)
+ (func $merge
   (local $0 i32)
   (nop)
  )
- (func $leave-type (; 3 ;)
+ (func $leave-type
   (local $0 i32)
   (local $1 f32)
   (nop)
  )
- (func $leave-interfere (; 4 ;)
+ (func $leave-interfere
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -35,7 +35,7 @@
    (local.get $1)
   )
  )
- (func $almost-interfere (; 5 ;)
+ (func $almost-interfere
   (local $0 i32)
   (local.set $0
    (i32.const 0)
@@ -50,7 +50,7 @@
    (local.get $0)
   )
  )
- (func $redundant-copy (; 6 ;)
+ (func $redundant-copy
   (local $0 i32)
   (local.set $0
    (i32.const 0)
@@ -60,7 +60,7 @@
    (local.get $0)
   )
  )
- (func $ineffective-store (; 7 ;)
+ (func $ineffective-store
   (local $0 i32)
   (drop
    (i32.const 0)
@@ -72,7 +72,7 @@
    (local.get $0)
   )
  )
- (func $block (; 8 ;)
+ (func $block
   (local $0 i32)
   (block $block0
    (local.set $0
@@ -83,7 +83,7 @@
    (local.get $0)
   )
  )
- (func $see-both-sides (; 9 ;)
+ (func $see-both-sides
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -101,7 +101,7 @@
    (local.get $1)
   )
  )
- (func $see-br-and-ignore-dead (; 10 ;)
+ (func $see-br-and-ignore-dead
   (local $0 i32)
   (local.set $0
    (i32.const 0)
@@ -122,7 +122,7 @@
    (local.get $0)
   )
  )
- (func $see-block-body (; 11 ;)
+ (func $see-block-body
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -141,7 +141,7 @@
    (local.get $0)
   )
  )
- (func $zero-init (; 12 ;)
+ (func $zero-init
   (local $0 i32)
   (local $1 i32)
   (drop
@@ -151,7 +151,7 @@
    (local.get $1)
   )
  )
- (func $multi (; 13 ;)
+ (func $multi
   (local $0 i32)
   (local $1 i32)
   (drop
@@ -161,7 +161,7 @@
    (local.get $1)
   )
  )
- (func $if-else (; 14 ;)
+ (func $if-else
   (local $0 i32)
   (local $1 i32)
   (if
@@ -174,7 +174,7 @@
    )
   )
  )
- (func $if-else-parallel (; 15 ;)
+ (func $if-else-parallel
   (local $0 i32)
   (if
    (i32.const 0)
@@ -196,7 +196,7 @@
    )
   )
  )
- (func $if-else-after (; 16 ;)
+ (func $if-else-after
   (local $0 i32)
   (local $1 i32)
   (if
@@ -215,7 +215,7 @@
    (local.get $1)
   )
  )
- (func $if-else-through (; 17 ;)
+ (func $if-else-through
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -240,7 +240,7 @@
    (local.get $1)
   )
  )
- (func $if-through (; 18 ;)
+ (func $if-through
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -262,7 +262,7 @@
    (local.get $1)
   )
  )
- (func $if-through2 (; 19 ;)
+ (func $if-through2
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -281,7 +281,7 @@
    (local.get $1)
   )
  )
- (func $if-through3 (; 20 ;)
+ (func $if-through3
   (local $0 i32)
   (local $1 i32)
   (local.set $0
@@ -299,7 +299,7 @@
    )
   )
  )
- (func $if2 (; 21 ;)
+ (func $if2
   (local $0 i32)
   (local $1 i32)
   (if
@@ -316,7 +316,7 @@
    )
   )
  )
- (func $if3 (; 22 ;)
+ (func $if3
   (local $0 i32)
   (local $1 i32)
   (if
@@ -334,7 +334,7 @@
    (local.get $1)
   )
  )
- (func $if4 (; 23 ;)
+ (func $if4
   (local $0 i32)
   (if
    (i32.const 0)
@@ -354,7 +354,7 @@
    (local.get $0)
   )
  )
- (func $if5 (; 24 ;)
+ (func $if5
   (local $0 i32)
   (local $1 i32)
   (if
@@ -372,7 +372,7 @@
    (local.get $1)
   )
  )
- (func $loop (; 25 ;)
+ (func $loop
   (local $0 i32)
   (local $1 i32)
   (block $out
@@ -390,7 +390,7 @@
    )
   )
  )
- (func $interfere-in-dead (; 26 ;)
+ (func $interfere-in-dead
   (local $0 i32)
   (block $block
    (br $block)
@@ -402,7 +402,7 @@
    )
   )
  )
- (func $interfere-in-dead2 (; 27 ;)
+ (func $interfere-in-dead2
   (local $0 i32)
   (block $block
    (unreachable)
@@ -414,7 +414,7 @@
    )
   )
  )
- (func $interfere-in-dead3 (; 28 ;)
+ (func $interfere-in-dead3
   (local $0 i32)
   (block $block
    (return)
@@ -426,7 +426,7 @@
    )
   )
  )
- (func $params (; 29 ;) (param $0 i32) (param $1 f32)
+ (func $params (param $0 i32) (param $1 f32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -440,7 +440,7 @@
    (local.get $4)
   )
  )
- (func $interfere-in-dead4 (; 30 ;)
+ (func $interfere-in-dead4
   (local $0 i32)
   (local $1 i32)
   (block $block
@@ -455,7 +455,7 @@
    )
   )
  )
- (func $switch (; 31 ;)
+ (func $switch
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -481,7 +481,7 @@
    (local.get $2)
   )
  )
- (func $greedy-can-be-happy (; 32 ;)
+ (func $greedy-can-be-happy
   (local $0 i32)
   (local $1 i32)
   (if
@@ -584,7 +584,7 @@
    )
   )
  )
- (func $greedy-can-be-sad (; 33 ;)
+ (func $greedy-can-be-sad
   (local $0 i32)
   (local $1 i32)
   (if
@@ -687,7 +687,7 @@
    )
   )
  )
- (func $_memcpy (; 34 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (if
    (i32.ge_s
@@ -847,7 +847,7 @@
    (local.get $3)
   )
  )
- (func $this-is-effective-i-tell-you (; 35 ;) (param $0 i32)
+ (func $this-is-effective-i-tell-you (param $0 i32)
   (if
    (i32.const -1)
    (block $block1

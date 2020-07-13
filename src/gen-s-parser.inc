@@ -8,21 +8,13 @@ char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
   case 'a': {
-    switch (op[1]) {
-      case 'n':
-        if (strcmp(op, "anyref.pop") == 0) { return makePop(Type::anyref); }
+    switch (op[7]) {
+      case 'f':
+        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
         goto parse_error;
-      case 't': {
-        switch (op[7]) {
-          case 'f':
-            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-            goto parse_error;
-          case 'n':
-            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
+      case 'n':
+        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -83,9 +75,17 @@ switch (op[0]) {
       case 'l':
         if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
         goto parse_error;
-      case 'x':
-        if (strcmp(op, "exnref.pop") == 0) { return makePop(Type::exnref); }
-        goto parse_error;
+      case 'x': {
+        switch (op[2]) {
+          case 'n':
+            if (strcmp(op, "exnref.pop") == 0) { return makePop(Type::exnref); }
+            goto parse_error;
+          case 't':
+            if (strcmp(op, "externref.pop") == 0) { return makePop(Type::externref); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
@@ -267,13 +267,21 @@ switch (op[0]) {
                 }
               }
               case 'c': {
-                switch (op[20]) {
-                  case 's':
-                    if (strcmp(op, "f32x4.convert_i32x4_s") == 0) { return makeUnary(s, UnaryOp::ConvertSVecI32x4ToVecF32x4); }
+                switch (op[7]) {
+                  case 'e':
+                    if (strcmp(op, "f32x4.ceil") == 0) { return makeUnary(s, UnaryOp::CeilVecF32x4); }
                     goto parse_error;
-                  case 'u':
-                    if (strcmp(op, "f32x4.convert_i32x4_u") == 0) { return makeUnary(s, UnaryOp::ConvertUVecI32x4ToVecF32x4); }
-                    goto parse_error;
+                  case 'o': {
+                    switch (op[20]) {
+                      case 's':
+                        if (strcmp(op, "f32x4.convert_i32x4_s") == 0) { return makeUnary(s, UnaryOp::ConvertSVecI32x4ToVecF32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "f32x4.convert_i32x4_u") == 0) { return makeUnary(s, UnaryOp::ConvertUVecI32x4ToVecF32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -291,6 +299,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'f':
+                if (strcmp(op, "f32x4.floor") == 0) { return makeUnary(s, UnaryOp::FloorVecF32x4); }
+                goto parse_error;
               case 'g': {
                 switch (op[7]) {
                   case 'e':
@@ -332,8 +343,22 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "f32x4.ne") == 0) { return makeBinary(s, BinaryOp::NeVecF32x4); }
                     goto parse_error;
+                  case 'a':
+                    if (strcmp(op, "f32x4.nearest") == 0) { return makeUnary(s, UnaryOp::NearestVecF32x4); }
+                    goto parse_error;
                   case 'g':
                     if (strcmp(op, "f32x4.neg") == 0) { return makeUnary(s, UnaryOp::NegVecF32x4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'p': {
+                switch (op[8]) {
+                  case 'a':
+                    if (strcmp(op, "f32x4.pmax") == 0) { return makeBinary(s, BinaryOp::PMaxVecF32x4); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "f32x4.pmin") == 0) { return makeBinary(s, BinaryOp::PMinVecF32x4); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -366,6 +391,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 't':
+                if (strcmp(op, "f32x4.trunc") == 0) { return makeUnary(s, UnaryOp::TruncVecF32x4); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -548,13 +576,21 @@ switch (op[0]) {
                 }
               }
               case 'c': {
-                switch (op[20]) {
-                  case 's':
-                    if (strcmp(op, "f64x2.convert_i64x2_s") == 0) { return makeUnary(s, UnaryOp::ConvertSVecI64x2ToVecF64x2); }
+                switch (op[7]) {
+                  case 'e':
+                    if (strcmp(op, "f64x2.ceil") == 0) { return makeUnary(s, UnaryOp::CeilVecF64x2); }
                     goto parse_error;
-                  case 'u':
-                    if (strcmp(op, "f64x2.convert_i64x2_u") == 0) { return makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2); }
-                    goto parse_error;
+                  case 'o': {
+                    switch (op[20]) {
+                      case 's':
+                        if (strcmp(op, "f64x2.convert_i64x2_s") == 0) { return makeUnary(s, UnaryOp::ConvertSVecI64x2ToVecF64x2); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "f64x2.convert_i64x2_u") == 0) { return makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -572,6 +608,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'f':
+                if (strcmp(op, "f64x2.floor") == 0) { return makeUnary(s, UnaryOp::FloorVecF64x2); }
+                goto parse_error;
               case 'g': {
                 switch (op[7]) {
                   case 'e':
@@ -613,8 +652,22 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "f64x2.ne") == 0) { return makeBinary(s, BinaryOp::NeVecF64x2); }
                     goto parse_error;
+                  case 'a':
+                    if (strcmp(op, "f64x2.nearest") == 0) { return makeUnary(s, UnaryOp::NearestVecF64x2); }
+                    goto parse_error;
                   case 'g':
                     if (strcmp(op, "f64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecF64x2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'p': {
+                switch (op[8]) {
+                  case 'a':
+                    if (strcmp(op, "f64x2.pmax") == 0) { return makeBinary(s, BinaryOp::PMaxVecF64x2); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "f64x2.pmin") == 0) { return makeBinary(s, BinaryOp::PMinVecF64x2); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -647,6 +700,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 't':
+                if (strcmp(op, "f64x2.trunc") == 0) { return makeUnary(s, UnaryOp::TruncVecF64x2); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -676,6 +732,9 @@ switch (op[0]) {
         switch (op[6]) {
           case 'a': {
             switch (op[7]) {
+              case 'b':
+                if (strcmp(op, "i16x8.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI16x8); }
+                goto parse_error;
               case 'd': {
                 switch (op[9]) {
                   case '\0':
@@ -707,6 +766,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'b':
+            if (strcmp(op, "i16x8.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI16x8); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -1395,6 +1457,9 @@ switch (op[0]) {
             switch (op[6]) {
               case 'a': {
                 switch (op[7]) {
+                  case 'b':
+                    if (strcmp(op, "i32x4.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI32x4); }
+                    goto parse_error;
                   case 'd':
                     if (strcmp(op, "i32x4.add") == 0) { return makeBinary(s, BinaryOp::AddVecI32x4); }
                     goto parse_error;
@@ -1407,6 +1472,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'b':
+                if (strcmp(op, "i32x4.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI32x4); }
+                goto parse_error;
               case 'd':
                 if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
                 goto parse_error;
@@ -2165,6 +2233,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'm':
+                if (strcmp(op, "i64x2.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI64x2); }
+                goto parse_error;
               case 'n':
                 if (strcmp(op, "i64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI64x2); }
                 goto parse_error;
@@ -2222,6 +2293,9 @@ switch (op[0]) {
         switch (op[6]) {
           case 'a': {
             switch (op[7]) {
+              case 'b':
+                if (strcmp(op, "i8x16.abs") == 0) { return makeUnary(s, UnaryOp::AbsVecI8x16); }
+                goto parse_error;
               case 'd': {
                 switch (op[9]) {
                   case '\0':
@@ -2253,6 +2327,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'b':
+            if (strcmp(op, "i8x16.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI8x16); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -2494,9 +2571,6 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'p':
-    if (strcmp(op, "push") == 0) { return makePush(s); }
-    goto parse_error;
   case 'r': {
     switch (op[2]) {
       case 'f': {
@@ -2562,6 +2636,17 @@ switch (op[0]) {
       case 'r':
         if (strcmp(op, "try") == 0) { return makeTry(s); }
         goto parse_error;
+      case 'u': {
+        switch (op[6]) {
+          case 'e':
+            if (strcmp(op, "tuple.extract") == 0) { return makeTupleExtract(s); }
+            goto parse_error;
+          case 'm':
+            if (strcmp(op, "tuple.make") == 0) { return makeTupleMake(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }

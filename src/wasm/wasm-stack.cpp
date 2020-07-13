@@ -15,13 +15,24 @@
  */
 
 #include "wasm-stack.h"
+#include "ir/find_all.h"
 
 namespace wasm {
+
+void BinaryInstWriter::emitResultType(Type type) {
+  if (type == Type::unreachable) {
+    o << binaryType(Type::none);
+  } else if (type.isMulti()) {
+    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+  } else {
+    o << binaryType(type);
+  }
+}
 
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Block);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -30,20 +41,23 @@ void BinaryInstWriter::visitIf(If* curr) {
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::If);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitResultType(curr->type);
 }
 
-void BinaryInstWriter::emitIfElse() {
+void BinaryInstWriter::emitIfElse(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO dito
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO same as If
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
+  }
   o << int8_t(BinaryConsts::Else);
 }
 
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Loop);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
@@ -73,22 +87,48 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(mappedLocals[curr->index]);
+  size_t numValues = func->getLocalType(curr->index).size();
+  for (Index i = 0; i < numValues; ++i) {
+    o << int8_t(BinaryConsts::LocalGet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+  }
 }
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
-  o << int8_t(curr->isTee() ? BinaryConsts::LocalTee : BinaryConsts::LocalSet)
-    << U32LEB(mappedLocals[curr->index]);
+  size_t numValues = func->getLocalType(curr->index).size();
+  for (Index i = numValues - 1; i >= 1; --i) {
+    o << int8_t(BinaryConsts::LocalSet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+  }
+  if (!curr->isTee()) {
+    o << int8_t(BinaryConsts::LocalSet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+  } else {
+    o << int8_t(BinaryConsts::LocalTee)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+    for (Index i = 1; i < numValues; ++i) {
+      o << int8_t(BinaryConsts::LocalGet)
+        << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+    }
+  }
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
-  o << int8_t(BinaryConsts::GlobalGet)
-    << U32LEB(parent.getGlobalIndex(curr->name));
+  // Emit a global.get for each element if this is a tuple global
+  Index index = parent.getGlobalIndex(curr->name);
+  size_t numValues = curr->type.size();
+  for (Index i = 0; i < numValues; ++i) {
+    o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + i);
+  }
 }
 
 void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
-  o << int8_t(BinaryConsts::GlobalSet)
-    << U32LEB(parent.getGlobalIndex(curr->name));
+  // Emit a global.set for each element if this is a tuple global
+  Index index = parent.getGlobalIndex(curr->name);
+  size_t numValues = parent.getModule()->getGlobal(curr->name)->type.size();
+  for (int i = numValues - 1; i >= 0; --i) {
+    o << int8_t(BinaryConsts::GlobalSet) << U32LEB(index + i);
+  }
 }
 
 void BinaryInstWriter::visitLoad(Load* curr) {
@@ -148,7 +188,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // a load
         return;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -250,7 +290,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
           << U32LEB(BinaryConsts::V128Store);
         break;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -647,7 +687,7 @@ void BinaryInstWriter::visitConst(Const* curr) {
       break;
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -867,6 +907,9 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NotVec128:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not);
       break;
+    case AbsVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Abs);
+      break;
     case NegVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg);
       break;
@@ -877,6 +920,13 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case AllTrueVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I8x16AllTrue);
+      break;
+    case BitmaskVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16Bitmask);
+      break;
+    case AbsVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Abs);
       break;
     case NegVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg);
@@ -889,6 +939,13 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I16x8AllTrue);
       break;
+    case BitmaskVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8Bitmask);
+      break;
+    case AbsVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Abs);
+      break;
     case NegVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg);
       break;
@@ -899,6 +956,10 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case AllTrueVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4AllTrue);
+      break;
+    case BitmaskVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4Bitmask);
       break;
     case NegVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg);
@@ -920,6 +981,19 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case SqrtVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sqrt);
       break;
+    case CeilVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ceil);
+      break;
+    case FloorVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Floor);
+      break;
+    case TruncVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Trunc);
+      break;
+    case NearestVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4Nearest);
+      break;
     case AbsVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Abs);
       break;
@@ -928,6 +1002,19 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       break;
     case SqrtVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sqrt);
+      break;
+    case CeilVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ceil);
+      break;
+    case FloorVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Floor);
+      break;
+    case TruncVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Trunc);
+      break;
+    case NearestVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2Nearest);
       break;
     case TruncSatSVecF32x4ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1481,6 +1568,9 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case SubVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Sub);
       break;
+    case MulVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Mul);
+      break;
 
     case AddVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Add);
@@ -1500,6 +1590,12 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MaxVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Max);
       break;
+    case PMinVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4PMin);
+      break;
+    case PMaxVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4PMax);
+      break;
     case AddVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Add);
       break;
@@ -1517,6 +1613,12 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case MaxVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max);
+      break;
+    case PMinVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2PMin);
+      break;
+    case PMaxVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2PMax);
       break;
 
     case NarrowSVecI16x8ToVecI8x16:
@@ -1592,13 +1694,16 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
-  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
+  emitResultType(curr->type);
 }
 
-void BinaryInstWriter::emitCatch() {
+void BinaryInstWriter::emitCatch(Try* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
+  }
   o << int8_t(BinaryConsts::Catch);
 }
 
@@ -1622,20 +1727,46 @@ void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
 }
 
 void BinaryInstWriter::visitDrop(Drop* curr) {
-  o << int8_t(BinaryConsts::Drop);
-}
-
-void BinaryInstWriter::visitPush(Push* curr) {
-  // Turns into nothing in the binary format
+  size_t numValues = curr->value->type.size();
+  for (size_t i = 0; i < numValues; i++) {
+    o << int8_t(BinaryConsts::Drop);
+  }
 }
 
 void BinaryInstWriter::visitPop(Pop* curr) {
   // Turns into nothing in the binary format
 }
 
-void BinaryInstWriter::emitScopeEnd() {
+void BinaryInstWriter::visitTupleMake(TupleMake* curr) {
+  // Turns into nothing in the binary format
+}
+
+void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
+  size_t numVals = curr->tuple->type.size();
+  // Drop all values after the one we want
+  for (size_t i = curr->index + 1; i < numVals; ++i) {
+    o << int8_t(BinaryConsts::Drop);
+  }
+  // If the extracted value is the only one left, we're done
+  if (curr->index == 0) {
+    return;
+  }
+  // Otherwise, save it to a scratch local, drop the others, then retrieve it
+  assert(scratchLocals.find(curr->type) != scratchLocals.end());
+  auto scratch = scratchLocals[curr->type];
+  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratch);
+  for (size_t i = 0; i < curr->index; ++i) {
+    o << int8_t(BinaryConsts::Drop);
+  }
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
+}
+
+void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::End);
+  }
   o << int8_t(BinaryConsts::End);
 }
 
@@ -1647,102 +1778,62 @@ void BinaryInstWriter::emitUnreachable() {
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {
   assert(func && "BinaryInstWriter: function is not set");
-  // Map them
+  // Map params
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
-    mappedLocals[i] = curr;
+    mappedLocals[std::make_pair(i, 0)] = curr;
   }
   for (auto type : func->vars) {
-    numLocalsByType[type]++;
+    for (auto t : type.expand()) {
+      numLocalsByType[t]++;
+    }
   }
+  countScratchLocals();
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    size_t index = func->getVarIndexBase();
-    Type type = func->getLocalType(i);
-    // increment now for simplicity, must decrement it in returns
-    currLocalsByType[type]++;
-    if (type == Type::i32) {
-      mappedLocals[i] = index + currLocalsByType[Type::i32] - 1;
-      continue;
+    const std::vector<Type> types = func->getLocalType(i).expand();
+    for (Index j = 0; j < types.size(); j++) {
+      Type type = types[j];
+      auto fullIndex = std::make_pair(i, j);
+      Index index = func->getVarIndexBase();
+      for (auto& typeCount : numLocalsByType) {
+        if (type == typeCount.first) {
+          mappedLocals[fullIndex] = index + currLocalsByType[typeCount.first];
+          currLocalsByType[type]++;
+          break;
+        }
+        index += typeCount.second;
+      }
     }
-    index += numLocalsByType[Type::i32];
-    if (type == Type::i64) {
-      mappedLocals[i] = index + currLocalsByType[Type::i64] - 1;
-      continue;
+  }
+  setScratchLocals();
+  o << U32LEB(numLocalsByType.size());
+  for (auto& typeCount : numLocalsByType) {
+    o << U32LEB(typeCount.second) << binaryType(typeCount.first);
+  }
+}
+
+void BinaryInstWriter::countScratchLocals() {
+  // Add a scratch register in `numLocalsByType` for each type of
+  // tuple.extract with nonzero index present.
+  FindAll<TupleExtract> extracts(func->body);
+  for (auto* extract : extracts.list) {
+    if (extract->type != Type::unreachable && extract->index != 0) {
+      scratchLocals[extract->type] = 0;
     }
-    index += numLocalsByType[Type::i64];
-    if (type == Type::f32) {
-      mappedLocals[i] = index + currLocalsByType[Type::f32] - 1;
-      continue;
+  }
+  for (auto t : scratchLocals) {
+    numLocalsByType[t.first]++;
+  }
+}
+
+void BinaryInstWriter::setScratchLocals() {
+  Index index = func->getVarIndexBase();
+  for (auto& typeCount : numLocalsByType) {
+    index += typeCount.second;
+    if (scratchLocals.find(typeCount.first) != scratchLocals.end()) {
+      scratchLocals[typeCount.first] = index - 1;
     }
-    index += numLocalsByType[Type::f32];
-    if (type == Type::f64) {
-      mappedLocals[i] = index + currLocalsByType[Type::f64] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::f64];
-    if (type == Type::v128) {
-      mappedLocals[i] = index + currLocalsByType[Type::v128] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::v128];
-    if (type == Type::funcref) {
-      mappedLocals[i] = index + currLocalsByType[Type::funcref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::funcref];
-    if (type == Type::anyref) {
-      mappedLocals[i] = index + currLocalsByType[Type::anyref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::anyref];
-    if (type == Type::nullref) {
-      mappedLocals[i] = index + currLocalsByType[Type::nullref] - 1;
-      continue;
-    }
-    index += numLocalsByType[Type::nullref];
-    if (type == Type::exnref) {
-      mappedLocals[i] = index + currLocalsByType[Type::exnref] - 1;
-      continue;
-    }
-    WASM_UNREACHABLE("unexpected type");
-  }
-  // Emit them.
-  o << U32LEB((numLocalsByType[Type::i32] ? 1 : 0) +
-              (numLocalsByType[Type::i64] ? 1 : 0) +
-              (numLocalsByType[Type::f32] ? 1 : 0) +
-              (numLocalsByType[Type::f64] ? 1 : 0) +
-              (numLocalsByType[Type::v128] ? 1 : 0) +
-              (numLocalsByType[Type::funcref] ? 1 : 0) +
-              (numLocalsByType[Type::anyref] ? 1 : 0) +
-              (numLocalsByType[Type::nullref] ? 1 : 0) +
-              (numLocalsByType[Type::exnref] ? 1 : 0));
-  if (numLocalsByType[Type::i32]) {
-    o << U32LEB(numLocalsByType[Type::i32]) << binaryType(Type::i32);
-  }
-  if (numLocalsByType[Type::i64]) {
-    o << U32LEB(numLocalsByType[Type::i64]) << binaryType(Type::i64);
-  }
-  if (numLocalsByType[Type::f32]) {
-    o << U32LEB(numLocalsByType[Type::f32]) << binaryType(Type::f32);
-  }
-  if (numLocalsByType[Type::f64]) {
-    o << U32LEB(numLocalsByType[Type::f64]) << binaryType(Type::f64);
-  }
-  if (numLocalsByType[Type::v128]) {
-    o << U32LEB(numLocalsByType[Type::v128]) << binaryType(Type::v128);
-  }
-  if (numLocalsByType[Type::funcref]) {
-    o << U32LEB(numLocalsByType[Type::funcref]) << binaryType(Type::funcref);
-  }
-  if (numLocalsByType[Type::anyref]) {
-    o << U32LEB(numLocalsByType[Type::anyref]) << binaryType(Type::anyref);
-  }
-  if (numLocalsByType[Type::nullref]) {
-    o << U32LEB(numLocalsByType[Type::nullref]) << binaryType(Type::nullref);
-  }
-  if (numLocalsByType[Type::exnref]) {
-    o << U32LEB(numLocalsByType[Type::exnref]) << binaryType(Type::exnref);
   }
 }
 
@@ -1838,15 +1929,15 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::TryEnd: {
-        writer.emitScopeEnd();
+        writer.emitScopeEnd(inst->origin);
         break;
       }
       case StackInst::IfElse: {
-        writer.emitIfElse();
+        writer.emitIfElse(inst->origin->cast<If>());
         break;
       }
       case StackInst::Catch: {
-        writer.emitCatch();
+        writer.emitCatch(inst->origin->cast<Try>());
         break;
       }
       default:

@@ -39,7 +39,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   Pass* create() override { return new FunctionDirectizer(flatTable); }
 
-  FunctionDirectizer(FlatTable* flatTable) : flatTable(flatTable) {}
+  FunctionDirectizer(TableUtils::FlatTable* flatTable) : flatTable(flatTable) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (auto* c = curr->target->dynCast<Const>()) {
@@ -77,7 +77,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  FlatTable* flatTable;
+  TableUtils::FlatTable* flatTable;
   bool changedTypes = false;
 
   void replaceWithUnreachable(CallIndirect* call) {
@@ -104,7 +104,7 @@ struct Directize : public Pass {
         return;
       }
     }
-    FlatTable flatTable(module->table);
+    TableUtils::FlatTable flatTable(module->table);
     if (!flatTable.valid) {
       return;
     }

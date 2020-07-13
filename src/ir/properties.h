@@ -18,6 +18,8 @@
 #define wasm_ir_properties_h
 
 #include "ir/bits.h"
+#include "ir/effects.h"
+#include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -57,6 +59,11 @@ inline bool isSymmetric(Binary* binary) {
   }
 }
 
+inline bool isControlFlowStructure(Expression* curr) {
+  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
+         curr->is<Try>();
+}
+
 // Check if an expression is a control flow construct with a name,
 // which implies it may have breaks to it.
 inline bool isNamedControlFlow(Expression* curr) {
@@ -66,6 +73,47 @@ inline bool isNamedControlFlow(Expression* curr) {
     return loop->name.is();
   }
   return false;
+}
+
+inline bool isConstantExpression(const Expression* curr) {
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return true;
+  }
+  if (auto* tuple = curr->dynCast<TupleMake>()) {
+    for (auto* op : tuple->operands) {
+      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+inline Literal getSingleLiteral(const Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    return c->value;
+  } else if (curr->is<RefNull>()) {
+    return Literal(Type::nullref);
+  } else if (auto* c = curr->dynCast<RefFunc>()) {
+    return Literal(c->func);
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
+}
+
+inline Literals getLiterals(const Expression* curr) {
+  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+    return {getSingleLiteral(curr)};
+  } else if (auto* tuple = curr->dynCast<TupleMake>()) {
+    Literals literals;
+    for (auto* op : tuple->operands) {
+      literals.push_back(getSingleLiteral(op));
+    }
+    return literals;
+  } else {
+    WASM_UNREACHABLE("non-constant expression");
+  }
 }
 
 // Check if an expression is a sign-extend, and if so, returns the value
@@ -152,8 +200,12 @@ inline Index getZeroExtBits(Expression* curr) {
 }
 
 // Returns a falling-through value, that is, it looks through a local.tee
-// and other operations that receive a value and let it flow through them.
-inline Expression* getFallthrough(Expression* curr) {
+// and other operations that receive a value and let it flow through them. If
+// there is no value falling through, returns the node itself (as that is the
+// value that trivially falls through, with 0 steps in the middle).
+inline Expression* getFallthrough(Expression* curr,
+                                  const PassOptions& passOptions,
+                                  FeatureSet features) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -161,34 +213,53 @@ inline Expression* getFallthrough(Expression* curr) {
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value);
+      return getFallthrough(set->value, passOptions, features);
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back());
+      return getFallthrough(block->list.back(), passOptions, features);
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body);
+    return getFallthrough(loop->body, passOptions, features);
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return getFallthrough(iff->ifFalse);
+        return getFallthrough(iff->ifFalse, passOptions, features);
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return getFallthrough(iff->ifTrue);
+        return getFallthrough(iff->ifTrue, passOptions, features);
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value);
+      return getFallthrough(br->value, passOptions, features);
+    }
+  } else if (auto* tryy = curr->dynCast<Try>()) {
+    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
+      return getFallthrough(tryy->body, passOptions, features);
     }
   }
   return curr;
 }
 
-inline bool isConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
+// Returns whether the resulting value here must fall through without being
+// modified. For example, a tee always does so. That is, this returns false if
+// and only if the return value may have some computation performed on it to
+// change it from the inputs the instruction receives.
+// This differs from getFallthrough() which returns a single value that falls
+// through - here if more than one value can fall through, like in if-else,
+// we can return true. That is, there we care about a value falling through and
+// for us to get that actual value to look at; here we just care whether the
+// value falls through without being changed, even if it might be one of
+// several options.
+inline bool isResultFallthrough(Expression* curr) {
+  // Note that we don't check if there is a return value here; the node may be
+  // unreachable, for example, but then there is no meaningful answer to give
+  // anyhow.
+  return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
+         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
+         curr->is<Break>();
 }
 
 } // namespace Properties

@@ -56,9 +56,10 @@ var Asyncify = {
           (function(module, i) {
             ret[module][i] = function() {
               if (!Asyncify.sleeping) {
-                // Sleep if asyncify support is present, and at a certain
-                // probability.
-                if (exports.asyncify_start_unwind && 
+                // Sleep if asyncify support is present (which also requires
+                // that the memory be exported), and at a certain probability.
+                if (exports.asyncify_start_unwind &&
+                    view &&
                     detrand() < 0.5) {
                   // We are called in order to start a sleep/unwind.
                   console.log('asyncify: sleep in ' + i + '...');
@@ -196,7 +197,7 @@ sortedExports.forEach(function(e) {
   Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
-    console.log('[fuzz-exec] calling $' + e);
+    console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: $' + e + ' => ' + result);

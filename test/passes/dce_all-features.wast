@@ -739,11 +739,17 @@
 ;; reachable
 (module
   (func $foo)
+  (event $e (attr 0))
 
   (func $try_unreachable
     (try
-      (unreachable)
+      (do
+        (unreachable)
+      )
       (catch
+        (drop
+          (exnref.pop)
+        )
       )
     )
     (call $foo) ;; shouldn't be dce'd
@@ -751,6 +757,7 @@
 
   (func $catch_unreachable
     (try
+      (do)
       (catch
         (unreachable)
       )
@@ -760,22 +767,47 @@
 
   (func $both_unreachable
     (try
-      (unreachable)
+      (do
+        (unreachable)
+      )
       (catch
         (unreachable)
       )
     )
     (call $foo) ;; should be dce'd
   )
-)
 
-;; Push-pop
-(module
-  (func $foo)
-  (func $push_unreachable
-    (push
-      (unreachable)
+  (func $throw
+    (drop
+      (block $label$0 (result nullref)
+        (if
+          (i32.clz
+            (block $label$1 (result i32)
+              (throw $e)
+            )
+          )
+          (nop)
+        )
+        (ref.null)
+      )
     )
-    (call $foo) ;; should be dce'd
+  )
+
+  (func $rethrow
+    (drop
+      (block $label$0 (result nullref)
+        (if
+          (i32.clz
+            (block $label$1 (result i32)
+              (rethrow
+                (ref.null)
+              )
+            )
+          )
+          (nop)
+        )
+        (ref.null)
+      )
+    )
   )
 )

@@ -23,6 +23,7 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"
@@ -38,7 +39,6 @@ cashew::IString EM_JS_PREFIX("__em_js__");
 
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
-static Name STACK_ALLOC("stackAlloc");
 static Name STACK_INIT("stack$init");
 static Name STACK_LIMIT("__stack_limit");
 static Name SET_STACK_LIMIT("__set_stack_limit");
@@ -64,7 +64,7 @@ bool isExported(Module& wasm, Name name) {
   return false;
 }
 
-Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
+Global* getStackPointerGlobal(Module& wasm) {
   // Assumption: The stack pointer is either imported as __stack_pointer or
   // its the first non-imported and non-exported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
@@ -81,151 +81,38 @@ Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
   return nullptr;
 }
 
-Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
-  if (!useStackPointerGlobal) {
-    return builder.makeLoad(
-      /* bytes  =*/4,
-      /* signed =*/false,
-      /* offset =*/stackPointerOffset,
-      /* align  =*/4,
-      /* ptr    =*/builder.makeConst(Literal(0)),
-      /* type   =*/Type::i32);
-  }
-  Global* stackPointer = getStackPointerGlobal();
-  if (!stackPointer) {
-    Fatal() << "stack pointer global not found";
-  }
-  return builder.makeGlobalGet(stackPointer->name, Type::i32);
-}
-
-inline Expression* stackBoundsCheck(Builder& builder,
-                                    Function* func,
-                                    Expression* value,
-                                    Global* stackPointer,
-                                    Global* stackLimit,
-                                    Name handlerName) {
-  // Add a local to store the value of the expression. We need the value twice:
-  // once to check if it has overflowed, and again to assign to store it.
-  auto newSP = Builder::addVar(func, stackPointer->type);
-  // If we imported a handler, call it. That can show a nice error in JS.
-  // Otherwise, just trap.
-  Expression* handler;
-  if (handlerName.is()) {
-    handler = builder.makeCall(handlerName, {}, Type::none);
-  } else {
-    handler = builder.makeUnreachable();
-  }
-  // (if (i32.lt_u (local.tee $newSP (...value...)) (global.get $__stack_limit))
-  auto check =
-    builder.makeIf(builder.makeBinary(
-                     BinaryOp::LtUInt32,
-                     builder.makeLocalTee(newSP, value, stackPointer->type),
-                     builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
-                   handler);
-  // (global.set $__stack_pointer (local.get $newSP))
-  auto newSet = builder.makeGlobalSet(
-    stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
-  return builder.blockify(check, newSet);
-}
-
-Expression*
-EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
-                                                   Expression* value) {
-  BYN_TRACE("generateStoreStackPointer\n");
-  if (!useStackPointerGlobal) {
-    return builder.makeStore(
-      /* bytes  =*/4,
-      /* offset =*/stackPointerOffset,
-      /* align  =*/4,
-      /* ptr    =*/builder.makeConst(Literal(0)),
-      /* value  =*/value,
-      /* type   =*/Type::i32);
-  }
-  Global* stackPointer = getStackPointerGlobal();
-  if (!stackPointer) {
-    Fatal() << "stack pointer global not found";
-  }
-  if (auto* stackLimit = wasm.getGlobalOrNull(STACK_LIMIT)) {
-    return stackBoundsCheck(builder,
-                            func,
-                            value,
-                            stackPointer,
-                            stackLimit,
-                            importStackOverflowHandler());
-  }
-  return builder.makeGlobalSet(stackPointer->name, value);
-}
-
-void EmscriptenGlueGenerator::generateStackSaveFunction() {
-  BYN_TRACE("generateStackSaveFunction\n");
-  std::vector<NameType> params{};
-  Function* function =
-    builder.makeFunction(STACK_SAVE, std::move(params), Type::i32, {});
-
-  function->body = generateLoadStackPointer();
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateStackAllocFunction() {
-  BYN_TRACE("generateStackAllocFunction\n");
-  std::vector<NameType> params{{"0", Type::i32}};
-  Function* function = builder.makeFunction(
-    STACK_ALLOC, std::move(params), Type::i32, {{"1", Type::i32}});
-  Expression* loadStack = generateLoadStackPointer();
-  LocalGet* getSizeArg = builder.makeLocalGet(0, Type::i32);
-  Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
-  const static uint32_t bitAlignment = 16;
-  const static uint32_t bitMask = bitAlignment - 1;
-  Const* subConst = builder.makeConst(Literal(~bitMask));
-  Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, Type::i32);
-  Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
-
-  Block* block = builder.makeBlock();
-  block->list.push_back(storeStack);
-  LocalGet* getStackLocal2 = builder.makeLocalGet(1, Type::i32);
-  block->list.push_back(getStackLocal2);
-  block->type = Type::i32;
-  function->body = block;
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateStackRestoreFunction() {
-  BYN_TRACE("generateStackRestoreFunction\n");
-  std::vector<NameType> params{{"0", Type::i32}};
-  Function* function =
-    builder.makeFunction(STACK_RESTORE, std::move(params), Type::none, {});
-  LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
-  Expression* store = generateStoreStackPointer(function, getArg);
-
-  function->body = store;
-
-  addExportedFunction(wasm, function);
-}
-
-void EmscriptenGlueGenerator::generateRuntimeFunctions() {
-  BYN_TRACE("generateRuntimeFunctions\n");
-  generateStackSaveFunction();
-  generateStackAllocFunction();
-  generateStackRestoreFunction();
-}
-
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
-  // Then see if its already imported
+  // See if its already imported.
+  // FIXME: O(N)
   ImportInfo info(*module);
-  if (Function* f = info.getImportedFunction(ENV, name)) {
+  if (auto* f = info.getImportedFunction(ENV, name)) {
     return f;
   }
-  // Failing that create a new function import.
+  // Failing that create a new import.
   auto import = new Function;
   import->name = name;
   import->module = ENV;
   import->base = name;
   import->sig = sig;
   module->addFunction(import);
+  return import;
+}
+
+static Global* ensureGlobalImport(Module* module, Name name, Type type) {
+  // See if its already imported.
+  // FIXME: O(N)
+  ImportInfo info(*module);
+  if (auto* g = info.getImportedGlobal(ENV, name)) {
+    return g;
+  }
+  // Failing that create a new import.
+  auto import = new Global;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  import->type = type;
+  module->addGlobal(import);
   return import;
 }
 
@@ -269,37 +156,97 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   Block* block = builder.makeBlock();
   assignFunc->body = block;
 
+  bool hasSingleMemorySegment =
+    wasm.memory.exists && wasm.memory.segments.size() == 1;
+
   for (Global* g : gotMemEntries) {
-    Name getter(std::string("g$") + g->base.c_str());
+    // If this global is defined in this module, we export its address relative
+    // to the relocatable memory. If we are in a main module, we can just use
+    // that location (since if other modules have this symbol too, we will "win"
+    // as we are loaded first). Otherwise, import a g$ getter.
+    // Note that this depends on memory having a single segment, so we know the
+    // offset, and that the export is a global.
+    auto base = g->base;
+    if (hasSingleMemorySegment && !sideModule) {
+      if (auto* ex = wasm.getExportOrNull(base)) {
+        if (ex->kind == ExternalKind::Global) {
+          // The base relative to which we are computed is the offset of the
+          // singleton segment.
+          auto* relativeBase =
+            ExpressionManipulator::copy(wasm.memory.segments[0].offset, wasm);
+
+          auto* offset =
+            builder.makeGlobalGet(ex->value, wasm.getGlobal(ex->value)->type);
+          auto* add = builder.makeBinary(AddInt32, relativeBase, offset);
+          GlobalSet* globalSet = builder.makeGlobalSet(g->name, add);
+          block->list.push_back(globalSet);
+          continue;
+        }
+      }
+    }
+    Name getter(std::string("g$") + base.c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, Type::i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
 
+  ImportInfo importInfo(wasm);
+
+  // We may have to add things to the table.
+  Global* tableBase = nullptr;
+
   for (Global* g : gotFuncEntries) {
-    Function* f = nullptr;
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
     // name may be different.
     auto* ex = wasm.getExportOrNull(g->base);
-    if (ex) {
+    // If this is exported then it must be one of the functions implemented
+    // here, and if this is a main module, then we can simply place the function
+    // in the table: the loader will see it there and resolve all other uses
+    // to this one.
+    if (ex && !sideModule) {
       assert(ex->kind == ExternalKind::Function);
-      f = wasm.getFunction(ex->value);
-    } else {
-      ImportInfo info(wasm);
-      f = info.getImportedFunction(ENV, g->base);
-      if (!f) {
+      auto* f = wasm.getFunction(ex->value);
+      if (f->imported()) {
+        Fatal() << "GOT.func entry is both imported and exported: " << g->base;
+      }
+      // The base relative to which we are computed is the offset of the
+      // singleton segment, which we must ensure exists
+      if (!tableBase) {
+        tableBase = ensureGlobalImport(&wasm, TABLE_BASE, Type::i32);
+      }
+      if (!wasm.table.exists) {
+        wasm.table.exists = true;
+      }
+      if (wasm.table.segments.empty()) {
+        wasm.table.segments.resize(1);
+        wasm.table.segments[0].offset =
+          builder.makeGlobalGet(tableBase->name, Type::i32);
+      }
+      auto tableIndex = TableUtils::getOrAppend(wasm.table, f->name, wasm);
+      auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, wasm);
+      auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
+      auto* add = builder.makeBinary(AddInt32, getBase, c);
+      auto* globalSet = builder.makeGlobalSet(g->name, add);
+      block->list.push_back(globalSet);
+      continue;
+    }
+    // This is imported or in a side module. Create an fp$ import to get the
+    // function table index from the dynamic loader.
+    auto* f = importInfo.getImportedFunction(ENV, g->base);
+    if (!f) {
+      if (!ex) {
         Fatal() << "GOT.func entry with no import/export: " << g->base;
       }
+      f = wasm.getFunction(ex->value);
     }
-
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
     ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
-    Expression* call = builder.makeCall(getter, {}, Type::i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    auto* call = builder.makeCall(getter, {}, Type::i32);
+    auto* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
   }
 
@@ -438,12 +385,21 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
     }
   }
 
-  bool needStackSave = false;
-  bool needStackRestore = false;
+  void visitModule(Module* curr) {
+    if (needStackSave) {
+      ensureFunctionImport(curr, STACK_SAVE, Signature(Type::none, Type::i32));
+    }
+    if (needStackRestore) {
+      ensureFunctionImport(
+        curr, STACK_RESTORE, Signature(Type::i32, Type::none));
+    }
+  }
 
 private:
   std::unique_ptr<Builder> builder;
   Global* stackPointer;
+  bool needStackSave = false;
+  bool needStackRestore = false;
 };
 
 // lld can sometimes produce a build with an imported mutable __stack_pointer
@@ -451,7 +407,7 @@ private:
 // __stack_pointer and initializes it from an immutable global instead.
 // For -shared builds we instead call replaceStackPointerGlobal.
 void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer || !stackPointer->imported() || !stackPointer->mutable_) {
     return;
   }
@@ -473,21 +429,13 @@ void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
 }
 
 void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     return;
   }
 
   // Replace all uses of stack pointer global
-  RemoveStackPointer walker(stackPointer);
-  walker.walkModule(&wasm);
-  if (walker.needStackSave) {
-    ensureFunctionImport(&wasm, STACK_SAVE, Signature(Type::none, Type::i32));
-  }
-  if (walker.needStackRestore) {
-    ensureFunctionImport(
-      &wasm, STACK_RESTORE, Signature(Type::i32, Type::none));
-  }
+  RemoveStackPointer(stackPointer).walkModule(&wasm);
 
   // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
@@ -508,14 +456,39 @@ struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
     return new StackLimitEnforcer(stackPointer, stackLimit, builder, handler);
   }
 
+  Expression* stackBoundsCheck(Function* func,
+                               Expression* value,
+                               Global* stackPointer,
+                               Global* stackLimit) {
+    // Add a local to store the value of the expression. We need the value
+    // twice: once to check if it has overflowed, and again to assign to store
+    // it.
+    auto newSP = Builder::addVar(func, stackPointer->type);
+    // If we imported a handler, call it. That can show a nice error in JS.
+    // Otherwise, just trap.
+    Expression* handlerExpr;
+    if (handler.is()) {
+      handlerExpr = builder.makeCall(handler, {}, Type::none);
+    } else {
+      handlerExpr = builder.makeUnreachable();
+    }
+    // (if (i32.lt_u (local.tee $newSP (...val...)) (global.get $__stack_limit))
+    auto check = builder.makeIf(
+      builder.makeBinary(
+        BinaryOp::LtUInt32,
+        builder.makeLocalTee(newSP, value, stackPointer->type),
+        builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
+      handlerExpr);
+    // (global.set $__stack_pointer (local.get $newSP))
+    auto newSet = builder.makeGlobalSet(
+      stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
+    return builder.blockify(check, newSet);
+  }
+
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      replaceCurrent(stackBoundsCheck(builder,
-                                      getFunction(),
-                                      curr->value,
-                                      stackPointer,
-                                      stackLimit,
-                                      handler));
+      replaceCurrent(
+        stackBoundsCheck(getFunction(), curr->value, stackPointer, stackLimit));
     }
   }
 
@@ -527,7 +500,7 @@ private:
 };
 
 void EmscriptenGlueGenerator::enforceStackLimit() {
-  Global* stackPointer = getStackPointerGlobal();
+  Global* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     return;
   }
@@ -993,12 +966,13 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
 struct FixInvokeFunctionNamesWalker
   : public PostWalker<FixInvokeFunctionNamesWalker> {
   Module& wasm;
-  std::map<Name, Name> importRenames;
   std::vector<Name> toRemove;
-  std::set<Name> newImports;
+  std::map<Name, Name> importRenames;
+  std::map<Name, Name> functionRenames;
   std::set<Signature> invokeSigs;
+  ImportInfo imports;
 
-  FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm) {}
+  FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm), imports(wasm) {}
 
   // Converts invoke wrapper names generated by LLVM backend to real invoke
   // wrapper names that are expected by JavaScript glue code.
@@ -1053,27 +1027,41 @@ struct FixInvokeFunctionNamesWalker
       return;
     }
 
-    assert(importRenames.count(curr->name) == 0);
-    BYN_TRACE("renaming: " << curr->name << " -> " << newname << "\n");
-    importRenames[curr->name] = newname;
-    // Either rename or remove the existing import
-    if (wasm.getFunctionOrNull(newname) || !newImports.insert(newname).second) {
+    BYN_TRACE("renaming import: " << curr->module << "." << curr->base << " ("
+                                  << curr->name << ") -> " << newname << "\n");
+
+    if (auto* f = imports.getImportedFunction(curr->module, newname)) {
+      BYN_TRACE("remove redundant import: " << curr->base << "\n");
       toRemove.push_back(curr->name);
+      // Make sure the existing import has the correct internal name.
+      if (f->name != newname) {
+        functionRenames[f->name] = newname;
+      }
     } else {
+      BYN_TRACE("rename import: " << curr->base << "\n");
       curr->base = newname;
-      curr->name = newname;
     }
+
+    functionRenames[curr->name] = newname;
+
+    // Ensure that an imported functions of this name exists.
+    importRenames[curr->base] = newname;
   }
 
   void visitModule(Module* curr) {
-    for (auto importName : toRemove) {
-      wasm.removeFunction(importName);
+    for (auto name : toRemove) {
+      wasm.removeFunction(name);
     }
-    ModuleUtils::renameFunctions(wasm, importRenames);
-    ImportInfo imports(wasm);
+
+    // Rename all uses of the old function to the new import name
+    ModuleUtils::renameFunctions(wasm, functionRenames);
+
+    // For imports that for renamed, update any associated GOT.func imports.
     for (auto& pair : importRenames) {
-      // Update any associated GOT.func import.
+      BYN_TRACE("looking for: GOT.func." << pair.first << "\n");
       if (auto g = imports.getImportedGlobal("GOT.func", pair.first)) {
+        BYN_TRACE("renaming corresponding GOT entry: " << g->base << " -> "
+                                                       << pair.second << "\n");
         g->base = pair.second;
       }
     }
@@ -1194,15 +1182,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "\n  ],\n";
 
   if (!wasm.exports.empty()) {
-    meta << "  \"implementedFunctions\": [";
-    commaFirst = true;
-    for (const auto& ex : wasm.exports) {
-      if (ex->kind == ExternalKind::Function) {
-        meta << nextElement() << "\"_" << ex->name.str << '"';
-      }
-    }
-    meta << "\n  ],\n";
-
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
@@ -1238,28 +1217,38 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   });
   meta << "\n  ],\n";
 
+  // In normal mode we attempt to determine if main takes argumnts or not
+  // In standalone mode we export _start instead and rely on the presence
+  // of the __wasi_args_get and __wasi_args_sizes_get syscalls allow us to
+  // DCE to the argument handling JS code instead.
+  if (!standalone) {
+    auto mainReadsParams = false;
+    auto* exp = wasm.getExportOrNull("main");
+    if (!exp) {
+      exp = wasm.getExportOrNull("__main_argc_argv");
+    }
+    if (exp) {
+      if (exp->kind == ExternalKind::Function) {
+        auto* main = wasm.getFunction(exp->value);
+        mainReadsParams = true;
+        // If main does not read its parameters, it will just be a stub that
+        // calls __original_main (which has no parameters).
+        if (auto* call = main->body->dynCast<Call>()) {
+          if (call->operands.empty()) {
+            mainReadsParams = false;
+          }
+        }
+      }
+    }
+    meta << "  \"mainReadsParams\": " << int(mainReadsParams) << ",\n";
+  }
+
   meta << "  \"features\": [";
   commaFirst = true;
   wasm.features.iterFeatures([&](FeatureSet::Feature f) {
     meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
   });
-  meta << "\n  ],\n";
-
-  auto mainReadsParams = false;
-  if (auto* exp = wasm.getExportOrNull("main")) {
-    if (exp->kind == ExternalKind::Function) {
-      auto* main = wasm.getFunction(exp->value);
-      mainReadsParams = true;
-      // If main does not read its parameters, it will just be a stub that
-      // calls __original_main (which has no parameters).
-      if (auto* call = main->body->dynCast<Call>()) {
-        if (call->operands.empty()) {
-          mainReadsParams = false;
-        }
-      }
-    }
-  }
-  meta << "  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
+  meta << "\n  ]\n";
 
   meta << "}\n";
 
@@ -1287,6 +1276,18 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
+}
+
+void EmscriptenGlueGenerator::renameMainArgcArgv() {
+  // If an export call ed __main_argc_argv exists rename it to main
+  Export* ex = wasm.getExportOrNull("__main_argc_argv");
+  if (!ex) {
+    BYN_TRACE("renameMain: __main_argc_argv not found\n");
+    return;
+  }
+  ex->name = "main";
+  wasm.updateMaps();
+  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
 }
 
 void EmscriptenGlueGenerator::exportWasiStart() {

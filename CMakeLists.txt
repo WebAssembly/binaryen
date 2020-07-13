@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 90)
+project(binaryen LANGUAGES C CXX VERSION 94)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -22,9 +22,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
                GIT_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(${GIT_VERSION_RESULT})
-    message(FATAL_ERROR "Error running git describe to determine version")
+    message(WARNING "Error running git describe to determine version")
   else()
-    set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION} (${GIT_VERSION})")
+    set(PROJECT_VERSION "${PROJECT_VERSION} (${GIT_VERSION})")
   endif()
 endif()
 
@@ -69,9 +69,37 @@ function(ADD_LINK_FLAG value)
   ENDFOREACH(variable)
 endfunction()
 
+function(binaryen_setup_rpath name)
+  if(CMAKE_INSTALL_RPATH)
+    return()
+  endif()
+
+  if (APPLE)
+    set(_install_name_dir INSTALL_NAME_DIR "@rpath")
+    set(_install_rpath "@loader_path/../lib")
+  elseif(UNIX)
+    set(_install_rpath "\$ORIGIN/../lib")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "(FreeBSD|DragonFly)")
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
+                   LINK_FLAGS " -Wl,-z,origin ")
+    endif()
+  else()
+    return()
+  endif()
+
+  set_target_properties(${name} PROPERTIES
+                        BUILD_WITH_INSTALL_RPATH On
+                        INSTALL_RPATH "${_install_rpath}"
+                        ${_install_name_dir})
+endfunction()
+
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
+if (MSVC)
+  # We don't have dllexport declarations set up for windows yet.
+  set(BUILD_STATIC_LIB ON)
+endif()
 
 # For now, don't include full DWARF support in JS builds, for size.
 if (NOT EMSCRIPTEN)
@@ -185,7 +213,7 @@ else()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_link_flag("-Wl,--stack,8388608")
-  else()
+  elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
   endif()
   add_debug_compile_flag("-O0")
@@ -225,10 +253,12 @@ if(EMSCRIPTEN)
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
-if(UNIX AND
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
-    CMAKE_GENERATOR STREQUAL "Ninja")
-  add_compile_flag("-fcolor-diagnostics")
+if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_flag("-fdiagnostics-color=always")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_flag("-fcolor-diagnostics")
+  endif()
 endif()
 
 # Static libraries
@@ -271,99 +301,34 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
-install(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS binaryen
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-set(wasm-shell_SOURCES
-  src/tools/wasm-shell.cpp
-)
-add_executable(wasm-shell ${wasm-shell_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-shell ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-shell PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endfunction()
 
-set(wasm-opt_SOURCES
-  src/tools/wasm-opt.cpp
-)
-add_executable(wasm-opt ${wasm-opt_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-opt ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
+binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
+binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
+binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
+binaryen_add_executable(asm2wasm src/tools/asm2wasm.cpp)
+binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
+binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
+binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
+binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
+binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
+binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
 
-set(wasm-metadce_SOURCES
-  src/tools/wasm-metadce.cpp
-)
-add_executable(wasm-metadce ${wasm-metadce_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-metadce ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-metadce DESTINATION bin)
-
-set(asm2wasm_SOURCES
-  src/tools/asm2wasm.cpp
-)
-add_executable(asm2wasm ${asm2wasm_SOURCES} ${binaryen_objs})
-target_link_libraries(asm2wasm ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET asm2wasm PROPERTY CXX_STANDARD 14)
-set_property(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm2js_SOURCES
-  src/tools/wasm2js.cpp
-)
-add_executable(wasm2js ${wasm2js_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm2js ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm2js PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm2js PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm2js DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm-emscripten-finalize_SOURCES
-  src/tools/wasm-emscripten-finalize.cpp
-)
-add_executable(wasm-emscripten-finalize ${wasm-emscripten-finalize_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-emscripten-finalize ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm_as_SOURCES
-  src/tools/wasm-as.cpp
-)
-add_executable(wasm-as ${wasm_as_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-as ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-as PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm_dis_SOURCES
-  src/tools/wasm-dis.cpp
-)
-add_executable(wasm-dis ${wasm_dis_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-dis ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-dis PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-set(wasm-ctor-eval_SOURCES
-  src/tools/wasm-ctor-eval.cpp
-)
-add_executable(wasm-ctor-eval ${wasm-ctor-eval_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-ctor-eval ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-ctor-eval DESTINATION bin)
-
-set(wasm-reduce_SOURCES
-  src/tools/wasm-reduce.cpp
-)
-add_executable(wasm-reduce ${wasm-reduce_SOURCES} ${binaryen_objs})
-target_link_libraries(wasm-reduce ${CMAKE_THREAD_LIBS_INIT})
-set_property(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
-set_property(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
-install(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # binaryen.js
 #
@@ -380,11 +345,12 @@ if(EMSCRIPTEN)
   add_executable(binaryen_wasm
                  ${binaryen_emscripten_SOURCES})
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-  target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
   target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
   target_link_libraries(binaryen_wasm debug "--profiling")
@@ -402,11 +368,12 @@ if(EMSCRIPTEN)
     # only valid with fastcomp and WASM=0
     target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
   endif()
-  target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
   target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
   target_link_libraries(binaryen_js debug "--profiling")

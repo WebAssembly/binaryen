@@ -47,7 +47,7 @@
  (global $tempFloat (mut f32) (f32.const 0))
  (global $f0 (mut f32) (f32.const 0))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
- (func $__ZN10WasmAssertC2Ev__async_cb (; 2 ;) (param $$0 i32)
+ (func $__ZN10WasmAssertC2Ev__async_cb (param $$0 i32)
   (block $switch
    (block $switch-default
     (block $switch-case

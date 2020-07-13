@@ -1,15 +1,15 @@
 (module
  (type $none_=>_none (func))
- (func $0 (; 0 ;)
+ (func $0
   (nop)
  )
- (func $1 (; 1 ;)
+ (func $1
   (nop)
  )
- (func $2 (; 2 ;)
+ (func $2
   (local $0 exnref)
   (try
-   (block
+   (do
     (call $0)
     (call $1)
    )

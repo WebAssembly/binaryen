@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # Copyright 2017 WebAssembly Community Group participants
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,8 +147,3 @@ def test_asm2wasm_binary():
     assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
     support.run_command(shared.ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
-
-
-if __name__ == '__main__':
-    test_asm2wasm()
-    test_asm2wasm_binary()

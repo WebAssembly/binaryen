@@ -1,6 +1,6 @@
 (module
   (event $e0 (attr 0) (param i32))
-  (event $e1 (attr 0) (param anyref))
+  (event $e1 (attr 0) (param externref))
 
   (func $exnref_test (param $0 exnref) (result exnref)
     (local.get $0)
@@ -11,7 +11,9 @@
 
   (func $eh_test (local $exn exnref)
     (try
-      (throw $e0 (i32.const 0))
+      (do
+        (throw $e0 (i32.const 0))
+      )
       (catch
         ;; Multi-value is not available yet, so block can't take a value from
         ;; stack. So this uses locals for now.
@@ -28,7 +30,9 @@
 
     ;; Try with a block label
     (try $l1
-      (br $l1)
+      (do
+        (br $l1)
+      )
       (catch
         (br $l1)
       )
@@ -36,6 +40,7 @@
 
     ;; Empty try body
     (try
+      (do)
       (catch
         (drop (exnref.pop))
       )
@@ -43,7 +48,7 @@
 
     ;; Multiple instructions within try and catch bodies
     (try
-      (block
+      (do
         (call $foo)
         (call $bar)
       )
@@ -58,6 +63,7 @@
   ;; Test subtype relationship
   (func $subtype_test
     (try
+      (do)
       (catch
         (drop (exnref.pop))
         (drop

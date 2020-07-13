@@ -112,6 +112,11 @@ struct LegalizeJSInterface : public Pass {
       // Gather functions used in 'ref.func'. They should not be removed.
       std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
 
+      // Fill in unordered_map, as we operate on it in parallel.
+      for (auto& func : module->functions) {
+        usedInRefFunc[func->name];
+      }
+
       struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
         Module& wasm;
         std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
@@ -125,12 +130,7 @@ struct LegalizeJSInterface : public Pass {
         RefFuncScanner(
           Module& wasm,
           std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
-          : wasm(wasm), usedInRefFunc(usedInRefFunc) {
-          // Fill in unordered_map, as we operate on it in parallel
-          for (auto& func : wasm.functions) {
-            usedInRefFunc[func->name];
-          }
-        }
+          : wasm(wasm), usedInRefFunc(usedInRefFunc) {}
 
         void visitRefFunc(RefFunc* curr) { usedInRefFunc[curr->func] = true; }
       };
@@ -167,8 +167,10 @@ struct LegalizeJSInterface : public Pass {
             // call
             return;
           }
-          replaceCurrent(Builder(*getModule())
-                           .makeCall(iter->second, curr->operands, curr->type));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeCall(
+                iter->second, curr->operands, curr->type, curr->isReturn));
         }
       };
 

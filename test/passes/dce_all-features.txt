@@ -10,10 +10,10 @@
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
  (global $x (mut i32) (i32.const 0))
- (func $call-me (; 0 ;) (param $0 i32) (param $1 i32)
+ (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
- (func $code-to-kill (; 1 ;)
+ (func $code-to-kill
   (local $x i32)
   (block $out
    (br $out)
@@ -264,20 +264,20 @@
    (i32.const 1337)
   )
  )
- (func $killer (; 2 ;)
+ (func $killer
   (unreachable)
  )
- (func $target (; 3 ;)
+ (func $target
   (drop
    (i32.const 2000)
   )
  )
- (func $typed-block-none-then-unreachable (; 4 ;) (result i32)
+ (func $typed-block-none-then-unreachable (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $typed-block-remove-br-changes-type (; 5 ;) (param $$$0 i32) (result i32)
+ (func $typed-block-remove-br-changes-type (param $$$0 i32) (result i32)
   (block $switch$7
    (block $switch-default$10
     (block $switch-case$9
@@ -296,46 +296,46 @@
    )
   )
  )
- (func $global (; 6 ;)
+ (func $global
   (unreachable)
  )
- (func $ret (; 7 ;) (result i32)
+ (func $ret (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $unreachable-br (; 8 ;) (result i32)
+ (func $unreachable-br (result i32)
   (block $out (result i32)
    (br $out
     (i32.const 0)
    )
   )
  )
- (func $unreachable-br-loop (; 9 ;) (result i32)
+ (func $unreachable-br-loop (result i32)
   (loop $out
    (br $out)
   )
  )
- (func $unreachable-block-ends-switch (; 10 ;) (result i32)
+ (func $unreachable-block-ends-switch (result i32)
   (block $label$3
    (nop)
    (unreachable)
   )
  )
- (func $unreachable-block-ends-br_if (; 11 ;) (result i32)
+ (func $unreachable-block-ends-br_if (result i32)
   (block $label$2
    (nop)
    (unreachable)
   )
  )
- (func $unreachable-brs-3 (; 12 ;) (result i32)
+ (func $unreachable-brs-3 (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (i32.const 18)
    )
   )
  )
- (func $unreachable-brs-4 (; 13 ;) (param $var$0 i32) (result i32)
+ (func $unreachable-brs-4 (param $var$0 i32) (result i32)
   (drop
    (i32.const 1)
   )
@@ -346,7 +346,7 @@
    (unreachable)
   )
  )
- (func $call-unreach (; 14 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+ (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
   (if (result i64)
    (i64.eqz
@@ -377,13 +377,13 @@
    )
   )
  )
- (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (param $var$0 i32) (result i32)
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (param $var$0 i32) (result i32)
   (block $block
    (nop)
    (unreachable)
   )
  )
- (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (param $var$0 i32) (result i32)
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (block $block
     (drop
@@ -396,39 +396,39 @@
    )
   )
  )
- (func $replace-br-value-of-i32-with-unreachable (; 17 ;) (result i32)
+ (func $replace-br-value-of-i32-with-unreachable (result i32)
   (block $label$1
    (nop)
    (unreachable)
   )
  )
- (func $shorten-block-requires-sync-refinalize (; 18 ;) (param $var$0 i32) (param $var$1 i32)
+ (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
   (unreachable)
  )
- (func $block-with-type-but-is-unreachable (; 19 ;) (param $var$0 i32) (result i32)
+ (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
   (block $block
    (nop)
    (unreachable)
   )
  )
- (func $if-with-type-but-is-unreachable (; 20 ;) (param $var$0 i32) (result i32)
+ (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
   (if
    (local.get $var$0)
    (unreachable)
    (unreachable)
   )
  )
- (func $unreachable-loop (; 21 ;)
+ (func $unreachable-loop
   (unreachable)
  )
- (func $br-block-from-unary (; 22 ;) (result i32)
+ (func $br-block-from-unary (result i32)
   (block $label$6 (result i32)
    (br $label$6
     (i32.const 8)
    )
   )
  )
- (func $replace-unary-with-br-child (; 23 ;)
+ (func $replace-unary-with-br-child
   (drop
    (block $label$6 (result i32)
     (br $label$6
@@ -437,13 +437,13 @@
    )
   )
  )
- (func $br_if-unreach-then-br_if-normal (; 24 ;)
+ (func $br_if-unreach-then-br_if-normal
   (block $out
    (nop)
    (unreachable)
   )
  )
- (func $replace-with-unreachable-affects-parent (; 25 ;) (param $var$0 f32) (param $var$1 i64)
+ (func $replace-with-unreachable-affects-parent (param $var$0 f32) (param $var$1 i64)
   (drop
    (i64.const 0)
   )
@@ -459,7 +459,7 @@
    (unreachable)
   )
  )
- (func $replace-block-changes-later-when-if-goes (; 26 ;)
+ (func $replace-block-changes-later-when-if-goes
   (block $top
    (global.set $x
     (i32.const 0)
@@ -475,14 +475,14 @@
    )
   )
  )
- (func $helper (; 27 ;) (param $var$0 f32) (param $var$1 i64) (result i32)
+ (func $helper (param $var$0 f32) (param $var$1 i64) (result i32)
   (i32.const 0)
  )
 )
 (module
  (type $none_=>_none (func))
  (global $global (mut f64) (f64.const 0))
- (func $0 (; 0 ;)
+ (func $0
   (if
    (i32.const 0)
    (unreachable)
@@ -492,7 +492,7 @@
 )
 (module
  (type $none_=>_none (func))
- (func $0 (; 0 ;)
+ (func $0
   (local $local f64)
   (if
    (i32.const 0)
@@ -503,43 +503,51 @@
 )
 (module
  (type $none_=>_none (func))
- (func $foo (; 0 ;)
+ (event $e (attr 0) (param))
+ (func $foo
   (nop)
  )
- (func $try_unreachable (; 1 ;)
+ (func $try_unreachable
   (try
-   (unreachable)
+   (do
+    (unreachable)
+   )
    (catch
+    (drop
+     (exnref.pop)
+    )
    )
   )
   (call $foo)
  )
- (func $catch_unreachable (; 2 ;)
+ (func $catch_unreachable
   (try
-   (nop)
+   (do
+    (nop)
+   )
    (catch
     (unreachable)
    )
   )
   (call $foo)
  )
- (func $both_unreachable (; 3 ;)
+ (func $both_unreachable
   (try
-   (unreachable)
+   (do
+    (unreachable)
+   )
    (catch
     (unreachable)
    )
   )
  )
-)
-(module
- (type $none_=>_none (func))
- (func $foo (; 0 ;)
-  (nop)
+ (func $throw
+  (throw $e
+  )
  )
- (func $push_unreachable (; 1 ;)
-  (push
-   (unreachable)
+ (func $rethrow
+  (rethrow
+   (ref.null)
   )
  )
 )

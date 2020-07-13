@@ -155,8 +155,9 @@ struct ReFinalize
   void visitBrOnExn(BrOnExn* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
-  void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitTupleMake(TupleMake* curr);
+  void visitTupleExtract(TupleExtract* curr);
 
   void visitFunction(Function* curr);
 
@@ -222,8 +223,9 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitBrOnExn(BrOnExn* curr) { curr->finalize(); }
   void visitNop(Nop* curr) { curr->finalize(); }
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
-  void visitPush(Push* curr) { curr->finalize(); }
   void visitPop(Pop* curr) { curr->finalize(); }
+  void visitTupleMake(TupleMake* curr) { curr->finalize(); }
+  void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
@@ -294,6 +296,20 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
       if (maybeDrop(curr->ifFalse)) {
         acted = true;
       }
+    }
+    if (acted) {
+      reFinalize();
+      assert(curr->type == Type::none);
+    }
+  }
+
+  void visitTry(Try* curr) {
+    bool acted = false;
+    if (maybeDrop(curr->body)) {
+      acted = true;
+    }
+    if (maybeDrop(curr->catchBody)) {
+      acted = true;
     }
     if (acted) {
       reFinalize();

@@ -41,17 +41,22 @@ public:
   using value_type = T;
 
   SmallVector() {}
-
-  T& operator[](size_t i) {
-    return const_cast<T&>(static_cast<const SmallVector<T, N>&>(*this)[i]);
+  SmallVector(std::initializer_list<T> init) {
+    for (T item : init) {
+      push_back(item);
+    }
   }
 
-  const T& operator[](size_t i) const {
+  T& operator[](size_t i) {
     if (i < N) {
       return fixed[i];
     } else {
       return flexible[i - N];
     }
+  }
+
+  const T& operator[](size_t i) const {
+    return const_cast<SmallVector<T, N>&>(*this)[i];
   }
 
   void push_back(const T& x) {
@@ -124,16 +129,15 @@ public:
 
   // iteration
 
-  struct Iterator {
+  template<typename Parent, typename Iterator> struct IteratorBase {
     typedef T value_type;
     typedef long difference_type;
     typedef T& reference;
 
-    const SmallVector<T, N>* parent;
+    Parent* parent;
     size_t index;
 
-    Iterator(const SmallVector<T, N>* parent, size_t index)
-      : parent(parent), index(index) {}
+    IteratorBase(Parent* parent, size_t index) : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
       return index != other.index || parent != other.parent;
@@ -149,16 +153,24 @@ public:
     const Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
     }
-
-    const value_type operator*() const { return (*parent)[index]; }
   };
 
-  Iterator begin() const {
-    return Iterator(static_cast<const SmallVector<T, N>*>(this), 0);
-  }
-  Iterator end() const {
-    return Iterator(static_cast<const SmallVector<T, N>*>(this), size());
-  }
+  struct Iterator : IteratorBase<SmallVector<T, N>, Iterator> {
+    Iterator(SmallVector<T, N>* parent, size_t index)
+      : IteratorBase<SmallVector<T, N>, Iterator>(parent, index) {}
+    value_type& operator*() { return (*this->parent)[this->index]; }
+  };
+
+  struct ConstIterator : IteratorBase<const SmallVector<T, N>, ConstIterator> {
+    ConstIterator(const SmallVector<T, N>* parent, size_t index)
+      : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
+    const value_type& operator*() const { return (*this->parent)[this->index]; }
+  };
+
+  Iterator begin() { return Iterator(this, 0); }
+  Iterator end() { return Iterator(this, size()); }
+  ConstIterator begin() const { return ConstIterator(this, 0); }
+  ConstIterator end() const { return ConstIterator(this, size()); }
 };
 
 } // namespace wasm

@@ -23,6 +23,8 @@
 
 namespace wasm {
 
+Global* getStackPointerGlobal(Module& wasm);
+
 // Class which modifies a wasm module for use with emscripten. Generates
 // runtime functions and emits metadata.
 class EmscriptenGlueGenerator {
@@ -32,8 +34,8 @@ public:
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
+  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
 
-  void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
@@ -58,6 +60,12 @@ public:
 
   void enforceStackLimit();
 
+  // clang uses name mangling to rename the argc/argv form of main to
+  // __main_argc_argv.  Emscripten in non-standalone mode expects that function
+  // to be exported as main.  This function renames __main_argc_argv to main
+  // as expected by emscripten.
+  void renameMainArgcArgv();
+
   void exportWasiStart();
 
   // Emits the data segments to a file. The file contains data from address base
@@ -72,17 +80,12 @@ private:
   Address stackPointerOffset;
   bool useStackPointerGlobal;
   bool standalone;
+  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
 
-  Global* getStackPointerGlobal();
-  Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Function* func, Expression* value);
   void generateDynCallThunk(Signature sig);
-  void generateStackSaveFunction();
-  void generateStackAllocFunction();
-  void generateStackRestoreFunction();
   void generateSetStackLimitFunction();
   Name importStackOverflowHandler();
 };

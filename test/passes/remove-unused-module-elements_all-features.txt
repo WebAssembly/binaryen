@@ -10,32 +10,32 @@
  (export "other1" (func $other1))
  (export "other2" (func $other2))
  (start $start)
- (func $start (; 0 ;)
+ (func $start
   (call $called0)
  )
- (func $called0 (; 1 ;)
+ (func $called0
   (call $called1)
  )
- (func $called1 (; 2 ;)
+ (func $called1
   (nop)
  )
- (func $called_indirect (; 3 ;)
+ (func $called_indirect
   (nop)
  )
- (func $exported (; 4 ;)
+ (func $exported
   (call $called2)
  )
- (func $called2 (; 5 ;)
+ (func $called2
   (call $called2)
   (call $called3)
  )
- (func $called3 (; 6 ;)
+ (func $called3
   (call $called4)
  )
- (func $called4 (; 7 ;)
+ (func $called4
   (call $called3)
  )
- (func $other1 (; 8 ;) (param $0 i32)
+ (func $other1 (param $0 i32)
   (call_indirect (type $none_=>_none)
    (i32.const 0)
   )
@@ -75,7 +75,7 @@
    )
   )
  )
- (func $other2 (; 9 ;) (param $0 i32)
+ (func $other2 (param $0 i32)
   (unreachable)
  )
 )
@@ -95,7 +95,7 @@
  (data (i32.const 1) "hello, world!")
  (import "env" "table" (table $0 1 funcref))
  (elem (i32.const 0) $waka)
- (func $waka (; 0 ;)
+ (func $waka
   (nop)
  )
 )
@@ -104,7 +104,7 @@
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table $0 0 funcref))
  (export "user" (func $user))
- (func $user (; 0 ;)
+ (func $user
   (drop
    (i32.load
     (i32.const 0)
@@ -119,7 +119,7 @@
  (type $none_=>_none (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (; 0 ;)
+ (func $user
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -130,7 +130,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (i32.atomic.rmw.add
    (i32.const 0)
    (i32.const 0)
@@ -141,7 +141,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (i32.atomic.rmw8.cmpxchg_u
    (i32.const 0)
    (i32.const 0)
@@ -153,7 +153,7 @@
  (type $none_=>_none (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (; 0 ;)
+ (func $user
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -169,7 +169,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (atomic.notify
    (i32.const 0)
    (i32.const 0)
@@ -180,7 +180,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (memory.grow
    (i32.const 0)
   )
@@ -190,7 +190,7 @@
  (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $0 256))
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (memory.grow
    (i32.const 0)
   )
@@ -200,7 +200,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
- (func $user (; 0 ;) (result i32)
+ (func $user (result i32)
   (memory.size)
  )
 )
@@ -212,7 +212,7 @@
  (elem (global.get $tableBase) $waka)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
- (func $waka (; 0 ;)
+ (func $waka
   (nop)
  )
 )
@@ -228,16 +228,16 @@
  (export "one" (func $one))
  (export "three" (func $three))
  (export "exp_glob" (global $exp_glob))
- (func $one (; 1 ;) (result i32)
+ (func $one (result i32)
   (call $two)
  )
- (func $two (; 2 ;) (result i32)
+ (func $two (result i32)
   (global.get $int)
  )
- (func $three (; 3 ;)
+ (func $three
   (call $four)
  )
- (func $four (; 4 ;)
+ (func $four
   (global.set $set
    (i32.const 200)
   )
@@ -253,7 +253,7 @@
 (module
  (type $none_=>_none (func))
  (start $starter)
- (func $starter (; 0 ;)
+ (func $starter
   (drop
    (i32.const 0)
   )
@@ -267,7 +267,7 @@
  (type $f64_=>_f64 (func (param f64) (result f64)))
  (import "env" "table" (table $0 6 6 funcref))
  (elem (i32.const 0) $0)
- (func $0 (; 0 ;) (param $var$0 f64) (result f64)
+ (func $0 (param $var$0 f64) (result f64)
   (if (result f64)
    (f64.eq
     (f64.const 1)
@@ -287,11 +287,13 @@
  (event $e-bronexn (attr 0) (param i32))
  (export "e-export" (event $e-export))
  (start $start)
- (func $start (; 0 ;)
+ (func $start
   (local $exn exnref)
   (try
-   (throw $e-throw
-    (i32.const 0)
+   (do
+    (throw $e-throw
+     (i32.const 0)
+    )
    )
    (catch
     (local.set $exn
@@ -313,10 +315,10 @@
 (module
  (type $none_=>_none (func))
  (export "test" (func $test))
- (func $foo (; 0 ;)
+ (func $foo
   (nop)
  )
- (func $test (; 1 ;)
+ (func $test
   (drop
    (ref.func $foo)
   )

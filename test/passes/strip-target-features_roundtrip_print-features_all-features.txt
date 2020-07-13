@@ -1,0 +1,22 @@
+--enable-threads
+--enable-mutable-globals
+--enable-nontrapping-float-to-int
+--enable-simd
+--enable-bulk-memory
+--enable-sign-ext
+--enable-exception-handling
+--enable-tail-call
+--enable-reference-types
+--enable-multivalue
+(module
+ (type $none_=>_v128_externref (func (result v128 externref)))
+ (func $foo (result v128 externref)
+  (tuple.make
+   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+   (ref.null)
+  )
+ )
+ (func $bar (result v128 externref)
+  (return_call $foo)
+ )
+)

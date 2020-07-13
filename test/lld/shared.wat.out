@@ -20,10 +20,10 @@
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $__wasm_call_ctors (; 4 ;)
+ (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 5 ;)
+ (func $__wasm_apply_relocs
   (i32.store
    (i32.add
     (global.get $gimport$2)
@@ -39,7 +39,7 @@
    (global.get $gimport$7)
   )
  )
- (func $print_message\28\29 (; 6 ;) (result i32)
+ (func $print_message\28\29 (result i32)
   (drop
    (call $puts
     (i32.add
@@ -52,11 +52,11 @@
    (global.get $gimport$5)
   )
  )
- (func $__post_instantiate (; 7 ;)
+ (func $__post_instantiate
   (call $__assign_got_enties)
   (call $__wasm_call_ctors)
  )
- (func $__assign_got_enties (; 8 ;)
+ (func $__assign_got_enties
   (global.set $gimport$5
    (call $g$external_var)
   )
@@ -83,10 +83,6 @@
     "___memory_base",
     "___table_base"
   ],
-  "implementedFunctions": [
-    "__Z13print_messagev",
-    "___post_instantiate"
-  ],
   "exports": [
     "_Z13print_messagev",
     "__post_instantiate"
@@ -97,9 +93,9 @@
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

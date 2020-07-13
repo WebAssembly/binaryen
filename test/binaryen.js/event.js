@@ -7,7 +7,7 @@ function cleanInfo(info) {
 }
 
 var module = new binaryen.Module();
-module.setFeatures(binaryen.Features.ExceptionHandling);
+module.setFeatures(binaryen.Features.ExceptionHandling | binaryen.Features.Multivalue);
 
 var pairType = binaryen.createType([binaryen.i32, binaryen.f32]);
 

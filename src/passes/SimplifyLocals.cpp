@@ -78,8 +78,10 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item, PassOptions& passOptions)
-      : item(item), effects(passOptions, *item) {}
+    SinkableInfo(Expression** item,
+                 PassOptions& passOptions,
+                 FeatureSet features)
+      : item(item), effects(passOptions, features, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -124,8 +126,7 @@ struct SimplifyLocals
                   Expression** currp) {
     // Main processing.
     auto* curr = *currp;
-    if (curr->is<Break>()) {
-      auto* br = curr->cast<Break>();
+    if (auto* br = curr->dynCast<Break>()) {
       if (br->value) {
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
@@ -145,6 +146,10 @@ struct SimplifyLocals
         self->unoptimizableBlocks.insert(target);
       }
       // TODO: we could use this info to stop gathering data on these blocks
+    } else if (auto* br = curr->dynCast<BrOnExn>()) {
+      // We cannot optimize the block this targets to have a return value, as
+      // the br_on_exn doesn't support a change to the block's type
+      self->unoptimizableBlocks.insert(br->name);
     }
     self->sinkables.clear();
   }
@@ -160,10 +165,9 @@ struct SimplifyLocals
   static void
   doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
                Expression** currp) {
-    auto* iff = (*currp)->dynCast<If>();
+    auto* iff = (*currp)->cast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
-      assert((*currp)->cast<If>()->ifFalse);
       self->ifStack.push_back(std::move(self->sinkables));
     } else {
       // This is an if without an else.
@@ -298,7 +302,21 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    // Expressions that may throw cannot be sinked into 'try'. At the start of
+    // 'try', we drop all sinkables that may throw.
+    if (curr->is<Try>()) {
+      std::vector<Index> invalidated;
+      for (auto& sinkable : self->sinkables) {
+        if (sinkable.second.effects.throws) {
+          invalidated.push_back(sinkable.first);
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -384,7 +402,8 @@ struct SimplifyLocals
       }
     }
 
-    EffectAnalyzer effects(self->getPassOptions());
+    FeatureSet features = self->getModule()->features;
+    EffectAnalyzer effects(self->getPassOptions(), features);
     if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
@@ -392,8 +411,8 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(
-        std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
+      self->sinkables.emplace(std::make_pair(
+        index, SinkableInfo(currp, self->getPassOptions(), features)));
     }
 
     if (!allowNesting) {
@@ -404,6 +423,14 @@ struct SimplifyLocals
   bool canSink(LocalSet* set) {
     // we can never move a tee
     if (set->isTee()) {
+      return false;
+    }
+    // We cannot move expressions containing exnref.pops that are not enclosed
+    // in 'catch', because 'exnref.pop' should follow right after 'catch'.
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), features, set->value)
+          .danglingPop) {
       return false;
     }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
@@ -504,6 +531,7 @@ struct SimplifyLocals
     //   )
     //  )
     // so we must check for that.
+    FeatureSet features = this->getModule()->features;
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
@@ -520,8 +548,9 @@ struct SimplifyLocals
             // itself, there is any risk
             Nop nop;
             *breakLocalSetPointer = &nop;
-            EffectAnalyzer condition(this->getPassOptions(), br->condition);
-            EffectAnalyzer value(this->getPassOptions(), set);
+            EffectAnalyzer condition(
+              this->getPassOptions(), features, br->condition);
+            EffectAnalyzer value(this->getPassOptions(), features, set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
@@ -994,7 +1023,9 @@ struct SimplifyLocals
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
+    UnneededSetRemover setRemover(
+      getCounter, func, this->getPassOptions(), this->getModule()->features);
+    setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;
   }

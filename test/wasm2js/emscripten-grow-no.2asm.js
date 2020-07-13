@@ -22,8 +22,10 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- // EMSCRIPTEN_START_FUNCS;
- // EMSCRIPTEN_END_FUNCS;
+ // EMSCRIPTEN_START_FUNCS
+;
+ // EMSCRIPTEN_END_FUNCS
+;
  var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
@@ -44,24 +46,27 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var writeSegment = (
-    function(mem) {
-      var _mem = new Uint8Array(mem);
-      return function(offset, s) {
-        var bytes, i;
-        if (typeof Buffer === 'undefined') {
-          bytes = atob(s);
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes.charCodeAt(i);
-        } else {
-          bytes = Buffer.from(s, 'base64');
-          for (i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes[i];
-        }
-      }
+var bufferView = new Uint8Array(wasmMemory.buffer);
+for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+    base64ReverseLookup[48+i] = 52+i; // '0-9'
+    base64ReverseLookup[65+i] = i; // 'A-Z'
+    base64ReverseLookup[97+i] = 26+i; // 'a-z'
+  }
+  base64ReverseLookup[43] = 62; // '+'
+  base64ReverseLookup[47] = 63; // '/'
+  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
+  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
+    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2) - (b64[bLength-2] == '=') - (b64[bLength-1] == '=');
+    for (; i < bLength; i += 4) {
+      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
+      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
+      uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
+      if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
+      if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-  )(wasmMemory.buffer);
-writeSegment(1600, "YWJj");
+    return uint8Array; 
+  }
+  base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 return asmFunc({
     'Int8Array': Int8Array,
     'Int16Array': Int16Array,

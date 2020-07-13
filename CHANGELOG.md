@@ -15,6 +15,45 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add Asyncify "add list" that adds to the list of functions to be instrumented.
+  Rename old lists to be clearer and more consistent with that, so now there is
+  "remove list" to remove, "add list" to add, and "only list" which if set means
+  that only those functions should be instrumented and nothing else.
+
+v94
+---
+
+- The C-API's `BinaryenSetAPITracing` and the JS-API's `setAPITracing` have been
+  removed because this feature was not very useful anymore and had a significant
+  maintainance cost.
+- wasm-emscripten-finalize will no longer generate `stackSave`, `stackAlloc`,
+  `stackRestore` function.  It not expects them to be included in the input
+  file.
+
+v93
+---
+
+- First release with binaries built with github actions.
+
+
+v92
+---
+
+- The `multivalue` feature has been added. It allows functions and control flow
+  structures to return tuples and for locals and globals to have tuple types.
+  Tuples are created with the new `tuple.make` pseudoinstruction and their
+  elements are retrieved with the new `tuple.extract` pseudoinstruction.
+- The internal type interner has been rewritten to avoid taking locks in far
+  more situations. Depending on the workload, this may result in large speedups
+  and increased parallelism.
+- Represent the `dylink` section in Binaryen IR, so we can read, write, and
+  update it.
+
+v91
+---
+
+- `BinaryenExpressionGetSideEffects` (C API) and `getSideEffects` (JS API) now
+  takes an additional `features` parameter.
 - Reference type support is added. Supported instructions are `ref.null`,
   `ref.is_null`, `ref.func`, and typed `select`. Table instructions are not
   supported yet. For typed `select`, C/JS API can take an additional 'type'
@@ -53,6 +92,8 @@ v90
   `binaryen.ready` promise, e.g. `binaryen.ready.then(() => ...)`.
 - Binaryen.js now uses `binaryen` (was `Binaryen`) as its global name to align
   with the npm package.
+- Binaryen.js: The result of `getMemorySegmentInfoByIndex` now has the same
+  structure as the respective inputs on creation (`byteOffset` -> `offset`).
 
 v88
 ---

@@ -28,13 +28,18 @@
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
+#include <wasm-emscripten.h>
 #include <wasm.h>
+
+#define DEBUG_TYPE "post-emscripten"
 
 namespace wasm {
 
 namespace {
 
-static bool isInvoke(Name name) { return name.startsWith("invoke_"); }
+static bool isInvoke(Function* F) {
+  return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
+}
 
 struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
   bool isFunctionParallel() override { return true; }
@@ -73,6 +78,24 @@ struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
 
 struct PostEmscripten : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // Apply the stack pointer, if it was provided.  This is needed here
+    // because the emscripten JS compiler can add static data allocations that
+    // come before the stack.
+    auto stackPtrStr =
+      runner->options.getArgumentOrDefault("stack-pointer", "");
+    if (stackPtrStr != "") {
+      Global* stackPointer = getStackPointerGlobal(*module);
+      BYN_TRACE("stack_pointer: " << stackPtrStr << "\n");
+      if (stackPointer && !stackPointer->imported()) {
+        auto stackPtr = std::stoi(stackPtrStr);
+        auto oldValue = stackPointer->init->cast<Const>()->value;
+        BYN_TRACE("updating __stack_pointer: " << oldValue.geti32() << " -> "
+                                               << stackPtr << "\n");
+        stackPointer->init =
+          Builder(*module).makeConst(Literal(int32_t(stackPtr)));
+      }
+    }
+
     // Apply the sbrk ptr, if it was provided.
     auto sbrkPtrStr =
       runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");
@@ -123,7 +146,7 @@ struct PostEmscripten : public Pass {
     // First, check if this code even uses invokes.
     bool hasInvokes = false;
     for (auto& imp : module->functions) {
-      if (imp->imported() && imp->module == ENV && isInvoke(imp->base)) {
+      if (isInvoke(imp.get())) {
         hasInvokes = true;
       }
     }
@@ -133,7 +156,7 @@ struct PostEmscripten : public Pass {
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
-    FlatTable flatTable(module->table);
+    TableUtils::FlatTable flatTable(module->table);
     if (!flatTable.valid) {
       return;
     }
@@ -152,9 +175,11 @@ struct PostEmscripten : public Pass {
         }
       });
 
+    // Assume an indirect call might throw.
     analyzer.propagateBack([](const Info& info) { return info.canThrow; },
                            [](const Info& info) { return true; },
-                           [](Info& info) { info.canThrow = true; });
+                           [](Info& info) { info.canThrow = true; },
+                           analyzer.IndirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -163,13 +188,15 @@ struct PostEmscripten : public Pass {
       Pass* create() override { return new OptimizeInvokes(map, flatTable); }
 
       std::map<Function*, Info>& map;
-      FlatTable& flatTable;
+      TableUtils::FlatTable& flatTable;
 
-      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable)
+      OptimizeInvokes(std::map<Function*, Info>& map,
+                      TableUtils::FlatTable& flatTable)
         : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {
-        if (isInvoke(curr->target)) {
+        auto* target = getModule()->getFunction(curr->target);
+        if (isInvoke(target)) {
           // The first operand is the function pointer index, which must be
           // constant if we are to optimize it statically.
           if (auto* index = curr->operands[0]->dynCast<Const>()) {

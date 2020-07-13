@@ -1,8 +1,7 @@
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
@@ -14,49 +13,23 @@
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "_start" (func $_start))
- (func $__original_main (; 0 ;) (result i32)
+ (func $__original_main (result i32)
   (nop)
  )
- (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $foo (; 2 ;) (result i32)
+ (func $foo (result i32)
   (nop)
  )
- (func $stackSave (; 3 ;) (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $global$0
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $global$0)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (; 5 ;) (param $0 i32)
-  (global.set $global$0
-   (local.get $0)
-  )
- )
- (func $__growWasmMemory (; 6 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
  )
- (func $_start (; 7 ;)
+ (func $_start
   (drop
    (call $main
     (i32.const 0)
@@ -74,19 +47,8 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "_main",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "__start"
-  ],
   "exports": [
     "main",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory",
     "_start"
   ],
@@ -97,8 +59,7 @@
   "invokeFuncs": [
   ],
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

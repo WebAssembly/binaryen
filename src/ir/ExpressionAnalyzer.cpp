@@ -231,8 +231,11 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {}
-    void visitPush(Push* curr) {}
     void visitPop(Pop* curr) {}
+    void visitTupleMake(TupleMake* curr) {}
+    void visitTupleExtract(TupleExtract* curr) {
+      visitor.visitIndex(curr->index);
+    }
   } singleton(curr, visitor);
 }
 

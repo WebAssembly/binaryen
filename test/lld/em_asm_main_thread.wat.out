@@ -2,7 +2,6 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -19,14 +18,11 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 1 ;)
+ (func $__wasm_call_ctors
   (nop)
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (global.set $global$0
@@ -104,10 +100,10 @@
   )
   (i32.const 0)
  )
- (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (; 3 ;) (result i32)
+ (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (result i32)
   (i32.const 0)
  )
- (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (; 4 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (global.set $global$0
    (local.tee $3
@@ -152,7 +148,7 @@
    )
   )
  )
- (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (; 5 ;) (param $0 i32) (param $1 i32)
+ (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (param $0 i32) (param $1 i32)
   (local $2 i32)
   (global.set $global$0
    (local.tee $2
@@ -188,36 +184,13 @@
    )
   )
  )
- (func $__em_asm_sig_builder::sig_char\28int\29 (; 6 ;) (param $0 i32) (result i32)
+ (func $__em_asm_sig_builder::sig_char\28int\29 (param $0 i32) (result i32)
   (i32.const 105)
  )
- (func $main (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $stackSave (; 8 ;) (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (; 9 ;) (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $global$0
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $global$0)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (; 10 ;) (param $0 i32)
-  (global.set $global$0
-   (local.get $0)
-  )
- )
- (func $__growWasmMemory (; 11 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
@@ -240,20 +213,9 @@
   ],
   "externs": [
   ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
     "__growWasmMemory"
   ],
   "namedGlobals": {
@@ -262,9 +224,9 @@
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)
