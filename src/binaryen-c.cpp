@@ -2866,10 +2866,22 @@ BinaryenExpressionRef BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr) {
   assert(expression->is<TupleExtract>());
   return static_cast<TupleExtract*>(expression)->tuple;
 }
+void BinaryenTupleExtractSetTuple(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef tupleExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  static_cast<TupleExtract*>(expression)->tuple = (Expression*)tupleExpr;
+}
 BinaryenIndex BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TupleExtract>());
   return static_cast<TupleExtract*>(expression)->index;
+}
+void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
+                                  BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleExtract>());
+  static_cast<TupleExtract*>(expression)->index = index;
 }
 
 // Functions

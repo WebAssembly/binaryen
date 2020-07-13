@@ -4120,6 +4120,21 @@ Module['BrOnExn'] = makeExpressionWrapper({
   }
 });
 
+Module['TupleExtract'] = makeExpressionWrapper({
+  'getTuple': function(expr) {
+    return Module['_BinaryenTupleExtractGetTuple'](expr);
+  },
+  'setTuple': function(expr, tupleExpr) {
+    Module['_BinaryenTupleExtractSetTuple'](expr, tupleExpr);
+  },
+  'getIndex': function(expr) {
+    return Module['_BinaryenTupleExtractGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenTupleExtractSetIndex'](expr, index);
+  }
+});
+
 // Additional customizations
 
 Module['exit'] = function(status) {

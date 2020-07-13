@@ -1676,10 +1676,18 @@ BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
+// Gets the tuple extracted from of a `tuple.extract` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
+// Sets the tuple extracted from of a `tuple.extract` expression.
+BINARYEN_API void BinaryenTupleExtractSetTuple(BinaryenExpressionRef expr,
+                                               BinaryenExpressionRef tupleExpr);
+// Gets the index extracted at of a `tuple.extract` expression.
 BINARYEN_API BinaryenIndex
 BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
+// Sets the index extracted at of a `tuple.extract` expression.
+BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
+                                               BinaryenIndex index);
 
 // Functions
 
