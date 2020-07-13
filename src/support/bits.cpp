@@ -150,24 +150,10 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 }
 
 uint32_t Log2(uint32_t v) {
-  switch (v) {
-    case 1:
-      return 0;
-    case 2:
-      return 1;
-    case 4:
-      return 2;
-    case 8:
-      return 3;
-    case 16:
-      return 4;
-    case 32:
-      return 5;
-    default: {
-      assert(IsPowerOf2(v));
-      return 31 - CountLeadingZeroes(v);
-    }
+  if (!IsPowerOf2(v)) {
+    WASM_UNREACHABLE("invalid value");
   }
+  return 31 - CountLeadingZeroes(v | 1);
 }
 
 uint32_t Pow2(uint32_t v) { return 1 << v; }
