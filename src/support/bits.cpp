@@ -153,7 +153,7 @@ uint32_t Log2(uint32_t v) {
   if (!IsPowerOf2(v)) {
     WASM_UNREACHABLE("invalid value");
   }
-  return 31 - CountLeadingZeroes(v | 1);
+  return 31 - CountLeadingZeroes(v);
 }
 
 uint32_t Pow2(uint32_t v) { return 1 << v; }
