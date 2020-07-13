@@ -1671,10 +1671,33 @@ BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenBrOnExnSetExnref(BinaryenExpressionRef expr,
                                            BinaryenExpressionRef exnrefExpr);
 
+// Gets the number of operands of a `tuple.make` expression.
 BINARYEN_API BinaryenIndex
 BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
+// Gets the operand at the specified index of a `tuple.make` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenTupleMakeGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand at the specified index of a `tuple.make` expression.
+BINARYEN_API void
+BinaryenTupleMakeSetOperandAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `tuple.make` expression, returning its
+// insertion index.
+BINARYEN_API BinaryenIndex BinaryenTupleMakeAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `tuple.make`
+// expression, moving existing operands including the one previously at that
+// index one index up.
+BINARYEN_API void
+BinaryenTupleMakeInsertOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `tuple.make`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BINARYEN_API BinaryenExpressionRef BinaryenTupleMakeRemoveOperandAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Gets the tuple extracted from of a `tuple.extract` expression.
 BINARYEN_API BinaryenExpressionRef

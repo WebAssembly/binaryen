@@ -2854,12 +2854,50 @@ BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<TupleMake>());
   return static_cast<TupleMake*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr,
-                                                  BinaryenIndex index) {
+BinaryenExpressionRef BinaryenTupleMakeGetOperandAt(BinaryenExpressionRef expr,
+                                                    BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TupleMake>());
   return static_cast<TupleMake*>(expression)->operands[index];
 }
+void BinaryenTupleMakeSetOperandAt(BinaryenExpressionRef expr,
+                                   BinaryenIndex index,
+                                   BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  assert(index < static_cast<TupleMake*>(expression)->operands.size());
+  assert(operandExpr);
+  static_cast<TupleMake*>(expression)->operands[index] =
+    (Expression*)operandExpr;
+}
+BinaryenIndex
+BinaryenTupleMakeAppendOperand(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  assert(operandExpr);
+  auto& list = static_cast<TupleMake*>(expression)->operands;
+  auto index = list.size();
+  list.push_back((Expression*)operandExpr);
+  return index;
+}
+void BinaryenTupleMakeInsertOperandAt(BinaryenExpressionRef expr,
+                                      BinaryenIndex index,
+                                      BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  assert(operandExpr);
+  static_cast<TupleMake*>(expression)
+    ->operands.insertAt(index, (Expression*)operandExpr);
+}
+BinaryenExpressionRef
+BinaryenTupleMakeRemoveOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TupleMake>());
+  return static_cast<TupleMake*>(expression)->operands.removeAt(index);
+}
+
 // TupleExtract
 BinaryenExpressionRef BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2870,6 +2908,7 @@ void BinaryenTupleExtractSetTuple(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef tupleExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TupleExtract>());
+  assert(tupleExpr);
   static_cast<TupleExtract*>(expression)->tuple = (Expression*)tupleExpr;
 }
 BinaryenIndex BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr) {
