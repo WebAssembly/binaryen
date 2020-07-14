@@ -868,6 +868,16 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
+          // Special-case division by 1. nan / 1 can change nan bits per the
+          // wasm spec, but it is ok to just return that original nan, and we
+          // do that here so that we are consistent with the optimization of
+          // removing the / 1 and leaving just the nan. That is, if we just
+          // do a normal divide and the CPU decides to change the bits, we'd
+          // give a different result on optimized code, which would look like
+          // it was a bad optimization.
+          if (rhs == 1) {
+            return Literal(lhs);
+          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
@@ -896,6 +906,10 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
+          // See above comment on f32.
+          if (rhs == 1) {
+            return Literal(lhs);
+          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
