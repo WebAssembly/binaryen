@@ -765,27 +765,15 @@ struct OptimizeInstructions
             if ((trueValue == 1LL && falseValue == 0LL) ||
                 (trueValue == 0LL && falseValue == 1LL)) {
               Builder builder(*getModule());
-              // canonicalize "expr ? 0 : 1" to "!expr ? 1 : 0"
+              Expression* condition = select->condition;
               if (trueValue == 0LL) {
-                select->condition = optimizeBoolean(
-                  builder.makeUnary(EqZInt32, select->condition));
+                condition =
+                  optimizeBoolean(builder.makeUnary(EqZInt32, condition));
               }
-              Expression* condition = nullptr;
-              if (Properties::emitsBoolean(select->condition)) {
-                // !x ? 1 : 0   ==>   !x
-                // x <=> y ? 1 : 0   ==>   x <=> y
-                condition = select->condition;
-              } else {
+              if (!Properties::emitsBoolean(condition)) {
                 // expr ? 1 : 0   ==>   !!expr
-                if (getPassOptions().shrinkLevel > 0) {
-                  condition = builder.makeUnary(
-                    EqZInt32, builder.makeUnary(EqZInt32, select->condition));
-                } else {
-                  condition =
-                    builder.makeBinary(NeInt32,
-                                       select->condition,
-                                       builder.makeConst(Literal(int32_t(0))));
-                }
+                condition = builder.makeUnary(
+                  EqZInt32, builder.makeUnary(EqZInt32, condition));
               }
               return select->type == Type::i64
                        ? builder.makeUnary(ExtendUInt32, condition)

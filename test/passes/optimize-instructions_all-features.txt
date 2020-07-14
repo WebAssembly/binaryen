@@ -3265,9 +3265,10 @@
    )
   )
   (drop
-   (i32.ne
-    (local.get $x)
-    (i32.const 0)
+   (i32.eqz
+    (i32.eqz
+     (local.get $x)
+    )
    )
   )
   (drop
@@ -3313,9 +3314,10 @@
   )
   (drop
    (i64.extend_i32_u
-    (i32.ne
-     (local.get $x)
-     (i32.const 0)
+    (i32.eqz
+     (i32.eqz
+      (local.get $x)
+     )
     )
    )
   )
