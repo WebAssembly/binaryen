@@ -402,6 +402,9 @@ class CompareVMs(TestCaseHandler):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
                 compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
+                # disable the signal handler: emcc looks like unix, but wasm has
+                # no signals
+                compile_cmd += ['-DWASM_RT_MEMCHECK_SIGNAL_HANDLER=0']
                 if random.random() < 0.5:
                     compile_cmd += ['-O' + str(random.randint(1, 3))]
                 elif random.random() < 0.5:
