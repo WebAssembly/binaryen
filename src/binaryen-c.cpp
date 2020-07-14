@@ -1517,6 +1517,30 @@ void BinaryenSwitchSetNameAt(BinaryenExpressionRef expr,
   assert(name);
   static_cast<Switch*>(expression)->targets[index] = name;
 }
+BinaryenIndex BinaryenSwitchAppendName(BinaryenExpressionRef expr,
+                                       const char* name) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  assert(name);
+  auto& list = static_cast<Switch*>(expression)->targets;
+  auto index = list.size();
+  list.push_back(name);
+  return index;
+}
+void BinaryenSwitchInsertNameAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index,
+                                const char* name) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  assert(name);
+  static_cast<Switch*>(expression)->targets.insertAt(index, name);
+}
+const char* BinaryenSwitchRemoveNameAt(BinaryenExpressionRef expr,
+                                       BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  return static_cast<Switch*>(expression)->targets.removeAt(index).c_str();
+}
 const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
@@ -1694,6 +1718,28 @@ void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr, int isReturn) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
   static_cast<CallIndirect*>(expression)->isReturn = isReturn != 0;
+}
+BinaryenType BinaryenCallIndirectGetParams(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->sig.params.getID();
+}
+void BinaryenCallIndirectSetParams(BinaryenExpressionRef expr,
+                                   BinaryenType params) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  static_cast<CallIndirect*>(expression)->sig.params = Type(params);
+}
+BinaryenType BinaryenCallIndirectGetResults(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->sig.results.getID();
+}
+void BinaryenCallIndirectSetResults(BinaryenExpressionRef expr,
+                                    BinaryenType results) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  static_cast<CallIndirect*>(expression)->sig.results = Type(results);
 }
 // LocalGet
 BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {

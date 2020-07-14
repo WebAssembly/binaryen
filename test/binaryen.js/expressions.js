@@ -1,5 +1,14 @@
-console.log("magic");
-(function testMagic() {
+function assertDeepEqual(x, y) {
+  if (typeof x === "object") {
+    for (let i in x) assertDeepEqual(x[i], y[i]);
+    for (let i in y) assertDeepEqual(x[i], y[i]);
+  } else {
+    assert(x === y);
+  }
+}
+
+console.log("# wrapper");
+(function testWrapper() {
   var block = binaryen.Block(42); // works without new
   assert(block instanceof binaryen.Expression);
   assert(block instanceof binaryen.Block);
@@ -12,89 +21,85 @@ console.log("magic");
   assert((block | 0) === 42); // via valueOf
 })();
 
-console.log("Block");
+console.log("# Block");
 (function testBlock() {
   var module = new binaryen.Module();
 
-  var blockRef = module.block(null, []);
-  var block = binaryen.Block(blockRef);
-  assert(block.id === binaryen.BlockId);
-  assert(block.name === null);
-  block.name ="theName";
-  assert(block.name === "theName");
-  assert(block.type === binaryen.none);
-  block.type = binaryen.i32;
-  assert(block.type === binaryen.i32);
-  assert(block.numChildren === 0);
+  var theBlock = binaryen.Block(module.block(null, []));
+  assert(theBlock.id === binaryen.BlockId);
+  assert(theBlock.name === null);
+  theBlock.name ="theName";
+  assert(theBlock.name === "theName");
+  assert(theBlock.type === binaryen.none);
+  theBlock.type = binaryen.i32;
+  assert(theBlock.type === binaryen.i32);
+  assert(theBlock.numChildren === 0);
   var child1 = module.i32.const(1);
-  block.appendChild(child1);
-  assert(block.numChildren === 1);
-  assert(block.getChildAt(0) === child1);
+  theBlock.appendChild(child1);
+  assert(theBlock.numChildren === 1);
+  assert(theBlock.getChildAt(0) === child1);
   var child2 = module.i32.const(2);
-  block.insertChildAt(1, child2);
-  assert(block.numChildren === 2);
-  assert(block.getChildAt(0) === child1);
-  assert(block.getChildAt(1) === child2);
+  theBlock.insertChildAt(1, child2);
+  assert(theBlock.numChildren === 2);
+  assert(theBlock.getChildAt(0) === child1);
+  assert(theBlock.getChildAt(1) === child2);
   var child0 = module.i32.const(0);
-  block.insertChildAt(0, child0);
-  assert(block.numChildren === 3);
-  assert(block.getChildAt(0) === child0);
-  assert(block.getChildAt(1) === child1);
-  assert(block.getChildAt(2) === child2);
+  theBlock.insertChildAt(0, child0);
+  assert(theBlock.numChildren === 3);
+  assert(theBlock.getChildAt(0) === child0);
+  assert(theBlock.getChildAt(1) === child1);
+  assert(theBlock.getChildAt(2) === child2);
   var newChild1 = module.i32.const(11);
-  block.setChildAt(1, newChild1);
-  assert(block.numChildren === 3);
-  assert(block.getChildAt(0) === child0);
-  assert(block.getChildAt(1) === newChild1);
-  assert(block.getChildAt(2) === child2);
-  block.removeChildAt(1);
-  assert(block.numChildren === 2);
-  assert(block.getChildAt(0) === child0);
-  assert(block.getChildAt(1) === child2);
-  block.removeChildAt(1);
-  assert(block.numChildren === 1);
-  assert(block.getChildAt(0) === child0);
-  block.finalize();
+  theBlock.setChildAt(1, newChild1);
+  assert(theBlock.numChildren === 3);
+  assert(theBlock.getChildAt(0) === child0);
+  assert(theBlock.getChildAt(1) === newChild1);
+  assert(theBlock.getChildAt(2) === child2);
+  theBlock.removeChildAt(1);
+  assert(theBlock.numChildren === 2);
+  assert(theBlock.getChildAt(0) === child0);
+  assert(theBlock.getChildAt(1) === child2);
+  theBlock.removeChildAt(1);
+  assert(theBlock.numChildren === 1);
+  assert(theBlock.getChildAt(0) === child0);
+  theBlock.finalize();
+  console.log(theBlock.toText());
   assert(
-    block.toText()
+    theBlock.toText()
     ==
     "(block $theName (result i32)\n (i32.const 0)\n)\n"
   );
-  block.removeChildAt(0);
-  assert(block.numChildren === 0);
+  theBlock.removeChildAt(0);
+  assert(theBlock.numChildren === 0);
 
   module.dispose();
 })();
 
-console.log("If");
+console.log("# If");
 (function testIf() {
   var module = new binaryen.Module();
 
   var conditionRef = module.i32.const(1);
   var ifTrueRef = module.i32.const(2);
   var ifFalseRef = module.i32.const(3);
-  var ifRef = module.if(
-    conditionRef,
-    ifTrueRef,
-    ifFalseRef
-  );
-  var if_ = binaryen.If(ifRef);
-  assert(if_.id === binaryen.IfId);
-  assert(if_.condition === conditionRef);
-  assert(if_.ifTrue === ifTrueRef);
-  assert(if_.ifFalse === ifFalseRef);
+  var theIf = binaryen.If(module.if(conditionRef, ifTrueRef, ifFalseRef));
+  assert(theIf.id === binaryen.IfId);
+  assert(theIf.condition === conditionRef);
+  assert(theIf.ifTrue === ifTrueRef);
+  assert(theIf.ifFalse === ifFalseRef);
   var newCondition = module.i32.const(4);
-  if_.condition = newCondition;
-  assert(if_.condition === newCondition);
+  theIf.condition = newCondition;
+  assert(theIf.condition === newCondition);
   var newIfTrue = module.i32.const(5);
-  if_.ifTrue = newIfTrue;
-  assert(if_.ifTrue === newIfTrue);
+  theIf.ifTrue = newIfTrue;
+  assert(theIf.ifTrue === newIfTrue);
   var newIfFalse = module.i32.const(6);
-  if_.ifFalse = newIfFalse;
-  assert(if_.ifFalse === newIfFalse);
-  if_.finalize();
+  theIf.ifFalse = newIfFalse;
+  assert(theIf.ifFalse === newIfFalse);
+  theIf.finalize();
+  console.log(theIf.toText());
   assert(
-    if_.toText()
+    theIf.toText()
     ==
     "(if (result i32)\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
   );
@@ -102,27 +107,300 @@ console.log("If");
   module.dispose();
 })();
 
-console.log("Loop");
+console.log("# Loop");
 (function testLoop() {
   var module = new binaryen.Module();
 
   var bodyRef = module.i32.const(1);
-  var loopRef = module.loop(null, bodyRef);
-  var loop = binaryen.Loop(loopRef);
-  assert(loop.id === binaryen.LoopId);
-  assert(loop.name === null);
-  assert(loop.body === bodyRef);
-  loop.name = "theName";
-  assert(loop.name === "theName");
+  var theLoop = binaryen.Loop(module.loop(null, bodyRef));
+  assert(theLoop.id === binaryen.LoopId);
+  assert(theLoop.name === null);
+  assert(theLoop.body === bodyRef);
+  theLoop.name = "theName";
+  assert(theLoop.name === "theName");
   var newBodyRef = module.i32.const(2);
-  loop.body = newBodyRef;
-  assert(loop.body === newBodyRef);
-  loop.finalize();
+  theLoop.body = newBodyRef;
+  assert(theLoop.body === newBodyRef);
+  theLoop.finalize();
+  console.log(theLoop.toText());
   assert(
-    loop.toText()
+    theLoop.toText()
     ==
     "(loop $theName (result i32)\n (i32.const 2)\n)\n"
   );
+
+  module.dispose();
+})();
+
+console.log("# Break");
+(function testBreak() {
+  var module = new binaryen.Module();
+
+  var conditionRef = module.i32.const(1);
+  var valueRef = module.i32.const(2);
+  var theBreak = binaryen.Break(module.br("theName", conditionRef, valueRef));
+  assert(theBreak.name === "theName");
+  assert(theBreak.condition === conditionRef);
+  assert(theBreak.value === valueRef);
+  theBreak.name = "theName2";
+  theBreak.condition = conditionRef = module.i32.const(3);
+  theBreak.value = valueRef = module.i32.const(4);
+  assert(theBreak.name === "theName2");
+  assert(theBreak.condition === conditionRef);
+  assert(theBreak.value === valueRef);
+  theBreak.finalize();
+  console.log(theBreak.toText());
+  assert(
+    theBreak.toText()
+    ==
+    "(br_if $theName2\n (i32.const 4)\n (i32.const 3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# Switch");
+(function testSwitch() {
+  var module = new binaryen.Module();
+
+  var names = ["a", "b"];
+  var defaultName = "c";
+  var conditionRef = module.i32.const(1);
+  var valueRef = module.i32.const(2);
+  var theSwitch = binaryen.Switch(module.switch(names, defaultName, conditionRef, valueRef));
+  assert(theSwitch.numNames === 2);
+  assert(theSwitch.names.length === 2);
+  assertDeepEqual(theSwitch.names, names);
+  assert(theSwitch.defaultName === defaultName);
+  assert(theSwitch.condition === conditionRef);
+  assert(theSwitch.value === valueRef);
+  theSwitch.names = names = [
+    "1", // set
+    "2", // set
+    "3"  // append
+  ];
+  assertDeepEqual(theSwitch.names, names);
+  theSwitch.names = names = [
+    "x", // set
+    // remove
+    // remove
+  ];
+  assertDeepEqual(theSwitch.names, names);
+  theSwitch.insertNameAt(1, "y");
+  theSwitch.condition = conditionRef = module.i32.const(3);
+  assert(theSwitch.condition === conditionRef);
+  theSwitch.value = valueRef = module.i32.const(4);
+  assert(theSwitch.value === valueRef);
+  theSwitch.finalize();
+  console.log(theSwitch.toText());
+  assert(
+    theSwitch.toText()
+    ==
+    "(br_table $x $y $c\n (i32.const 4)\n (i32.const 3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# Call");
+(function testCall() {
+  var module = new binaryen.Module();
+
+  var target = "foo";
+  var operands = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  var theCall = binaryen.Call(module.call(target, operands, binaryen.i32));
+  assert(theCall.target === target);
+  assertDeepEqual(theCall.operands, operands);
+  assert(theCall.type === binaryen.i32);
+  assert(theCall.return === false);
+  theCall.target = "bar";
+  assert(theCall.target === "bar");
+  theCall.operands = operands = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theCall.operands, operands);
+  theCall.operands = operands = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  assertDeepEqual(theCall.operands, operands);
+  theCall.insertOperandAt(0, module.i32.const(7));
+  theCall.return = true;
+  assert(theCall.return === true);
+  theCall.finalize();
+  assert(theCall.type === binaryen.unreachable); // finalized tail call
+  theCall.return = false;
+  theCall.type = binaryen.i32;
+  theCall.finalize();
+  assert(theCall.type === binaryen.i32); // finalized call
+  console.log(theCall.toText());
+  assert(
+    theCall.toText()
+    ==
+    "(call $bar\n (i32.const 7)\n (i32.const 6)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# CallIndirect");
+(function testCallIndirect() {
+  var module = new binaryen.Module();
+
+  var target = module.i32.const(42);
+  var params = binaryen.none;
+  var results = binaryen.none;
+  var operands = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  var theCallIndirect = binaryen.CallIndirect(module.call_indirect(target, operands, params, results));
+  assert(theCallIndirect.target === target);
+  assertDeepEqual(theCallIndirect.operands, operands);
+  assert(theCallIndirect.params === params);
+  assert(theCallIndirect.results === results);
+  assert(theCallIndirect.type === theCallIndirect.results);
+  assert(theCallIndirect.return === false);
+  theCallIndirect.target = target = module.i32.const(9000);
+  assert(theCallIndirect.target === target);
+  theCallIndirect.operands = operands = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theCallIndirect.operands, operands);
+  theCallIndirect.operands = operands = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  assertDeepEqual(theCallIndirect.operands, operands);
+  theCallIndirect.insertOperandAt(0, module.i32.const(7));
+  theCallIndirect.return = true;
+  assert(theCallIndirect.return === true);
+  theCallIndirect.params = params = binaryen.createType([ binaryen.i32, binaryen.i32 ]);
+  assert(theCallIndirect.params === params);
+  theCallIndirect.results = results = binaryen.i32;
+  assert(theCallIndirect.results === results);
+  theCallIndirect.finalize();
+  assert(theCallIndirect.type === binaryen.unreachable); // finalized tail call
+  theCallIndirect.return = false;
+  theCallIndirect.finalize();
+  assert(theCallIndirect.type === results); // finalized call
+  console.log(theCallIndirect.toText());
+  assert(
+    theCallIndirect.toText()
+    ==
+    "(call_indirect (type $i32_i32_=>_i32)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# LocalGet");
+(function testLocalGet() {
+  var module = new binaryen.Module();
+
+  var index = 1;
+  var type = binaryen.i32;
+  var theLocalGet = binaryen.LocalGet(module.local.get(index, type));
+  assert(theLocalGet.index === index);
+  assert(theLocalGet.type === type);
+  theLocalGet.index = index = 2;
+  assert(theLocalGet.index === index);
+  theLocalGet.type = type = binaryen.f64;
+  assert(theLocalGet.type === type);
+  theLocalGet.finalize();
+  console.log(theLocalGet.toText());
+  assert(
+    theLocalGet.toText()
+    ==
+    "(local.get $2)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# LocalSet");
+(function testLocalSet() {
+  var module = new binaryen.Module();
+
+  var index = 1;
+  var value = module.i32.const(1);
+  var theLocalSet = binaryen.LocalSet(module.local.set(index, value));
+  assert(theLocalSet.index === index);
+  assert(theLocalSet.value === value);
+  assert(theLocalSet.tee === false);
+  theLocalSet.index = index = 2;
+  assert(theLocalSet.index === index);
+  theLocalSet.value = value = module.i32.const(3);
+  assert(theLocalSet.value === value);
+  theLocalSet.type = binaryen.i32;
+  assert(theLocalSet.type === binaryen.i32);
+  assert(theLocalSet.tee === true);
+  theLocalSet.type = binaryen.none;
+  theLocalSet.finalize();
+  console.log(theLocalSet.toText());
+  assert(
+    theLocalSet.toText()
+    ==
+    "(local.set $2\n (i32.const 3)\n)\n"
+  )
+
+  module.dispose();
+})();
+
+console.log("# GlobalGet");
+(function testGlobalGet() {
+  var module = new binaryen.Module();
+
+  var name = "a";
+  var type = binaryen.i32;
+  var theGlobalGet = binaryen.GlobalGet(module.global.get(name, type));
+  assert(theGlobalGet.name === name);
+  assert(theGlobalGet.type === type);
+  theGlobalGet.name = name = "b";
+  assert(theGlobalGet.name === name);
+  theGlobalGet.type = type = binaryen.f64;
+  assert(theGlobalGet.type === type);
+  theGlobalGet.finalize();
+  console.log(theGlobalGet.toText());
+  assert(
+    theGlobalGet.toText()
+    ==
+    "(global.get $b)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# GlobalSet");
+(function testGlobalSet() {
+  var module = new binaryen.Module();
+
+  var name = "a";
+  var value = module.i32.const(1);
+  var theGlobalSet = binaryen.GlobalSet(module.global.set(name, value));
+  assert(theGlobalSet.name === name);
+  assert(theGlobalSet.value === value);
+  assert(theGlobalSet.type == binaryen.none);
+  theGlobalSet.name = name = "b";
+  assert(theGlobalSet.name === name);
+  theGlobalSet.value = value = module.f64.const(3);
+  assert(theGlobalSet.value === value);
+  theGlobalSet.finalize();
+  console.log(theGlobalSet.toText());
+  assert(
+    theGlobalSet.toText()
+    ==
+    "(global.set $b\n (f64.const 3)\n)\n"
+  )
 
   module.dispose();
 })();

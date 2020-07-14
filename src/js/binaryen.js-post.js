@@ -3205,6 +3205,31 @@ Module['Block'] = makeExpressionWrapper({
   'getNumChildren': function(expr) {
     return Module['_BinaryenBlockGetNumChildren'](expr);
   },
+  'getChildren': function(expr) {
+    var numChildren = Module['_BinaryenBlockGetNumChildren'](expr);
+    var children = new Array(numChildren);
+    var index = 0;
+    while (index < numChildren) {
+      children[index] = Module['_BinaryenBlockGetChildAt'](expr, index++);
+    }
+    return children;
+  },
+  'setChildren': function(expr, children) {
+    var numChildren = children.length;
+    var prevNumChildren = Module['_BinaryenBlockGetNumChildren'](expr);
+    var index = 0;
+    while (index < numChildren) {
+      if (index < prevNumChildren) {
+        Module['_BinaryenBlockSetChildAt'](expr, index, children[index]);
+      } else {
+        Module['_BinaryenBlockAppendChild'](expr, children[index]);
+      }
+      ++index;
+    }
+    while (prevNumChildren > index) {
+      Module['_BinaryenBlockRemoveChildAt'](expr, --prevNumChildren);
+    }
+  },
   'getChildAt': function(expr, index) {
     return Module['_BinaryenBlockGetChildAt'](expr, index);
   },
@@ -3289,6 +3314,33 @@ Module['Switch'] = makeExpressionWrapper({
   'getNumNames': function(expr) {
     return Module['_BinaryenSwitchGetNumNames'](expr);
   },
+  'getNames': function(expr) {
+    var numNames = Module['_BinaryenSwitchGetNumNames'](expr);
+    var names = new Array(numNames);
+    var index = 0;
+    while (index < numNames) {
+      names[index] = UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index++));
+    }
+    return names;
+  },
+  'setNames': function(expr, names) {
+    var numNames = names.length;
+    var prevNumNames = Module['_BinaryenSwitchGetNumNames'](expr);
+    var index = 0;
+    while (index < numNames) {
+      preserveStack(function() {
+        if (index < prevNumNames) {
+          Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(names[index]));
+        } else {
+          Module['_BinaryenSwitchAppendName'](expr, strToStack(names[index]));
+        }
+      });
+      ++index;
+    }
+    while (prevNumNames > index) {
+      Module['_BinaryenSwitchRemoveNameAt'](expr, --prevNumNames);
+    }
+  },
   'getDefaultName': function(expr) {
     var name = Module['_BinaryenSwitchGetDefaultName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -3317,7 +3369,20 @@ Module['Switch'] = makeExpressionWrapper({
     preserveStack(function() {
       Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name));
     });
-  }
+  },
+  'appendName': function(expr, name) {
+    preserveStack(function() {
+      return Module['_BinaryenSwitchAppendName'](expr, strToStack(name));
+    });
+  },
+  'insertNameAt': function(expr, index, name) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchInsertNameAt'](expr, index, strToStack(name));
+    });
+  },
+  'removeNameAt': function(expr, index) {
+    return UTF8ToString(Module['_BinaryenSwitchRemoveNameAt'](expr, index));
+  },
 });
 
 Module['Call'] = makeExpressionWrapper({
@@ -3331,6 +3396,31 @@ Module['Call'] = makeExpressionWrapper({
   },
   'getNumOperands': function(expr) {
     return Module['_BinaryenCallGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenCallGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenCallGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenCallGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenCallSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenCallAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenCallRemoveOperandAt'](expr, --prevNumOperands);
+    }
   },
   'getOperandAt': function(expr, index) {
     return Module['_BinaryenCallGetOperandAt'](expr, index);
@@ -3348,7 +3438,7 @@ Module['Call'] = makeExpressionWrapper({
     return Module['_BinaryenCallRemoveOperandAt'](expr, index);
   },
   'isReturn': function(expr) {
-    return Module['_BinaryenCallIsReturn'](expr);
+    return Boolean(Module['_BinaryenCallIsReturn'](expr));
   },
   'setReturn': function(expr, isReturn) {
     Module['_BinaryenCallSetReturn'](expr, isReturn);
@@ -3364,6 +3454,31 @@ Module['CallIndirect'] = makeExpressionWrapper({
   },
   'getNumOperands': function(expr) {
     return Module['_BinaryenCallIndirectGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenCallIndirectGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenCallIndirectAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenCallIndirectRemoveOperandAt'](expr, --prevNumOperands);
+    }
   },
   'getOperandAt': function(expr, index) {
     return Module['_BinaryenCallIndirectGetOperandAt'](expr, index);
@@ -3381,10 +3496,22 @@ Module['CallIndirect'] = makeExpressionWrapper({
     return Module['_BinaryenCallIndirectRemoveOperandAt'](expr, index);
   },
   'isReturn': function(expr) {
-    return Module['_BinaryenCallIndirectIsReturn'](expr);
+    return Boolean(Module['_BinaryenCallIndirectIsReturn'](expr));
   },
   'setReturn': function(expr, isReturn) {
     Module['_BinaryenCallIndirectSetReturn'](expr, isReturn);
+  },
+  'getParams': function(expr) {
+    return Module['_BinaryenCallIndirectGetParams'](expr);
+  },
+  'setParams': function(expr, params) {
+    Module['_BinaryenCallIndirectSetParams'](expr, params);
+  },
+  'getResults': function(expr) {
+    return Module['_BinaryenCallIndirectGetResults'](expr);
+  },
+  'setResults': function(expr, results) {
+    Module['_BinaryenCallIndirectSetResults'](expr, results);
   }
 });
 

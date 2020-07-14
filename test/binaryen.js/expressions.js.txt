@@ -1,4 +1,59 @@
-magic
-Block
-If
-Loop
+# wrapper
+# Block
+(block $theName (result i32)
+ (i32.const 0)
+)
+
+# If
+(if (result i32)
+ (i32.const 4)
+ (i32.const 5)
+ (i32.const 6)
+)
+
+# Loop
+(loop $theName (result i32)
+ (i32.const 2)
+)
+
+# Break
+(br_if $theName2
+ (i32.const 4)
+ (i32.const 3)
+)
+
+# Switch
+(br_table $x $y $c
+ (i32.const 4)
+ (i32.const 3)
+)
+
+# Call
+(call $bar
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# CallIndirect
+(call_indirect (type $i32_i32_=>_i32)
+ (i32.const 7)
+ (i32.const 6)
+ (i32.const 9000)
+)
+
+# LocalGet
+(local.get $2)
+
+# LocalSet
+(local.set $2
+ (i32.const 3)
+)
+
+# GlobalGet
+(global.get $b)
+
+# GlobalSet
+(global.set $b
+ (f64.const 3)
+)
+
