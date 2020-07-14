@@ -874,7 +874,9 @@ Literal Literal::div(const Literal& other) const {
           // removing the / 1 and leaving just the nan. That is, if we just
           // do a normal divide and the CPU decides to change the bits, we'd
           // give a different result on optimized code, which would look like
-          // it was a bad optimization.
+          // it was a bad optimization. So out of all the valid results to
+          // return here, return the simplest one that is consistent with
+          // optimization.
           if (rhs == 1) {
             return Literal(lhs);
           }
