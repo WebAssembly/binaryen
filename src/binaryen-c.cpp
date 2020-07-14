@@ -1836,8 +1836,7 @@ const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
 void BinaryenHostSetNameOperand(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Host>());
-  assert(name);
-  static_cast<Host*>(expression)->nameOperand = name;
+  static_cast<Host*>(expression)->nameOperand = name ? name : "";
 }
 BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -1859,6 +1858,31 @@ void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
   assert(index < static_cast<Host*>(expression)->operands.size());
   assert(operandExpr);
   static_cast<Host*>(expression)->operands[index] = (Expression*)operandExpr;
+}
+BinaryenIndex BinaryenHostAppendOperand(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  assert(operandExpr);
+  auto& list = static_cast<Host*>(expression)->operands;
+  auto index = list.size();
+  list.push_back((Expression*)operandExpr);
+  return index;
+}
+void BinaryenHostInsertOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  assert(operandExpr);
+  static_cast<Host*>(expression)
+    ->operands.insertAt(index, (Expression*)operandExpr);
+}
+BinaryenExpressionRef BinaryenHostRemoveOperandAt(BinaryenExpressionRef expr,
+                                                  BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  return static_cast<Host*>(expression)->operands.removeAt(index);
 }
 // Load
 int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {

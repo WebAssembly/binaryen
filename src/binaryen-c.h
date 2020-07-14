@@ -1173,6 +1173,22 @@ BinaryenHostGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 BINARYEN_API void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
                                            BinaryenIndex index,
                                            BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a host expression, returning its insertion
+// index.
+BINARYEN_API BinaryenIndex BinaryenHostAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a host expression,
+// moving existing operands including the one previously at that index one index
+// up.
+BINARYEN_API void
+BinaryenHostInsertOperandAt(BinaryenExpressionRef expr,
+                            BinaryenIndex index,
+                            BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a host expression,
+// moving all subsequent operands one index down. Returns the operand
+// expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenHostRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Load
 

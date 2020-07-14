@@ -7,18 +7,18 @@ function assertDeepEqual(x, y) {
   }
 }
 
-console.log("# wrapper");
+console.log("# Expression");
 (function testWrapper() {
-  var block = binaryen.Block(42); // works without new
-  assert(block instanceof binaryen.Expression);
-  assert(block instanceof binaryen.Block);
-  assert(block.constructor === binaryen.Block);
+  var theExpression = binaryen.Block(42); // works without new
+  assert(theExpression instanceof binaryen.Expression);
+  assert(theExpression instanceof binaryen.Block);
+  assert(theExpression.constructor === binaryen.Block);
   assert(typeof binaryen.Block.getId === "function"); // proto
   assert(typeof binaryen.Block.getName === "function"); // own
-  assert(typeof block.getId === "function"); // proto
-  assert(typeof block.getName === "function"); // own
-  assert(block.expr === 42);
-  assert((block | 0) === 42); // via valueOf
+  assert(typeof theExpression.getId === "function"); // proto
+  assert(typeof theExpression.getName === "function"); // own
+  assert(theExpression.expr === 42);
+  assert((theExpression | 0) === 42); // via valueOf
 })();
 
 console.log("# Block");
@@ -401,6 +401,80 @@ console.log("# GlobalSet");
     ==
     "(global.set $b\n (f64.const 3)\n)\n"
   )
+
+  module.dispose();
+})();
+
+console.log("# Host");
+(function testHost() {
+  var module = new binaryen.Module();
+
+  var op = binaryen.Operations.MemorySize;
+  var nameOp = null;
+  var operands = [];
+  var theHost = binaryen.Host(module.memory.size());
+  assert(theHost.op === op);
+  assert(theHost.nameOperand === nameOp);
+  assertDeepEqual(theHost.operands, operands);
+  theHost.op = op = binaryen.Operations.MemoryGrow;
+  assert(theHost.op === op);
+  theHost.nameOperand = nameOp = "a";
+  assert(theHost.nameOperand === nameOp);
+  theHost.nameOperand = null;
+  theHost.operands = operands = [
+    module.i32.const(1)
+  ];
+  assertDeepEqual(theHost.operands, operands);
+  theHost.type = binaryen.f64;
+  theHost.finalize();
+  assert(theHost.type === binaryen.i32);
+  console.log(theHost.toText());
+  assert(
+    theHost.toText()
+    ==
+    "(memory.grow\n (i32.const 1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# Load");
+(function testLoad() {
+  var module = new binaryen.Module();
+
+  var offset = 16;
+  var align = 2;
+  var ptr = module.i32.const(64);
+  var theLoad = binaryen.Load(module.i32.load(offset, align, ptr));
+  assert(theLoad.offset === offset);
+  assert(theLoad.align === align);
+  assert(theLoad.ptr === ptr);
+  assert(theLoad.bytes === 4);
+  assert(theLoad.atomic === false);
+  theLoad.offset = offset = 32;
+  assert(theLoad.offset === offset);
+  theLoad.align = align = 4;
+  assert(theLoad.align === align);
+  theLoad.ptr = ptr = module.i32.const(128);
+  assert(theLoad.ptr === ptr);
+  assert(theLoad.signed === true);
+  assert(theLoad.type == binaryen.i32);
+  theLoad.type = binaryen.i64;
+  assert(theLoad.type === binaryen.i64);
+  theLoad.signed = false;
+  assert(theLoad.signed === false);
+  theLoad.bytes = 8;
+  assert(theLoad.bytes === 8);
+  theLoad.atomic = true;
+  assert(theLoad.atomic === true);
+  theLoad.finalize();
+  assert(theLoad.align === 4);
+  console.log(theLoad.toText());
+  assert(
+    theLoad.toText()
+    ==
+    "(i64.atomic.load offset=32 align=4\n (i32.const 128)\n)\n"
+  );
 
   module.dispose();
 })();

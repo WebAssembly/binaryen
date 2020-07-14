@@ -3575,7 +3575,7 @@ Module['Host'] = makeExpressionWrapper({
     return Module['_BinaryenHostGetOp'](expr);
   },
   'setOp': function(expr, op) {
-    Module['_BinaryenmHostSetOp'](expr, op);
+    Module['_BinaryenHostSetOp'](expr, op);
   },
   'getNameOperand': function(expr) {
     var name = Module['_BinaryenHostGetNameOperand'](expr);
@@ -3589,12 +3589,46 @@ Module['Host'] = makeExpressionWrapper({
   'getNumOperands': function(expr) {
     return Module['_BinaryenHostGetNumOperands'](expr);
   },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenHostGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenHostGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenHostSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenHostAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
   'getOperandAt': function(expr, index) {
     return Module['_BinaryenHostGetOperandAt'](expr, index);
   },
   'setOperandAt': function(expr, index, operandExpr) {
     Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
-  }
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenHostRemoveOperandAt'](expr, index);
+  },
 });
 
 Module['Load'] = makeExpressionWrapper({
