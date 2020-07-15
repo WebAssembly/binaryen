@@ -1045,9 +1045,6 @@ BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
 // Sets whether the specified `call` expression is a tail call.
 BINARYEN_API void BinaryenCallSetReturn(BinaryenExpressionRef expr,
                                         int isReturn);
-// Gets the target expression of a `call_indirect` expression.
-BINARYEN_API BinaryenExpressionRef
-BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // CallIndirect
 
