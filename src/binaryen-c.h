@@ -1258,6 +1258,11 @@ BinaryenStoreGetValue(BinaryenExpressionRef expr);
 // Sets the value expression of a `store` expression.
 BINARYEN_API void BinaryenStoreSetValue(BinaryenExpressionRef expr,
                                         BinaryenExpressionRef valueExpr);
+// Gets the value type of a `store` expression.
+BINARYEN_API BinaryenType BinaryenStoreGetValueType(BinaryenExpressionRef expr);
+// Sets the value type of a `store` expression.
+BINARYEN_API void BinaryenStoreSetValueType(BinaryenExpressionRef expr,
+                                            BinaryenType valueType);
 
 // Const
 

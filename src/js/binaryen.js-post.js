@@ -3706,6 +3706,12 @@ Module['Store'] = makeExpressionWrapper({
   },
   'setValue': function(expr, valueExpr) {
     Module['_BinaryenStoreSetValue'](expr, valueExpr);
+  },
+  'getValueType': function(expr) {
+    return Module['_BinaryenStoreGetValueType'](expr);
+  },
+  'setValueType': function(expr, valueType) {
+    Module['_BinaryenStoreSetValueType'](expr, valueType);
   }
 });
 

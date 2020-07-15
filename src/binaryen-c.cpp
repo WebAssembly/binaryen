@@ -2012,6 +2012,17 @@ void BinaryenStoreSetValue(BinaryenExpressionRef expr,
   assert(valueExpr);
   static_cast<Store*>(expression)->value = (Expression*)valueExpr;
 }
+BinaryenType BinaryenStoreGetValueType(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->valueType.getID();
+}
+void BinaryenStoreSetValueType(BinaryenExpressionRef expr,
+                               BinaryenType valueType) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  static_cast<Store*>(expression)->valueType = Type(valueType);
+}
 // Const
 int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2042,7 +2053,8 @@ int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
 void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr, int32_t valueLow) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
-  auto valueI64 = static_cast<Const*>(expression)->value.geti64();
+  auto& value = static_cast<Const*>(expression)->value;
+  int64_t valueI64 = value.type == Type::i64 ? value.geti64() : 0;
   static_cast<Const*>(expression)->value =
     Literal((valueI64 & ~0xffffffff) | (int64_t(valueLow) & 0xffffffff));
 }
@@ -2055,7 +2067,8 @@ void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
                                   int32_t valueHigh) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
-  auto valueI64 = static_cast<Const*>(expression)->value.geti64();
+  auto& value = static_cast<Const*>(expression)->value;
+  int64_t valueI64 = value.type == Type::i64 ? value.geti64() : 0;
   static_cast<Const*>(expression)->value =
     Literal((int64_t(valueHigh) << 32) | (valueI64 & 0xffffffff));
 }

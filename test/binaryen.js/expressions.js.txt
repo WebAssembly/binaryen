@@ -1,4 +1,4 @@
-# wrapper
+# Expression
 # Block
 (block $theName (result i32)
  (i32.const 0)
@@ -11,13 +11,20 @@
  (i32.const 6)
 )
 
+(if (result i32)
+ (i32.const 4)
+ (i32.const 5)
+)
+
 # Loop
-(loop $theName (result i32)
- (i32.const 2)
+(loop $theName
+ (drop
+  (i32.const 1)
+ )
 )
 
 # Break
-(br_if $theName2
+(br_if $theNewName
  (i32.const 4)
  (i32.const 3)
 )
@@ -55,5 +62,52 @@
 # GlobalSet
 (global.set $b
  (f64.const 3)
+)
+
+# Host
+(memory.grow
+ (i32.const 1)
+)
+
+# Load
+(i64.atomic.load offset=32 align=4
+ (i32.const 128)
+)
+
+# Store
+(i64.atomic.store offset=32 align=4
+ (i32.const 128)
+ (i32.const 2)
+)
+
+# Const
+(v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+
+# Unary
+(i64.eqz
+ (i64.const 2)
+)
+
+# Binary
+(i64.add
+ (i64.const 3)
+ (i64.const 4)
+)
+
+# Select
+(select
+ (i64.const 5)
+ (i64.const 6)
+ (i32.const 4)
+)
+
+# Drop
+(drop
+ (i32.const 2)
+)
+
+# Return
+(return
+ (i32.const 2)
 )
 
