@@ -156,9 +156,6 @@ public:
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
 
-  void setSourceMap(bool sourceMap_) { sourceMap = sourceMap_; }
-  void setDWARF(bool DWARF_) { DWARF = DWARF_; }
-
 private:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
   int32_t getBreakIndex(Name name);
@@ -166,6 +163,8 @@ private:
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
   Function* func = nullptr;
+  bool sourceMap;
+  bool DWARF;
 
   std::vector<Name> breakStack;
 
@@ -179,10 +178,6 @@ private:
   std::map<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
-
-protected:
-  bool sourceMap;
-  bool DWARF;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
