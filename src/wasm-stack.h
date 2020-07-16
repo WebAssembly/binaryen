@@ -904,7 +904,8 @@ public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
                         Function* func)
-    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */), func(func) {}
+    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
+      func(func) {}
 
   void write();
 
