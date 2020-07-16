@@ -1787,7 +1787,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
   // keeps everything unmoved.
-  if (Debug::hasDWARFSections(*parent.getModule())) {
+  if (DWARF) {
     FindAll<TupleExtract> extracts(func->body);
     if (!extracts.list.empty()) {
       Fatal() << "DWARF + multivalue is not yet complete";
