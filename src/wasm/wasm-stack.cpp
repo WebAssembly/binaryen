@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "wasm-debug.h"
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "wasm-debug.h"
 
 namespace wasm {
 
