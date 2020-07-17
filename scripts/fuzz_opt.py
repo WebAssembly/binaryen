@@ -118,6 +118,7 @@ FUZZ_OPTS = None
 NANS = None
 OOB = None
 LEGALIZE = None
+ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
 
 
 def randomize_fuzz_settings():
@@ -138,7 +139,16 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
-    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
+    extra_v8_opts = []
+    if random.random() < 0.5:
+        if random.random() < 0.5:
+            # test the optimizing compiler
+            extra_v8_opts += ['--no-liftoff']
+        else:
+            # test the baseline compiler
+            extra_v8_opts += ['--liftoff', '--no-wasm-tier-up']
+    shared.V8_OPTS = ORIGINAL_V8_OPTS + extra_v8_opts
+    print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
 
 
 # Test outputs we want to ignore are marked this way.
