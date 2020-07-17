@@ -1759,6 +1759,9 @@ BINARYEN_API const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr);
 // Sets the name of the event being thrown by a `throw` expression.
 BINARYEN_API void BinaryenThrowSetEvent(BinaryenExpressionRef expr,
                                         const char* eventName);
+// Gets the number of operands of a `throw` expression.
+BINARYEN_API BinaryenIndex
+BinaryenThrowGetNumOperands(BinaryenExpressionRef expr);
 // Gets the operand at the specified index of a `throw` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenThrowGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
@@ -1766,9 +1769,22 @@ BinaryenThrowGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 BINARYEN_API void BinaryenThrowSetOperandAt(BinaryenExpressionRef expr,
                                             BinaryenIndex index,
                                             BinaryenExpressionRef operandExpr);
-// Gets the number of operands of a `throw` expression.
-BINARYEN_API BinaryenIndex
-BinaryenThrowGetNumOperands(BinaryenExpressionRef expr);
+// Appends an operand expression to a `throw` expression, returning its
+// insertion index.
+BINARYEN_API BinaryenIndex BinaryenThrowAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `throw` expression,
+// moving existing operands including the one previously at that index one index
+// up.
+BINARYEN_API void
+BinaryenThrowInsertOperandAt(BinaryenExpressionRef expr,
+                             BinaryenIndex index,
+                             BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `throw`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Rethrow
 
@@ -2212,6 +2228,9 @@ BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
 // Gets the body of the specified `Function`.
 BINARYEN_API BinaryenExpressionRef
 BinaryenFunctionGetBody(BinaryenFunctionRef func);
+// Sets the body of the specified `Function`.
+BINARYEN_API void BinaryenFunctionSetBody(BinaryenFunctionRef func,
+                                          BinaryenExpressionRef body);
 
 // Runs the standard optimization passes on the function. Uses the currently set
 // global optimize and shrink level.

@@ -2863,6 +2863,11 @@ void BinaryenThrowSetEvent(BinaryenExpressionRef expr, const char* eventName) {
   assert(expression->is<Throw>());
   static_cast<Throw*>(expression)->event = eventName;
 }
+BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  return static_cast<Throw*>(expression)->operands.size();
+}
 BinaryenExpressionRef BinaryenThrowGetOperandAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index) {
   auto* expression = (Expression*)expr;
@@ -2879,10 +2884,30 @@ void BinaryenThrowSetOperandAt(BinaryenExpressionRef expr,
   assert(operandExpr);
   static_cast<Throw*>(expression)->operands[index] = (Expression*)operandExpr;
 }
-BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenThrowAppendOperand(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef operandExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  return static_cast<Throw*>(expression)->operands.size();
+  assert(operandExpr);
+  auto& list = static_cast<Throw*>(expression)->operands;
+  auto index = list.size();
+  list.push_back((Expression*)operandExpr);
+  return index;
+}
+void BinaryenThrowInsertOperandAt(BinaryenExpressionRef expr,
+                                  BinaryenIndex index,
+                                  BinaryenExpressionRef operandExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  assert(operandExpr);
+  static_cast<Throw*>(expression)
+    ->operands.insertAt(index, (Expression*)operandExpr);
+}
+BinaryenExpressionRef BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr,
+                                                   BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  return static_cast<Throw*>(expression)->operands.removeAt(index);
 }
 // Rethrow
 BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
@@ -3669,6 +3694,11 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
 }
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   return ((Function*)func)->body;
+}
+void BinaryenFunctionSetBody(BinaryenFunctionRef func,
+                             BinaryenExpressionRef body) {
+  assert(body);
+  ((Function*)func)->body = (Expression*)body;
 }
 void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {

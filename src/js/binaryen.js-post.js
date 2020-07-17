@@ -4242,15 +4242,49 @@ Module['Throw'] = makeExpressionWrapper({
       Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName));
     });
   },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenThrowGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenThrowGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenThrowSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenThrowAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenThrowRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
   'getOperandAt': function(expr, index) {
     return Module['_BinaryenThrowGetOperandAt'](expr, index);
   },
   'setOperandAt': function(expr, index, operandExpr) {
     Module['_BinaryenThrowSetOperandAt'](expr, index, operandExpr);
   },
-  'getNumOperands': function(expr) {
-    return Module['_BinaryenThrowGetNumOperands'](expr);
-  }
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenThrowAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenThrowInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenThrowRemoveOperandAt'](expr, index);
+  },
 });
 
 Module['Rethrow'] = makeExpressionWrapper({
@@ -4290,6 +4324,31 @@ Module['BrOnExn'] = makeExpressionWrapper({
 Module['TupleMake'] = makeExpressionWrapper({
   'getNumOperands': function(expr) {
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenTupleMakeGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenTupleMakeAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenTupleMakeRemoveOperandAt'](expr, --prevNumOperands);
+    }
   },
   'getOperandAt': function(expr, index) {
     return Module['_BinaryenTupleMakeGetOperandAt'](expr, index);
