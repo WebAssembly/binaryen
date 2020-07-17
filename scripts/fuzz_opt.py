@@ -140,12 +140,19 @@ def randomize_fuzz_settings():
     else:
         LEGALIZE = False
     extra_v8_opts = []
+    # 50% of the time test v8 normally, that is, the same way it runs in
+    # production (which as of 07/15/2020 means baseline, then tier up to
+    # optimizing, but that may change in the future).
     if random.random() < 0.5:
+        # test either the optimizing compiler or the baseline compiler, with
+        # equal probability. it's useful to do this because the normal tier-up
+        # mode does not check them both equally (typically baseline does not get
+        # enough testing, as we quickly leave it), and also because the tiering
+        # up is nondeterministic (when optimized code becomes ready, we switch
+        # to it)
         if random.random() < 0.5:
-            # test the optimizing compiler
             extra_v8_opts += ['--no-liftoff']
         else:
-            # test the baseline compiler
             extra_v8_opts += ['--liftoff', '--no-wasm-tier-up']
     shared.V8_OPTS = ORIGINAL_V8_OPTS + extra_v8_opts
     print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
