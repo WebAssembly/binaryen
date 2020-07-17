@@ -8,6 +8,7 @@
     (local $X externref)
     (local $N nullref)
     (local $E exnref)
+    (local $S v128)
 
     (drop (local.get $x))
     (drop (local.get $y))
@@ -50,6 +51,11 @@
     (local.set $X (externref.pop))
     (local.set $N (nullref.pop))
     (local.set $E (exnref.pop))
+
+    ;; Add new instructions here so expected output doesn't change too much, it
+    ;; depends on order of instructions in this file.
+    (drop (local.get $S))
+    (local.set $S (v128.const i32x4 0x00000000 0x00000001 0x00000002 0x00000003))
   )
 )
 
