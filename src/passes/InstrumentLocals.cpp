@@ -60,6 +60,7 @@ Name get_funcref("get_funcref");
 Name get_externref("get_externref");
 Name get_nullref("get_nullref");
 Name get_exnref("get_exnref");
+Name get_v128("get_v128");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
@@ -69,6 +70,7 @@ Name set_funcref("set_funcref");
 Name set_externref("set_externref");
 Name set_nullref("set_nullref");
 Name set_exnref("set_exnref");
+Name set_v128("set_v128");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
@@ -87,7 +89,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         import = get_f64;
         break;
       case Type::v128:
-        assert(false && "v128 not implemented yet");
+        import = get_v128;
+        break;
       case Type::funcref:
         import = get_funcref;
         break;
@@ -135,7 +138,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         import = set_f64;
         break;
       case Type::v128:
-        assert(false && "v128 not implemented yet");
+        import = set_v128;
+        break;
       case Type::funcref:
         import = set_funcref;
         break;
@@ -202,6 +206,10 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
       addImport(
         curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+    }
+    if (curr->features.hasSIMD()) {
+      addImport(curr, get_v128, {Type::i32, Type::i32, Type::v128}, Type::v128);
+      addImport(curr, set_v128, {Type::i32, Type::i32, Type::v128}, Type::v128);
     }
   }
 
