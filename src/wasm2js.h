@@ -2474,11 +2474,52 @@ void Wasm2JSGlue::emitSpecialSupport() {
   // reorders a 32-bit reinterpret in between a 64-bit's split-out parts.
   // That situation can occur because the 64-bit reinterpret was split up into
   // pieces early, in the 64-bit lowering pass, while the 32-bit reinterprets
-  // are lowered only at the very end, and the optimizer sees normal wasm
-  // reinterprets which have no side effects (but they do have the side effect
-  // of altering scratch memory).
-  // We could lower 32-bit reinterprets early on as well, but the optimizer may
-  // generate new ones, so that isn't an option.
+  // are lowered only at the very end, and until then the optimizer sees wasm
+  // reinterprets which have no side effects (but they will have the side effect
+  // of altering scratch memory). That is, conceptual code like this:
+  //
+  //   a = reinterpret_64(b)
+  //   x = reinterpret_32(y)
+  //
+  // turns into
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   a_high = scratch_read(1)
+  //   x = reinterpret_32(y)
+  //
+  // (Note how the single wasm instruction for a 64-bit reinterpret turns into
+  // multiple operations. We have to do such splitting, because in JS we will
+  // have to have separate operations to receive each 32-bit chunk anyhow. A
+  // *32*-bit reinterpret *could* be a single function, but given we have the
+  // separate functions anyhow for the 64-bit case, it's more compact to reuse
+  // those.)
+  // At this point, the scratch_* functions look like they have side effects to
+  // the optimizer (which is true, as they modify scratch memory), but the
+  // reinterpret_32 is still a normal wasm instruction without side effects, so
+  // the optimizer might do this:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   x = reinterpret_32(y)    ;; this moved one line up
+  //   a_high = scratch_read(1)
+  //
+  // When we do lower the reinterpret_32 into JS, we get:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   scratch_write(y)
+  //   x = scratch_read()
+  //   a_high = scratch_read(1)
+  //
+  // The second write occurs before the first's values have been read, so they
+  // interfere.
+  //
+  // There isn't a problem with reordering 32-bit reinterprets with each other
+  // as each is lowered into a pair of write+read in JS (after the wasm
+  // optimizer runs), so they are guaranteed to be adjacent (and a JS optimizer
+  // that runs later will handle that ok since they are calls, which can always
+  // have side effects).
   out << R"(
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
