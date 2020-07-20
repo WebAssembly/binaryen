@@ -1437,8 +1437,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
                                        visit(curr->value, EXPRESSION_RESULT));
-              // 32-bit scratch memory uses index 3, so that it does not
-              // conflict with indexes 0, 1 which are used for 64-bit.
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
                                                 ValueBuilder::makeInt(2));
               return ValueBuilder::makeSeq(store, load);
@@ -1530,8 +1531,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ABI::wasm2js::ensureHelpers(module,
                                           ABI::wasm2js::SCRATCH_LOAD_F32);
 
-              // 32-bit scratch memory uses index 3, so that it does not
-              // conflict with indexes 0, 1 which are used for 64-bit.
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
                                        ValueBuilder::makeNum(2),
