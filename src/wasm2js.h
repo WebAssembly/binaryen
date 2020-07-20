@@ -1437,8 +1437,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
                                        visit(curr->value, EXPRESSION_RESULT));
+              // 32-bit scratch memory uses index 3, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit.
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
-                                                ValueBuilder::makeInt(0));
+                                                ValueBuilder::makeInt(2));
               return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
@@ -1528,9 +1530,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ABI::wasm2js::ensureHelpers(module,
                                           ABI::wasm2js::SCRATCH_LOAD_F32);
 
+              // 32-bit scratch memory uses index 3, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit.
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
-                                       ValueBuilder::makeNum(0),
+                                       ValueBuilder::makeNum(2),
                                        visit(curr->value, EXPRESSION_RESULT));
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_F32);
               return ValueBuilder::makeSeq(store, load);
@@ -2462,8 +2466,19 @@ void Wasm2JSGlue::emitSpecialSupport() {
     return;
   }
 
+  // Scratch memory uses 3 indexes, each referring to 4 bytes. Indexes 0, 1 are
+  // used for 64-bit operations, while 2 is for 32-bit. These operations need
+  // separate indexes because each reinterpret becomes separate loads and
+  // stores, which is no longer a single operation. The optimizer can then
+  // reorder a 32-bit reinterpret in between a 64-bit one, which would be bad.
+  // In theory this would not be a problem if the optimizer knew that
+  // 32-bit reinterprets have side effects after lowering to JS, but we only
+  // lower them in wasm2js after the optimizer runs, while 64-bit reinterprets
+  // have been partially lowered in the 64-bit lowering pass.
+  // We could also use separate ArrayBuffers and views here, but that would
+  // increase code size.
   out << R"(
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -2494,13 +2509,13 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
       out << R"(
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F32) {
       out << R"(
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F64) {
