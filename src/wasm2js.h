@@ -2470,15 +2470,15 @@ void Wasm2JSGlue::emitSpecialSupport() {
 
   // Scratch memory uses 3 indexes, each referring to 4 bytes. Indexes 0, 1 are
   // used for 64-bit operations, while 2 is for 32-bit. These operations need
-  // separate indexes because each reinterpret becomes separate loads and
-  // stores, which is no longer a single operation. The optimizer can then
-  // reorder a 32-bit reinterpret in between a 64-bit one, which would be bad.
-  // In theory this would not be a problem if the optimizer knew that
-  // 32-bit reinterprets have side effects after lowering to JS, but we only
-  // lower them in wasm2js after the optimizer runs, while 64-bit reinterprets
-  // have been partially lowered in the 64-bit lowering pass.
-  // We could also use separate ArrayBuffers and views here, but that would
-  // increase code size.
+  // separate indexes because we need to handle the case where the optimizer
+  // reorders a 32-bit reinterpret in between a 64-bit's split-out parts.
+  // That situation can occur because the 64-bit reinterpret was split up into
+  // pieces early, in the 64-bit lowering pass, while the 32-bit reinterprets
+  // are lowered only at the very end, and the optimizer sees normal wasm
+  // reinterprets which have no side effects (but they do have the side effect
+  // of altering scratch memory).
+  // We could lower 32-bit reinterprets early on as well, but the optimizer may
+  // generate new ones, so that isn't an option.
   out << R"(
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
