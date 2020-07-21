@@ -1,31 +1,31 @@
 total
  [events]       : 0       
- [exports]      : 31      
- [funcs]        : 45      
+ [exports]      : 36      
+ [funcs]        : 48      
  [globals]      : 7       
  [imports]      : 4       
  [memory-data]  : 4       
- [table-data]   : 16      
- [total]        : 5788    
- [vars]         : 115     
- binary         : 453     
- block          : 823     
- break          : 242     
- call           : 208     
- call_indirect  : 47      
- const          : 997     
- drop           : 46      
- global.get     : 473     
- global.set     : 208     
- if             : 323     
- load           : 99      
- local.get      : 491     
- local.set      : 364     
- loop           : 148     
- nop            : 109     
- return         : 228     
- select         : 46      
- store          : 55      
- switch         : 3       
- unary          : 422     
+ [table-data]   : 8       
+ [total]        : 4373    
+ [vars]         : 133     
+ binary         : 351     
+ block          : 654     
+ break          : 160     
+ call           : 202     
+ call_indirect  : 8       
+ const          : 856     
+ drop           : 42      
+ global.get     : 318     
+ global.set     : 156     
+ if             : 241     
+ load           : 72      
+ local.get      : 287     
+ local.set      : 234     
+ loop           : 110     
+ nop            : 86      
+ return         : 200     
+ select         : 23      
+ store          : 58      
+ switch         : 2       
+ unary          : 310     
  unreachable    : 3       
