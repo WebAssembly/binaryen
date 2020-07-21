@@ -1561,17 +1561,15 @@ private:
         case 1:
           value = value.add(Literal::makeFromInt32(1, type));
           break;
-        default: {}
+        default: {
+        }
       }
       // For floats, optionally add a non-integer adjustment in +- [-1, 1]
       if (type.isFloat() && oneIn(2)) {
         const int RANGE = 1000;
         auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
         // adjustment -> [0, 2 * RANGE]
-        auto adjustment = Literal::makeFromInt32(
-          upTo(2 * RANGE + 1),
-          type
-        );
+        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
         // adjustment -> [-RANGE, RANGE]
         adjustment = adjustment.sub(RANGE_LITERAL);
         // adjustment -> [-1, 1]
@@ -1579,7 +1577,7 @@ private:
         value = value.add(adjustment);
       }
       // Flip sign.
-       if (oneIn(2)) {
+      if (oneIn(2)) {
         value = value.mul(Literal::makeFromInt32(-1, type));
       }
       return value;
