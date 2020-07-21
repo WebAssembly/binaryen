@@ -1554,14 +1554,14 @@ private:
     // Optional tweaking of the value by a small adjustment.
     auto tweak = [this, type](Literal value) {
       // +- 1
-      switch (oneIn(5)) {
+      switch (upTo(5)) {
         case 0:
           value = value.add(Literal::makeFromInt32(-1, type));
           break;
         case 1:
           value = value.add(Literal::makeFromInt32(1, type));
           break;
-        default:
+        default: {}
       }
       // For floats, optionally add a non-integer adjustment in +- [-1, 1]
       if (type.isFloat() && oneIn(2)) {
