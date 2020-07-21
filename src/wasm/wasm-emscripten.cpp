@@ -144,7 +144,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     }
     // Make this an internal, non-imported, global.
     g->module.clear();
-    g->init = Builder(wasm).makeConst(Literal(0));
+    g->init = Builder(wasm).makeConst(int32_t(0));
   }
 
   if (!gotFuncEntries.size() && !gotMemEntries.size()) {
@@ -507,7 +507,7 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
 
   auto* stackLimit = builder.makeGlobal(STACK_LIMIT,
                                         stackPointer->type,
-                                        builder.makeConst(Literal(0)),
+                                        builder.makeConst(int32_t(0)),
                                         Builder::Mutable);
   wasm.addGlobal(stackLimit);
 

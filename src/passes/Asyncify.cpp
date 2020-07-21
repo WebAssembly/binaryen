@@ -998,7 +998,7 @@ private:
     //       avoid saving/restoring that local later)
     curr = builder->makeIf(
       builder->makeIf(builder->makeStateCheck(State::Normal),
-                      builder->makeConst(Literal(int32_t(1))),
+                      builder->makeConst(int32_t(1)),
                       makeCallIndexPeek(index)),
       builder->makeSequence(curr, makePossibleUnwind(index, set)));
     return curr;
@@ -1012,7 +1012,7 @@ private:
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
       builder->makeCall(ASYNCIFY_UNWIND,
-                        {builder->makeConst(Literal(int32_t(index)))},
+                        {builder->makeConst(int32_t(index))},
                         Type::none),
       ifNotUnwinding);
   }
@@ -1021,7 +1021,7 @@ private:
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_CHECK_CALL_INDEX,
-                             {builder->makeConst(Literal(int32_t(index)))},
+                             {builder->makeConst(int32_t(index))},
                              Type::i32);
   }
 
@@ -1489,11 +1489,11 @@ private:
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
     module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
   }
 
@@ -1506,7 +1506,7 @@ private:
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
-        ASYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
+        ASYNCIFY_STATE, builder.makeConst(int32_t(state))));
       if (setData) {
         body->list.push_back(builder.makeGlobalSet(
           ASYNCIFY_DATA, builder.makeLocalGet(0, Type::i32)));
@@ -1617,7 +1617,7 @@ struct ModAsyncify
       value = 1 - value;
     }
     Builder builder(*this->getModule());
-    this->replaceCurrent(builder.makeConst(Literal(int32_t(value))));
+    this->replaceCurrent(builder.makeConst(int32_t(value)));
   }
 
   void visitSelect(Select* curr) {
@@ -1630,7 +1630,7 @@ struct ModAsyncify
     // we know we'll never rewind, we can optimize this.
     if (neverRewind) {
       Builder builder(*this->getModule());
-      curr->condition = builder.makeConst(Literal(int32_t(0)));
+      curr->condition = builder.makeConst(int32_t(0));
     }
   }
 

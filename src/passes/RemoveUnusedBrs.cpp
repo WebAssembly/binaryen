@@ -238,7 +238,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       curr->condition =
         builder.makeBinary(SubInt32,
                            curr->condition,
-                           builder.makeConst(Literal(int32_t(removable))));
+                           builder.makeConst(int32_t(removable)));
     }
     // when there isn't a value, we can do some trivial optimizations without
     // worrying about the value being executed before the condition
@@ -294,7 +294,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               builder.makeBinary(
                 EqInt32,
                 builder.makeLocalGet(temp, Type::i32),
-                builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))),
+                builder.makeConst(int32_t(curr->targets.size() - 1))),
               builder.makeBreak(curr->targets.back()),
               builder.makeBreak(curr->default_)),
             builder.makeBreak(curr->targets.front())));
@@ -1265,7 +1265,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 conditionValue =
                   builder.makeBinary(SubInt32,
                                      conditionValue,
-                                     builder.makeConst(Literal(int32_t(min))));
+                                     builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,

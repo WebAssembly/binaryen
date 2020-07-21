@@ -109,8 +109,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     }
     replaceCurrent(
       builder.makeCall(import,
-                       {builder.makeConst(Literal(int32_t(id++))),
-                        builder.makeConst(Literal(int32_t(curr->index))),
+                       {builder.makeConst(int32_t(id++)),
+                        builder.makeConst(int32_t(curr->index)),
                         curr},
                        curr->type));
   }
@@ -159,8 +159,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     }
     curr->value =
       builder.makeCall(import,
-                       {builder.makeConst(Literal(int32_t(id++))),
-                        builder.makeConst(Literal(int32_t(curr->index))),
+                       {builder.makeConst(int32_t(id++)),
+                        builder.makeConst(int32_t(curr->index)),
                         curr->value},
                        curr->value->type);
   }
