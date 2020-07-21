@@ -762,8 +762,11 @@ struct OptimizeInstructions
           if (select->type == Type::i32 || select->type == Type::i64) {
             auto trueValue = constTrue->value.getInteger();
             auto falseValue = constFalse->value.getInteger();
-            if ((trueValue == 1LL && falseValue == 0LL) ||
-                (trueValue == 0LL && falseValue == 1LL)) {
+            // check if trueValue or falseValue equal to 0 or 1 in
+            // mutually exclusive manner:
+            // (trueValue == 1LL && falseValue == 0LL) ||
+            // (trueValue == 0LL && falseValue == 1LL)
+            if ((trueValue ^ falseValue) == 1LL) {
               Builder builder(*getModule());
               Expression* condition = select->condition;
               if (trueValue == 0LL) {
