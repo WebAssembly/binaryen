@@ -48,7 +48,7 @@ jobs:
       run: cmake --build out --config Release
 
     - name: strip
-      run: find bin/ -type f -perm -u=x -exec strip {} +
+      run: find out/bin/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
 
     - name: archive
@@ -115,7 +115,7 @@ jobs:
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON
 
     - name: build
       run: |
@@ -131,7 +131,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        ./alpine find bin/ -type f -perm -u=x -exec strip {} +
+        ./alpine.sh find bin/ -type f -perm -u=x -exec strip {} +
         mv bin binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         shasum -a 256 $TARBALL > $SHASUM

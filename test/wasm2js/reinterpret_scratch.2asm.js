@@ -9,24 +9,12 @@
     return i32ScratchView[index];
   }
       
-  function wasm2js_scratch_store_i32(index, value) {
-    i32ScratchView[index] = value;
-  }
-      
-  function wasm2js_scratch_load_f64() {
-    return f64ScratchView[0];
-  }
-      
   function wasm2js_scratch_store_f64(value) {
     f64ScratchView[0] = value;
   }
       
   function wasm2js_scratch_store_f32(value) {
     f32ScratchView[2] = value;
-  }
-      
-  function wasm2js_scratch_load_f32() {
-    return f32ScratchView[2];
   }
       
 function asmFunc(global, env, buffer) {
@@ -50,34 +38,27 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0) {
-  $0 = $0 | 0;
-  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(2, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(2)) | 0) == ($0 | 0) | 0;
- }
- 
- function $2($0, $1_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  var $2_1 = 0;
-  wasm2js_scratch_store_i32(0, $0 | 0);
-  wasm2js_scratch_store_i32(1, $1_1 | 0);
-  wasm2js_scratch_store_f64(+wasm2js_scratch_load_f64());
-  $2_1 = wasm2js_scratch_load_i32(1) | 0;
-  return (wasm2js_scratch_load_i32(0) | 0) == ($0 | 0) & ($1_1 | 0) == ($2_1 | 0);
- }
- 
- function legalstub$2($0, $1_1) {
-  return $2($0, $1_1);
+ function $0() {
+  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $0_1 = Math_fround(0);
+  wasm2js_scratch_store_f64(+(305419896.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = (wasm2js_scratch_store_f32($0_1), wasm2js_scratch_load_i32(2));
+  HEAP32[i64toi32_i32$1 >> 2] = wasm2js_scratch_load_i32(0 | 0) | 0;
+  HEAP32[(i64toi32_i32$1 + 4 | 0) >> 2] = i64toi32_i32$0;
+  return HEAP32[0 >> 2] | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  return {
-  "i32_roundtrip": $1, 
-  "i64_roundtrip": legalstub$2
+  "foo": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
+var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var i32_roundtrip = retasmFunc.i32_roundtrip;
-export var i64_roundtrip = retasmFunc.i64_roundtrip;
+export var foo = retasmFunc.foo;
