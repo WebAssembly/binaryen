@@ -136,7 +136,7 @@ bool wasm::isInRangeI64TruncU(int32_t i) {
  * 1 00000000000 0000...000000...000 0x8000000000000000 => -0
  * 1 01111111110 1111...111111...111 0xbfefffffffffffff => -1 + ulp  (~UINT32_MIN, ~UINT64_MIN)
  * 1 01111111111 0000...000000...000 0xbff0000000000000 => -1
- * 1 10000011110 0000...000000...000 0xc1e0000000000000 => -2147483648              (INT32_MIN)
+ * 1 10000011110 0000...000000...111 0xc1e00000001fffff => -2147483648.9999995    (rounds up to INT32_MIN)
  * 1 10000111110 0000...000000...000 0xc3e0000000000000 => -9223372036854775808     (INT64_MIN)
  * 1 11111111111 0000...000000...000 0xfff0000000000000 => -inf
  * 1 11111111111 0000...000000...001 0xfff0000000000001 => -nan(0x1)
@@ -147,7 +147,7 @@ bool wasm::isInRangeI64TruncU(int32_t i) {
 bool wasm::isInRangeI32TruncS(int64_t i) {
   uint64_t u = i;
   return (u <= 0x41dfffffffffffffULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xc1e0000000000000ULL);
+         (u >= 0x8000000000000000ULL && u <= 0xc1e00000001fffffULL);
 }
 
 bool wasm::isInRangeI32TruncU(int64_t i) {
