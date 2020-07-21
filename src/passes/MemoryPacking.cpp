@@ -437,8 +437,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
     Expression* offset = nullptr;
     if (!segment.isPassive) {
       if (auto* c = segment.offset->dynCast<Const>()) {
-        offset =
-          builder.makeConst(int32_t(c->value.geti32() + range.start));
+        offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
       } else {
         assert(ranges.size() == 1);
         offset = segment.offset;
@@ -576,8 +575,7 @@ void MemoryPacking::createReplacements(Module* module,
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
       if (auto* c = init->dest->dynCast<Const>()) {
-        dest =
-          builder.makeConst(int32_t(c->value.geti32() + bytesWritten));
+        dest = builder.makeConst(int32_t(c->value.geti32() + bytesWritten));
       } else {
         auto* get = builder.makeLocalGet(-1, Type::i32);
         getVars.push_back(&get->index);
@@ -634,8 +632,8 @@ void MemoryPacking::createReplacements(Module* module,
 
     // Track drop state in a global only if some memory.init required it
     if (dropStateGlobal != Name()) {
-      appendResult(builder.makeGlobalSet(
-        dropStateGlobal, builder.makeConst(int32_t(1))));
+      appendResult(
+        builder.makeGlobalSet(dropStateGlobal, builder.makeConst(int32_t(1))));
     }
     size_t dropIndex = segmentIndex;
     for (auto range : ranges) {

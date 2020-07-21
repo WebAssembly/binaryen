@@ -389,8 +389,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                             builder->makeLocalGet(lowBits, Type::i32),
                             builder->makeConst(int32_t(31))));
     } else {
-      loadHigh = builder->makeLocalSet(highBits,
-                                       builder->makeConst(int32_t(0)));
+      loadHigh =
+        builder->makeLocalSet(highBits, builder->makeConst(int32_t(0)));
     }
     curr->type = Type::i32;
     curr->bytes = std::min(curr->bytes, uint8_t(4));
@@ -488,10 +488,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar highBits = getTemp();
     Const* lowVal =
       builder->makeConst(int32_t(curr->value.geti64() & 0xffffffff));
-    LocalSet* setHigh =
-      builder->makeLocalSet(highBits,
-                            builder->makeConst(
-                              int32_t(uint64_t(curr->value.geti64()) >> 32)));
+    LocalSet* setHigh = builder->makeLocalSet(
+      highBits,
+      builder->makeConst(int32_t(uint64_t(curr->value.geti64()) >> 32)));
     Block* result = builder->blockify(setHigh, lowVal);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
@@ -548,11 +547,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Block* result = builder->blockify(
       builder->makeCall(
         ABI::wasm2js::SCRATCH_STORE_F64, {curr->value}, Type::none),
-      builder->makeLocalSet(
-        highBits,
-        builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
-                          {builder->makeConst(int32_t(1))},
-                          Type::i32)),
+      builder->makeLocalSet(highBits,
+                            builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
+                                              {builder->makeConst(int32_t(1))},
+                                              Type::i32)),
       builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
                         {builder->makeConst(int32_t(0))},
                         Type::i32));
@@ -718,8 +716,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
     Expression* result = builder->blockify(
       builder->makeLocalSet(lowBits, curr->value),
-      builder->makeLocalSet(highResult,
-                            builder->makeConst(int32_t(0))),
+      builder->makeLocalSet(highResult, builder->makeConst(int32_t(0))),
       builder->makeBinary(
         AddFloat64,
         builder->makeUnary(ConvertUInt32ToFloat64,
@@ -767,8 +764,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
           builder->makeConst(int32_t(32))),
         builder->makeLocalGet(firstResult, Type::i32));
 
-      LocalSet* setHigh = builder->makeLocalSet(
-        highResult, builder->makeConst(int32_t(0)));
+      LocalSet* setHigh =
+        builder->makeLocalSet(highResult, builder->makeConst(int32_t(0)));
 
       setOutParam(result, std::move(highResult));
 
@@ -1283,13 +1280,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeBinary(lowOp,
                           builder->makeLocalGet(leftLow, Type::i32),
                           builder->makeLocalGet(rightLow, Type::i32));
-    If* lowIf = builder->makeIf(compLow,
-                                builder->makeConst(int32_t(0)),
-                                builder->makeConst(int32_t(1)));
-    If* highIf2 = builder->makeIf(
-      compHigh2, lowIf, builder->makeConst(int32_t(0)));
-    If* highIf1 = builder->makeIf(
-      compHigh1, builder->makeConst(int32_t(1)), highIf2);
+    If* lowIf = builder->makeIf(
+      compLow, builder->makeConst(int32_t(0)), builder->makeConst(int32_t(1)));
+    If* highIf2 =
+      builder->makeIf(compHigh2, lowIf, builder->makeConst(int32_t(0)));
+    If* highIf1 =
+      builder->makeIf(compHigh1, builder->makeConst(int32_t(1)), highIf2);
     return builder->blockify(result, highIf1);
   }
 

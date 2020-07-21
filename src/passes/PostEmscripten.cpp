@@ -91,8 +91,7 @@ struct PostEmscripten : public Pass {
         auto oldValue = stackPointer->init->cast<Const>()->value;
         BYN_TRACE("updating __stack_pointer: " << oldValue.geti32() << " -> "
                                                << stackPtr << "\n");
-        stackPointer->init =
-          Builder(*module).makeConst(int32_t(stackPtr));
+        stackPointer->init = Builder(*module).makeConst(int32_t(stackPtr));
       }
     }
 

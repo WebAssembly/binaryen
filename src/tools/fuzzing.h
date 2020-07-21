@@ -386,12 +386,8 @@ private:
                                builder.makeLocalGet(0, Type::i32),
                                builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
-          builder.makeLoad(1,
-                           false,
-                           i,
-                           1,
-                           builder.makeConst(uint32_t(0)),
-                           Type::i32))));
+          builder.makeLoad(
+            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -443,18 +439,17 @@ private:
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
 
   void addHangLimitSupport() {
-    auto* glob =
-      builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                         Type::i32,
-                         builder.makeConst(int32_t(HANG_LIMIT)),
-                         Builder::Mutable);
+    auto* glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
+                                    Type::i32,
+                                    builder.makeConst(int32_t(HANG_LIMIT)),
+                                    Builder::Mutable);
     wasm.addGlobal(glob);
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
     func->sig = Signature(Type::none, Type::none);
-    func->body = builder.makeGlobalSet(
-      glob->name, builder.makeConst(int32_t(HANG_LIMIT)));
+    func->body =
+      builder.makeGlobalSet(glob->name, builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
 
     auto* export_ = new Export;

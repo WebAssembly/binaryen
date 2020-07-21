@@ -1011,9 +1011,8 @@ private:
     // it when we add its contents, later.)
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
-      builder->makeCall(ASYNCIFY_UNWIND,
-                        {builder->makeConst(int32_t(index))},
-                        Type::none),
+      builder->makeCall(
+        ASYNCIFY_UNWIND, {builder->makeConst(int32_t(index))}, Type::none),
       ifNotUnwinding);
   }
 

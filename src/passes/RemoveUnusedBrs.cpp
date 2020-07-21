@@ -235,10 +235,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       curr->targets.resize(curr->targets.size() - removable);
       Builder builder(*getModule());
-      curr->condition =
-        builder.makeBinary(SubInt32,
-                           curr->condition,
-                           builder.makeConst(int32_t(removable)));
+      curr->condition = builder.makeBinary(
+        SubInt32, curr->condition, builder.makeConst(int32_t(removable)));
     }
     // when there isn't a value, we can do some trivial optimizations without
     // worrying about the value being executed before the condition
@@ -287,17 +285,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         auto temp = builder.addVar(getFunction(), Type::i32);
         Expression* z;
-        replaceCurrent(
-          z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition, Type::i32),
-            builder.makeIf(
-              builder.makeBinary(
-                EqInt32,
-                builder.makeLocalGet(temp, Type::i32),
-                builder.makeConst(int32_t(curr->targets.size() - 1))),
-              builder.makeBreak(curr->targets.back()),
-              builder.makeBreak(curr->default_)),
-            builder.makeBreak(curr->targets.front())));
+        replaceCurrent(z = builder.makeIf(
+                         builder.makeLocalTee(temp, curr->condition, Type::i32),
+                         builder.makeIf(builder.makeBinary(
+                                          EqInt32,
+                                          builder.makeLocalGet(temp, Type::i32),
+                                          builder.makeConst(
+                                            int32_t(curr->targets.size() - 1))),
+                                        builder.makeBreak(curr->targets.back()),
+                                        builder.makeBreak(curr->default_)),
+                         builder.makeBreak(curr->targets.front())));
       }
     }
   }
@@ -1262,10 +1259,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Builder builder(*getModule());
               // the table and condition are offset by the min
               if (min != 0) {
-                conditionValue =
-                  builder.makeBinary(SubInt32,
-                                     conditionValue,
-                                     builder.makeConst(int32_t(min)));
+                conditionValue = builder.makeBinary(
+                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,

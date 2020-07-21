@@ -36,8 +36,7 @@ inline Expression* makeZero(Type type, Module& wasm) {
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
   Builder builder(wasm);
   if (type == Type::v128) {
-    return builder.makeUnary(SplatVecI32x4,
-                             builder.makeConst(int32_t(0)));
+    return builder.makeUnary(SplatVecI32x4, builder.makeConst(int32_t(0)));
   }
   return builder.makeConstantExpression(Literal::makeZero(type));
 }
