@@ -107,12 +107,11 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
-    replaceCurrent(
-      builder.makeCall(import,
-                       {builder.makeConst(Literal(int32_t(id++))),
-                        builder.makeConst(Literal(int32_t(curr->index))),
-                        curr},
-                       curr->type));
+    replaceCurrent(builder.makeCall(import,
+                                    {builder.makeConst(int32_t(id++)),
+                                     builder.makeConst(int32_t(curr->index)),
+                                     curr},
+                                    curr->type));
   }
 
   void visitLocalSet(LocalSet* curr) {
@@ -157,12 +156,11 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
-    curr->value =
-      builder.makeCall(import,
-                       {builder.makeConst(Literal(int32_t(id++))),
-                        builder.makeConst(Literal(int32_t(curr->index))),
-                        curr->value},
-                       curr->value->type);
+    curr->value = builder.makeCall(import,
+                                   {builder.makeConst(int32_t(id++)),
+                                    builder.makeConst(int32_t(curr->index)),
+                                    curr->value},
+                                   curr->value->type);
   }
 
   void visitModule(Module* curr) {

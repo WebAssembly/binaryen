@@ -335,7 +335,7 @@ struct I64Utilities {
       builder.makeUnary(ExtendUInt32, low),
       builder.makeBinary(ShlInt64,
                          builder.makeUnary(ExtendUInt32, high),
-                         builder.makeConst(Literal(int64_t(32)))));
+                         builder.makeConst(int64_t(32))));
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
@@ -349,7 +349,7 @@ struct I64Utilities {
       WrapInt64,
       builder.makeBinary(ShrUInt64,
                          builder.makeLocalGet(index, Type::i64),
-                         builder.makeConst(Literal(int64_t(32)))));
+                         builder.makeConst(int64_t(32))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {

@@ -982,7 +982,7 @@ struct Reducer
     if (condition->is<Const>()) {
       return;
     }
-    auto* c = builder->makeConst(Literal(int32_t(0)));
+    auto* c = builder->makeConst(int32_t(0));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
       tryToReplaceChild(condition, c);
@@ -1019,7 +1019,7 @@ struct Reducer
         builder->makeConstantExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);
     }
-    Const* c = builder->makeConst(Literal(int32_t(0)));
+    Const* c = builder->makeConst(int32_t(0));
     if (tryToReplaceCurrent(c)) {
       return true;
     }
