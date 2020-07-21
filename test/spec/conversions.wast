@@ -67,6 +67,8 @@
 (assert_return (invoke "i32.trunc_f32_s" (f32.const -2.0)) (i32.const -2))
 (assert_return (invoke "i32.trunc_f32_s" (f32.const 2147483520.0)) (i32.const 2147483520))
 (assert_return (invoke "i32.trunc_f32_s" (f32.const -2147483648.0)) (i32.const -2147483648))
+(assert_return (invoke "i32.trunc_f64_s" (f64.const 2147483647.9999998)) (i32.const 2147483647))
+(assert_trap   (invoke "i32.trunc_f64_s" (f64.const 2147483647.9999999)) "integer overflow")
 (assert_trap (invoke "i32.trunc_f32_s" (f32.const 2147483648.0)) "integer overflow")
 (assert_trap (invoke "i32.trunc_f32_s" (f32.const -2147483904.0)) "integer overflow")
 (assert_trap (invoke "i32.trunc_f32_s" (f32.const inf)) "integer overflow")
