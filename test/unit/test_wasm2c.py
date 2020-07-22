@@ -18,5 +18,6 @@ class Wasm2CTest(utils.BinaryenTestCase):
         shared.run_process(shared.WASM_OPT + args + ['-ttf'])
         with open('output.c') as f:
           ttf_output = f.read()
-        self.assertIn('hangLimitInitializer', ttf_output)
-        self.assertNotIn('hangLimitInitializer', normal_output)
+        hang_limit_name = 'hangLimitInitializer'
+        self.assertIn(hang_limit_name, ttf_output)
+        self.assertNotIn(hang_limit_name, normal_output)
