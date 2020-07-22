@@ -30,3 +30,22 @@
 [trap final > memory: 18446744073709551615 > 65514]
 [fuzz-exec] comparing func_0
 [fuzz-exec] comparing func_1
+[fuzz-exec] calling func_113
+[LoggingExternalInterface logging -nan:0x23017a]
+[fuzz-exec] note result: func_113 => 113
+(module
+ (type $f32_=>_none (func (param f32)))
+ (type $none_=>_i64 (func (result i64)))
+ (import "fuzzing-support" "log-f32" (func $fimport$0 (param f32)))
+ (export "func_113" (func $0))
+ (func $0 (; has Stack IR ;) (result i64)
+  (call $fimport$0
+   (f32.const -nan:0x23017a)
+  )
+  (i64.const 113)
+ )
+)
+[fuzz-exec] calling func_113
+[LoggingExternalInterface logging -nan:0x23017a]
+[fuzz-exec] note result: func_113 => 113
+[fuzz-exec] comparing func_113

@@ -404,9 +404,9 @@ Abbrev table for offset: 0x00000000
 
 0x00000049:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
-                     [0xffffffff,  0x00000005): 
-                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
-                     [0x0000001e,  0x00000033): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
+                     [0xffffffff,  0x0000000c): 
+                     [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+                     [0x00000017,  0x0000002c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ac] = "a")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(2)
@@ -414,10 +414,10 @@ Abbrev table for offset: 0x00000000
 
 0x00000058:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000002b: 
-                     [0xffffffff,  0x00000005): 
-                     [0x00000007,  0x00000010): DW_OP_consts +1, DW_OP_stack_value
-                     [0x0000001e,  0x00000023): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
-                     [0x00000023,  0x00000033): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                     [0xffffffff,  0x0000000c): 
+                     [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
+                     [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+                     [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ae] = "b")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(2)
@@ -425,9 +425,9 @@ Abbrev table for offset: 0x00000000
 
 0x00000067:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000064: 
-                     [0xffffffff,  0x00000005): 
-                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
-                     [0x0000002e,  0x00000033): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
+                     [0xffffffff,  0x0000000c): 
+                     [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+                     [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "i")
                   DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
                   DW_AT_decl_line [DW_FORM_data1]	(2)
@@ -466,20 +466,20 @@ Abbrev table for offset: 0x00000000
 
 .debug_loc contents:
 0x00000000: 
-            [0xffffffff,  0x00000005): 
-            [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
-            [0x0000001e,  0x00000033): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0xffffffff,  0x0000000c): 
+            [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000017,  0x0000002c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
 
 0x0000002b: 
-            [0xffffffff,  0x00000005): 
-            [0x00000007,  0x00000010): DW_OP_consts +1, DW_OP_stack_value
-            [0x0000001e,  0x00000023): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
-            [0x00000023,  0x00000033): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+            [0xffffffff,  0x0000000c): 
+            [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
+            [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 0x00000064: 
-            [0xffffffff,  0x00000005): 
-            [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
-            [0x0000002e,  0x00000033): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
+            [0xffffffff,  0x0000000c): 
+            [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
 
 .debug_line contents:
 debug_line[0x00000000]

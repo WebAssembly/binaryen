@@ -113,12 +113,17 @@ namespace wasm2js {
 
 cashew::IString SCRATCH_LOAD_I32("wasm2js_scratch_load_i32");
 cashew::IString SCRATCH_STORE_I32("wasm2js_scratch_store_i32");
-cashew::IString SCRATCH_LOAD_I64("wasm2js_scratch_load_i64");
-cashew::IString SCRATCH_STORE_I64("wasm2js_scratch_store_i64");
 cashew::IString SCRATCH_LOAD_F32("wasm2js_scratch_load_f32");
 cashew::IString SCRATCH_STORE_F32("wasm2js_scratch_store_f32");
 cashew::IString SCRATCH_LOAD_F64("wasm2js_scratch_load_f64");
 cashew::IString SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
+cashew::IString MEMORY_INIT("wasm2js_memory_init");
+cashew::IString MEMORY_FILL("wasm2js_memory_fill");
+cashew::IString MEMORY_COPY("wasm2js_memory_copy");
+cashew::IString DATA_DROP("wasm2js_data_drop");
+cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
+cashew::IString ATOMIC_RMW_I64("wasm2js_atomic_rmw_i64");
+cashew::IString GET_STASHED_BITS("wasm2js_get_stashed_bits");
 
 } // namespace wasm2js
 } // namespace ABI

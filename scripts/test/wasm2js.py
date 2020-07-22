@@ -43,7 +43,8 @@ def test_wasm2js_output():
 
             print('..', os.path.basename(t))
 
-            all_out = []
+            all_js = []
+            all_out = ''
 
             for module, asserts in support.split_wast(t):
                 support.write_wast('split.wast', module, asserts)
@@ -58,28 +59,28 @@ def test_wasm2js_output():
                     cmd += ['--emscripten']
                 if 'deterministic' in t:
                     cmd += ['--deterministic']
-                out = support.run_command(cmd)
-                all_out.append(out)
+                js = support.run_command(cmd)
+                all_js.append(js)
 
                 if not shared.NODEJS and not shared.MOZJS:
                     print('No JS interpreters. Skipping spec tests.')
                     continue
 
-                open('a.2asm.mjs', 'w').write(out)
+                open('a.2asm.mjs', 'w').write(js)
 
                 cmd += ['--allow-asserts']
-                out = support.run_command(cmd)
+                js = support.run_command(cmd)
                 # also verify it passes pass-debug verifications
                 shared.with_pass_debug(lambda: support.run_command(cmd))
 
-                open('a.2asm.asserts.mjs', 'w').write(out)
+                open('a.2asm.asserts.mjs', 'w').write(js)
 
                 # verify asm.js is valid js, note that we're using --experimental-modules
                 # to enable ESM syntax and we're also passing a custom loader to handle the
                 # `spectest` and `env` modules in our tests.
                 if shared.NODEJS:
                     loader = os.path.join(shared.options.binaryen_root, 'scripts', 'test', 'node-esm-loader.mjs')
-                    node = [shared.NODEJS, '--experimental-modules', '--loader', loader]
+                    node = [shared.NODEJS, '--experimental-modules', '--no-warnings', '--loader', loader]
                     cmd = node[:]
                     cmd.append('a.2asm.mjs')
                     out = support.run_command(cmd)
@@ -87,9 +88,15 @@ def test_wasm2js_output():
                     cmd = node[:]
                     cmd.append('a.2asm.asserts.mjs')
                     out = support.run_command(cmd, expected_err='', err_ignore='ExperimentalWarning')
-                    shared.fail_if_not_identical(out, '')
+                    all_out += out
 
-            shared.fail_if_not_identical_to_file(''.join(all_out), expected_file)
+            shared.fail_if_not_identical_to_file(''.join(all_js), expected_file)
+            expected_out = os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(t) + '.log')
+            if os.path.exists(expected_out):
+                expected_out = open(expected_out).read()
+            else:
+                expected_out = ''
+            shared.fail_if_not_identical(all_out, expected_out)
 
 
 def test_asserts_output():

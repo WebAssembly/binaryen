@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <type_traits>
 
 #include <ir/abstract.h>
 #include <ir/cost.h>
@@ -790,10 +791,30 @@ struct OptimizeInstructions
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
           if (IsPowerOf2(c)) {
-            if (binary->op == MulInt32) {
-              return optimizePowerOf2Mul(binary, c);
-            } else if (binary->op == RemUInt32) {
-              return optimizePowerOf2URem(binary, c);
+            switch (binary->op) {
+              case MulInt32:
+                return optimizePowerOf2Mul(binary, c);
+              case RemUInt32:
+                return optimizePowerOf2URem(binary, c);
+              case DivUInt32:
+                return optimizePowerOf2UDiv(binary, c);
+              default:
+                break;
+            }
+          }
+        }
+        if (right->type == Type::i64) {
+          uint64_t c = right->value.geti64();
+          if (IsPowerOf2(c)) {
+            switch (binary->op) {
+              case MulInt64:
+                return optimizePowerOf2Mul(binary, c);
+              case RemUInt64:
+                return optimizePowerOf2URem(binary, c);
+              case DivUInt64:
+                return optimizePowerOf2UDiv(binary, c);
+              default:
+                break;
             }
           }
         }
@@ -857,87 +878,13 @@ struct OptimizeInstructions
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
-      // de-morgan's laws
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          switch (inner->op) {
-            case EqInt32:
-              inner->op = NeInt32;
-              return inner;
-            case NeInt32:
-              inner->op = EqInt32;
-              return inner;
-            case LtSInt32:
-              inner->op = GeSInt32;
-              return inner;
-            case LtUInt32:
-              inner->op = GeUInt32;
-              return inner;
-            case LeSInt32:
-              inner->op = GtSInt32;
-              return inner;
-            case LeUInt32:
-              inner->op = GtUInt32;
-              return inner;
-            case GtSInt32:
-              inner->op = LeSInt32;
-              return inner;
-            case GtUInt32:
-              inner->op = LeUInt32;
-              return inner;
-            case GeSInt32:
-              inner->op = LtSInt32;
-              return inner;
-            case GeUInt32:
-              inner->op = LtUInt32;
-              return inner;
-
-            case EqInt64:
-              inner->op = NeInt64;
-              return inner;
-            case NeInt64:
-              inner->op = EqInt64;
-              return inner;
-            case LtSInt64:
-              inner->op = GeSInt64;
-              return inner;
-            case LtUInt64:
-              inner->op = GeUInt64;
-              return inner;
-            case LeSInt64:
-              inner->op = GtSInt64;
-              return inner;
-            case LeUInt64:
-              inner->op = GtUInt64;
-              return inner;
-            case GtSInt64:
-              inner->op = LeSInt64;
-              return inner;
-            case GtUInt64:
-              inner->op = LeUInt64;
-              return inner;
-            case GeSInt64:
-              inner->op = LtSInt64;
-              return inner;
-            case GeUInt64:
-              inner->op = LtUInt64;
-              return inner;
-
-            case EqFloat32:
-              inner->op = NeFloat32;
-              return inner;
-            case NeFloat32:
-              inner->op = EqFloat32;
-              return inner;
-
-            case EqFloat64:
-              inner->op = NeFloat64;
-              return inner;
-            case NeFloat64:
-              inner->op = EqFloat64;
-              return inner;
-
-            default: {}
+          // Try to invert a relational operation using De Morgan's law
+          auto op = invertBinaryOp(inner->op);
+          if (op != InvalidBinary) {
+            inner->op = op;
+            return inner;
           }
         }
         // eqz of a sign extension can be of zero-extension
@@ -1000,16 +947,6 @@ struct OptimizeInstructions
       }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
-      auto* condition = select->condition->dynCast<Unary>();
-      if (condition && condition->op == EqZInt32) {
-        // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-        if (!ifTrue.invalidates(ifFalse)) {
-          select->condition = condition->value;
-          std::swap(select->ifTrue, select->ifFalse);
-        }
-      }
       if (auto* c = select->condition->dynCast<Const>()) {
         // constant condition, we can just pick the right side (barring side
         // effects)
@@ -1029,6 +966,42 @@ struct OptimizeInstructions
             Builder builder(*getModule());
             return builder.makeSequence(builder.makeDrop(select->ifTrue),
                                         select->ifFalse);
+          }
+        }
+      }
+      if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
+        if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
+          if (select->type == Type::i32 || select->type == Type::i64) {
+            auto trueValue = constTrue->value.getInteger();
+            auto falseValue = constFalse->value.getInteger();
+            if ((trueValue == 1LL && falseValue == 0LL) ||
+                (trueValue == 0LL && falseValue == 1LL)) {
+              Builder builder(*getModule());
+              Expression* condition = select->condition;
+              if (trueValue == 0LL) {
+                condition =
+                  optimizeBoolean(builder.makeUnary(EqZInt32, condition));
+              }
+              if (!Properties::emitsBoolean(condition)) {
+                // expr ? 1 : 0   ==>   !!expr
+                condition = builder.makeUnary(
+                  EqZInt32, builder.makeUnary(EqZInt32, condition));
+              }
+              return select->type == Type::i64
+                       ? builder.makeUnary(ExtendUInt32, condition)
+                       : condition;
+            }
+          }
+        }
+      }
+      if (auto* condition = select->condition->dynCast<Unary>()) {
+        if (condition->op == EqZInt32) {
+          // flip select to remove eqz, if we can reorder
+          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
           }
         }
       }
@@ -1165,25 +1138,48 @@ private:
   Expression* optimizeBoolean(Expression* boolean) {
     // TODO use a general getFallthroughs
     if (auto* unary = boolean->dynCast<Unary>()) {
-      if (unary && unary->op == EqZInt32) {
-        auto* unary2 = unary->value->dynCast<Unary>();
-        if (unary2 && unary2->op == EqZInt32) {
-          // double eqz
-          return unary2->value;
+      if (unary) {
+        if (unary->op == EqZInt32) {
+          auto* unary2 = unary->value->dynCast<Unary>();
+          if (unary2 && unary2->op == EqZInt32) {
+            // double eqz
+            return unary2->value;
+          }
+          if (auto* binary = unary->value->dynCast<Binary>()) {
+            // !(x <=> y)   ==>   x <!=> y
+            auto op = invertBinaryOp(binary->op);
+            if (op != InvalidBinary) {
+              binary->op = op;
+              return binary;
+            }
+          }
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
-      if (binary->op == OrInt32) {
+      if (binary->op == SubInt32) {
+        if (auto* num = binary->left->dynCast<Const>()) {
+          if (num->value.geti32() == 0) {
+            // bool(0 - x)   ==>   bool(x)
+            return binary->right;
+          }
+        }
+      } else if (binary->op == OrInt32) {
         // an or flowing into a boolean context can consider each input as
         // boolean
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
       } else if (binary->op == NeInt32) {
-        // x != 0 is just x if it's used as a bool
         if (auto* num = binary->right->dynCast<Const>()) {
+          // x != 0 is just x if it's used as a bool
           if (num->value.geti32() == 0) {
             return binary->left;
           }
+          // TODO: Perhaps use it for separate final pass???
+          // x != -1   ==>    x ^ -1
+          // if (num->value.geti32() == -1) {
+          //   binary->op = XorInt32;
+          //   return binary;
+          // }
         }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
@@ -1477,22 +1473,37 @@ private:
   // but it's still worth doing since
   //  * Often shifts are more common than muls.
   //  * The constant is smaller.
-  Expression* optimizePowerOf2Mul(Binary* binary, uint32_t c) {
-    uint32_t shifts = CountTrailingZeroes(c);
-    binary->op = ShlInt32;
-    binary->right->cast<Const>()->value = Literal(int32_t(shifts));
+  template<typename T> Expression* optimizePowerOf2Mul(Binary* binary, T c) {
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    auto shifts = CountTrailingZeroes<T>(c);
+    binary->op = std::is_same<T, uint32_t>::value ? ShlInt32 : ShlInt64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
   }
 
-  // Optimize an unsigned divide by a power of two on the right,
-  // which can be an AND mask
+  // Optimize an unsigned divide / remainder by a power of two on the right
   // This doesn't shrink code size, and VMs likely optimize it anyhow,
   // but it's still worth doing since
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
-  Expression* optimizePowerOf2URem(Binary* binary, uint32_t c) {
-    binary->op = AndInt32;
-    binary->right->cast<Const>()->value = Literal(int32_t(c - 1));
+  template<typename T> Expression* optimizePowerOf2UDiv(Binary* binary, T c) {
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    auto shifts = CountTrailingZeroes<T>(c);
+    binary->op = std::is_same<T, uint32_t>::value ? ShrUInt32 : ShrUInt64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
+    return binary;
+  }
+
+  template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    binary->op = std::is_same<T, uint32_t>::value ? AndInt32 : AndInt64;
+    binary->right->cast<Const>()->value = Literal(c - 1);
     return binary;
   }
 
@@ -1539,8 +1550,9 @@ private:
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
     if (type.isInteger()) {
+      auto constRight = right->value.getInteger();
       // operations on zero
-      if (right->value == Literal::makeFromInt32(0, type)) {
+      if (constRight == 0LL) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
@@ -1556,16 +1568,62 @@ private:
           return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
         }
       }
+      // operations on one
+      if (constRight == 1LL) {
+        // (signed)x % 1   ==>   0
+        if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
+            !EffectAnalyzer(getPassOptions(), features, binary->left)
+               .hasSideEffects()) {
+          right->value = Literal::makeSingleZero(type);
+          return right;
+        }
+      }
       // operations on all 1s
-      // TODO: shortcut method to create an all-ones?
-      if (right->value == Literal(int32_t(-1)) ||
-          right->value == Literal(int64_t(-1))) {
+      if (constRight == -1LL) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
+          // x & -1   ==>   x
           return binary->left;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
+          // x | -1   ==>   -1
           return binary->right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (signed)x % -1     ==>   0
+          right->value = Literal::makeSingleZero(type);
+          return right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (unsigned)x > -1   ==>   0
+          right->value = Literal::makeSingleZero(Type::i32);
+          right->type = Type::i32;
+          return right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
+          // (unsigned)x < -1   ==>   x != -1
+          // friendlier to JS emitting as we don't need to write an unsigned
+          // -1 value which is large.
+          binary->op = Abstract::getBinary(type, Abstract::Ne);
+          return binary;
+        } else if (binary->op == DivUInt32) {
+          // (unsigned)x / -1   ==>   x == -1
+          binary->op = Abstract::getBinary(type, Abstract::Eq);
+          return binary;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+          // x * -1   ==>   0 - x
+          binary->op = Abstract::getBinary(type, Abstract::Sub);
+          right->value = Literal::makeSingleZero(type);
+          std::swap(binary->left, binary->right);
+          return binary;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
+                   !EffectAnalyzer(getPassOptions(), features, binary->left)
+                      .hasSideEffects()) {
+          // (unsigned)x <= -1   ==>   1
+          right->value = Literal::makeFromInt32(1, Type::i32);
+          right->type = Type::i32;
+          return right;
         }
       }
       // wasm binary encoding uses signed LEBs, which slightly favor negative
@@ -1576,7 +1634,7 @@ private:
       // subtractions than the more common additions).
       if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
           binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-        auto value = right->value.getInteger();
+        auto value = constRight;
         if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
             value == 0x8000000 || value == 0x400000000LL ||
             value == 0x20000000000LL || value == 0x1000000000000LL ||
@@ -1730,6 +1788,66 @@ private:
         return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
+    }
+  }
+
+  BinaryOp invertBinaryOp(BinaryOp op) {
+    // use de-morgan's laws
+    switch (op) {
+      case EqInt32:
+        return NeInt32;
+      case NeInt32:
+        return EqInt32;
+      case LtSInt32:
+        return GeSInt32;
+      case LtUInt32:
+        return GeUInt32;
+      case LeSInt32:
+        return GtSInt32;
+      case LeUInt32:
+        return GtUInt32;
+      case GtSInt32:
+        return LeSInt32;
+      case GtUInt32:
+        return LeUInt32;
+      case GeSInt32:
+        return LtSInt32;
+      case GeUInt32:
+        return LtUInt32;
+
+      case EqInt64:
+        return NeInt64;
+      case NeInt64:
+        return EqInt64;
+      case LtSInt64:
+        return GeSInt64;
+      case LtUInt64:
+        return GeUInt64;
+      case LeSInt64:
+        return GtSInt64;
+      case LeUInt64:
+        return GtUInt64;
+      case GtSInt64:
+        return LeSInt64;
+      case GtUInt64:
+        return LeUInt64;
+      case GeSInt64:
+        return LtSInt64;
+      case GeUInt64:
+        return LtUInt64;
+
+      case EqFloat32:
+        return NeFloat32;
+      case NeFloat32:
+        return EqFloat32;
+
+      case EqFloat64:
+        return NeFloat64;
+      case NeFloat64:
+        return EqFloat64;
+
+      default:
+        return InvalidBinary;
     }
   }
 };

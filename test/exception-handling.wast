@@ -1,6 +1,6 @@
 (module
   (event $e0 (attr 0) (param i32))
-  (event $e1 (attr 0) (param anyref))
+  (event $e1 (attr 0) (param externref))
 
   (func $exnref_test (param $0 exnref) (result exnref)
     (local.get $0)

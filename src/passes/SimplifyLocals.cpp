@@ -302,6 +302,20 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
+    // Expressions that may throw cannot be sinked into 'try'. At the start of
+    // 'try', we drop all sinkables that may throw.
+    if (curr->is<Try>()) {
+      std::vector<Index> invalidated;
+      for (auto& sinkable : self->sinkables) {
+        if (sinkable.second.effects.throws) {
+          invalidated.push_back(sinkable.first);
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
     EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);

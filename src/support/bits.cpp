@@ -19,6 +19,10 @@
 #include "../compiler-support.h"
 #include "support/utilities.h"
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 namespace wasm {
 
 template<> int PopCount<uint8_t>(uint8_t v) {
@@ -30,19 +34,31 @@ template<> int PopCount<uint8_t>(uint8_t v) {
 }
 
 template<> int PopCount<uint16_t>(uint16_t v) {
-  return PopCount((uint8_t)(v & 0xff)) + PopCount((uint8_t)(v >> 8));
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcount(v);
+#else
+  return PopCount((uint8_t)(v & 0xFF)) + PopCount((uint8_t)(v >> 8));
+#endif
 }
 
 template<> int PopCount<uint32_t>(uint32_t v) {
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcount(v);
+#else
   // See Stanford bithacks, counting bits set in parallel, "best method":
   // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
   v = v - ((v >> 1) & 0x55555555);
   v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
   return (((v + (v >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
+#endif
 }
 
 template<> int PopCount<uint64_t>(uint64_t v) {
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcountll(v);
+#else
   return PopCount((uint32_t)v) + PopCount((uint32_t)(v >> 32));
+#endif
 }
 
 template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
@@ -55,21 +71,53 @@ template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
 }
 
 template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
+  if (v == 0) {
+    return 32;
+  }
+#if __has_builtin(__builtin_ctz) || defined(__GNUC__)
+  return __builtin_ctz(v);
+#elif defined(_MSC_VER)
+  unsigned long count;
+  _BitScanForward(&count, v);
+  return (int)count;
+#else
   // See Stanford bithacks, count the consecutive zero bits (trailing) on the
   // right with multiply and lookup:
   // http://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightMultLookup
   static const uint8_t tbl[32] = {0,  1,  28, 2,  29, 14, 24, 3,  30, 22, 20,
                                   15, 25, 17, 4,  8,  31, 27, 13, 23, 21, 19,
                                   16, 7,  26, 12, 18, 6,  11, 5,  10, 9};
-  return v ? (int)tbl[((uint32_t)((v & -v) * 0x077CB531U)) >> 27] : 32;
+  return (int)tbl[((uint32_t)((v & -v) * 0x077CB531U)) >> 27];
+#endif
 }
 
 template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
+  if (v == 0) {
+    return 64;
+  }
+#if __has_builtin(__builtin_ctzll) || defined(__GNUC__)
+  return __builtin_ctzll(v);
+#elif defined(_MSC_VER)
+  unsigned long count;
+  _BitScanForward64(&count, v);
+  return (int)count;
+#else
   return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
                      : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
+#endif
 }
 
 template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
+  if (v == 0) {
+    return 32;
+  }
+#if __has_builtin(__builtin_clz) || defined(__GNUC__)
+  return __builtin_clz(v);
+#elif defined(_MSC_VER)
+  unsigned long count;
+  _BitScanReverse(&count, v);
+  return (int)count;
+#else
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
   // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
@@ -81,12 +129,24 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
   v = v | (v >> 4);
   v = v | (v >> 8);
   v = v | (v >> 16);
-  return v ? (int)tbl[((uint32_t)(v * 0x07C4ACDDU)) >> 27] : 32;
+  return (int)tbl[((uint32_t)(v * 0x07C4ACDDU)) >> 27];
+#endif
 }
 
 template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
+  if (v == 0) {
+    return 64;
+  }
+#if __has_builtin(__builtin_clzll) || defined(__GNUC__)
+  return __builtin_clzll(v);
+#elif defined(_MSC_VER)
+  unsigned long count;
+  _BitScanReverse64(&count, v);
+  return (int)count;
+#else
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);
+#endif
 }
 
 uint32_t Log2(uint32_t v) {
@@ -108,23 +168,6 @@ uint32_t Log2(uint32_t v) {
   }
 }
 
-uint32_t Pow2(uint32_t v) {
-  switch (v) {
-    case 0:
-      return 1;
-    case 1:
-      return 2;
-    case 2:
-      return 4;
-    case 3:
-      return 8;
-    case 4:
-      return 16;
-    case 5:
-      return 32;
-    default:
-      return 1 << v;
-  }
-}
+uint32_t Pow2(uint32_t v) { return 1 << v; }
 
 } // namespace wasm

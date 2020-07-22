@@ -594,7 +594,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -619,7 +619,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -644,7 +644,7 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -669,7 +669,7 @@ struct Reducer
                 WASM_UNREACHABLE("unexpected type");
               case Type::v128:
               case Type::funcref:
-              case Type::anyref:
+              case Type::externref:
               case Type::nullref:
               case Type::exnref:
                 continue; // not implemented yet
@@ -681,7 +681,7 @@ struct Reducer
           }
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
             continue; // not implemented yet
@@ -982,7 +982,7 @@ struct Reducer
     if (condition->is<Const>()) {
       return;
     }
-    auto* c = builder->makeConst(Literal(int32_t(0)));
+    auto* c = builder->makeConst(int32_t(0));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
       tryToReplaceChild(condition, c);
@@ -1019,7 +1019,7 @@ struct Reducer
         builder->makeConstantExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);
     }
-    Const* c = builder->makeConst(Literal(int32_t(0)));
+    Const* c = builder->makeConst(int32_t(0));
     if (tryToReplaceCurrent(c)) {
       return true;
     }

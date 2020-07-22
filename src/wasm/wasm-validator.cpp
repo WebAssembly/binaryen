@@ -1260,7 +1260,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -2068,7 +2068,7 @@ void FunctionValidator::validateAlignment(
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:

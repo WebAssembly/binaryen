@@ -59,7 +59,7 @@ Literal& Literal::operator=(const Literal& other) {
     case Type::none:
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -191,7 +191,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::funcref:
     case Type::nullref:
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -346,7 +346,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     case Type::exnref:
       o << "exnref(" << literal.getExceptionPackage() << ")";
       break;
-    case Type::anyref:
+    case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -569,7 +569,7 @@ Literal Literal::eqz() const {
       return eq(Literal(double(0)));
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -591,7 +591,7 @@ Literal Literal::neg() const {
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -613,7 +613,7 @@ Literal Literal::abs() const {
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -718,7 +718,7 @@ Literal Literal::add(const Literal& other) const {
       return Literal(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -740,7 +740,7 @@ Literal Literal::sub(const Literal& other) const {
       return Literal(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -833,7 +833,7 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -868,6 +868,18 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
+          // Special-case division by 1. nan / 1 can change nan bits per the
+          // wasm spec, but it is ok to just return that original nan, and we
+          // do that here so that we are consistent with the optimization of
+          // removing the / 1 and leaving just the nan. That is, if we just
+          // do a normal divide and the CPU decides to change the bits, we'd
+          // give a different result on optimized code, which would look like
+          // it was a bad optimization. So out of all the valid results to
+          // return here, return the simplest one that is consistent with
+          // optimization.
+          if (rhs == 1) {
+            return Literal(lhs);
+          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
@@ -896,6 +908,10 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
+          // See above comment on f32.
+          if (rhs == 1) {
+            return Literal(lhs);
+          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
@@ -1071,7 +1087,7 @@ Literal Literal::eq(const Literal& other) const {
       return Literal(getf64() == other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -1093,7 +1109,7 @@ Literal Literal::ne(const Literal& other) const {
       return Literal(getf64() != other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:

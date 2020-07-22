@@ -316,7 +316,7 @@ private:
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
     switch (type.getSingle()) {
-      case Type::anyref:
+      case Type::externref:
         if (wasm.features.hasExceptionHandling()) {
           options.push_back(Type::exnref);
         }
@@ -348,14 +348,14 @@ private:
           segment.data[j] = upTo(512);
         }
         if (!segment.isPassive) {
-          segment.offset = builder.makeConst(Literal(int32_t(memCovered)));
+          segment.offset = builder.makeConst(int32_t(memCovered));
           memCovered += segSize;
         }
         wasm.memory.segments.push_back(segment);
       }
     } else {
       // init some data
-      wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+      wasm.memory.segments.emplace_back(builder.makeConst(int32_t(0)));
       auto num = upTo(USABLE_MEMORY * 2);
       for (size_t i = 0; i < num; i++) {
         auto value = upTo(512);
@@ -374,7 +374,7 @@ private:
     // }
     std::vector<Expression*> contents;
     contents.push_back(
-      builder.makeLocalSet(0, builder.makeConst(Literal(uint32_t(5381)))));
+      builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -384,14 +384,10 @@ private:
             AddInt32,
             builder.makeBinary(ShlInt32,
                                builder.makeLocalGet(0, Type::i32),
-                               builder.makeConst(Literal(uint32_t(5)))),
+                               builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
-          builder.makeLoad(1,
-                           false,
-                           i,
-                           1,
-                           builder.makeConst(Literal(uint32_t(0))),
-                           Type::i32))));
+          builder.makeLoad(
+            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -405,7 +401,7 @@ private:
 
   void setupTable() {
     wasm.table.exists = true;
-    wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+    wasm.table.segments.emplace_back(builder.makeConst(int32_t(0)));
   }
 
   std::map<Type, std::vector<Name>> globalsByType;
@@ -443,18 +439,17 @@ private:
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
 
   void addHangLimitSupport() {
-    auto* glob =
-      builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                         Type::i32,
-                         builder.makeConst(Literal(int32_t(HANG_LIMIT))),
-                         Builder::Mutable);
+    auto* glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
+                                    Type::i32,
+                                    builder.makeConst(int32_t(HANG_LIMIT)),
+                                    Builder::Mutable);
     wasm.addGlobal(glob);
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
     func->sig = Signature(Type::none, Type::none);
-    func->body = builder.makeGlobalSet(
-      glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
+    func->body =
+      builder.makeGlobalSet(glob->name, builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
 
     auto* export_ = new Export;
@@ -486,7 +481,7 @@ private:
         HANG_LIMIT_GLOBAL,
         builder.makeBinary(BinaryOp::SubInt32,
                            builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32),
-                           builder.makeConst(Literal(int32_t(1))))));
+                           builder.makeConst(int32_t(1)))));
   }
 
   // function generation state
@@ -1209,7 +1204,7 @@ private:
     // going to trap
     Expression* target;
     if (!allowOOB || !oneIn(10)) {
-      target = builder.makeConst(Literal(int32_t(i)));
+      target = builder.makeConst(int32_t(i));
     } else {
       target = make(Type::i32);
     }
@@ -1312,7 +1307,7 @@ private:
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
       ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(Literal(int32_t(USABLE_MEMORY - 1))));
+        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
     }
     return ret;
   }
@@ -1364,7 +1359,7 @@ private:
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -1468,7 +1463,7 @@ private:
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -1565,7 +1560,7 @@ private:
             return Literal(getDouble());
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1610,7 +1605,7 @@ private:
             return Literal(double(small));
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1678,7 +1673,7 @@ private:
             break;
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1712,7 +1707,7 @@ private:
             break;
           case Type::v128:
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
           case Type::none:
@@ -1824,7 +1819,7 @@ private:
                                make(Type::v128)});
           }
           case Type::funcref:
-          case Type::anyref:
+          case Type::externref:
           case Type::nullref:
           case Type::exnref:
             return makeTrivial(type);
@@ -1969,7 +1964,7 @@ private:
         WASM_UNREACHABLE("invalid value");
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2206,7 +2201,7 @@ private:
                             make(Type::v128)});
       }
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2413,7 +2408,7 @@ private:
         break;
       case Type::v128:
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -2588,9 +2583,10 @@ private:
     assert(wasm.features.hasReferenceTypes());
     Type refType;
     if (wasm.features.hasExceptionHandling()) {
-      refType = pick(Type::funcref, Type::anyref, Type::nullref, Type::exnref);
+      refType =
+        pick(Type::funcref, Type::externref, Type::nullref, Type::exnref);
     } else {
-      refType = pick(Type::funcref, Type::anyref, Type::nullref);
+      refType = pick(Type::funcref, Type::externref, Type::nullref);
     }
     return builder.makeRefIsNull(make(refType));
   }
@@ -2604,8 +2600,8 @@ private:
     size_t offsetVal = upTo(totalSize);
     size_t sizeVal = upTo(totalSize - offsetVal);
     Expression* dest = makePointer();
-    Expression* offset = builder.makeConst(Literal(int32_t(offsetVal)));
-    Expression* size = builder.makeConst(Literal(int32_t(sizeVal)));
+    Expression* offset = builder.makeConst(int32_t(offsetVal));
+    Expression* size = builder.makeConst(int32_t(sizeVal));
     return builder.makeMemoryInit(segment, dest, offset, size);
   }
 
@@ -2657,7 +2653,7 @@ private:
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes,
              Type::funcref,
-             Type::anyref,
+             Type::externref,
              Type::nullref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
@@ -2700,7 +2696,7 @@ private:
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging anyref because it is opaque
+  // - there's no point in logging externref because it is opaque
   // - don't bother logging tuples
   std::vector<Type> getLoggableTypes() {
     return items(

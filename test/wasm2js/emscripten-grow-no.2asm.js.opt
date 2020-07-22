@@ -46,6 +46,7 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+var bufferView = new Uint8Array(wasmMemory.buffer);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -55,19 +56,17 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
   base64ReverseLookup[47] = 63; // '/'
   /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
   function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
-    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2);
-    if (b64[bLength-2] == '=') --end;
-    if (b64[bLength-1] == '=') --end;
-    for (; i < bLength; i += 4, j += 3) {
+    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2) - (b64[bLength-2] == '=') - (b64[bLength-1] == '=');
+    for (; i < bLength; i += 4) {
       b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
       b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
-      uint8Array[j] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
-      if (j+1 < end) uint8Array[j+1] = b1 << 4 | b2 >> 2;
-      if (j+2 < end) uint8Array[j+2] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
+      uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
+      if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
+      if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
+    return uint8Array; 
   }
-var bufferView = new Uint8Array(wasmMemory.buffer);
-base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
+  base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 return asmFunc({
     'Int8Array': Int8Array,
     'Int16Array': Int16Array,
