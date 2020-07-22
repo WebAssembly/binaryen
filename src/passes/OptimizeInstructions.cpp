@@ -668,8 +668,8 @@ struct OptimizeInstructions
     } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          // Try to inverse a relational operation using De Morgan's law
-          auto op = inverseBinaryOp(inner->op);
+          // Try to invert a relational operation using De Morgan's law
+          auto op = invertBinaryOp(inner->op);
           if (op != InvalidBinary) {
             inner->op = op;
             return inner;
@@ -935,7 +935,7 @@ private:
           }
           if (auto* binary = unary->value->dynCast<Binary>()) {
             // !(x <=> y)   ==>   x <!=> y
-            auto op = inverseBinaryOp(binary->op);
+            auto op = invertBinaryOp(binary->op);
             if (op != InvalidBinary) {
               binary->op = op;
               return binary;
@@ -1579,7 +1579,7 @@ private:
     }
   }
 
-  BinaryOp inverseBinaryOp(BinaryOp op) {
+  BinaryOp invertBinaryOp(BinaryOp op) {
     // use de-morgan's laws
     switch (op) {
       case EqInt32:
