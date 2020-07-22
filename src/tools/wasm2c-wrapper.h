@@ -85,9 +85,14 @@ int main(int argc, char** argv) {
   // wasm traps, and emitting a single one helps compilation speed into wasm as
   // compile times are O(size * num_setjmps).
   for (size_t curr = 0;; curr++) {
+  )";
+  if (wasm.getExportOrNull("hangLimitInitializer")) {
+    ret += R"(
     // Always call the hang limit initializer before each export.
     (*Z_hangLimitInitializerZ_vv)();
-
+)";
+  }
+  ret += R"(
     // Prepare to call the export, so we can catch traps.
     if (WASM_RT_SETJMP(g_jmp_buf) != 0) {
       puts("exception!");
