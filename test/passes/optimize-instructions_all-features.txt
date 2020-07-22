@@ -3716,23 +3716,6 @@
  )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if
-   (i32.ne
-    (local.get $x)
-    (i32.const -1)
-   )
-   (unreachable)
-  )
-  (drop
-   (select
-    (local.get $x)
-    (local.get $y)
-    (i32.ne
-     (local.get $x)
-     (i32.const -1)
-    )
-   )
-  )
-  (if
    (local.get $x)
    (unreachable)
   )
