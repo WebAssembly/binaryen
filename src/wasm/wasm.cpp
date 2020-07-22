@@ -522,6 +522,8 @@ void AtomicNotify::finalize() {
   }
 }
 
+void AtomicFence::finalize() { type = Type::none; }
+
 void SIMDExtract::finalize() {
   assert(vec);
   switch (op) {
