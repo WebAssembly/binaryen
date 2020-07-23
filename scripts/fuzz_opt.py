@@ -505,6 +505,11 @@ class CheckDeterminism(TestCaseHandler):
         assert open('b1.wasm', 'rb').read() == open('b2.wasm', 'rb').read(), 'output must be deterministic'
 
 
+# interpreter logging notation
+TRAP_PREFIX = '[trap'
+FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
+
+
 class Wasm2JS(TestCaseHandler):
     frequency = 0.6
 
@@ -514,8 +519,20 @@ class Wasm2JS(TestCaseHandler):
         # different in JS than wasm)
         before = self.run(before_wasm)
         after = self.run(after_wasm)
-        if not NANS:
-            compare(before, after, 'Wasm2JS')
+        # we also cannot compare if the wasm hits a trap, as wasm2js does not
+        # trap on many things wasm would, and in those cases it can do weird
+        # undefined things. in such a case, at least compare up until before
+        # the trap, which lets us compare at least some results in some cases.
+        interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter_output:
+            trap_index = interpreter_output.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of
+            call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter_output.index('\n', call_start)
+            call_line = interpreter_output[call_start:call_end]
+            before = before[:before.index(call_line)]
+            after = after[:after.index(call_line)]
+        compare(before, after, 'Wasm2JS')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -539,11 +556,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        out = fix_output(run_vm([shared.NODEJS, 'js.js', 'a.wasm']))
-        if 'exception' in out:
-            # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
-            out = IGNORE
-        return out
+        return fix_output(run_vm([shared.NODEJS, 'js.js', 'a.wasm']))
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
