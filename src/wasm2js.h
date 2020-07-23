@@ -1149,7 +1149,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // Ensure the function pointer is a number. In general in wasm2js we are
       // ok with true/false being present, as they are immediately cast to a
       // number anyhow on their use. However, FUNCTION_TABLE[true] is *not* the
-      // same as FUNCTION_TABLE[1], so we must cast.
+      // same as FUNCTION_TABLE[1], so we must cast. This is a rare exception
+      // because FUNCTION_TABLE is just a normal JS object, not a typed array
+      // or a mathematical operation (all of which coerce to a number for us).
       auto target = visit(curr->target, EXPRESSION_RESULT);
       target = makeAsmCoercion(target, ASM_INT);
       if (mustReorder) {
