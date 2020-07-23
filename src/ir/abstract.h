@@ -44,7 +44,6 @@ enum Op {
   Or,
   Xor,
   // Relational
-  EqZ,
   Eq,
   Ne,
   LtS,
@@ -63,22 +62,10 @@ enum Op {
 inline UnaryOp getUnary(Type type, Op op) {
   switch (type.getSingle()) {
     case Type::i32: {
-      switch (op) {
-        case EqZ:
-          return EqZInt32;
-        default:
-          return InvalidUnary;
-      }
-      break;
+      return InvalidUnary;
     }
     case Type::i64: {
-      switch (op) {
-        case EqZ:
-          return EqZInt64;
-        default:
-          return InvalidUnary;
-      }
-      break;
+      return InvalidUnary;
     }
     case Type::f32: {
       switch (op) {
