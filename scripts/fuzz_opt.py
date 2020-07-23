@@ -161,6 +161,12 @@ def randomize_fuzz_settings():
 # Test outputs we want to ignore are marked this way.
 IGNORE = '[binaryen-fuzzer-ignore]'
 
+# Traps are reported as [trap REASON]
+TRAP_PREFIX = '[trap '
+
+# --fuzz-exec reports calls as [fuzz-exec] calling foo
+FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
+
 
 # compare two strings, strictly
 def compare(x, y, context):
@@ -239,7 +245,7 @@ def fix_output(out):
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace('[trap ', 'exception: [trap ')
+    out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -503,11 +509,6 @@ class CheckDeterminism(TestCaseHandler):
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
         assert open('b1.wasm', 'rb').read() == open('b2.wasm', 'rb').read(), 'output must be deterministic'
-
-
-# interpreter logging notation
-TRAP_PREFIX = '[trap'
-FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
 
 class Wasm2JS(TestCaseHandler):
