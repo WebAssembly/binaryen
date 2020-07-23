@@ -622,7 +622,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/home/alon/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000005, 0x0000005b))
+                 [0x00000005, 0x0000006d))
 
 0x00000026:   DW_TAG_variable [2]  
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b5] = "quine")
@@ -650,7 +650,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000004f:   DW_TAG_subprogram [6] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000056)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000068)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c4] = "_Z4usedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cd] = "used")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
@@ -687,8 +687,8 @@ Abbrev table for offset: 0x00000000
 0x0000009a:     NULL
 
 0x0000009b:   DW_TAG_subprogram [8]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000005c)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000051)
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000006e)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000065)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000e4] = "main")
                 DW_AT_decl_file [DW_FORM_data1]	("/home/alon/Dev/emscripten/a.cpp")
                 DW_AT_decl_line [DW_FORM_data1]	(16)
@@ -732,74 +732,74 @@ file_names[  1]:
             0x0000000000000005      4      0      1   0             0  is_stmt
 
 
-0x00000031: 00 DW_LNE_set_address (0x000000000000001e)
+0x00000031: 00 DW_LNE_set_address (0x0000000000000030)
 0x00000038: 03 DW_LNS_advance_line (5)
 0x0000003a: 05 DW_LNS_set_column (4)
 0x0000003c: 0a DW_LNS_set_prologue_end
 0x0000003d: 01 DW_LNS_copy
-            0x000000000000001e      5      4      1   0             0  is_stmt prologue_end
+            0x0000000000000030      5      4      1   0             0  is_stmt prologue_end
 
 
-0x0000003e: 00 DW_LNE_set_address (0x0000000000000037)
+0x0000003e: 00 DW_LNE_set_address (0x0000000000000049)
 0x00000045: 03 DW_LNS_advance_line (6)
 0x00000047: 01 DW_LNS_copy
-            0x0000000000000037      6      4      1   0             0  is_stmt
+            0x0000000000000049      6      4      1   0             0  is_stmt
 
 
-0x00000048: 00 DW_LNE_set_address (0x0000000000000050)
+0x00000048: 00 DW_LNE_set_address (0x0000000000000062)
 0x0000004f: 03 DW_LNS_advance_line (7)
 0x00000051: 05 DW_LNS_set_column (10)
 0x00000053: 01 DW_LNS_copy
-            0x0000000000000050      7     10      1   0             0  is_stmt
+            0x0000000000000062      7     10      1   0             0  is_stmt
 
 
-0x00000054: 00 DW_LNE_set_address (0x0000000000000057)
+0x00000054: 00 DW_LNE_set_address (0x0000000000000069)
 0x0000005b: 05 DW_LNS_set_column (3)
 0x0000005d: 06 DW_LNS_negate_stmt
 0x0000005e: 01 DW_LNS_copy
-            0x0000000000000057      7      3      1   0             0 
+            0x0000000000000069      7      3      1   0             0 
 
 
-0x0000005f: 00 DW_LNE_set_address (0x000000000000005b)
+0x0000005f: 00 DW_LNE_set_address (0x000000000000006d)
 0x00000066: 00 DW_LNE_end_sequence
-            0x000000000000005b      7      3      1   0             0  end_sequence
+            0x000000000000006d      7      3      1   0             0  end_sequence
 
-0x00000069: 00 DW_LNE_set_address (0x000000000000005c)
+0x00000069: 00 DW_LNE_set_address (0x000000000000006e)
 0x00000070: 03 DW_LNS_advance_line (16)
 0x00000072: 01 DW_LNS_copy
-            0x000000000000005c     16      0      1   0             0  is_stmt
+            0x000000000000006e     16      0      1   0             0  is_stmt
 
 
-0x00000073: 00 DW_LNE_set_address (0x0000000000000081)
+0x00000073: 00 DW_LNE_set_address (0x00000000000000a7)
 0x0000007a: 03 DW_LNS_advance_line (17)
 0x0000007c: 05 DW_LNS_set_column (10)
 0x0000007e: 0a DW_LNS_set_prologue_end
 0x0000007f: 01 DW_LNS_copy
-            0x0000000000000081     17     10      1   0             0  is_stmt prologue_end
+            0x00000000000000a7     17     10      1   0             0  is_stmt prologue_end
 
 
-0x00000080: 00 DW_LNE_set_address (0x0000000000000087)
+0x00000080: 00 DW_LNE_set_address (0x00000000000000ad)
 0x00000087: 05 DW_LNS_set_column (25)
 0x00000089: 06 DW_LNS_negate_stmt
 0x0000008a: 01 DW_LNS_copy
-            0x0000000000000087     17     25      1   0             0 
+            0x00000000000000ad     17     25      1   0             0 
 
 
-0x0000008b: 00 DW_LNE_set_address (0x0000000000000093)
+0x0000008b: 00 DW_LNE_set_address (0x00000000000000b9)
 0x00000092: 05 DW_LNS_set_column (19)
 0x00000094: 01 DW_LNS_copy
-            0x0000000000000093     17     19      1   0             0 
+            0x00000000000000b9     17     19      1   0             0 
 
 
-0x00000095: 00 DW_LNE_set_address (0x000000000000009a)
+0x00000095: 00 DW_LNE_set_address (0x00000000000000c0)
 0x0000009c: 05 DW_LNS_set_column (3)
 0x0000009e: 01 DW_LNS_copy
-            0x000000000000009a     17      3      1   0             0 
+            0x00000000000000c0     17      3      1   0             0 
 
 
-0x0000009f: 00 DW_LNE_set_address (0x00000000000000ad)
+0x0000009f: 00 DW_LNE_set_address (0x00000000000000d3)
 0x000000a6: 00 DW_LNE_end_sequence
-            0x00000000000000ad     17      3      1   0             0  end_sequence
+            0x00000000000000d3     17      3      1   0             0  end_sequence
 
 
 .debug_str contents:
@@ -817,9 +817,9 @@ file_names[  1]:
 0x000000e9: "x"
 
 .debug_ranges contents:
-00000000 00000005 0000005b
+00000000 00000005 0000006d
 00000000 <End of list>
-00000010 0000005c 000000ad
+00000010 0000006e 000000d3
 00000010 <End of list>
 (module
  (type $none_=>_none (func))
@@ -848,104 +848,104 @@ file_names[  1]:
   (local $8 i32)
   (local $9 i32)
   (local $10 i32)
-  ;; code offset: 0xa
+  ;; code offset: 0x1c
   (local.set $1
-   ;; code offset: 0x8
+   ;; code offset: 0x1a
    (global.get $global$0)
   )
-  ;; code offset: 0xe
+  ;; code offset: 0x20
   (local.set $2
-   ;; code offset: 0xc
+   ;; code offset: 0x1e
    (i32.const 16)
   )
-  ;; code offset: 0x15
+  ;; code offset: 0x27
   (local.set $3
-   ;; code offset: 0x14
+   ;; code offset: 0x26
    (i32.sub
-    ;; code offset: 0x10
+    ;; code offset: 0x22
     (local.get $1)
-    ;; code offset: 0x12
+    ;; code offset: 0x24
     (local.get $2)
    )
   )
-  ;; code offset: 0x1b
+  ;; code offset: 0x2d
   (i32.store offset=12
-   ;; code offset: 0x17
+   ;; code offset: 0x29
    (local.get $3)
-   ;; code offset: 0x19
+   ;; code offset: 0x2b
    (local.get $0)
   )
-  ;; code offset: 0x23
+  ;; code offset: 0x35
   (local.set $4
-   ;; code offset: 0x20
+   ;; code offset: 0x32
    (i32.load offset=12
-    ;; code offset: 0x1e
+    ;; code offset: 0x30
     (local.get $3)
    )
   )
-  ;; code offset: 0x27
+  ;; code offset: 0x39
   (local.set $5
-   ;; code offset: 0x25
+   ;; code offset: 0x37
    (i32.const 1)
   )
-  ;; code offset: 0x2e
+  ;; code offset: 0x40
   (local.set $6
-   ;; code offset: 0x2d
+   ;; code offset: 0x3f
    (i32.add
-    ;; code offset: 0x29
+    ;; code offset: 0x3b
     (local.get $4)
-    ;; code offset: 0x2b
+    ;; code offset: 0x3d
     (local.get $5)
    )
   )
-  ;; code offset: 0x34
+  ;; code offset: 0x46
   (i32.store offset=12
-   ;; code offset: 0x30
+   ;; code offset: 0x42
    (local.get $3)
-   ;; code offset: 0x32
+   ;; code offset: 0x44
    (local.get $6)
   )
-  ;; code offset: 0x3c
+  ;; code offset: 0x4e
   (local.set $7
-   ;; code offset: 0x39
+   ;; code offset: 0x4b
    (i32.load offset=12
-    ;; code offset: 0x37
+    ;; code offset: 0x49
     (local.get $3)
    )
   )
-  ;; code offset: 0x40
+  ;; code offset: 0x52
   (local.set $8
-   ;; code offset: 0x3e
+   ;; code offset: 0x50
    (i32.const -1)
   )
-  ;; code offset: 0x47
+  ;; code offset: 0x59
   (local.set $9
-   ;; code offset: 0x46
+   ;; code offset: 0x58
    (i32.add
-    ;; code offset: 0x42
+    ;; code offset: 0x54
     (local.get $7)
-    ;; code offset: 0x44
+    ;; code offset: 0x56
     (local.get $8)
    )
   )
-  ;; code offset: 0x4d
+  ;; code offset: 0x5f
   (i32.store offset=12
-   ;; code offset: 0x49
+   ;; code offset: 0x5b
    (local.get $3)
-   ;; code offset: 0x4b
+   ;; code offset: 0x5d
    (local.get $9)
   )
-  ;; code offset: 0x55
+  ;; code offset: 0x67
   (local.set $10
-   ;; code offset: 0x52
+   ;; code offset: 0x64
    (i32.load offset=12
-    ;; code offset: 0x50
+    ;; code offset: 0x62
     (local.get $3)
    )
   )
-  ;; code offset: 0x59
+  ;; code offset: 0x6b
   (return
-   ;; code offset: 0x57
+   ;; code offset: 0x69
    (local.get $10)
   )
  )
@@ -961,115 +961,115 @@ file_names[  1]:
   (local $8 i32)
   (local $9 i32)
   (local $10 i32)
-  ;; code offset: 0x61
+  ;; code offset: 0x87
   (local.set $0
-   ;; code offset: 0x5f
+   ;; code offset: 0x85
    (global.get $global$0)
   )
-  ;; code offset: 0x65
+  ;; code offset: 0x8b
   (local.set $1
-   ;; code offset: 0x63
+   ;; code offset: 0x89
    (i32.const 16)
   )
-  ;; code offset: 0x6c
+  ;; code offset: 0x92
   (local.set $2
-   ;; code offset: 0x6b
+   ;; code offset: 0x91
    (i32.sub
-    ;; code offset: 0x67
+    ;; code offset: 0x8d
     (local.get $0)
-    ;; code offset: 0x69
+    ;; code offset: 0x8f
     (local.get $1)
    )
   )
-  ;; code offset: 0x70
+  ;; code offset: 0x96
   (global.set $global$0
-   ;; code offset: 0x6e
+   ;; code offset: 0x94
    (local.get $2)
   )
-  ;; code offset: 0x74
+  ;; code offset: 0x9a
   (local.set $3
-   ;; code offset: 0x72
+   ;; code offset: 0x98
    (i32.const 42)
   )
-  ;; code offset: 0x78
+  ;; code offset: 0x9e
   (local.set $4
-   ;; code offset: 0x76
+   ;; code offset: 0x9c
    (i32.const 0)
   )
-  ;; code offset: 0x7e
+  ;; code offset: 0xa4
   (i32.store offset=12
-   ;; code offset: 0x7a
+   ;; code offset: 0xa0
    (local.get $2)
-   ;; code offset: 0x7c
+   ;; code offset: 0xa2
    (local.get $4)
   )
-  ;; code offset: 0x85
+  ;; code offset: 0xab
   (local.set $5
-   ;; code offset: 0x83
+   ;; code offset: 0xa9
    (call $used\28int\29
-    ;; code offset: 0x81
+    ;; code offset: 0xa7
     (local.get $3)
    )
   )
-  ;; code offset: 0x89
+  ;; code offset: 0xaf
   (local.set $6
-   ;; code offset: 0x87
+   ;; code offset: 0xad
    (i32.const 0)
   )
-  ;; code offset: 0x91
+  ;; code offset: 0xb7
   (local.set $7
-   ;; code offset: 0x8d
+   ;; code offset: 0xb3
    (i32.load offset=1168
-    ;; code offset: 0x8b
+    ;; code offset: 0xb1
     (local.get $6)
    )
   )
-  ;; code offset: 0x98
+  ;; code offset: 0xbe
   (local.set $8
-   ;; code offset: 0x97
+   ;; code offset: 0xbd
    (i32.add
-    ;; code offset: 0x93
+    ;; code offset: 0xb9
     (local.get $5)
-    ;; code offset: 0x95
+    ;; code offset: 0xbb
     (local.get $7)
    )
   )
-  ;; code offset: 0x9c
+  ;; code offset: 0xc2
   (local.set $9
-   ;; code offset: 0x9a
+   ;; code offset: 0xc0
    (i32.const 16)
   )
-  ;; code offset: 0xa3
+  ;; code offset: 0xc9
   (local.set $10
-   ;; code offset: 0xa2
+   ;; code offset: 0xc8
    (i32.add
-    ;; code offset: 0x9e
+    ;; code offset: 0xc4
     (local.get $2)
-    ;; code offset: 0xa0
+    ;; code offset: 0xc6
     (local.get $9)
    )
   )
-  ;; code offset: 0xa7
+  ;; code offset: 0xcd
   (global.set $global$0
-   ;; code offset: 0xa5
+   ;; code offset: 0xcb
    (local.get $10)
   )
-  ;; code offset: 0xab
+  ;; code offset: 0xd1
   (return
-   ;; code offset: 0xa9
+   ;; code offset: 0xcf
    (local.get $8)
   )
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
-  ;; code offset: 0xb3
+  ;; code offset: 0xd9
   (local.set $2
-   ;; code offset: 0xb1
+   ;; code offset: 0xd7
    (call $__original_main)
   )
-  ;; code offset: 0xb7
+  ;; code offset: 0xdd
   (return
-   ;; code offset: 0xb5
+   ;; code offset: 0xdb
    (local.get $2)
   )
  )

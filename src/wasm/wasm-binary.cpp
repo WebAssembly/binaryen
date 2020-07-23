@@ -307,6 +307,7 @@ void WasmBinaryWriter::writeFunctions() {
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
+  bool DWARF = Debug::hasDWARFSections(*getModule());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
@@ -315,12 +316,12 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present, and if we can
-    if (func->stackIR && !sourceMap) {
+    if (func->stackIR && !sourceMap && !DWARF) {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter(*this, o, func).write();
     } else {
       BYN_TRACE("write Binaryen IR\n");
-      BinaryenIRToBinaryWriter(*this, o, func, sourceMap).write();
+      BinaryenIRToBinaryWriter(*this, o, func, sourceMap, DWARF).write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
