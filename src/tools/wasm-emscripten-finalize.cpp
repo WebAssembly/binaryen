@@ -247,7 +247,9 @@ int main(int argc, const char* argv[]) {
 
   if (sideModule) {
     BYN_TRACE("finalizing as side module\n");
-    generator.replaceStackPointerGlobal();
+    PassRunner passRunner(&wasm);
+    passRunner.add("replace-stack-pointer");
+    passRunner.run();
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
