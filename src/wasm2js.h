@@ -1146,6 +1146,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
         }
       }
+      // Ensure the function pointer is a number. In general in wasm2js we are
+      // ok with true/false being present, as they are immediately cast to a
+      // number anyhow on their use. However, FUNCTION_TABLE[true] is *not* the
+      // same as FUNCTION_TABLE[1], so we must cast.
+      auto target = visit(curr->target, EXPRESSION_RESULT);
+      target = makeAsmCoercion(target, ASM_INT);
       if (mustReorder) {
         Ref ret;
         ScopedTemp idx(Type::i32, parent, func);
@@ -1155,7 +1161,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString temp = temps.back()->temp;
           sequenceAppend(ret, visitAndAssign(operand, temp));
         }
-        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        sequenceAppend(ret, ValueBuilder::makeBinary(
+          ValueBuilder::makeName(idx.getName()), SET, target));
         Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
           ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
         for (size_t i = 0; i < temps.size(); i++) {
@@ -1174,7 +1181,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         // Target has no side effects, emit simple code
         Ref theCall = ValueBuilder::makeCall(
           ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                visit(curr->target, EXPRESSION_RESULT)));
+                                target));
         for (auto* operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
