@@ -1,3 +1,4 @@
+import { FUNCTION_TABLE } from 'env';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -20,29 +21,23 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function t1() {
-  return 1 | 0;
+ function $0(x) {
+  x = x | 0;
+  return FUNCTION_TABLE[(x ? 1 : 0) | 0]() | 0 | 0;
  }
  
- function t2() {
-  return 2 | 0;
+ function $1(x) {
+  x = x | 0;
+  return FUNCTION_TABLE[(x ? 0 : 1) | 0]() | 0 | 0;
  }
  
- function t3() {
-  return 3 | 0;
- }
- 
- function $3($0) {
-  $0 = $0 | 0;
-  return FUNCTION_TABLE[$0 | 0]() | 0 | 0;
- }
- 
- var FUNCTION_TABLE = [null, t1, t2, t3];
  return {
-  "call": $3
+  "foo_true": $0, 
+  "foo_false": $1
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var call = retasmFunc.call;
+export var foo_true = retasmFunc.foo_true;
+export var foo_false = retasmFunc.foo_false;
