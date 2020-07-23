@@ -1161,8 +1161,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString temp = temps.back()->temp;
           sequenceAppend(ret, visitAndAssign(operand, temp));
         }
-        sequenceAppend(ret, ValueBuilder::makeBinary(
-          ValueBuilder::makeName(idx.getName()), SET, target));
+        sequenceAppend(ret,
+                       ValueBuilder::makeBinary(
+                         ValueBuilder::makeName(idx.getName()), SET, target));
         Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
           ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
         for (size_t i = 0; i < temps.size(); i++) {
@@ -1179,9 +1180,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ret;
       } else {
         // Target has no side effects, emit simple code
-        Ref theCall = ValueBuilder::makeCall(
-          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                target));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE), target));
         for (auto* operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
