@@ -528,7 +528,9 @@ class Wasm2JS(TestCaseHandler):
         interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
         if TRAP_PREFIX in interpreter_output:
             trap_index = interpreter_output.index(TRAP_PREFIX)
-            # we can't test this function, which the trap is in the middle of
+            # we can't test this function, which the trap is in the middle of.
+            # erase everything from this function's output and onward, so we
+            # only compare the previous trap-free code
             call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
             call_end = interpreter_output.index('\n', call_start)
             call_line = interpreter_output[call_start:call_end]
