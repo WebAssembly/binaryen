@@ -23,10 +23,10 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function main() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
-  FUNCTION_TABLE[foo(2 | 0) | 0](1) | 0;
-  FUNCTION_TABLE[4](foo(3 | 0) | 0) | 0;
-  (wasm2js_i32$1 = foo(5 | 0) | 0, wasm2js_i32$0 = bar(6 | 0) | 0), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0;
-  FUNCTION_TABLE[8](7) | 0;
+  FUNCTION_TABLE[foo(2 | 0) | 0 | 0](1) | 0;
+  FUNCTION_TABLE[4 | 0](foo(3 | 0) | 0) | 0;
+  (wasm2js_i32$1 = foo(5 | 0) | 0, wasm2js_i32$0 = bar(6 | 0) | 0 | 0), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0;
+  FUNCTION_TABLE[8 | 0](7) | 0;
   baz((11 ? 9 : 10) | 0) | 0;
   baz((wasm2js_i32$0 = foo(12 | 0) | 0, wasm2js_i32$1 = 13, wasm2js_i32$2 = 14, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
   baz((wasm2js_i32$0 = 15, wasm2js_i32$1 = foo(16 | 0) | 0, wasm2js_i32$2 = 17, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
