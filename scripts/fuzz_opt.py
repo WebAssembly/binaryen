@@ -623,11 +623,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
-    #CompareVMs(),
-    #CheckDeterminism(),
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
     Wasm2JS(),
-    #Asyncify(),
+    Asyncify(),
 ]
 
 
