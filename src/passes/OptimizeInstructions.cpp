@@ -705,8 +705,7 @@ struct OptimizeInstructions
               }
             }
           }
-        }
-        if (auto* unary = iff->condition->dynCast<Unary>()) {
+        } else if (auto* unary = iff->condition->dynCast<Unary>()) {
           if (unary->op == EqZInt32) {
             // flip if-else arms to get rid of an eqz
             iff->condition = unary->value;
@@ -765,8 +764,7 @@ struct OptimizeInstructions
             }
           }
         }
-      }
-      if (auto* condition = select->condition->dynCast<Unary>()) {
+      } else if (auto* condition = select->condition->dynCast<Unary>()) {
         if (condition->op == EqZInt32) {
           // flip select to remove eqz, if we can reorder
           EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
@@ -776,8 +774,7 @@ struct OptimizeInstructions
             std::swap(select->ifTrue, select->ifFalse);
           }
         }
-      }
-      if (auto* c = select->condition->dynCast<Const>()) {
+      } else if (auto* c = select->condition->dynCast<Const>()) {
         // constant condition, we can just pick the right side (barring side
         // effects)
         if (c->value.getInteger()) {
