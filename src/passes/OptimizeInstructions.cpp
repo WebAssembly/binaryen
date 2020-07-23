@@ -746,7 +746,8 @@ struct OptimizeInstructions
               inner->op = EqFloat64;
               return inner;
 
-            default: {}
+            default: {
+            }
           }
         }
         // eqz of a sign extension can be of zero-extension
