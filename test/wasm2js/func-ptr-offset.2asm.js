@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
  
  function $3($0) {
   $0 = $0 | 0;
-  return FUNCTION_TABLE[$0]() | 0 | 0;
+  return FUNCTION_TABLE[$0 | 0]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [null, t1, t2, t3];

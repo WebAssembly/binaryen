@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     (*Z_hangLimitInitializerZ_vv)();
 
     // Prepare to call the export, so we can catch traps.
-    if (setjmp(g_jmp_buf) != 0) {
+    if (WASM_RT_SETJMP(g_jmp_buf) != 0) {
       puts("exception!");
     } else {
       // Call the proper export.

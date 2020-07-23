@@ -51,13 +51,13 @@ struct DeNaN : public WalkerPass<
     auto* c = expr->dynCast<Const>();
     if (expr->type == Type::f32) {
       if (c && c->value.isNaN()) {
-        replacement = builder.makeConst(Literal(float(0)));
+        replacement = builder.makeConst(float(0));
       } else {
         replacement = builder.makeCall("deNan32", {expr}, Type::f32);
       }
     } else if (expr->type == Type::f64) {
       if (c && c->value.isNaN()) {
-        replacement = builder.makeConst(Literal(double(0)));
+        replacement = builder.makeConst(double(0));
       } else {
         replacement = builder.makeCall("deNan64", {expr}, Type::f64);
       }

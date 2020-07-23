@@ -21,8 +21,6 @@
 
 #ifdef _MSC_VER
 #include <intrin.h>
-#define __builtin_popcount __popcnt
-#define __builtin_popcountll __popcnt64
 #endif
 
 namespace wasm {
@@ -36,16 +34,16 @@ template<> int PopCount<uint8_t>(uint8_t v) {
 }
 
 template<> int PopCount<uint16_t>(uint16_t v) {
-#if __has_builtin(__builtin_popcount) || defined(__GNUC__) || defined(_MSC_VER)
-  return (int)__builtin_popcount(v);
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcount(v);
 #else
   return PopCount((uint8_t)(v & 0xFF)) + PopCount((uint8_t)(v >> 8));
 #endif
 }
 
 template<> int PopCount<uint32_t>(uint32_t v) {
-#if __has_builtin(__builtin_popcount) || defined(__GNUC__) || defined(_MSC_VER)
-  return (int)__builtin_popcount(v);
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcount(v);
 #else
   // See Stanford bithacks, counting bits set in parallel, "best method":
   // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
@@ -56,8 +54,8 @@ template<> int PopCount<uint32_t>(uint32_t v) {
 }
 
 template<> int PopCount<uint64_t>(uint64_t v) {
-#if __has_builtin(__builtin_popcount) || defined(__GNUC__) || defined(_MSC_VER)
-  return (int)__builtin_popcountll(v);
+#if __has_builtin(__builtin_popcount) || defined(__GNUC__)
+  return __builtin_popcountll(v);
 #else
   return PopCount((uint32_t)v) + PopCount((uint32_t)(v >> 32));
 #endif

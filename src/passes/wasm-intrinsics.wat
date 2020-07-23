@@ -10,6 +10,7 @@
 ;;    add $wasm-intrinsics-temp-i64 global for that.
 ;;  * Fix function type of __wasm_ctz_i64, which was wrong somehow,
 ;;    i32, i32 => i32 instead of i64 => i64
+;;  * Remove unnecessary memory import.
 ;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
@@ -20,7 +21,6 @@
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i32 i32) (result i32)))
  (type $5 (func (param i64) (result i64)))
- (import "env" "memory" (memory $0 17))
  (export "__wasm_i64_sdiv" (func $__wasm_i64_sdiv))
  (export "__wasm_i64_udiv" (func $__wasm_i64_udiv))
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))

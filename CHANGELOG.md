@@ -15,10 +15,21 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v95
+---
+
 - Add Asyncify "add list" that adds to the list of functions to be instrumented.
   Rename old lists to be clearer and more consistent with that, so now there is
   "remove list" to remove, "add list" to add, and "only list" which if set means
   that only those functions should be instrumented and nothing else.
+- Renamed various ambiguous C-API functions for consistency:
+  - `BinaryenBlockGetChild` to `BinaryenBlockGetChildAt`
+  - `BinaryenSwitchGetName` to `BinaryenSwitchGetNameAt`
+  - `BinaryenCallGetOperand` to `BinaryenCallGetOperandAt`
+  - `BinaryenCallIndirectGetOperand` to `BinaryenCallIndirectGetOperandAt`
+  - `BinaryenHostGetOperand` to `BinaryenHostGetOperandAt`
+  - `BinaryenThrowGetOperand` to `BinaryenThrowGetOperandAt`
+  - `BinaryenTupleMakeGetOperand` to `BinaryenTupleMakeGetOperandAt`
 
 v94
 ---

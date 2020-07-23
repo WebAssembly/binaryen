@@ -316,7 +316,7 @@ private:
       std::vector<char> temp;
       Builder builder(*wasm);
       wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(Literal(int32_t(0))), temp));
+        Memory::Segment(builder.makeConst(int32_t(0)), temp));
     }
     // memory should already have been flattened
     assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==

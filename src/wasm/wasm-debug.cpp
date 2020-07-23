@@ -992,8 +992,9 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // a new address for it.
       newStart = locationUpdater.getNewStart(loc.Start + oldBase);
       newEnd = locationUpdater.getNewEnd(loc.End + oldBase);
-      if (newStart == 0 || newEnd == 0) {
-        // This part of the loc no longer has a mapping, so we must ignore it.
+      if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
+        // This part of the loc no longer has a mapping, or after the mapping
+        // it is no longer a proper span, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
         // We picked a new base that ensures it is smaller than the values we
@@ -1001,6 +1002,16 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
         assert(newStart >= newBase && newEnd >= newBase);
         newStart -= newBase;
         newEnd -= newBase;
+        if (newStart == 0 && newEnd == 0) {
+          // After mapping to the new positions, and after relativizing to the
+          // base, if we end up with (0, 0) then we must emit something else, as
+          // that would be interpreted as the end of a list. As it is an empty
+          // span, the actual value doesn't matter, it just has to be != 0.
+          // This can happen if the very first span in a compile unit is an
+          // empty span, in which case relative to the base of the compile unit
+          // we would have (0, 0).
+          newStart = newEnd = IGNOREABLE_LOCATION;
+        }
       }
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no
