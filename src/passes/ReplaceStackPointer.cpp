@@ -34,7 +34,8 @@ namespace wasm {
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
 
-struct ReplaceStackPointer : public WalkerPass<PostWalker<ReplaceStackPointer>> {
+struct ReplaceStackPointer
+  : public WalkerPass<PostWalker<ReplaceStackPointer>> {
   void visitGlobalGet(GlobalGet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackSave = true;
@@ -65,7 +66,8 @@ struct ReplaceStackPointer : public WalkerPass<PostWalker<ReplaceStackPointer>> 
     BYN_DEBUG(std::cerr << "stack pointer found\n");
     super::doWalkModule(module);
     if (needStackSave) {
-      ensureFunctionImport(module, STACK_SAVE, Signature(Type::none, Type::i32));
+      ensureFunctionImport(
+        module, STACK_SAVE, Signature(Type::none, Type::i32));
     }
     if (needStackRestore) {
       ensureFunctionImport(
@@ -95,7 +97,6 @@ private:
   bool needStackSave = false;
   bool needStackRestore = false;
 };
-
 
 Pass* createReplaceStackPointerPass() { return new ReplaceStackPointer; }
 
