@@ -512,7 +512,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.6
+    frequency = 1 # 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # always check for compiler crashes
@@ -526,18 +526,45 @@ class Wasm2JS(TestCaseHandler):
         # trap on many things wasm would, and in those cases it can do weird
         # undefined things. in such a case, at least compare up until before
         # the trap, which lets us compare at least some results in some cases.
-        interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
-        if TRAP_PREFIX in interpreter_output:
-            trap_index = interpreter_output.index(TRAP_PREFIX)
+        # (this is why wasm2js is not in CompareVMs, which does full
+        # comparisons - we need to limit the comparison in a special way here)
+        interpreter = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter:
+            trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
             # erase everything from this function's output and onward, so we
             # only compare the previous trap-free code
-            call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
-            call_end = interpreter_output.index('\n', call_start)
-            call_line = interpreter_output[call_start:call_end]
+            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter.index('\n', call_start)
+            call_line = interpreter[call_start:call_end]
             before = before[:before.index(call_line)]
             after = after[:after.index(call_line)]
-        compare(before, after, 'Wasm2JS')
+            interpreter = interpreter[:interpreter.index(call_line)]
+
+        # large doubles print differently in JS VMs than anywhere else:
+        # 9223372036854775808 will show up as 9223372036854776000 even
+        # though the bit pattern is the same (so it is just a printing
+        # difference, specifically of floats that have no fraction and so are
+        # rendered as ints, which hits the 53-bit limit of ints in doubles).
+        def fix_output_for_js(x):
+            # start with the normal output fixes that all VMs need
+            x = fix_output(x)
+            def fix_double(x):
+                x = int(x.group(1))
+                # for simplicity, just ignore values that are in the dangerous
+                # area, but in theory we could do the same rounding JS VMs do
+                x = min(2 ** 53, x)
+                x = max(-(2 ** 53), x)
+                return ' => ' + str(x)
+
+            return re.sub(r' => (-?[\d+-]+)', fix_double, x)
+
+        before = fix_output_for_js(before)
+        after = fix_output_for_js(after)
+        interpreter = fix_output_for_js(interpreter)
+        
+        compare(before, after, 'Wasm2JS (before/after)')
+        compare(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -562,7 +589,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        return fix_output(run_vm([shared.NODEJS, js_file, 'a.wasm']))
+        return run_vm([shared.NODEJS, js_file, 'a.wasm'])
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
@@ -624,11 +651,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
 ]
 
 
