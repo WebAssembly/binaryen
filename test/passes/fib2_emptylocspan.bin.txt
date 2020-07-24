@@ -381,12 +381,12 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000070] = "/usr/local/google/home/azakai/Dev/2-binaryen")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000005, 0x0000003d)
-                 [0x0000003e, 0x00000044))
+                 [0x00000005, 0x00000043)
+                 [0x00000044, 0x0000004a))
 
 0x00000026:   DW_TAG_subprogram [2] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000038)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000003e)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009d] = "fib")
@@ -404,7 +404,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000049:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
-                     [0xffffffff,  0x0000000c): 
+                     [0xffffffff,  0x00000012): 
                      [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                      [0x00000017,  0x00000017): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ac] = "a")
@@ -414,7 +414,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000058:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x0000002b: 
-                     [0xffffffff,  0x0000000c): 
+                     [0xffffffff,  0x00000012): 
                      [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
                      [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
                      [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
@@ -425,7 +425,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000067:     DW_TAG_variable [4]  
                   DW_AT_location [DW_FORM_sec_offset]	(0x00000064: 
-                     [0xffffffff,  0x0000000c): 
+                     [0xffffffff,  0x00000012): 
                      [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
                      [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
                   DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "i")
@@ -442,7 +442,7 @@ Abbrev table for offset: 0x00000000
 0x00000081:     NULL
 
 0x00000082:   DW_TAG_subprogram [6] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000003e)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000044)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000006)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
@@ -466,18 +466,18 @@ Abbrev table for offset: 0x00000000
 
 .debug_loc contents:
 0x00000000: 
-            [0xffffffff,  0x0000000c): 
+            [0xffffffff,  0x00000012): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000017,  0x00000017): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
 
 0x0000002b: 
-            [0xffffffff,  0x0000000c): 
+            [0xffffffff,  0x00000012): 
             [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
             [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
             [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 0x00000064: 
-            [0xffffffff,  0x0000000c): 
+            [0xffffffff,  0x00000012): 
             [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
             [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
 
@@ -515,84 +515,84 @@ file_names[  1]:
             0x0000000000000005      1      0      1   0             0  is_stmt
 
 
-0x00000030: 00 DW_LNE_set_address (0x000000000000000e)
+0x00000030: 00 DW_LNE_set_address (0x0000000000000014)
 0x00000037: 03 DW_LNS_advance_line (3)
 0x00000039: 05 DW_LNS_set_column (17)
 0x0000003b: 0a DW_LNS_set_prologue_end
 0x0000003c: 01 DW_LNS_copy
-            0x000000000000000e      3     17      1   0             0  is_stmt prologue_end
+            0x0000000000000014      3     17      1   0             0  is_stmt prologue_end
 
 
-0x0000003d: 00 DW_LNE_set_address (0x0000000000000013)
+0x0000003d: 00 DW_LNE_set_address (0x0000000000000019)
 0x00000044: 05 DW_LNS_set_column (3)
 0x00000046: 06 DW_LNS_negate_stmt
 0x00000047: 01 DW_LNS_copy
-            0x0000000000000013      3      3      1   0             0 
+            0x0000000000000019      3      3      1   0             0 
 
 
-0x00000048: 00 DW_LNE_set_address (0x0000000000000021)
+0x00000048: 00 DW_LNE_set_address (0x0000000000000027)
 0x0000004f: 03 DW_LNS_advance_line (6)
 0x00000051: 05 DW_LNS_set_column (7)
 0x00000053: 06 DW_LNS_negate_stmt
 0x00000054: 01 DW_LNS_copy
-            0x0000000000000021      6      7      1   0             0  is_stmt
+            0x0000000000000027      6      7      1   0             0  is_stmt
 
 
-0x00000055: 00 DW_LNE_set_address (0x000000000000002c)
+0x00000055: 00 DW_LNE_set_address (0x0000000000000032)
 0x0000005c: 03 DW_LNS_advance_line (3)
 0x0000005e: 05 DW_LNS_set_column (23)
 0x00000060: 01 DW_LNS_copy
-            0x000000000000002c      3     23      1   0             0  is_stmt
+            0x0000000000000032      3     23      1   0             0  is_stmt
 
 
-0x00000061: 00 DW_LNE_set_address (0x0000000000000031)
+0x00000061: 00 DW_LNE_set_address (0x0000000000000037)
 0x00000068: 05 DW_LNS_set_column (17)
 0x0000006a: 06 DW_LNS_negate_stmt
 0x0000006b: 01 DW_LNS_copy
-            0x0000000000000031      3     17      1   0             0 
+            0x0000000000000037      3     17      1   0             0 
 
 
-0x0000006c: 00 DW_LNE_set_address (0x0000000000000036)
+0x0000006c: 00 DW_LNE_set_address (0x000000000000003c)
 0x00000073: 05 DW_LNS_set_column (3)
 0x00000075: 01 DW_LNS_copy
-            0x0000000000000036      3      3      1   0             0 
+            0x000000000000003c      3      3      1   0             0 
 
 
-0x00000076: 00 DW_LNE_set_address (0x000000000000003a)
+0x00000076: 00 DW_LNE_set_address (0x0000000000000040)
 0x0000007d: 03 DW_LNS_advance_line (8)
 0x0000007f: 06 DW_LNS_negate_stmt
 0x00000080: 01 DW_LNS_copy
-            0x000000000000003a      8      3      1   0             0  is_stmt
+            0x0000000000000040      8      3      1   0             0  is_stmt
 
 
-0x00000081: 00 DW_LNE_set_address (0x000000000000003d)
+0x00000081: 00 DW_LNE_set_address (0x0000000000000043)
 0x00000088: 00 DW_LNE_end_sequence
-            0x000000000000003d      8      3      1   0             0  is_stmt end_sequence
+            0x0000000000000043      8      3      1   0             0  is_stmt end_sequence
 
-0x0000008b: 00 DW_LNE_set_address (0x000000000000003e)
+0x0000008b: 00 DW_LNE_set_address (0x0000000000000044)
 0x00000092: 03 DW_LNS_advance_line (11)
 0x00000094: 01 DW_LNS_copy
-            0x000000000000003e     11      0      1   0             0  is_stmt
+            0x0000000000000044     11      0      1   0             0  is_stmt
 
 
-0x00000095: 00 DW_LNE_set_address (0x0000000000000041)
+0x00000095: 00 DW_LNE_set_address (0x0000000000000047)
 0x0000009c: 03 DW_LNS_advance_line (12)
 0x0000009e: 05 DW_LNS_set_column (10)
 0x000000a0: 0a DW_LNS_set_prologue_end
 0x000000a1: 01 DW_LNS_copy
-            0x0000000000000041     12     10      1   0             0  is_stmt prologue_end
+            0x0000000000000047     12     10      1   0             0  is_stmt prologue_end
 
 
-0x000000a2: 00 DW_LNE_set_address (0x0000000000000043)
+0x000000a2: 00 DW_LNE_set_address (0x0000000000000049)
 0x000000a9: 05 DW_LNS_set_column (3)
 0x000000ab: 06 DW_LNS_negate_stmt
 0x000000ac: 01 DW_LNS_copy
-            0x0000000000000043     12      3      1   0             0 
+            0x0000000000000049     12      3      1   0             0 
 
 
-0x000000ad: 00 DW_LNE_set_address (0x0000000000000044)
+0x000000ad: 00 DW_LNE_set_address (0x000000000000004a)
 0x000000b4: 00 DW_LNE_end_sequence
-            0x0000000000000044     12      3      1   0             0  end_sequence
+            0x000000000000004a     12      3      1   0             0  end_sequence
 
 
 .debug_str contents:
@@ -609,8 +609,8 @@ file_names[  1]:
 0x000000b2: "t"
 
 .debug_ranges contents:
-00000000 00000005 0000003d
-00000000 0000003e 00000044
+00000000 00000005 00000043
+00000000 00000044 0000004a
 00000000 <End of list>
 (module
  (type $none_=>_none (func))
@@ -631,85 +631,85 @@ file_names[  1]:
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  ;; code offset: 0xa
+  ;; code offset: 0x10
   (local.set $1
-   ;; code offset: 0x8
+   ;; code offset: 0xe
    (i32.const 1)
   )
-  ;; code offset: 0xc
+  ;; code offset: 0x12
   (block $label$1
-   ;; code offset: 0x13
+   ;; code offset: 0x19
    (br_if $label$1
-    ;; code offset: 0x12
+    ;; code offset: 0x18
     (i32.lt_s
-     ;; code offset: 0xe
+     ;; code offset: 0x14
      (local.get $0)
-     ;; code offset: 0x10
+     ;; code offset: 0x16
      (i32.const 1)
     )
    )
-   ;; code offset: 0x17
-   (local.set $2
-    ;; code offset: 0x15
-    (i32.const 0)
-   )
-   ;; code offset: 0x1b
-   (local.set $3
-    ;; code offset: 0x19
-    (i32.const 0)
-   )
    ;; code offset: 0x1d
+   (local.set $2
+    ;; code offset: 0x1b
+    (i32.const 0)
+   )
+   ;; code offset: 0x21
+   (local.set $3
+    ;; code offset: 0x1f
+    (i32.const 0)
+   )
+   ;; code offset: 0x23
    (loop $label$2
-    ;; code offset: 0x26
+    ;; code offset: 0x2c
     (local.set $1
-     ;; code offset: 0x25
+     ;; code offset: 0x2b
      (i32.add
-      ;; code offset: 0x21
+      ;; code offset: 0x27
       (local.tee $4
-       ;; code offset: 0x1f
+       ;; code offset: 0x25
        (local.get $1)
       )
-      ;; code offset: 0x23
+      ;; code offset: 0x29
       (local.get $2)
      )
     )
-    ;; code offset: 0x2a
+    ;; code offset: 0x30
     (local.set $2
-     ;; code offset: 0x28
+     ;; code offset: 0x2e
      (local.get $4)
     )
-    ;; code offset: 0x36
+    ;; code offset: 0x3c
     (br_if $label$2
-     ;; code offset: 0x35
+     ;; code offset: 0x3b
      (i32.ne
-      ;; code offset: 0x31
+      ;; code offset: 0x37
       (local.tee $3
-       ;; code offset: 0x30
+       ;; code offset: 0x36
        (i32.add
-        ;; code offset: 0x2c
+        ;; code offset: 0x32
         (local.get $3)
-        ;; code offset: 0x2e
+        ;; code offset: 0x34
         (i32.const 1)
        )
       )
-      ;; code offset: 0x33
+      ;; code offset: 0x39
       (local.get $0)
      )
     )
    )
   )
-  ;; code offset: 0x3a
+  ;; code offset: 0x40
   (local.get $1)
  )
  (func $__original_main (result i32)
-  ;; code offset: 0x41
+  ;; code offset: 0x47
   (call $fib
-   ;; code offset: 0x3f
+   ;; code offset: 0x45
    (i32.const 6)
   )
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
-  ;; code offset: 0x46
+  ;; code offset: 0x4c
   (call $__original_main)
  )
  ;; custom section ".debug_info", size 168

@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "wasm-debug.h"
 
 namespace wasm {
 
@@ -1780,8 +1781,25 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   assert(func && "BinaryInstWriter: function is not set");
   // Map params
   for (Index i = 0; i < func->getNumParams(); i++) {
-    size_t curr = mappedLocals.size();
-    mappedLocals[std::make_pair(i, 0)] = curr;
+    mappedLocals[std::make_pair(i, 0)] = i;
+  }
+  // Normally we map all locals of the same type into a range of adjacent
+  // addresses, which is more compact. However, if we need to keep DWARF valid,
+  // do not do any reordering at all - instead, do a trivial mapping that
+  // keeps everything unmoved.
+  if (DWARF) {
+    FindAll<TupleExtract> extracts(func->body);
+    if (!extracts.list.empty()) {
+      Fatal() << "DWARF + multivalue is not yet complete";
+    }
+    Index varStart = func->getVarIndexBase();
+    Index varEnd = varStart + func->getNumVars();
+    o << U32LEB(func->getNumVars());
+    for (Index i = varStart; i < varEnd; i++) {
+      mappedLocals[std::make_pair(i, 0)] = i;
+      o << U32LEB(1) << binaryType(func->getLocalType(i));
+    }
+    return;
   }
   for (auto type : func->vars) {
     for (auto t : type.expand()) {
