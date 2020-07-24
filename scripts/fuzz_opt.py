@@ -515,6 +515,11 @@ class Wasm2JS(TestCaseHandler):
     frequency = 1 # 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        # legalize the wasm files first, so that comparisons to the interpreter
+        # later make sense (if we don't do this, the wasm may have i64 exports
+        # which wasm2js will have legalized into i32s)
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
@@ -563,8 +568,8 @@ class Wasm2JS(TestCaseHandler):
         after = fix_output_for_js(after)
         interpreter = fix_output_for_js(interpreter)
         
-        compare(before, after, 'Wasm2JS (before/after)')
-        compare(before, interpreter, 'Wasm2JS (vs interpreter)')
+        compare_between_vms(before, after, 'Wasm2JS (before/after)')
+        compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
