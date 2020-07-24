@@ -60,4 +60,18 @@
   (drop (i32.load16_s offset=100 align=2 (i32.const 4)))
   (drop (i32.load16_s offset=100 align=1 (unreachable)))
  )
+ (func $i64-load
+  (drop (i64.load align=1 (i32.const 12)))
+  (drop (i64.load align=2 (i32.const 16)))
+  (drop (i64.load align=4 (i32.const 20)))
+ )
+ (func $f32-load
+  (drop (f32.load align=1 (i32.const 12)))
+  (drop (f32.load align=2 (i32.const 16)))
+ )
+ (func $f64-load
+  (drop (f64.load align=1 (i32.const 12)))
+  (drop (f64.load align=2 (i32.const 16)))
+  (drop (f64.load align=4 (i32.const 20)))
+ )
 )
