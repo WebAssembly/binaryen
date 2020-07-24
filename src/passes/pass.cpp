@@ -285,6 +285,10 @@ void PassRegistry::registerPasses() {
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
+  registerPass("replace-stack-pointer",
+               "Replace llvm-generated stack pointer global with calls with "
+               "imported functions.",
+               createReplaceStackPointerPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("roundtrip",

@@ -44,10 +44,6 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
-  // Convert stack pointer access from global.get/global.set to calling save
-  // and restore functions.
-  void replaceStackPointerGlobal();
-
   // Remove the import of a mutable __stack_pointer and instead initialize the
   // stack pointer from an immutable import.
   void internalizeStackPointerGlobal();

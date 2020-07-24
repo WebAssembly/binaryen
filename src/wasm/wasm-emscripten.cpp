@@ -37,8 +37,6 @@ namespace wasm {
 cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
-static Name STACK_SAVE("stackSave");
-static Name STACK_RESTORE("stackRestore");
 static Name STACK_INIT("stack$init");
 static Name STACK_LIMIT("__stack_limit");
 static Name SET_STACK_LIMIT("__set_stack_limit");
@@ -361,47 +359,6 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
   }
 }
 
-struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
-  RemoveStackPointer(Global* stackPointer) : stackPointer(stackPointer) {}
-
-  void visitGlobalGet(GlobalGet* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      needStackSave = true;
-      if (!builder) {
-        builder = make_unique<Builder>(*getModule());
-      }
-      replaceCurrent(builder->makeCall(STACK_SAVE, {}, Type::i32));
-    }
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      needStackRestore = true;
-      if (!builder) {
-        builder = make_unique<Builder>(*getModule());
-      }
-      replaceCurrent(
-        builder->makeCall(STACK_RESTORE, {curr->value}, Type::none));
-    }
-  }
-
-  void visitModule(Module* curr) {
-    if (needStackSave) {
-      ensureFunctionImport(curr, STACK_SAVE, Signature(Type::none, Type::i32));
-    }
-    if (needStackRestore) {
-      ensureFunctionImport(
-        curr, STACK_RESTORE, Signature(Type::i32, Type::none));
-    }
-  }
-
-private:
-  std::unique_ptr<Builder> builder;
-  Global* stackPointer;
-  bool needStackSave = false;
-  bool needStackRestore = false;
-};
-
 // lld can sometimes produce a build with an imported mutable __stack_pointer
 // (i.e.  when linking with -fpie).  This method internalizes the
 // __stack_pointer and initializes it from an immutable global instead.
@@ -426,20 +383,6 @@ void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
   auto* sp = builder.makeGlobal(
     internalName, stackPointer->type, init, Builder::Mutable);
   wasm.addGlobal(sp);
-}
-
-void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal(wasm);
-  if (!stackPointer) {
-    return;
-  }
-
-  // Replace all uses of stack pointer global
-  RemoveStackPointer(stackPointer).walkModule(&wasm);
-
-  // Finally remove the stack pointer global itself. This avoids importing
-  // a mutable global.
-  wasm.removeGlobal(stackPointer->name);
 }
 
 struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {

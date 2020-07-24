@@ -95,6 +95,7 @@ Pass* createRemoveUnusedNonFunctionModuleElementsPass();
 Pass* createRemoveUnusedNamesPass();
 Pass* createReorderFunctionsPass();
 Pass* createReorderLocalsPass();
+Pass* createReplaceStackPointerPass();
 Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
