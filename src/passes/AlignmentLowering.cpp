@@ -226,7 +226,48 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     if (curr->align != 0 && curr->align != curr->bytes) {
-      replaceCurrent(lowerLoadI32(curr));
+      Builder builder(*getModule());
+      auto type = curr->type.getSingle();
+      switch (type) {
+        case Type::i32:
+          curr = lowerLoadI32(curr);
+          break;
+        case Type::f32:
+          curr->type = Type::i32;
+          curr = lowerLoadI32(curr);
+          curr = builder.makeUnary(ReinterpretInt32, curr);
+          break;
+        case Type::i64:
+        case Type::f64:
+          // Ensure an i64 input.
+          if (type == Type::f64) {
+            curr->type = Type::i64;
+            curr->value = builder.makeUnary(ReinterpreterFloat64, curr->value);
+          }
+          // Load two 32-bit pieces, and combine them.
+          auto temp = builder.addVar(getFunction(), Type::i32);
+          auto* set = builder.makeLocalSet(temp, curr->ptr);
+          auto* low = builder.makeLoad(4, false, 0, curr->align,
+            builder.makeLocalGet(temp, Type::i32),
+            Type::i32);
+          low = builder.makeUnary(ExtendUInt32, low);
+          auto* high = builder.makeLoad(4, false, 4, curr->align,
+            builder.makeLocalGet(temp, Type::i32),
+            Type::i32);
+          high = builder.makeUnary(ExtendUInt32, high);
+          high = builder.makeBinary(ShlInt32, high,
+            builder.makeConst(int32_t(32)));
+          auto* combined = builder.makeBinary(OrInt64, low, high);
+          curr = builder.makeSequence(set, combined));
+          // Ensure the proper output type.
+          if (type == Type::f64) {
+            curr = builder.makeUnary(ReinterpreterInt64, curr);
+          }
+          break;
+        default:
+          WASM_UNREACHABLE("unhandled unaligned load");
+      }
+      replaceCurrent(curr);
     }
   }
 
@@ -240,7 +281,29 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     if (curr->align != 0 && curr->align != curr->bytes) {
-      replaceCurrent(lowerStoreI32(curr));
+      if (curr->type == Type::i32) {
+        curr = lowerStoreI32(curr);
+      }
+      
+      
+      
+          // Ensure an i64 input
+          if (type == Type::f64) {
+            curr->type = Type::i64;
+            curr->value = builder.makeUnary(ReinterpreterFloat64, curr->value);
+          }
+          // Split the input into 32-bit pieces.
+          auto* low = builder.makeBinary(ShrUInt32,
+                           builder.makeLocalGet(tempValue, Type::i32),
+                           builder.makeConst(int32_t(8))),
+
+
+
+
+
+
+
+      replaceCurrent(curr);
     }
   }
 };
