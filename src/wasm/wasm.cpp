@@ -91,6 +91,7 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
+Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
 

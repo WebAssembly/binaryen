@@ -17,17 +17,17 @@
  (func $__stdio_write
   (nop)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
  (func $__assign_got_enties
   (global.set $gimport$9
    (i32.add
     (global.get $__table_base)
     (i32.const 0)
    )
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
   )
  )
  (func $dynCall_v (param $fptr i32)
