@@ -567,6 +567,7 @@ class Wasm2JS(TestCaseHandler):
         before = fix_output_for_js(before)
         after = fix_output_for_js(after)
         interpreter = fix_output_for_js(interpreter)
+        # alignment!
         
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
         compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
