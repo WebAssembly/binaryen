@@ -122,8 +122,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     } else {
       WASM_UNREACHABLE("invalid size");
     }
-    return
-      builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret});
+    return builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret});
   }
 
   // Core lowering of a 32-bit store. Other storess are done using this.
@@ -246,16 +245,24 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           // Load two 32-bit pieces, and combine them.
           auto temp = builder.addVar(getFunction(), Type::i32);
           auto* set = builder.makeLocalSet(temp, curr->ptr);
-          Expression* low = builder.makeLoad(4, false, 0, curr->align,
-            builder.makeLocalGet(temp, Type::i32),
-            Type::i32);
+          Expression* low =
+            builder.makeLoad(4,
+                             false,
+                             0,
+                             curr->align,
+                             builder.makeLocalGet(temp, Type::i32),
+                             Type::i32);
           low = builder.makeUnary(ExtendUInt32, low);
-          Expression* high = builder.makeLoad(4, false, 4, curr->align,
-            builder.makeLocalGet(temp, Type::i32),
-            Type::i32);
+          Expression* high =
+            builder.makeLoad(4,
+                             false,
+                             4,
+                             curr->align,
+                             builder.makeLocalGet(temp, Type::i32),
+                             Type::i32);
           high = builder.makeUnary(ExtendUInt32, high);
-          high = builder.makeBinary(ShlInt32, high,
-            builder.makeConst(int32_t(32)));
+          high =
+            builder.makeBinary(ShlInt32, high, builder.makeConst(int32_t(32)));
           auto* combined = builder.makeBinary(OrInt64, low, high);
           replacement = builder.makeSequence(set, combined);
           // Ensure the proper output type.
