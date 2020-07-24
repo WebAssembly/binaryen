@@ -27,16 +27,13 @@
 namespace wasm {
 
 struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
-  void visitLoad(Load* curr) {
+  // Core lowering of a 32-bit load. Other loads are done using this.
+  Expression* lowerLoadI32(Load* curr) {
     if (curr->align == 0 || curr->align == curr->bytes) {
-      return;
+      return curr;
     }
     Builder builder(*getModule());
-    if (curr->type == Type::unreachable) {
-      replaceCurrent(curr->ptr);
-      return;
-    }
-    assert(curr->type == Type::i32); // TODO: i64, f32, f64
+    assert(curr->type == Type::i32);
     auto temp = builder.addVar(getFunction(), Type::i32);
     Expression* ret;
     if (curr->bytes == 2) {
@@ -125,21 +122,17 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     } else {
       WASM_UNREACHABLE("invalid size");
     }
-    replaceCurrent(
-      builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret}));
+    return
+      builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret});
   }
 
-  void visitStore(Store* curr) {
+  // Core lowering of a 32-bit store. Other storess are done using this.
+  Expression* lowerStoreI32(Store* curr) {
     if (curr->align == 0 || curr->align == curr->bytes) {
-      return;
+      return curr;
     }
     Builder builder(*getModule());
-    if (curr->type == Type::unreachable) {
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
-      return;
-    }
-    assert(curr->value->type == Type::i32); // TODO: i64, f32, f64
+    assert(curr->value->type == Type::i32);
     auto tempPtr = builder.addVar(getFunction(), Type::i32);
     auto tempValue = builder.addVar(getFunction(), Type::i32);
     auto* block =
@@ -222,7 +215,33 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       WASM_UNREACHABLE("invalid size");
     }
     block->finalize();
-    replaceCurrent(block);
+    return block;
+  }
+
+  void visitLoad(Load* curr) {
+    // If unreachable, just remove the load, which removes the unaligned
+    // operation in a trivial way.
+    if (curr->type == Type::unreachable) {
+      replaceCurrent(curr->ptr);
+      return;
+    }
+    if (curr->align != 0 && curr->align != curr->bytes) {
+      replaceCurrent(lowerLoadI32(curr));
+    }
+  }
+
+  void visitStore(Store* curr) {
+    Builder builder(*getModule());
+    // If unreachable, just remove the store, which removes the unaligned
+    // operation in a trivial way.
+    if (curr->type == Type::unreachable) {
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
+      return;
+    }
+    if (curr->align != 0 && curr->align != curr->bytes) {
+      replaceCurrent(lowerStoreI32(curr));
+    }
   }
 };
 

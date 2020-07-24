@@ -520,6 +520,13 @@ class Wasm2JS(TestCaseHandler):
         # which wasm2js will have legalized into i32s)
         run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
+        # unexpectedly-unaligned loads/stores work fine in wasm in general, but
+        # not in wasm2js, since typed arrays silently round down, effectively.
+        # if we want to compare to the interpreter, remove unaligned operations.
+        allow_unaligned = False # random.random() < 0.5
+        if not allow_unaligned:
+          run([in_bin('wasm-opt'), before_wasm, '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
+          run([in_bin('wasm-opt'), after_wasm, '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
@@ -567,7 +574,6 @@ class Wasm2JS(TestCaseHandler):
         before = fix_output_for_js(before)
         after = fix_output_for_js(after)
         interpreter = fix_output_for_js(interpreter)
-        # alignment!
         
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
         compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
