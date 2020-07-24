@@ -17,7 +17,7 @@
 //
 // Convert llvm's stack pointer usage from from global.get/global.set into
 // cals to external stackSave/stackRestore.
-// This is needed to emscripten SIDE_MODULE code where motuble global imports
+// This is needed to emscripten SIDE_MODULE code where mutable global imports
 // are not yet permitted by default.
 //
 
