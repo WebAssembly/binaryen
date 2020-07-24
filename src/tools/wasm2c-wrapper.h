@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
   )";
   if (wasm.getExportOrNull("hangLimitInitializer")) {
     ret += R"(
-    // Always call the hang limit initializer before each export.
+    // If present, call the hang limit initializer before each export.
     (*Z_hangLimitInitializerZ_vv)();
 )";
   }
