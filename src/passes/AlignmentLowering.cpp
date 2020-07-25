@@ -284,7 +284,54 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     if (curr->align != 0 && curr->align != curr->bytes) {
-      replaceCurrent(lowerStoreI32(curr));
+      auto type = curr->value->type.getSingle();
+      Expression* replacement;
+      switch (type) {
+        default:
+          WASM_UNREACHABLE("unhandled unaligned store");
+        case Type::i32:
+          replacement = lowerStoreI32(curr);
+          break;
+        case Type::f32:
+          curr->type = Type::i32;
+          curr->value = builder.makeUnary(ReinterpretFloat32, curr->value);
+          replacement = lowerStoreI32(curr);
+          break;
+        case Type::i64:
+        case Type::f64:
+          // Ensure an integer input value.
+          auto* value = curr->value;
+          if (type == Type::f64) {
+            value = builder.makeUnary(ReinterpretFloat64, value);
+          }
+          // Store as two 32-bit pieces.
+          auto tempPtr = builder.addVar(getFunction(), Type::i32);
+          auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
+          auto tempValue = builder.addVar(getFunction(), Type::i32);
+          auto* setValue = builder.makeLocalSet(tempValue, value);
+          Expression* low = builder.makeUnary(WrapInt64,
+                              builder.makeLocalGet(tempValue, Type::i32));
+          low =
+            builder.makeStore(4,
+                              0,
+                              curr->align,
+                              builder.makeLocalGet(tempPtr, Type::i32),
+                              low,
+                              Type::i32);
+          Expression* high = builder.makeBinary(ShrUInt64, 
+                              builder.makeLocalGet(tempValue, Type::i32), builder.makeConst(int64_t(32)));
+          high = builder.makeUnary(WrapInt64, high);
+          high = 
+            builder.makeStore(4,
+                              4,
+                              curr->align,
+                              builder.makeLocalGet(tempPtr, Type::i32),
+                              high,
+                              Type::i32);
+          replacement = builder.makeBlock({setPtr, setValue, low, high});
+          break;
+      }
+      replaceCurrent(replacement);
     }
   }
 };
