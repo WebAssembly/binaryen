@@ -311,25 +311,23 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           auto* setValue = builder.makeLocalSet(tempValue, value);
           Expression* low = builder.makeUnary(
             WrapInt64, builder.makeLocalGet(tempValue, Type::i64));
-          low = builder.makeStore(4,
+          low = lowerStoreI32(builder.makeStore(4,
                                   0,
                                   curr->align,
                                   builder.makeLocalGet(tempPtr, Type::i32),
                                   low,
-                                  Type::i32);
-          low = lowerStoreI32(low);
+                                  Type::i32));
           Expression* high =
             builder.makeBinary(ShrUInt64,
                                builder.makeLocalGet(tempValue, Type::i64),
                                builder.makeConst(int64_t(32)));
           high = builder.makeUnary(WrapInt64, high);
-          high = builder.makeStore(4,
+          high = lowerStoreI32(builder.makeStore(4,
                                    4,
                                    curr->align,
                                    builder.makeLocalGet(tempPtr, Type::i32),
                                    high,
-                                   Type::i32);
-          high = lowerStoreI32(high);
+                                   Type::i32));
           replacement = builder.makeBlock({setPtr, setValue, low, high});
           break;
       }
