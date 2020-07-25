@@ -1,6 +1,6 @@
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -22,11 +22,11 @@
   }
       
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       
 function asmFunc(global, env, buffer) {
@@ -90,7 +90,7 @@ function asmFunc(global, env, buffer) {
  function $7(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(2, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(2)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(2)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function $8(x) {

@@ -478,6 +478,7 @@ public:
     ret->type = value.type;
     return ret;
   }
+  template<typename T> Const* makeConst(T x) { return makeConst(Literal(x)); }
   Unary* makeUnary(UnaryOp op, Expression* value) {
     auto* ret = allocator.alloc<Unary>();
     ret->op = op;

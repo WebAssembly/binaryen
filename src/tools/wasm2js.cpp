@@ -591,8 +591,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* body = nullptr;
   if (e.size() == 2) {
     if (actual->type == Type::none) {
-      body = wasmBuilder.blockify(actual,
-                                  wasmBuilder.makeConst(Literal(uint32_t(1))));
+      body = wasmBuilder.blockify(actual, wasmBuilder.makeConst(uint32_t(1)));
     } else {
       body = actual;
     }

@@ -1130,6 +1130,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
         }
       }
+      // Ensure the function pointer is a number. In general in wasm2js we are
+      // ok with true/false being present, as they are immediately cast to a
+      // number anyhow on their use. However, FUNCTION_TABLE[true] is *not* the
+      // same as FUNCTION_TABLE[1], so we must cast. This is a rare exception
+      // because FUNCTION_TABLE is just a normal JS object, not a typed array
+      // or a mathematical operation (all of which coerce to a number for us).
+      auto target = visit(curr->target, EXPRESSION_RESULT);
+      target = makeAsmCoercion(target, ASM_INT);
       if (mustReorder) {
         Ref ret;
         ScopedTemp idx(Type::i32, parent, func);
@@ -1139,7 +1147,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString temp = temps.back()->temp;
           sequenceAppend(ret, visitAndAssign(operand, temp));
         }
-        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        sequenceAppend(ret,
+                       ValueBuilder::makeBinary(
+                         ValueBuilder::makeName(idx.getName()), SET, target));
         Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
           ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
         for (size_t i = 0; i < temps.size(); i++) {
@@ -1156,9 +1166,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ret;
       } else {
         // Target has no side effects, emit simple code
-        Ref theCall = ValueBuilder::makeCall(
-          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                visit(curr->target, EXPRESSION_RESULT)));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE), target));
         for (auto* operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
@@ -1421,8 +1430,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
                                        visit(curr->value, EXPRESSION_RESULT));
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
-                                                ValueBuilder::makeInt(0));
+                                                ValueBuilder::makeInt(2));
               return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
@@ -1512,9 +1524,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ABI::wasm2js::ensureHelpers(module,
                                           ABI::wasm2js::SCRATCH_LOAD_F32);
 
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
-                                       ValueBuilder::makeNum(0),
+                                       ValueBuilder::makeNum(2),
                                        visit(curr->value, EXPRESSION_RESULT));
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_F32);
               return ValueBuilder::makeSeq(store, load);
@@ -2421,8 +2436,60 @@ void Wasm2JSGlue::emitSpecialSupport() {
     return;
   }
 
+  // Scratch memory uses 3 indexes, each referring to 4 bytes. Indexes 0, 1 are
+  // used for 64-bit operations, while 2 is for 32-bit. These operations need
+  // separate indexes because we need to handle the case where the optimizer
+  // reorders a 32-bit reinterpret in between a 64-bit's split-out parts.
+  // That situation can occur because the 64-bit reinterpret was split up into
+  // pieces early, in the 64-bit lowering pass, while the 32-bit reinterprets
+  // are lowered only at the very end, and until then the optimizer sees wasm
+  // reinterprets which have no side effects (but they will have the side effect
+  // of altering scratch memory). That is, conceptual code like this:
+  //
+  //   a = reinterpret_64(b)
+  //   x = reinterpret_32(y)
+  //
+  // turns into
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   a_high = scratch_read(1)
+  //   x = reinterpret_32(y)
+  //
+  // (Note how the single wasm instruction for a 64-bit reinterpret turns into
+  // multiple operations. We have to do such splitting, because in JS we will
+  // have to have separate operations to receive each 32-bit chunk anyhow. A
+  // *32*-bit reinterpret *could* be a single function, but given we have the
+  // separate functions anyhow for the 64-bit case, it's more compact to reuse
+  // those.)
+  // At this point, the scratch_* functions look like they have side effects to
+  // the optimizer (which is true, as they modify scratch memory), but the
+  // reinterpret_32 is still a normal wasm instruction without side effects, so
+  // the optimizer might do this:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   x = reinterpret_32(y)    ;; this moved one line up
+  //   a_high = scratch_read(1)
+  //
+  // When we do lower the reinterpret_32 into JS, we get:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   scratch_write(y)
+  //   x = scratch_read()
+  //   a_high = scratch_read(1)
+  //
+  // The second write occurs before the first's values have been read, so they
+  // interfere.
+  //
+  // There isn't a problem with reordering 32-bit reinterprets with each other
+  // as each is lowered into a pair of write+read in JS (after the wasm
+  // optimizer runs), so they are guaranteed to be adjacent (and a JS optimizer
+  // that runs later will handle that ok since they are calls, which can always
+  // have side effects).
   out << R"(
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -2453,13 +2520,13 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
       out << R"(
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F32) {
       out << R"(
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F64) {

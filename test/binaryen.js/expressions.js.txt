@@ -1,0 +1,249 @@
+# Expression
+# Block
+(block $theName (result i32)
+ (i32.const 0)
+)
+
+# If
+(if (result i32)
+ (i32.const 4)
+ (i32.const 5)
+ (i32.const 6)
+)
+
+(if (result i32)
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# Loop
+(loop $theName
+ (drop
+  (i32.const 1)
+ )
+)
+
+# Break
+(br_if $theNewName
+ (i32.const 4)
+ (i32.const 3)
+)
+
+# Switch
+(br_table $x $y $c
+ (i32.const 4)
+ (i32.const 3)
+)
+
+# Call
+(call $bar
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# CallIndirect
+(call_indirect (type $i32_i32_=>_i32)
+ (i32.const 7)
+ (i32.const 6)
+ (i32.const 9000)
+)
+
+# LocalGet
+(local.get $2)
+
+# LocalSet
+(local.set $2
+ (i32.const 3)
+)
+
+# GlobalGet
+(global.get $b)
+
+# GlobalSet
+(global.set $b
+ (f64.const 3)
+)
+
+# Host
+(memory.grow
+ (i32.const 1)
+)
+
+# Load
+(i64.atomic.load offset=32 align=4
+ (i32.const 128)
+)
+
+# Store
+(i64.atomic.store offset=32 align=4
+ (i32.const 128)
+ (i32.const 2)
+)
+
+# Const
+(v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+
+# Unary
+(i64.eqz
+ (i64.const 2)
+)
+
+# Binary
+(i64.add
+ (i64.const 3)
+ (i64.const 4)
+)
+
+# Select
+(select
+ (i64.const 5)
+ (i64.const 6)
+ (i32.const 4)
+)
+
+# Drop
+(drop
+ (i32.const 2)
+)
+
+# Return
+(return
+ (i32.const 2)
+)
+
+# AtomicRMW
+(i64.atomic.rmw16.sub_u offset=16
+ (i32.const 4)
+ (i64.const 5)
+)
+
+# AtomicCmpxchg
+(i64.atomic.rmw16.cmpxchg_u offset=16
+ (i32.const 5)
+ (i64.const 6)
+ (i64.const 7)
+)
+
+# AtomicWait
+(i64.atomic.wait
+ (i32.const 5)
+ (i32.const 6)
+ (i64.const 7)
+)
+
+# AtomicNotify
+(atomic.notify
+ (i32.const 3)
+ (i32.const 4)
+)
+
+# AtomicFence
+(atomic.fence)
+
+# SIMDExtract
+(i16x8.extract_lane_s 1
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+)
+
+# SIMDReplace
+(i16x8.replace_lane 1
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+ (i32.const 2)
+)
+
+# SIMDShuffle
+(v8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+ (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)
+)
+
+# SIMDTernary
+(f64x2.qfma
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+ (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)
+ (v128.const i32x4 0x03030303 0x03030303 0x03030303 0x03030303)
+)
+
+# SIMDShift
+(i8x16.shr_s
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+ (i32.const 2)
+)
+
+# SIMDLoad
+(v8x16.load_splat offset=32 align=4
+ (i32.const 2)
+)
+
+# MemoryInit
+(memory.init 5
+ (i32.const 6)
+ (i32.const 7)
+ (i32.const 8)
+)
+
+# DataDrop
+(data.drop 2)
+
+# MemoryCopy
+(memory.copy
+ (i32.const 4)
+ (i32.const 5)
+ (i32.const 6)
+)
+
+# MemoryFill
+(memory.fill
+ (i32.const 4)
+ (i32.const 5)
+ (i32.const 6)
+)
+
+# RefIsNull
+(ref.is_null
+ (local.get $2)
+)
+
+# RefFunc
+(ref.func $b)
+
+# Try
+(try (result i32)
+ (do
+  (i32.const 3)
+ )
+ (catch
+  (i32.const 4)
+ )
+)
+
+# Throw
+(throw $bar
+ (i32.const 6)
+ (i32.const 7)
+)
+
+# Rethrow
+(rethrow
+ (local.get $2)
+)
+
+# BrOnExn
+(br_on_exn $bar $event2
+ (local.get $2)
+)
+
+# TupleMake
+(tuple.make
+ (i32.const 6)
+ (i32.const 7)
+)
+
+# TupleExtract
+(tuple.extract 0
+ (tuple.make
+  (f64.const 3)
+  (f64.const 4)
+ )
+)
+

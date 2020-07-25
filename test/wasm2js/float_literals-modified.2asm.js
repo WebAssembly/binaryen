@@ -1,7 +1,7 @@
 import { setTempRet0 } from 'env';
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -15,7 +15,7 @@ import { setTempRet0 } from 'env';
   }
       
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       
 function asmFunc(global, env, buffer) {
@@ -88,75 +88,75 @@ function asmFunc(global, env, buffer) {
  }
  
  function $12() {
-  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $13() {
-  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $14() {
-  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $15() {
-  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $16() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $17() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $18() {
-  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $19() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $20() {
-  return (wasm2js_scratch_store_f32(Math_fround(1024.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1024.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $21() {
-  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $22() {
-  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $23() {
-  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $24() {
-  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $25() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $26() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $27() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $28() {
-  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $29() {
-  return (wasm2js_scratch_store_f32(Math_fround(1.0e10)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.0e10)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $30() {
