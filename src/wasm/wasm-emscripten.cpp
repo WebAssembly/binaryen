@@ -1059,29 +1059,4 @@ void EmscriptenGlueGenerator::renameMainArgcArgv() {
   ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
 }
 
-void EmscriptenGlueGenerator::exportWasiStart() {
-  // If main exists, export a function to call it per the wasi standard.
-  Name main = "main";
-  if (!wasm.getFunctionOrNull(main)) {
-    BYN_TRACE("exportWasiStart: main not found\n");
-    return;
-  }
-  Name _start = "_start";
-  if (wasm.getExportOrNull(_start)) {
-    BYN_TRACE("exportWasiStart: _start already present\n");
-    return;
-  }
-  BYN_TRACE("exportWasiStart\n");
-  Builder builder(wasm);
-  auto* body =
-    builder.makeDrop(builder.makeCall(main,
-                                      {LiteralUtils::makeZero(Type::i32, wasm),
-                                       LiteralUtils::makeZero(Type::i32, wasm)},
-                                      Type::i32));
-  auto* func =
-    builder.makeFunction(_start, Signature(Type::none, Type::none), {}, body);
-  wasm.addFunction(func);
-  wasm.addExport(builder.makeExport(_start, _start, ExternalKind::Function));
-}
-
 } // namespace wasm
