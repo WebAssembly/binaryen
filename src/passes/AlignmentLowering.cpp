@@ -244,23 +244,19 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           // Load two 32-bit pieces, and combine them.
           auto temp = builder.addVar(getFunction(), Type::i32);
           auto* set = builder.makeLocalSet(temp, curr->ptr);
-          Expression* low =
-            builder.makeLoad(4,
+          Expression* low = lowerLoadI32(builder.makeLoad(4,
                              false,
                              0,
                              curr->align,
                              builder.makeLocalGet(temp, Type::i32),
-                             Type::i32);
-          low = lowerLoadI32(low);
+                             Type::i32));
           low = builder.makeUnary(ExtendUInt32, low);
-          Expression* high =
-            builder.makeLoad(4,
+          Expression* high = lowerLoadI32(builder.makeLoad(4,
                              false,
                              4,
                              curr->align,
                              builder.makeLocalGet(temp, Type::i32),
-                             Type::i32);
-          high = lowerLoadI32(high);
+                             Type::i32));
           high = builder.makeUnary(ExtendUInt32, high);
           high =
             builder.makeBinary(ShlInt64, high, builder.makeConst(int64_t(32)));
