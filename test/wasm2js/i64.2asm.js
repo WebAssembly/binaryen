@@ -19,6 +19,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;

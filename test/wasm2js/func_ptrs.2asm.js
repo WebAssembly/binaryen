@@ -19,6 +19,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  var print = env.print_i32;
  function $3() {
   return 13 | 0;
@@ -73,6 +75,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  function t1() {
   return 1 | 0;
  }
@@ -134,6 +138,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  function t1() {
   return 1 | 0;
  }

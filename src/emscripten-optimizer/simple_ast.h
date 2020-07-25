@@ -918,17 +918,25 @@ struct JSPrinter {
   void printName(Ref node) { emit(node->getCString()); }
 
   static char* numToString(double d, bool finalize = true) {
+    // If this number is NaN or infinite then things are a bit tricky. In JS we
+    // want to eventually use `NaN` and/or `Infinity`, but neither of those
+    // identifiers are valid in asm.js. Instead we have to explicitly import
+    // `NaN` and `Infinity` from the global environment, and those names are
+    // bound locally in an asm function as `nan` and `infinity`.
+    //
+    // TODO: the JS names of `NaN` and `Infinity` should be used once literal
+    // asm.js code isn't generated any more
     if (std::isnan(d)) {
       if (std::signbit(d)) {
-        return (char*)"-NaN";
+        return (char*)"-nan";
       } else {
-        return (char*)"NaN";
+        return (char*)"nan";
       }
     } else if (!std::isfinite(d)) {
       if (std::signbit(d)) {
-        return (char*)"-Infinity";
+        return (char*)"-infinity";
       } else {
-        return (char*)"Infinity";
+        return (char*)"infinity";
       }
     }
     bool neg = d < 0;
@@ -1182,10 +1190,10 @@ struct JSPrinter {
       ensure(1);                  // we temporarily append a 0
       char* curr = buffer + last; // ensure might invalidate
       buffer[used] = 0;
-      if (strstr(curr, "Infinity")) {
+      if (strstr(curr, "infinity")) {
         return;
       }
-      if (strstr(curr, "NaN")) {
+      if (strstr(curr, "nan")) {
         return;
       }
       if (strchr(curr, '.')) {

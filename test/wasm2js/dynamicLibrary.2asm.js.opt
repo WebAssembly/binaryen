@@ -21,6 +21,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  var import$memoryBase = env.memoryBase | 0;
  var import$tableBase = env.tableBase | 0;
  function foo() {

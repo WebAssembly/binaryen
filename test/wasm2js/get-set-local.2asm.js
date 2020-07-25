@@ -18,6 +18,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  function $1($0, r, r$hi) {
   $0 = $0 | 0;
   r = r | 0;

@@ -20,6 +20,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  // EMSCRIPTEN_START_FUNCS
 ;
  // EMSCRIPTEN_END_FUNCS

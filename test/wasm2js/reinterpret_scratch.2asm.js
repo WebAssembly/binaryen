@@ -36,6 +36,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0() {
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $0_1 = Math_fround(0);
   wasm2js_scratch_store_f64(+(305419896.0));

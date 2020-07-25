@@ -18,6 +18,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = Math.ceil;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   (wasm2js_i32$0 = 0, wasm2js_i32$1 = __wasm_memory_grow(1)), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
