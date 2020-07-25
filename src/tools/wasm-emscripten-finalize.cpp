@@ -253,18 +253,51 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
+  if (!standaloneWasm) {
+    // This is also not needed in standalone mode since standalone mode uses
+    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
+    generator.renameMainArgcArgv();
+  }
+
+  PassRunner passRunner(&wasm, options.passOptions);
+  passRunner.setDebug(options.debug);
+  passRunner.setDebugInfo(debugInfo);
+
   if (sideModule) {
-    BYN_TRACE("finalizing as side module\n");
-    PassRunner passRunner(&wasm);
     passRunner.add("replace-stack-pointer");
     passRunner.add("emscripten-pic");
-    passRunner.run();
+  } else {
+    passRunner.add("emscripten-pic-main-module");
+  }
+
+  if (!standaloneWasm) {
+    // If not standalone wasm then JS is relevant and we need dynCalls.
+    passRunner.add("generate-dyncalls");
+  }
+
+  // Legalize the wasm, if BigInts don't make that moot.
+  if (!bigInt) {
+    passRunner.add(ABI::getLegalizationPass(
+      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                            : ABI::LegalizationLevel::Minimal));
+  }
+
+  // Strip target features section (its information is in the metadata)
+  passRunner.add("strip-target-features");
+
+  // If DWARF is unused, strip it out. This avoids us keeping it alive
+  // until wasm-opt strips it later.
+  if (!DWARF) {
+    passRunner.add("strip-dwarf");
+  }
+
+  passRunner.run();
+
+  if (sideModule) {
+    BYN_TRACE("finalizing as side module\n");
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    PassRunner passRunner(&wasm);
-    passRunner.add("emscripten-pic-main-module");
-    passRunner.run();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
@@ -285,28 +318,6 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (!standaloneWasm) {
-    // If not standalone wasm then JS is relevant and we need dynCalls.
-    PassRunner passRunner(&wasm);
-    passRunner.add("generate-dyncalls");
-    passRunner.run();
-    // This is also not needed in standalone mode since standalone mode uses
-    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
-    generator.renameMainArgcArgv();
-  }
-
-  // Legalize the wasm, if BigInts don't make that moot.
-  if (!bigInt) {
-    BYN_TRACE("legalizing types\n");
-    PassRunner passRunner(&wasm, options.passOptions);
-    passRunner.setDebug(options.debug);
-    passRunner.setDebugInfo(debugInfo);
-    passRunner.add(ABI::getLegalizationPass(
-      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                            : ABI::LegalizationLevel::Minimal));
-    passRunner.run();
-  }
-
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
@@ -325,21 +336,6 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
                       WasmPrinter::printModule(&wasm, std::cerr));
-
-  // Strip target features section (its information is in the metadata)
-  {
-    PassRunner passRunner(&wasm);
-    passRunner.add("strip-target-features");
-    passRunner.run();
-  }
-
-  // If DWARF is unused, strip it out. This avoids us keeping it alive
-  // until wasm-opt strips it later.
-  if (!DWARF) {
-    PassRunner passRunner(&wasm);
-    passRunner.add("strip-dwarf");
-    passRunner.run();
-  }
 
   Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
   ModuleWriter writer;
