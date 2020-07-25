@@ -23,6 +23,7 @@ set(passes_SOURCES
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  EmscriptenPIC.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp

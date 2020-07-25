@@ -40,6 +40,8 @@ Pass* createDWARFDumpPass();
 Pass* createDuplicateImportEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createEmitTargetFeaturesPass();
+Pass* createEmscriptenPICPass();
+Pass* createEmscriptenPICMainModulePass();
 Pass* createExtractFunctionPass();
 Pass* createFlattenPass();
 Pass* createFuncCastEmulationPass();

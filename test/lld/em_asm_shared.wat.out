@@ -95,10 +95,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
- )
  (func $__assign_got_enties
   (global.set $gimport$6
    (call $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE)
@@ -109,6 +105,10 @@
   (global.set $gimport$8
    (call $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE)
   )
+ )
+ (func $__post_instantiate
+  (call $__assign_got_enties)
+  (call $__wasm_call_ctors)
  )
 )
 (;

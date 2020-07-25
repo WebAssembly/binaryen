@@ -59,11 +59,6 @@
    (global.get $gimport$5)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
  (func $__assign_got_enties
   (global.set $gimport$5
    (call $g$external_var)
@@ -76,6 +71,11 @@
     (global.get $gimport$3)
     (i32.const 0)
    )
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
   )
  )
  (func $dynCall_i (param $fptr i32) (result i32)

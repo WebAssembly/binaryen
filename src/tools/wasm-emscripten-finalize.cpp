@@ -249,14 +249,18 @@ int main(int argc, const char* argv[]) {
     BYN_TRACE("finalizing as side module\n");
     PassRunner passRunner(&wasm);
     passRunner.add("replace-stack-pointer");
+    passRunner.add("emscripten-pic");
     passRunner.run();
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
+    PassRunner passRunner(&wasm);
+    passRunner.add("emscripten-pic-main-module");
+    passRunner.run();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
-    if (Function* F = generator.generateAssignGOTEntriesFunction()) {
+    if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
       auto* ex = new Export();
       ex->value = F->name;
       ex->name = F->name;

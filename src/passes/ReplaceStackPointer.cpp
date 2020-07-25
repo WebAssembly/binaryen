@@ -27,7 +27,7 @@
 #include "support/debug.h"
 #include "wasm-emscripten.h"
 
-#define DEBUG_TYPE "binary"
+#define DEBUG_TYPE "replace-stack-pointer"
 
 namespace wasm {
 
