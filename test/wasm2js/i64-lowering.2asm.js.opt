@@ -58,7 +58,6 @@ function asmFunc(global, env, buffer) {
   return ($1 | 0) == ($3 | 0) & $0 >>> 0 < $2 >>> 0 | $1 >>> 0 < $3 >>> 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "eq_i64": legalstub$1, 
   "ne_i64": legalstub$2, 

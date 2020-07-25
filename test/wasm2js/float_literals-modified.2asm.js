@@ -40,51 +40,51 @@ function asmFunc(global, env, buffer) {
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $1() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $2() {
-  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $3() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $4() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $5() {
-  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $6() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $7() {
-  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $8() {
-  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $9() {
-  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $10() {
-  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $11() {
-  return (wasm2js_scratch_store_f32(Math_fround(-Infinity)), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $12() {
