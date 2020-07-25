@@ -74,4 +74,18 @@
   (drop (f64.load align=2 (i32.const 16)))
   (drop (f64.load align=4 (i32.const 20)))
  )
+ (func $i64-store
+  (drop (i64.store align=1 (i32.const 12) (i64.const 100)))
+  (drop (i64.store align=2 (i32.const 16) (i64.const 200)))
+  (drop (i64.store align=4 (i32.const 20) (i64.const 300)))
+ )
+ (func $f32-store
+  (drop (f32.store align=1 (i32.const 12) (f32.const 100)))
+  (drop (f32.store align=2 (i32.const 16) (f32.const 200)))
+ )
+ (func $f64-store
+  (drop (f64.store align=1 (i32.const 12) (f64.const 100)))
+  (drop (f64.store align=2 (i32.const 16) (f64.const 200)))
+  (drop (f64.store align=4 (i32.const 20) (f64.const 300)))
+ )
 )
