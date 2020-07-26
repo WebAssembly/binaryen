@@ -3122,7 +3122,10 @@ Object.defineProperty(Module, 'ready', {
       } else if (runtimeInitialized) {
         resolve(Module);
       } else {
-        pendingPromises.push({ resolve: resolve, reject: reject });
+        pendingPromises.push({
+          resolve: resolve,
+          reject: reject
+        });
       }
     });
   }
