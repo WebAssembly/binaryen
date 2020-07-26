@@ -2274,15 +2274,15 @@ function wrapModule(module, self) {
         var arr = new Array(numSegments);
         for (var i = 0; i !== numSegments; ++i) {
           var segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
-          var seg = {
-            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
-            'names': new Array(segmentLength)
-          };
+          var names = new Array(segmentLength);
           for (var j = 0; j !== segmentLength; ++j) {
             var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
-            seg['names'][j] = UTF8ToString(ptr);
+            names[j] = UTF8ToString(ptr);
           }
-          arr[i] = seg;
+          arr[i] = {
+            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
+            'names': names
+          };
         }
         return arr;
       })()
