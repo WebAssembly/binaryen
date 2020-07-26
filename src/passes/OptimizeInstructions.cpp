@@ -579,7 +579,7 @@ struct OptimizeInstructions
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
           if (!(c >> 31) && getMaxBits(binary->left, this) <= 31) {
-            binary->op = makeUnsignedOp(binary->op);
+            binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
             switch (binary->op) {
@@ -597,7 +597,7 @@ struct OptimizeInstructions
         if (right->type == Type::i64) {
           uint64_t c = right->value.geti64();
           if (!(c >> 63) && getMaxBits(binary->left, this) <= 63) {
-            binary->op = makeUnsignedOp(binary->op);
+            binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
             switch (binary->op) {
@@ -1645,7 +1645,7 @@ private:
     }
   }
 
-  BinaryOp makeUnsignedOp(BinaryOp op) {
+  BinaryOp makeUnsignedBinaryOp(BinaryOp op) {
     switch (op) {
       case DivSInt32:
         return DivUInt32;
