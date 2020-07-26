@@ -2292,29 +2292,25 @@ function wrapModule(module, self) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
+      var segmentsLen = segments.length;
+      var segmentData = new Array(segmentsLen);
+      var segmentDataLen = new Array(segmentsLen);
+      var segmentPassive = new Array(segmentsLen);
+      var segmentOffset = new Array(segmentsLen);
+      for (var i = 0; i < segmentsLen; i++) {
+        var segment = segments[i];
+        segmentData[i] = allocate(segment.data, 'i8', ALLOC_STACK);
+        segmentDataLen[i] = segment.data.length;
+        segmentPassive[i] = segment.passive;
+        segmentOffset[i] = segment.offset;
+      }
       return Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
-        i32sToStack(
-          segments.map(function(segment) {
-            return allocate(segment.data, 'i8', ALLOC_STACK);
-          })
-        ),
-        i8sToStack(
-          segments.map(function(segment) {
-            return segment.passive;
-          })
-        ),
-        i32sToStack(
-          segments.map(function(segment) {
-            return segment.offset;
-          })
-        ),
-        i32sToStack(
-          segments.map(function(segment) {
-            return segment.data.length;
-          })
-        ),
-        segments.length,
+        i32sToStack(segmentData),
+        i8sToStack(segmentPassive),
+        i32sToStack(segmentOffset),
+        i32sToStack(segmentDataLen),
+        segmentsLen,
         shared
       );
     });
