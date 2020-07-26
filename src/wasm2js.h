@@ -482,16 +482,11 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   // NaN and Infinity variables
   Ref nanVar = ValueBuilder::makeVar();
   ast->push_back(nanVar);
-  ValueBuilder::appendToVar(
-    nanVar,
-    "nan",
-    ValueBuilder::makeName("NaN"));
+  ValueBuilder::appendToVar(nanVar, "nan", ValueBuilder::makeName("NaN"));
   Ref infinityVar = ValueBuilder::makeVar();
   ast->push_back(infinityVar);
   ValueBuilder::appendToVar(
-    infinityVar,
-    "infinity",
-    ValueBuilder::makeName("Infinity"));
+    infinityVar, "infinity", ValueBuilder::makeName("Infinity"));
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
