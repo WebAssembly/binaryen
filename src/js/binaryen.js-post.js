@@ -552,9 +552,7 @@ function wrapModule(module, self) {
   };
   self['switch'] = function(names, defaultName, condition, value) {
     return preserveStack(function() {
-      var namei32s = names.map(strToStack);
-      return Module['_BinaryenSwitch'](module, i32sToStack(namei32s), namei32s.length,
-                                       strToStack(defaultName), condition, value);
+      return Module['_BinaryenSwitch'](module, i32sToStack(names.map(strToStack)), names.length, strToStack(defaultName), condition, value);
     });
   };
   self['call'] = function(name, operands, type) {
@@ -2904,8 +2902,7 @@ Module['getSideEffects'] = function(expr, features) {
 
 Module['createType'] = function(types) {
   return preserveStack(function() {
-    var array = i32sToStack(types);
-    return Module['_BinaryenTypeCreate'](array, types.length);
+    return Module['_BinaryenTypeCreate'](i32sToStack(types), types.length);
   });
 };
 
