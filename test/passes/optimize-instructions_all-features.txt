@@ -46,25 +46,25 @@
    )
   )
   (drop
-   (i32.le_s
+   (i32.le_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.lt_s
+   (i32.lt_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.ge_s
+   (i32.ge_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.gt_s
+   (i32.gt_u
     (i32.const 1)
     (i32.const 2)
    )
@@ -372,7 +372,7 @@
    )
   )
   (drop
-   (i32.lt_s
+   (i32.lt_u
     (i32.const 2000)
     (i32.const 3000)
    )
@@ -541,7 +541,7 @@
   )
   (drop
    (i32.and
-    (i32.gt_s
+    (i32.gt_u
      (i32.const 16)
      (i32.const 17)
     )
@@ -553,13 +553,13 @@
   )
   (drop
    (i32.and
-    (i32.gt_s
-     (i32.const 22)
-     (i32.const 23)
-    )
     (i32.gt_u
      (i32.const 20)
      (i32.const 21)
+    )
+    (i32.gt_u
+     (i32.const 22)
+     (i32.const 23)
     )
    )
   )
@@ -884,15 +884,9 @@
    )
   )
   (drop
-   (i32.shr_s
-    (i32.shl
-     (i32.div_s
-      (i32.const 1)
-      (i32.const 2)
-     )
-     (i32.const 24)
-    )
-    (i32.const 24)
+   (i32.shr_u
+    (i32.const 1)
+    (i32.const 1)
    )
   )
   (drop
@@ -1000,7 +994,7 @@
   (drop
    (i32.shr_s
     (i32.shl
-     (i32.shr_s
+     (i32.shr_u
       (i32.const 256)
       (i32.const 1)
      )
@@ -1010,13 +1004,13 @@
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.const 256)
     (i32.const 2)
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.const 128)
     (i32.const 35)
    )
@@ -1034,7 +1028,7 @@
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.and
      (i32.const -1)
      (i32.const 2147483647)
@@ -2331,7 +2325,7 @@
   )
  )
  (func $mix-shifts (result i32)
-  (i32.shr_s
+  (i32.shr_u
    (i32.shl
     (i32.const 23)
     (i32.const -61)

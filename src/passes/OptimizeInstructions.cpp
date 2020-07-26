@@ -578,6 +578,9 @@ struct OptimizeInstructions
         // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
+          if (!(c >> 31) && getMaxBits(binary->left, this) <= 31) {
+            binary->op = makeUnsignedOp(binary->op);
+          }
           if (IsPowerOf2(c)) {
             switch (binary->op) {
               case MulInt32:
@@ -593,6 +596,9 @@ struct OptimizeInstructions
         }
         if (right->type == Type::i64) {
           uint64_t c = right->value.geti64();
+          if (!(c >> 63) && getMaxBits(binary->left, this) <= 63) {
+            binary->op = makeUnsignedOp(binary->op);
+          }
           if (IsPowerOf2(c)) {
             switch (binary->op) {
               case MulInt64:
@@ -1636,6 +1642,43 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  BinaryOp makeUnsignedOp(BinaryOp op) {
+    switch (op) {
+      case DivSInt32:
+        return DivUInt32;
+      case RemSInt32:
+        return RemUInt32;
+      case ShrSInt32:
+        return ShrUInt32;
+      case LtSInt32:
+        return LtUInt32;
+      case LeSInt32:
+        return LeUInt32;
+      case GtSInt32:
+        return GtUInt32;
+      case GeSInt32:
+        return GeUInt32;
+
+      case DivSInt64:
+        return DivUInt64;
+      case RemSInt64:
+        return RemUInt64;
+      case ShrSInt64:
+        return ShrUInt64;
+      case LtSInt64:
+        return LtUInt64;
+      case LeSInt64:
+        return LeUInt64;
+      case GtSInt64:
+        return GtUInt64;
+      case GeSInt64:
+        return GeUInt64;
+
+      default:
+        return op;
     }
   }
 };
