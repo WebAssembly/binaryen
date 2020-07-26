@@ -525,6 +525,7 @@ class Wasm2JS(TestCaseHandler):
         # if we want to compare to the interpreter, remove unaligned operations.
         allow_unaligned = False # random.random() < 0.5
         if not allow_unaligned:
+must loewr to alignment 1!!!
           run([in_bin('wasm-opt'), before_wasm, '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
           run([in_bin('wasm-opt'), after_wasm, '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
