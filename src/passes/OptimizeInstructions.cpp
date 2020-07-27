@@ -584,7 +584,7 @@ struct OptimizeInstructions
             return binary;
           }
           if (IsPowerOf2(c)) {
-            // math operations on a constant power of 2 right side can be optimized
+            // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt32:
                 return optimizePowerOf2Mul(binary, (uint32_t)c);
@@ -606,7 +606,7 @@ struct OptimizeInstructions
             return binary;
           }
           if (IsPowerOf2(c)) {
-            // math operations on a constant power of 2 right side can be optimized
+            // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt64:
                 return optimizePowerOf2Mul(binary, (uint64_t)c);
