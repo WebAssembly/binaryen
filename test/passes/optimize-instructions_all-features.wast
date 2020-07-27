@@ -4233,6 +4233,50 @@
       )
     ))
   )
+  (func $unsigned-context (param $x i32)
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+     (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -3) ;; skip
+    ))
+    (drop (i32.rem_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.shr_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -7) ;; skip
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

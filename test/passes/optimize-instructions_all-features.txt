@@ -3,8 +3,8 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
@@ -3718,6 +3718,62 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $unsigned-context (param $x i32)
+  (drop
+   (i32.div_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const -3)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.shr_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (i32.ge_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const -7)
    )
   )
  )
