@@ -38,10 +38,7 @@ cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
 static Name STACK_INIT("stack$init");
-static Name STACK_LIMIT("__stack_limit");
-static Name SET_STACK_LIMIT("__set_stack_limit");
 static Name POST_INSTANTIATE("__post_instantiate");
-static Name STACK_OVERFLOW_IMPORT("__handle_stack_overflow");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -209,114 +206,6 @@ void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
   auto* sp = builder.makeGlobal(
     internalName, stackPointer->type, init, Builder::Mutable);
   wasm.addGlobal(sp);
-}
-
-struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
-  StackLimitEnforcer(Global* stackPointer,
-                     Global* stackLimit,
-                     Builder& builder,
-                     Name handler)
-    : stackPointer(stackPointer), stackLimit(stackLimit), builder(builder),
-      handler(handler) {}
-
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override {
-    return new StackLimitEnforcer(stackPointer, stackLimit, builder, handler);
-  }
-
-  Expression* stackBoundsCheck(Function* func,
-                               Expression* value,
-                               Global* stackPointer,
-                               Global* stackLimit) {
-    // Add a local to store the value of the expression. We need the value
-    // twice: once to check if it has overflowed, and again to assign to store
-    // it.
-    auto newSP = Builder::addVar(func, stackPointer->type);
-    // If we imported a handler, call it. That can show a nice error in JS.
-    // Otherwise, just trap.
-    Expression* handlerExpr;
-    if (handler.is()) {
-      handlerExpr = builder.makeCall(handler, {}, Type::none);
-    } else {
-      handlerExpr = builder.makeUnreachable();
-    }
-    // (if (i32.lt_u (local.tee $newSP (...val...)) (global.get $__stack_limit))
-    auto check = builder.makeIf(
-      builder.makeBinary(
-        BinaryOp::LtUInt32,
-        builder.makeLocalTee(newSP, value, stackPointer->type),
-        builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
-      handlerExpr);
-    // (global.set $__stack_pointer (local.get $newSP))
-    auto newSet = builder.makeGlobalSet(
-      stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
-    return builder.blockify(check, newSet);
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      replaceCurrent(
-        stackBoundsCheck(getFunction(), curr->value, stackPointer, stackLimit));
-    }
-  }
-
-private:
-  Global* stackPointer;
-  Global* stackLimit;
-  Builder& builder;
-  Name handler;
-};
-
-void EmscriptenGlueGenerator::enforceStackLimit() {
-  Global* stackPointer = getStackPointerGlobal(wasm);
-  if (!stackPointer) {
-    return;
-  }
-
-  auto* stackLimit = builder.makeGlobal(STACK_LIMIT,
-                                        stackPointer->type,
-                                        builder.makeConst(int32_t(0)),
-                                        Builder::Mutable);
-  wasm.addGlobal(stackLimit);
-
-  Name handler = importStackOverflowHandler();
-  StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
-  PassRunner runner(&wasm);
-  walker.run(&runner, &wasm);
-
-  generateSetStackLimitFunction();
-}
-
-void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
-  Function* function =
-    builder.makeFunction(SET_STACK_LIMIT, Signature(Type::i32, Type::none), {});
-  LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
-  Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
-  function->body = store;
-  addExportedFunction(wasm, function);
-}
-
-Name EmscriptenGlueGenerator::importStackOverflowHandler() {
-  // We can call an import to handle stack overflows normally, but not in
-  // standalone mode, where we can't import from JS.
-  if (standalone) {
-    return Name();
-  }
-
-  ImportInfo info(wasm);
-
-  if (auto* existing = info.getImportedFunction(ENV, STACK_OVERFLOW_IMPORT)) {
-    return existing->name;
-  } else {
-    auto* import = new Function;
-    import->name = STACK_OVERFLOW_IMPORT;
-    import->module = ENV;
-    import->base = STACK_OVERFLOW_IMPORT;
-    import->sig = Signature(Type::none, Type::none);
-    wasm.addFunction(import);
-    return STACK_OVERFLOW_IMPORT;
-  }
 }
 
 const Address UNKNOWN_OFFSET(uint32_t(-1));

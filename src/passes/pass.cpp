@@ -343,6 +343,9 @@ void PassRegistry::registerPasses() {
     createSSAifyNoMergePass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
+  registerPass("stack-check",
+               "enforce limits on llvm's __stack_pointer global",
+               createStackCheckPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);

@@ -54,8 +54,6 @@ public:
 
   void fixInvokeFunctionNames();
 
-  void enforceStackLimit();
-
   // clang uses name mangling to rename the argc/argv form of main to
   // __main_argc_argv.  Emscripten in non-standalone mode expects that function
   // to be exported as main.  This function renames __main_argc_argv to main
@@ -80,8 +78,6 @@ private:
   std::unordered_set<Signature> sigs;
 
   void generateDynCallThunk(Signature sig);
-  void generateSetStackLimitFunction();
-  Name importStackOverflowHandler();
 };
 
 } // namespace wasm
