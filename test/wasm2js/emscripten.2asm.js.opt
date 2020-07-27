@@ -83,34 +83,34 @@ function asmFunc(global, env, buffer) {
   if (HEAPU8[144] < 3) {
    bar()
   }
-  if (bools(314159) >>> 7) {
+  if (bools(314159) >>> 7 | 0) {
    bar()
   }
   if (bools(314159) >> 8) {
    bar()
   }
-  if (~~getf32()) {
+  if (~~getf32() >>> 0) {
    bar()
   }
   if (~~getf32()) {
    bar()
   }
-  if (~~getf64()) {
+  if (~~getf64() >>> 0) {
    bar()
   }
   if (~~getf64()) {
    bar()
   }
-  if ((geti32() + geti32() | 0) + geti32()) {
+  if ((geti32() + geti32() | 0) + geti32() | 0) {
    bar()
   }
-  if (geti32() + (geti32() + geti32() | 0)) {
+  if (geti32() + (geti32() + geti32() | 0) | 0) {
    bar()
   }
-  if (geti32() + geti32() + (geti32() + geti32())) {
+  if (geti32() + geti32() + (geti32() + geti32()) | 0) {
    bar()
   }
-  if (geti32() + geti32() + (geti32() + geti32()) + (geti32() + geti32() + (geti32() + geti32()))) {
+  if (geti32() + geti32() + (geti32() + geti32()) + (geti32() + geti32() + (geti32() + geti32())) | 0) {
    bar()
   }
  }
