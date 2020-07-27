@@ -3,8 +3,8 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
@@ -3631,7 +3631,7 @@
    )
   )
  )
- (func $rhs-is-neg-const (param $x i32) (param $y i64)
+ (func $rhs-is-neg-const (param $x i32)
   (drop
    (i32.ge_u
     (local.get $x)
@@ -3648,24 +3648,6 @@
    (i32.shr_u
     (local.get $x)
     (i32.const 31)
-   )
-  )
-  (drop
-   (i64.ge_u
-    (local.get $y)
-    (i64.const -2)
-   )
-  )
-  (drop
-   (i64.ge_u
-    (local.get $y)
-    (i64.const -9223372036854775807)
-   )
-  )
-  (drop
-   (i64.shr_u
-    (local.get $y)
-    (i64.const 63)
    )
   )
  )

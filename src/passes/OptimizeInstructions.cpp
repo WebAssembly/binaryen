@@ -599,12 +599,6 @@ struct OptimizeInstructions
         }
         if (right->type == Type::i64) {
           int64_t c = right->value.geti64();
-          if (binary->op == DivUInt64 &&
-              c > std::numeric_limits<int64_t>::min() && c < -1LL) {
-            // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
-            binary->op = GeUInt64;
-            return binary;
-          }
           if (IsPowerOf2(c)) {
             // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
