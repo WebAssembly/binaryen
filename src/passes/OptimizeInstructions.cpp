@@ -580,7 +580,7 @@ struct OptimizeInstructions
           if (binary->op == DivUInt32 &&
               c > std::numeric_limits<int32_t>::min() && c < -1) {
             // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
-            binary->op = GtUInt32;
+            binary->op = GeUInt32;
             return binary;
           }
           if (IsPowerOf2(c)) {
@@ -602,7 +602,7 @@ struct OptimizeInstructions
           if (binary->op == DivUInt64 &&
               c > std::numeric_limits<int64_t>::min() && c < -1LL) {
             // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
-            binary->op = GtUInt64;
+            binary->op = GeUInt64;
             return binary;
           }
           if (IsPowerOf2(c)) {

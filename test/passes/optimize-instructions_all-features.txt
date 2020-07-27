@@ -3633,13 +3633,13 @@
  )
  (func $rhs-is-neg-const (param $x i32) (param $y i64)
   (drop
-   (i32.gt_u
+   (i32.ge_u
     (local.get $x)
     (i32.const -2)
    )
   )
   (drop
-   (i32.gt_u
+   (i32.ge_u
     (local.get $x)
     (i32.const -2147483647)
    )
@@ -3651,13 +3651,13 @@
    )
   )
   (drop
-   (i64.gt_u
+   (i64.ge_u
     (local.get $y)
     (i64.const -2)
    )
   )
   (drop
-   (i64.gt_u
+   (i64.ge_u
     (local.get $y)
     (i64.const -9223372036854775807)
    )
