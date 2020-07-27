@@ -277,10 +277,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (standaloneWasm) {
-    // Export a standard wasi "_start" method.
-    generator.exportWasiStart();
-  } else {
+  if (!standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
     generator.generateDynCallThunks();
     // This is also not needed in standalone mode since standalone mode uses
