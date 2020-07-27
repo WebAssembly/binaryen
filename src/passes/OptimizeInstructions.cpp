@@ -576,38 +576,39 @@ struct OptimizeInstructions
           }
         }
         if (right->type == Type::i32) {
-          int32_t c = right->value.geti32();
+          uint32_t c = right->value.geti32();
           if (binary->op == DivUInt32 &&
-              c > std::numeric_limits<int32_t>::min() && c < -1) {
+              c > uint32_t(std::numeric_limits<int32_t>::min()) &&
+              c < uint32_t(-1)) {
             // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
             binary->op = GeUInt32;
             return binary;
           }
-          if (IsPowerOf2((uint32_t)c)) {
+          if (IsPowerOf2(c)) {
             // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt32:
-                return optimizePowerOf2Mul(binary, (uint32_t)c);
+                return optimizePowerOf2Mul(binary, c);
               case RemUInt32:
-                return optimizePowerOf2URem(binary, (uint32_t)c);
+                return optimizePowerOf2URem(binary, c);
               case DivUInt32:
-                return optimizePowerOf2UDiv(binary, (uint32_t)c);
+                return optimizePowerOf2UDiv(binary, c);
               default:
                 break;
             }
           }
         }
         if (right->type == Type::i64) {
-          int64_t c = right->value.geti64();
-          if (IsPowerOf2((uint64_t)c)) {
+          uint64_t c = right->value.geti64();
+          if (IsPowerOf2(c)) {
             // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt64:
-                return optimizePowerOf2Mul(binary, (uint64_t)c);
+                return optimizePowerOf2Mul(binary, c);
               case RemUInt64:
-                return optimizePowerOf2URem(binary, (uint64_t)c);
+                return optimizePowerOf2URem(binary, c);
               case DivUInt64:
-                return optimizePowerOf2UDiv(binary, (uint64_t)c);
+                return optimizePowerOf2UDiv(binary, c);
               default:
                 break;
             }
