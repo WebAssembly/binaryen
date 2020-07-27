@@ -4122,6 +4122,39 @@
       (i64.const -1)
     ))
   )
+  (func $rhs-is-neg-const (param $x i32) (param $y i64)
+    ;; (unsigned)x / -2
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2)
+    ))
+    ;; (unsigned)x / (i32.min + 1)
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2147483647)
+    ))
+    ;; (unsigned)x / i32.min
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2147483648) ;; x >> 31
+    ))
+
+    ;; (unsigned)x / -2
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -2)
+    ))
+    ;; (unsigned)x / (i64.min + 1)
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -9223372036854775807)
+    ))
+    ;; (unsigned)x / i64.min
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -9223372036854775808) ;; x >> 63
+    ))
+  )
   (func $pre-combine-or (param $x i32) (param $y i32)
     (drop (i32.or
       (i32.gt_s

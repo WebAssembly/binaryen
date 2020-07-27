@@ -575,32 +575,45 @@ struct OptimizeInstructions
             }
           }
         }
-        // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
-          uint32_t c = right->value.geti32();
+          int32_t c = right->value.geti32();
+          if (binary->op == DivUInt32 &&
+              c > std::numeric_limits<int32_t>::min() && c < -1) {
+            // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
+            binary->op = GtUInt32;
+            return binary;
+          }
           if (IsPowerOf2(c)) {
+            // math operations on a constant power of 2 right side can be optimized
             switch (binary->op) {
               case MulInt32:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint32_t)c);
               case RemUInt32:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint32_t)c);
               case DivUInt32:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint32_t)c);
               default:
                 break;
             }
           }
         }
         if (right->type == Type::i64) {
-          uint64_t c = right->value.geti64();
+          int64_t c = right->value.geti64();
+          if (binary->op == DivUInt64 &&
+              c > std::numeric_limits<int64_t>::min() && c < -1LL) {
+            // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
+            binary->op = GtUInt64;
+            return binary;
+          }
           if (IsPowerOf2(c)) {
+            // math operations on a constant power of 2 right side can be optimized
             switch (binary->op) {
               case MulInt64:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint64_t)c);
               case RemUInt64:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint64_t)c);
               case DivUInt64:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint64_t)c);
               default:
                 break;
             }
