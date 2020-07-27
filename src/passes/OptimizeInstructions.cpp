@@ -583,7 +583,7 @@ struct OptimizeInstructions
             binary->op = GeUInt32;
             return binary;
           }
-          if (IsPowerOf2(c)) {
+          if (IsPowerOf2((uint32_t)c)) {
             // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt32:
@@ -599,7 +599,7 @@ struct OptimizeInstructions
         }
         if (right->type == Type::i64) {
           int64_t c = right->value.geti64();
-          if (IsPowerOf2(c)) {
+          if (IsPowerOf2((uint64_t)c)) {
             // optimize math operations on a constant power of 2 right side
             switch (binary->op) {
               case MulInt64:
