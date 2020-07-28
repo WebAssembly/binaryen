@@ -75,6 +75,7 @@ set(passes_SOURCES
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp
+  StackCheck.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp

@@ -242,7 +242,15 @@ int main(int argc, const char* argv[]) {
   wasm.updateMaps();
 
   if (checkStackOverflow && !sideModule) {
-    generator.enforceStackLimit();
+    PassOptions options;
+    if (!standaloneWasm) {
+      // In standalone mode we don't set a handler at all.. which means
+      // just trap on overflow.
+      options.arguments["stack-check-handler"] = "__handle_stack_overflow";
+    }
+    PassRunner passRunner(&wasm, options);
+    passRunner.add("stack-check");
+    passRunner.run();
   }
 
   if (sideModule) {
@@ -288,8 +296,7 @@ int main(int argc, const char* argv[]) {
   // Legalize the wasm, if BigInts don't make that moot.
   if (!bigInt) {
     BYN_TRACE("legalizing types\n");
-    PassRunner passRunner(&wasm);
-    passRunner.setOptions(options.passOptions);
+    PassRunner passRunner(&wasm, options.passOptions);
     passRunner.setDebug(options.debug);
     passRunner.setDebugInfo(debugInfo);
     passRunner.add(ABI::getLegalizationPass(
