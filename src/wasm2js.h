@@ -85,7 +85,13 @@ IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
+//
+// Export: Export names
+// Top: The main scope which contains functions and globals
+// Local: Local variables in a function.
+// Label: Label identifiers in a function
 enum class NameScope {
+  Export,
   Top,
   Local,
   Label,
@@ -206,19 +212,10 @@ public:
       if (!allMangledNames.count(ret)) {
         break;
       }
-
-      // In the global scope that's how you refer to actual function exports, so
-      // it's a bug currently if they're not globally unique. This should
-      // probably be fixed via a different namespace for exports or something
-      // like that.
-      // XXX This is not actually a valid check atm, since functions are not in
-      //     the global-most scope, but rather in the "asmFunc" scope which is
-      //     inside it. Also, for emscripten style glue, we emit the exports as
-      //     a return, so there is no name placed into the scope. For these
-      //     reasons, just warn here, don't error.
-      if (scope == NameScope::Top) {
-        std::cerr << "wasm2js: warning: global scope may be colliding with "
-                     "other scope: "
+      // When export names collide things may be confusing, as this is
+      // observable externally by the person using the JS. Report a warning.
+      if (scope == NameScope::Export) {
+        std::cerr << "wasm2js: warning: export names colliding: "
                   << mangled << '\n';
       }
     }
@@ -383,10 +380,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
 
-  // make sure exports get their expected names
   for (auto& e : wasm->exports) {
     if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Top);
+      fromName(e->name, NameScope::Export);
     }
   }
   for (auto& f : wasm->functions) {
@@ -589,7 +585,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObjectWithQuotes(
         exports,
-        fromName(export_->name, NameScope::Top),
+        fromName(export_->name, NameScope::Export),
         ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -615,7 +611,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
                               IString("prototype")));
       ValueBuilder::appendToCall(memory, descs);
       ValueBuilder::appendToObjectWithQuotes(
-        exports, fromName(export_->name, NameScope::Top), memory);
+        exports, fromName(export_->name, NameScope::Export), memory);
     }
   }
   if (wasm->memory.exists) {
