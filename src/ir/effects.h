@@ -392,8 +392,10 @@ struct EffectAnalyzer
     }
   }
   void visitDataDrop(DataDrop* curr) {
-    // prevent reordering with memory.init
-    readsMemory = true;
+    // data.drop does not actually write memory, but it does alter the size of
+    // a segment, which can be noticeable later by memory.init, so we need to
+    // mark it as having a global side effect of some kind.
+    writesMemory = true;
     if (!ignoreImplicitTraps) {
       implicitTrap = true;
     }

@@ -1831,12 +1831,14 @@
  )
  (func $data-drop-load
   (local $x i32)
-  (nop)
-  (data.drop 0)
-  (drop
+  (local.set $x
    (i32.load
     (i32.const 0)
    )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
   )
  )
  (func $data-drop-store
