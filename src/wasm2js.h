@@ -215,8 +215,8 @@ public:
       // When export names collide things may be confusing, as this is
       // observable externally by the person using the JS. Report a warning.
       if (scope == NameScope::Export) {
-        std::cerr << "wasm2js: warning: export names colliding: "
-                  << mangled << '\n';
+        std::cerr << "wasm2js: warning: export names colliding: " << mangled
+                  << '\n';
       }
     }
     allMangledNames.insert(ret);
