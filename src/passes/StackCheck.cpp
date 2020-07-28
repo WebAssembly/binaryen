@@ -16,7 +16,7 @@
 
 //
 // Enforce stack pointer limits.  This pass will add checks around all
-// assignments to the __stack_pointer global that LLVM uses to for it's
+// assignments to the __stack_pointer global that LLVM uses for its
 // shadow stack.
 //
 
@@ -31,6 +31,7 @@
 
 namespace wasm {
 
+static Name STACK_LIMIT("__stack_limit");
 static Name SET_STACK_LIMIT("__set_stack_limit");
 
 static void importStackOverflowHandler(Module& module, Name name) {
@@ -144,9 +145,9 @@ struct StackCheck : public Pass {
                                      Builder::Mutable);
     module->addGlobal(stackLimit);
 
-    PassRunner inner_runner(module);
+    PassRunner innerRunner(module);
     EnforceStackLimit(stackPointer, stackLimit, builder, handler)
-      .run(&inner_runner, module);
+      .run(&innerRunner, module);
     generateSetStackLimitFunction(*module);
   }
 };

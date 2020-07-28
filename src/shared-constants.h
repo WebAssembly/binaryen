@@ -66,7 +66,6 @@ extern Name SHARED;
 extern Name EVENT;
 extern Name ATTR;
 extern Name ASSIGN_GOT_ENTRIES;
-extern Name STACK_LIMIT;
 
 } // namespace wasm
 
