@@ -80,7 +80,7 @@ def test_wasm2js_output():
                 # `spectest` and `env` modules in our tests.
                 if shared.NODEJS:
                     loader = os.path.join(shared.options.binaryen_root, 'scripts', 'test', 'node-esm-loader.mjs')
-                    node = [shared.NODEJS, '--experimental-modules', '--loader', loader]
+                    node = [shared.NODEJS, '--experimental-modules', '--no-warnings', '--loader', loader]
                     cmd = node[:]
                     cmd.append('a.2asm.mjs')
                     out = support.run_command(cmd)

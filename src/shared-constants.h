@@ -65,6 +65,7 @@ extern Name EXIT;
 extern Name SHARED;
 extern Name EVENT;
 extern Name ATTR;
+extern Name ASSIGN_GOT_ENTRIES;
 
 } // namespace wasm
 

@@ -19,7 +19,6 @@
  (export "main" (func $main))
  (export "__set_stack_limit" (func $__set_stack_limit))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (export "_start" (func $_start))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -150,14 +149,6 @@
    (local.get $newSize)
   )
  )
- (func $_start
-  (drop
-   (call $main
-    (i32.const 0)
-    (i32.const 0)
-   )
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -176,8 +167,7 @@
     "__wasm_call_ctors",
     "main",
     "__set_stack_limit",
-    "__growWasmMemory",
-    "_start"
+    "__growWasmMemory"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",

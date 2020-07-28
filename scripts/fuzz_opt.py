@@ -118,6 +118,7 @@ FUZZ_OPTS = None
 NANS = None
 OOB = None
 LEGALIZE = None
+ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
 
 
 def randomize_fuzz_settings():
@@ -138,11 +139,33 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
-    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
+    extra_v8_opts = []
+    # 50% of the time test v8 normally, that is, the same way it runs in
+    # production (which as of 07/15/2020 means baseline, then tier up to
+    # optimizing, but that may change in the future).
+    if random.random() < 0.5:
+        # test either the optimizing compiler or the baseline compiler, with
+        # equal probability. it's useful to do this because the normal tier-up
+        # mode does not check them both equally (typically baseline does not get
+        # enough testing, as we quickly leave it), and also because the tiering
+        # up is nondeterministic (when optimized code becomes ready, we switch
+        # to it)
+        if random.random() < 0.5:
+            extra_v8_opts += ['--no-liftoff']
+        else:
+            extra_v8_opts += ['--liftoff', '--no-wasm-tier-up']
+    shared.V8_OPTS = ORIGINAL_V8_OPTS + extra_v8_opts
+    print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
 
 
 # Test outputs we want to ignore are marked this way.
 IGNORE = '[binaryen-fuzzer-ignore]'
+
+# Traps are reported as [trap REASON]
+TRAP_PREFIX = '[trap '
+
+# --fuzz-exec reports calls as [fuzz-exec] calling foo
+FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
 
 # compare two strings, strictly
@@ -222,7 +245,7 @@ def fix_output(out):
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace('[trap ', 'exception: [trap ')
+    out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -277,8 +300,12 @@ def run_bynterp(wasm, args):
         del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
 
 
-def run_d8(wasm):
-    return run_vm([shared.V8] + shared.V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
+def run_d8_js(js, args=[]):
+    return run_vm([shared.V8] + shared.V8_OPTS + [js] + (['--'] if args else []) + args)
+
+
+def run_d8_wasm(wasm):
+    return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm])
 
 
 class TestCaseHandler:
@@ -402,6 +429,9 @@ class CompareVMs(TestCaseHandler):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
                 run(['wasm2c', wasm, '-o', 'wasm.c'])
                 compile_cmd = ['emcc', 'main.c', 'wasm.c', os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'), '-I' + self.wasm2c_dir, '-lm']
+                # disable the signal handler: emcc looks like unix, but wasm has
+                # no signals
+                compile_cmd += ['-DWASM_RT_MEMCHECK_SIGNAL_HANDLER=0']
                 if random.random() < 0.5:
                     compile_cmd += ['-O' + str(random.randint(1, 3))]
                 elif random.random() < 0.5:
@@ -414,7 +444,7 @@ class CompareVMs(TestCaseHandler):
                 # large and it isn't what we are focused on testing here
                 with no_pass_debug():
                     run(compile_cmd)
-                return run_vm(['d8', 'a.out.js'])
+                return run_d8_js('a.out.js')
 
             def can_run(self, wasm):
                 # prefer not to run if the wasm is very large, as it can OOM
@@ -485,13 +515,29 @@ class Wasm2JS(TestCaseHandler):
     frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # always check for compiler crashes. without NaNs we can also compare
-        # before and after (with NaNs, a reinterpret through memory might end up
-        # different in JS than wasm)
+        # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
-        if not NANS:
-            compare(before, after, 'Wasm2JS')
+        if NANS:
+            # with NaNs we can't compare the output, as a reinterpret through
+            # memory might end up different in JS than wasm
+            return
+        # we also cannot compare if the wasm hits a trap, as wasm2js does not
+        # trap on many things wasm would, and in those cases it can do weird
+        # undefined things. in such a case, at least compare up until before
+        # the trap, which lets us compare at least some results in some cases.
+        interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter_output:
+            trap_index = interpreter_output.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of.
+            # erase everything from this function's output and onward, so we
+            # only compare the previous trap-free code
+            call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter_output.index('\n', call_start)
+            call_line = interpreter_output[call_start:call_end]
+            before = before[:before.index(call_line)]
+            after = after[:after.index(call_line)]
+        compare(before, after, 'Wasm2JS')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -511,15 +557,12 @@ class Wasm2JS(TestCaseHandler):
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
             glue = f.read()
-        with open('js.js', 'w') as f:
+        js_file = wasm + '.js'
+        with open(js_file, 'w') as f:
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        out = fix_output(run_vm([shared.NODEJS, 'js.js', 'a.wasm']))
-        if 'exception' in out:
-            # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
-            out = IGNORE
-        return out
+        return fix_output(run_vm([shared.NODEJS, js_file, 'a.wasm']))
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
@@ -534,8 +577,8 @@ class Asyncify(TestCaseHandler):
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', 'async.' + after_wasm] + FEATURE_OPTS)
         before_wasm = 'async.' + before_wasm
         after_wasm = 'async.' + after_wasm
-        before = fix_output(run_d8(before_wasm))
-        after = fix_output(run_d8(after_wasm))
+        before = fix_output(run_d8_wasm(before_wasm))
+        after = fix_output(run_d8_wasm(after_wasm))
 
         try:
             compare(before, after, 'Asyncify (before/after)')
@@ -557,7 +600,7 @@ class Asyncify(TestCaseHandler):
                     cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
-            out = run_d8('async.t.wasm')
+            out = run_d8_wasm('async.t.wasm')
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
             for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
                            '[fuzz-exec] calling asyncify_start_unwind\n',

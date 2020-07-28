@@ -9,23 +9,18 @@ function preserveStack(func) {
 }
 
 function strToStack(str) {
-  if (!str) return 0;
-  return allocate(intArrayFromString(str), 'i8', ALLOC_STACK);
+  return str ? allocate(intArrayFromString(str), 'i8', ALLOC_STACK) : 0;
 }
 
 function i32sToStack(i32s) {
   var ret = stackAlloc(i32s.length << 2);
-  for (var i = 0; i < i32s.length; i++) {
-    HEAP32[ret + (i << 2) >> 2] = i32s[i];
-  }
+  HEAP32.set(i32s, ret >>> 2);
   return ret;
 }
 
 function i8sToStack(i8s) {
   var ret = stackAlloc(i8s.length);
-  for (var i = 0; i < i8s.length; i++) {
-    HEAP8[ret + i] = i8s[i];
-  }
+  HEAP8.set(i8s, ret);
   return ret;
 }
 
@@ -557,12 +552,7 @@ function wrapModule(module, self) {
   };
   self['switch'] = function(names, defaultName, condition, value) {
     return preserveStack(function() {
-      var namei32s = [];
-      names.forEach(function(name) {
-        namei32s.push(strToStack(name));
-      });
-      return Module['_BinaryenSwitch'](module, i32sToStack(namei32s), namei32s.length,
-                                       strToStack(defaultName), condition, value);
+      return Module['_BinaryenSwitch'](module, i32sToStack(names.map(strToStack)), names.length, strToStack(defaultName), condition, value);
     });
   };
   self['call'] = function(name, operands, type) {
@@ -2278,14 +2268,19 @@ function wrapModule(module, self) {
     return {
       'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
       'segments': (function() {
-        var arr = [];
-        for (var i = 0, numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module); i !== numSegments; ++i) {
-          var seg = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
-          for (var j = 0, segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i); j !== segmentLength; ++j) {
+        var numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module)
+        var arr = new Array(numSegments);
+        for (var i = 0; i !== numSegments; ++i) {
+          var segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
+          var names = new Array(segmentLength);
+          for (var j = 0; j !== segmentLength; ++j) {
             var ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
-            seg['names'].push(UTF8ToString(ptr));
+            names[j] = UTF8ToString(ptr);
           }
-          arr.push(seg);
+          arr[i] = {
+            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
+            'names': names
+          };
         }
         return arr;
       })()
@@ -2295,29 +2290,25 @@ function wrapModule(module, self) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
+      var segmentsLen = segments.length;
+      var segmentData = new Array(segmentsLen);
+      var segmentDataLen = new Array(segmentsLen);
+      var segmentPassive = new Array(segmentsLen);
+      var segmentOffset = new Array(segmentsLen);
+      for (var i = 0; i < segmentsLen; i++) {
+        var segment = segments[i];
+        segmentData[i] = allocate(segment.data, 'i8', ALLOC_STACK);
+        segmentDataLen[i] = segment.data.length;
+        segmentPassive[i] = segment.passive;
+        segmentOffset[i] = segment.offset;
+      }
       return Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
-        i32sToStack(
-          segments.map(function(segment) {
-            return allocate(segment.data, 'i8', ALLOC_STACK);
-          })
-        ),
-        i8sToStack(
-          segments.map(function(segment) {
-            return segment.passive;
-          })
-        ),
-        i32sToStack(
-          segments.map(function(segment) {
-            return segment.offset;
-          })
-        ),
-        i32sToStack(
-          segments.map(function(segment) {
-            return segment.data.length;
-          })
-        ),
-        segments.length,
+        i32sToStack(segmentData),
+        i8sToStack(segmentPassive),
+        i32sToStack(segmentOffset),
+        i32sToStack(segmentDataLen),
+        segmentsLen,
         shared
       );
     });
@@ -2534,7 +2525,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'name': UTF8ToString(Module['_BinaryenBlockGetName'](expr)),
-        'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChild'])
+        'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
       };
     case Module['IfId']:
       return {
@@ -2563,7 +2554,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(function (p) {
+        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(function (p) {
           // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
           return UTF8ToString(p);
         }),
@@ -2577,7 +2568,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expr)),
         'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
-        'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
+        'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt'])
       };
     case Module['CallIndirectId']:
       return {
@@ -2585,7 +2576,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
-        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
       };
     case Module['LocalGetId']:
       return {
@@ -2710,7 +2701,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'op': Module['_BinaryenHostGetOp'](expr),
         'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperandAt'])
       };
     case Module['AtomicRMWId']:
       return {
@@ -2869,7 +2860,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
       };
     case Module['RethrowId']:
       return {
@@ -2889,7 +2880,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperand'])
+        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperandAt'])
       };
     case Module['TupleExtractId']:
       return {
@@ -2911,8 +2902,7 @@ Module['getSideEffects'] = function(expr, features) {
 
 Module['createType'] = function(types) {
   return preserveStack(function() {
-    var array = i32sToStack(types);
-    return Module['_BinaryenTypeCreate'](array, types.length);
+    return Module['_BinaryenTypeCreate'](i32sToStack(types), types.length);
   });
 };
 
@@ -2921,9 +2911,9 @@ Module['expandType'] = function(ty) {
     var numTypes = Module['_BinaryenTypeArity'](ty);
     var array = stackAlloc(numTypes << 2);
     Module['_BinaryenTypeExpand'](ty, array);
-    var types = [];
+    var types = new Array(numTypes);
     for (var i = 0; i < numTypes; i++) {
-      types.push(HEAPU32[(array >>> 2) + i]);
+      types[i] = HEAPU32[(array >>> 2) + i];
     }
     return types;
   });
@@ -3102,6 +3092,1285 @@ Module['getOneCallerInlineMaxSize'] = function() {
 Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
+
+// Expression wrappers
+
+// Makes a wrapper class with the specified static members while
+// automatically deriving instance methods and accessors.
+function makeExpressionWrapper(ownStaticMembers) {
+  function SpecificExpression(expr) {
+    // can call the constructor without `new`
+    if (!(this instanceof SpecificExpression)) {
+      if (!expr) return null;
+      return new SpecificExpression(expr);
+    }
+    Expression.call(this, expr);
+  }
+  // inherit static members of Expression
+  Object.assign(SpecificExpression, Expression);
+  // add own static members
+  Object.assign(SpecificExpression, ownStaticMembers);
+  // inherit from Expression
+  (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
+  // make own instance members
+  makeExpressionWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  return SpecificExpression;
+}
+
+// Makes instance members from the given static members
+function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
+  Object.keys(staticMembers).forEach(function(memberName) {
+    var member = staticMembers[memberName];
+    if (typeof member === "function") {
+      // Instance method calls the respective static method
+      prototype[memberName] = function(/* arguments */) {
+        var numArgs = arguments.length;
+        var args = new Array(1 + numArgs);
+        args[0] = this['expr'];
+        for (var i = 0; i < numArgs; ++i) {
+          args[1 + i] = arguments[i];
+        }
+        return this.constructor[memberName].apply(null, args);
+      };
+      // Instance accessor calls the respective static methods
+      var match;
+      if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
+        (function(propertyName, getter, setterIfAny) {
+          Object.defineProperty(prototype, propertyName, {
+            get: function() {
+              return getter(this['expr']);
+            },
+            set: function(value) {
+              if (setterIfAny) setterIfAny(this['expr'], value);
+              else throw Error("property '" + propertyName + "' has no setter");
+            }
+          });
+        })(
+          memberName.charAt(match[1].length).toLowerCase() + memberName.substring(match[1].length + 1),
+          staticMembers[memberName],
+          staticMembers["set" + memberName.substring(match[1].length)]
+        );
+      }
+    }
+  });
+}
+
+// Base class of all expression wrappers
+function Expression(expr) {
+  if (!expr) throw Error("expression reference must not be null");
+  this['expr'] = expr;
+}
+Expression['getId'] = function(expr) {
+  return Module['_BinaryenExpressionGetId'](expr);
+};
+Expression['getType'] = function(expr) {
+  return Module['_BinaryenExpressionGetType'](expr);
+};
+Expression['setType'] = function(expr, type) {
+  Module['_BinaryenExpressionSetType'](expr, type);
+};
+Expression['finalize'] = function(expr) {
+  return Module['_BinaryenExpressionFinalize'](expr);
+};
+Expression['toText'] = function(expr) {
+  return Module['emitText'](expr);
+};
+makeExpressionWrapperInstanceMembers(Expression.prototype, Expression);
+Expression.prototype['valueOf'] = function() {
+  return this['expr'];
+};
+
+Module['Expression'] = Expression;
+
+Module['Block'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenBlockGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenBlockSetName'](expr, strToStack(name));
+    });
+  },
+  'getNumChildren': function(expr) {
+    return Module['_BinaryenBlockGetNumChildren'](expr);
+  },
+  'getChildren': function(expr) {
+    var numChildren = Module['_BinaryenBlockGetNumChildren'](expr);
+    var children = new Array(numChildren);
+    var index = 0;
+    while (index < numChildren) {
+      children[index] = Module['_BinaryenBlockGetChildAt'](expr, index++);
+    }
+    return children;
+  },
+  'setChildren': function(expr, children) {
+    var numChildren = children.length;
+    var prevNumChildren = Module['_BinaryenBlockGetNumChildren'](expr);
+    var index = 0;
+    while (index < numChildren) {
+      if (index < prevNumChildren) {
+        Module['_BinaryenBlockSetChildAt'](expr, index, children[index]);
+      } else {
+        Module['_BinaryenBlockAppendChild'](expr, children[index]);
+      }
+      ++index;
+    }
+    while (prevNumChildren > index) {
+      Module['_BinaryenBlockRemoveChildAt'](expr, --prevNumChildren);
+    }
+  },
+  'getChildAt': function(expr, index) {
+    return Module['_BinaryenBlockGetChildAt'](expr, index);
+  },
+  'setChildAt': function(expr, index, childExpr) {
+    Module['_BinaryenBlockSetChildAt'](expr, index, childExpr);
+  },
+  'appendChild': function(expr, childExpr) {
+    return Module['_BinaryenBlockAppendChild'](expr, childExpr);
+  },
+  'insertChildAt': function(expr, index, childExpr) {
+    Module['_BinaryenBlockInsertChildAt'](expr, index, childExpr);
+  },
+  'removeChildAt': function(expr, index) {
+    return Module['_BinaryenBlockRemoveChildAt'](expr, index);
+  }
+});
+
+Module['If'] = makeExpressionWrapper({
+  'getCondition': function(expr) {
+    return Module['_BinaryenIfGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenIfSetCondition'](expr, condExpr);
+  },
+  'getIfTrue': function(expr) {
+    return Module['_BinaryenIfGetIfTrue'](expr);
+  },
+  'setIfTrue': function(expr, ifTrueExpr) {
+    Module['_BinaryenIfSetIfTrue'](expr, ifTrueExpr);
+  },
+  'getIfFalse': function(expr) {
+    return Module['_BinaryenIfGetIfFalse'](expr);
+  },
+  'setIfFalse': function(expr, ifFalseExpr) {
+    Module['_BinaryenIfSetIfFalse'](expr, ifFalseExpr);
+  }
+});
+
+Module['Loop'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenLoopGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenLoopSetName'](expr, strToStack(name));
+    });
+  },
+  'getBody': function(expr) {
+    return Module['_BinaryenLoopGetBody'](expr);
+  },
+  'setBody': function(expr, bodyExpr) {
+    Module['_BinaryenLoopSetBody'](expr, bodyExpr);
+  }
+});
+
+Module['Break'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    var name = Module['_BinaryenBreakGetName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenBreakSetName'](expr, strToStack(name));
+    });
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenBreakGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenBreakSetCondition'](expr, condExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenBreakGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenBreakSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Switch'] = makeExpressionWrapper({
+  'getNumNames': function(expr) {
+    return Module['_BinaryenSwitchGetNumNames'](expr);
+  },
+  'getNames': function(expr) {
+    var numNames = Module['_BinaryenSwitchGetNumNames'](expr);
+    var names = new Array(numNames);
+    var index = 0;
+    while (index < numNames) {
+      names[index] = UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index++));
+    }
+    return names;
+  },
+  'setNames': function(expr, names) {
+    var numNames = names.length;
+    var prevNumNames = Module['_BinaryenSwitchGetNumNames'](expr);
+    var index = 0;
+    while (index < numNames) {
+      preserveStack(function() {
+        if (index < prevNumNames) {
+          Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(names[index]));
+        } else {
+          Module['_BinaryenSwitchAppendName'](expr, strToStack(names[index]));
+        }
+      });
+      ++index;
+    }
+    while (prevNumNames > index) {
+      Module['_BinaryenSwitchRemoveNameAt'](expr, --prevNumNames);
+    }
+  },
+  'getDefaultName': function(expr) {
+    var name = Module['_BinaryenSwitchGetDefaultName'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setDefaultName': function(expr, defaultName) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchSetDefaultName'](expr, strToStack(defaultName));
+    });
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenSwitchGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenSwitchSetCondition'](expr, condExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenSwitchGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenSwitchSetValue'](expr, valueExpr);
+  },
+  'getNameAt': function(expr, index) {
+    return UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index));
+  },
+  'setNameAt': function(expr, index, name) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name));
+    });
+  },
+  'appendName': function(expr, name) {
+    preserveStack(function() {
+      return Module['_BinaryenSwitchAppendName'](expr, strToStack(name));
+    });
+  },
+  'insertNameAt': function(expr, index, name) {
+    preserveStack(function() {
+      Module['_BinaryenSwitchInsertNameAt'](expr, index, strToStack(name));
+    });
+  },
+  'removeNameAt': function(expr, index) {
+    return UTF8ToString(Module['_BinaryenSwitchRemoveNameAt'](expr, index));
+  },
+});
+
+Module['Call'] = makeExpressionWrapper({
+  'getTarget': function(expr) {
+    return UTF8ToString(Module['_BinaryenCallGetTarget'](expr));
+  },
+  'setTarget': function(expr, targetName) {
+    preserveStack(function() {
+      Module['_BinaryenCallSetTarget'](expr, strToStack(targetName));
+    });
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenCallGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenCallGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenCallGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenCallGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenCallSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenCallAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenCallRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenCallGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenCallAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenCallRemoveOperandAt'](expr, index);
+  },
+  'isReturn': function(expr) {
+    return Boolean(Module['_BinaryenCallIsReturn'](expr));
+  },
+  'setReturn': function(expr, isReturn) {
+    Module['_BinaryenCallSetReturn'](expr, isReturn);
+  }
+});
+
+Module['CallIndirect'] = makeExpressionWrapper({
+  'getTarget': function(expr) {
+    return Module['_BinaryenCallIndirectGetTarget'](expr);
+  },
+  'setTarget': function(expr, targetExpr) {
+    Module['_BinaryenCallIndirectSetTarget'](expr, targetExpr);
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenCallIndirectGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenCallIndirectGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenCallIndirectAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenCallIndirectRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenCallIndirectGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenCallIndirectAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenCallIndirectInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenCallIndirectRemoveOperandAt'](expr, index);
+  },
+  'isReturn': function(expr) {
+    return Boolean(Module['_BinaryenCallIndirectIsReturn'](expr));
+  },
+  'setReturn': function(expr, isReturn) {
+    Module['_BinaryenCallIndirectSetReturn'](expr, isReturn);
+  },
+  'getParams': function(expr) {
+    return Module['_BinaryenCallIndirectGetParams'](expr);
+  },
+  'setParams': function(expr, params) {
+    Module['_BinaryenCallIndirectSetParams'](expr, params);
+  },
+  'getResults': function(expr) {
+    return Module['_BinaryenCallIndirectGetResults'](expr);
+  },
+  'setResults': function(expr, results) {
+    Module['_BinaryenCallIndirectSetResults'](expr, results);
+  }
+});
+
+Module['LocalGet'] = makeExpressionWrapper({
+  'getIndex': function(expr) {
+    return Module['_BinaryenLocalGetGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenLocalGetSetIndex'](expr, index);
+  }
+});
+
+Module['LocalSet'] = makeExpressionWrapper({
+  'getIndex': function(expr) {
+    return Module['_BinaryenLocalSetGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenLocalSetSetIndex'](expr, index);
+  },
+  'isTee': function(expr) {
+    return Boolean(Module['_BinaryenLocalSetIsTee'](expr));
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenLocalSetGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenLocalSetSetValue'](expr, valueExpr);
+  }
+});
+
+Module['GlobalGet'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    return UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr));
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenGlobalGetSetName'](expr, strToStack(name));
+    });
+  }
+});
+
+Module['GlobalSet'] = makeExpressionWrapper({
+  'getName': function(expr) {
+    return UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr));
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenGlobalSetSetName'](expr, strToStack(name));
+    });
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenGlobalSetGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenGlobalSetSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Host'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenHostGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenHostSetOp'](expr, op);
+  },
+  'getNameOperand': function(expr) {
+    var name = Module['_BinaryenHostGetNameOperand'](expr);
+    return name ? UTF8ToString(name) : null;
+  },
+  'setNameOperand': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenHostSetNameOperand'](expr, strToStack(name));
+    });
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenHostGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenHostGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenHostGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenHostSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenHostAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenHostGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenHostRemoveOperandAt'](expr, index);
+  },
+});
+
+Module['Load'] = makeExpressionWrapper({
+  'isAtomic': function(expr) {
+    return Boolean(Module['_BinaryenLoadIsAtomic'](expr));
+  },
+  'setAtomic': function(expr, isAtomic) {
+    Module['_BinaryenLoadSetAtomic'](expr, isAtomic);
+  },
+  'isSigned': function(expr) {
+    return Boolean(Module['_BinaryenLoadIsSigned'](expr));
+  },
+  'setSigned': function(expr, isSigned) {
+    Module['_BinaryenLoadSetSigned'](expr, isSigned);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenLoadGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenLoadSetOffset'](expr, offset);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenLoadGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenLoadSetBytes'](expr, bytes);
+  },
+  'getAlign': function(expr) {
+    return Module['_BinaryenLoadGetAlign'](expr);
+  },
+  'setAlign': function(expr, align) {
+    Module['_BinaryenLoadSetAlign'](expr, align);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenLoadGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenLoadSetPtr'](expr, ptrExpr);
+  }
+});
+
+Module['Store'] = makeExpressionWrapper({
+  'isAtomic': function(expr) {
+    return Boolean(Module['_BinaryenStoreIsAtomic'](expr));
+  },
+  'setAtomic': function(expr, isAtomic) {
+    Module['_BinaryenStoreSetAtomic'](expr, isAtomic);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenStoreGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenStoreSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenStoreGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenStoreSetOffset'](expr, offset);
+  },
+  'getAlign': function(expr) {
+    return Module['_BinaryenStoreGetAlign'](expr);
+  },
+  'setAlign': function(expr, align) {
+    Module['_BinaryenStoreSetAlign'](expr, align);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenStoreGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenStoreSetPtr'](expr, ptrExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenStoreGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenStoreSetValue'](expr, valueExpr);
+  },
+  'getValueType': function(expr) {
+    return Module['_BinaryenStoreGetValueType'](expr);
+  },
+  'setValueType': function(expr, valueType) {
+    Module['_BinaryenStoreSetValueType'](expr, valueType);
+  }
+});
+
+Module['Const'] = makeExpressionWrapper({
+  'getValueI32': function(expr) {
+    return Module['_BinaryenConstGetValueI32'](expr);
+  },
+  'setValueI32': function(expr, value) {
+    Module['_BinaryenConstSetValueI32'](expr, value);
+  },
+  'getValueI64Low': function(expr) {
+    return Module['_BinaryenConstGetValueI64Low'](expr);
+  },
+  'setValueI64Low': function(expr, value) {
+    Module['_BinaryenConstSetValueI64Low'](expr, value);
+  },
+  'getValueI64High': function(expr) {
+    return Module['_BinaryenConstGetValueI64High'](expr);
+  },
+  'setValueI64High': function(expr, value) {
+    Module['_BinaryenConstSetValueI64High'](expr, value);
+  },
+  'getValueF32': function(expr) {
+    return Module['_BinaryenConstGetValueF32'](expr);
+  },
+  'setValueF32': function(expr, value) {
+    Module['_BinaryenConstSetValueF32'](expr, value);
+  },
+  'getValueF64': function(expr) {
+    return Module['_BinaryenConstGetValueF64'](expr);
+  },
+  'setValueF64': function(expr, value) {
+    Module['_BinaryenConstSetValueF64'](expr, value);
+  },
+  'getValueV128': function(expr) {
+    var value;
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
+      value = new Array(16);
+      for (var i = 0 ; i < 16; ++i) {
+        value[i] = HEAPU8[tempBuffer + i];
+      }
+    });
+    return value;
+  },
+  'setValueV128': function(expr, value) {
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      for (var i = 0 ; i < 16; ++i) {
+        HEAPU8[tempBuffer + i] = value[i];
+      }
+      Module['_BinaryenConstSetValueV128'](expr, tempBuffer);
+    });
+  }
+});
+
+Module['Unary'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenUnaryGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenUnarySetOp'](expr, op);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenUnaryGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenUnarySetValue'](expr, valueExpr);
+  }
+});
+
+Module['Binary'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenBinaryGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenBinarySetOp'](expr, op);
+  },
+  'getLeft': function(expr) {
+    return Module['_BinaryenBinaryGetLeft'](expr);
+  },
+  'setLeft': function(expr, leftExpr) {
+    Module['_BinaryenBinarySetLeft'](expr, leftExpr);
+  },
+  'getRight': function(expr) {
+    return Module['_BinaryenBinaryGetRight'](expr);
+  },
+  'setRight': function(expr, rightExpr) {
+    Module['_BinaryenBinarySetRight'](expr, rightExpr);
+  }
+});
+
+Module['Select'] = makeExpressionWrapper({
+  'getIfTrue': function(expr) {
+    return Module['_BinaryenSelectGetIfTrue'](expr);
+  },
+  'setIfTrue': function(expr, ifTrueExpr) {
+    Module['_BinaryenSelectSetIfTrue'](expr, ifTrueExpr);
+  },
+  'getIfFalse': function(expr) {
+    return Module['_BinaryenSelectGetIfFalse'](expr);
+  },
+  'setIfFalse': function(expr, ifFalseExpr) {
+    Module['_BinaryenSelectSetIfFalse'](expr, ifFalseExpr);
+  },
+  'getCondition': function(expr) {
+    return Module['_BinaryenSelectGetCondition'](expr);
+  },
+  'setCondition': function(expr, condExpr) {
+    Module['_BinaryenSelectSetCondition'](expr, condExpr);
+  }
+});
+
+Module['Drop'] = makeExpressionWrapper({
+  'getValue': function(expr) {
+    return Module['_BinaryenDropGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenDropSetValue'](expr, valueExpr);
+  }
+});
+
+Module['Return'] = makeExpressionWrapper({
+  'getValue': function(expr) {
+    return Module['_BinaryenReturnGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenReturnSetValue'](expr, valueExpr);
+  }
+});
+
+Module['AtomicRMW'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenAtomicRMWGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenAtomicRMWSetOp'](expr, op);
+  },
+  'getBytes': function(expr) {
+    return Module['_BinaryenAtomicRMWGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenAtomicRMWSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenAtomicRMWGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenAtomicRMWSetOffset'](expr, offset);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicRMWGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicRMWSetPtr'](expr, ptrExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenAtomicRMWGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenAtomicRMWSetValue'](expr, valueExpr);
+  }
+});
+
+Module['AtomicCmpxchg'] = makeExpressionWrapper({
+  'getBytes': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetBytes'](expr);
+  },
+  'setBytes': function(expr, bytes) {
+    Module['_BinaryenAtomicCmpxchgSetBytes'](expr, bytes);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenAtomicCmpxchgSetOffset'](expr, offset);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicCmpxchgSetPtr'](expr, ptrExpr);
+  },
+  'getExpected': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetExpected'](expr);
+  },
+  'setExpected': function(expr, expectedExpr) {
+    Module['_BinaryenAtomicCmpxchgSetExpected'](expr, expectedExpr);
+  },
+  'getReplacement': function(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetReplacement'](expr);
+  },
+  'setReplacement': function(expr, replacementExpr) {
+    Module['_BinaryenAtomicCmpxchgSetReplacement'](expr, replacementExpr);
+  }
+});
+
+Module['AtomicWait'] = makeExpressionWrapper({
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicWaitGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicWaitSetPtr'](expr, ptrExpr);
+  },
+  'getExpected': function(expr) {
+    return Module['_BinaryenAtomicWaitGetExpected'](expr);
+  },
+  'setExpected': function(expr, expectedExpr) {
+    Module['_BinaryenAtomicWaitSetExpected'](expr, expectedExpr);
+  },
+  'getTimeout': function(expr) {
+    return Module['_BinaryenAtomicWaitGetTimeout'](expr);
+  },
+  'setTimeout': function(expr, timeoutExpr) {
+    Module['_BinaryenAtomicWaitSetTimeout'](expr, timeoutExpr);
+  },
+  'getExpectedType': function(expr) {
+    return Module['_BinaryenAtomicWaitGetExpectedType'](expr);
+  },
+  'setExpectedType': function(expr, expectedType) {
+    Module['_BinaryenAtomicWaitSetExpectedType'](expr, expectedType);
+  }
+});
+
+Module['AtomicNotify'] = makeExpressionWrapper({
+  'getPtr': function(expr) {
+    return Module['_BinaryenAtomicNotifyGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenAtomicNotifySetPtr'](expr, ptrExpr);
+  },
+  'getNotifyCount': function(expr) {
+    return Module['_BinaryenAtomicNotifyGetNotifyCount'](expr);
+  },
+  'setNotifyCount': function(expr, notifyCountExpr) {
+    Module['_BinaryenAtomicNotifySetNotifyCount'](expr, notifyCountExpr);
+  }
+});
+
+Module['AtomicFence'] = makeExpressionWrapper({
+  'getOrder': function(expr) {
+    return Module['_BinaryenAtomicFenceGetOrder'](expr);
+  },
+  'setOrder': function(expr, order) {
+    Module['_BinaryenAtomicFenceSetOrder'](expr, order);
+  }
+});
+
+Module['SIMDExtract'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenSIMDExtractGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenSIMDExtractSetOp'](expr, op);
+  },
+  'getVec': function(expr) {
+    return Module['_BinaryenSIMDExtractGetVec'](expr);
+  },
+  'setVec': function(expr, vecExpr) {
+    Module['_BinaryenSIMDExtractSetVec'](expr, vecExpr);
+  },
+  'getIndex': function(expr) {
+    return Module['_BinaryenSIMDExtractGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenSIMDExtractSetIndex'](expr, index)
+  }
+});
+
+Module['SIMDReplace'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenSIMDReplaceGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenSIMDReplaceSetOp'](expr, op);
+  },
+  'getVec': function(expr) {
+    return Module['_BinaryenSIMDReplaceGetVec'](expr);
+  },
+  'setVec': function(expr, vecExpr) {
+    Module['_BinaryenSIMDReplaceSetVec'](expr, vecExpr);
+  },
+  'getIndex': function(expr) {
+    return Module['_BinaryenSIMDReplaceGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenSIMDReplaceSetIndex'](expr, index);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenSIMDReplaceGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenSIMDReplaceSetValue'](expr, valueExpr);
+  }
+});
+
+Module['SIMDShuffle'] = makeExpressionWrapper({
+  'getLeft': function(expr) {
+    return Module['_BinaryenSIMDShuffleGetLeft'](expr);
+  },
+  'setLeft': function(expr, leftExpr) {
+    Module['_BinaryenSIMDShuffleSetLeft'](expr, leftExpr)
+  },
+  'getRight': function(expr) {
+    return Module['_BinaryenSIMDShuffleGetRight'](expr);
+  },
+  'setRight': function(expr, rightExpr) {
+    Module['_BinaryenSIMDShuffleSetRight'](expr, rightExpr);
+  },
+  'getMask': function(expr) {
+    var mask;
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
+      mask = new Array(16);
+      for (var i = 0 ; i < 16; ++i) {
+        mask[i] = HEAPU8[tempBuffer + i];
+      }
+    });
+    return mask;
+  },
+  'setMask': function(expr, mask) {
+    preserveStack(function() {
+      var tempBuffer = stackAlloc(16);
+      for (var i = 0 ; i < 16; ++i) {
+        HEAPU8[tempBuffer + i] = mask[i];
+      }
+      Module['_BinaryenSIMDShuffleSetMask'](expr, tempBuffer);
+    });
+  }
+});
+
+Module['SIMDTernary'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenSIMDTernaryGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenSIMDTernarySetOp'](expr, op);
+  },
+  'getA': function(expr) {
+    return Module['_BinaryenSIMDTernaryGetA'](expr);
+  },
+  'setA': function(expr, aExpr) {
+    Module['_BinaryenSIMDTernarySetA'](expr, aExpr);
+  },
+  'getB': function(expr) {
+    return Module['_BinaryenSIMDTernaryGetB'](expr);
+  },
+  'setB': function(expr, bExpr) {
+    Module['_BinaryenSIMDTernarySetB'](expr, bExpr);
+  },
+  'getC': function(expr) {
+    return Module['_BinaryenSIMDTernaryGetC'](expr);
+  },
+  'setC': function(expr, cExpr) {
+    Module['_BinaryenSIMDTernarySetC'](expr, cExpr);
+  }
+});
+
+Module['SIMDShift'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenSIMDShiftGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenSIMDShiftSetOp'](expr, op);
+  },
+  'getVec': function(expr) {
+    return Module['_BinaryenSIMDShiftGetVec'](expr);
+  },
+  'setVec': function(expr, vecExpr) {
+    Module['_BinaryenSIMDShiftSetVec'](expr, vecExpr);
+  },
+  'getShift': function(expr) {
+    return Module['_BinaryenSIMDShiftGetShift'](expr);
+  },
+  'setShift': function(expr, shiftExpr) {
+    Module['_BinaryenSIMDShiftSetShift'](expr, shiftExpr);
+  }
+});
+
+Module['SIMDLoad'] = makeExpressionWrapper({
+  'getOp': function(expr) {
+    return Module['_BinaryenSIMDLoadGetOp'](expr);
+  },
+  'setOp': function(expr, op) {
+    Module['_BinaryenSIMDLoadSetOp'](expr, op);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenSIMDLoadGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenSIMDLoadSetOffset'](expr, offset);
+  },
+  'getAlign': function(expr) {
+    return Module['_BinaryenSIMDLoadGetAlign'](expr);
+  },
+  'setAlign': function(expr, align) {
+    Module['_BinaryenSIMDLoadSetAlign'](expr, align);
+  },
+  'getPtr': function(expr) {
+    return Module['_BinaryenSIMDLoadGetPtr'](expr);
+  },
+  'setPtr': function(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadSetPtr'](expr, ptrExpr);
+  }
+});
+
+Module['MemoryInit'] = makeExpressionWrapper({
+  'getSegment': function(expr) {
+    return Module['_BinaryenMemoryInitGetSegment'](expr);
+  },
+  'setSegment': function(expr, segmentIndex) {
+    Module['_BinaryenMemoryInitSetSegment'](expr, segmentIndex);
+  },
+  'getDest': function(expr) {
+    return Module['_BinaryenMemoryInitGetDest'](expr);
+  },
+  'setDest': function(expr, destExpr) {
+    Module['_BinaryenMemoryInitSetDest'](expr, destExpr);
+  },
+  'getOffset': function(expr) {
+    return Module['_BinaryenMemoryInitGetOffset'](expr);
+  },
+  'setOffset': function(expr, offset) {
+    Module['_BinaryenMemoryInitSetOffset'](expr, offset);
+  },
+  'getSize': function(expr) {
+    return Module['_BinaryenMemoryInitGetSize'](expr);
+  },
+  'setSize': function(expr, sizeExpr) {
+    Module['_BinaryenMemoryInitSetSize'](expr, sizeExpr);
+  }
+});
+
+Module['DataDrop'] = makeExpressionWrapper({
+  'getSegment': function(expr) {
+    return Module['_BinaryenDataDropGetSegment'](expr);
+  },
+  'setSegment': function(expr, segmentIndex) {
+    Module['_BinaryenDataDropSetSegment'](expr, segmentIndex);
+  }
+});
+
+Module['MemoryCopy'] = makeExpressionWrapper({
+  'getDest': function(expr) {
+    return Module['_BinaryenMemoryCopyGetDest'](expr);
+  },
+  'setDest': function(expr, destExpr) {
+    Module['_BinaryenMemoryCopySetDest'](expr, destExpr);
+  },
+  'getSource': function(expr) {
+    return Module['_BinaryenMemoryCopyGetSource'](expr);
+  },
+  'setSource': function(expr, sourceExpr) {
+    Module['_BinaryenMemoryCopySetSource'](expr, sourceExpr);
+  },
+  'getSize': function(expr) {
+    return Module['_BinaryenMemoryCopyGetSize'](expr);
+  },
+  'setSize': function(expr, sizeExpr) {
+    Module['_BinaryenMemoryCopySetSize'](expr, sizeExpr);
+  }
+});
+
+Module['MemoryFill'] = makeExpressionWrapper({
+  'getDest': function(expr) {
+    return Module['_BinaryenMemoryFillGetDest'](expr);
+  },
+  'setDest': function(expr, destExpr) {
+    Module['_BinaryenMemoryFillSetDest'](expr, destExpr);
+  },
+  'getValue': function(expr) {
+    return Module['_BinaryenMemoryFillGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenMemoryFillSetValue'](expr, valueExpr);
+  },
+  'getSize': function(expr) {
+    return Module['_BinaryenMemoryFillGetSize'](expr);
+  },
+  'setSize': function(expr, sizeExpr) {
+    Module['_BinaryenMemoryFillSetSize'](expr, sizeExpr);
+  }
+});
+
+Module['RefIsNull'] = makeExpressionWrapper({
+  'getValue': function(expr) {
+    return Module['_BinaryenRefIsNullGetValue'](expr);
+  },
+  'setValue': function(expr, valueExpr) {
+    Module['_BinaryenRefIsNullSetValue'](expr, valueExpr);
+  }
+});
+
+Module['RefFunc'] = makeExpressionWrapper({
+  'getFunc': function(expr) {
+    return UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr));
+  },
+  'setFunc': function(expr, funcName) {
+    preserveStack(function() {
+      Module['_BinaryenRefFuncSetFunc'](expr, strToStack(funcName));
+    });
+  }
+});
+
+Module['Try'] = makeExpressionWrapper({
+  'getBody': function(expr) {
+    return Module['_BinaryenTryGetBody'](expr);
+  },
+  'setBody': function(expr, bodyExpr) {
+    Module['_BinaryenTrySetBody'](expr, bodyExpr);
+  },
+  'getCatchBody': function(expr) {
+    return Module['_BinaryenTryGetCatchBody'](expr);
+  },
+  'setCatchBody': function(expr, catchBodyExpr) {
+    Module['_BinaryenTrySetCatchBody'](expr, catchBodyExpr);
+  }
+});
+
+Module['Throw'] = makeExpressionWrapper({
+  'getEvent': function(expr) {
+    return UTF8ToString(Module['_BinaryenThrowGetEvent'](expr));
+  },
+  'setEvent': function(expr, eventName) {
+    preserveStack(function() {
+      Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName));
+    });
+  },
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenThrowGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenThrowGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenThrowSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenThrowAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenThrowRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenThrowGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenThrowSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenThrowAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenThrowInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenThrowRemoveOperandAt'](expr, index);
+  },
+});
+
+Module['Rethrow'] = makeExpressionWrapper({
+  'getExnref': function(expr) {
+    return Module['_BinaryenRethrowGetExnref'](expr);
+  },
+  'setExnref': function(expr, exnrefExpr) {
+    Module['_BinaryenRethrowSetExnref'](expr, exnrefExpr);
+  }
+});
+
+Module['BrOnExn'] = makeExpressionWrapper({
+  'getEvent': function(expr) {
+    return UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr));
+  },
+  'setEvent': function(expr, eventName) {
+    preserveStack(function() {
+      Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName));
+    });
+  },
+  'getName': function(expr) {
+    return UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr));
+  },
+  'setName': function(expr, name) {
+    preserveStack(function() {
+      Module['_BinaryenBrOnExnSetName'](expr, strToStack(name));
+    });
+  },
+  'getExnref': function(expr) {
+    return Module['_BinaryenBrOnExnGetExnref'](expr);
+  },
+  'setExnref': function(expr, exnrefExpr) {
+    Module['_BinaryenBrOnExnSetExnref'](expr, exnrefExpr);
+  }
+});
+
+Module['TupleMake'] = makeExpressionWrapper({
+  'getNumOperands': function(expr) {
+    return Module['_BinaryenTupleMakeGetNumOperands'](expr);
+  },
+  'getOperands': function(expr) {
+    var numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    var operands = new Array(numOperands);
+    var index = 0;
+    while (index < numOperands) {
+      operands[index] = Module['_BinaryenTupleMakeGetOperandAt'](expr, index++);
+    }
+    return operands;
+  },
+  'setOperands': function(expr, operands) {
+    var numOperands = operands.length;
+    var prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    var index = 0;
+    while (index < numOperands) {
+      if (index < prevNumOperands) {
+        Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operands[index]);
+      } else {
+        Module['_BinaryenTupleMakeAppendOperand'](expr, operands[index]);
+      }
+      ++index;
+    }
+    while (prevNumOperands > index) {
+      Module['_BinaryenTupleMakeRemoveOperandAt'](expr, --prevNumOperands);
+    }
+  },
+  'getOperandAt': function(expr, index) {
+    return Module['_BinaryenTupleMakeGetOperandAt'](expr, index);
+  },
+  'setOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand': function(expr, operandExpr) {
+    return Module['_BinaryenTupleMakeAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt': function(expr, index, operandExpr) {
+    Module['_BinaryenTupleMakeInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt': function(expr, index) {
+    return Module['_BinaryenTupleMakeRemoveOperandAt'](expr, index);
+  }
+});
+
+Module['TupleExtract'] = makeExpressionWrapper({
+  'getTuple': function(expr) {
+    return Module['_BinaryenTupleExtractGetTuple'](expr);
+  },
+  'setTuple': function(expr, tupleExpr) {
+    Module['_BinaryenTupleExtractSetTuple'](expr, tupleExpr);
+  },
+  'getIndex': function(expr) {
+    return Module['_BinaryenTupleExtractGetIndex'](expr);
+  },
+  'setIndex': function(expr, index) {
+    Module['_BinaryenTupleExtractSetIndex'](expr, index);
+  }
+});
 
 // Additional customizations
 

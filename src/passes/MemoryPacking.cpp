@@ -79,7 +79,7 @@ namespace {
 Expression* makeShiftedMemorySize(Builder& builder) {
   return builder.makeBinary(ShlInt32,
                             builder.makeHost(MemorySize, Name(), {}),
-                            builder.makeConst(Literal(int32_t(16))));
+                            builder.makeConst(int32_t(16)));
 }
 
 } // anonymous namespace
@@ -437,8 +437,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
     Expression* offset = nullptr;
     if (!segment.isPassive) {
       if (auto* c = segment.offset->dynCast<Const>()) {
-        offset =
-          builder.makeConst(Literal(int32_t(c->value.geti32() + range.start)));
+        offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
       } else {
         assert(ranges.size() == 1);
         offset = segment.offset;
@@ -497,7 +496,7 @@ void MemoryPacking::createReplacements(Module* module,
                            std::to_string(dropStateGlobalCount++));
     module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
     return dropStateGlobal;
   };
@@ -576,21 +575,20 @@ void MemoryPacking::createReplacements(Module* module,
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
       if (auto* c = init->dest->dynCast<Const>()) {
-        dest =
-          builder.makeConst(Literal(int32_t(c->value.geti32() + bytesWritten)));
+        dest = builder.makeConst(int32_t(c->value.geti32() + bytesWritten));
       } else {
         auto* get = builder.makeLocalGet(-1, Type::i32);
         getVars.push_back(&get->index);
         dest = get;
         if (bytesWritten > 0) {
-          Const* addend = builder.makeConst(Literal(int32_t(bytesWritten)));
+          Const* addend = builder.makeConst(int32_t(bytesWritten));
           dest = builder.makeBinary(AddInt32, dest, addend);
         }
       }
 
       // How many bytes are read from this range
       size_t bytes = std::min(range.end, end) - std::max(range.start, start);
-      Expression* size = builder.makeConst(Literal(int32_t(bytes)));
+      Expression* size = builder.makeConst(int32_t(bytes));
       bytesWritten += bytes;
 
       // Create new memory.init or memory.fill
@@ -600,7 +598,7 @@ void MemoryPacking::createReplacements(Module* module,
         appendResult(builder.makeMemoryFill(dest, value, size));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
-        Expression* offset = builder.makeConst(Literal(int32_t(offsetBytes)));
+        Expression* offset = builder.makeConst(int32_t(offsetBytes));
         appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
         initIndex++;
       }
@@ -634,8 +632,8 @@ void MemoryPacking::createReplacements(Module* module,
 
     // Track drop state in a global only if some memory.init required it
     if (dropStateGlobal != Name()) {
-      appendResult(builder.makeGlobalSet(
-        dropStateGlobal, builder.makeConst(Literal(int32_t(1)))));
+      appendResult(
+        builder.makeGlobalSet(dropStateGlobal, builder.makeConst(int32_t(1))));
     }
     size_t dropIndex = segmentIndex;
     for (auto range : ranges) {

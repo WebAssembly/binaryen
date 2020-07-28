@@ -91,7 +91,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   if (PointerType == Type::i32) {
     added = builder.makeBinary(AddInt32,
                                builder.makeLocalGet(local, PointerType),
-                               builder.makeConst(Literal(int32_t(size))));
+                               builder.makeConst(int32_t(size)));
   } else {
     WASM_UNREACHABLE("unhandled PointerType");
   }
