@@ -49,4 +49,21 @@
     )
    )
   )
+  (func $nofallthrough
+    (local $x i32)
+    (local.set $x
+     (i32.load
+      (i32.const 1024)
+     )
+    )
+    (drop
+     (f32.reinterpret_i32
+      (block (result i32)
+       (nop) ;; this would be removed by other opts, but in general, we can't
+             ;; just look at the fallthrough, as we can't just remove code here
+       (local.get $x)
+      )
+     )
+    )
+  )
 )

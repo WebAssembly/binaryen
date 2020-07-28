@@ -17,7 +17,8 @@
 // Avoids reinterprets by using more loads: if we load a value and
 // reinterpret it, we could have loaded it with the other type
 // anyhow. This uses more locals and loads, so it is not generally
-// beneficial, unless reinterprets are very costly.
+// beneficial, unless reinterprets are very costly (which is the case
+// with wasm2js).
 
 #include <ir/local-graph.h>
 #include <ir/properties.h>
@@ -147,8 +148,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
       void visitUnary(Unary* curr) {
         if (isReinterpret(curr)) {
-          auto* value = Properties::getFallthrough(
-            curr->value, passOptions, module->features);
+          auto* value = curr->value;
           if (auto* load = value->dynCast<Load>()) {
             // A reinterpret of a load - flip it right here if we can.
             if (canReplaceWithReinterpret(load)) {

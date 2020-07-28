@@ -163,4 +163,20 @@
    )
   )
  )
+ (func $nofallthrough
+  (local $x i32)
+  (local.set $x
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (f32.reinterpret_i32
+    (block $block (result i32)
+     (nop)
+     (local.get $x)
+    )
+   )
+  )
+ )
 )
