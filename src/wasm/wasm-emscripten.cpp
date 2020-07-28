@@ -171,17 +171,6 @@ void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
   exportFunction(wasm, f->name, true);
 }
 
-void EmscriptenGlueGenerator::generateDynCallThunks() {
-  Builder builder(wasm);
-  std::vector<Name> tableSegmentData;
-  if (wasm.table.segments.size() > 0) {
-    tableSegmentData = wasm.table.segments[0].data;
-  }
-  for (const auto& indirectFunc : tableSegmentData) {
-    generateDynCallThunk(wasm.getFunction(indirectFunc)->sig);
-  }
-}
-
 // lld can sometimes produce a build with an imported mutable __stack_pointer
 // (i.e.  when linking with -fpie).  This method internalizes the
 // __stack_pointer and initializes it from an immutable global instead.
