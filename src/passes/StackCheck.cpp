@@ -23,8 +23,8 @@
 #include "abi/js.h"
 #include "ir/import-utils.h"
 #include "pass.h"
-#include "support/debug.h"
 #include "shared-constants.h"
+#include "support/debug.h"
 #include "wasm-emscripten.h"
 
 #define DEBUG_TYPE "stack-check"
@@ -118,10 +118,9 @@ struct EnforceStackLimit : public WalkerPass<PostWalker<EnforceStackLimit>> {
 private:
   Global* stackPointer;
   Global* stackLimit;
-  Builder &builder;
+  Builder& builder;
   Name handler;
 };
-
 
 struct StackCheck : public Pass {
   void run(PassRunner* runner, Module* module) override {
@@ -132,7 +131,8 @@ struct StackCheck : public Pass {
     }
 
     Name handler;
-    auto handlerName = runner->options.getArgumentOrDefault("stack-check-handler", "");
+    auto handlerName =
+      runner->options.getArgumentOrDefault("stack-check-handler", "");
     if (handlerName != "") {
       handler = handlerName;
       importStackOverflowHandler(*module, handler);
@@ -140,9 +140,9 @@ struct StackCheck : public Pass {
 
     Builder builder(*module);
     Global* stackLimit = builder.makeGlobal(STACK_LIMIT,
-                                     stackPointer->type,
-                                     builder.makeConst(int32_t(0)),
-                                     Builder::Mutable);
+                                            stackPointer->type,
+                                            builder.makeConst(int32_t(0)),
+                                            Builder::Mutable);
     module->addGlobal(stackLimit);
 
     PassRunner innerRunner(module);
