@@ -254,13 +254,8 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBinary(node, XOR, 1)) {
-      // x ^ 1  =>  !x
-      node[0]->setString(UNARY_PREFIX);
-      node[1]->setString(L_NOT);
-      node[3]->setNull();
-    }
     // TODO: in some cases it may be possible to turn
     //
     //   if (x | 0)
