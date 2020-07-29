@@ -3066,14 +3066,8 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method
-      prototype[memberName] = function(/* arguments */) {
-        var numArgs = arguments.length;
-        var args = new Array(1 + numArgs);
-        args[0] = this['expr'];
-        for (var i = 0; i < numArgs; ++i) {
-          args[1 + i] = arguments[i];
-        }
-        return this.constructor[memberName].apply(null, args);
+      prototype[memberName] = function(...args) {
+        return this.constructor[memberName](this['expr'], ...args);
       };
       // Instance accessor calls the respective static methods
       let match;
@@ -3279,9 +3273,7 @@ Module['Switch'] = makeExpressionWrapper({
     return name ? UTF8ToString(name) : null;
   },
   'setDefaultName'(expr, defaultName) {
-    preserveStack(() => {
-      Module['_BinaryenSwitchSetDefaultName'](expr, strToStack(defaultName));
-    });
+    preserveStack(() => { Module['_BinaryenSwitchSetDefaultName'](expr, strToStack(defaultName)) });
   },
   'getCondition'(expr) {
     return Module['_BinaryenSwitchGetCondition'](expr);
@@ -3299,19 +3291,13 @@ Module['Switch'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index));
   },
   'setNameAt'(expr, index, name) {
-    preserveStack(() => {
-      Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name)) });
   },
   'appendName'(expr, name) {
-    preserveStack(() => {
-      return Module['_BinaryenSwitchAppendName'](expr, strToStack(name));
-    });
+    preserveStack(() => Module['_BinaryenSwitchAppendName'](expr, strToStack(name)));
   },
   'insertNameAt'(expr, index, name) {
-    preserveStack(() => {
-      Module['_BinaryenSwitchInsertNameAt'](expr, index, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenSwitchInsertNameAt'](expr, index, strToStack(name)) });
   },
   'removeNameAt'(expr, index) {
     return UTF8ToString(Module['_BinaryenSwitchRemoveNameAt'](expr, index));
@@ -3323,9 +3309,7 @@ Module['Call'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenCallGetTarget'](expr));
   },
   'setTarget'(expr, targetName) {
-    preserveStack(() => {
-      Module['_BinaryenCallSetTarget'](expr, strToStack(targetName));
-    });
+    preserveStack(() => { Module['_BinaryenCallSetTarget'](expr, strToStack(targetName)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenCallGetNumOperands'](expr);
@@ -3480,9 +3464,7 @@ Module['GlobalGet'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr));
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenGlobalGetSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenGlobalGetSetName'](expr, strToStack(name)) });
   }
 });
 
@@ -3491,9 +3473,7 @@ Module['GlobalSet'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr));
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenGlobalSetSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenGlobalSetSetName'](expr, strToStack(name)) });
   },
   'getValue'(expr) {
     return Module['_BinaryenGlobalSetGetValue'](expr);
@@ -3515,9 +3495,7 @@ Module['Host'] = makeExpressionWrapper({
     return name ? UTF8ToString(name) : null;
   },
   'setNameOperand'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenHostSetNameOperand'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenHostSetNameOperand'](expr, strToStack(name)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenHostGetNumOperands'](expr);
