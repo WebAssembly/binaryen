@@ -21,8 +21,8 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var global$0 = 10;
- function $0($0) {
-  $0 = $0 | 0;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
   folding_inner0 : {
    if (global$0) {
     break folding_inner0
@@ -36,7 +36,7 @@ function asmFunc(global, env, buffer) {
    }
    abort();
   }
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
  var FUNCTION_TABLE = [];

@@ -55,19 +55,19 @@ function asmFunc(global, env, buffer) {
   return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(2, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(2)) | 0) == ($0 | 0) | 0;
  }
  
- function $2($0, $1) {
+ function $2($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var $2 = 0;
+  $1_1 = $1_1 | 0;
+  var $2_1 = 0;
   wasm2js_scratch_store_i32(0, $0 | 0);
-  wasm2js_scratch_store_i32(1, $1 | 0);
+  wasm2js_scratch_store_i32(1, $1_1 | 0);
   wasm2js_scratch_store_f64(+wasm2js_scratch_load_f64());
-  $2 = wasm2js_scratch_load_i32(1) | 0;
-  return (wasm2js_scratch_load_i32(0) | 0) == ($0 | 0) & ($1 | 0) == ($2 | 0);
+  $2_1 = wasm2js_scratch_load_i32(1) | 0;
+  return (wasm2js_scratch_load_i32(0) | 0) == ($0 | 0) & ($1_1 | 0) == ($2_1 | 0);
  }
  
- function legalstub$2($0, $1) {
-  return $2($0, $1);
+ function legalstub$2($0, $1_1) {
+  return $2($0, $1_1);
  }
  
  var FUNCTION_TABLE = [];

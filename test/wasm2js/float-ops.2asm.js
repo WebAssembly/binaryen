@@ -20,148 +20,148 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1) {
+ function $1($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 + $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 + $1_1));
  }
  
- function $2($0, $1) {
+ function $2($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 - $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 - $1_1));
  }
  
- function $3($0, $1) {
+ function $3($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 * $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 * $1_1));
  }
  
- function $4($0, $1) {
+ function $4($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 / $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 / $1_1));
  }
  
- function $5($0, $1) {
+ function $5($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 + $1);
+  $1_1 = +$1_1;
+  return +($0 + $1_1);
  }
  
- function $6($0, $1) {
+ function $6($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 - $1);
+  $1_1 = +$1_1;
+  return +($0 - $1_1);
  }
  
- function $7($0, $1) {
+ function $7($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 * $1);
+  $1_1 = +$1_1;
+  return +($0 * $1_1);
  }
  
- function $8($0, $1) {
+ function $8($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 / $1);
+  $1_1 = +$1_1;
+  return +($0 / $1_1);
  }
  
- function $9($0, $1) {
+ function $9($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 == $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 == $1_1 | 0;
  }
  
- function $10($0, $1) {
+ function $10($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 != $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 != $1_1 | 0;
  }
  
- function $11($0, $1) {
+ function $11($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 >= $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 >= $1_1 | 0;
  }
  
- function $12($0, $1) {
+ function $12($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 > $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 > $1_1 | 0;
  }
  
- function $13($0, $1) {
+ function $13($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 <= $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 <= $1_1 | 0;
  }
  
- function $14($0, $1) {
+ function $14($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 < $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 < $1_1 | 0;
  }
  
- function $15($0, $1) {
+ function $15($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 == $1 | 0;
+  $1_1 = +$1_1;
+  return $0 == $1_1 | 0;
  }
  
- function $16($0, $1) {
+ function $16($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 != $1 | 0;
+  $1_1 = +$1_1;
+  return $0 != $1_1 | 0;
  }
  
- function $17($0, $1) {
+ function $17($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 >= $1 | 0;
+  $1_1 = +$1_1;
+  return $0 >= $1_1 | 0;
  }
  
- function $18($0, $1) {
+ function $18($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 > $1 | 0;
+  $1_1 = +$1_1;
+  return $0 > $1_1 | 0;
  }
  
- function $19($0, $1) {
+ function $19($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 <= $1 | 0;
+  $1_1 = +$1_1;
+  return $0 <= $1_1 | 0;
  }
  
- function $20($0, $1) {
+ function $20($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 < $1 | 0;
+  $1_1 = +$1_1;
+  return $0 < $1_1 | 0;
  }
  
- function $21($0, $1) {
+ function $21($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround(Math_min($0, $1)));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_min($0, $1_1)));
  }
  
- function $22($0, $1) {
+ function $22($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround(Math_max($0, $1)));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_max($0, $1_1)));
  }
  
- function $23($0, $1) {
+ function $23($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +Math_min($0, $1);
+  $1_1 = +$1_1;
+  return +Math_min($0, $1_1);
  }
  
- function $24($0, $1) {
+ function $24($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +Math_max($0, $1);
+  $1_1 = +$1_1;
+  return +Math_max($0, $1_1);
  }
  
  function $25($0) {
@@ -278,184 +278,184 @@ function asmFunc(global, env, buffer) {
  
  function $47($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), $3 = 0, $4 = 0, i64toi32_i32$1 = 0;
+  var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
    if (i64toi32_i32$0 > Math_fround(0.0)) {
-    $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
+    $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
    } else {
-    $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
+    $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
    }
-   $4 = $3;
+   $4_1 = $3_1;
   } else {
-   $4 = 0
+   $4_1 = 0
   }
-  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $48($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, $3 = 0, $4 = 0, i64toi32_i32$1 = 0;
+  var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
    if (i64toi32_i32$0 > 0.0) {
-    $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
+    $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
    } else {
-    $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
+    $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
    }
-   $4 = $3;
+   $4_1 = $3_1;
   } else {
-   $4 = 0
+   $4_1 = 0
   }
-  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $49($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), $3 = 0, $4 = 0, i64toi32_i32$1 = 0;
+  var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
    if (i64toi32_i32$0 > Math_fround(0.0)) {
-    $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
+    $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
    } else {
-    $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
+    $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
    }
-   $4 = $3;
+   $4_1 = $3_1;
   } else {
-   $4 = 0
+   $4_1 = 0
   }
-  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $50($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, $3 = 0, $4 = 0, i64toi32_i32$1 = 0;
+  var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
    if (i64toi32_i32$0 > 0.0) {
-    $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
+    $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
    } else {
-    $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
+    $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
    }
-   $4 = $3;
+   $4_1 = $3_1;
   } else {
-   $4 = 0
+   $4_1 = 0
   }
-  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
- function legalstub$43($0, $1) {
+ function legalstub$43($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
+  $1_1 = $1_1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10_1 = 0, $3_1 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
-  $3 = $0;
+  $3_1 = $0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1;
+  i64toi32_i32$2 = $1_1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   $10 = 0;
+   $10_1 = 0;
   } else {
    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-   $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $10_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $6$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $3$hi;
-  i64toi32_i32$0 = $3;
+  i64toi32_i32$0 = $3_1;
   i64toi32_i32$2 = $6$hi;
-  i64toi32_i32$3 = $10;
+  i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
   return Math_fround(Math_fround($43(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0)));
  }
  
- function legalstub$44($0, $1) {
+ function legalstub$44($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
+  $1_1 = $1_1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10_1 = 0, $3_1 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
-  $3 = $0;
+  $3_1 = $0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1;
+  i64toi32_i32$2 = $1_1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   $10 = 0;
+   $10_1 = 0;
   } else {
    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-   $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $10_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $6$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $3$hi;
-  i64toi32_i32$0 = $3;
+  i64toi32_i32$0 = $3_1;
   i64toi32_i32$2 = $6$hi;
-  i64toi32_i32$3 = $10;
+  i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
   return +(+$44(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0));
  }
  
- function legalstub$45($0, $1) {
+ function legalstub$45($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
+  $1_1 = $1_1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10_1 = 0, $3_1 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
-  $3 = $0;
+  $3_1 = $0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1;
+  i64toi32_i32$2 = $1_1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   $10 = 0;
+   $10_1 = 0;
   } else {
    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-   $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $10_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $6$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $3$hi;
-  i64toi32_i32$0 = $3;
+  i64toi32_i32$0 = $3_1;
   i64toi32_i32$2 = $6$hi;
-  i64toi32_i32$3 = $10;
+  i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
   return Math_fround(Math_fround($45(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0)));
  }
  
- function legalstub$46($0, $1) {
+ function legalstub$46($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
+  $1_1 = $1_1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10_1 = 0, $3_1 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
-  $3 = $0;
+  $3_1 = $0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1;
+  i64toi32_i32$2 = $1_1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   $10 = 0;
+   $10_1 = 0;
   } else {
    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-   $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $10_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $6$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $3$hi;
-  i64toi32_i32$0 = $3;
+  i64toi32_i32$0 = $3_1;
   i64toi32_i32$2 = $6$hi;
-  i64toi32_i32$3 = $10;
+  i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
   return +(+$46(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0));
  }

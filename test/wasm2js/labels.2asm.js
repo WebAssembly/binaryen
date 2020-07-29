@@ -21,32 +21,32 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  var $0 = 0;
+  var $0_1 = 0;
   exit : {
-   $0 = 1;
+   $0_1 = 1;
    break exit;
   }
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
  function $1() {
-  var i = 0, $6 = 0;
+  var i = 0, $6_1 = 0;
   i = 0;
   exit : {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6 = i;
+     $6_1 = i;
      break exit;
     }
     continue cont;
    };
   }
-  return $6 | 0;
+  return $6_1 | 0;
  }
  
  function $2() {
-  var i = 0, $8 = 0;
+  var i = 0, $8_1 = 0;
   i = 0;
   exit : {
    cont : while (1) {
@@ -55,69 +55,69 @@ function asmFunc(global, env, buffer) {
      continue cont
     }
     if ((i | 0) == (8 | 0)) {
-     $8 = i;
+     $8_1 = i;
      break exit;
     }
     i = i + 1 | 0;
     continue cont;
    };
   }
-  return $8 | 0;
+  return $8_1 | 0;
  }
  
  function $3() {
-  var i = 0, $6 = 0;
+  var i = 0, $6_1 = 0;
   i = 0;
   exit : {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6 = i;
+     $6_1 = i;
      break exit;
     }
     break cont;
    };
-   $6 = i;
+   $6_1 = i;
   }
-  return $6 | 0;
+  return $6_1 | 0;
  }
  
  function $4(max) {
   max = max | 0;
-  var i = 0, $9 = 0;
+  var i = 0, $9_1 = 0;
   i = 1;
   exit : {
    cont : while (1) {
     i = i + i | 0;
     if (i >>> 0 > max >>> 0) {
-     $9 = i;
+     $9_1 = i;
      break exit;
     }
     continue cont;
    };
   }
-  return $9 | 0;
+  return $9_1 | 0;
  }
  
  function $5() {
-  var $0 = 0;
+  var $0_1 = 0;
   l : while (1) {
-   $0 = 1;
+   $0_1 = 1;
    break l;
   };
-  return $0 + 1 | 0 | 0;
+  return $0_1 + 1 | 0 | 0;
  }
  
  function $6() {
-  var $2 = 0;
+  var $2_1 = 0;
   loop_in : while (1) {
    if (0) {
     continue loop_in
    }
-   $2 = 3;
+   $2_1 = 3;
    break loop_in;
   };
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $7() {
@@ -176,36 +176,36 @@ function asmFunc(global, env, buffer) {
   return i | 0;
  }
  
- function $9($0) {
-  $0 = $0 | 0;
-  var $2 = 0, $3 = 0;
+ function $9($0_1) {
+  $0_1 = $0_1 | 0;
+  var $2_1 = 0, $3_1 = 0;
   ret : {
    exit : {
     $0 : {
-     switch ($0 | 0) {
+     switch ($0_1 | 0) {
      case 1:
      case 2:
-      $2 = 2;
+      $2_1 = 2;
       break exit;
      case 3:
-      $3 = 3;
+      $3_1 = 3;
       break ret;
      default:
      case 0:
       break $0;
      };
     }
-    $2 = 5;
+    $2_1 = 5;
    }
-   $3 = Math_imul(10, $2);
+   $3_1 = Math_imul(10, $2_1);
   }
-  return $3 | 0;
+  return $3_1 | 0;
  }
  
- function $10($0) {
-  $0 = $0 | 0;
+ function $10($0_1) {
+  $0_1 = $0_1 | 0;
   $1 : {
-   switch ($0 | 0) {
+   switch ($0_1 | 0) {
    case 0:
     return 0 | 0;
    default:
@@ -216,7 +216,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $11() {
-  var i = 0, $10 = 0;
+  var i = 0, $10_1 = 0;
   i = 0;
   outer : {
    inner : {
@@ -230,101 +230,101 @@ function asmFunc(global, env, buffer) {
     i = i | 2 | 0;
    }
    i = i | 4 | 0;
-   $10 = i;
+   $10_1 = i;
    if (0) {
     break outer
    }
    i = i | 8 | 0;
    i = i | 16 | 0;
-   $10 = i;
+   $10_1 = i;
    if (1) {
     break outer
    }
    i = i | 32 | 0;
-   $10 = i;
+   $10_1 = i;
   }
-  return $10 | 0;
+  return $10_1 | 0;
  }
  
  function $12() {
-  var $2 = 0, $0 = 0;
+  var $2_1 = 0, $0_1 = 0;
   l0 : {
    l1 : {
-    $0 = 1;
+    $0_1 = 1;
     break l1;
    }
-   $2 = $0;
+   $2_1 = $0_1;
    if (1) {
     break l0
    }
-   $2 = 0;
+   $2_1 = 0;
   }
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $13() {
-  var $2 = 0, $0 = 0;
+  var $2_1 = 0, $0_1 = 0;
   l0 : {
    l1 : {
-    $0 = 1;
+    $0_1 = 1;
     break l1;
    }
-   $2 = $0;
+   $2_1 = $0_1;
    if (1) {
     break l0
    }
-   $2 = 0;
+   $2_1 = 0;
   }
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $14() {
-  var i1 = 0, $7 = 0, $3 = 0;
+  var i1 = 0, $7_1 = 0, $3_1 = 0;
   l0 : {
    i1 = 1;
-   $3 = i1;
+   $3_1 = i1;
    i1 = 2;
-   $7 = $3;
+   $7_1 = $3_1;
    if (i1) {
     break l0
    }
-   $7 = 0;
+   $7_1 = 0;
   }
   return i1 | 0;
  }
  
  function $15() {
-  var $2 = 0, $0 = 0, $3 = 0;
+  var $2_1 = 0, $0_1 = 0, $3_1 = 0;
   l0 : {
    l1 : {
-    $0 = 1;
+    $0_1 = 1;
     break l1;
    }
-   $2 = $0;
+   $2_1 = $0_1;
    break l0;
   }
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $16() {
-  var $0 = 0;
+  var $0_1 = 0;
   l1 : {
-   $0 = 1;
+   $0_1 = 1;
    break l1;
   }
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
  function $17() {
-  var $1 = 0, $2 = 0;
+  var $1_1 = 0, $2_1 = 0;
   l1 : {
-   $1 = 2;
+   $1_1 = 2;
    l113 : {
-    $2 = 3;
+    $2_1 = 3;
     break l113;
    }
   }
-  return $1 + $2 | 0 | 0;
+  return $1_1 + $2_1 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];

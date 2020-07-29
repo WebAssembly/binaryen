@@ -193,6 +193,17 @@ public:
       return it->second;
     }
     auto& set = mangledNamesSet[(int)scope];
+    // The Local scope is special: a Local name must not collide with a Top
+    // name, as they are in a single namespace in JS and can conflict:
+    //
+    // function foo(bar) {
+    //   var bar = 0;
+    // }
+    // function bar() { ..
+    std::unordered_set<IString>* additionalSet = nullptr;
+    if (scope == NameScope::Local) {
+      additionalSet = &mangledNamesSet[int(NameScope::Top)];
+    }
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -210,7 +221,7 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!set.count(ret)) {
+      if (!set.count(ret) && !(additionalSet && additionalSet->count(ret))) {
         break;
       }
       // When export names collide things may be confusing, as this is
@@ -381,6 +392,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     *wasm, [&](Function* import) { addFunctionImport(asmFunc[3], import); });
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
+
+  // Note the names of functions. We need to do this here as when generating
+  // mangled local names we need them not to conflict with these (see fromName)
+  // so we can't wait until we parse each function to note its name.
+  for (auto& f : wasm->functions) {
+    fromName(f->name, NameScope::Top);
+  }
 
   // globals
   bool generateFetchHighBits = false;

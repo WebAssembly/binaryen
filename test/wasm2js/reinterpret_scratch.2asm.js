@@ -39,10 +39,10 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $0 = Math_fround(0);
+  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $0_1 = Math_fround(0);
   wasm2js_scratch_store_f64(+(305419896.0));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  i64toi32_i32$1 = (wasm2js_scratch_store_f32($0), wasm2js_scratch_load_i32(2));
+  i64toi32_i32$1 = (wasm2js_scratch_store_f32($0_1), wasm2js_scratch_load_i32(2));
   HEAP32[i64toi32_i32$1 >> 2] = wasm2js_scratch_load_i32(0 | 0) | 0;
   HEAP32[(i64toi32_i32$1 + 4 | 0) >> 2] = i64toi32_i32$0;
   return HEAP32[0 >> 2] | 0 | 0;

@@ -63,16 +63,16 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0($0, $1, $2) {
-  $0 = $0 | 0;
-  $1 = $1 | 0;
+ function $0($0_1, $1_1, $2) {
+  $0_1 = $0_1 | 0;
+  $1_1 = $1_1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_fill($0, $1, $2);
+  wasm2js_memory_fill($0_1, $1_1, $2);
  }
  
- function $1($0) {
-  $0 = $0 | 0;
-  return HEAPU8[$0 | 0];
+ function $1($0_1) {
+  $0_1 = $0_1 | 0;
+  return HEAPU8[$0_1 | 0];
  }
  
  var FUNCTION_TABLE = [];
@@ -146,16 +146,16 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0($0, $1, $2) {
-  $0 = $0 | 0;
-  $1 = $1 | 0;
+ function $0($0_1, $1_1, $2) {
+  $0_1 = $0_1 | 0;
+  $1_1 = $1_1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_copy($0, $1, $2);
+  wasm2js_memory_copy($0_1, $1_1, $2);
  }
  
- function $1($0) {
-  $0 = $0 | 0;
-  return HEAPU8[$0 | 0];
+ function $1($0_1) {
+  $0_1 = $0_1 | 0;
+  return HEAPU8[$0_1 | 0];
  }
  
  var FUNCTION_TABLE = [];
@@ -229,16 +229,16 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0($0, $1, $2) {
-  $0 = $0 | 0;
-  $1 = $1 | 0;
+ function $0($0_1, $1_1, $2) {
+  $0_1 = $0_1 | 0;
+  $1_1 = $1_1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_init(0, $0, $1, $2);
+  wasm2js_memory_init(0, $0_1, $1_1, $2);
  }
  
- function $1($0) {
-  $0 = $0 | 0;
-  return HEAPU8[$0 | 0];
+ function $1($0_1) {
+  $0_1 = $0_1 | 0;
+  return HEAPU8[$0_1 | 0];
  }
  
  var FUNCTION_TABLE = [];
