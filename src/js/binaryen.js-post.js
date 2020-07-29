@@ -2165,29 +2165,29 @@ function wrapModule(module, self) {
     return preserveStack(() => Module['_BinaryenRemoveEvent'](module, strToStack(name)));
   };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
+    ));
   };
   self['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))
+    ));
   };
   self['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName, shared) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)
+    ));
   };
   self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType, mutable) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
+    ));
   };
   self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results)
+    ));
   };
   self['addExport'] = // deprecated
   self['addFunctionExport'] = function(internalName, externalName) {
@@ -2224,8 +2224,8 @@ function wrapModule(module, self) {
         const numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module)
         const arr = new Array(numSegments);
         for (var i = 0; i !== numSegments; ++i) {
-          var segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
-          var names = new Array(segmentLength);
+          const segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
+          const names = new Array(segmentLength);
           for (let j = 0; j !== segmentLength; ++j) {
             const ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
             names[j] = UTF8ToString(ptr);
@@ -2347,11 +2347,9 @@ function wrapModule(module, self) {
     return Module['_BinaryenFunctionOptimize'](func, module);
   };
   self['runPasses'] = function(passes) {
-    return preserveStack(() => {
-      return Module['_BinaryenModuleRunPasses'](module, i32sToStack(
-        passes.map(strToStack)
-      ), passes.length);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenModuleRunPasses'](module, i32sToStack(passes.map(strToStack)), passes.length)
+    ));
   };
   self['runPassesOnFunction'] = function(func, passes) {
     if (typeof func === 'string') func = self['getFunction'](func);
