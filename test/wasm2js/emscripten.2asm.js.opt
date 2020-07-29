@@ -155,13 +155,13 @@ function asmFunc(global, env, buffer) {
   bools(HEAP32[0] & 1);
   bools(HEAPU8[0] & 2);
   bools($0 ^ 1);
-  if (!$0) {
+  if ($0 ^ 1) {
    bools(2)
   }
   if ($0 ^ 2) {
    bools(2)
   }
-  bools(!!$0);
+  bools(!($0 ^ 1));
   abort();
  }
  
