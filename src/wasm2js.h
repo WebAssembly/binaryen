@@ -187,23 +187,15 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& map = mangledNamesMap[(int)scope];
+    auto& map = wasmNameToMangledName[(int)scope];
     auto it = map.find(name.c_str());
     if (it != map.end()) {
       return it->second;
     }
-    auto& set = mangledNamesSet[(int)scope];
-    // The Local scope is special: a Local name must not collide with a Top
-    // name, as they are in a single namespace in JS and can conflict:
-    //
-    // function foo(bar) {
-    //   var bar = 0;
-    // }
-    // function bar() { ..
-    std::unordered_set<IString>* additionalSet = nullptr;
-    if (scope == NameScope::Local) {
-      additionalSet = &mangledNamesSet[int(NameScope::Top)];
-    }
+    // The mangled names relevant to us, i.e., in our scope.
+    auto& relevantMangledNames = mangledNames[(int)scope];
+    // In some cases (see below) we need to also check the Top scope.
+    auto& topMangledNames = mangledNames[int(NameScope::Top)];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -221,19 +213,30 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!set.count(ret) && !(additionalSet && additionalSet->count(ret))) {
-        break;
+      if (relevantMangledNames.count(ret)) {
+        // When export names collide things may be confusing, as this is
+        // observable externally by the person using the JS. Report a warning.
+        if (scope == NameScope::Export) {
+          std::cerr << "wasm2js: warning: export names colliding: " << mangled
+                    << '\n';
+        }
+        continue;
       }
-      // When export names collide things may be confusing, as this is
-      // observable externally by the person using the JS. Report a warning.
-      if (scope == NameScope::Export) {
-        std::cerr << "wasm2js: warning: export names colliding: " << mangled
-                  << '\n';
+      // The Local scope is special: a Local name must not collide with a Top
+      // name, as they are in a single namespace in JS and can conflict:
+      //
+      // function foo(bar) {
+      //   var bar = 0;
+      // }
+      // function bar() { ..
+      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+        continue;
       }
+      // We found an good name, use it.
+      relevantMangledNames.insert(ret);
+      map[name.c_str()] = ret;
+      return ret;
     }
-    set.insert(ret);
-    map[name.c_str()] = ret;
-    return ret;
   }
 
 private:
@@ -247,9 +250,9 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNamesMap[(int)NameScope::Max];
-  // Set of all mangled names in a scope.
-  std::unordered_set<IString> mangledNamesSet[(int)NameScope::Max];
+  std::unordered_map<const char*, IString> wasmNameToMangledName[(int)NameScope::Max];
+  // Set of all mangled names in each scope.
+  std::unordered_set<IString> mangledNames[(int)NameScope::Max];
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed

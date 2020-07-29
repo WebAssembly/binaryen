@@ -512,7 +512,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.6
+    frequency = 1 # 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # always check for compiler crashes
@@ -624,11 +624,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
 ]
 
 
