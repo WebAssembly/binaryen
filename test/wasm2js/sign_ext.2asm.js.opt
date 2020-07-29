@@ -20,14 +20,14 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0($0_1) {
-  $0_1 = $0_1 | 0;
-  return $0_1 << 24 >> 24;
+ function $0($0) {
+  $0 = $0 | 0;
+  return $0 << 24 >> 24;
  }
  
- function $1($0_1) {
-  $0_1 = $0_1 | 0;
-  return $0_1 << 16 >> 16;
+ function $1($0) {
+  $0 = $0 | 0;
+  return $0 << 16 >> 16;
  }
  
  var FUNCTION_TABLE = [];

@@ -187,11 +187,12 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& mangledScope = mangledNames[(int)scope];
-    auto it = mangledScope.find(name.c_str());
-    if (it != mangledScope.end()) {
+    auto& map = mangledNamesMap[(int)scope];
+    auto it = map.find(name.c_str());
+    if (it != map.end()) {
       return it->second;
     }
+    auto& set = mangledNamesSet[(int)scope];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -209,7 +210,7 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!allMangledNames.count(ret)) {
+      if (!set.count(ret)) {
         break;
       }
       // When export names collide things may be confusing, as this is
@@ -219,8 +220,8 @@ public:
                   << '\n';
       }
     }
-    allMangledNames.insert(ret);
-    mangledScope[name.c_str()] = ret;
+    set.insert(ret);
+    map[name.c_str()] = ret;
     return ret;
   }
 
@@ -235,8 +236,9 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNames[(int)NameScope::Max];
-  std::unordered_set<IString> allMangledNames;
+  std::unordered_map<const char*, IString> mangledNamesMap[(int)NameScope::Max];
+  // Set of all mangled names in a scope.
+  std::unordered_set<IString> mangledNamesSet[(int)NameScope::Max];
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -380,15 +382,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
 
-  for (auto& e : wasm->exports) {
-    if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Export);
-    }
-  }
-  for (auto& f : wasm->functions) {
-    fromName(f->name, NameScope::Top);
-  }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Export);
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {

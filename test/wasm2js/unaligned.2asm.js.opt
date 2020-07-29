@@ -63,10 +63,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $3() {
-  var $0_1 = 0;
-  $0_1 = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
+  var $0 = 0;
+  $0 = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
   wasm2js_scratch_store_i32(0, HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24));
-  wasm2js_scratch_store_i32(1, $0_1 | 0);
+  wasm2js_scratch_store_i32(1, $0 | 0);
   return +wasm2js_scratch_load_f64();
  }
  
@@ -89,25 +89,25 @@ function asmFunc(global, env, buffer) {
  }
  
  function $7() {
-  var $0_1 = 0, $1_1 = 0;
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(0.0);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
-  $1_1 = wasm2js_scratch_load_i32(0) | 0;
-  HEAP8[0] = $1_1;
-  HEAP8[1] = $1_1 >>> 8;
-  HEAP8[2] = $1_1 >>> 16;
-  HEAP8[3] = $1_1 >>> 24;
-  HEAP8[4] = $0_1;
-  HEAP8[5] = $0_1 >>> 8;
-  HEAP8[6] = $0_1 >>> 16;
-  HEAP8[7] = $0_1 >>> 24;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
+  $1 = wasm2js_scratch_load_i32(0) | 0;
+  HEAP8[0] = $1;
+  HEAP8[1] = $1 >>> 8;
+  HEAP8[2] = $1 >>> 16;
+  HEAP8[3] = $1 >>> 24;
+  HEAP8[4] = $0;
+  HEAP8[5] = $0 >>> 8;
+  HEAP8[6] = $0 >>> 16;
+  HEAP8[7] = $0 >>> 24;
  }
  
  function legalstub$1() {
-  var $0_1 = 0;
-  $0_1 = $1();
+  var $0 = 0;
+  $0 = $1();
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
+  return $0;
  }
  
  var FUNCTION_TABLE = [];

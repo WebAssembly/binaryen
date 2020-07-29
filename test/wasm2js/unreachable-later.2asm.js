@@ -21,30 +21,30 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var global$0 = 10;
- function $0($0_1) {
-  $0_1 = $0_1 | 0;
+ function $0($0) {
+  $0 = $0 | 0;
   var $15 = Math_fround(0), $21 = 0, $29 = 0, $26 = 0;
   if (global$0) {
-   return $0_1 | 0
+   return $0 | 0
   }
   if (global$0) {
-   return $0_1 | 0
+   return $0 | 0
   }
   global$0 = 0;
   label$3 : while (1) {
    label$4 : {
     if (global$0) {
-     return $0_1 | 0
+     return $0 | 0
     }
     if (global$0) {
-     return $0_1 | 0
+     return $0 | 0
     }
     if (global$0) {
-     return $0_1 | 0
+     return $0 | 0
     }
     $15 = Math_fround(0.0);
     if (global$0) {
-     return $0_1 | 0
+     return $0 | 0
     }
    }
    $21 = 32;

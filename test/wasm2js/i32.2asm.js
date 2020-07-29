@@ -200,10 +200,10 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_popcnt_i32(var$0) {
   var$0 = var$0 | 0;
-  var var$1 = 0, $5_1 = 0;
+  var var$1 = 0, $5 = 0;
   label$1 : {
    label$2 : while (1) {
-    $5_1 = var$1;
+    $5 = var$1;
     if (!var$0) {
      break label$1
     }
@@ -212,7 +212,7 @@ function asmFunc(global, env, buffer) {
     continue label$2;
    };
   }
-  return $5_1 | 0;
+  return $5 | 0;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
