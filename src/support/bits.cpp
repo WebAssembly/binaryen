@@ -97,7 +97,7 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
   }
 #if __has_builtin(__builtin_ctzll) || defined(__GNUC__)
   return __builtin_ctzll(v);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanForward64(&count, v);
   return (int)count;
@@ -139,7 +139,7 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
   }
 #if __has_builtin(__builtin_clzll) || defined(__GNUC__)
   return __builtin_clzll(v);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanReverse64(&count, v);
   return (int)count;
