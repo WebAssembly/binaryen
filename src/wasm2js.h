@@ -192,8 +192,8 @@ public:
     if (it != map.end()) {
       return it->second;
     }
-    // The mangled names relevant to us, i.e., in our scope.
-    auto& relevantMangledNames = mangledNames[(int)scope];
+    // The mangled names in our scope.
+    auto& scopeMangledNames = mangledNames[(int)scope];
     // In some cases (see below) we need to also check the Top scope.
     auto& topMangledNames = mangledNames[int(NameScope::Top)];
 
@@ -213,7 +213,7 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (relevantMangledNames.count(ret)) {
+      if (scopeMangledNames.count(ret)) {
         // When export names collide things may be confusing, as this is
         // observable externally by the person using the JS. Report a warning.
         if (scope == NameScope::Export) {
@@ -232,8 +232,8 @@ public:
       if (scope == NameScope::Local && topMangledNames.count(ret)) {
         continue;
       }
-      // We found an good name, use it.
-      relevantMangledNames.insert(ret);
+      // We found a good name, use it.
+      scopeMangledNames.insert(ret);
       map[name.c_str()] = ret;
       return ret;
     }
