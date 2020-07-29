@@ -254,6 +254,7 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
     // TODO: in some cases it may be possible to turn
     //
