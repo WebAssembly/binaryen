@@ -388,7 +388,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   for (auto& f : wasm->functions) {
     fromName(f->name, NameScope::Top);
   }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
+  fromName(WASM_FETCH_HIGH_BITS, NameScope::Export);
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
