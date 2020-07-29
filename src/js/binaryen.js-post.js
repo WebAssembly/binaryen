@@ -4013,21 +4013,21 @@ Module['SIMDShuffle'] = makeExpressionWrapper({
     Module['_BinaryenSIMDShuffleSetRight'](expr, rightExpr);
   },
   'getMask'(expr) {
-    var mask;
-    preserveStack(function() {
-      var tempBuffer = stackAlloc(16);
+    let mask;
+    preserveStack(() => {
+      const tempBuffer = stackAlloc(16);
       Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
       mask = new Array(16);
-      for (var i = 0 ; i < 16; ++i) {
+      for (let i = 0 ; i < 16; ++i) {
         mask[i] = HEAPU8[tempBuffer + i];
       }
     });
     return mask;
   },
   'setMask'(expr, mask) {
-    preserveStack(function() {
-      var tempBuffer = stackAlloc(16);
-      for (var i = 0 ; i < 16; ++i) {
+    preserveStack(() => {
+      const tempBuffer = stackAlloc(16);
+      for (let i = 0 ; i < 16; ++i) {
         HEAPU8[tempBuffer + i] = mask[i];
       }
       Module['_BinaryenSIMDShuffleSetMask'](expr, tempBuffer);
@@ -4236,18 +4236,18 @@ Module['Throw'] = makeExpressionWrapper({
     return Module['_BinaryenThrowGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    var numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
-    var operands = new Array(numOperands);
-    var index = 0;
+    const numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    const operands = new Array(numOperands);
+    let index = 0;
     while (index < numOperands) {
       operands[index] = Module['_BinaryenThrowGetOperandAt'](expr, index++);
     }
     return operands;
   },
   'setOperands'(expr, operands) {
-    var numOperands = operands.length;
-    var prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
-    var index = 0;
+    const numOperands = operands.length;
+    let prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
+    let index = 0;
     while (index < numOperands) {
       if (index < prevNumOperands) {
         Module['_BinaryenThrowSetOperandAt'](expr, index, operands[index]);
@@ -4291,7 +4291,7 @@ Module['BrOnExn'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr));
   },
   'setEvent'(expr, eventName) {
-    preserveStack(function() {
+    preserveStack(() => {
       Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName));
     });
   },
@@ -4299,7 +4299,7 @@ Module['BrOnExn'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr));
   },
   'setName'(expr, name) {
-    preserveStack(function() {
+    preserveStack(() => {
       Module['_BinaryenBrOnExnSetName'](expr, strToStack(name));
     });
   },
@@ -4316,18 +4316,18 @@ Module['TupleMake'] = makeExpressionWrapper({
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    var numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
-    var operands = new Array(numOperands);
-    var index = 0;
+    const numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    const operands = new Array(numOperands);
+    let index = 0;
     while (index < numOperands) {
       operands[index] = Module['_BinaryenTupleMakeGetOperandAt'](expr, index++);
     }
     return operands;
   },
   'setOperands'(expr, operands) {
-    var numOperands = operands.length;
-    var prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
-    var index = 0;
+    const numOperands = operands.length;
+    let prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
+    let index = 0;
     while (index < numOperands) {
       if (index < prevNumOperands) {
         Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operands[index]);
@@ -4392,7 +4392,7 @@ var pendingPromises = [];
 var initializeError = null;
 Object.defineProperty(Module, 'ready', {
   get() {
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
       if (initializeError) {
         reject(initializeError);
       } else if (runtimeInitialized) {
@@ -4408,23 +4408,17 @@ Object.defineProperty(Module, 'ready', {
 if (runtimeInitialized) {
   initializeConstants();
 } else {
-  Module['onRuntimeInitialized'] = (function(super_) {
-    return function() {
-      try {
-        initializeConstants();
-        if (super_) super_();
-        Module['isReady'] = true;
-        pendingPromises.forEach(function(p) {
-          p.resolve(Module);
-        });
-      } catch (e) {
-        initializeError = e;
-        pendingPromises.forEach(function(p) {
-          p.reject(e);
-        });
-      } finally {
-        pendingPromises = [];
-      }
-    };
+  Module['onRuntimeInitialized'] = (super_ => () => {
+    try {
+      initializeConstants();
+      if (super_) super_();
+      Module['isReady'] = true;
+      pendingPromises.forEach(p => { p.resolve(Module) });
+    } catch (e) {
+      initializeError = e;
+      pendingPromises.forEach(p => { p.reject(e) });
+    } finally {
+      pendingPromises = [];
+    }
   })(Module['onRuntimeInitialized']);
 }
