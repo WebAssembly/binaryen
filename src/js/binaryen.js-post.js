@@ -580,13 +580,13 @@ function wrapModule(module, self) {
   };
 
   self['local'] = {
-    'get': function(index, type) {
+    'get'(index, type) {
       return Module['_BinaryenLocalGet'](module, index, type);
     },
-    'set': function(index, value) {
+    'set'(index, value) {
       return Module['_BinaryenLocalSet'](module, index, value);
     },
-    'tee': function(index, value, type) {
+    'tee'(index, value, type) {
       if (typeof type === 'undefined') {
         throw new Error("local.tee's type should be defined");
       }
@@ -595,1498 +595,1498 @@ function wrapModule(module, self) {
   }
 
   self['global'] = {
-    'get': function(name, type) {
+    'get'(name, type) {
       return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
     },
-    'set': function(name, value) {
+    'set'(name, value) {
       return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
     }
   }
 
   self['memory'] = {
-    'size': function() {
+    'size'() {
       return Module['_BinaryenHost'](module, Module['MemorySize']);
     },
-    'grow': function(value) {
+    'grow'(value) {
       return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
     },
-    'init': function(segment, dest, offset, size) {
+    'init'(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
     },
-    'copy': function(dest, source, size) {
+    'copy'(dest, source, size) {
       return Module['_BinaryenMemoryCopy'](module, dest, source, size);
     },
-    'fill': function(dest, value, size) {
+    'fill'(dest, value, size) {
       return Module['_BinaryenMemoryFill'](module, dest, value, size);
     }
   }
 
   self['data'] = {
-    'drop': function(segment) {
+    'drop'(segment) {
       return Module['_BinaryenDataDrop'](module, segment);
     }
   }
 
   self['i32'] = {
-    'load': function(offset, align, ptr) {
+    'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr);
     },
-    'load8_s': function(offset, align, ptr) {
+    'load8_s'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i32'], ptr);
     },
-    'load8_u': function(offset, align, ptr) {
+    'load8_u'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i32'], ptr);
     },
-    'load16_s': function(offset, align, ptr) {
+    'load16_s'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i32'], ptr);
     },
-    'load16_u': function(offset, align, ptr) {
+    'load16_u'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i32'], ptr);
     },
-    'store': function(offset, align, ptr, value) {
+    'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i32']);
     },
-    'store8': function(offset, align, ptr, value) {
+    'store8'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i32']);
     },
-    'store16': function(offset, align, ptr, value) {
+    'store16'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
     },
-    'const': function(x) {
+    'const'(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralInt32'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'clz': function(value) {
+    'clz'(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt32'], value);
     },
-    'ctz': function(value) {
+    'ctz'(value) {
       return Module['_BinaryenUnary'](module, Module['CtzInt32'], value);
     },
-    'popcnt': function(value) {
+    'popcnt'(value) {
       return Module['_BinaryenUnary'](module, Module['PopcntInt32'], value);
     },
-    'eqz': function(value) {
+    'eqz'(value) {
       return Module['_BinaryenUnary'](module, Module['EqZInt32'], value);
     },
     'trunc_s': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt32'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSFloat64ToInt32'], value);
       },
     },
     'trunc_u': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat32ToInt32'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt32'], value);
       },
     },
     'trunc_s_sat': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatSFloat32ToInt32'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatSFloat64ToInt32'], value);
       },
     },
     'trunc_u_sat': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatUFloat32ToInt32'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatUFloat64ToInt32'], value);
       },
     },
-    'reinterpret': function(value) {
+    'reinterpret'(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
     },
-    'extend8_s': function(value) {
+    'extend8_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendS8Int32'], value);
     },
-    'extend16_s': function(value) {
+    'extend16_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendS16Int32'], value);
     },
-    'wrap': function(value) {
+    'wrap'(value) {
       return Module['_BinaryenUnary'](module, Module['WrapInt64'], value);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddInt32'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubInt32'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulInt32'], left, right);
     },
-    'div_s': function(left, right) {
+    'div_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivSInt32'], left, right);
     },
-    'div_u': function(left, right) {
+    'div_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivUInt32'], left, right);
     },
-    'rem_s': function(left, right) {
+    'rem_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RemSInt32'], left, right);
     },
-    'rem_u': function(left, right) {
+    'rem_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RemUInt32'], left, right);
     },
-    'and': function(left, right) {
+    'and'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AndInt32'], left, right);
     },
-    'or': function(left, right) {
+    'or'(left, right) {
       return Module['_BinaryenBinary'](module, Module['OrInt32'], left, right);
     },
-    'xor': function(left, right) {
+    'xor'(left, right) {
       return Module['_BinaryenBinary'](module, Module['XorInt32'], left, right);
     },
-    'shl': function(left, right) {
+    'shl'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShlInt32'], left, right);
     },
-    'shr_u': function(left, right) {
+    'shr_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShrUInt32'], left, right);
     },
-    'shr_s': function(left, right) {
+    'shr_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShrSInt32'], left, right);
     },
-    'rotl': function(left, right) {
+    'rotl'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RotLInt32'], left, right);
     },
-    'rotr': function(left, right) {
+    'rotr'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RotRInt32'], left, right);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqInt32'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeInt32'], left, right);
     },
-    'lt_s': function(left, right) {
+    'lt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtSInt32'], left, right);
     },
-    'lt_u': function(left, right) {
+    'lt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtUInt32'], left, right);
     },
-    'le_s': function(left, right) {
+    'le_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeSInt32'], left, right);
     },
-    'le_u': function(left, right) {
+    'le_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeUInt32'], left, right);
     },
-    'gt_s': function(left, right) {
+    'gt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtSInt32'], left, right);
     },
-    'gt_u': function(left, right) {
+    'gt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtUInt32'], left, right);
     },
-    'ge_s': function(left, right) {
+    'ge_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeSInt32'], left, right);
     },
-    'ge_u': function(left, right) {
+    'ge_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
     },
     'atomic': {
-      'load': function(offset, ptr) {
+      'load'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr);
       },
-      'load8_u': function(offset, ptr) {
+      'load8_u'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr);
       },
-      'load16_u': function(offset, ptr) {
+      'load16_u'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr);
       },
-      'store': function(offset, ptr, value) {
+      'store'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32']);
       },
-      'store8': function(offset, ptr, value) {
+      'store8'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32']);
       },
-      'store16': function(offset, ptr, value) {
+      'store16'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32']);
       },
       'rmw': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'])
         },
       },
       'rmw8_u': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'])
         },
       },
       'rmw16_u': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'])
         },
       },
-      'wait': function(ptr, expected, timeout) {
+      'wait'(ptr, expected, timeout) {
         return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
       }
     },
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['i32']);
     }
   };
 
   self['i64'] = {
-    'load': function(offset, align, ptr) {
+    'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['i64'], ptr);
     },
-    'load8_s': function(offset, align, ptr) {
+    'load8_s'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i64'], ptr);
     },
-    'load8_u': function(offset, align, ptr) {
+    'load8_u'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i64'], ptr);
     },
-    'load16_s': function(offset, align, ptr) {
+    'load16_s'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i64'], ptr);
     },
-    'load16_u': function(offset, align, ptr) {
+    'load16_u'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i64'], ptr);
     },
-    'load32_s': function(offset, align, ptr) {
+    'load32_s'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i64'], ptr);
     },
-    'load32_u': function(offset, align, ptr) {
+    'load32_u'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, false, offset, align, Module['i64'], ptr);
     },
-    'store': function(offset, align, ptr, value) {
+    'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['i64']);
     },
-    'store8': function(offset, align, ptr, value) {
+    'store8'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i64']);
     },
-    'store16': function(offset, align, ptr, value) {
+    'store16'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i64']);
     },
-    'store32': function(offset, align, ptr, value) {
+    'store32'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
     },
-    'const': function(x, y) {
+    'const'(x, y) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'clz': function(value) {
+    'clz'(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt64'], value);
     },
-    'ctz': function(value) {
+    'ctz'(value) {
       return Module['_BinaryenUnary'](module, Module['CtzInt64'], value);
     },
-    'popcnt': function(value) {
+    'popcnt'(value) {
       return Module['_BinaryenUnary'](module, Module['PopcntInt64'], value);
     },
-    'eqz': function(value) {
+    'eqz'(value) {
       return Module['_BinaryenUnary'](module, Module['EqZInt64'], value);
     },
     'trunc_s': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt64'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSFloat64ToInt64'], value);
       },
     },
     'trunc_u': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat32ToInt64'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt64'], value);
       },
     },
     'trunc_s_sat': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatSFloat32ToInt64'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatSFloat64ToInt64'], value);
       },
     },
     'trunc_u_sat': {
-      'f32': function(value) {
+      'f32'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatUFloat32ToInt64'], value);
       },
-      'f64': function(value) {
+      'f64'(value) {
         return Module['_BinaryenUnary'](module, Module['TruncSatUFloat64ToInt64'], value);
       },
     },
-    'reinterpret': function(value) {
+    'reinterpret'(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretFloat64'], value);
     },
-    'extend8_s': function(value) {
+    'extend8_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendS8Int64'], value);
     },
-    'extend16_s': function(value) {
+    'extend16_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendS16Int64'], value);
     },
-    'extend32_s': function(value) {
+    'extend32_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendS32Int64'], value);
     },
-    'extend_s': function(value) {
+    'extend_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendSInt32'], value);
     },
-    'extend_u': function(value) {
+    'extend_u'(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendUInt32'], value);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddInt64'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubInt64'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulInt64'], left, right);
     },
-    'div_s': function(left, right) {
+    'div_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivSInt64'], left, right);
     },
-    'div_u': function(left, right) {
+    'div_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivUInt64'], left, right);
     },
-    'rem_s': function(left, right) {
+    'rem_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RemSInt64'], left, right);
     },
-    'rem_u': function(left, right) {
+    'rem_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RemUInt64'], left, right);
     },
-    'and': function(left, right) {
+    'and'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AndInt64'], left, right);
     },
-    'or': function(left, right) {
+    'or'(left, right) {
       return Module['_BinaryenBinary'](module, Module['OrInt64'], left, right);
     },
-    'xor': function(left, right) {
+    'xor'(left, right) {
       return Module['_BinaryenBinary'](module, Module['XorInt64'], left, right);
     },
-    'shl': function(left, right) {
+    'shl'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShlInt64'], left, right);
     },
-    'shr_u': function(left, right) {
+    'shr_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShrUInt64'], left, right);
     },
-    'shr_s': function(left, right) {
+    'shr_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['ShrSInt64'], left, right);
     },
-    'rotl': function(left, right) {
+    'rotl'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RotLInt64'], left, right);
     },
-    'rotr': function(left, right) {
+    'rotr'(left, right) {
       return Module['_BinaryenBinary'](module, Module['RotRInt64'], left, right);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqInt64'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeInt64'], left, right);
     },
-    'lt_s': function(left, right) {
+    'lt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtSInt64'], left, right);
     },
-    'lt_u': function(left, right) {
+    'lt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtUInt64'], left, right);
     },
-    'le_s': function(left, right) {
+    'le_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeSInt64'], left, right);
     },
-    'le_u': function(left, right) {
+    'le_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeUInt64'], left, right);
     },
-    'gt_s': function(left, right) {
+    'gt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtSInt64'], left, right);
     },
-    'gt_u': function(left, right) {
+    'gt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtUInt64'], left, right);
     },
-    'ge_s': function(left, right) {
+    'ge_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeSInt64'], left, right);
     },
-    'ge_u': function(left, right) {
+    'ge_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
     },
     'atomic': {
-      'load': function(offset, ptr) {
+      'load'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr);
       },
-      'load8_u': function(offset, ptr) {
+      'load8_u'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr);
       },
-      'load16_u': function(offset, ptr) {
+      'load16_u'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr);
       },
-      'load32_u': function(offset, ptr) {
+      'load32_u'(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr);
       },
-      'store': function(offset, ptr, value) {
+      'store'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64']);
       },
-      'store8': function(offset, ptr, value) {
+      'store8'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64']);
       },
-      'store16': function(offset, ptr, value) {
+      'store16'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64']);
       },
-      'store32': function(offset, ptr, value) {
+      'store32'(offset, ptr, value) {
         return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64']);
       },
       'rmw': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'])
         },
       },
       'rmw8_u': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'])
         },
       },
       'rmw16_u': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'])
         },
       },
       'rmw32_u': {
-        'add': function(offset, ptr, value) {
+        'add'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64']);
         },
-        'sub': function(offset, ptr, value) {
+        'sub'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64']);
         },
-        'and': function(offset, ptr, value) {
+        'and'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64']);
         },
-        'or': function(offset, ptr, value) {
+        'or'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64']);
         },
-        'xor': function(offset, ptr, value) {
+        'xor'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64']);
         },
-        'xchg': function(offset, ptr, value) {
+        'xchg'(offset, ptr, value) {
           return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64']);
         },
-        'cmpxchg': function(offset, ptr, expected, replacement) {
+        'cmpxchg'(offset, ptr, expected, replacement) {
           return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'])
         },
       },
-      'wait': function(ptr, expected, timeout) {
+      'wait'(ptr, expected, timeout) {
         return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
       }
     },
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['i64']);
     }
   };
 
   self['f32'] = {
-    'load': function(offset, align, ptr) {
+    'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr);
     },
-    'store': function(offset, align, ptr, value) {
+    'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
     },
-    'const': function(x) {
+    'const'(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat32'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits': function(x) {
+    'const_bits'(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat32Bits'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat32'], value);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsFloat32'], value);
     },
-    'ceil': function(value) {
+    'ceil'(value) {
       return Module['_BinaryenUnary'](module, Module['CeilFloat32'], value);
     },
-    'floor': function(value) {
+    'floor'(value) {
       return Module['_BinaryenUnary'](module, Module['FloorFloat32'], value);
     },
-    'trunc': function(value) {
+    'trunc'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncFloat32'], value);
     },
-    'nearest': function(value) {
+    'nearest'(value) {
       return Module['_BinaryenUnary'](module, Module['NearestFloat32'], value);
     },
-    'sqrt': function(value) {
+    'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtFloat32'], value);
     },
-    'reinterpret': function(value) {
+    'reinterpret'(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretInt32'], value);
     },
     'convert_s': {
-      'i32': function(value) {
+      'i32'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat32'], value);
       },
-      'i64': function(value) {
+      'i64'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat32'], value);
       },
     },
     'convert_u': {
-      'i32': function(value) {
+      'i32'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat32'], value);
       },
-      'i64': function(value) {
+      'i64'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat32'], value);
       },
     },
-    'demote': function(value) {
+    'demote'(value) {
       return Module['_BinaryenUnary'](module, Module['DemoteFloat64'], value);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddFloat32'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubFloat32'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulFloat32'], left, right);
     },
-    'div': function(left, right) {
+    'div'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivFloat32'], left, right);
     },
-    'copysign': function(left, right) {
+    'copysign'(left, right) {
       return Module['_BinaryenBinary'](module, Module['CopySignFloat32'], left, right);
     },
-    'min': function(left, right) {
+    'min'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinFloat32'], left, right);
     },
-    'max': function(left, right) {
+    'max'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxFloat32'], left, right);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqFloat32'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeFloat32'], left, right);
     },
-    'lt': function(left, right) {
+    'lt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtFloat32'], left, right);
     },
-    'le': function(left, right) {
+    'le'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeFloat32'], left, right);
     },
-    'gt': function(left, right) {
+    'gt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtFloat32'], left, right);
     },
-    'ge': function(left, right) {
+    'ge'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat32'], left, right);
     },
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['f32']);
     }
   };
 
   self['f64'] = {
-    'load': function(offset, align, ptr) {
+    'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['f64'], ptr);
     },
-    'store': function(offset, align, ptr, value) {
+    'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
     },
-    'const': function(x) {
+    'const'(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat64'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits': function(x, y) {
+    'const_bits'(x, y) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat64'], value);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsFloat64'], value);
     },
-    'ceil': function(value) {
+    'ceil'(value) {
       return Module['_BinaryenUnary'](module, Module['CeilFloat64'], value);
     },
-    'floor': function(value) {
+    'floor'(value) {
       return Module['_BinaryenUnary'](module, Module['FloorFloat64'], value);
     },
-    'trunc': function(value) {
+    'trunc'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncFloat64'], value);
     },
-    'nearest': function(value) {
+    'nearest'(value) {
       return Module['_BinaryenUnary'](module, Module['NearestFloat64'], value);
     },
-    'sqrt': function(value) {
+    'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtFloat64'], value);
     },
-    'reinterpret': function(value) {
+    'reinterpret'(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretInt64'], value);
     },
     'convert_s': {
-      'i32': function(value) {
+      'i32'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat64'], value);
       },
-      'i64': function(value) {
+      'i64'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat64'], value);
       },
     },
     'convert_u': {
-      'i32': function(value) {
+      'i32'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat64'], value);
       },
-      'i64': function(value) {
+      'i64'(value) {
         return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat64'], value);
       },
     },
-    'promote': function(value) {
+    'promote'(value) {
       return Module['_BinaryenUnary'](module, Module['PromoteFloat32'], value);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddFloat64'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubFloat64'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulFloat64'], left, right);
     },
-    'div': function(left, right) {
+    'div'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivFloat64'], left, right);
     },
-    'copysign': function(left, right) {
+    'copysign'(left, right) {
       return Module['_BinaryenBinary'](module, Module['CopySignFloat64'], left, right);
     },
-    'min': function(left, right) {
+    'min'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinFloat64'], left, right);
     },
-    'max': function(left, right) {
+    'max'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxFloat64'], left, right);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqFloat64'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeFloat64'], left, right);
     },
-    'lt': function(left, right) {
+    'lt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtFloat64'], left, right);
     },
-    'le': function(left, right) {
+    'le'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeFloat64'], left, right);
     },
-    'gt': function(left, right) {
+    'gt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtFloat64'], left, right);
     },
-    'ge': function(left, right) {
+    'ge'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat64'], left, right);
     },
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['f64']);
     }
   };
 
   self['v128'] = {
-    'load': function(offset, align, ptr) {
+    'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr);
     },
-    'store': function(offset, align, ptr, value) {
+    'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128']);
     },
-    'const': function(i8s) {
+    'const'(i8s) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'not': function(value) {
+    'not'(value) {
       return Module['_BinaryenUnary'](module, Module['NotVec128'], value);
     },
-    'and': function(left, right) {
+    'and'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AndVec128'], left, right);
     },
-    'or': function(left, right) {
+    'or'(left, right) {
       return Module['_BinaryenBinary'](module, Module['OrVec128'], left, right);
     },
-    'xor': function(left, right) {
+    'xor'(left, right) {
       return Module['_BinaryenBinary'](module, Module['XorVec128'], left, right);
     },
-    'andnot': function(left, right) {
+    'andnot'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AndNotVec128'], left, right);
     },
-    'bitselect': function(left, right, cond) {
+    'bitselect'(left, right, cond) {
       return Module['_BinaryenSIMDTernary'](module, Module['BitselectVec128'], left, right, cond);
     },
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['v128']);
     }
   };
 
   self['i8x16'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
     },
-    'extract_lane_s': function(vec, index) {
+    'extract_lane_s'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI8x16'], vec, index);
     },
-    'extract_lane_u': function(vec, index) {
+    'extract_lane_u'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI8x16'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI8x16'], vec, index, value);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI8x16'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeVecI8x16'], left, right);
     },
-    'lt_s': function(left, right) {
+    'lt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtSVecI8x16'], left, right);
     },
-    'lt_u': function(left, right) {
+    'lt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtUVecI8x16'], left, right);
     },
-    'gt_s': function(left, right) {
+    'gt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtSVecI8x16'], left, right);
     },
-    'gt_u': function(left, right) {
+    'gt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtUVecI8x16'], left, right);
     },
-    'le_s': function(left, right) {
+    'le_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeSVecI8x16'], left, right);
     },
-    'le_u': function(left, right) {
+    'le_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeUVecI8x16'], left, right);
     },
-    'ge_s': function(left, right) {
+    'ge_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeSVecI8x16'], left, right);
     },
-    'ge_u': function(left, right) {
+    'ge_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI8x16'], left, right);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsVecI8x16'], value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI8x16'], value);
     },
-    'any_true': function(value) {
+    'any_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AnyTrueVecI8x16'], value);
     },
-    'all_true': function(value) {
+    'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI8x16'], value);
     },
-    'bitmask': function(value) {
+    'bitmask'(value) {
       return Module['_BinaryenUnary'](module, Module['BitmaskVecI8x16'], value);
     },
-    'shl': function(vec, shift) {
+    'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI8x16'], vec, shift);
     },
-    'shr_s': function(vec, shift) {
+    'shr_s'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrSVecI8x16'], vec, shift);
     },
-    'shr_u': function(vec, shift) {
+    'shr_u'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrUVecI8x16'], vec, shift);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecI8x16'], left, right);
     },
-    'add_saturate_s': function(left, right) {
+    'add_saturate_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddSatSVecI8x16'], left, right);
     },
-    'add_saturate_u': function(left, right) {
+    'add_saturate_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddSatUVecI8x16'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI8x16'], left, right);
     },
-    'sub_saturate_s': function(left, right) {
+    'sub_saturate_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubSatSVecI8x16'], left, right);
     },
-    'sub_saturate_u': function(left, right) {
+    'sub_saturate_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubSatUVecI8x16'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI8x16'], left, right);
     },
-    'min_s': function(left, right) {
+    'min_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinSVecI8x16'], left, right);
     },
-    'min_u': function(left, right) {
+    'min_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinUVecI8x16'], left, right);
     },
-    'max_s': function(left, right) {
+    'max_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxSVecI8x16'], left, right);
     },
-    'max_u': function(left, right) {
+    'max_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI8x16'], left, right);
     },
-    'avgr_u': function(left, right) {
+    'avgr_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AvgrUVecI8x16'], left, right);
     },
-    'narrow_i16x8_s': function(left, right) {
+    'narrow_i16x8_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
     },
-    'narrow_i16x8_u': function(left, right) {
+    'narrow_i16x8_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowUVecI16x8ToVecI8x16'], left, right);
     },
   };
 
   self['i16x8'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI16x8'], value);
     },
-    'extract_lane_s': function(vec, index) {
+    'extract_lane_s'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI16x8'], vec, index);
     },
-    'extract_lane_u': function(vec, index) {
+    'extract_lane_u'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI16x8'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI16x8'], vec, index, value);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI16x8'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeVecI16x8'], left, right);
     },
-    'lt_s': function(left, right) {
+    'lt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtSVecI16x8'], left, right);
     },
-    'lt_u': function(left, right) {
+    'lt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtUVecI16x8'], left, right);
     },
-    'gt_s': function(left, right) {
+    'gt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtSVecI16x8'], left, right);
     },
-    'gt_u': function(left, right) {
+    'gt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtUVecI16x8'], left, right);
     },
-    'le_s': function(left, right) {
+    'le_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeSVecI16x8'], left, right);
     },
-    'le_u': function(left, right) {
+    'le_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeUVecI16x8'], left, right);
     },
-    'ge_s': function(left, right) {
+    'ge_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeSVecI16x8'], left, right);
     },
-    'ge_u': function(left, right) {
+    'ge_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI16x8'], left, right);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsVecI16x8'], value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI16x8'], value);
     },
-    'any_true': function(value) {
+    'any_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AnyTrueVecI16x8'], value);
     },
-    'all_true': function(value) {
+    'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI16x8'], value);
     },
-    'bitmask': function(value) {
+    'bitmask'(value) {
       return Module['_BinaryenUnary'](module, Module['BitmaskVecI16x8'], value);
     },
-    'shl': function(vec, shift) {
+    'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI16x8'], vec, shift);
     },
-    'shr_s': function(vec, shift) {
+    'shr_s'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrSVecI16x8'], vec, shift);
     },
-    'shr_u': function(vec, shift) {
+    'shr_u'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrUVecI16x8'], vec, shift);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecI16x8'], left, right);
     },
-    'add_saturate_s': function(left, right) {
+    'add_saturate_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddSatSVecI16x8'], left, right);
     },
-    'add_saturate_u': function(left, right) {
+    'add_saturate_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddSatUVecI16x8'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI16x8'], left, right);
     },
-    'sub_saturate_s': function(left, right) {
+    'sub_saturate_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubSatSVecI16x8'], left, right);
     },
-    'sub_saturate_u': function(left, right) {
+    'sub_saturate_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubSatUVecI16x8'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI16x8'], left, right);
     },
-    'min_s': function(left, right) {
+    'min_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinSVecI16x8'], left, right);
     },
-    'min_u': function(left, right) {
+    'min_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinUVecI16x8'], left, right);
     },
-    'max_s': function(left, right) {
+    'max_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxSVecI16x8'], left, right);
     },
-    'max_u': function(left, right) {
+    'max_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI16x8'], left, right);
     },
-    'avgr_u': function(left, right) {
+    'avgr_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AvgrUVecI16x8'], left, right);
     },
-    'narrow_i32x4_s': function(left, right) {
+    'narrow_i32x4_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);
     },
-    'narrow_i32x4_u': function(left, right) {
+    'narrow_i32x4_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowUVecI32x4ToVecI16x8'], left, right);
     },
-    'widen_low_i8x16_s': function(value) {
+    'widen_low_i8x16_s'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenLowSVecI8x16ToVecI16x8'], value);
     },
-    'widen_high_i8x16_s': function(value) {
+    'widen_high_i8x16_s'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighSVecI8x16ToVecI16x8'], value);
     },
-    'widen_low_i8x16_u': function(value) {
+    'widen_low_i8x16_u'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenLowUVecI8x16ToVecI16x8'], value);
     },
-    'widen_high_i8x16_u': function(value) {
+    'widen_high_i8x16_u'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighUVecI8x16ToVecI16x8'], value);
     },
-    'load8x8_s': function(offset, align, ptr) {
+    'load8x8_s'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec8x8ToVecI16x8'], offset, align, ptr);
     },
-    'load8x8_u': function(offset, align, ptr) {
+    'load8x8_u'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec8x8ToVecI16x8'], offset, align, ptr);
     },
   };
 
   self['i32x4'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI32x4'], value);
     },
-    'extract_lane': function(vec, index) {
+    'extract_lane'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI32x4'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI32x4'], vec, index, value);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI32x4'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeVecI32x4'], left, right);
     },
-    'lt_s': function(left, right) {
+    'lt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtSVecI32x4'], left, right);
     },
-    'lt_u': function(left, right) {
+    'lt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtUVecI32x4'], left, right);
     },
-    'gt_s': function(left, right) {
+    'gt_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtSVecI32x4'], left, right);
     },
-    'gt_u': function(left, right) {
+    'gt_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtUVecI32x4'], left, right);
     },
-    'le_s': function(left, right) {
+    'le_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeSVecI32x4'], left, right);
     },
-    'le_u': function(left, right) {
+    'le_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeUVecI32x4'], left, right);
     },
-    'ge_s': function(left, right) {
+    'ge_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeSVecI32x4'], left, right);
     },
-    'ge_u': function(left, right) {
+    'ge_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUVecI32x4'], left, right);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsVecI32x4'], value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI32x4'], value);
     },
-    'any_true': function(value) {
+    'any_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AnyTrueVecI32x4'], value);
     },
-    'all_true': function(value) {
+    'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI32x4'], value);
     },
-    'bitmask': function(value) {
+    'bitmask'(value) {
       return Module['_BinaryenUnary'](module, Module['BitmaskVecI32x4'], value);
     },
-    'shl': function(vec, shift) {
+    'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI32x4'], vec, shift);
     },
-    'shr_s': function(vec, shift) {
+    'shr_s'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrSVecI32x4'], vec, shift);
     },
-    'shr_u': function(vec, shift) {
+    'shr_u'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrUVecI32x4'], vec, shift);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecI32x4'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI32x4'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI32x4'], left, right);
     },
-    'min_s': function(left, right) {
+    'min_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinSVecI32x4'], left, right);
     },
-    'min_u': function(left, right) {
+    'min_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinUVecI32x4'], left, right);
     },
-    'max_s': function(left, right) {
+    'max_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxSVecI32x4'], left, right);
     },
-    'max_u': function(left, right) {
+    'max_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI32x4'], left, right);
     },
-    'dot_i16x8_s': function(left, right) {
+    'dot_i16x8_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DotSVecI16x8ToVecI32x4'], left, right);
     },
-    'trunc_sat_f32x4_s': function(value) {
+    'trunc_sat_f32x4_s'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF32x4ToVecI32x4'], value);
     },
-    'trunc_sat_f32x4_u': function(value) {
+    'trunc_sat_f32x4_u'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF32x4ToVecI32x4'], value);
     },
-    'widen_low_i16x8_s': function(value) {
+    'widen_low_i16x8_s'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenLowSVecI16x8ToVecI32x4'], value);
     },
-    'widen_high_i16x8_s': function(value) {
+    'widen_high_i16x8_s'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighSVecI16x8ToVecI32x4'], value);
     },
-    'widen_low_i16x8_u': function(value) {
+    'widen_low_i16x8_u'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenLowUVecI16x8ToVecI32x4'], value);
     },
-    'widen_high_i16x8_u': function(value) {
+    'widen_high_i16x8_u'(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighUVecI16x8ToVecI32x4'], value);
     },
-    'load16x4_s': function(offset, align, ptr) {
+    'load16x4_s'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec16x4ToVecI32x4'], offset, align, ptr);
     },
-    'load16x4_u': function(offset, align, ptr) {
+    'load16x4_u'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec16x4ToVecI32x4'], offset, align, ptr);
     },
   };
 
   self['i64x2'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI64x2'], value);
     },
-    'extract_lane': function(vec, index) {
+    'extract_lane'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI64x2'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI64x2'], vec, index, value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
     },
-    'any_true': function(value) {
+    'any_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AnyTrueVecI64x2'], value);
     },
-    'all_true': function(value) {
+    'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI64x2'], value);
     },
-    'shl': function(vec, shift) {
+    'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI64x2'], vec, shift);
     },
-    'shr_s': function(vec, shift) {
+    'shr_s'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrSVecI64x2'], vec, shift);
     },
-    'shr_u': function(vec, shift) {
+    'shr_u'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShrUVecI64x2'], vec, shift);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecI64x2'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI64x2'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI64x2'], left, right);
     },
-    'trunc_sat_f64x2_s': function(value) {
+    'trunc_sat_f64x2_s'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF64x2ToVecI64x2'], value);
     },
-    'trunc_sat_f64x2_u': function(value) {
+    'trunc_sat_f64x2_u'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF64x2ToVecI64x2'], value);
     },
-    'load32x2_s': function(offset, align, ptr) {
+    'load32x2_s'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec32x2ToVecI64x2'], offset, align, ptr);
     },
-    'load32x2_u': function(offset, align, ptr) {
+    'load32x2_u'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
     },
   };
 
   self['f32x4'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecF32x4'], value);
     },
-    'extract_lane': function(vec, index) {
+    'extract_lane'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF32x4'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF32x4'], vec, index, value);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecF32x4'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeVecF32x4'], left, right);
     },
-    'lt': function(left, right) {
+    'lt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtVecF32x4'], left, right);
     },
-    'gt': function(left, right) {
+    'gt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtVecF32x4'], left, right);
     },
-    'le': function(left, right) {
+    'le'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeVecF32x4'], left, right);
     },
-    'ge': function(left, right) {
+    'ge'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeVecF32x4'], left, right);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsVecF32x4'], value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecF32x4'], value);
     },
-    'sqrt': function(value) {
+    'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF32x4'], value);
     },
-    'qfma': function(a, b, c) {
+    'qfma'(a, b, c) {
       return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF32x4'], a, b, c);
     },
-    'qfms': function(a, b, c) {
+    'qfms'(a, b, c) {
       return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF32x4'], a, b, c);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF32x4'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecF32x4'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecF32x4'], left, right);
     },
-    'div': function(left, right) {
+    'div'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivVecF32x4'], left, right);
     },
-    'min': function(left, right) {
+    'min'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinVecF32x4'], left, right);
     },
-    'max': function(left, right) {
+    'max'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF32x4'], left, right);
     },
-    'pmin': function(left, right) {
+    'pmin'(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMinVecF32x4'], left, right);
     },
-    'pmax': function(left, right) {
+    'pmax'(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMaxVecF32x4'], left, right);
     },
-    'ceil': function(value) {
+    'ceil'(value) {
       return Module['_BinaryenUnary'](module, Module['CeilVecF32x4'], value);
     },
-    'floor': function(value) {
+    'floor'(value) {
       return Module['_BinaryenUnary'](module, Module['FloorVecF32x4'], value);
     },
-    'trunc': function(value) {
+    'trunc'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncVecF32x4'], value);
     },
-    'nearest': function(value) {
+    'nearest'(value) {
       return Module['_BinaryenUnary'](module, Module['NearestVecF32x4'], value);
     },
-    'convert_i32x4_s': function(value) {
+    'convert_i32x4_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI32x4ToVecF32x4'], value);
     },
-    'convert_i32x4_u': function(value) {
+    'convert_i32x4_u'(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI32x4ToVecF32x4'], value);
     },
   };
 
   self['f64x2'] = {
-    'splat': function(value) {
+    'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecF64x2'], value);
     },
-    'extract_lane': function(vec, index) {
+    'extract_lane'(vec, index) {
       return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF64x2'], vec, index);
     },
-    'replace_lane': function(vec, index, value) {
+    'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF64x2'], vec, index, value);
     },
-    'eq': function(left, right) {
+    'eq'(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecF64x2'], left, right);
     },
-    'ne': function(left, right) {
+    'ne'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NeVecF64x2'], left, right);
     },
-    'lt': function(left, right) {
+    'lt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LtVecF64x2'], left, right);
     },
-    'gt': function(left, right) {
+    'gt'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GtVecF64x2'], left, right);
     },
-    'le': function(left, right) {
+    'le'(left, right) {
       return Module['_BinaryenBinary'](module, Module['LeVecF64x2'], left, right);
     },
-    'ge': function(left, right) {
+    'ge'(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeVecF64x2'], left, right);
     },
-    'abs': function(value) {
+    'abs'(value) {
       return Module['_BinaryenUnary'](module, Module['AbsVecF64x2'], value);
     },
-    'neg': function(value) {
+    'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecF64x2'], value);
     },
-    'sqrt': function(value) {
+    'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF64x2'], value);
     },
-    'qfma': function(a, b, c) {
+    'qfma'(a, b, c) {
       return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF64x2'], a, b, c);
     },
-    'qfms': function(a, b, c) {
+    'qfms'(a, b, c) {
       return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF64x2'], a, b, c);
     },
-    'add': function(left, right) {
+    'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF64x2'], left, right);
     },
-    'sub': function(left, right) {
+    'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecF64x2'], left, right);
     },
-    'mul': function(left, right) {
+    'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecF64x2'], left, right);
     },
-    'div': function(left, right) {
+    'div'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DivVecF64x2'], left, right);
     },
-    'min': function(left, right) {
+    'min'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinVecF64x2'], left, right);
     },
-    'max': function(left, right) {
+    'max'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF64x2'], left, right);
     },
-    'pmin': function(left, right) {
+    'pmin'(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMinVecF64x2'], left, right);
     },
-    'pmax': function(left, right) {
+    'pmax'(left, right) {
       return Module['_BinaryenBinary'](module, Module['PMaxVecF64x2'], left, right);
     },
-    'ceil': function(value) {
+    'ceil'(value) {
       return Module['_BinaryenUnary'](module, Module['CeilVecF64x2'], value);
     },
-    'floor': function(value) {
+    'floor'(value) {
       return Module['_BinaryenUnary'](module, Module['FloorVecF64x2'], value);
     },
-    'trunc': function(value) {
+    'trunc'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncVecF64x2'], value);
     },
-    'nearest': function(value) {
+    'nearest'(value) {
       return Module['_BinaryenUnary'](module, Module['NearestVecF64x2'], value);
     },
-    'convert_i64x2_s': function(value) {
+    'convert_i64x2_s'(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI64x2ToVecF64x2'], value);
     },
-    'convert_i64x2_u': function(value) {
+    'convert_i64x2_u'(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI64x2ToVecF64x2'], value);
     },
   };
 
   self['v8x16'] = {
-    'shuffle': function(left, right, mask) {
+    'shuffle'(left, right, mask) {
       return preserveStack(function() {
         return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
       });
     },
-    'swizzle': function(left, right) {
+    'swizzle'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
     },
-    'load_splat': function(offset, align, ptr) {
+    'load_splat'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
     },
   };
 
   self['v16x8'] = {
-    'load_splat': function(offset, align, ptr) {
+    'load_splat'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec16x8'], offset, align, ptr);
     },
   };
 
   self['v32x4'] = {
-    'load_splat': function(offset, align, ptr) {
+    'load_splat'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec32x4'], offset, align, ptr);
     },
   };
 
   self['v64x2'] = {
-    'load_splat': function(offset, align, ptr) {
+    'load_splat'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
     },
   };
 
   self['funcref'] = {
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['funcref']);
     }
   };
 
   self['externref'] = {
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['externref']);
     }
   };
 
   self['nullref'] = {
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['nullref']);
     }
   };
 
   self['exnref'] = {
-    'pop': function() {
+    'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
     }
   };
 
   self['ref'] = {
-    'null': function() {
+    'null'() {
       return Module['_BinaryenRefNull'](module);
     },
-    'is_null': function(value) {
+    'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
     },
-    'func': function(func) {
+    'func'(func) {
       return preserveStack(function() {
         return Module['_BinaryenRefFunc'](module, strToStack(func));
       });
@@ -2117,10 +2117,10 @@ function wrapModule(module, self) {
   };
 
   self['atomic'] = {
-    'notify': function(ptr, notifyCount) {
+    'notify'(ptr, notifyCount) {
       return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
     },
-    'fence': function() {
+    'fence'() {
       return Module['_BinaryenAtomicFence'](module);
     }
   };
@@ -2143,12 +2143,12 @@ function wrapModule(module, self) {
   };
 
   self['tuple'] = {
-    'make': function(elements) {
+    'make'(elements) {
       return preserveStack(function() {
         return Module['_BinaryenTupleMake'](module, i32sToStack(elements), elements.length);
       });
     },
-    'extract': function(tuple, index) {
+    'extract'(tuple, index) {
       return Module['_BinaryenTupleExtract'](module, tuple, index);
     }
   };
@@ -3183,19 +3183,19 @@ Expression.prototype['valueOf'] = function() {
 Module['Expression'] = Expression;
 
 Module['Block'] = makeExpressionWrapper({
-  'getName': function(expr) {
+  'getName'(expr) {
     var name = Module['_BinaryenBlockGetName'](expr);
     return name ? UTF8ToString(name) : null;
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenBlockSetName'](expr, strToStack(name));
     });
   },
-  'getNumChildren': function(expr) {
+  'getNumChildren'(expr) {
     return Module['_BinaryenBlockGetNumChildren'](expr);
   },
-  'getChildren': function(expr) {
+  'getChildren'(expr) {
     var numChildren = Module['_BinaryenBlockGetNumChildren'](expr);
     var children = new Array(numChildren);
     var index = 0;
@@ -3204,7 +3204,7 @@ Module['Block'] = makeExpressionWrapper({
     }
     return children;
   },
-  'setChildren': function(expr, children) {
+  'setChildren'(expr, children) {
     var numChildren = children.length;
     var prevNumChildren = Module['_BinaryenBlockGetNumChildren'](expr);
     var index = 0;
@@ -3220,91 +3220,91 @@ Module['Block'] = makeExpressionWrapper({
       Module['_BinaryenBlockRemoveChildAt'](expr, --prevNumChildren);
     }
   },
-  'getChildAt': function(expr, index) {
+  'getChildAt'(expr, index) {
     return Module['_BinaryenBlockGetChildAt'](expr, index);
   },
-  'setChildAt': function(expr, index, childExpr) {
+  'setChildAt'(expr, index, childExpr) {
     Module['_BinaryenBlockSetChildAt'](expr, index, childExpr);
   },
-  'appendChild': function(expr, childExpr) {
+  'appendChild'(expr, childExpr) {
     return Module['_BinaryenBlockAppendChild'](expr, childExpr);
   },
-  'insertChildAt': function(expr, index, childExpr) {
+  'insertChildAt'(expr, index, childExpr) {
     Module['_BinaryenBlockInsertChildAt'](expr, index, childExpr);
   },
-  'removeChildAt': function(expr, index) {
+  'removeChildAt'(expr, index) {
     return Module['_BinaryenBlockRemoveChildAt'](expr, index);
   }
 });
 
 Module['If'] = makeExpressionWrapper({
-  'getCondition': function(expr) {
+  'getCondition'(expr) {
     return Module['_BinaryenIfGetCondition'](expr);
   },
-  'setCondition': function(expr, condExpr) {
+  'setCondition'(expr, condExpr) {
     Module['_BinaryenIfSetCondition'](expr, condExpr);
   },
-  'getIfTrue': function(expr) {
+  'getIfTrue'(expr) {
     return Module['_BinaryenIfGetIfTrue'](expr);
   },
-  'setIfTrue': function(expr, ifTrueExpr) {
+  'setIfTrue'(expr, ifTrueExpr) {
     Module['_BinaryenIfSetIfTrue'](expr, ifTrueExpr);
   },
-  'getIfFalse': function(expr) {
+  'getIfFalse'(expr) {
     return Module['_BinaryenIfGetIfFalse'](expr);
   },
-  'setIfFalse': function(expr, ifFalseExpr) {
+  'setIfFalse'(expr, ifFalseExpr) {
     Module['_BinaryenIfSetIfFalse'](expr, ifFalseExpr);
   }
 });
 
 Module['Loop'] = makeExpressionWrapper({
-  'getName': function(expr) {
+  'getName'(expr) {
     var name = Module['_BinaryenLoopGetName'](expr);
     return name ? UTF8ToString(name) : null;
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenLoopSetName'](expr, strToStack(name));
     });
   },
-  'getBody': function(expr) {
+  'getBody'(expr) {
     return Module['_BinaryenLoopGetBody'](expr);
   },
-  'setBody': function(expr, bodyExpr) {
+  'setBody'(expr, bodyExpr) {
     Module['_BinaryenLoopSetBody'](expr, bodyExpr);
   }
 });
 
 Module['Break'] = makeExpressionWrapper({
-  'getName': function(expr) {
+  'getName'(expr) {
     var name = Module['_BinaryenBreakGetName'](expr);
     return name ? UTF8ToString(name) : null;
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenBreakSetName'](expr, strToStack(name));
     });
   },
-  'getCondition': function(expr) {
+  'getCondition'(expr) {
     return Module['_BinaryenBreakGetCondition'](expr);
   },
-  'setCondition': function(expr, condExpr) {
+  'setCondition'(expr, condExpr) {
     Module['_BinaryenBreakSetCondition'](expr, condExpr);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenBreakGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenBreakSetValue'](expr, valueExpr);
   }
 });
 
 Module['Switch'] = makeExpressionWrapper({
-  'getNumNames': function(expr) {
+  'getNumNames'(expr) {
     return Module['_BinaryenSwitchGetNumNames'](expr);
   },
-  'getNames': function(expr) {
+  'getNames'(expr) {
     var numNames = Module['_BinaryenSwitchGetNumNames'](expr);
     var names = new Array(numNames);
     var index = 0;
@@ -3313,7 +3313,7 @@ Module['Switch'] = makeExpressionWrapper({
     }
     return names;
   },
-  'setNames': function(expr, names) {
+  'setNames'(expr, names) {
     var numNames = names.length;
     var prevNumNames = Module['_BinaryenSwitchGetNumNames'](expr);
     var index = 0;
@@ -3331,63 +3331,63 @@ Module['Switch'] = makeExpressionWrapper({
       Module['_BinaryenSwitchRemoveNameAt'](expr, --prevNumNames);
     }
   },
-  'getDefaultName': function(expr) {
+  'getDefaultName'(expr) {
     var name = Module['_BinaryenSwitchGetDefaultName'](expr);
     return name ? UTF8ToString(name) : null;
   },
-  'setDefaultName': function(expr, defaultName) {
+  'setDefaultName'(expr, defaultName) {
     preserveStack(function() {
       Module['_BinaryenSwitchSetDefaultName'](expr, strToStack(defaultName));
     });
   },
-  'getCondition': function(expr) {
+  'getCondition'(expr) {
     return Module['_BinaryenSwitchGetCondition'](expr);
   },
-  'setCondition': function(expr, condExpr) {
+  'setCondition'(expr, condExpr) {
     Module['_BinaryenSwitchSetCondition'](expr, condExpr);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenSwitchGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenSwitchSetValue'](expr, valueExpr);
   },
-  'getNameAt': function(expr, index) {
+  'getNameAt'(expr, index) {
     return UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index));
   },
-  'setNameAt': function(expr, index, name) {
+  'setNameAt'(expr, index, name) {
     preserveStack(function() {
       Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(name));
     });
   },
-  'appendName': function(expr, name) {
+  'appendName'(expr, name) {
     preserveStack(function() {
       return Module['_BinaryenSwitchAppendName'](expr, strToStack(name));
     });
   },
-  'insertNameAt': function(expr, index, name) {
+  'insertNameAt'(expr, index, name) {
     preserveStack(function() {
       Module['_BinaryenSwitchInsertNameAt'](expr, index, strToStack(name));
     });
   },
-  'removeNameAt': function(expr, index) {
+  'removeNameAt'(expr, index) {
     return UTF8ToString(Module['_BinaryenSwitchRemoveNameAt'](expr, index));
   },
 });
 
 Module['Call'] = makeExpressionWrapper({
-  'getTarget': function(expr) {
+  'getTarget'(expr) {
     return UTF8ToString(Module['_BinaryenCallGetTarget'](expr));
   },
-  'setTarget': function(expr, targetName) {
+  'setTarget'(expr, targetName) {
     preserveStack(function() {
       Module['_BinaryenCallSetTarget'](expr, strToStack(targetName));
     });
   },
-  'getNumOperands': function(expr) {
+  'getNumOperands'(expr) {
     return Module['_BinaryenCallGetNumOperands'](expr);
   },
-  'getOperands': function(expr) {
+  'getOperands'(expr) {
     var numOperands = Module['_BinaryenCallGetNumOperands'](expr);
     var operands = new Array(numOperands);
     var index = 0;
@@ -3396,7 +3396,7 @@ Module['Call'] = makeExpressionWrapper({
     }
     return operands;
   },
-  'setOperands': function(expr, operands) {
+  'setOperands'(expr, operands) {
     var numOperands = operands.length;
     var prevNumOperands = Module['_BinaryenCallGetNumOperands'](expr);
     var index = 0;
@@ -3412,40 +3412,40 @@ Module['Call'] = makeExpressionWrapper({
       Module['_BinaryenCallRemoveOperandAt'](expr, --prevNumOperands);
     }
   },
-  'getOperandAt': function(expr, index) {
+  'getOperandAt'(expr, index) {
     return Module['_BinaryenCallGetOperandAt'](expr, index);
   },
-  'setOperandAt': function(expr, index, operandExpr) {
+  'setOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenCallSetOperandAt'](expr, index, operandExpr);
   },
-  'appendOperand': function(expr, operandExpr) {
+  'appendOperand'(expr, operandExpr) {
     return Module['_BinaryenCallAppendOperand'](expr, operandExpr);
   },
-  'insertOperandAt': function(expr, index, operandExpr) {
+  'insertOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenCallInsertOperandAt'](expr, index, operandExpr);
   },
-  'removeOperandAt': function(expr, index) {
+  'removeOperandAt'(expr, index) {
     return Module['_BinaryenCallRemoveOperandAt'](expr, index);
   },
-  'isReturn': function(expr) {
+  'isReturn'(expr) {
     return Boolean(Module['_BinaryenCallIsReturn'](expr));
   },
-  'setReturn': function(expr, isReturn) {
+  'setReturn'(expr, isReturn) {
     Module['_BinaryenCallSetReturn'](expr, isReturn);
   }
 });
 
 Module['CallIndirect'] = makeExpressionWrapper({
-  'getTarget': function(expr) {
+  'getTarget'(expr) {
     return Module['_BinaryenCallIndirectGetTarget'](expr);
   },
-  'setTarget': function(expr, targetExpr) {
+  'setTarget'(expr, targetExpr) {
     Module['_BinaryenCallIndirectSetTarget'](expr, targetExpr);
   },
-  'getNumOperands': function(expr) {
+  'getNumOperands'(expr) {
     return Module['_BinaryenCallIndirectGetNumOperands'](expr);
   },
-  'getOperands': function(expr) {
+  'getOperands'(expr) {
     var numOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
     var operands = new Array(numOperands);
     var index = 0;
@@ -3454,7 +3454,7 @@ Module['CallIndirect'] = makeExpressionWrapper({
     }
     return operands;
   },
-  'setOperands': function(expr, operands) {
+  'setOperands'(expr, operands) {
     var numOperands = operands.length;
     var prevNumOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
     var index = 0;
@@ -3470,73 +3470,73 @@ Module['CallIndirect'] = makeExpressionWrapper({
       Module['_BinaryenCallIndirectRemoveOperandAt'](expr, --prevNumOperands);
     }
   },
-  'getOperandAt': function(expr, index) {
+  'getOperandAt'(expr, index) {
     return Module['_BinaryenCallIndirectGetOperandAt'](expr, index);
   },
-  'setOperandAt': function(expr, index, operandExpr) {
+  'setOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operandExpr);
   },
-  'appendOperand': function(expr, operandExpr) {
+  'appendOperand'(expr, operandExpr) {
     return Module['_BinaryenCallIndirectAppendOperand'](expr, operandExpr);
   },
-  'insertOperandAt': function(expr, index, operandExpr) {
+  'insertOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenCallIndirectInsertOperandAt'](expr, index, operandExpr);
   },
-  'removeOperandAt': function(expr, index) {
+  'removeOperandAt'(expr, index) {
     return Module['_BinaryenCallIndirectRemoveOperandAt'](expr, index);
   },
-  'isReturn': function(expr) {
+  'isReturn'(expr) {
     return Boolean(Module['_BinaryenCallIndirectIsReturn'](expr));
   },
-  'setReturn': function(expr, isReturn) {
+  'setReturn'(expr, isReturn) {
     Module['_BinaryenCallIndirectSetReturn'](expr, isReturn);
   },
-  'getParams': function(expr) {
+  'getParams'(expr) {
     return Module['_BinaryenCallIndirectGetParams'](expr);
   },
-  'setParams': function(expr, params) {
+  'setParams'(expr, params) {
     Module['_BinaryenCallIndirectSetParams'](expr, params);
   },
-  'getResults': function(expr) {
+  'getResults'(expr) {
     return Module['_BinaryenCallIndirectGetResults'](expr);
   },
-  'setResults': function(expr, results) {
+  'setResults'(expr, results) {
     Module['_BinaryenCallIndirectSetResults'](expr, results);
   }
 });
 
 Module['LocalGet'] = makeExpressionWrapper({
-  'getIndex': function(expr) {
+  'getIndex'(expr) {
     return Module['_BinaryenLocalGetGetIndex'](expr);
   },
-  'setIndex': function(expr, index) {
+  'setIndex'(expr, index) {
     Module['_BinaryenLocalGetSetIndex'](expr, index);
   }
 });
 
 Module['LocalSet'] = makeExpressionWrapper({
-  'getIndex': function(expr) {
+  'getIndex'(expr) {
     return Module['_BinaryenLocalSetGetIndex'](expr);
   },
-  'setIndex': function(expr, index) {
+  'setIndex'(expr, index) {
     Module['_BinaryenLocalSetSetIndex'](expr, index);
   },
-  'isTee': function(expr) {
+  'isTee'(expr) {
     return Boolean(Module['_BinaryenLocalSetIsTee'](expr));
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenLocalSetGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenLocalSetSetValue'](expr, valueExpr);
   }
 });
 
 Module['GlobalGet'] = makeExpressionWrapper({
-  'getName': function(expr) {
+  'getName'(expr) {
     return UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr));
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenGlobalGetSetName'](expr, strToStack(name));
     });
@@ -3544,42 +3544,42 @@ Module['GlobalGet'] = makeExpressionWrapper({
 });
 
 Module['GlobalSet'] = makeExpressionWrapper({
-  'getName': function(expr) {
+  'getName'(expr) {
     return UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr));
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenGlobalSetSetName'](expr, strToStack(name));
     });
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenGlobalSetGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenGlobalSetSetValue'](expr, valueExpr);
   }
 });
 
 Module['Host'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenHostGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenHostSetOp'](expr, op);
   },
-  'getNameOperand': function(expr) {
+  'getNameOperand'(expr) {
     var name = Module['_BinaryenHostGetNameOperand'](expr);
     return name ? UTF8ToString(name) : null;
   },
-  'setNameOperand': function(expr, name) {
+  'setNameOperand'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenHostSetNameOperand'](expr, strToStack(name));
     });
   },
-  'getNumOperands': function(expr) {
+  'getNumOperands'(expr) {
     return Module['_BinaryenHostGetNumOperands'](expr);
   },
-  'getOperands': function(expr) {
+  'getOperands'(expr) {
     var numOperands = Module['_BinaryenHostGetNumOperands'](expr);
     var operands = new Array(numOperands);
     var index = 0;
@@ -3588,7 +3588,7 @@ Module['Host'] = makeExpressionWrapper({
     }
     return operands;
   },
-  'setOperands': function(expr, operands) {
+  'setOperands'(expr, operands) {
     var numOperands = operands.length;
     var prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
     var index = 0;
@@ -3604,139 +3604,139 @@ Module['Host'] = makeExpressionWrapper({
       Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
     }
   },
-  'getOperandAt': function(expr, index) {
+  'getOperandAt'(expr, index) {
     return Module['_BinaryenHostGetOperandAt'](expr, index);
   },
-  'setOperandAt': function(expr, index, operandExpr) {
+  'setOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
   },
-  'appendOperand': function(expr, operandExpr) {
+  'appendOperand'(expr, operandExpr) {
     return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
   },
-  'insertOperandAt': function(expr, index, operandExpr) {
+  'insertOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
   },
-  'removeOperandAt': function(expr, index) {
+  'removeOperandAt'(expr, index) {
     return Module['_BinaryenHostRemoveOperandAt'](expr, index);
   },
 });
 
 Module['Load'] = makeExpressionWrapper({
-  'isAtomic': function(expr) {
+  'isAtomic'(expr) {
     return Boolean(Module['_BinaryenLoadIsAtomic'](expr));
   },
-  'setAtomic': function(expr, isAtomic) {
+  'setAtomic'(expr, isAtomic) {
     Module['_BinaryenLoadSetAtomic'](expr, isAtomic);
   },
-  'isSigned': function(expr) {
+  'isSigned'(expr) {
     return Boolean(Module['_BinaryenLoadIsSigned'](expr));
   },
-  'setSigned': function(expr, isSigned) {
+  'setSigned'(expr, isSigned) {
     Module['_BinaryenLoadSetSigned'](expr, isSigned);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenLoadGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenLoadSetOffset'](expr, offset);
   },
-  'getBytes': function(expr) {
+  'getBytes'(expr) {
     return Module['_BinaryenLoadGetBytes'](expr);
   },
-  'setBytes': function(expr, bytes) {
+  'setBytes'(expr, bytes) {
     Module['_BinaryenLoadSetBytes'](expr, bytes);
   },
-  'getAlign': function(expr) {
+  'getAlign'(expr) {
     return Module['_BinaryenLoadGetAlign'](expr);
   },
-  'setAlign': function(expr, align) {
+  'setAlign'(expr, align) {
     Module['_BinaryenLoadSetAlign'](expr, align);
   },
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenLoadGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenLoadSetPtr'](expr, ptrExpr);
   }
 });
 
 Module['Store'] = makeExpressionWrapper({
-  'isAtomic': function(expr) {
+  'isAtomic'(expr) {
     return Boolean(Module['_BinaryenStoreIsAtomic'](expr));
   },
-  'setAtomic': function(expr, isAtomic) {
+  'setAtomic'(expr, isAtomic) {
     Module['_BinaryenStoreSetAtomic'](expr, isAtomic);
   },
-  'getBytes': function(expr) {
+  'getBytes'(expr) {
     return Module['_BinaryenStoreGetBytes'](expr);
   },
-  'setBytes': function(expr, bytes) {
+  'setBytes'(expr, bytes) {
     Module['_BinaryenStoreSetBytes'](expr, bytes);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenStoreGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenStoreSetOffset'](expr, offset);
   },
-  'getAlign': function(expr) {
+  'getAlign'(expr) {
     return Module['_BinaryenStoreGetAlign'](expr);
   },
-  'setAlign': function(expr, align) {
+  'setAlign'(expr, align) {
     Module['_BinaryenStoreSetAlign'](expr, align);
   },
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenStoreGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenStoreSetPtr'](expr, ptrExpr);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenStoreGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenStoreSetValue'](expr, valueExpr);
   },
-  'getValueType': function(expr) {
+  'getValueType'(expr) {
     return Module['_BinaryenStoreGetValueType'](expr);
   },
-  'setValueType': function(expr, valueType) {
+  'setValueType'(expr, valueType) {
     Module['_BinaryenStoreSetValueType'](expr, valueType);
   }
 });
 
 Module['Const'] = makeExpressionWrapper({
-  'getValueI32': function(expr) {
+  'getValueI32'(expr) {
     return Module['_BinaryenConstGetValueI32'](expr);
   },
-  'setValueI32': function(expr, value) {
+  'setValueI32'(expr, value) {
     Module['_BinaryenConstSetValueI32'](expr, value);
   },
-  'getValueI64Low': function(expr) {
+  'getValueI64Low'(expr) {
     return Module['_BinaryenConstGetValueI64Low'](expr);
   },
-  'setValueI64Low': function(expr, value) {
+  'setValueI64Low'(expr, value) {
     Module['_BinaryenConstSetValueI64Low'](expr, value);
   },
-  'getValueI64High': function(expr) {
+  'getValueI64High'(expr) {
     return Module['_BinaryenConstGetValueI64High'](expr);
   },
-  'setValueI64High': function(expr, value) {
+  'setValueI64High'(expr, value) {
     Module['_BinaryenConstSetValueI64High'](expr, value);
   },
-  'getValueF32': function(expr) {
+  'getValueF32'(expr) {
     return Module['_BinaryenConstGetValueF32'](expr);
   },
-  'setValueF32': function(expr, value) {
+  'setValueF32'(expr, value) {
     Module['_BinaryenConstSetValueF32'](expr, value);
   },
-  'getValueF64': function(expr) {
+  'getValueF64'(expr) {
     return Module['_BinaryenConstGetValueF64'](expr);
   },
-  'setValueF64': function(expr, value) {
+  'setValueF64'(expr, value) {
     Module['_BinaryenConstSetValueF64'](expr, value);
   },
-  'getValueV128': function(expr) {
+  'getValueV128'(expr) {
     var value;
     preserveStack(function() {
       var tempBuffer = stackAlloc(16);
@@ -3748,7 +3748,7 @@ Module['Const'] = makeExpressionWrapper({
     });
     return value;
   },
-  'setValueV128': function(expr, value) {
+  'setValueV128'(expr, value) {
     preserveStack(function() {
       var tempBuffer = stackAlloc(16);
       for (var i = 0 ; i < 16; ++i) {
@@ -3760,259 +3760,259 @@ Module['Const'] = makeExpressionWrapper({
 });
 
 Module['Unary'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenUnaryGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenUnarySetOp'](expr, op);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenUnaryGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenUnarySetValue'](expr, valueExpr);
   }
 });
 
 Module['Binary'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenBinaryGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenBinarySetOp'](expr, op);
   },
-  'getLeft': function(expr) {
+  'getLeft'(expr) {
     return Module['_BinaryenBinaryGetLeft'](expr);
   },
-  'setLeft': function(expr, leftExpr) {
+  'setLeft'(expr, leftExpr) {
     Module['_BinaryenBinarySetLeft'](expr, leftExpr);
   },
-  'getRight': function(expr) {
+  'getRight'(expr) {
     return Module['_BinaryenBinaryGetRight'](expr);
   },
-  'setRight': function(expr, rightExpr) {
+  'setRight'(expr, rightExpr) {
     Module['_BinaryenBinarySetRight'](expr, rightExpr);
   }
 });
 
 Module['Select'] = makeExpressionWrapper({
-  'getIfTrue': function(expr) {
+  'getIfTrue'(expr) {
     return Module['_BinaryenSelectGetIfTrue'](expr);
   },
-  'setIfTrue': function(expr, ifTrueExpr) {
+  'setIfTrue'(expr, ifTrueExpr) {
     Module['_BinaryenSelectSetIfTrue'](expr, ifTrueExpr);
   },
-  'getIfFalse': function(expr) {
+  'getIfFalse'(expr) {
     return Module['_BinaryenSelectGetIfFalse'](expr);
   },
-  'setIfFalse': function(expr, ifFalseExpr) {
+  'setIfFalse'(expr, ifFalseExpr) {
     Module['_BinaryenSelectSetIfFalse'](expr, ifFalseExpr);
   },
-  'getCondition': function(expr) {
+  'getCondition'(expr) {
     return Module['_BinaryenSelectGetCondition'](expr);
   },
-  'setCondition': function(expr, condExpr) {
+  'setCondition'(expr, condExpr) {
     Module['_BinaryenSelectSetCondition'](expr, condExpr);
   }
 });
 
 Module['Drop'] = makeExpressionWrapper({
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenDropGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenDropSetValue'](expr, valueExpr);
   }
 });
 
 Module['Return'] = makeExpressionWrapper({
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenReturnGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenReturnSetValue'](expr, valueExpr);
   }
 });
 
 Module['AtomicRMW'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenAtomicRMWGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenAtomicRMWSetOp'](expr, op);
   },
-  'getBytes': function(expr) {
+  'getBytes'(expr) {
     return Module['_BinaryenAtomicRMWGetBytes'](expr);
   },
-  'setBytes': function(expr, bytes) {
+  'setBytes'(expr, bytes) {
     Module['_BinaryenAtomicRMWSetBytes'](expr, bytes);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenAtomicRMWGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenAtomicRMWSetOffset'](expr, offset);
   },
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenAtomicRMWGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenAtomicRMWSetPtr'](expr, ptrExpr);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenAtomicRMWGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenAtomicRMWSetValue'](expr, valueExpr);
   }
 });
 
 Module['AtomicCmpxchg'] = makeExpressionWrapper({
-  'getBytes': function(expr) {
+  'getBytes'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetBytes'](expr);
   },
-  'setBytes': function(expr, bytes) {
+  'setBytes'(expr, bytes) {
     Module['_BinaryenAtomicCmpxchgSetBytes'](expr, bytes);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenAtomicCmpxchgSetOffset'](expr, offset);
   },
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenAtomicCmpxchgSetPtr'](expr, ptrExpr);
   },
-  'getExpected': function(expr) {
+  'getExpected'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetExpected'](expr);
   },
-  'setExpected': function(expr, expectedExpr) {
+  'setExpected'(expr, expectedExpr) {
     Module['_BinaryenAtomicCmpxchgSetExpected'](expr, expectedExpr);
   },
-  'getReplacement': function(expr) {
+  'getReplacement'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetReplacement'](expr);
   },
-  'setReplacement': function(expr, replacementExpr) {
+  'setReplacement'(expr, replacementExpr) {
     Module['_BinaryenAtomicCmpxchgSetReplacement'](expr, replacementExpr);
   }
 });
 
 Module['AtomicWait'] = makeExpressionWrapper({
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenAtomicWaitGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenAtomicWaitSetPtr'](expr, ptrExpr);
   },
-  'getExpected': function(expr) {
+  'getExpected'(expr) {
     return Module['_BinaryenAtomicWaitGetExpected'](expr);
   },
-  'setExpected': function(expr, expectedExpr) {
+  'setExpected'(expr, expectedExpr) {
     Module['_BinaryenAtomicWaitSetExpected'](expr, expectedExpr);
   },
-  'getTimeout': function(expr) {
+  'getTimeout'(expr) {
     return Module['_BinaryenAtomicWaitGetTimeout'](expr);
   },
-  'setTimeout': function(expr, timeoutExpr) {
+  'setTimeout'(expr, timeoutExpr) {
     Module['_BinaryenAtomicWaitSetTimeout'](expr, timeoutExpr);
   },
-  'getExpectedType': function(expr) {
+  'getExpectedType'(expr) {
     return Module['_BinaryenAtomicWaitGetExpectedType'](expr);
   },
-  'setExpectedType': function(expr, expectedType) {
+  'setExpectedType'(expr, expectedType) {
     Module['_BinaryenAtomicWaitSetExpectedType'](expr, expectedType);
   }
 });
 
 Module['AtomicNotify'] = makeExpressionWrapper({
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenAtomicNotifyGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenAtomicNotifySetPtr'](expr, ptrExpr);
   },
-  'getNotifyCount': function(expr) {
+  'getNotifyCount'(expr) {
     return Module['_BinaryenAtomicNotifyGetNotifyCount'](expr);
   },
-  'setNotifyCount': function(expr, notifyCountExpr) {
+  'setNotifyCount'(expr, notifyCountExpr) {
     Module['_BinaryenAtomicNotifySetNotifyCount'](expr, notifyCountExpr);
   }
 });
 
 Module['AtomicFence'] = makeExpressionWrapper({
-  'getOrder': function(expr) {
+  'getOrder'(expr) {
     return Module['_BinaryenAtomicFenceGetOrder'](expr);
   },
-  'setOrder': function(expr, order) {
+  'setOrder'(expr, order) {
     Module['_BinaryenAtomicFenceSetOrder'](expr, order);
   }
 });
 
 Module['SIMDExtract'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenSIMDExtractGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenSIMDExtractSetOp'](expr, op);
   },
-  'getVec': function(expr) {
+  'getVec'(expr) {
     return Module['_BinaryenSIMDExtractGetVec'](expr);
   },
-  'setVec': function(expr, vecExpr) {
+  'setVec'(expr, vecExpr) {
     Module['_BinaryenSIMDExtractSetVec'](expr, vecExpr);
   },
-  'getIndex': function(expr) {
+  'getIndex'(expr) {
     return Module['_BinaryenSIMDExtractGetIndex'](expr);
   },
-  'setIndex': function(expr, index) {
+  'setIndex'(expr, index) {
     Module['_BinaryenSIMDExtractSetIndex'](expr, index)
   }
 });
 
 Module['SIMDReplace'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenSIMDReplaceGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenSIMDReplaceSetOp'](expr, op);
   },
-  'getVec': function(expr) {
+  'getVec'(expr) {
     return Module['_BinaryenSIMDReplaceGetVec'](expr);
   },
-  'setVec': function(expr, vecExpr) {
+  'setVec'(expr, vecExpr) {
     Module['_BinaryenSIMDReplaceSetVec'](expr, vecExpr);
   },
-  'getIndex': function(expr) {
+  'getIndex'(expr) {
     return Module['_BinaryenSIMDReplaceGetIndex'](expr);
   },
-  'setIndex': function(expr, index) {
+  'setIndex'(expr, index) {
     Module['_BinaryenSIMDReplaceSetIndex'](expr, index);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenSIMDReplaceGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenSIMDReplaceSetValue'](expr, valueExpr);
   }
 });
 
 Module['SIMDShuffle'] = makeExpressionWrapper({
-  'getLeft': function(expr) {
+  'getLeft'(expr) {
     return Module['_BinaryenSIMDShuffleGetLeft'](expr);
   },
-  'setLeft': function(expr, leftExpr) {
+  'setLeft'(expr, leftExpr) {
     Module['_BinaryenSIMDShuffleSetLeft'](expr, leftExpr)
   },
-  'getRight': function(expr) {
+  'getRight'(expr) {
     return Module['_BinaryenSIMDShuffleGetRight'](expr);
   },
-  'setRight': function(expr, rightExpr) {
+  'setRight'(expr, rightExpr) {
     Module['_BinaryenSIMDShuffleSetRight'](expr, rightExpr);
   },
-  'getMask': function(expr) {
+  'getMask'(expr) {
     var mask;
     preserveStack(function() {
       var tempBuffer = stackAlloc(16);
@@ -4024,7 +4024,7 @@ Module['SIMDShuffle'] = makeExpressionWrapper({
     });
     return mask;
   },
-  'setMask': function(expr, mask) {
+  'setMask'(expr, mask) {
     preserveStack(function() {
       var tempBuffer = stackAlloc(16);
       for (var i = 0 ; i < 16; ++i) {
@@ -4036,172 +4036,172 @@ Module['SIMDShuffle'] = makeExpressionWrapper({
 });
 
 Module['SIMDTernary'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenSIMDTernaryGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenSIMDTernarySetOp'](expr, op);
   },
-  'getA': function(expr) {
+  'getA'(expr) {
     return Module['_BinaryenSIMDTernaryGetA'](expr);
   },
-  'setA': function(expr, aExpr) {
+  'setA'(expr, aExpr) {
     Module['_BinaryenSIMDTernarySetA'](expr, aExpr);
   },
-  'getB': function(expr) {
+  'getB'(expr) {
     return Module['_BinaryenSIMDTernaryGetB'](expr);
   },
-  'setB': function(expr, bExpr) {
+  'setB'(expr, bExpr) {
     Module['_BinaryenSIMDTernarySetB'](expr, bExpr);
   },
-  'getC': function(expr) {
+  'getC'(expr) {
     return Module['_BinaryenSIMDTernaryGetC'](expr);
   },
-  'setC': function(expr, cExpr) {
+  'setC'(expr, cExpr) {
     Module['_BinaryenSIMDTernarySetC'](expr, cExpr);
   }
 });
 
 Module['SIMDShift'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenSIMDShiftGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenSIMDShiftSetOp'](expr, op);
   },
-  'getVec': function(expr) {
+  'getVec'(expr) {
     return Module['_BinaryenSIMDShiftGetVec'](expr);
   },
-  'setVec': function(expr, vecExpr) {
+  'setVec'(expr, vecExpr) {
     Module['_BinaryenSIMDShiftSetVec'](expr, vecExpr);
   },
-  'getShift': function(expr) {
+  'getShift'(expr) {
     return Module['_BinaryenSIMDShiftGetShift'](expr);
   },
-  'setShift': function(expr, shiftExpr) {
+  'setShift'(expr, shiftExpr) {
     Module['_BinaryenSIMDShiftSetShift'](expr, shiftExpr);
   }
 });
 
 Module['SIMDLoad'] = makeExpressionWrapper({
-  'getOp': function(expr) {
+  'getOp'(expr) {
     return Module['_BinaryenSIMDLoadGetOp'](expr);
   },
-  'setOp': function(expr, op) {
+  'setOp'(expr, op) {
     Module['_BinaryenSIMDLoadSetOp'](expr, op);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenSIMDLoadGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenSIMDLoadSetOffset'](expr, offset);
   },
-  'getAlign': function(expr) {
+  'getAlign'(expr) {
     return Module['_BinaryenSIMDLoadGetAlign'](expr);
   },
-  'setAlign': function(expr, align) {
+  'setAlign'(expr, align) {
     Module['_BinaryenSIMDLoadSetAlign'](expr, align);
   },
-  'getPtr': function(expr) {
+  'getPtr'(expr) {
     return Module['_BinaryenSIMDLoadGetPtr'](expr);
   },
-  'setPtr': function(expr, ptrExpr) {
+  'setPtr'(expr, ptrExpr) {
     Module['_BinaryenSIMDLoadSetPtr'](expr, ptrExpr);
   }
 });
 
 Module['MemoryInit'] = makeExpressionWrapper({
-  'getSegment': function(expr) {
+  'getSegment'(expr) {
     return Module['_BinaryenMemoryInitGetSegment'](expr);
   },
-  'setSegment': function(expr, segmentIndex) {
+  'setSegment'(expr, segmentIndex) {
     Module['_BinaryenMemoryInitSetSegment'](expr, segmentIndex);
   },
-  'getDest': function(expr) {
+  'getDest'(expr) {
     return Module['_BinaryenMemoryInitGetDest'](expr);
   },
-  'setDest': function(expr, destExpr) {
+  'setDest'(expr, destExpr) {
     Module['_BinaryenMemoryInitSetDest'](expr, destExpr);
   },
-  'getOffset': function(expr) {
+  'getOffset'(expr) {
     return Module['_BinaryenMemoryInitGetOffset'](expr);
   },
-  'setOffset': function(expr, offset) {
+  'setOffset'(expr, offset) {
     Module['_BinaryenMemoryInitSetOffset'](expr, offset);
   },
-  'getSize': function(expr) {
+  'getSize'(expr) {
     return Module['_BinaryenMemoryInitGetSize'](expr);
   },
-  'setSize': function(expr, sizeExpr) {
+  'setSize'(expr, sizeExpr) {
     Module['_BinaryenMemoryInitSetSize'](expr, sizeExpr);
   }
 });
 
 Module['DataDrop'] = makeExpressionWrapper({
-  'getSegment': function(expr) {
+  'getSegment'(expr) {
     return Module['_BinaryenDataDropGetSegment'](expr);
   },
-  'setSegment': function(expr, segmentIndex) {
+  'setSegment'(expr, segmentIndex) {
     Module['_BinaryenDataDropSetSegment'](expr, segmentIndex);
   }
 });
 
 Module['MemoryCopy'] = makeExpressionWrapper({
-  'getDest': function(expr) {
+  'getDest'(expr) {
     return Module['_BinaryenMemoryCopyGetDest'](expr);
   },
-  'setDest': function(expr, destExpr) {
+  'setDest'(expr, destExpr) {
     Module['_BinaryenMemoryCopySetDest'](expr, destExpr);
   },
-  'getSource': function(expr) {
+  'getSource'(expr) {
     return Module['_BinaryenMemoryCopyGetSource'](expr);
   },
-  'setSource': function(expr, sourceExpr) {
+  'setSource'(expr, sourceExpr) {
     Module['_BinaryenMemoryCopySetSource'](expr, sourceExpr);
   },
-  'getSize': function(expr) {
+  'getSize'(expr) {
     return Module['_BinaryenMemoryCopyGetSize'](expr);
   },
-  'setSize': function(expr, sizeExpr) {
+  'setSize'(expr, sizeExpr) {
     Module['_BinaryenMemoryCopySetSize'](expr, sizeExpr);
   }
 });
 
 Module['MemoryFill'] = makeExpressionWrapper({
-  'getDest': function(expr) {
+  'getDest'(expr) {
     return Module['_BinaryenMemoryFillGetDest'](expr);
   },
-  'setDest': function(expr, destExpr) {
+  'setDest'(expr, destExpr) {
     Module['_BinaryenMemoryFillSetDest'](expr, destExpr);
   },
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenMemoryFillGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenMemoryFillSetValue'](expr, valueExpr);
   },
-  'getSize': function(expr) {
+  'getSize'(expr) {
     return Module['_BinaryenMemoryFillGetSize'](expr);
   },
-  'setSize': function(expr, sizeExpr) {
+  'setSize'(expr, sizeExpr) {
     Module['_BinaryenMemoryFillSetSize'](expr, sizeExpr);
   }
 });
 
 Module['RefIsNull'] = makeExpressionWrapper({
-  'getValue': function(expr) {
+  'getValue'(expr) {
     return Module['_BinaryenRefIsNullGetValue'](expr);
   },
-  'setValue': function(expr, valueExpr) {
+  'setValue'(expr, valueExpr) {
     Module['_BinaryenRefIsNullSetValue'](expr, valueExpr);
   }
 });
 
 Module['RefFunc'] = makeExpressionWrapper({
-  'getFunc': function(expr) {
+  'getFunc'(expr) {
     return UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr));
   },
-  'setFunc': function(expr, funcName) {
+  'setFunc'(expr, funcName) {
     preserveStack(function() {
       Module['_BinaryenRefFuncSetFunc'](expr, strToStack(funcName));
     });
@@ -4209,33 +4209,33 @@ Module['RefFunc'] = makeExpressionWrapper({
 });
 
 Module['Try'] = makeExpressionWrapper({
-  'getBody': function(expr) {
+  'getBody'(expr) {
     return Module['_BinaryenTryGetBody'](expr);
   },
-  'setBody': function(expr, bodyExpr) {
+  'setBody'(expr, bodyExpr) {
     Module['_BinaryenTrySetBody'](expr, bodyExpr);
   },
-  'getCatchBody': function(expr) {
+  'getCatchBody'(expr) {
     return Module['_BinaryenTryGetCatchBody'](expr);
   },
-  'setCatchBody': function(expr, catchBodyExpr) {
+  'setCatchBody'(expr, catchBodyExpr) {
     Module['_BinaryenTrySetCatchBody'](expr, catchBodyExpr);
   }
 });
 
 Module['Throw'] = makeExpressionWrapper({
-  'getEvent': function(expr) {
+  'getEvent'(expr) {
     return UTF8ToString(Module['_BinaryenThrowGetEvent'](expr));
   },
-  'setEvent': function(expr, eventName) {
+  'setEvent'(expr, eventName) {
     preserveStack(function() {
       Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName));
     });
   },
-  'getNumOperands': function(expr) {
+  'getNumOperands'(expr) {
     return Module['_BinaryenThrowGetNumOperands'](expr);
   },
-  'getOperands': function(expr) {
+  'getOperands'(expr) {
     var numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
     var operands = new Array(numOperands);
     var index = 0;
@@ -4244,7 +4244,7 @@ Module['Throw'] = makeExpressionWrapper({
     }
     return operands;
   },
-  'setOperands': function(expr, operands) {
+  'setOperands'(expr, operands) {
     var numOperands = operands.length;
     var prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
     var index = 0;
@@ -4260,62 +4260,62 @@ Module['Throw'] = makeExpressionWrapper({
       Module['_BinaryenThrowRemoveOperandAt'](expr, --prevNumOperands);
     }
   },
-  'getOperandAt': function(expr, index) {
+  'getOperandAt'(expr, index) {
     return Module['_BinaryenThrowGetOperandAt'](expr, index);
   },
-  'setOperandAt': function(expr, index, operandExpr) {
+  'setOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenThrowSetOperandAt'](expr, index, operandExpr);
   },
-  'appendOperand': function(expr, operandExpr) {
+  'appendOperand'(expr, operandExpr) {
     return Module['_BinaryenThrowAppendOperand'](expr, operandExpr);
   },
-  'insertOperandAt': function(expr, index, operandExpr) {
+  'insertOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenThrowInsertOperandAt'](expr, index, operandExpr);
   },
-  'removeOperandAt': function(expr, index) {
+  'removeOperandAt'(expr, index) {
     return Module['_BinaryenThrowRemoveOperandAt'](expr, index);
   },
 });
 
 Module['Rethrow'] = makeExpressionWrapper({
-  'getExnref': function(expr) {
+  'getExnref'(expr) {
     return Module['_BinaryenRethrowGetExnref'](expr);
   },
-  'setExnref': function(expr, exnrefExpr) {
+  'setExnref'(expr, exnrefExpr) {
     Module['_BinaryenRethrowSetExnref'](expr, exnrefExpr);
   }
 });
 
 Module['BrOnExn'] = makeExpressionWrapper({
-  'getEvent': function(expr) {
+  'getEvent'(expr) {
     return UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr));
   },
-  'setEvent': function(expr, eventName) {
+  'setEvent'(expr, eventName) {
     preserveStack(function() {
       Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName));
     });
   },
-  'getName': function(expr) {
+  'getName'(expr) {
     return UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr));
   },
-  'setName': function(expr, name) {
+  'setName'(expr, name) {
     preserveStack(function() {
       Module['_BinaryenBrOnExnSetName'](expr, strToStack(name));
     });
   },
-  'getExnref': function(expr) {
+  'getExnref'(expr) {
     return Module['_BinaryenBrOnExnGetExnref'](expr);
   },
-  'setExnref': function(expr, exnrefExpr) {
+  'setExnref'(expr, exnrefExpr) {
     Module['_BinaryenBrOnExnSetExnref'](expr, exnrefExpr);
   }
 });
 
 Module['TupleMake'] = makeExpressionWrapper({
-  'getNumOperands': function(expr) {
+  'getNumOperands'(expr) {
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
   },
-  'getOperands': function(expr) {
+  'getOperands'(expr) {
     var numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
     var operands = new Array(numOperands);
     var index = 0;
@@ -4324,7 +4324,7 @@ Module['TupleMake'] = makeExpressionWrapper({
     }
     return operands;
   },
-  'setOperands': function(expr, operands) {
+  'setOperands'(expr, operands) {
     var numOperands = operands.length;
     var prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
     var index = 0;
@@ -4340,34 +4340,34 @@ Module['TupleMake'] = makeExpressionWrapper({
       Module['_BinaryenTupleMakeRemoveOperandAt'](expr, --prevNumOperands);
     }
   },
-  'getOperandAt': function(expr, index) {
+  'getOperandAt'(expr, index) {
     return Module['_BinaryenTupleMakeGetOperandAt'](expr, index);
   },
-  'setOperandAt': function(expr, index, operandExpr) {
+  'setOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operandExpr);
   },
-  'appendOperand': function(expr, operandExpr) {
+  'appendOperand'(expr, operandExpr) {
     return Module['_BinaryenTupleMakeAppendOperand'](expr, operandExpr);
   },
-  'insertOperandAt': function(expr, index, operandExpr) {
+  'insertOperandAt'(expr, index, operandExpr) {
     Module['_BinaryenTupleMakeInsertOperandAt'](expr, index, operandExpr);
   },
-  'removeOperandAt': function(expr, index) {
+  'removeOperandAt'(expr, index) {
     return Module['_BinaryenTupleMakeRemoveOperandAt'](expr, index);
   }
 });
 
 Module['TupleExtract'] = makeExpressionWrapper({
-  'getTuple': function(expr) {
+  'getTuple'(expr) {
     return Module['_BinaryenTupleExtractGetTuple'](expr);
   },
-  'setTuple': function(expr, tupleExpr) {
+  'setTuple'(expr, tupleExpr) {
     Module['_BinaryenTupleExtractSetTuple'](expr, tupleExpr);
   },
-  'getIndex': function(expr) {
+  'getIndex'(expr) {
     return Module['_BinaryenTupleExtractGetIndex'](expr);
   },
-  'setIndex': function(expr, index) {
+  'setIndex'(expr, index) {
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
   }
 });
@@ -4391,17 +4391,14 @@ Module['isReady'] = runtimeInitialized;
 var pendingPromises = [];
 var initializeError = null;
 Object.defineProperty(Module, 'ready', {
-  get: function() {
+  get() {
     return new Promise(function(resolve, reject) {
       if (initializeError) {
         reject(initializeError);
       } else if (runtimeInitialized) {
         resolve(Module);
       } else {
-        pendingPromises.push({
-          resolve: resolve,
-          reject: reject
-        });
+        pendingPromises.push({ resolve, reject });
       }
     });
   }
