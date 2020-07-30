@@ -249,7 +249,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         Expression* low =
           lowerLoadI32(builder.makeLoad(4,
                                         false,
-                                        0,
+                                        curr->offset,
                                         curr->align,
                                         builder.makeLocalGet(temp, Type::i32),
                                         Type::i32));
@@ -257,7 +257,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         Expression* high =
           lowerLoadI32(builder.makeLoad(4,
                                         false,
-                                        4,
+                                        curr->offset + 4,
                                         curr->align,
                                         builder.makeLocalGet(temp, Type::i32),
                                         Type::i32));
@@ -317,7 +317,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           WrapInt64, builder.makeLocalGet(tempValue, Type::i64));
         low = lowerStoreI32(
           builder.makeStore(4,
-                            0,
+                            curr->offset,
                             curr->align,
                             builder.makeLocalGet(tempPtr, Type::i32),
                             low,
@@ -329,7 +329,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         high = builder.makeUnary(WrapInt64, high);
         high = lowerStoreI32(
           builder.makeStore(4,
-                            4,
+                            curr->offset + 4,
                             curr->align,
                             builder.makeLocalGet(tempPtr, Type::i32),
                             high,
