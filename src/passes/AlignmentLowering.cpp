@@ -218,14 +218,14 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
   }
 
   void visitLoad(Load* curr) {
-    if (curr->align == 0 || curr->align == curr->bytes) {
-      // Nothing to do.
-      return;
-    }
     // If unreachable, just remove the load, which removes the unaligned
     // operation in a trivial way.
     if (curr->type == Type::unreachable) {
       replaceCurrent(curr->ptr);
+      return;
+    }
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do.
       return;
     }
     Builder builder(*getModule());
@@ -276,16 +276,16 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
   }
 
   void visitStore(Store* curr) {
-    if (curr->align == 0 || curr->align == curr->bytes) {
-      // Nothing to do.
-      return;
-    }
     Builder builder(*getModule());
     // If unreachable, just remove the store, which removes the unaligned
     // operation in a trivial way.
     if (curr->type == Type::unreachable) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
+      return;
+    }
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do.
       return;
     }
     auto type = curr->value->type.getSingle();
