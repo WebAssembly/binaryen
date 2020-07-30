@@ -2994,9 +2994,7 @@ Module['getPassArgument'] = function(key) {
 // Sets the value of the specified arbitrary pass argument. Removes the
 // respective argument if `value` is NULL.
 Module['setPassArgument'] = function (key, value) {
-  preserveStack(() => {
-    Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value));
-  });
+  preserveStack(() => { Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value)) });
 };
 
 // Clears all arbitrary pass arguments.
