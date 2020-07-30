@@ -180,9 +180,20 @@ def compare(x, y, context):
 
 # check if a number is 0 or a subnormal, which is basically zero
 def is_basically_zero(x):
-  # to check if something is a subnormal, compare it to the largest one
-  return x >= 0 and x <= 2.22507385850720088902e-308
-# FIXME only do this with JS?
+    # to check if something is a subnormal, compare it to the largest one
+    return x >= 0 and x <= 2.22507385850720088902e-308
+
+
+# large doubles print differently in JS VMs than anywhere else:
+# 9223372036854775808 will show up as 9223372036854776000 even
+# though the bit pattern is the same (so it is just a printing
+# difference, specifically of floats that have no fraction and so are
+# rendered as ints, which hits the 53-bit limit of ints in doubles).
+def big_numbers_are_close_enough(x, y):
+    return x == y
+#            x = min(2 ** 53, x)
+#            x = max(-(2 ** 53), x)
+
 
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
@@ -197,7 +208,10 @@ def numbers_are_close_enough(x, y):
         fy = float(y)
         # check for strict equality, and also ignore subnormals (which some
         # float printing code will log out in full, but others will not)
-        return fx == fy or (is_basically_zero(fx) and is_basically_zero(fy))
+        # FIXME only for JS
+        return fx == fy or \
+               (is_basically_zero(fx) and is_basically_zero(fy)) or \
+               big_numbers_are_close_enough(fx, fy)
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
@@ -565,27 +579,9 @@ class Wasm2JS(TestCaseHandler):
             after = after[:after.index(call_line)]
             interpreter = interpreter[:interpreter.index(call_line)]
 
-        # large doubles print differently in JS VMs than anywhere else:
-        # 9223372036854775808 will show up as 9223372036854776000 even
-        # though the bit pattern is the same (so it is just a printing
-        # difference, specifically of floats that have no fraction and so are
-        # rendered as ints, which hits the 53-bit limit of ints in doubles).
-        def fix_output_for_js(x):
-            # start with the normal output fixes that all VMs need
-            x = fix_output(x)
-            def fix_double(x):
-                x = int(x.group(1))
-                # for simplicity, just ignore values that are in the dangerous
-                # area, but in theory we could do the same rounding JS VMs do
-                x = min(2 ** 53, x)
-                x = max(-(2 ** 53), x)
-                return ' => ' + str(x)
-
-            return re.sub(r' => (-?[\d+-]+)', fix_double, x)
-
-        before = fix_output_for_js(before)
-        after = fix_output_for_js(after)
-        interpreter = fix_output_for_js(interpreter)
+        before = fix_output(before)
+        after = fix_output(after)
+        interpreter = fix_output(interpreter)
         
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
         if compare_to_interpreter:
