@@ -178,6 +178,12 @@ def compare(x, y, context):
         ))
 
 
+# check if a number is 0 or a subnormal, which is basically zero
+def is_basically_zero(x):
+  # to check if something is a subnormal, compare it to the largest one
+  return x >= 0 and x <= 2.22507385850720088902e-308
+# FIXME only do this with JS?
+
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
@@ -187,14 +193,18 @@ def numbers_are_close_enough(x, y):
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
-        return float(x) == float(y)
+        fx = float(x)
+        fy = float(y)
+        # check for strict equality, and also ignore subnormals (which some
+        # float printing code will log out in full, but others will not)
+        return fx == fy or (is_basically_zero(fx) and is_basically_zero(fy))
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
     try:
-        x = eval(x)
-        y = eval(y)
-        return x == y or float(x) == float(y)
+        ex = eval(x)
+        ey = eval(y)
+        return ex == ey or float(ex) == float(ey)
     except Exception as e:
         print('failed to check if numbers are close enough:', e)
         return False
