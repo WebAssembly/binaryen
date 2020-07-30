@@ -2208,12 +2208,12 @@ function wrapModule(module, self) {
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
   };
-  self['setFunctionTable'] = function(initial, maximum, funcNames, offset) {
+  self['setFunctionTable'] = function(initial, maximum, funcNames, offset = self['i32']['const'](0)) {
     return preserveStack(() => {
       return Module['_BinaryenSetFunctionTable'](module, initial, maximum,
         i32sToStack(funcNames.map(strToStack)),
         funcNames.length,
-        offset || self['i32']['const'](0)
+        offset
       );
     });
   };
@@ -2239,9 +2239,8 @@ function wrapModule(module, self) {
       })()
     };
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
+  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
-    if (!segments) segments = [];
     return preserveStack(() => {
       const segmentsLen = segments.length;
       const segmentData = new Array(segmentsLen);
