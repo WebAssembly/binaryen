@@ -3057,7 +3057,7 @@ function makeExpressionWrapper(ownStaticMembers) {
 
 // Makes instance members from the given static members
 function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
-  Object.keys(staticMembers).forEach(function(memberName) {
+  Object.keys(staticMembers).forEach(memberName => {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method
@@ -3067,21 +3067,19 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
       // Instance accessor calls the respective static methods
       let match;
       if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
-        (function(propertyName, getter, setterIfAny) {
-          Object.defineProperty(prototype, propertyName, {
-            get() {
-              return getter(this['expr']);
-            },
-            set(value) {
-              if (setterIfAny) setterIfAny(this['expr'], value);
-              else throw Error("property '" + propertyName + "' has no setter");
-            }
-          });
-        })(
-          memberName.charAt(match[1].length).toLowerCase() + memberName.substring(match[1].length + 1),
-          staticMembers[memberName],
-          staticMembers["set" + memberName.substring(match[1].length)]
-        );
+        const index = match[1].length;
+        const propertyName = memberName.charAt(index).toLowerCase() + memberName.substring(index + 1);
+        const getter = staticMembers[memberName];
+        const setterIfAny = staticMembers["set" + memberName.substring(index)];
+        Object.defineProperty(prototype, propertyName, {
+          get() {
+            return getter(this['expr']);
+          },
+          set(value) {
+            if (setterIfAny) setterIfAny(this['expr'], value);
+            else throw Error("property '" + propertyName + "' has no setter");
+          }
+        });
       }
     }
   });
