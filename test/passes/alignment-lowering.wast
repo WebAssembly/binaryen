@@ -60,4 +60,32 @@
   (drop (i32.load16_s offset=100 align=2 (i32.const 4)))
   (drop (i32.load16_s offset=100 align=1 (unreachable)))
  )
+ (func $i64-load
+  (drop (i64.load align=1 (i32.const 12)))
+  (drop (i64.load align=2 (i32.const 16)))
+  (drop (i64.load align=4 (i32.const 20)))
+ )
+ (func $f32-load
+  (drop (f32.load align=1 (i32.const 12)))
+  (drop (f32.load align=2 (i32.const 16)))
+ )
+ (func $f64-load
+  (drop (f64.load align=1 (i32.const 12)))
+  (drop (f64.load align=2 (i32.const 16)))
+  (drop (f64.load align=4 (i32.const 20)))
+ )
+ (func $i64-store
+  (i64.store align=1 (i32.const 12) (i64.const 100))
+  (i64.store align=2 (i32.const 16) (i64.const 200))
+  (i64.store align=4 (i32.const 20) (i64.const 300))
+ )
+ (func $f32-store
+  (f32.store align=1 (i32.const 12) (f32.const 100))
+  (f32.store align=2 (i32.const 16) (f32.const 200))
+ )
+ (func $f64-store
+  (f64.store align=1 (i32.const 12) (f64.const 100))
+  (f64.store align=2 (i32.const 16) (f64.const 200))
+  (f64.store align=4 (i32.const 20) (f64.const 300))
+ )
 )
