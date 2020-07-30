@@ -2229,8 +2229,8 @@ function wrapModule(module, self = {}) {
             names[j] = UTF8ToString(ptr);
           }
           arr[i] = {
-            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
-            'names': names
+            offset: Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
+            names
           };
         }
         return arr;
@@ -2246,11 +2246,11 @@ function wrapModule(module, self = {}) {
       const segmentPassive = new Array(segmentsLen);
       const segmentOffset = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
-        const segment = segments[i];
-        segmentData[i] = allocate(segment.data, 'i8', ALLOC_STACK);
-        segmentDataLen[i] = segment.data.length;
-        segmentPassive[i] = segment.passive;
-        segmentOffset[i] = segment.offset;
+        const { data, offset, passive } = segments[i];
+        segmentData[i] = allocate(data, 'i8', ALLOC_STACK);
+        segmentDataLen[i] = data.length;
+        segmentPassive[i] = passive;
+        segmentOffset[i] = offset;
       }
       return Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
@@ -2494,10 +2494,8 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(function (p) {
-          // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
-          return UTF8ToString(p);
-        }),
+         // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
+        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p)),
         'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expr)),
         'condition': Module['_BinaryenSwitchGetCondition'](expr),
         'value': Module['_BinaryenSwitchGetValue'](expr)
@@ -2571,7 +2569,10 @@ Module['getExpressionInfo'] = function(expr) {
       let value;
       switch (type) {
         case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
-        case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
+        case Module['i64']: value = {
+          low:  Module['_BinaryenConstGetValueI64Low'](expr),
+          high: Module['_BinaryenConstGetValueI64High'](expr)
+        }; break;
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
         case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
         case Module['v128']: {
