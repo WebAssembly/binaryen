@@ -2136,9 +2136,9 @@ function wrapModule(module, self) {
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
-    return preserveStack(() => {
-      return Module['_BinaryenAddFunction'](module, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body);
-    });
+    return preserveStack(() => (
+      Module['_BinaryenAddFunction'](module, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body)
+    ));
   };
   self['getFunction'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetFunction'](module, strToStack(name)));
@@ -3121,9 +3121,7 @@ Module['Block'] = makeExpressionWrapper({
     return name ? UTF8ToString(name) : null;
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenBlockSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenBlockSetName'](expr, strToStack(name)) });
   },
   'getNumChildren'(expr) {
     return Module['_BinaryenBlockGetNumChildren'](expr);
@@ -3197,9 +3195,7 @@ Module['Loop'] = makeExpressionWrapper({
     return name ? UTF8ToString(name) : null;
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenLoopSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenLoopSetName'](expr, strToStack(name)) });
   },
   'getBody'(expr) {
     return Module['_BinaryenLoopGetBody'](expr);
@@ -3215,9 +3211,7 @@ Module['Break'] = makeExpressionWrapper({
     return name ? UTF8ToString(name) : null;
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenBreakSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenBreakSetName'](expr, strToStack(name)) });
   },
   'getCondition'(expr) {
     return Module['_BinaryenBreakGetCondition'](expr);
@@ -4119,9 +4113,7 @@ Module['RefFunc'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr));
   },
   'setFunc'(expr, funcName) {
-    preserveStack(() => {
-      Module['_BinaryenRefFuncSetFunc'](expr, strToStack(funcName));
-    });
+    preserveStack(() => { Module['_BinaryenRefFuncSetFunc'](expr, strToStack(funcName)) });
   }
 });
 
@@ -4145,9 +4137,7 @@ Module['Throw'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenThrowGetEvent'](expr));
   },
   'setEvent'(expr, eventName) {
-    preserveStack(() => {
-      Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName));
-    });
+    preserveStack(() => { Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenThrowGetNumOperands'](expr);
@@ -4208,17 +4198,13 @@ Module['BrOnExn'] = makeExpressionWrapper({
     return UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr));
   },
   'setEvent'(expr, eventName) {
-    preserveStack(() => {
-      Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName));
-    });
+    preserveStack(() => { Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName)) });
   },
   'getName'(expr) {
     return UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr));
   },
   'setName'(expr, name) {
-    preserveStack(() => {
-      Module['_BinaryenBrOnExnSetName'](expr, strToStack(name));
-    });
+    preserveStack(() => { Module['_BinaryenBrOnExnSetName'](expr, strToStack(name)) });
   },
   'getExnref'(expr) {
     return Module['_BinaryenBrOnExnGetExnref'](expr);
