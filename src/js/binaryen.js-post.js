@@ -513,9 +513,8 @@ Module['Module'] = function(module) {
 // This is meant for internal use only, and is necessary as we
 // want to access Module from JS that were perhaps not created
 // from JS.
-function wrapModule(module, self) {
+function wrapModule(module, self = {}) {
   assert(module); // guard against incorrect old API usage
-  if (!self) self = {};
 
   self['ptr'] = module;
 
@@ -2092,8 +2091,7 @@ function wrapModule(module, self) {
   self['return'] = function(value) {
     return Module['_BinaryenReturn'](module, value);
   };
-  self['host'] = function(op, name, operands) {
-    if (!operands) operands = [];
+  self['host'] = function(op, name, operands = []) {
     return preserveStack(() => Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length));
   };
   self['nop'] = function() {
