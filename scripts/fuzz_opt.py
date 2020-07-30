@@ -523,11 +523,13 @@ class Wasm2JS(TestCaseHandler):
         # unexpectedly-unaligned loads/stores work fine in wasm in general, but
         # not in wasm2js, since typed arrays silently round down, effectively.
         # if we want to compare to the interpreter, remove unaligned operations.
-        allow_unaligned = False # random.random() < 0.5
+        allow_unaligned = random.random() < 0.5
         if not allow_unaligned:
-must loewr to alignment 1!!!
-          run([in_bin('wasm-opt'), before_wasm, '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
-          run([in_bin('wasm-opt'), after_wasm, '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
+          # remove unaligned operations by forcing alignment 1, then lowering
+          # those into aligned components, which means all loads and stores are
+          # of a single byte.
+          run([in_bin('wasm-opt'), before_wasm, '--dealign', '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
+          run([in_bin('wasm-opt'), after_wasm, '--dealign', '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
@@ -757,7 +759,6 @@ def write_commands(commands, filename):
 opt_choices = [
     [],
     ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
-    ["--alignment-lowering"],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
