@@ -528,11 +528,11 @@ function wrapModule(module, self) {
 
   // 'Expression' creation
   self['block'] = function(name, children, type) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
                                i32sToStack(children), children.length,
                                typeof type !== 'undefined' ? type : Module['none'])
-    ));
+    );
   };
   self['if'] = function(condition, ifTrue, ifFalse) {
     return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
@@ -547,9 +547,9 @@ function wrapModule(module, self) {
     return self['br'](label, condition, value);
   };
   self['switch'] = function(names, defaultName, condition, value) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenSwitch'](module, i32sToStack(names.map(strToStack)), names.length, strToStack(defaultName), condition, value)
-    ));
+    );
   };
   self['call'] = function(name, operands, type) {
     return preserveStack(() => Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type));
@@ -558,19 +558,19 @@ function wrapModule(module, self) {
   // be removed in a future release. Please use the the snake_case names
   // instead.
   self['callIndirect'] = self['call_indirect'] = function(target, operands, params, results) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results)
-    ));
+    );
   };
   self['returnCall'] = self['return_call'] = function(name, operands, type) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type)
-    ));
+    );
   };
   self['returnCallIndirect'] = self['return_call_indirect'] = function(target, operands, params, results) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results)
-    ));
+    );
   };
 
   self['local'] = {
@@ -2136,9 +2136,9 @@ function wrapModule(module, self) {
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddFunction'](module, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body)
-    ));
+    );
   };
   self['getFunction'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetFunction'](module, strToStack(name)));
@@ -2165,29 +2165,29 @@ function wrapModule(module, self) {
     return preserveStack(() => Module['_BinaryenRemoveEvent'](module, strToStack(name)));
   };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
-    ));
+    );
   };
   self['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))
-    ));
+    );
   };
   self['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName, shared) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)
-    ));
+    );
   };
   self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType, mutable) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
-    ));
+    );
   };
   self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results)
-    ));
+    );
   };
   self['addExport'] = // deprecated
   self['addFunctionExport'] = function(internalName, externalName) {
@@ -2293,9 +2293,9 @@ function wrapModule(module, self) {
     Module['_BinaryenModuleSetFeatures'](module, features);
   };
   self['addCustomSection'] = function(name, contents) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length)
-    ));
+    );
   };
   self['getNumExports'] = function() {
     return Module['_BinaryenGetNumExports'](module);
@@ -2346,15 +2346,15 @@ function wrapModule(module, self) {
     return Module['_BinaryenFunctionOptimize'](func, module);
   };
   self['runPasses'] = function(passes) {
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenModuleRunPasses'](module, i32sToStack(passes.map(strToStack)), passes.length)
-    ));
+    );
   };
   self['runPassesOnFunction'] = function(func, passes) {
     if (typeof func === 'string') func = self['getFunction'](func);
-    return preserveStack(() => (
+    return preserveStack(() =>
       Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(passes.map(strToStack)), passes.length)
-    ));
+    );
   };
   self['autoDrop'] = function() {
     return Module['_BinaryenModuleAutoDrop'](module);
