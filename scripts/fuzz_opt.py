@@ -582,10 +582,10 @@ class Wasm2JS(TestCaseHandler):
         before = fix_output(before)
         after = fix_output(after)
         interpreter = fix_output(interpreter)
-        
+
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
         if compare_to_interpreter:
-          compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
+            compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
