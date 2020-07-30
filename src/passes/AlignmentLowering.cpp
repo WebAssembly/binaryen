@@ -224,53 +224,62 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       replaceCurrent(curr->ptr);
       return;
     }
-    if (curr->align != 0 && curr->align != curr->bytes) {
-      Builder builder(*getModule());
-      auto type = curr->type.getSingle();
-      Expression* replacement;
-      switch (type) {
-        default:
-          WASM_UNREACHABLE("unhandled unaligned load");
-        case Type::i32:
-          replacement = lowerLoadI32(curr);
-          break;
-        case Type::f32:
-          curr->type = Type::i32;
-          replacement = builder.makeUnary(ReinterpretInt32, lowerLoadI32(curr));
-          break;
-        case Type::i64:
-        case Type::f64:
-          // Load two 32-bit pieces, and combine them.
-          auto temp = builder.addVar(getFunction(), Type::i32);
-          auto* set = builder.makeLocalSet(temp, curr->ptr);
-          Expression* low =
-            lowerLoadI32(builder.makeLoad(4,
-                                          false,
-                                          0,
-                                          curr->align,
-                                          builder.makeLocalGet(temp, Type::i32),
-                                          Type::i32));
-          low = builder.makeUnary(ExtendUInt32, low);
-          Expression* high =
-            lowerLoadI32(builder.makeLoad(4,
-                                          false,
-                                          4,
-                                          curr->align,
-                                          builder.makeLocalGet(temp, Type::i32),
-                                          Type::i32));
-          high = builder.makeUnary(ExtendUInt32, high);
-          high =
-            builder.makeBinary(ShlInt64, high, builder.makeConst(int64_t(32)));
-          auto* combined = builder.makeBinary(OrInt64, low, high);
-          replacement = builder.makeSequence(set, combined);
-          // Ensure the proper output type.
-          if (type == Type::f64) {
-            replacement = builder.makeUnary(ReinterpretInt64, replacement);
-          }
-          break;
-      }
-      replaceCurrent(replacement);
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do.
+      return;
     }
+    Builder builder(*getModule());
+    auto type = curr->type.getSingle();
+    Expression* replacement;
+    switch (type) {
+      default:
+        WASM_UNREACHABLE("unhandled unaligned load");
+      case Type::i32:
+        replacement = lowerLoadI32(curr);
+        break;
+      case Type::f32:
+        curr->type = Type::i32;
+        replacement = builder.makeUnary(ReinterpretInt32, lowerLoadI32(curr));
+        break;
+      case Type::i64:
+      case Type::f64:
+        if (type == Type::i64 && curr->bytes != 8) {
+          // A load of <64 bits.
+          curr->type = Type::i32;
+          replacement = builder.makeUnary(
+            curr->signed_ ? ExtendSInt32 : ExtendUInt32, lowerLoadI32(curr));
+          break;
+        }
+        // Load two 32-bit pieces, and combine them.
+        auto temp = builder.addVar(getFunction(), Type::i32);
+        auto* set = builder.makeLocalSet(temp, curr->ptr);
+        Expression* low =
+          lowerLoadI32(builder.makeLoad(4,
+                                        false,
+                                        curr->offset,
+                                        curr->align,
+                                        builder.makeLocalGet(temp, Type::i32),
+                                        Type::i32));
+        low = builder.makeUnary(ExtendUInt32, low);
+        Expression* high =
+          lowerLoadI32(builder.makeLoad(4,
+                                        false,
+                                        curr->offset + 4,
+                                        curr->align,
+                                        builder.makeLocalGet(temp, Type::i32),
+                                        Type::i32));
+        high = builder.makeUnary(ExtendUInt32, high);
+        high =
+          builder.makeBinary(ShlInt64, high, builder.makeConst(int64_t(32)));
+        auto* combined = builder.makeBinary(OrInt64, low, high);
+        replacement = builder.makeSequence(set, combined);
+        // Ensure the proper output type.
+        if (type == Type::f64) {
+          replacement = builder.makeUnary(ReinterpretInt64, replacement);
+        }
+        break;
+    }
+    replaceCurrent(replacement);
   }
 
   void visitStore(Store* curr) {
@@ -282,58 +291,68 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
       return;
     }
-    if (curr->align != 0 && curr->align != curr->bytes) {
-      auto type = curr->value->type.getSingle();
-      Expression* replacement;
-      switch (type) {
-        default:
-          WASM_UNREACHABLE("unhandled unaligned store");
-        case Type::i32:
-          replacement = lowerStoreI32(curr);
-          break;
-        case Type::f32:
-          curr->type = Type::i32;
-          curr->value = builder.makeUnary(ReinterpretFloat32, curr->value);
-          replacement = lowerStoreI32(curr);
-          break;
-        case Type::i64:
-        case Type::f64:
-          // Ensure an integer input value.
-          auto* value = curr->value;
-          if (type == Type::f64) {
-            value = builder.makeUnary(ReinterpretFloat64, value);
-          }
-          // Store as two 32-bit pieces.
-          auto tempPtr = builder.addVar(getFunction(), Type::i32);
-          auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
-          auto tempValue = builder.addVar(getFunction(), Type::i64);
-          auto* setValue = builder.makeLocalSet(tempValue, value);
-          Expression* low = builder.makeUnary(
-            WrapInt64, builder.makeLocalGet(tempValue, Type::i64));
-          low = lowerStoreI32(
-            builder.makeStore(4,
-                              0,
-                              curr->align,
-                              builder.makeLocalGet(tempPtr, Type::i32),
-                              low,
-                              Type::i32));
-          Expression* high =
-            builder.makeBinary(ShrUInt64,
-                               builder.makeLocalGet(tempValue, Type::i64),
-                               builder.makeConst(int64_t(32)));
-          high = builder.makeUnary(WrapInt64, high);
-          high = lowerStoreI32(
-            builder.makeStore(4,
-                              4,
-                              curr->align,
-                              builder.makeLocalGet(tempPtr, Type::i32),
-                              high,
-                              Type::i32));
-          replacement = builder.makeBlock({setPtr, setValue, low, high});
-          break;
-      }
-      replaceCurrent(replacement);
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do.
+      return;
     }
+    auto type = curr->value->type.getSingle();
+    Expression* replacement;
+    switch (type) {
+      default:
+        WASM_UNREACHABLE("unhandled unaligned store");
+      case Type::i32:
+        replacement = lowerStoreI32(curr);
+        break;
+      case Type::f32:
+        curr->type = Type::i32;
+        curr->value = builder.makeUnary(ReinterpretFloat32, curr->value);
+        replacement = lowerStoreI32(curr);
+        break;
+      case Type::i64:
+      case Type::f64:
+        if (type == Type::i64 && curr->bytes != 8) {
+          // A store of <64 bits.
+          curr->type = Type::i32;
+          curr->value = builder.makeUnary(WrapInt64, curr->value);
+          replacement = lowerStoreI32(curr);
+          break;
+        }
+        // Otherwise, fall through to f64 case for a 64-bit load.
+        // Ensure an integer input value.
+        auto* value = curr->value;
+        if (type == Type::f64) {
+          value = builder.makeUnary(ReinterpretFloat64, value);
+        }
+        // Store as two 32-bit pieces.
+        auto tempPtr = builder.addVar(getFunction(), Type::i32);
+        auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
+        auto tempValue = builder.addVar(getFunction(), Type::i64);
+        auto* setValue = builder.makeLocalSet(tempValue, value);
+        Expression* low = builder.makeUnary(
+          WrapInt64, builder.makeLocalGet(tempValue, Type::i64));
+        low = lowerStoreI32(
+          builder.makeStore(4,
+                            curr->offset,
+                            curr->align,
+                            builder.makeLocalGet(tempPtr, Type::i32),
+                            low,
+                            Type::i32));
+        Expression* high =
+          builder.makeBinary(ShrUInt64,
+                             builder.makeLocalGet(tempValue, Type::i64),
+                             builder.makeConst(int64_t(32)));
+        high = builder.makeUnary(WrapInt64, high);
+        high = lowerStoreI32(
+          builder.makeStore(4,
+                            curr->offset + 4,
+                            curr->align,
+                            builder.makeLocalGet(tempPtr, Type::i32),
+                            high,
+                            Type::i32));
+        replacement = builder.makeBlock({setPtr, setValue, low, high});
+        break;
+    }
+    replaceCurrent(replacement);
   }
 };
 
