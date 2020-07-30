@@ -12619,7 +12619,7 @@ function asmFunc(global, env, buffer) {
  
  function $63($0) {
   $0 = $0 | 0;
-  if ($0 - 1) {
+  if ($0 - 1 | 0) {
    $0 = 9
   } else {
    $0 = 8

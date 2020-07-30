@@ -44,10 +44,6 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
-  // Convert stack pointer access from global.get/global.set to calling save
-  // and restore functions.
-  void replaceStackPointerGlobal();
-
   // Remove the import of a mutable __stack_pointer and instead initialize the
   // stack pointer from an immutable import.
   void internalizeStackPointerGlobal();
@@ -58,15 +54,11 @@ public:
 
   void fixInvokeFunctionNames();
 
-  void enforceStackLimit();
-
   // clang uses name mangling to rename the argc/argv form of main to
   // __main_argc_argv.  Emscripten in non-standalone mode expects that function
   // to be exported as main.  This function renames __main_argc_argv to main
   // as expected by emscripten.
   void renameMainArgcArgv();
-
-  void exportWasiStart();
 
   // Emits the data segments to a file. The file contains data from address base
   // onwards (we must pass in base, as we can't tell it from the wasm - the
@@ -86,8 +78,6 @@ private:
   std::unordered_set<Signature> sigs;
 
   void generateDynCallThunk(Signature sig);
-  void generateSetStackLimitFunction();
-  Name importStackOverflowHandler();
 };
 
 } // namespace wasm

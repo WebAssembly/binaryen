@@ -254,29 +254,34 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBinary(node, XOR, 1)) {
-      // x ^ 1  =>  !x
-      node[0]->setString(UNARY_PREFIX);
-      node[1]->setString(L_NOT);
-      node[3]->setNull();
-    } else if (isOrZero(node) || isTrshiftZero(node)) {
-      // Just being different from 0 is enough, casts don't matter. However,
-      // in deterministic mode we care about corner cases that would trap in
-      // wasm, like an integer divide by zero:
-      //
-      //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
-      //
-      // while
-      //
-      //  if (1 / 0)  =>  condition is Infinity which is truthy
-      //
-      // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
-      // which has the right truthiness).
-      if (!(flags.deterministic && isBinary(node[2], DIV))) {
-        return node[2];
-      }
-    }
+    // TODO: in some cases it may be possible to turn
+    //
+    //   if (x | 0)
+    //
+    // into
+    //
+    //   if (x)
+    //
+    // In general this is unsafe if e.g. x is -2147483648 + -2147483648 (which
+    // the | 0 turns into 0, but without it is a truthy value).
+    //
+    // Another issue is that in deterministic mode we care about corner cases
+    // that would trap in wasm, like an integer divide by zero:
+    //
+    //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
+    //
+    // while
+    //
+    //  if (1 / 0)  =>  condition is Infinity which is truthy
+    //
+    // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
+    // which has the right truthiness), so we could perhaps do
+    //
+    //   if (!(flags.deterministic && isBinary(node[2], DIV))) return node[2];
+    //
+    // (but there is still the first issue).
     return node;
   };
 
