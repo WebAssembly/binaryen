@@ -246,7 +246,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         if (type == Type::i64 && curr->bytes != 8) {
           // A load of <64 bits.
           curr->type = Type::i32;
-          replacement = builder.makeUnary(curr->signed_ ? ExtendSInt32 : ExtendUInt32, lowerLoadI32(curr));
+          replacement = builder.makeUnary(
+            curr->signed_ ? ExtendSInt32 : ExtendUInt32, lowerLoadI32(curr));
           break;
         }
         // Load two 32-bit pieces, and combine them.
