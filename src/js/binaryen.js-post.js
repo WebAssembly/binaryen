@@ -3069,11 +3069,10 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
       if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
         const index = match[1].length;
         const propertyName = memberName.charAt(index).toLowerCase() + memberName.substring(index + 1);
-        const getter = staticMembers[memberName];
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
           get() {
-            return getter(this['expr']);
+            return member(this['expr']);
           },
           set(value) {
             if (setterIfAny) setterIfAny(this['expr'], value);
