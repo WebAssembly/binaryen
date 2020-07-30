@@ -169,7 +169,7 @@ def run_command(cmd, expected_status=0, stderr=None,
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
     out, err = proc.communicate()
     code = proc.returncode
     if expected_status is not None and code != expected_status:
