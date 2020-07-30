@@ -210,8 +210,8 @@ def numbers_are_close_enough(x, y):
         # float printing code will log out in full, but others will not)
         # FIXME only for JS
         return fx == fy or \
-               (is_basically_zero(fx) and is_basically_zero(fy)) or \
-               big_numbers_are_close_enough(fx, fy)
+            (is_basically_zero(fx) and is_basically_zero(fy)) or \
+            big_numbers_are_close_enough(fx, fy)
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
@@ -546,13 +546,13 @@ class Wasm2JS(TestCaseHandler):
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
         compare_to_interpreter = random.random() < 0.5
         if compare_to_interpreter:
-          # unexpectedly-unaligned loads/stores work fine in wasm in general but
-          # not in wasm2js, since typed arrays silently round down, effectively.
-          # if we want to compare to the interpreter, remove unaligned
-          # operations (by forcing alignment 1, then lowering those into aligned
-          # components, which means all loads and stores are of a single byte).
-          run([in_bin('wasm-opt'), before_wasm, '--dealign', '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
-          run([in_bin('wasm-opt'), after_wasm, '--dealign', '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
+            # unexpectedly-unaligned loads/stores work fine in wasm in general but
+            # not in wasm2js, since typed arrays silently round down, effectively.
+            # if we want to compare to the interpreter, remove unaligned
+            # operations (by forcing alignment 1, then lowering those into aligned
+            # components, which means all loads and stores are of a single byte).
+            run([in_bin('wasm-opt'), before_wasm, '--dealign', '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
+            run([in_bin('wasm-opt'), after_wasm, '--dealign', '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
