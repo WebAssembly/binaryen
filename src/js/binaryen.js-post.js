@@ -524,7 +524,7 @@ function wrapModule(module, self) {
   // their own Literals, as the C API handles them by value, which means
   // we would leak them. Instead, Const creation is fused together with
   // an intermediate stack allocation of this size to pass the value.
-  var sizeOfLiteral = _BinaryenSizeofLiteral();
+  const sizeOfLiteral = _BinaryenSizeofLiteral();
 
   // 'Expression' creation
   self['block'] = function(name, children, type) {
@@ -1410,7 +1410,7 @@ function wrapModule(module, self) {
     },
     'const'(i8s) {
       return preserveStack(() => {
-        var tempLiteral = stackAlloc(sizeOfLiteral);
+        const tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -2223,7 +2223,7 @@ function wrapModule(module, self) {
       'segments': (function() {
         const numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module)
         const arr = new Array(numSegments);
-        for (var i = 0; i !== numSegments; ++i) {
+        for (let i = 0; i !== numSegments; ++i) {
           const segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
           const names = new Array(segmentLength);
           for (let j = 0; j !== segmentLength; ++j) {
@@ -2247,8 +2247,8 @@ function wrapModule(module, self) {
       const segmentDataLen = new Array(segmentsLen);
       const segmentPassive = new Array(segmentsLen);
       const segmentOffset = new Array(segmentsLen);
-      for (var i = 0; i < segmentsLen; i++) {
-        var segment = segments[i];
+      for (let i = 0; i < segmentsLen; i++) {
+        const segment = segments[i];
         segmentData[i] = allocate(segment.data, 'i8', ALLOC_STACK);
         segmentDataLen[i] = segment.data.length;
         segmentPassive[i] = segment.passive;
@@ -2459,8 +2459,8 @@ Module['getExpressionType'] = function(expr) {
 
 // Obtains information about an 'Expression'
 Module['getExpressionInfo'] = function(expr) {
-  var id = Module['_BinaryenExpressionGetId'](expr);
-  var type = Module['_BinaryenExpressionGetType'](expr);
+  const id = Module['_BinaryenExpressionGetId'](expr);
+  const type = Module['_BinaryenExpressionGetType'](expr);
   switch (id) {
     case Module['BlockId']:
       return {
@@ -3190,7 +3190,7 @@ Module['If'] = makeExpressionWrapper({
 
 Module['Loop'] = makeExpressionWrapper({
   'getName'(expr) {
-    var name = Module['_BinaryenLoopGetName'](expr);
+    const name = Module['_BinaryenLoopGetName'](expr);
     return name ? UTF8ToString(name) : null;
   },
   'setName'(expr, name) {
@@ -3480,7 +3480,7 @@ Module['Host'] = makeExpressionWrapper({
     Module['_BinaryenHostSetOp'](expr, op);
   },
   'getNameOperand'(expr) {
-    var name = Module['_BinaryenHostGetNameOperand'](expr);
+    const name = Module['_BinaryenHostGetNameOperand'](expr);
     return name ? UTF8ToString(name) : null;
   },
   'setNameOperand'(expr, name) {
