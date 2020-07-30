@@ -243,6 +243,12 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         break;
       case Type::i64:
       case Type::f64:
+        if (type == Type::i64 && curr->bytes != 8) {
+          // A load of <64 bits.
+          curr->type = Type::i32;
+          replacement = builder.makeUnary(curr->signed_ ? ExtendSInt32 : ExtendUInt32, lowerLoadI32(curr));
+          break;
+        }
         // Load two 32-bit pieces, and combine them.
         auto temp = builder.addVar(getFunction(), Type::i32);
         auto* set = builder.makeLocalSet(temp, curr->ptr);
@@ -303,6 +309,14 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         break;
       case Type::i64:
       case Type::f64:
+        if (type == Type::i64 && curr->bytes != 8) {
+          // A store of <64 bits.
+          curr->type = Type::i32;
+          curr->value = builder.makeUnary(WrapInt64, curr->value);
+          replacement = lowerStoreI32(curr);
+          break;
+        }
+        // Otherwise, fall through to f64 case for a 64-bit load.
         // Ensure an integer input value.
         auto* value = curr->value;
         if (type == Type::f64) {
