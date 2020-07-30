@@ -81,10 +81,10 @@ def run_unchecked(cmd):
 def randomize_pass_debug():
     if random.random() < 0.125:
         print('[pass-debug]')
-        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+#        os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
-        del os.environ['BINARYEN_PASS_DEBUG']
+#        del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
@@ -530,14 +530,13 @@ class Wasm2JS(TestCaseHandler):
         # which wasm2js will have legalized into i32s)
         run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
-        # unexpectedly-unaligned loads/stores work fine in wasm in general, but
-        # not in wasm2js, since typed arrays silently round down, effectively.
-        # if we want to compare to the interpreter, remove unaligned operations.
-        allow_unaligned = random.random() < 0.5
-        if not allow_unaligned:
-          # remove unaligned operations by forcing alignment 1, then lowering
-          # those into aligned components, which means all loads and stores are
-          # of a single byte.
+        compare_to_interpreter = random.random() < 0.5
+        if compare_to_interpreter:
+          # unexpectedly-unaligned loads/stores work fine in wasm in general but
+          # not in wasm2js, since typed arrays silently round down, effectively.
+          # if we want to compare to the interpreter, remove unaligned
+          # operations (by forcing alignment 1, then lowering those into aligned
+          # components, which means all loads and stores are of a single byte).
           run([in_bin('wasm-opt'), before_wasm, '--dealign', '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
           run([in_bin('wasm-opt'), after_wasm, '--dealign', '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
         # always check for compiler crashes
@@ -589,7 +588,8 @@ class Wasm2JS(TestCaseHandler):
         interpreter = fix_output_for_js(interpreter)
         
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
-        compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
+        if compare_to_interpreter:
+          compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
