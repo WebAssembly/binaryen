@@ -81,10 +81,10 @@ def run_unchecked(cmd):
 def randomize_pass_debug():
     if random.random() < 0.125:
         print('[pass-debug]')
-#        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+        os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
-#        del os.environ['BINARYEN_PASS_DEBUG']
+        del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
@@ -184,17 +184,6 @@ def is_basically_zero(x):
     return x >= 0 and x <= 2.22507385850720088902e-308
 
 
-# large doubles print differently in JS VMs than anywhere else:
-# 9223372036854775808 will show up as 9223372036854776000 even
-# though the bit pattern is the same (so it is just a printing
-# difference, specifically of floats that have no fraction and so are
-# rendered as ints, which hits the 53-bit limit of ints in doubles).
-def big_numbers_are_close_enough(x, y):
-    return x == y
-#            x = min(2 ** 53, x)
-#            x = max(-(2 ** 53), x)
-
-
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
@@ -209,9 +198,7 @@ def numbers_are_close_enough(x, y):
         # check for strict equality, and also ignore subnormals (which some
         # float printing code will log out in full, but others will not)
         # FIXME only for JS
-        return fx == fy or \
-            (is_basically_zero(fx) and is_basically_zero(fy)) or \
-            big_numbers_are_close_enough(fx, fy)
+        return fx == fy or (is_basically_zero(fx) and is_basically_zero(fy))
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
@@ -536,7 +523,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 1 # 0.6
+    frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # legalize the wasm files first, so that comparisons to the interpreter
@@ -672,11 +659,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
-    #CompareVMs(),
-    #CheckDeterminism(),
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
     Wasm2JS(),
-    #Asyncify(),
+    Asyncify(),
 ]
 
 
