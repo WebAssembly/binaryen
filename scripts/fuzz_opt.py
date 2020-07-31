@@ -81,10 +81,10 @@ def run_unchecked(cmd):
 def randomize_pass_debug():
     if random.random() < 0.125:
         print('[pass-debug]')
-        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+#        os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
-        del os.environ['BINARYEN_PASS_DEBUG']
+#        del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
@@ -195,10 +195,7 @@ def numbers_are_close_enough(x, y):
     try:
         fx = float(x)
         fy = float(y)
-        # check for strict equality, and also ignore subnormals (which some
-        # float printing code will log out in full, but others will not)
-        # FIXME only for JS
-        return fx == fy or (is_basically_zero(fx) and is_basically_zero(fy))
+        return fx == fy
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
@@ -678,11 +675,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
 ]
 
 
