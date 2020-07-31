@@ -29,17 +29,11 @@ struct DeAlign : public WalkerPass<PostWalker<DeAlign>> {
 
   Pass* create() override { return new DeAlign(); }
 
-  void visitLoad(Load* curr) {
-    curr->align = 1;
-  }
+  void visitLoad(Load* curr) { curr->align = 1; }
 
-  void visitStore(Store* curr) {
-    curr->align = 1;
-  }
+  void visitStore(Store* curr) { curr->align = 1; }
 
-  void visitSIMDLoad(SIMDLoad* curr) {
-    curr->align = 1;
-  }
+  void visitSIMDLoad(SIMDLoad* curr) { curr->align = 1; }
 };
 
 Pass* createDeAlignPass() { return new DeAlign(); }
