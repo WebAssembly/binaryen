@@ -571,8 +571,9 @@ class Wasm2JS(TestCaseHandler):
                 x = x.group(1)
                 try:
                     x = float(x)
-                    # JS VMs will print subnormals in full detail, while nothing
-                    # else does so, so just replace them with zero
+                    # There appear to be some cases where JS VMs will print
+                    # subnormals in full detail while other VMs do not, and vice
+                    # versa. Ignore such really tiny numbers.
                     if is_basically_zero(x):
                         x = 0
                 except ValueError:
