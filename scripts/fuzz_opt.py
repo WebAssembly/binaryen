@@ -81,10 +81,10 @@ def run_unchecked(cmd):
 def randomize_pass_debug():
     if random.random() < 0.125:
         print('[pass-debug]')
-        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+#        os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
-        del os.environ['BINARYEN_PASS_DEBUG']
+#        del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
@@ -571,11 +571,16 @@ class Wasm2JS(TestCaseHandler):
             x = fix_output(x)
 
             def fix_number(x):
-                x = float(x.group(1))
-                # JS VMs will print subnormals in full detail, while nothing
-                # else does so, so just replace them with zero
-                if is_basically_zero(x):
-                    x = 0
+                x = x.group(1)
+                try:
+                    x = float(x)
+                    # JS VMs will print subnormals in full detail, while nothing
+                    # else does so, so just replace them with zero
+                    if is_basically_zero(x):
+                        x = 0
+                except ValueError:
+                    # not a floating-point number, nothing to do
+                    pass
                 return ' => ' + str(x)
 
             return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
@@ -673,11 +678,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
 ]
 
 
