@@ -27,7 +27,9 @@
 namespace wasm {
 
 struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
-  // Core lowering of a 32-bit load. Other loads are done using this.
+  // Core lowering of a 32-bit load: ensures it is done using aligned
+  // operations, which means we can leave it alone if it's already aligned, or
+  // else we break it up into smaller loads that are.
   Expression* lowerLoadI32(Load* curr) {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return curr;
@@ -125,7 +127,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     return builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret});
   }
 
-  // Core lowering of a 32-bit store. Other storess are done using this.
+  // Core lowering of a 32-bit store.
   Expression* lowerStoreI32(Store* curr) {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return curr;
@@ -225,7 +227,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     if (curr->align == 0 || curr->align == curr->bytes) {
-      // Nothing to do.
+      // Nothing to do: leave the node unchanged. All code lower down assumes
+      // the operation is unaligned.
       return;
     }
     Builder builder(*getModule());
@@ -261,6 +264,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                         builder.makeLocalGet(temp, Type::i32),
                                         Type::i32));
         low = builder.makeUnary(ExtendUInt32, low);
+        // Note that the alignment is assumed to be the same here, even though
+        // we add an offset of 4. That is because this is an unaligned load, so
+        // the alignment is 1, 2, or 4, which means it stays the same after
+        // adding 4.
         Expression* high =
           lowerLoadI32(builder.makeLoad(4,
                                         false,
@@ -292,7 +299,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     if (curr->align == 0 || curr->align == curr->bytes) {
-      // Nothing to do.
+      // Nothing to do: leave the node unchanged. All code lower down assumes
+      // the operation is unaligned.
       return;
     }
     auto type = curr->value->type.getSingle();
@@ -342,6 +350,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              builder.makeLocalGet(tempValue, Type::i64),
                              builder.makeConst(int64_t(32)));
         high = builder.makeUnary(WrapInt64, high);
+        // Note that the alignment is assumed to be the same here, even though
+        // we add an offset of 4. That is because this is an unaligned store, so
+        // the alignment is 1, 2, or 4, which means it stays the same after
+        // adding 4.
         high = lowerStoreI32(
           builder.makeStore(4,
                             curr->offset + 4,
