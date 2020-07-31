@@ -566,12 +566,26 @@ class Wasm2JS(TestCaseHandler):
             after = after[:after.index(call_line)]
             interpreter = interpreter[:interpreter.index(call_line)]
 
-        before = fix_output(before)
-        after = fix_output(after)
-        interpreter = fix_output(interpreter)
+        def fix_output_for_js(x):
+            # start with the normal output fixes that all VMs need
+            x = fix_output(x)
 
+            def fix_number(x):
+                x = float(x.group(1))
+                # JS VMs will print subnormals in full detail, while nothing
+                # else does so, so just replace them with zero
+                if is_basically_zero(x):
+                    x = 0
+                return ' => ' + str(x)
+
+            return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
+
+        before = fix_output_for_js(before)
+        after = fix_output_for_js(after)
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
+
         if compare_to_interpreter:
+            interpreter = fix_output(interpreter)
             compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
