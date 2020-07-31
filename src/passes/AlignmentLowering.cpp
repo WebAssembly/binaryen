@@ -226,6 +226,11 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       replaceCurrent(curr->ptr);
       return;
     }
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do: leave the node unchanged. All code lower down assumes
+      // the operation is unaligned.
+      return;
+    }
     Builder builder(*getModule());
     auto type = curr->type.getSingle();
     Expression* replacement;
@@ -291,6 +296,11 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     if (curr->type == Type::unreachable) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
+      return;
+    }
+    if (curr->align == 0 || curr->align == curr->bytes) {
+      // Nothing to do: leave the node unchanged. All code lower down assumes
+      // the operation is unaligned.
       return;
     }
     auto type = curr->value->type.getSingle();
