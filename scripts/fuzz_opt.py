@@ -81,10 +81,10 @@ def run_unchecked(cmd):
 def randomize_pass_debug():
     if random.random() < 0.125:
         print('[pass-debug]')
-#        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+        os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
         os.environ['BINARYEN_PASS_DEBUG'] = '0'
-#        del os.environ['BINARYEN_PASS_DEBUG']
+        del os.environ['BINARYEN_PASS_DEBUG']
     print('randomized pass debug:', os.environ.get('BINARYEN_PASS_DEBUG', ''))
 
 
@@ -678,11 +678,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
-    #CompareVMs(),
-    #CheckDeterminism(),
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
     Wasm2JS(),
-    #Asyncify(),
+    Asyncify(),
 ]
 
 
