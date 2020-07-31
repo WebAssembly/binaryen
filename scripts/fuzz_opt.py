@@ -587,7 +587,7 @@ class Wasm2JS(TestCaseHandler):
         compare_between_vms(before, after, 'Wasm2JS (before/after)')
 
         if compare_to_interpreter:
-            interpreter = fix_output(interpreter)
+            interpreter = fix_output_for_js(interpreter)
             compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
