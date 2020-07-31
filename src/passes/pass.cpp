@@ -104,6 +104,9 @@ void PassRegistry::registerPasses() {
                createConstHoistingPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("dealign",
+               "forces all loads and stores to have alignment 1",
+               createDeAlignPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);
