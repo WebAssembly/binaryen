@@ -3743,6 +3743,18 @@
   )
   (drop
    (f64.mul
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.mul
     (f64.abs
      (local.get $x0)
     )
@@ -3778,6 +3790,22 @@
     )
     (f32.abs
      (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.mul
+    (f64.abs
+     (f64.add
+      (local.get $x0)
+      (local.get $x1)
+     )
+    )
+    (f64.abs
+     (f64.add
+      (local.get $x0)
+      (local.get $x0)
+     )
     )
    )
   )

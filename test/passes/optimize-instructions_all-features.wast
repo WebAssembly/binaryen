@@ -4243,6 +4243,10 @@
       (f32.abs (local.get $y0))
       (f32.abs (local.get $y0))
     ))
+    (drop (f64.mul
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+    ))
 
     (drop (f64.mul
       (f64.abs (local.get $x0))
@@ -4260,6 +4264,10 @@
     (drop (f32.mul
       (f32.abs (f32.const 0)) ;; skip
       (f32.abs (local.get $y0))
+    ))
+    (drop (f64.mul
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x0))) ;; skip
     ))
   )
 )
