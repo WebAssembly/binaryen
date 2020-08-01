@@ -27,6 +27,7 @@ namespace Abstract {
 
 enum Op {
   // Unary
+  Abs,
   Neg,
   // Binary
   Add,
@@ -82,6 +83,8 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case Type::f32: {
       switch (op) {
+        case Abs:
+          return AbsFloat32;
         case Neg:
           return NegFloat32;
         default:
@@ -91,6 +94,8 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case Type::f64: {
       switch (op) {
+        case Abs:
+          return AbsFloat64;
         case Neg:
           return NegFloat64;
         default:

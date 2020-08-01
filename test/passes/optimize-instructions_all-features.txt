@@ -3754,54 +3754,114 @@
    )
   )
   (drop
-   (f64.mul
-    (f64.abs
+   (f64.abs
+    (f64.mul
      (local.get $x0)
-    )
-    (f64.abs
      (local.get $x1)
     )
    )
   )
   (drop
-   (f32.mul
-    (f32.abs
+   (f32.abs
+    (f32.mul
      (local.get $y1)
-    )
-    (f32.abs
      (local.get $y0)
     )
    )
   )
   (drop
-   (f64.mul
-    (f64.abs
+   (f64.abs
+    (f64.mul
      (local.get $x0)
-    )
-    (f64.abs
      (f64.const 0)
     )
    )
   )
   (drop
-   (f32.mul
-    (f32.abs
+   (f32.abs
+    (f32.mul
      (f32.const 0)
-    )
-    (f32.abs
      (local.get $y0)
     )
    )
   )
   (drop
-   (f64.mul
-    (f64.abs
+   (f64.abs
+    (f64.mul
      (f64.add
       (local.get $x0)
       (local.get $x1)
      )
+     (f64.add
+      (local.get $x0)
+      (local.get $x0)
+     )
     )
-    (f64.abs
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.div
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.div
+     (local.get $y1)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (local.get $x0)
+     (f64.const 0)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.div
+     (f32.const 0)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (f64.add
+      (local.get $x0)
+      (local.get $x1)
+     )
      (f64.add
       (local.get $x0)
       (local.get $x0)
