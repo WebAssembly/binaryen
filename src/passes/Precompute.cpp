@@ -134,9 +134,13 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::nullref &&
-                   curr->value->template is<RefNull>()) {
-          return;
+        } else if (singleValue.isNull()) {
+          if (auto *n = curr->value->template dynCast<RefNull>()) {
+            n->type = singleValue.type;
+            n->finalize();
+            curr->finalize();
+            return;
+          }
         } else if (singleValue.type == Type::funcref) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();

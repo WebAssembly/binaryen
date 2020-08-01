@@ -313,24 +313,9 @@ private:
       }
       return Type(types);
     }
-    SmallVector<Type, 2> options;
-    options.push_back(type); // includes itself
-    TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::externref:
-        if (wasm.features.hasExceptionHandling()) {
-          options.push_back(Type::exnref);
-        }
-        options.push_back(Type::funcref);
-        // falls through
-      case Type::funcref:
-      case Type::exnref:
-        options.push_back(Type::nullref);
-        break;
-      default:
-        break;
-    }
-    return pick(options);
+    // Currently reference types proposal doesn't have any subtype relationship,
+    // so return itself. This can change later when we add more subtypes.
+    return type;
   }
 
   void setupMemory() {
@@ -1362,7 +1347,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -1466,7 +1450,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -1595,7 +1578,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1640,7 +1622,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1708,7 +1689,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1735,7 +1715,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1763,7 +1742,7 @@ private:
         }
         return builder.makeRefFunc(target->name);
       }
-      return builder.makeRefNull();
+      return builder.makeRefNull(type);
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
@@ -1845,7 +1824,6 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
             return makeTrivial(type);
           case Type::none:
@@ -1990,7 +1968,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -2227,7 +2204,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -2434,7 +2410,6 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -2612,10 +2587,9 @@ private:
     assert(wasm.features.hasReferenceTypes());
     Type refType;
     if (wasm.features.hasExceptionHandling()) {
-      refType =
-        pick(Type::funcref, Type::externref, Type::nullref, Type::exnref);
+      refType = pick(Type::funcref, Type::externref, Type::exnref);
     } else {
-      refType = pick(Type::funcref, Type::externref, Type::nullref);
+      refType = pick(Type::funcref, Type::externref);
     }
     return builder.makeRefIsNull(make(refType));
   }
@@ -2682,8 +2656,7 @@ private:
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes,
              Type::funcref,
-             Type::externref,
-             Type::nullref)
+             Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
@@ -2732,7 +2705,6 @@ private:
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes, Type::nullref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }

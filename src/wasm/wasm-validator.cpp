@@ -313,6 +313,7 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
@@ -1265,7 +1266,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
@@ -1820,6 +1820,13 @@ void FunctionValidator::visitHost(Host* curr) {
   }
 }
 
+void FunctionValidator::visitRefNull(RefNull* curr) {
+  shouldBeTrue(curr->type == Type::funcref || curr->type == Type::externref ||
+                 curr->type == Type::exnref,
+               curr,
+               "ref.null's type should be one of func|extern}exn");
+}
+
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
@@ -2075,7 +2082,6 @@ void FunctionValidator::validateAlignment(
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");

@@ -39,7 +39,7 @@ class Literal {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    Name func; // function name for funcref
+    std::unique_ptr<Name> func; // function name for funcref
     std::unique_ptr<ExceptionPackage> exn;
   };
 
@@ -66,12 +66,15 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func) : func(func), type(Type::funcref) {}
+  explicit Literal(Name func) : func(new Name(func)), type(Type::funcref) {}
   explicit Literal(std::unique_ptr<ExceptionPackage> exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal() {
+    if (type == Type::funcref) {
+      func.~unique_ptr();
+    }
     if (type == Type::exnref) {
       exn.~unique_ptr();
     }
@@ -79,6 +82,9 @@ public:
 
   bool isConcrete() const { return type != Type::none; }
   bool isNone() const { return type == Type::none; }
+  bool isNull() const {
+    return (type == Type::funcref && !func) || (type == Type::exnref && !exn);
+  }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
@@ -103,7 +109,11 @@ public:
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
 
-  static Literal makeNullref() { return Literal(Type(Type::nullref)); }
+  static Literal makeNull(Type type) {
+    assert(type == Type::funcref || type == Type::exnref);
+    // This creates a literal with null pointer for its func / exn
+    return Literal(type);
+  }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
   static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
     return Literal(std::move(exn));
@@ -132,11 +142,11 @@ public:
   }
   std::array<uint8_t, 16> getv128() const;
   Name getFunc() const {
-    assert(type == Type::funcref);
-    return func;
+    assert(type == Type::funcref && func);
+    return *func.get();
   }
   const ExceptionPackage& getExceptionPackage() const {
-    assert(type == Type::exnref);
+    assert(type == Type::exnref && exn);
     return *exn.get();
   }
 
@@ -503,6 +513,9 @@ public:
 struct ExceptionPackage {
   Name event;
   Literals values;
+  bool operator==(const ExceptionPackage& other) const {
+    return event == other.event && values == other.values;
+  }
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
@@ -555,7 +568,6 @@ template<> struct less<wasm::Literal> {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
       case wasm::Type::externref:
-      case wasm::Type::nullref:
       case wasm::Type::exnref:
       case wasm::Type::none:
       case wasm::Type::unreachable:

@@ -94,7 +94,7 @@ inline Literal getSingleLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (curr->is<RefNull>()) {
-    return Literal(Type::nullref);
+    return Literal::makeNull(curr->type);
   } else if (auto* c = curr->dynCast<RefFunc>()) {
     return Literal(c->func);
   } else {

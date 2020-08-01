@@ -347,8 +347,6 @@ enum EncodedType {
   funcref = -0x10, // 0x70
   // opaque host reference type
   externref = -0x11, // 0x6f
-  // null reference type
-  nullref = -0x12, // 0x6e
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -967,9 +965,6 @@ inline S32LEB binaryType(Type type) {
       break;
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
-      break;
-    case Type::nullref:
-      ret = BinaryConsts::EncodedType::nullref;
       break;
     case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;

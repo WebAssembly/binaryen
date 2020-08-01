@@ -210,20 +210,20 @@ struct Flatten
             // out. The local we created using 'getTempForBreakTarget' returns
             // the return type of the block this branch is targetting, which may
             // not be the same with the innermost block's return type. For
-            // example,
-            // (block $any (result externref)
-            //   (block (result nullref)
+            // example, when 'subtype' is a subtype of 'supertype',
+            // (block $super (result supertype)
+            //   (block (result subtype)
             //     (local.tee $0
-            //       (br_if $any
-            //         (ref.null)
+            //       (br_if $super
+            //         (produce_subtype_value) ;; pseudo instruction
             //         (i32.const 0)
             //       )
             //     )
             //   )
             // )
-            // In this case we need two locals to store (ref.null); one with
-            // externref type that's for the target block ($label0) and one more
-            // with nullref type in case for flowing out. Here we create the
+            // In this case we need two locals to store (produce_subtype_value);
+            // one with supertype that's for the target block ($super) and one
+            // more with subtype in case for flowing out. Here we create the
             // second 'flowing out' local in case two block's types are
             // different.
             if (type != blockType) {

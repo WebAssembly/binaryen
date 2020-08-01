@@ -869,9 +869,6 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type::externref;
   }
-  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::nullref;
-  }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
   }
@@ -1779,7 +1776,22 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  std::string errMsg = "ref.null should take a second argument, which is one "
+                       "of func, extern, or exn";
+  if (s.size() != 2) {
+    throw ParseException(errMsg, s.line, s.col);
+  }
+  const char* str = s[1]->c_str();
   auto ret = allocator.alloc<RefNull>();
+  if (strncmp(str, "func", 4) == 0 && str[4] == 0) {
+    ret->type = Type::funcref;
+  } else if (strncmp(str, "extern", 6) == 0 && str[6] == 0) {
+    ret->type = Type::externref;
+  } else if (strncmp(str, "exn", 4) == 0 && str[3] == 0) {
+    ret->type = Type::exnref;
+  } else {
+    throw ParseException(errMsg, s[1]->line, s[1]->col);
+  }
   ret->finalize();
   return ret;
 }

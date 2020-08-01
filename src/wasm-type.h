@@ -49,7 +49,6 @@ public:
     v128,
     funcref,
     externref,
-    nullref,
     exnref,
     _last_basic_id = exnref
   };
@@ -93,7 +92,6 @@ public:
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
   // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
-  // │ nullref     ║ x │   │ x │ x │ f? n  │ │ ◄ TODO (removed)
   // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘

@@ -51,13 +51,12 @@ Literal& Literal::operator=(const Literal& other) {
       memcpy(&v128, other.v128, 16);
       break;
     case Type::funcref:
-      func = other.func;
+      new (&func) auto(std::make_unique<Name>(*other.func));
       break;
     case Type::exnref:
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
       break;
     case Type::none:
-    case Type::nullref:
       break;
     case Type::externref:
     case Type::unreachable:
@@ -111,7 +110,7 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    return makeNull(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -190,8 +189,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
       memcpy(buf, &v128, sizeof(v128));
       break;
     case Type::funcref:
-    case Type::nullref:
-      break;
     case Type::externref:
     case Type::exnref:
     case Type::none:
@@ -201,21 +198,21 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
-  }
   if (type != other.type) {
     return false;
   }
   if (type == Type::none) {
     return true;
+  }
+  if (type.isRef() && other.type.isRef()) {
+    if (type == Type::funcref && other.type == Type::funcref) {
+      return (isNull() && other.isNull() )|| (getFunc() == other.getFunc());
+    }
+    if (type == Type::exnref && other.type == Type::exnref) {
+      return (isNull() && other.isNull()) ||
+             (getExceptionPackage() == other.getExceptionPackage());
+    }
+    return false;
   }
   uint8_t bits[16], other_bits[16];
   getBits(bits);
@@ -341,9 +338,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       break;
     case Type::funcref:
       o << "funcref(" << literal.getFunc() << ")";
-      break;
-    case Type::nullref:
-      o << "nullref";
       break;
     case Type::exnref:
       o << "exnref(" << literal.getExceptionPackage() << ")";
@@ -572,7 +566,6 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -594,7 +587,6 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -616,7 +608,6 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -721,7 +712,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -743,7 +733,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -836,7 +825,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1090,7 +1078,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1112,7 +1099,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

@@ -240,10 +240,7 @@ def run_spec_tests():
         # some wast files cannot be split:
         #     * comments.wast: contains characters that are not valid utf-8,
         #       so our string splitting code fails there
-
-        # FIXME Remove reference type tests from this list after nullref is
-        # implemented in V8
-        if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
+        if base not in ['comments.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
             for module, asserts in support.split_wast(wast):

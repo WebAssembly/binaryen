@@ -71,8 +71,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::funcref:
       ret.func = x.getFunc().c_str();
       break;
-    case Type::nullref:
-      break;
     case Type::externref:
     case Type::exnref:
     case Type::none:
@@ -96,8 +94,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.v128);
     case Type::funcref:
       return Literal::makeFuncref(x.func);
-    case Type::nullref:
-      return Literal::makeNullref();
     case Type::externref:
     case Type::exnref:
     case Type::none:
@@ -133,7 +129,6 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
@@ -1264,8 +1259,10 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
     Builder(*(Module*)module).makePop(Type(type)));
 }
 
-BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull());
+BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                      BinaryenType type) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefNull(Type(type)));
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,

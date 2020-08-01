@@ -528,8 +528,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefNull* makeRefNull() {
+  RefNull* makeRefNull(Type type) {
+    assert(type.isRef());
     auto* ret = allocator.alloc<RefNull>();
+    ret->type = type;
     ret->finalize();
     return ret;
   }
@@ -624,13 +626,11 @@ public:
   Expression* makeConstantExpression(Literal value) {
     TODO_SINGLE_COMPOUND(value.type);
     switch (value.type.getBasic()) {
-      case Type::nullref:
-        return makeRefNull();
       case Type::funcref:
         if (value.getFunc()[0] != 0) {
           return makeRefFunc(value.getFunc());
         }
-        return makeRefNull();
+        return makeRefNull(Type::funcref);
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -822,7 +822,6 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
         return ExpressionManipulator::refNull(curr);
       case Type::none:

@@ -35,7 +35,6 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
@@ -2058,12 +2057,6 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
-    }
-  };
-
   self['exnref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
@@ -2071,8 +2064,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);

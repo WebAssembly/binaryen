@@ -210,7 +210,7 @@ Literal getSingleLiteralFromConstExpression(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (curr->is<RefNull>()) {
-    return Literal::makeNullref();
+    return Literal::makeNull(curr->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
     return Literal::makeFuncref(r->func);
   } else {
@@ -895,8 +895,6 @@ void Host::finalize() {
     }
   }
 }
-
-void RefNull::finalize() { type = Type::nullref; }
 
 void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {

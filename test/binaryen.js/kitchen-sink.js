@@ -563,7 +563,6 @@ function test_core() {
     module.v128.pop(),
     module.externref.pop(),
     module.funcref.pop(),
-    module.nullref.pop(),
     module.exnref.pop(),
     // TODO: Host
     module.nop(),

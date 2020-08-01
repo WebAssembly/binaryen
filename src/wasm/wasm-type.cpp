@@ -260,7 +260,6 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   // * `(ref null any) == anyref`
   // * `(ref null eq) == eqref`
   // * `(ref i31) == i31ref`
-  {TypeInfo({Type::nullref}), Type::nullref}, // TODO (removed)
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
 };
@@ -389,7 +388,6 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -432,7 +430,6 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::SIMD;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
@@ -468,11 +465,10 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
+  // Currently reference types proposal doesn't have any subtype relationship,
+  // so single type A is a subtype of B only if they are the same type. This
+  // can change later when we add more subtypes.
   if (left == right) {
-    return true;
-  }
-  if (left.isRef() && right.isRef() &&
-      (right == Type::externref || left == Type::nullref)) {
     return true;
   }
   if (left.isTuple() && right.isTuple()) {
@@ -513,16 +509,10 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
-  if (!a.isRef() || !b.isRef()) {
-    return Type::none;
-  }
-  if (a == Type::nullref) {
-    return b;
-  }
-  if (b == Type::nullref) {
-    return a;
-  }
-  return Type::externref;
+  // Currently reference types proposal doesn't have any subtype relationship,
+  // so at this point we return none. This will change when we add subtype
+  // relationship between types.
+  return Type::none;
 }
 
 Type::Iterator Type::end() const {
@@ -707,9 +697,6 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
       case Type::externref:
         os << "externref";
-        break;
-      case Type::nullref:
-        os << "nullref";
         break;
       case Type::exnref:
         os << "exnref";

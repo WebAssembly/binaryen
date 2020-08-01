@@ -113,10 +113,8 @@ def test_wasm_opt():
 
         shared.fail_if_not_identical_to_file(actual, f)
 
-        # FIXME Remove this condition after nullref is implemented in V8
-        if 'reference-types.wast' not in t:
-            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
-            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
+        shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
+        shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
 
         shared.minify_check(t)
 

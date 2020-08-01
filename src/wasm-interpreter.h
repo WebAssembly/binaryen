@@ -1242,7 +1242,7 @@ public:
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
-    return Literal::makeNullref();
+    return Literal::makeNull(curr->type);
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
@@ -1252,7 +1252,7 @@ public:
     }
     Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal(value.type == Type::nullref);
+    return Literal(value.isNull());
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
@@ -1282,7 +1282,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    if (flow.getSingleValue().isNull()) {
       trap("rethrow: argument is null");
     }
     throwException(flow.getSingleValue());
@@ -1294,7 +1294,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    if (flow.getSingleValue().isNull()) {
       trap("br_on_exn: argument is null");
     }
     const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
@@ -1644,7 +1644,6 @@ public:
           return Literal(load128(addr).data());
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
         case Type::none:
         case Type::unreachable:
@@ -1701,7 +1700,6 @@ public:
           break;
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
         case Type::none:
         case Type::unreachable:

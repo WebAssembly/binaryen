@@ -1957,6 +1957,19 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitRefNull(RefNull* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
+    switch (curr->type.getBasic()) {
+      case Type::externref:
+        o << " extern";
+        break;
+      case Type::funcref:
+        o << " func";
+        break;
+      case Type::exnref:
+        o << " exn";
+        break;
+      default:
+        WASM_UNREACHABLE("ref.null's argument should be a reference type");
+    }
     o << ')';
   }
   void visitRefIsNull(RefIsNull* curr) {

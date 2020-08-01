@@ -50,7 +50,6 @@ instructions = [
     ("v128.pop",       "makePop(Type::v128)"),
     ("funcref.pop",    "makePop(Type::funcref)"),
     ("externref.pop",  "makePop(Type::externref)"),
-    ("nullref.pop",    "makePop(Type::nullref)"),
     ("exnref.pop",     "makePop(Type::exnref)"),
     ("i32.load",       "makeLoad(s, Type::i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, Type::i64, /*isAtomic=*/false)"),

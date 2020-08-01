@@ -1136,8 +1136,6 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::nullref:
-      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
     default:
@@ -4689,6 +4687,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
+  curr->type = getType();
   curr->finalize();
 }
 
