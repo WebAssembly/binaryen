@@ -525,9 +525,10 @@ struct OptimizeInstructions
                  binary->op == DivFloat32 || binary->op == DivFloat64) {
         if (binary->left->type == binary->right->type) {
           if (auto* leftUnary = binary->left->dynCast<Unary>()) {
-            if ((leftUnary->op == AbsFloat32 || leftUnary->op == AbsFloat64)) {
+            if (leftUnary->op ==
+                Abstract::getUnary(binary->type, Abstract::Abs)) {
               if (auto* rightUnary = binary->right->dynCast<Unary>()) {
-                if (leftUnary->op == rightUnary->op) { // both are abs op
+                if (leftUnary->op == rightUnary->op) { // both are abs ops
                   // abs(x) * abs(x)   ==>   x * x
                   // abs(x) / abs(x)   ==>   x / x
                   if (ExpressionAnalyzer::equal(leftUnary->value,
