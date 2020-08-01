@@ -110,6 +110,34 @@ public:
     WASM_UNREACHABLE("unexpected type");
   }
 
+  static Literal makeFromInt64(int64_t x, Type type) {
+    switch (type.getSingle()) {
+      case Type::i32:
+        return Literal(int32_t(x));
+        break;
+      case Type::i64:
+        return Literal(x);
+        break;
+      case Type::f32:
+        return Literal(float(x));
+        break;
+      case Type::f64:
+        return Literal(double(x));
+        break;
+      case Type::v128:
+        return Literal(std::array<Literal, 2>{{Literal(x),
+                                               Literal(int64_t(0))}});
+      case Type::funcref:
+      case Type::externref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+    WASM_UNREACHABLE("unexpected type");
+  }
+
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
 
