@@ -1030,7 +1030,8 @@ private:
           seekStack.emplace_back(binary->right, mul);
           seekStack.emplace_back(binary->left, mul);
           continue;
-        } else if (binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
+        } else if (binary->op ==
+                   Abstract::getBinary(binary->type, Abstract::Sub)) {
           // if the left is a zero, ignore it, it's how we negate ints
           auto* left = binary->left->dynCast<Const>();
           seekStack.emplace_back(binary->right, -mul);
@@ -1038,13 +1039,15 @@ private:
             seekStack.emplace_back(binary->left, mul);
           }
           continue;
-        } else if (binary->op == Abstract::getBinary(binary->type, Abstract::Shl)) {
+        } else if (binary->op ==
+                   Abstract::getBinary(binary->type, Abstract::Shl)) {
           if (auto* c = binary->right->dynCast<Const>()) {
             seekStack.emplace_back(binary->left,
                                    mul * Pow2(Bits::getEffectiveShifts(c)));
             continue;
           }
-        } else if (binary->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
+        } else if (binary->op ==
+                   Abstract::getBinary(binary->type, Abstract::Mul)) {
           if (auto* c = binary->left->dynCast<Const>()) {
             seekStack.emplace_back(binary->right, mul * c->value.getInteger());
             continue;
@@ -1140,7 +1143,8 @@ private:
     Builder builder(*getModule());
     return builder.makeBinary(
       Abstract::getBinary(walked->type, Abstract::Add),
-      walked, builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
+      walked,
+      builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,

@@ -125,8 +125,8 @@ public:
         return Literal(double(x));
         break;
       case Type::v128:
-        return Literal(std::array<Literal, 2>{{Literal(x),
-                                               Literal(int64_t(0))}});
+        return Literal(
+          std::array<Literal, 2>{{Literal(x), Literal(int64_t(0))}});
       case Type::funcref:
       case Type::externref:
       case Type::nullref:
