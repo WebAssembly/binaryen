@@ -23,13 +23,18 @@
 
 namespace wasm {
 
+class Type;
+typedef std::vector<Type> Tuple;
+struct Signature;
+struct Struct;
+struct Array;
+
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `ValueType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
-  void init(const std::vector<Type>&);
 
 public:
   enum ValueType : uint32_t {
@@ -56,24 +61,33 @@ public:
   explicit Type(uint64_t id) : id(id){};
 
   // Construct from lists of elementary types
-  Type(std::initializer_list<Type> types);
-  explicit Type(const std::vector<Type>& types);
+  Type(std::initializer_list<Type>);
+  explicit Type(const Tuple&);
+
+  // Construct from signature descriptions
+  explicit Type(const Signature&);
+
+  // Construct from struct descriptions
+  explicit Type(const Struct&);
+
+  // Construct from array descriptions
+  explicit Type(const Array&);
 
   // Accessors
   size_t size() const;
-  const std::vector<Type>& expand() const;
+  const Tuple& expand() const;
 
   // Predicates
   constexpr bool isSingle() const {
     return id >= i32 && id <= _last_value_type;
   }
-  constexpr bool isMulti() const { return id > _last_value_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  constexpr bool isRef() const { return id >= funcref && id <= exnref; }
+  bool isMulti() const;
+  bool isRef() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -90,7 +104,7 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  constexpr ValueType getSingle() const {
+  ValueType getSingle() const {
     assert(!isMulti() && "Unexpected multivalue type");
     return static_cast<ValueType>(id);
   }
@@ -166,10 +180,110 @@ struct Signature {
   bool operator<(const Signature& other) const;
 };
 
+struct Field {
+  Type type;
+  bool mutable_;
+  Field(Type type, bool mutable_ = false) : type(type), mutable_(mutable_) {}
+  bool operator==(const Field& other) const {
+    return type == other.type && mutable_ == other.mutable_;
+  }
+  bool operator!=(const Field& other) const { return !(*this == other); }
+};
+
+typedef std::vector<Field> FieldList;
+
+struct Struct {
+  FieldList fields;
+  bool nullable;
+  Struct(const Struct& other)
+    : fields(other.fields), nullable(other.nullable) {}
+  Struct(FieldList fields, bool nullable = false)
+    : fields(fields), nullable(nullable) {}
+  bool operator==(const Struct& other) const {
+    return fields == other.fields && nullable == other.nullable;
+  }
+  bool operator!=(const Struct& other) const { return !(*this == other); }
+};
+
+struct Array {
+  Field element;
+  bool nullable;
+  Array(const Array& other)
+    : element(other.element), nullable(other.nullable) {}
+  Array(Field element, bool nullable = false)
+    : element(element), nullable(nullable) {}
+  bool operator==(const Array& other) const {
+    return element == other.element && nullable == other.nullable;
+  }
+  bool operator!=(const Array& other) const { return !(*this == other); }
+};
+
+struct TypeDef { // TODO: make internal to wasm-type.cpp ?
+  enum Kind { TupleKind, SignatureKind, StructKind, ArrayKind };
+
+  Kind kind;
+  union Def {
+    Def(Tuple tuple) : tuple(tuple) {}
+    Def(Signature signature) : signature(signature) {}
+    Def(Struct struct_) : struct_(struct_) {}
+    Def(Array array) : array(array) {}
+    ~Def() {}
+    Tuple tuple;
+    Signature signature;
+    Struct struct_;
+    Array array;
+  } def;
+
+  TypeDef(const TypeDef& other) : kind(other.kind), def(Tuple()) { // FIXME
+    switch (kind) {
+      case TupleKind:
+        def.tuple = other.def.tuple;
+        break;
+      case SignatureKind: {
+        def.signature = other.def.signature;
+        break;
+      }
+      case StructKind: {
+        def.struct_ = other.def.struct_;
+        break;
+      }
+      case ArrayKind: {
+        def.array = other.def.array;
+        break;
+      }
+      default:
+        WASM_UNREACHABLE("unexpected kind");
+    }
+  }
+  TypeDef(Tuple tuple) : kind(TupleKind), def(tuple) {}
+  TypeDef(Signature signature) : kind(SignatureKind), def(signature) {}
+  TypeDef(Struct struct_) : kind(StructKind), def(struct_) {}
+  TypeDef(Array array) : kind(ArrayKind), def(array) {}
+
+  bool operator==(const TypeDef& other) const {
+    if (kind != other.kind)
+      return false;
+    switch (kind) {
+      case TupleKind:
+        return def.tuple == other.def.tuple;
+      case SignatureKind:
+        return def.signature == other.def.signature;
+      case StructKind:
+        return def.struct_ == other.def.struct_;
+      case ArrayKind:
+        return def.array == other.def.array;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  bool operator!=(const TypeDef& other) const { return !(*this == other); }
+};
+
 std::ostream& operator<<(std::ostream& os, Type t);
 std::ostream& operator<<(std::ostream& os, ParamType t);
 std::ostream& operator<<(std::ostream& os, ResultType t);
 std::ostream& operator<<(std::ostream& os, Signature t);
+std::ostream& operator<<(std::ostream& os, Struct t);
+std::ostream& operator<<(std::ostream& os, Array t);
 
 } // namespace wasm
 
@@ -183,6 +297,11 @@ public:
 template<> class hash<wasm::Signature> {
 public:
   size_t operator()(const wasm::Signature& sig) const;
+};
+
+template<> class hash<wasm::TypeDef> {
+public:
+  size_t operator()(const wasm::TypeDef&) const;
 };
 
 } // namespace std

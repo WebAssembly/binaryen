@@ -30,9 +30,9 @@ namespace std {
 template<> class hash<vector<wasm::Type>> {
 public:
   size_t operator()(const vector<wasm::Type>& types) const {
-    uint64_t res = wasm::rehash(0, uint32_t(types.size()));
+    auto res = hash<size_t>{}(types.size());
     for (auto t : types) {
-      res = wasm::rehash(res, t.getID());
+      wasm::hash_combine<uint64_t>(res, t.getID());
     }
     return res;
   }
@@ -43,8 +43,49 @@ size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
 }
 
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
-  return wasm::rehash(uint64_t(hash<uint64_t>{}(sig.params.getID())),
-                      uint64_t(hash<uint64_t>{}(sig.results.getID())));
+  auto res = hash<uint64_t>{}(sig.params.getID());
+  wasm::hash_combine(res, sig.results.getID());
+  return res;
+}
+
+size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
+  auto res = hash<uint32_t>{}(uint32_t(typeDef.kind));
+  switch (typeDef.kind) {
+    case wasm::TypeDef::TupleKind: {
+      auto& tuple = typeDef.def.tuple;
+      for (auto t : tuple) {
+        wasm::hash_combine(res, t.getID());
+      }
+      break;
+    }
+    case wasm::TypeDef::SignatureKind: {
+      auto& sig = typeDef.def.signature;
+      wasm::hash_combine(res, sig.params.getID());
+      wasm::hash_combine(res, sig.results.getID());
+      break;
+    }
+    case wasm::TypeDef::StructKind: {
+      auto& struct_ = typeDef.def.struct_;
+      auto& fields = struct_.fields;
+      wasm::hash_combine(res, fields.size());
+      for (auto f : fields) {
+        wasm::hash_combine(res, f.type.getID());
+        wasm::hash_combine(res, f.mutable_);
+      }
+      wasm::hash_combine(res, struct_.nullable);
+      break;
+    }
+    case wasm::TypeDef::ArrayKind: {
+      auto& array = typeDef.def.array;
+      wasm::hash_combine(res, array.element.type.getID());
+      wasm::hash_combine(res, array.element.mutable_);
+      wasm::hash_combine(res, array.nullable);
+      break;
+    }
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+  return res;
 }
 
 } // namespace std
@@ -55,86 +96,140 @@ namespace {
 
 std::mutex mutex;
 
-std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
-  {{},
-   {Type::unreachable},
-   {Type::i32},
-   {Type::i64},
-   {Type::f32},
-   {Type::f64},
-   {Type::v128},
-   {Type::funcref},
-   {Type::externref},
-   {Type::nullref},
-   {Type::exnref}}};
-
 // Track unique_ptrs for constructed types to avoid leaks
-std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
+std::vector<std::unique_ptr<TypeDef>> complexTypes;
 
-// Maps from type vectors to the canonical Type ID
-std::unordered_map<std::vector<Type>, uintptr_t> indices = {
-  {{}, Type::none},
-  {{Type::unreachable}, Type::unreachable},
-  {{Type::i32}, Type::i32},
-  {{Type::i64}, Type::i64},
-  {{Type::f32}, Type::f32},
-  {{Type::f64}, Type::f64},
-  {{Type::v128}, Type::v128},
-  {{Type::funcref}, Type::funcref},
-  {{Type::externref}, Type::externref},
-  {{Type::nullref}, Type::nullref},
-  {{Type::exnref}, Type::exnref},
+// Maps from complex types to the canonical Type ID.
+// Also maps tuples of a single basic type to the basic type.
+std::unordered_map<TypeDef, uintptr_t> complexIndices = {
+  {TypeDef(Tuple()), Type::none},
+  {TypeDef({Type::unreachable}), Type::unreachable},
+  {TypeDef({Type::i32}), Type::i32},
+  {TypeDef({Type::i64}), Type::i64},
+  {TypeDef({Type::f32}), Type::f32},
+  {TypeDef({Type::f64}), Type::f64},
+  {TypeDef({Type::v128}), Type::v128},
+  {TypeDef({Type::funcref}), Type::funcref},
+  {TypeDef({Type::externref}), Type::externref},
+  {TypeDef({Type::nullref}), Type::nullref},
+  {TypeDef({Type::exnref}), Type::exnref},
+};
+
+// Maps from the canonical Type ID to complex types.
+// Also maps basic types to tuples of the single basic type.
+std::unordered_map<uintptr_t, TypeDef> complexLookup = {
+  {Type::none, TypeDef(Tuple())},
+  {Type::unreachable, TypeDef({Type::unreachable})},
+  {Type::i32, TypeDef({Type::i32})},
+  {Type::i64, TypeDef({Type::i64})},
+  {Type::f32, TypeDef({Type::f32})},
+  {Type::f64, TypeDef({Type::f64})},
+  {Type::v128, TypeDef({Type::v128})},
+  {Type::funcref, TypeDef({Type::funcref})},
+  {Type::externref, TypeDef({Type::externref})},
+  {Type::nullref, TypeDef({Type::nullref})},
+  {Type::exnref, TypeDef({Type::exnref})},
 };
 
 } // anonymous namespace
 
-void Type::init(const std::vector<Type>& types) {
+static uintptr_t canonicalize(const TypeDef& typeDef) {
+  std::lock_guard<std::mutex> lock(mutex);
+  auto indexIt = complexIndices.find(typeDef);
+  if (indexIt != complexIndices.end()) {
+    return indexIt->second;
+  }
+  auto ptr = std::make_unique<TypeDef>(typeDef);
+  auto id = uintptr_t(ptr.get());
+  complexTypes.push_back(std::move(ptr));
+  assert(id > Type::_last_value_type);
+  complexIndices[typeDef] = id;
+  complexLookup.emplace(id, typeDef);
+  return id;
+}
+
+Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
+
+Type::Type(const Tuple& tuple) {
 #ifndef NDEBUG
-  for (Type t : types) {
+  for (Type t : tuple) {
     assert(t.isSingle() && t.isConcrete());
   }
 #endif
-
-  if (types.size() == 0) {
+  if (tuple.size() == 0) {
     id = none;
     return;
   }
-  if (types.size() == 1) {
-    *this = types[0];
+  if (tuple.size() == 1) {
+    *this = tuple[0];
     return;
   }
-
-  // Add a new type if it hasn't been added concurrently
-  std::lock_guard<std::mutex> lock(mutex);
-  auto indexIt = indices.find(types);
-  if (indexIt != indices.end()) {
-    id = indexIt->second;
-  } else {
-    auto vec = std::make_unique<std::vector<Type>>(types);
-    id = uintptr_t(vec.get());
-    constructedTypes.push_back(std::move(vec));
-    assert(id > _last_value_type);
-    indices[types] = id;
-  }
+  id = canonicalize(TypeDef(tuple));
 }
 
-Type::Type(std::initializer_list<Type> types) { init(types); }
+Type::Type(const Signature& signature) {
+  id = canonicalize(TypeDef(signature));
+}
 
-Type::Type(const std::vector<Type>& types) { init(types); }
+Type::Type(const Struct& struct_) {
+#ifndef NDEBUG
+  for (Field f : struct_.fields) {
+    assert(f.type.isSingle() && f.type.isConcrete());
+  }
+#endif
+  id = canonicalize(TypeDef(struct_));
+}
+
+Type::Type(const Array& array) {
+#ifndef NDEBUG
+  assert(array.element.type.isSingle() && array.element.type.isConcrete());
+#endif
+  id = canonicalize(TypeDef(array));
+}
+
+bool Type::isMulti() const {
+  if (id > _last_value_type) {
+    auto it = complexLookup.find(id);
+    if (it != complexLookup.end()) {
+      return it->second.kind == TypeDef::TupleKind;
+    }
+  }
+  return false;
+}
+
+bool Type::isRef() const {
+  if (id > _last_value_type) {
+    auto it = complexLookup.find(id);
+    if (it != complexLookup.end()) {
+      switch (it->second.kind) {
+        case TypeDef::SignatureKind:
+        case TypeDef::StructKind:
+        case TypeDef::ArrayKind:
+          return true;
+        default:
+          return false;
+      }
+    }
+  }
+  return id >= funcref && id <= exnref;
+}
 
 size_t Type::size() const { return expand().size(); }
 
-const std::vector<Type>& Type::expand() const {
-  if (id <= _last_value_type) {
-    return basicTypes[id];
-  } else {
-    return *(std::vector<Type>*)id;
+const Tuple& Type::expand() const {
+  auto it = complexLookup.find(id);
+  if (it != complexLookup.end()) {
+    auto& typeDef = it->second;
+    if (typeDef.kind == TypeDef::TupleKind) {
+      return typeDef.def.tuple;
+    }
   }
+  WASM_UNREACHABLE("invalid type");
 }
 
 bool Type::operator<(const Type& other) const {
-  const std::vector<Type>& these = expand();
-  const std::vector<Type>& others = other.expand();
+  const Tuple& these = expand();
+  const Tuple& others = other.expand();
   return std::lexicographical_compare(
     these.begin(),
     these.end(),
@@ -282,7 +377,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     return Type::none; // a poison value that must not be consumed
   }
   if (a.isMulti()) {
-    std::vector<Type> types;
+    Tuple types;
     types.resize(a.size());
     const auto& as = a.expand();
     const auto& bs = b.expand();
@@ -343,51 +438,78 @@ bool Signature::operator<(const Signature& other) const {
 }
 
 std::ostream& operator<<(std::ostream& os, Type type) {
-  if (type.isMulti()) {
-    os << '(';
-    const std::vector<Type>& types = type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      os << types[i];
-      if (i < types.size() - 1) {
-        os << ", ";
+  auto id = type.getID();
+  switch (id) {
+    case Type::none:
+      os << "none";
+      break;
+    case Type::unreachable:
+      os << "unreachable";
+      break;
+    case Type::i32:
+      os << "i32";
+      break;
+    case Type::i64:
+      os << "i64";
+      break;
+    case Type::f32:
+      os << "f32";
+      break;
+    case Type::f64:
+      os << "f64";
+      break;
+    case Type::v128:
+      os << "v128";
+      break;
+    case Type::funcref:
+      os << "funcref";
+      break;
+    case Type::externref:
+      os << "externref";
+      break;
+    case Type::nullref:
+      os << "nullref";
+      break;
+    case Type::exnref:
+      os << "exnref";
+      break;
+    default: {
+      assert(id > Type::_last_value_type);
+      auto it = complexLookup.find(id);
+      if (it != complexLookup.end()) {
+        auto& typeDef = it->second;
+        switch (typeDef.kind) {
+          case TypeDef::TupleKind: {
+            auto& tuple = typeDef.def.tuple;
+            os << '(';
+            for (size_t i = 0; i < tuple.size(); ++i) {
+              os << tuple[i];
+              if (i < tuple.size() - 1) {
+                os << ", ";
+              }
+            }
+            os << ')';
+            break;
+          }
+          case TypeDef::SignatureKind: {
+            auto& signature = typeDef.def.signature;
+            os << signature;
+            break;
+          }
+          case TypeDef::StructKind: {
+            auto& struct_ = typeDef.def.struct_;
+            os << struct_;
+            break;
+          }
+          case TypeDef::ArrayKind: {
+            auto& array = typeDef.def.array;
+            os << array;
+            break;
+          }
+          default:
+            WASM_UNREACHABLE("invalid type kind");
+        }
       }
-    }
-    os << ')';
-  } else {
-    switch (type.getSingle()) {
-      case Type::none:
-        os << "none";
-        break;
-      case Type::unreachable:
-        os << "unreachable";
-        break;
-      case Type::i32:
-        os << "i32";
-        break;
-      case Type::i64:
-        os << "i64";
-        break;
-      case Type::f32:
-        os << "f32";
-        break;
-      case Type::f64:
-        os << "f64";
-        break;
-      case Type::v128:
-        os << "v128";
-        break;
-      case Type::funcref:
-        os << "funcref";
-        break;
-      case Type::externref:
-        os << "externref";
-        break;
-      case Type::nullref:
-        os << "nullref";
-        break;
-      case Type::exnref:
-        os << "exnref";
-        break;
     }
   }
   return os;
@@ -403,6 +525,30 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
 
 std::ostream& operator<<(std::ostream& os, Signature sig) {
   return os << "Signature(" << sig.params << " => " << sig.results << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, Struct struct_) {
+  os << "struct";
+  auto& fields = struct_.fields;
+  for (auto f : fields) {
+    if (f.mutable_) {
+      os << " (mut " << f.type << ")";
+    } else {
+      os << " " << f.type;
+    }
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, Array array) {
+  os << "array";
+  auto& element = array.element;
+  if (element.mutable_) {
+    os << " (mut " << element.type << ")";
+  } else {
+    os << element.type;
+  }
+  return os;
 }
 
 } // namespace wasm

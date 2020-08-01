@@ -45,6 +45,11 @@ inline uint64_t rehash(uint64_t x, uint64_t y) {
   return rehash(ret, HashType(y >> 32));
 }
 
+template<typename T> inline void hash_combine(std::size_t& s, const T& v) {
+  // see boost/container_hash/hash.hpp
+  s ^= std::hash<T>{}(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+}
+
 } // namespace wasm
 
 #endif // wasm_support_hash_h
