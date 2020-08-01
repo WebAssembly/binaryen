@@ -189,6 +189,7 @@ Type::Type(const Array& array) {
 
 bool Type::isMulti() const {
   if (id > _last_value_type) {
+    std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
     if (it != complexLookup.end()) {
       return it->second.kind == TypeDef::TupleKind;
@@ -199,6 +200,7 @@ bool Type::isMulti() const {
 
 bool Type::isRef() const {
   if (id > _last_value_type) {
+    std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
     if (it != complexLookup.end()) {
       switch (it->second.kind) {
@@ -217,6 +219,7 @@ bool Type::isRef() const {
 size_t Type::size() const { return expand().size(); }
 
 const Tuple& Type::expand() const {
+  std::lock_guard<std::mutex> lock(mutex);
   auto it = complexLookup.find(id);
   if (it != complexLookup.end()) {
     auto& typeDef = it->second;
@@ -475,6 +478,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       break;
     default: {
       assert(id > Type::_last_value_type);
+      std::lock_guard<std::mutex> lock(mutex);
       auto it = complexLookup.find(id);
       if (it != complexLookup.end()) {
         auto& typeDef = it->second;
