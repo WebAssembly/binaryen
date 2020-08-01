@@ -4233,6 +4233,35 @@
       )
     ))
   )
+  (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
+    ;; abs(x) * abs(x)   ==>   x
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x0))
+    ))
+    (drop (f32.mul
+      (f32.abs (local.get $y0))
+      (f32.abs (local.get $y0))
+    ))
+
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x1)) ;; skip
+    ))
+    (drop (f32.mul
+      (f32.abs (local.get $y1)) ;; skip
+      (f32.abs (local.get $y0))
+    ))
+
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (f64.const 0)) ;; skip
+    ))
+    (drop (f32.mul
+      (f32.abs (f32.const 0)) ;; skip
+      (f32.abs (local.get $y0))
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

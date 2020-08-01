@@ -521,6 +521,24 @@ struct OptimizeInstructions
         if (ret) {
           return ret;
         }
+      } else if (binary->op == MulFloat32 || binary->op == MulFloat64) {
+        if (binary->left->type == binary->right->type) {
+          if (auto* leftUnary = binary->left->dynCast<Unary>()) {
+            // abs(x) * abs(x)   ==>   x * x
+            if ((leftUnary->op == AbsFloat32 || leftUnary->op == AbsFloat64)) {
+              if (auto* rightUnary = binary->right->dynCast<Unary>()) {
+                if (leftUnary->op == rightUnary->op) {
+                  if (ExpressionAnalyzer::equal(leftUnary->value,
+                                                rightUnary->value)) {
+                    binary->left = leftUnary->value;
+                    binary->right = rightUnary->value;
+                    return binary;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
