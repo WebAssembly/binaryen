@@ -431,6 +431,14 @@ std::string ParamType::toString() const { return genericToString(*this); }
 
 std::string ResultType::toString() const { return genericToString(*this); }
 
+std::string Signature::toString() const { return genericToString(*this); }
+
+std::string Struct::toString() const { return genericToString(*this); }
+
+std::string Array::toString() const { return genericToString(*this); }
+
+std::string TypeDef::toString() const { return genericToString(*this); }
+
 bool Signature::operator<(const Signature& other) const {
   if (results < other.results) {
     return true;
@@ -483,37 +491,13 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       auto it = complexLookup.find(id);
       if (it != complexLookup.end()) {
         auto& typeDef = it->second;
-        switch (typeDef.getKind()) {
-          case TypeDef::TupleKind: {
-            auto& tuple = typeDef.tupleDef.tuple;
-            os << '(';
-            for (size_t i = 0; i < tuple.size(); ++i) {
-              os << tuple[i];
-              if (i < tuple.size() - 1) {
-                os << ", ";
-              }
-            }
-            os << ')';
-            break;
-          }
-          case TypeDef::SignatureKind: {
-            auto& signature = typeDef.signatureDef.signature;
-            os << signature;
-            break;
-          }
-          case TypeDef::StructKind: {
-            auto& struct_ = typeDef.structDef.struct_;
-            os << struct_;
-            break;
-          }
-          case TypeDef::ArrayKind: {
-            auto& array = typeDef.arrayDef.array;
-            os << array;
-            break;
-          }
-          default:
-            WASM_UNREACHABLE("invalid type kind");
+        if (typeDef.getKind() == TypeDef::TupleKind) {
+          os << typeDef;
+        } else {
+          os << "ref " << typeDef;
         }
+      } else {
+        WASM_UNREACHABLE("invalid type kind");
       }
     }
   }
@@ -528,11 +512,38 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
   return printPrefixedTypes(os, "result", param.type);
 }
 
+std::ostream& operator<<(std::ostream& os, Tuple tuple) {
+  os << "(";
+  auto size = tuple.size();
+  if (size) {
+    os << tuple[0];
+    for (size_t i = 1; i < size; ++i) {
+      os << " " << tuple[i];
+    }
+  }
+  os << ")";
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, Signature sig) {
-  return os << "Signature(" << sig.params << " => " << sig.results << ")";
+  os << "func";
+  if (sig.params.getID() != Type::ValueType::none) {
+    os << " (";
+    printPrefixedTypes(os, "param", sig.params);
+    os << ")";
+  }
+  if (sig.results.getID() != Type::ValueType::none) {
+    os << " (";
+    printPrefixedTypes(os, "result", sig.results);
+    os << ")";
+  }
+  return os;
 }
 
 std::ostream& operator<<(std::ostream& os, Struct struct_) {
+  if (struct_.nullable) {
+    os << "null ";
+  }
   os << "struct";
   auto& fields = struct_.fields;
   for (auto f : fields) {
@@ -546,12 +557,39 @@ std::ostream& operator<<(std::ostream& os, Struct struct_) {
 }
 
 std::ostream& operator<<(std::ostream& os, Array array) {
-  os << "array";
+  if (array.nullable) {
+    os << "null ";
+  }
+  os << "array ";
   auto& element = array.element;
   if (element.mutable_) {
-    os << " (mut " << element.type << ")";
+    os << "(mut " << element.type << ")";
   } else {
     os << element.type;
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
+  switch (typeDef.getKind()) {
+    case TypeDef::TupleKind: {
+      os << typeDef.tupleDef.tuple;
+      break;
+    }
+    case TypeDef::SignatureKind: {
+      os << typeDef.signatureDef.signature;
+      break;
+    }
+    case TypeDef::StructKind: {
+      os << typeDef.structDef.struct_;
+      break;
+    }
+    case TypeDef::ArrayKind: {
+      os << typeDef.arrayDef.array;
+      break;
+    }
+    default:
+      WASM_UNREACHABLE("invalid type kind");
   }
   return os;
 }

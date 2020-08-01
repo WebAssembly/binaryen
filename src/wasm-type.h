@@ -178,6 +178,7 @@ struct Signature {
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
   bool operator<(const Signature& other) const;
+  std::string toString() const;
 };
 
 struct Field {
@@ -188,6 +189,7 @@ struct Field {
     return type == other.type && mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
+  std::string toString() const;
 };
 
 typedef std::vector<Field> FieldList;
@@ -203,6 +205,7 @@ struct Struct {
     return fields == other.fields && nullable == other.nullable;
   }
   bool operator!=(const Struct& other) const { return !(*this == other); }
+  std::string toString() const;
 };
 
 struct Array {
@@ -216,6 +219,7 @@ struct Array {
     return element == other.element && nullable == other.nullable;
   }
   bool operator!=(const Array& other) const { return !(*this == other); }
+  std::string toString() const;
 };
 
 union TypeDef {
@@ -286,14 +290,18 @@ union TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
   bool operator!=(const TypeDef& other) const { return !(*this == other); }
+
+  std::string toString() const;
 };
 
 std::ostream& operator<<(std::ostream& os, Type t);
 std::ostream& operator<<(std::ostream& os, ParamType t);
 std::ostream& operator<<(std::ostream& os, ResultType t);
+std::ostream& operator<<(std::ostream& os, Tuple t);
 std::ostream& operator<<(std::ostream& os, Signature t);
 std::ostream& operator<<(std::ostream& os, Struct t);
 std::ostream& operator<<(std::ostream& os, Array t);
+std::ostream& operator<<(std::ostream& os, TypeDef t);
 
 } // namespace wasm
 
