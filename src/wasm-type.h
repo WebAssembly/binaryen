@@ -261,8 +261,9 @@ struct TypeDef { // TODO: make internal to wasm-type.cpp ?
   TypeDef(Array array) : kind(ArrayKind), def(array) {}
 
   bool operator==(const TypeDef& other) const {
-    if (kind != other.kind)
+    if (kind != other.kind) {
       return false;
+    }
     switch (kind) {
       case TupleKind:
         return def.tuple == other.def.tuple;
