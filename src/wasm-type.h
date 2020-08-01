@@ -221,58 +221,76 @@ struct Array {
 struct TypeDef { // TODO: make internal to wasm-type.cpp ?
   enum Kind { TupleKind, SignatureKind, StructKind, ArrayKind };
 
-  Kind kind;
   union Def {
-    Def(Tuple tuple) : tuple(tuple) {}
-    Def(Signature signature) : signature(signature) {}
-    Def(Struct struct_) : struct_(struct_) {}
-    Def(Array array) : array(array) {}
-    ~Def() {}
-    Tuple tuple;
-    Signature signature;
-    Struct struct_;
-    Array array;
+    struct TupleDef {
+      Kind kind;
+      Tuple tuple;
+    } tupleDef;
+    struct SignatureDef {
+      Kind kind;
+      Signature signature;
+    } signatureDef;
+    struct StructDef {
+      Kind kind;
+      Struct struct_;
+    } structDef;
+    struct ArrayDef {
+      Kind kind;
+      Array array;
+    } arrayDef;
+
+    Def(Tuple tuple) : tupleDef{TupleKind, tuple} {}
+    Def(Signature signature) : signatureDef{SignatureKind, signature} {}
+    Def(Struct struct_) : structDef{StructKind, struct_} {}
+    Def(Array array) : arrayDef{ArrayKind, array} {}
+
+    Def(const Def& other) {
+      switch (other.tupleDef.kind) {
+        case TupleKind:
+          ::new (&tupleDef) auto(other.tupleDef);
+          break;
+        case SignatureKind:
+          ::new (&signatureDef) auto(other.signatureDef);
+          break;
+        case StructKind:
+          ::new (&structDef) auto(other.structDef);
+          break;
+        case ArrayKind:
+          ::new (&arrayDef) auto(other.arrayDef);
+          break;
+        default:
+          WASM_UNREACHABLE("unexpected kind");
+      }
+    }
+    ~Def() {
+      if (tupleDef.kind == TupleKind) {
+        tupleDef.~TupleDef();
+      }
+    }
   } def;
 
-  TypeDef(const TypeDef& other) : kind(other.kind), def(Tuple()) { // FIXME
-    switch (kind) {
-      case TupleKind:
-        def.tuple = other.def.tuple;
-        break;
-      case SignatureKind: {
-        def.signature = other.def.signature;
-        break;
-      }
-      case StructKind: {
-        def.struct_ = other.def.struct_;
-        break;
-      }
-      case ArrayKind: {
-        def.array = other.def.array;
-        break;
-      }
-      default:
-        WASM_UNREACHABLE("unexpected kind");
-    }
-  }
-  TypeDef(Tuple tuple) : kind(TupleKind), def(tuple) {}
-  TypeDef(Signature signature) : kind(SignatureKind), def(signature) {}
-  TypeDef(Struct struct_) : kind(StructKind), def(struct_) {}
-  TypeDef(Array array) : kind(ArrayKind), def(array) {}
+  TypeDef(const TypeDef& other) : def(other.def) {}
+  TypeDef(Tuple tuple) : def(tuple) {}
+  TypeDef(Signature signature) : def(signature) {}
+  TypeDef(Struct struct_) : def(struct_) {}
+  TypeDef(Array array) : def(array) {}
+
+  constexpr Kind getKind() const { return def.tupleDef.kind; }
 
   bool operator==(const TypeDef& other) const {
-    if (kind != other.kind) {
+    auto kind = getKind();
+    if (kind != other.getKind()) {
       return false;
     }
     switch (kind) {
       case TupleKind:
-        return def.tuple == other.def.tuple;
+        return def.tupleDef.tuple == other.def.tupleDef.tuple;
       case SignatureKind:
-        return def.signature == other.def.signature;
+        return def.signatureDef.signature == other.def.signatureDef.signature;
       case StructKind:
-        return def.struct_ == other.def.struct_;
+        return def.structDef.struct_ == other.def.structDef.struct_;
       case ArrayKind:
-        return def.array == other.def.array;
+        return def.arrayDef.array == other.def.arrayDef.array;
     }
     WASM_UNREACHABLE("unexpected kind");
   }

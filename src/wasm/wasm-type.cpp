@@ -49,23 +49,24 @@ size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
 }
 
 size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
-  auto res = hash<uint32_t>{}(uint32_t(typeDef.kind));
-  switch (typeDef.kind) {
+  auto kind = typeDef.getKind();
+  auto res = hash<uint32_t>{}(uint32_t(kind));
+  switch (kind) {
     case wasm::TypeDef::TupleKind: {
-      auto& tuple = typeDef.def.tuple;
+      auto& tuple = typeDef.def.tupleDef.tuple;
       for (auto t : tuple) {
         wasm::hash_combine(res, t.getID());
       }
       break;
     }
     case wasm::TypeDef::SignatureKind: {
-      auto& sig = typeDef.def.signature;
+      auto& sig = typeDef.def.signatureDef.signature;
       wasm::hash_combine(res, sig.params.getID());
       wasm::hash_combine(res, sig.results.getID());
       break;
     }
     case wasm::TypeDef::StructKind: {
-      auto& struct_ = typeDef.def.struct_;
+      auto& struct_ = typeDef.def.structDef.struct_;
       auto& fields = struct_.fields;
       wasm::hash_combine(res, fields.size());
       for (auto f : fields) {
@@ -76,7 +77,7 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
       break;
     }
     case wasm::TypeDef::ArrayKind: {
-      auto& array = typeDef.def.array;
+      auto& array = typeDef.def.arrayDef.array;
       wasm::hash_combine(res, array.element.type.getID());
       wasm::hash_combine(res, array.element.mutable_);
       wasm::hash_combine(res, array.nullable);
@@ -192,7 +193,7 @@ bool Type::isMulti() const {
     std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
     if (it != complexLookup.end()) {
-      return it->second.kind == TypeDef::TupleKind;
+      return it->second.def.tupleDef.kind == TypeDef::TupleKind;
     }
   }
   return false;
@@ -203,7 +204,7 @@ bool Type::isRef() const {
     std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
     if (it != complexLookup.end()) {
-      switch (it->second.kind) {
+      switch (it->second.getKind()) {
         case TypeDef::SignatureKind:
         case TypeDef::StructKind:
         case TypeDef::ArrayKind:
@@ -223,8 +224,8 @@ const Tuple& Type::expand() const {
   auto it = complexLookup.find(id);
   if (it != complexLookup.end()) {
     auto& typeDef = it->second;
-    if (typeDef.kind == TypeDef::TupleKind) {
-      return typeDef.def.tuple;
+    if (typeDef.getKind() == TypeDef::TupleKind) {
+      return typeDef.def.tupleDef.tuple;
     }
   }
   WASM_UNREACHABLE("invalid type");
@@ -482,9 +483,9 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       auto it = complexLookup.find(id);
       if (it != complexLookup.end()) {
         auto& typeDef = it->second;
-        switch (typeDef.kind) {
+        switch (typeDef.getKind()) {
           case TypeDef::TupleKind: {
-            auto& tuple = typeDef.def.tuple;
+            auto& tuple = typeDef.def.tupleDef.tuple;
             os << '(';
             for (size_t i = 0; i < tuple.size(); ++i) {
               os << tuple[i];
@@ -496,17 +497,17 @@ std::ostream& operator<<(std::ostream& os, Type type) {
             break;
           }
           case TypeDef::SignatureKind: {
-            auto& signature = typeDef.def.signature;
+            auto& signature = typeDef.def.signatureDef.signature;
             os << signature;
             break;
           }
           case TypeDef::StructKind: {
-            auto& struct_ = typeDef.def.struct_;
+            auto& struct_ = typeDef.def.structDef.struct_;
             os << struct_;
             break;
           }
           case TypeDef::ArrayKind: {
-            auto& array = typeDef.def.array;
+            auto& array = typeDef.def.arrayDef.array;
             os << array;
             break;
           }
