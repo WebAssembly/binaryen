@@ -3820,12 +3820,14 @@
                              (local.tee $4
                               (f64.ne
                                (local.tee $22
-                                (f64.mul
-                                 (call $_frexp
-                                  (local.get $14)
-                                  (local.get $20)
+                                (f64.add
+                                 (local.tee $14
+                                  (call $_frexp
+                                   (local.get $14)
+                                   (local.get $20)
+                                  )
                                  )
-                                 (f64.const 2)
+                                 (local.get $14)
                                 )
                                )
                                (f64.const 0)

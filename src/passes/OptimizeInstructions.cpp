@@ -1449,6 +1449,17 @@ private:
           return binary->left;
         }
       }
+      if (type.isFloat()) {
+        // x * 2.0  ==>  x + x
+        if (binary->op == Abstract::getBinary(type, Abstract::Mul) &&
+            right->value == Literal::makeFromInt32(2, type) &&
+            !EffectAnalyzer(getPassOptions(), features, binary->left)
+               .hasSideEffects()) {
+          binary->right = ExpressionManipulator::copy(binary->left, *getModule());
+          binary->op = Abstract::getBinary(type, Abstract::Add);
+          return binary;
+        }
+      }
     }
     // TODO: v128 not implemented yet
     return nullptr;
