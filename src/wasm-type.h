@@ -24,10 +24,12 @@
 namespace wasm {
 
 class Type;
-typedef std::vector<Type> Tuple;
+struct Tuple;
 struct Signature;
 struct Struct;
 struct Array;
+
+typedef std::vector<Type> TypeList;
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
@@ -60,22 +62,24 @@ public:
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
 
-  // Construct from lists of elementary types
+  // Construct tuple from lists of elementary types
   Type(std::initializer_list<Type>);
+
+  // Construct from tuple description
   explicit Type(const Tuple&);
 
-  // Construct from signature descriptions
+  // Construct from signature description
   explicit Type(const Signature&);
 
-  // Construct from struct descriptions
+  // Construct from struct description
   explicit Type(const Struct&);
 
-  // Construct from array descriptions
+  // Construct from array description
   explicit Type(const Array&);
 
   // Accessors
   size_t size() const;
-  const Tuple& expand() const;
+  const TypeList& expand() const;
 
   // Predicates
   constexpr bool isSingle() const {
@@ -86,7 +90,7 @@ public:
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  bool isMulti() const;
+  bool isTuple() const;
   bool isRef() const;
 
 private:
@@ -105,7 +109,7 @@ public:
 
   constexpr uint64_t getID() const { return id; }
   ValueType getSingle() const {
-    assert(!isMulti() && "Unexpected multivalue type");
+    assert(!isTuple() && "Unexpected tuple type");
     return static_cast<ValueType>(id);
   }
 
@@ -165,6 +169,16 @@ struct ParamType {
 struct ResultType {
   Type type;
   ResultType(Type type) : type(type) {}
+  std::string toString() const;
+};
+
+struct Tuple {
+  TypeList types;
+  Tuple() : types({}) {}
+  Tuple(std::initializer_list<Type> types) : types(types) {}
+  Tuple(TypeList types) : types(types) {}
+  bool operator==(const Tuple& other) const { return types == other.types; }
+  bool operator!=(const Tuple& other) const { return !(*this == other); }
   std::string toString() const;
 };
 
@@ -265,8 +279,25 @@ union TypeDef {
     }
   }
   ~TypeDef() {
-    if (tupleDef.kind == TupleKind) {
-      tupleDef.~TupleDef();
+    switch (getKind()) {
+      case TupleKind: {
+        tupleDef.~TupleDef();
+        break;
+      }
+      case SignatureKind: {
+        signatureDef.~SignatureDef();
+        break;
+      }
+      case StructKind: {
+        structDef.~StructDef();
+        break;
+      }
+      case ArrayKind: {
+        arrayDef.~ArrayDef();
+        break;
+      }
+      default:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
 

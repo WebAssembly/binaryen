@@ -32,7 +32,7 @@ public:
   size_t operator()(const vector<wasm::Type>& types) const {
     auto res = hash<size_t>{}(types.size());
     for (auto t : types) {
-      wasm::hash_combine<uint64_t>(res, t.getID());
+      wasm::hash_combine(res, t.getID());
     }
     return res;
   }
@@ -53,8 +53,8 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
   auto res = hash<uint32_t>{}(uint32_t(kind));
   switch (kind) {
     case wasm::TypeDef::TupleKind: {
-      auto& tuple = typeDef.tupleDef.tuple;
-      for (auto t : tuple) {
+      auto& types = typeDef.tupleDef.tuple.types;
+      for (auto t : types) {
         wasm::hash_combine(res, t.getID());
       }
       break;
@@ -152,17 +152,18 @@ static uintptr_t canonicalize(const TypeDef& typeDef) {
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
 Type::Type(const Tuple& tuple) {
+  auto& types = tuple.types;
 #ifndef NDEBUG
-  for (Type t : tuple) {
+  for (Type t : types) {
     assert(t.isSingle() && t.isConcrete());
   }
 #endif
-  if (tuple.size() == 0) {
+  if (types.size() == 0) {
     id = none;
     return;
   }
-  if (tuple.size() == 1) {
-    *this = tuple[0];
+  if (types.size() == 1) {
+    *this = types[0];
     return;
   }
   id = canonicalize(TypeDef(tuple));
@@ -188,7 +189,7 @@ Type::Type(const Array& array) {
   id = canonicalize(TypeDef(array));
 }
 
-bool Type::isMulti() const {
+bool Type::isTuple() const {
   if (id > _last_value_type) {
     std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
@@ -219,21 +220,21 @@ bool Type::isRef() const {
 
 size_t Type::size() const { return expand().size(); }
 
-const Tuple& Type::expand() const {
+const TypeList& Type::expand() const {
   std::lock_guard<std::mutex> lock(mutex);
   auto it = complexLookup.find(id);
   if (it != complexLookup.end()) {
     auto& typeDef = it->second;
     if (typeDef.getKind() == TypeDef::TupleKind) {
-      return typeDef.tupleDef.tuple;
+      return typeDef.tupleDef.tuple.types;
     }
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 bool Type::operator<(const Type& other) const {
-  const Tuple& these = expand();
-  const Tuple& others = other.expand();
+  const TypeList& these = expand();
+  const TypeList& others = other.expand();
   return std::lexicographical_compare(
     these.begin(),
     these.end(),
@@ -351,7 +352,7 @@ bool Type::isSubType(Type left, Type right) {
       (right == Type::externref || left == Type::nullref)) {
     return true;
   }
-  if (left.isMulti() && right.isMulti()) {
+  if (left.isTuple() && right.isTuple()) {
     const auto& leftElems = left.expand();
     const auto& rightElems = right.expand();
     if (leftElems.size() != rightElems.size()) {
@@ -380,8 +381,8 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
   }
-  if (a.isMulti()) {
-    Tuple types;
+  if (a.isTuple()) {
+    TypeList types;
     types.resize(a.size());
     const auto& as = a.expand();
     const auto& bs = b.expand();
@@ -430,6 +431,8 @@ std::string Type::toString() const { return genericToString(*this); }
 std::string ParamType::toString() const { return genericToString(*this); }
 
 std::string ResultType::toString() const { return genericToString(*this); }
+
+std::string Tuple::toString() const { return genericToString(*this); }
 
 std::string Signature::toString() const { return genericToString(*this); }
 
@@ -514,11 +517,12 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
 
 std::ostream& operator<<(std::ostream& os, Tuple tuple) {
   os << "(";
-  auto size = tuple.size();
+  auto& types = tuple.types;
+  auto size = types.size();
   if (size) {
-    os << tuple[0];
+    os << types[0];
     for (size_t i = 1; i < size; ++i) {
-      os << " " << tuple[i];
+      os << " " << types[i];
     }
   }
   os << ")";

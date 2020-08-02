@@ -389,7 +389,7 @@ void FunctionValidator::noteLabelName(Name name) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(!curr->type.isMulti(),
+    shouldBeTrue(!curr->type.isTuple(),
                  curr,
                  "Multivalue block type (multivalue is not enabled)");
   }
@@ -1964,7 +1964,7 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->sig.results.isMulti()) {
+  if (curr->sig.results.isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
@@ -2131,7 +2131,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
-    if (curr->sig.results.isMulti()) {
+    if (curr->sig.results.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Imported multivalue function "
@@ -2341,7 +2341,7 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                        Type(Type::none),
                        curr->name,
                        "Event type's result type should be none");
-    if (curr->sig.params.isMulti()) {
+    if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Multivalue event type (multivalue is not enabled)");

@@ -1014,7 +1014,7 @@ struct Reducer
       RefNull* n = builder->makeRefNull();
       return tryToReplaceCurrent(n);
     }
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       Expression* n =
         builder->makeConstantExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);

@@ -66,7 +66,7 @@ struct SExprType {
 
 static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
-  if (type.isMulti()) {
+  if (type.isTuple()) {
     const std::vector<Type>& types = type.expand();
     o << '(' << types[0];
     for (size_t i = 1; i < types.size(); ++i) {

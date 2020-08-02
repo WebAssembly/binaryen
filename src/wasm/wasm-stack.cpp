@@ -23,7 +23,7 @@ namespace wasm {
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
     o << binaryType(type);

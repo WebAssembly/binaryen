@@ -37,7 +37,7 @@ Literal::Literal(const Literal& other) { *this = other; }
 
 Literal& Literal::operator=(const Literal& other) {
   type = other.type;
-  assert(!type.isMulti());
+  assert(!type.isTuple());
   switch (type.getSingle()) {
     case Type::i32:
     case Type::f32:

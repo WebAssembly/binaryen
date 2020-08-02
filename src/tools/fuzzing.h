@@ -306,7 +306,7 @@ private:
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
   Type getSubType(Type type) {
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Type> types;
       for (auto t : type.expand()) {
         types.push_back(getSubType(t));
@@ -849,7 +849,7 @@ private:
 
   Expression* _makeConcrete(Type type) {
     bool canMakeControlFlow =
-      !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
+      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -885,7 +885,7 @@ private:
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
     return (this->*pick(options))(type);
@@ -1264,7 +1264,7 @@ private:
 
   Expression* makeTupleMake(Type type) {
     assert(wasm.features.hasMultivalue());
-    assert(type.isMulti());
+    assert(type.isTuple());
     std::vector<Expression*> elements;
     for (auto t : type.expand()) {
       elements.push_back(make(t));
@@ -1742,7 +1742,7 @@ private:
       }
       return builder.makeRefNull();
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Expression*> operands;
       for (auto t : type.expand()) {
         operands.push_back(makeConst(t));
@@ -1760,7 +1760,7 @@ private:
   }
 
   Expression* makeUnary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
         return builder.makeUnary(unary->op, make(Type::unreachable));
@@ -1979,7 +1979,7 @@ private:
   }
 
   Expression* makeBinary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* binary =
             makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
