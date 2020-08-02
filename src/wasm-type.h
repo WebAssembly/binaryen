@@ -211,7 +211,7 @@ typedef std::vector<Field> FieldList;
 struct Struct {
   FieldList fields;
   Struct(const Struct& other) : fields(other.fields) {}
-  Struct(FieldList fields, bool nullable = false) : fields(fields) {}
+  Struct(FieldList fields) : fields(fields) {}
   bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
   std::string toString() const;
@@ -220,7 +220,7 @@ struct Struct {
 struct Array {
   Field element;
   Array(const Array& other) : element(other.element) {}
-  Array(Field element, bool nullable = false) : element(element) {}
+  Array(Field element) : element(element) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   std::string toString() const;
