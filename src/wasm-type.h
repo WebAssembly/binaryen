@@ -33,13 +33,13 @@ typedef std::vector<Type> TypeList;
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `ValueType`
+  // comparison of the ids. For basic types the `id` is just the `ID`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
 
 public:
-  enum ValueType : uint32_t {
+  enum ID : uint32_t {
     none,
     unreachable,
     i32,
@@ -51,13 +51,13 @@ public:
     externref,
     nullref,
     exnref,
-    _last_value_type = exnref
+    _last_basic_id = exnref
   };
 
   Type() = default;
 
-  // ValueType can be implicitly upgraded to Type
-  constexpr Type(ValueType id) : id(id){};
+  // ID can be implicitly upgraded to Type
+  constexpr Type(ID id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
@@ -82,9 +82,7 @@ public:
   const TypeList& expand() const;
 
   // Predicates
-  constexpr bool isSingle() const {
-    return id >= i32 && id <= _last_value_type;
-  }
+  constexpr bool isSingle() const { return id >= i32 && id <= _last_basic_id; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
@@ -108,18 +106,18 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  ValueType getSingle() const {
+  ID getSingle() const {
     assert(!isTuple() && "Unexpected tuple type");
-    return static_cast<ValueType>(id);
+    return static_cast<ID>(id);
   }
 
-  // (In)equality must be defined for both Type and ValueType because it is
+  // (In)equality must be defined for both Type and ID because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const ValueType& other) const { return id == other; }
+  bool operator==(const ID& other) const { return id == other; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const ValueType& other) const { return id != other; }
+  bool operator!=(const ID& other) const { return id != other; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;

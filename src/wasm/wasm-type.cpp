@@ -97,12 +97,26 @@ namespace {
 
 std::mutex mutex;
 
-// Track unique_ptrs for constructed types to avoid leaks
-std::vector<std::unique_ptr<TypeDef>> complexTypes;
+// Maps basic types to tuples of the single basic type.
+std::array<TypeList, Type::_last_basic_id + 1> basicTuples = {{
+  {},
+  {Type::unreachable},
+  {Type::i32},
+  {Type::i64},
+  {Type::f32},
+  {Type::f64},
+  {Type::v128},
+  {Type::funcref},
+  {Type::externref},
+  {Type::nullref},
+  {Type::exnref},
+}};
 
-// Maps from complex types to the canonical Type ID.
-// Also maps tuples of a single basic type to the basic type.
-std::unordered_map<TypeDef, uintptr_t> complexIndices = {
+// Track unique_ptrs for constructed types to avoid leaks
+std::vector<std::unique_ptr<TypeDef>> constructedTypes;
+
+// Maps from constructed types to the canonical Type ID.
+std::unordered_map<TypeDef, uintptr_t> indices = {
   {TypeDef(Tuple()), Type::none},
   {TypeDef({Type::unreachable}), Type::unreachable},
   {TypeDef({Type::i32}), Type::i32},
@@ -116,36 +130,19 @@ std::unordered_map<TypeDef, uintptr_t> complexIndices = {
   {TypeDef({Type::exnref}), Type::exnref},
 };
 
-// Maps from the canonical Type ID to complex types.
-// Also maps basic types to tuples of the single basic type.
-std::unordered_map<uintptr_t, TypeDef> complexLookup = {
-  {Type::none, TypeDef(Tuple())},
-  {Type::unreachable, TypeDef({Type::unreachable})},
-  {Type::i32, TypeDef({Type::i32})},
-  {Type::i64, TypeDef({Type::i64})},
-  {Type::f32, TypeDef({Type::f32})},
-  {Type::f64, TypeDef({Type::f64})},
-  {Type::v128, TypeDef({Type::v128})},
-  {Type::funcref, TypeDef({Type::funcref})},
-  {Type::externref, TypeDef({Type::externref})},
-  {Type::nullref, TypeDef({Type::nullref})},
-  {Type::exnref, TypeDef({Type::exnref})},
-};
-
 } // anonymous namespace
 
 static uintptr_t canonicalize(const TypeDef& typeDef) {
   std::lock_guard<std::mutex> lock(mutex);
-  auto indexIt = complexIndices.find(typeDef);
-  if (indexIt != complexIndices.end()) {
+  auto indexIt = indices.find(typeDef);
+  if (indexIt != indices.end()) {
     return indexIt->second;
   }
   auto ptr = std::make_unique<TypeDef>(typeDef);
   auto id = uintptr_t(ptr.get());
-  complexTypes.push_back(std::move(ptr));
-  assert(id > Type::_last_value_type);
-  complexIndices[typeDef] = id;
-  complexLookup.emplace(id, typeDef);
+  constructedTypes.push_back(std::move(ptr));
+  assert(id > Type::_last_basic_id);
+  indices[typeDef] = id;
   return id;
 }
 
@@ -190,46 +187,40 @@ Type::Type(const Array& array, bool nullable) {
 }
 
 bool Type::isTuple() const {
-  if (id > _last_value_type) {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto it = complexLookup.find(id);
-    if (it != complexLookup.end()) {
-      return it->second.isTuple();
-    }
+  if (id <= _last_basic_id) {
+    return false;
+  } else {
+    auto* typeDef = (TypeDef*)id;
+    return typeDef->isTuple();
   }
-  return false;
 }
 
 bool Type::isRef() const {
-  if (id > _last_value_type) {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto it = complexLookup.find(id);
-    if (it != complexLookup.end()) {
-      switch (it->second.getKind()) {
-        case TypeDef::SignatureKind:
-        case TypeDef::StructKind:
-        case TypeDef::ArrayKind:
-          return true;
-        default:
-          return false;
-      }
+  if (id <= _last_basic_id) {
+    return id >= funcref && id <= exnref;
+  } else {
+    auto* typeDef = (TypeDef*)id;
+    switch (typeDef->getKind()) {
+      case TypeDef::SignatureKind:
+      case TypeDef::StructKind:
+      case TypeDef::ArrayKind:
+        return true;
+      default:
+        return false;
     }
   }
-  return id >= funcref && id <= exnref;
 }
 
 size_t Type::size() const { return expand().size(); }
 
 const TypeList& Type::expand() const {
-  std::lock_guard<std::mutex> lock(mutex);
-  auto it = complexLookup.find(id);
-  if (it != complexLookup.end()) {
-    auto& typeDef = it->second;
-    if (typeDef.isTuple()) {
-      return typeDef.tupleDef.tuple.types;
-    }
+  if (id <= Type::_last_basic_id) {
+    return basicTuples[id];
+  } else {
+    auto* typeDef = (TypeDef*)id;
+    assert(typeDef->isTuple() && "can only expand tuple types");
+    return typeDef->tupleDef.tuple.types;
   }
-  WASM_UNREACHABLE("invalid type");
 }
 
 bool Type::operator<(const Type& other) const {
@@ -489,18 +480,13 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       os << "exnref";
       break;
     default: {
-      assert(id > Type::_last_value_type);
-      std::lock_guard<std::mutex> lock(mutex);
-      auto it = complexLookup.find(id);
-      if (it != complexLookup.end()) {
-        auto& typeDef = it->second;
-        if (!typeDef.isTuple()) {
-          os << "ref ";
-        }
-        os << typeDef;
-      } else {
-        WASM_UNREACHABLE("invalid type kind");
+      assert(id > Type::_last_basic_id);
+      auto* typeDef = (TypeDef*)id;
+      if (!typeDef->isTuple()) {
+        os << "ref ";
       }
+      os << *typeDef;
+      break;
     }
   }
   return os;
@@ -530,12 +516,12 @@ std::ostream& operator<<(std::ostream& os, Tuple tuple) {
 
 std::ostream& operator<<(std::ostream& os, Signature sig) {
   os << "func";
-  if (sig.params.getID() != Type::ValueType::none) {
+  if (sig.params.getID() != Type::none) {
     os << " (";
     printPrefixedTypes(os, "param", sig.params);
     os << ")";
   }
-  if (sig.results.getID() != Type::ValueType::none) {
+  if (sig.results.getID() != Type::none) {
     os << " (";
     printPrefixedTypes(os, "result", sig.results);
     os << ")";
