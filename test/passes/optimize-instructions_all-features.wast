@@ -4233,6 +4233,25 @@
       )
     ))
   )
+  (func $optimize-float-mul-by-two (param $0 f64) (param $1 f32)
+    (drop (f64.mul
+      (local.get $0)
+      (f64.const 2)
+    ))
+    (drop (f32.mul
+      (local.get $1)
+      (f32.const 2)
+    ))
+
+    (drop (f64.mul
+      (call $tee-with-unreachable-value) ;; side effect
+      (f64.const 2)
+    ))
+    (drop (f64.mul
+      (f64.neg (local.get $0)) ;; complex expression
+      (f64.const 2)
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
