@@ -496,9 +496,6 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         auto& typeDef = it->second;
         if (!typeDef.isTuple()) {
           os << "ref ";
-          if (typeDef.isNullable()) {
-            os << "null ";
-          }
         }
         os << typeDef;
       } else {
@@ -577,14 +574,23 @@ std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
       break;
     }
     case TypeDef::SignatureKind: {
+      if (typeDef.signatureDef.nullable) {
+        os << "null ";
+      }
       os << typeDef.signatureDef.signature;
       break;
     }
     case TypeDef::StructKind: {
+      if (typeDef.structDef.nullable) {
+        os << "null ";
+      }
       os << typeDef.structDef.struct_;
       break;
     }
     case TypeDef::ArrayKind: {
+      if (typeDef.arrayDef.nullable) {
+        os << "null ";
+      }
       os << typeDef.arrayDef.array;
       break;
     }
