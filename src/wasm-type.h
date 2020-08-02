@@ -69,13 +69,13 @@ public:
   explicit Type(const Tuple&);
 
   // Construct from signature description
-  explicit Type(const Signature&);
+  explicit Type(const Signature&, bool nullable);
 
   // Construct from struct description
-  explicit Type(const Struct&);
+  explicit Type(const Struct&, bool nullable);
 
   // Construct from array description
-  explicit Type(const Array&);
+  explicit Type(const Array&, bool nullable);
 
   // Accessors
   size_t size() const;
@@ -210,28 +210,18 @@ typedef std::vector<Field> FieldList;
 
 struct Struct {
   FieldList fields;
-  bool nullable;
-  Struct(const Struct& other)
-    : fields(other.fields), nullable(other.nullable) {}
-  Struct(FieldList fields, bool nullable = false)
-    : fields(fields), nullable(nullable) {}
-  bool operator==(const Struct& other) const {
-    return fields == other.fields && nullable == other.nullable;
-  }
+  Struct(const Struct& other) : fields(other.fields) {}
+  Struct(FieldList fields, bool nullable = false) : fields(fields) {}
+  bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
   std::string toString() const;
 };
 
 struct Array {
   Field element;
-  bool nullable;
-  Array(const Array& other)
-    : element(other.element), nullable(other.nullable) {}
-  Array(Field element, bool nullable = false)
-    : element(element), nullable(nullable) {}
-  bool operator==(const Array& other) const {
-    return element == other.element && nullable == other.nullable;
-  }
+  Array(const Array& other) : element(other.element) {}
+  Array(Field element, bool nullable = false) : element(element) {}
+  bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   std::string toString() const;
 };
@@ -246,62 +236,83 @@ union TypeDef {
   struct SignatureDef {
     Kind kind;
     Signature signature;
+    bool nullable;
   } signatureDef;
   struct StructDef {
     Kind kind;
     Struct struct_;
+    bool nullable;
   } structDef;
   struct ArrayDef {
     Kind kind;
     Array array;
+    bool nullable;
   } arrayDef;
 
   TypeDef(Tuple tuple) : tupleDef{TupleKind, tuple} {}
-  TypeDef(Signature signature) : signatureDef{SignatureKind, signature} {}
-  TypeDef(Struct struct_) : structDef{StructKind, struct_} {}
-  TypeDef(Array array) : arrayDef{ArrayKind, array} {}
+  TypeDef(Signature signature, bool nullable)
+    : signatureDef{SignatureKind, signature, nullable} {}
+  TypeDef(Struct struct_, bool nullable)
+    : structDef{StructKind, struct_, nullable} {}
+  TypeDef(Array array, bool nullable) : arrayDef{ArrayKind, array, nullable} {}
   TypeDef(const TypeDef& other) {
     switch (other.getKind()) {
       case TupleKind:
-        ::new (&tupleDef) auto(other.tupleDef);
-        break;
+        new (&tupleDef) auto(other.tupleDef);
+        return;
       case SignatureKind:
-        ::new (&signatureDef) auto(other.signatureDef);
-        break;
+        new (&signatureDef) auto(other.signatureDef);
+        return;
       case StructKind:
-        ::new (&structDef) auto(other.structDef);
-        break;
+        new (&structDef) auto(other.structDef);
+        return;
       case ArrayKind:
-        ::new (&arrayDef) auto(other.arrayDef);
-        break;
-      default:
-        WASM_UNREACHABLE("unexpected kind");
+        new (&arrayDef) auto(other.arrayDef);
+        return;
     }
+    WASM_UNREACHABLE("unexpected kind");
   }
   ~TypeDef() {
     switch (getKind()) {
       case TupleKind: {
         tupleDef.~TupleDef();
-        break;
+        return;
       }
       case SignatureKind: {
         signatureDef.~SignatureDef();
-        break;
+        return;
       }
       case StructKind: {
         structDef.~StructDef();
-        break;
+        return;
       }
       case ArrayKind: {
         arrayDef.~ArrayDef();
-        break;
+        return;
       }
-      default:
-        WASM_UNREACHABLE("unexpected kind");
     }
+    WASM_UNREACHABLE("unexpected kind");
   }
 
   constexpr Kind getKind() const { return tupleDef.kind; }
+  constexpr bool isTuple() const { return getKind() == TupleKind; }
+  constexpr bool isSignature() const { return getKind() == SignatureKind; }
+  constexpr bool isStruct() const { return getKind() == StructKind; }
+  constexpr bool isArray() const { return getKind() == ArrayKind; }
+
+  bool isNullable() const {
+    switch (getKind()) {
+      case TupleKind:
+        return false;
+      case SignatureKind:
+        return signatureDef.nullable;
+      case StructKind:
+        return structDef.nullable;
+      case ArrayKind:
+        return arrayDef.nullable;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
 
   bool operator==(const TypeDef& other) const {
     auto kind = getKind();
@@ -312,11 +323,14 @@ union TypeDef {
       case TupleKind:
         return tupleDef.tuple == other.tupleDef.tuple;
       case SignatureKind:
-        return signatureDef.signature == other.signatureDef.signature;
+        return signatureDef.nullable == other.signatureDef.nullable &&
+               signatureDef.signature == other.signatureDef.signature;
       case StructKind:
-        return structDef.struct_ == other.structDef.struct_;
+        return structDef.nullable == other.structDef.nullable &&
+               structDef.struct_ == other.structDef.struct_;
       case ArrayKind:
-        return arrayDef.array == other.arrayDef.array;
+        return arrayDef.nullable == other.arrayDef.nullable &&
+               arrayDef.array == other.arrayDef.array;
     }
     WASM_UNREACHABLE("unexpected kind");
   }

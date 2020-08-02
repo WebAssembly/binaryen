@@ -63,24 +63,24 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
       auto& sig = typeDef.signatureDef.signature;
       wasm::hash_combine(res, sig.params.getID());
       wasm::hash_combine(res, sig.results.getID());
+      wasm::hash_combine(res, typeDef.isNullable());
       break;
     }
     case wasm::TypeDef::StructKind: {
-      auto& struct_ = typeDef.structDef.struct_;
-      auto& fields = struct_.fields;
+      auto& fields = typeDef.structDef.struct_.fields;
       wasm::hash_combine(res, fields.size());
       for (auto f : fields) {
         wasm::hash_combine(res, f.type.getID());
         wasm::hash_combine(res, f.mutable_);
       }
-      wasm::hash_combine(res, struct_.nullable);
+      wasm::hash_combine(res, typeDef.isNullable());
       break;
     }
     case wasm::TypeDef::ArrayKind: {
       auto& array = typeDef.arrayDef.array;
       wasm::hash_combine(res, array.element.type.getID());
       wasm::hash_combine(res, array.element.mutable_);
-      wasm::hash_combine(res, array.nullable);
+      wasm::hash_combine(res, typeDef.isNullable());
       break;
     }
     default:
@@ -169,24 +169,24 @@ Type::Type(const Tuple& tuple) {
   id = canonicalize(TypeDef(tuple));
 }
 
-Type::Type(const Signature& signature) {
-  id = canonicalize(TypeDef(signature));
+Type::Type(const Signature& signature, bool nullable) {
+  id = canonicalize(TypeDef(signature, nullable));
 }
 
-Type::Type(const Struct& struct_) {
+Type::Type(const Struct& struct_, bool nullable) {
 #ifndef NDEBUG
   for (Field f : struct_.fields) {
     assert(f.type.isSingle() && f.type.isConcrete());
   }
 #endif
-  id = canonicalize(TypeDef(struct_));
+  id = canonicalize(TypeDef(struct_, nullable));
 }
 
-Type::Type(const Array& array) {
+Type::Type(const Array& array, bool nullable) {
 #ifndef NDEBUG
   assert(array.element.type.isSingle() && array.element.type.isConcrete());
 #endif
-  id = canonicalize(TypeDef(array));
+  id = canonicalize(TypeDef(array, nullable));
 }
 
 bool Type::isTuple() const {
@@ -194,7 +194,7 @@ bool Type::isTuple() const {
     std::lock_guard<std::mutex> lock(mutex);
     auto it = complexLookup.find(id);
     if (it != complexLookup.end()) {
-      return it->second.getKind() == TypeDef::TupleKind;
+      return it->second.isTuple();
     }
   }
   return false;
@@ -225,7 +225,7 @@ const TypeList& Type::expand() const {
   auto it = complexLookup.find(id);
   if (it != complexLookup.end()) {
     auto& typeDef = it->second;
-    if (typeDef.getKind() == TypeDef::TupleKind) {
+    if (typeDef.isTuple()) {
       return typeDef.tupleDef.tuple.types;
     }
   }
@@ -494,11 +494,13 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       auto it = complexLookup.find(id);
       if (it != complexLookup.end()) {
         auto& typeDef = it->second;
-        if (typeDef.getKind() == TypeDef::TupleKind) {
-          os << typeDef;
-        } else {
-          os << "ref " << typeDef;
+        if (!typeDef.isTuple()) {
+          os << "ref ";
+          if (typeDef.isNullable()) {
+            os << "null ";
+          }
         }
+        os << typeDef;
       } else {
         WASM_UNREACHABLE("invalid type kind");
       }
@@ -545,9 +547,6 @@ std::ostream& operator<<(std::ostream& os, Signature sig) {
 }
 
 std::ostream& operator<<(std::ostream& os, Struct struct_) {
-  if (struct_.nullable) {
-    os << "null ";
-  }
   os << "struct";
   auto& fields = struct_.fields;
   for (auto f : fields) {
@@ -561,9 +560,6 @@ std::ostream& operator<<(std::ostream& os, Struct struct_) {
 }
 
 std::ostream& operator<<(std::ostream& os, Array array) {
-  if (array.nullable) {
-    os << "null ";
-  }
   os << "array ";
   auto& element = array.element;
   if (element.mutable_) {
