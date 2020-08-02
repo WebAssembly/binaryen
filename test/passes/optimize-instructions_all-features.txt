@@ -3730,6 +3730,7 @@
  )
  (func $optimize-float-mul-by-two (param $0 f64) (param $1 f32)
   (local $2 f64)
+  (local $3 f64)
   (drop
    (f64.add
     (local.get $0)
@@ -3752,12 +3753,12 @@
   )
   (drop
    (f64.add
-    (f64.neg
-     (local.get $0)
+    (local.tee $3
+     (f64.neg
+      (local.get $0)
+     )
     )
-    (f64.neg
-     (local.get $0)
-    )
+    (local.get $3)
    )
   )
  )
