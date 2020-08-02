@@ -1455,7 +1455,8 @@ private:
             right->value == Literal::makeFromInt32(2, type) &&
             !EffectAnalyzer(getPassOptions(), features, binary->left)
                .hasSideEffects()) {
-          binary->right = ExpressionManipulator::copy(binary->left, *getModule());
+          binary->right =
+            ExpressionManipulator::copy(binary->left, *getModule());
           binary->op = Abstract::getBinary(type, Abstract::Add);
           return binary;
         }
