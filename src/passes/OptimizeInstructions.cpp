@@ -24,6 +24,7 @@
 #include <ir/abstract.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/localize.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -1452,11 +1453,16 @@ private:
       if (type.isFloat()) {
         // x * 2.0  ==>  x + x
         if (binary->op == Abstract::getBinary(type, Abstract::Mul) &&
-            right->value == Literal::makeFromInt32(2, type) &&
-            !EffectAnalyzer(getPassOptions(), features, binary->left)
-               .hasSideEffects()) {
-          binary->right =
-            ExpressionManipulator::copy(binary->left, *getModule());
+            right->value == Literal::makeFromInt32(2, type)) {
+          if (EffectAnalyzer(getPassOptions(), features, binary->left).hasSideEffects()) {
+            Localizer localizer(binary->left, getFunction(), getModule());
+            Builder builder(*getModule());
+            binary->left = localizer.expr;
+            binary->right = builder.makeLocalGet(localizer.index, localizer.expr->type);
+          } else {
+            binary->right =
+              ExpressionManipulator::copy(binary->left, *getModule());
+          }
           binary->op = Abstract::getBinary(type, Abstract::Add);
           return binary;
         }

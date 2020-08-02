@@ -3729,6 +3729,7 @@
   )
  )
  (func $optimize-float-mul-by-two (param $0 f64) (param $1 f32)
+  (local $2 f64)
   (drop
    (f64.add
     (local.get $0)
@@ -3742,9 +3743,11 @@
    )
   )
   (drop
-   (f64.mul
-    (call $tee-with-unreachable-value)
-    (f64.const 2)
+   (f64.add
+    (local.tee $2
+     (call $tee-with-unreachable-value)
+    )
+    (local.get $2)
    )
   )
   (drop
