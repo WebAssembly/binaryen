@@ -833,12 +833,12 @@ enum ASTNodes {
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
   I32x4Sub = 0xb1,
-  I32x4DotSVecI16x8 = 0xb4,
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
   I32x4MaxS = 0xb8,
   I32x4MaxU = 0xb9,
+  I32x4DotSVecI16x8 = 0xba,
 
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
