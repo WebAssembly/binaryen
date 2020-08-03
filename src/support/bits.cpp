@@ -150,10 +150,10 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 }
 
 template<> bool IsPowerOf2Float<double>(double v) {
-  const double MIN_POT = wasm::bit_cast<double>(0x001ULL << 52); // 0x1.0p-1022
-  const double MAX_POT = wasm::bit_cast<double>(0x7FDULL << 52); // 0x1.0p+1022
-  uint64_t y = wasm::bit_cast<uint64_t>(v) & (0x7FFULL << 52);
-  double z = wasm::bit_cast<double>(y);
+  const double MIN_POT = bit_cast<double>(0x001ULL << 52); // 0x1.0p-1022
+  const double MAX_POT = bit_cast<double>(0x7FDULL << 52); // 0x1.0p+1022
+  uint64_t y = bit_cast<uint64_t>(v) & (0x7FFULL << 52);
+  double z = bit_cast<double>(y);
   if (z < MIN_POT || z > MAX_POT) {
     return false;
   }
