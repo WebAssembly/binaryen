@@ -76,10 +76,10 @@ template<typename T> bool IsPowerOf2Float(T v) {
   const double MAX_POT = 0x7FDULL << 52; // 0x1.0p+1022
   // TODO: use different implementations for 32-bit and 64-bit floats
   double x = v; // promote 32-bit floats to 64-bit floats
-  uint64_t y = reinterpret_cast<uint64_t&>(x) & (0x7FFULL << 52);
-  double z = reinterpret_cast<double&>(y);
-  if (z < reinterpret_cast<const double&>(MIN_POT) ||
-      z > reinterpret_cast<const double&>(MAX_POT)) {
+  uint64_t y = *reinterpret_cast<uint64_t*>(&x) & (0x7FFULL << 52);
+  double z = *reinterpret_cast<double*>(&y);
+  if (z < *reinterpret_cast<const double*>(&MIN_POT) ||
+      z > *reinterpret_cast<const double*>(&MAX_POT)) {
     return false;
   }
   return x == z;
