@@ -78,8 +78,9 @@ template<typename T> bool IsPowerOf2Float(T v) {
   double x = v; // promote 32-bit floats to 64-bit floats
   uint64_t y = reinterpret_cast<uint64_t&>(x) & (0x7FFULL << 52);
   double z = reinterpret_cast<double&>(y);
-  if (z < MIN_POT || z > MAX_POT)
+  if (z < MIN_POT || z > MAX_POT) {
     return false;
+  }
   return x == z;
 }
 template<typename T, typename U> inline static T RotateLeft(T val, U count) {
