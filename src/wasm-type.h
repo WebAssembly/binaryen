@@ -224,35 +224,37 @@ struct Array {
   std::string toString() const;
 };
 
-union TypeDef {
-  enum Kind { TupleKind, SignatureKind, StructKind, ArrayKind };
-
+struct TypeDef {
+  enum Kind { TupleKind, SignatureKind, StructKind, ArrayKind } kind;
   struct TupleDef {
-    Kind kind;
     Tuple tuple;
-  } tupleDef;
+  };
   struct SignatureDef {
-    Kind kind;
     Signature signature;
     bool nullable;
-  } signatureDef;
+  };
   struct StructDef {
-    Kind kind;
     Struct struct_;
     bool nullable;
-  } structDef;
+  };
   struct ArrayDef {
-    Kind kind;
     Array array;
     bool nullable;
-  } arrayDef;
+  };
+  union {
+    TupleDef tupleDef;
+    SignatureDef signatureDef;
+    StructDef structDef;
+    ArrayDef arrayDef;
+  };
 
-  TypeDef(Tuple tuple) : tupleDef{TupleKind, tuple} {}
+  TypeDef(Tuple tuple) : kind(TupleKind), tupleDef{tuple} {}
   TypeDef(Signature signature, bool nullable)
-    : signatureDef{SignatureKind, signature, nullable} {}
+    : kind(SignatureKind), signatureDef{signature, nullable} {}
   TypeDef(Struct struct_, bool nullable)
-    : structDef{StructKind, struct_, nullable} {}
-  TypeDef(Array array, bool nullable) : arrayDef{ArrayKind, array, nullable} {}
+    : kind(StructKind), structDef{struct_, nullable} {}
+  TypeDef(Array array, bool nullable)
+    : kind(ArrayKind), arrayDef{array, nullable} {}
   TypeDef(const TypeDef& other) {
     switch (other.getKind()) {
       case TupleKind:
@@ -292,7 +294,7 @@ union TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
 
-  constexpr Kind getKind() const { return tupleDef.kind; }
+  constexpr Kind getKind() const { return kind; }
   constexpr bool isTuple() const { return getKind() == TupleKind; }
   constexpr bool isSignature() const { return getKind() == SignatureKind; }
   constexpr bool isStruct() const { return getKind() == StructKind; }
