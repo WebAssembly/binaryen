@@ -40,6 +40,7 @@ template<typename T> int PopCount(T);
 template<typename T> uint32_t BitReverse(T);
 template<typename T> int CountTrailingZeroes(T);
 template<typename T> int CountLeadingZeroes(T);
+template<typename T> bool IsPowerOf2Float(T);
 
 #ifndef wasm_support_bits_definitions
 // The template specializations are provided elsewhere.
@@ -52,6 +53,8 @@ extern template int CountTrailingZeroes(uint32_t);
 extern template int CountTrailingZeroes(uint64_t);
 extern template int CountLeadingZeroes(uint32_t);
 extern template int CountLeadingZeroes(uint64_t);
+extern template bool IsPowerOf2Float(float);
+extern template bool IsPowerOf2Float(double);
 #endif
 
 // Convenience signed -> unsigned. It usually doesn't make much sense to use bit
@@ -68,21 +71,6 @@ template<typename T> int CountLeadingZeroes(T v) {
 template<typename T> bool IsPowerOf2(T v) {
   static_assert(std::is_integral<T>::value, "unexpected type");
   return v != 0 && (v & (v - 1)) == 0;
-}
-template<typename T> bool IsPowerOf2Float(T v) {
-  static_assert(std::is_floating_point<T>::value, "unexpected type");
-
-  const double MIN_POT = 0x001ULL << 52; // 0x1.0p-1022
-  const double MAX_POT = 0x7FDULL << 52; // 0x1.0p+1022
-  // TODO: use different implementations for 32-bit and 64-bit floats
-  double x = v; // promote 32-bit floats to 64-bit floats
-  uint64_t y = *reinterpret_cast<uint64_t*>(&x) & (0x7FFULL << 52);
-  double z = *reinterpret_cast<double*>(&y);
-  if (z < *reinterpret_cast<const double*>(&MIN_POT) ||
-      z > *reinterpret_cast<const double*>(&MAX_POT)) {
-    return false;
-  }
-  return x == z;
 }
 template<typename T, typename U> inline static T RotateLeft(T val, U count) {
   auto value = typename std::make_unsigned<T>::type(val);
