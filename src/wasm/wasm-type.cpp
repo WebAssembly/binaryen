@@ -164,7 +164,7 @@ Type::Type(const Tuple& tuple) {
   id = canonicalize(TypeDef(tuple));
 }
 
-Type::Type(const Signature& signature, bool nullable) {
+Type::Type(const Signature signature, bool nullable) {
   id = canonicalize(TypeDef(signature, nullable));
 }
 

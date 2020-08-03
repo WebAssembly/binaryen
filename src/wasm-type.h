@@ -69,7 +69,7 @@ public:
   explicit Type(const Tuple&);
 
   // Construct from signature description
-  explicit Type(const Signature&, bool nullable);
+  explicit Type(const Signature, bool nullable);
 
   // Construct from struct description
   explicit Type(const Struct&, bool nullable);
