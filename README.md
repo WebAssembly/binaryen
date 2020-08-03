@@ -32,7 +32,7 @@ Compilers using Binaryen include:
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a subset of TypeScript to WebAssembly
  * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
- * ['Grain'](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
+ * [`Grain`](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
