@@ -2,8 +2,8 @@
  (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
  (type $v128_=>_v128 (func (param v128) (result v128)))
  (type $v128_=>_i32 (func (param v128) (result i32)))
- (type $v128_i32_=>_v128 (func (param v128 i32) (result v128)))
  (type $i32_=>_v128 (func (param i32) (result v128)))
+ (type $v128_i32_=>_v128 (func (param v128 i32) (result v128)))
  (type $none_=>_v128 (func (result v128)))
  (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
  (type $i32_v128_=>_none (func (param i32 v128)))
@@ -1157,6 +1157,16 @@
  )
  (func $i64x2.load32x2_u (param $0 i32) (result v128)
   (i64x2.load32x2_u
+   (local.get $0)
+  )
+ )
+ (func $v128.load32_zero (param $0 i32) (result v128)
+  (v128.load32_zero
+   (local.get $0)
+  )
+ )
+ (func $v128.load64_zero (param $0 i32) (result v128)
+  (v128.load64_zero
    (local.get $0)
   )
  )
