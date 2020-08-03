@@ -49,7 +49,7 @@ size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
 }
 
 size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
-  auto kind = typeDef.getKind();
+  auto kind = typeDef.kind;
   auto res = hash<uint32_t>{}(uint32_t(kind));
   switch (kind) {
     case wasm::TypeDef::TupleKind: {
@@ -198,7 +198,7 @@ bool Type::isRef() const {
     return id >= funcref && id <= exnref;
   } else {
     auto* typeDef = (TypeDef*)id;
-    switch (typeDef->getKind()) {
+    switch (typeDef->kind) {
       case TypeDef::TupleKind:
         return false;
       case TypeDef::SignatureKind:
@@ -469,7 +469,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       return os << "exnref";
   }
   auto* typeDef = (TypeDef*)id;
-  switch (typeDef->getKind()) {
+  switch (typeDef->kind) {
     case TypeDef::TupleKind:
       break;
     case TypeDef::SignatureKind:
@@ -543,7 +543,7 @@ std::ostream& operator<<(std::ostream& os, Array array) {
 }
 
 std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
-  switch (typeDef.getKind()) {
+  switch (typeDef.kind) {
     case TypeDef::TupleKind: {
       return os << typeDef.tupleDef.tuple;
     }

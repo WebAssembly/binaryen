@@ -256,7 +256,8 @@ struct TypeDef {
   TypeDef(Array array, bool nullable)
     : kind(ArrayKind), arrayDef{array, nullable} {}
   TypeDef(const TypeDef& other) {
-    switch (other.getKind()) {
+    kind = other.kind;
+    switch (kind) {
       case TupleKind:
         new (&tupleDef) auto(other.tupleDef);
         return;
@@ -273,7 +274,7 @@ struct TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
   ~TypeDef() {
-    switch (getKind()) {
+    switch (kind) {
       case TupleKind: {
         tupleDef.~TupleDef();
         return;
@@ -294,14 +295,13 @@ struct TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
 
-  constexpr Kind getKind() const { return kind; }
-  constexpr bool isTuple() const { return getKind() == TupleKind; }
-  constexpr bool isSignature() const { return getKind() == SignatureKind; }
-  constexpr bool isStruct() const { return getKind() == StructKind; }
-  constexpr bool isArray() const { return getKind() == ArrayKind; }
+  constexpr bool isTuple() const { return kind == TupleKind; }
+  constexpr bool isSignature() const { return kind == SignatureKind; }
+  constexpr bool isStruct() const { return kind == StructKind; }
+  constexpr bool isArray() const { return kind == ArrayKind; }
 
   bool isNullable() const {
-    switch (getKind()) {
+    switch (kind) {
       case TupleKind:
         return false;
       case SignatureKind:
@@ -315,8 +315,7 @@ struct TypeDef {
   }
 
   bool operator==(const TypeDef& other) const {
-    auto kind = getKind();
-    if (kind != other.getKind()) {
+    if (kind != other.kind) {
       return false;
     }
     switch (kind) {
