@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include <wasm.h>
 #include <ir/bits.h>
 #include <ir/cost.h>
+#include <wasm.h>
 
 using namespace wasm;
 
@@ -32,8 +32,7 @@ void test_cost() {
   compare(CostAnalyzer(&get).cost, 0);
 }
 
-int main() 
-{
+int main() {
   test_bits();
 
   test_cost();

@@ -18,9 +18,9 @@
 #define wasm_ir_bits_h
 
 #include "ir/literal-utils.h"
-#include <ir/load-utils.h>
 #include "support/bits.h"
 #include "wasm-builder.h"
+#include <ir/load-utils.h>
 
 namespace wasm {
 
@@ -125,8 +125,9 @@ struct DummyLocalInfoProvider {
 // not extremely precise (doesn't look into add operands, etc.)
 // LocalInfoProvider is an optional class that can provide answers about
 // local.get.
-template<typename LocalInfoProvider=DummyLocalInfoProvider>
-Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider=nullptr) {
+template<typename LocalInfoProvider = DummyLocalInfoProvider>
+Index getMaxBits(Expression* curr,
+                 LocalInfoProvider* localInfoProvider = nullptr) {
   if (auto* const_ = curr->dynCast<Const>()) {
     switch (curr->type.getSingle()) {
       case Type::i32:
@@ -222,7 +223,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider=nullptr)
       case GtFloat64:
       case GeFloat64:
         return 1;
-      default: {}
+      default: {
+      }
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
@@ -239,7 +241,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider=nullptr)
         return 1;
       case WrapInt64:
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
-      default: {}
+      default: {
+      }
     }
   } else if (auto* set = curr->dynCast<LocalSet>()) {
     // a tee passes through the value
