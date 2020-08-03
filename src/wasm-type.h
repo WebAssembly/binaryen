@@ -56,7 +56,7 @@ public:
 
   Type() = default;
 
-  // ID can be implicitly upgraded to Type
+  // BasicID can be implicitly upgraded to Type
   constexpr Type(BasicID id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
@@ -111,7 +111,7 @@ public:
     return static_cast<BasicID>(id);
   }
 
-  // (In)equality must be defined for both Type and ID because it is
+  // (In)equality must be defined for both Type and BasicID because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
