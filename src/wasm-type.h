@@ -33,13 +33,13 @@ typedef std::vector<Type> TypeList;
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `ID`
+  // comparison of the ids. For basic types the `id` is just the `BasicID`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
 
 public:
-  enum ID : uint32_t {
+  enum BasicID : uint32_t {
     none,
     unreachable,
     i32,
@@ -57,7 +57,7 @@ public:
   Type() = default;
 
   // ID can be implicitly upgraded to Type
-  constexpr Type(ID id) : id(id){};
+  constexpr Type(BasicID id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
@@ -106,18 +106,18 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  ID getSingle() const {
+  BasicID getSingle() const {
     assert(!isTuple() && "Unexpected tuple type");
-    return static_cast<ID>(id);
+    return static_cast<BasicID>(id);
   }
 
   // (In)equality must be defined for both Type and ID because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const ID& other) const { return id == other; }
+  bool operator==(const BasicID& other) const { return id == other; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const ID& other) const { return id != other; }
+  bool operator!=(const BasicID& other) const { return id != other; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
