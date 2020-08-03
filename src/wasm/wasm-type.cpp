@@ -57,14 +57,14 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
       for (auto t : types) {
         wasm::hash_combine(res, t.getID());
       }
-      break;
+      return res;
     }
     case wasm::TypeDef::SignatureKind: {
       auto& sig = typeDef.signatureDef.signature;
       wasm::hash_combine(res, sig.params.getID());
       wasm::hash_combine(res, sig.results.getID());
       wasm::hash_combine(res, typeDef.isNullable());
-      break;
+      return res;
     }
     case wasm::TypeDef::StructKind: {
       auto& fields = typeDef.structDef.struct_.fields;
@@ -74,19 +74,17 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
         wasm::hash_combine(res, f.mutable_);
       }
       wasm::hash_combine(res, typeDef.isNullable());
-      break;
+      return res;
     }
     case wasm::TypeDef::ArrayKind: {
       auto& array = typeDef.arrayDef.array;
       wasm::hash_combine(res, array.element.type.getID());
       wasm::hash_combine(res, array.element.mutable_);
       wasm::hash_combine(res, typeDef.isNullable());
-      break;
+      return res;
     }
-    default:
-      WASM_UNREACHABLE("unexpected type");
   }
-  return res;
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 } // namespace std
@@ -201,13 +199,14 @@ bool Type::isRef() const {
   } else {
     auto* typeDef = (TypeDef*)id;
     switch (typeDef->getKind()) {
+      case TypeDef::TupleKind:
+        return false;
       case TypeDef::SignatureKind:
       case TypeDef::StructKind:
       case TypeDef::ArrayKind:
         return true;
-      default:
-        return false;
     }
+    WASM_UNREACHABLE("unexpected kind");
   }
 }
 
@@ -447,49 +446,39 @@ std::ostream& operator<<(std::ostream& os, Type type) {
   auto id = type.getID();
   switch (id) {
     case Type::none:
-      os << "none";
-      break;
+      return os << "none";
     case Type::unreachable:
-      os << "unreachable";
-      break;
+      return os << "unreachable";
     case Type::i32:
-      os << "i32";
-      break;
+      return os << "i32";
     case Type::i64:
-      os << "i64";
-      break;
+      return os << "i64";
     case Type::f32:
-      os << "f32";
-      break;
+      return os << "f32";
     case Type::f64:
-      os << "f64";
-      break;
+      return os << "f64";
     case Type::v128:
-      os << "v128";
-      break;
+      return os << "v128";
     case Type::funcref:
-      os << "funcref";
-      break;
+      return os << "funcref";
     case Type::externref:
-      os << "externref";
-      break;
+      return os << "externref";
     case Type::nullref:
-      os << "nullref";
-      break;
+      return os << "nullref";
     case Type::exnref:
-      os << "exnref";
-      break;
-    default: {
-      assert(id > Type::_last_basic_id);
-      auto* typeDef = (TypeDef*)id;
-      if (!typeDef->isTuple()) {
-        os << "ref ";
-      }
-      os << *typeDef;
-      break;
-    }
+      return os << "exnref";
   }
-  return os;
+  auto* typeDef = (TypeDef*)id;
+  switch (typeDef->getKind()) {
+    case TypeDef::TupleKind:
+      break;
+    case TypeDef::SignatureKind:
+    case TypeDef::StructKind:
+    case TypeDef::ArrayKind:
+      os << "ref ";
+      break;
+  }
+  return os << *typeDef;
 }
 
 std::ostream& operator<<(std::ostream& os, ParamType param) {
@@ -556,34 +545,28 @@ std::ostream& operator<<(std::ostream& os, Array array) {
 std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
   switch (typeDef.getKind()) {
     case TypeDef::TupleKind: {
-      os << typeDef.tupleDef.tuple;
-      break;
+      return os << typeDef.tupleDef.tuple;
     }
     case TypeDef::SignatureKind: {
       if (typeDef.signatureDef.nullable) {
         os << "null ";
       }
-      os << typeDef.signatureDef.signature;
-      break;
+      return os << typeDef.signatureDef.signature;
     }
     case TypeDef::StructKind: {
       if (typeDef.structDef.nullable) {
         os << "null ";
       }
-      os << typeDef.structDef.struct_;
-      break;
+      return os << typeDef.structDef.struct_;
     }
     case TypeDef::ArrayKind: {
       if (typeDef.arrayDef.nullable) {
         os << "null ";
       }
-      os << typeDef.arrayDef.array;
-      break;
+      return os << typeDef.arrayDef.array;
     }
-    default:
-      WASM_UNREACHABLE("invalid type kind");
   }
-  return os;
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 } // namespace wasm
