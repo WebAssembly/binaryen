@@ -1322,7 +1322,7 @@ private:
     static_assert(std::is_same<T, float>::value ||
                     std::is_same<T, double>::value,
                   "type mismatch");
-    auto invDivisor = 1.0 / c;
+    double invDivisor = 1.0 / (double)c;
     binary->op = std::is_same<T, float>::value ? MulFloat32 : MulFloat64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(invDivisor));
     return binary;
