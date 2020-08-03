@@ -75,13 +75,13 @@ function asmFunc(global, env, buffer) {
  
  function $7($0) {
   $0 = Math_fround($0);
-  i64toi32_i32$HIGH_BITS = Math_fround(Math_abs($0)) >= Math_fround(1.0) ? ($0 > Math_fround(0.0) ? ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 / Math_fround(4294967296.0)))), Math_fround(4294967296.0))) >>> 0 : ~~Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0) : 0;
+  i64toi32_i32$HIGH_BITS = Math_fround(Math_abs($0)) >= Math_fround(1.0) ? ($0 > Math_fround(0.0) ? ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) >>> 0 : ~~Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10)))) >>> 0) : 0;
   return ~~$0 >>> 0 | 0;
  }
  
  function $9($0) {
   $0 = +$0;
-  i64toi32_i32$HIGH_BITS = Math_abs($0) >= 1.0 ? ($0 > 0.0 ? ~~Math_min(Math_floor($0 / 4294967296.0), 4294967295.0) >>> 0 : ~~Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0) : 0;
+  i64toi32_i32$HIGH_BITS = Math_abs($0) >= 1.0 ? ($0 > 0.0 ? ~~Math_min(Math_floor($0 * 2.3283064365386963e-10), 4294967295.0) >>> 0 : ~~Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) * 2.3283064365386963e-10) >>> 0) : 0;
   return ~~$0 >>> 0 | 0;
  }
  

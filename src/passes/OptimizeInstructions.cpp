@@ -606,6 +606,28 @@ struct OptimizeInstructions
             }
           }
         }
+        if (right->type == Type::f32) {
+          float c = right->value.getf32();
+          if (IsPowerOf2Float(c)) {
+            switch (binary->op) {
+              case DivFloat32:
+                return optimizePowerOf2FloatDiv(binary, c);
+              default:
+                break;
+            }
+          }
+        }
+        if (right->type == Type::f64) {
+          double c = right->value.getf64();
+          if (IsPowerOf2Float(c)) {
+            switch (binary->op) {
+              case DivFloat64:
+                return optimizePowerOf2FloatDiv(binary, c);
+              default:
+                break;
+            }
+          }
+        }
       }
       // a bunch of operations on a constant left side can be simplified
       if (binary->left->is<Const>()) {
@@ -1265,6 +1287,7 @@ private:
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
                   "type mismatch");
+
     auto shifts = CountTrailingZeroes<T>(c);
     binary->op = std::is_same<T, uint32_t>::value ? ShlInt32 : ShlInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
@@ -1292,6 +1315,18 @@ private:
                   "type mismatch");
     binary->op = std::is_same<T, uint32_t>::value ? AndInt32 : AndInt64;
     binary->right->cast<Const>()->value = Literal(c - 1);
+    return binary;
+  }
+
+  template<typename T>
+  Expression* optimizePowerOf2FloatDiv(Binary* binary, T c) {
+    static_assert(std::is_same<T, float>::value ||
+                    std::is_same<T, double>::value,
+                  "type mismatch");
+
+    auto invDivisor = 1.0 / c;
+    binary->op = std::is_same<T, float>::value ? MulFloat32 : MulFloat64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(invDivisor));
     return binary;
   }
 

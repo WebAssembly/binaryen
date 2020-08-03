@@ -66,9 +66,22 @@ template<typename T> int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
 }
 template<typename T> bool IsPowerOf2(T v) {
+  static_assert(std::is_integral<T>::value, "unexpected type");
   return v != 0 && (v & (v - 1)) == 0;
 }
+template<typename T> bool IsPowerOf2Float(T v) {
+  static_assert(std::is_floating_point<T>::value, "unexpected type");
 
+  const double MIN_POT = 0x1p-1022; // 0x001 << 52
+  const double MAX_POT = 0x1p+1022; // 0x7FD << 52
+  // TODO: use different implementations for 32-bit and 64-bit floats
+  double x = v; // promote 32-bit floats to 64-bit floats
+  uint64_t y = reinterpret_cast<uint64_t&>(x) & (0x7FFULL << 52);
+  double z = reinterpret_cast<double&>(y);
+  if (z < MIN_POT || z > MAX_POT)
+    return false;
+  return x == z;
+}
 template<typename T, typename U> inline static T RotateLeft(T val, U count) {
   auto value = typename std::make_unsigned<T>::type(val);
   U mask = sizeof(T) * CHAR_BIT - 1;
