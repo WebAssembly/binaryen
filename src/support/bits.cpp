@@ -150,8 +150,8 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 }
 
 template<> bool IsPowerOf2Float<double>(double v) {
-  const double MIN_POT = bit_cast<double>(0x001ULL << 52); // 0x1.0p-1022
-  const double MAX_POT = bit_cast<double>(0x7FDULL << 52); // 0x1.0p+1022
+  const double MIN_POT = bit_cast<double>(0x001ULL << 52); // 0x1p-1022
+  const double MAX_POT = bit_cast<double>(0x7FDULL << 52); // 0x1p+1022
   uint64_t y = bit_cast<uint64_t>(v) & (0x7FFULL << 52);
   double z = bit_cast<double>(y);
   if (z < MIN_POT || z > MAX_POT) {
@@ -161,8 +161,14 @@ template<> bool IsPowerOf2Float<double>(double v) {
 }
 
 template<> bool IsPowerOf2Float<float>(float v) {
-  // TODO: use different implementations for 32-bit and 64-bit floats
-  return IsPowerOf2Float((double)v);
+  const float MIN_POT = bit_cast<float>(0x01U << 23); // 0x1p-126
+  const float MAX_POT = bit_cast<float>(0xFDU << 23); // 0x1p+126
+  uint32_t y = bit_cast<uint32_t>(v) & (0xFFU << 23);
+  float z = bit_cast<float>(y);
+  if (z < MIN_POT || z > MAX_POT) {
+    return false;
+  }
+  return v == z;
 }
 
 uint32_t Log2(uint32_t v) {
