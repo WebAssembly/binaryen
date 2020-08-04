@@ -9,7 +9,7 @@
   // BinaryenTypeExternref: 8
   // BinaryenTypeNullref: 9
   // BinaryenTypeExnref: 10
-  // BinaryenTypeAuto: -1
+  // BinaryenTypeAuto: 18446744073709551615
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16

@@ -306,7 +306,7 @@ def run_gcc_tests():
             # build the C file separately
             libpath = os.path.join(os.path.dirname(shared.options.binaryen_bin),  'lib')
             extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
-                     '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
+                     '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-pthread']
             if src.endswith('.cpp'):
                 extra += ['-std=c++14']
             if os.environ.get('COMPILER_FLAGS'):

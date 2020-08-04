@@ -152,72 +152,72 @@ void test_types() {
   BinaryenType valueType = 0xdeadbeef;
 
   BinaryenType none = BinaryenTypeNone();
-  printf("  // BinaryenTypeNone: %d\n", none);
+  printf("  // BinaryenTypeNone: %lu\n", none);
   assert(BinaryenTypeArity(none) == 0);
   BinaryenTypeExpand(none, &valueType);
   assert(valueType == 0xdeadbeef);
 
   BinaryenType unreachable = BinaryenTypeUnreachable();
-  printf("  // BinaryenTypeUnreachable: %d\n", unreachable);
+  printf("  // BinaryenTypeUnreachable: %lu\n", unreachable);
   assert(BinaryenTypeArity(unreachable) == 1);
   BinaryenTypeExpand(unreachable, &valueType);
   assert(valueType == unreachable);
 
   BinaryenType i32 = BinaryenTypeInt32();
-  printf("  // BinaryenTypeInt32: %d\n", i32);
+  printf("  // BinaryenTypeInt32: %lu\n", i32);
   assert(BinaryenTypeArity(i32) == 1);
   BinaryenTypeExpand(i32, &valueType);
   assert(valueType == i32);
 
   BinaryenType i64 = BinaryenTypeInt64();
-  printf("  // BinaryenTypeInt64: %d\n", i64);
+  printf("  // BinaryenTypeInt64: %lu\n", i64);
   assert(BinaryenTypeArity(i64) == 1);
   BinaryenTypeExpand(i64, &valueType);
   assert(valueType == i64);
 
   BinaryenType f32 = BinaryenTypeFloat32();
-  printf("  // BinaryenTypeFloat32: %d\n", f32);
+  printf("  // BinaryenTypeFloat32: %lu\n", f32);
   assert(BinaryenTypeArity(f32) == 1);
   BinaryenTypeExpand(f32, &valueType);
   assert(valueType == f32);
 
   BinaryenType f64 = BinaryenTypeFloat64();
-  printf("  // BinaryenTypeFloat64: %d\n", f64);
+  printf("  // BinaryenTypeFloat64: %lu\n", f64);
   assert(BinaryenTypeArity(f64) == 1);
   BinaryenTypeExpand(f64, &valueType);
   assert(valueType == f64);
 
   BinaryenType v128 = BinaryenTypeVec128();
-  printf("  // BinaryenTypeVec128: %d\n", v128);
+  printf("  // BinaryenTypeVec128: %lu\n", v128);
   assert(BinaryenTypeArity(v128) == 1);
   BinaryenTypeExpand(v128, &valueType);
   assert(valueType == v128);
 
   BinaryenType funcref = BinaryenTypeFuncref();
-  printf("  // BinaryenTypeFuncref: %d\n", funcref);
+  printf("  // BinaryenTypeFuncref: %lu\n", funcref);
   assert(BinaryenTypeArity(funcref) == 1);
   BinaryenTypeExpand(funcref, &valueType);
   assert(valueType == funcref);
 
   BinaryenType externref = BinaryenTypeExternref();
-  printf("  // BinaryenTypeExternref: %d\n", externref);
+  printf("  // BinaryenTypeExternref: %lu\n", externref);
   assert(BinaryenTypeArity(externref) == 1);
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
   BinaryenType nullref = BinaryenTypeNullref();
-  printf("  // BinaryenTypeNullref: %d\n", nullref);
+  printf("  // BinaryenTypeNullref: %lu\n", nullref);
   assert(BinaryenTypeArity(nullref) == 1);
   BinaryenTypeExpand(nullref, &valueType);
   assert(valueType == nullref);
 
   BinaryenType exnref = BinaryenTypeExnref();
-  printf("  // BinaryenTypeExnref: %d\n", exnref);
+  printf("  // BinaryenTypeExnref: %lu\n", exnref);
   assert(BinaryenTypeArity(exnref) == 1);
   BinaryenTypeExpand(exnref, &valueType);
   assert(valueType == exnref);
 
-  printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
+  printf("  // BinaryenTypeAuto: %lu\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
 

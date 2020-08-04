@@ -95,7 +95,7 @@ int main() {
     char buffer[1024];
     BinaryenSetDebugInfo(1);
     size_t size = BinaryenModuleWrite(the_module, buffer, 1024);
-    printf("%d\n", size);
+    printf("%zu\n", size);
     BinaryenModuleRef copy = BinaryenModuleRead(buffer, size);
     BinaryenModulePrint(copy);
     BinaryenModuleDispose(copy);
