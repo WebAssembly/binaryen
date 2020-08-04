@@ -241,18 +241,6 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
-  if (checkStackOverflow && !sideModule) {
-    PassOptions options;
-    if (!standaloneWasm) {
-      // In standalone mode we don't set a handler at all.. which means
-      // just trap on overflow.
-      options.arguments["stack-check-handler"] = "__handle_stack_overflow";
-    }
-    PassRunner passRunner(&wasm, options);
-    passRunner.add("stack-check");
-    passRunner.run();
-  }
-
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
     // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
@@ -262,6 +250,16 @@ int main(int argc, const char* argv[]) {
   PassRunner passRunner(&wasm, options.passOptions);
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
+
+  if (checkStackOverflow && !sideModule) {
+    if (!standaloneWasm) {
+      // In standalone mode we don't set a handler at all.. which means
+      // just trap on overflow.
+      passRunner.options.arguments["stack-check-handler"] = "__handle_stack_overflow";
+    }
+    passRunner.add("stack-check");
+  }
+
 
   if (sideModule) {
     passRunner.add("replace-stack-pointer");
