@@ -242,19 +242,33 @@ int main(int argc, const char* argv[]) {
   wasm.updateMaps();
 
   if (checkStackOverflow && !sideModule) {
-    generator.enforceStackLimit();
+    PassOptions options;
+    if (!standaloneWasm) {
+      // In standalone mode we don't set a handler at all.. which means
+      // just trap on overflow.
+      options.arguments["stack-check-handler"] = "__handle_stack_overflow";
+    }
+    PassRunner passRunner(&wasm, options);
+    passRunner.add("stack-check");
+    passRunner.run();
   }
 
   if (sideModule) {
     BYN_TRACE("finalizing as side module\n");
-    generator.replaceStackPointerGlobal();
+    PassRunner passRunner(&wasm);
+    passRunner.add("replace-stack-pointer");
+    passRunner.add("emscripten-pic");
+    passRunner.run();
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
+    PassRunner passRunner(&wasm);
+    passRunner.add("emscripten-pic-main-module");
+    passRunner.run();
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
-    if (Function* F = generator.generateAssignGOTEntriesFunction()) {
+    if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
       auto* ex = new Export();
       ex->value = F->name;
       ex->name = F->name;
@@ -271,10 +285,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (standaloneWasm) {
-    // Export a standard wasi "_start" method.
-    generator.exportWasiStart();
-  } else {
+  if (!standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
     generator.generateDynCallThunks();
     // This is also not needed in standalone mode since standalone mode uses
@@ -285,8 +296,7 @@ int main(int argc, const char* argv[]) {
   // Legalize the wasm, if BigInts don't make that moot.
   if (!bigInt) {
     BYN_TRACE("legalizing types\n");
-    PassRunner passRunner(&wasm);
-    passRunner.setOptions(options.passOptions);
+    PassRunner passRunner(&wasm, options.passOptions);
     passRunner.setDebug(options.debug);
     passRunner.setDebugInfo(debugInfo);
     passRunner.add(ABI::getLegalizationPass(

@@ -91,6 +91,7 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
+Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
 
@@ -628,6 +629,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadSplatVec16x8:
       return 2;
     case LoadSplatVec32x4:
+    case Load32Zero:
       return 4;
     case LoadSplatVec64x2:
     case LoadExtSVec8x8ToVecI16x8:
@@ -636,6 +638,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");

@@ -476,6 +476,8 @@ instructions = [
     ("i32x4.load16x4_u",         "makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec16x4ToVecI32x4)"),
     ("i64x2.load32x2_s",         "makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec32x2ToVecI64x2)"),
     ("i64x2.load32x2_u",         "makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec32x2ToVecI64x2)"),
+    ("v128.load32_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load32Zero)"),
+    ("v128.load64_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load64Zero)"),
     ("i8x16.narrow_i16x8_s",     "makeBinary(s, BinaryOp::NarrowSVecI16x8ToVecI8x16)"),
     ("i8x16.narrow_i16x8_u",     "makeBinary(s, BinaryOp::NarrowUVecI16x8ToVecI8x16)"),
     ("i16x8.narrow_i32x4_s",     "makeBinary(s, BinaryOp::NarrowSVecI32x4ToVecI16x8)"),

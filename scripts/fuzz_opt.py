@@ -161,6 +161,12 @@ def randomize_fuzz_settings():
 # Test outputs we want to ignore are marked this way.
 IGNORE = '[binaryen-fuzzer-ignore]'
 
+# Traps are reported as [trap REASON]
+TRAP_PREFIX = '[trap '
+
+# --fuzz-exec reports calls as [fuzz-exec] calling foo
+FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
+
 
 # compare two strings, strictly
 def compare(x, y, context):
@@ -239,7 +245,7 @@ def fix_output(out):
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace('[trap ', 'exception: [trap ')
+    out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -509,13 +515,29 @@ class Wasm2JS(TestCaseHandler):
     frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # always check for compiler crashes. without NaNs we can also compare
-        # before and after (with NaNs, a reinterpret through memory might end up
-        # different in JS than wasm)
+        # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
-        if not NANS:
-            compare(before, after, 'Wasm2JS')
+        if NANS:
+            # with NaNs we can't compare the output, as a reinterpret through
+            # memory might end up different in JS than wasm
+            return
+        # we also cannot compare if the wasm hits a trap, as wasm2js does not
+        # trap on many things wasm would, and in those cases it can do weird
+        # undefined things. in such a case, at least compare up until before
+        # the trap, which lets us compare at least some results in some cases.
+        interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter_output:
+            trap_index = interpreter_output.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of.
+            # erase everything from this function's output and onward, so we
+            # only compare the previous trap-free code
+            call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter_output.index('\n', call_start)
+            call_line = interpreter_output[call_start:call_end]
+            before = before[:before.index(call_line)]
+            after = after[:after.index(call_line)]
+        compare(before, after, 'Wasm2JS')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -535,15 +557,12 @@ class Wasm2JS(TestCaseHandler):
         main = run(cmd + FEATURE_OPTS)
         with open(os.path.join(shared.options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
             glue = f.read()
-        with open('js.js', 'w') as f:
+        js_file = wasm + '.js'
+        with open(js_file, 'w') as f:
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        out = fix_output(run_vm([shared.NODEJS, 'js.js', 'a.wasm']))
-        if 'exception' in out:
-            # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
-            out = IGNORE
-        return out
+        return fix_output(run_vm([shared.NODEJS, js_file, 'a.wasm']))
 
     def can_run_on_feature_opts(self, feature_opts):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])

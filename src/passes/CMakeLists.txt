@@ -18,11 +18,13 @@ set(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  DeAlign.cpp
   DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  EmscriptenPIC.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -61,6 +63,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
+  ReplaceStackPointer.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
@@ -73,6 +76,7 @@ set(passes_SOURCES
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp
+  StackCheck.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp

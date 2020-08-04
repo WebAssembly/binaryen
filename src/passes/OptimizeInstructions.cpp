@@ -22,6 +22,7 @@
 #include <type_traits>
 
 #include <ir/abstract.h>
+#include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
@@ -455,7 +456,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto* value = Properties::getFallthrough(
       curr->value, passOptions, getModule()->features);
     auto& info = localInfo[curr->index];
-    info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
+    info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
     if (Properties::getSignExtValue(value)) {
       signExtBits = Properties::getSignExtBits(value);
@@ -585,7 +586,7 @@ struct OptimizeInstructions
         // if the sign-extend input cannot have a sign bit, we don't need it
         // we also don't need it if it already has an identical-sized sign
         // extend
-        if (getMaxBits(ext, this) + extraShifts < bits ||
+        if (Bits::getMaxBits(ext, this) + extraShifts < bits ||
             isSignExted(ext, bits)) {
           return removeAlmostSignExt(binary);
         }
@@ -750,7 +751,7 @@ struct OptimizeInstructions
               return binary->left;
             }
           } else if (auto maskedBits = Bits::getMaskedBits(mask)) {
-            if (getMaxBits(binary->left, this) <= maskedBits) {
+            if (Bits::getMaxBits(binary->left, this) <= maskedBits) {
               // a mask of lower bits is not needed if we are already smaller
               return binary->left;
             }

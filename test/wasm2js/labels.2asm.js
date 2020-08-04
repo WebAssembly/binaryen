@@ -123,7 +123,7 @@ function asmFunc(global, env, buffer) {
  function $7() {
   var i = 0;
   i = 0;
-  block_1 : {
+  block : {
    l : {
     break l;
    }
@@ -151,9 +151,9 @@ function asmFunc(global, env, buffer) {
  function $8() {
   var i = 0;
   i = 0;
-  block_1 : {
-   if_1 : {
-    break if_1;
+  block : {
+   if_ : {
+    break if_;
    }
    i = i + 1 | 0;
    if5 : {
@@ -181,7 +181,7 @@ function asmFunc(global, env, buffer) {
   var $2_1 = 0, $3_1 = 0;
   ret : {
    exit : {
-    $0_2 : {
+    $0 : {
      switch ($0_1 | 0) {
      case 1:
      case 2:
@@ -192,7 +192,7 @@ function asmFunc(global, env, buffer) {
       break ret;
      default:
      case 0:
-      break $0_2;
+      break $0;
      };
     }
     $2_1 = 5;
@@ -204,12 +204,12 @@ function asmFunc(global, env, buffer) {
  
  function $10($0_1) {
   $0_1 = $0_1 | 0;
-  $1_1 : {
+  $1 : {
    switch ($0_1 | 0) {
    case 0:
     return 0 | 0;
    default:
-    break $1_1;
+    break $1;
    };
   }
   return 2 | 0;
@@ -316,15 +316,15 @@ function asmFunc(global, env, buffer) {
  }
  
  function $17() {
-  var $1_2 = 0, $2_1 = 0;
+  var $1_1 = 0, $2_1 = 0;
   l1 : {
-   $1_2 = 2;
+   $1_1 = 2;
    l113 : {
     $2_1 = 3;
     break l113;
    }
   }
-  return $1_2 + $2_1 | 0 | 0;
+  return $1_1 + $2_1 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
