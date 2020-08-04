@@ -215,6 +215,15 @@ bool Type::isRef() const {
   }
 }
 
+bool Type::isNullable() const {
+  if (id <= _last_basic_id) {
+    return id >= funcref && id <= exnref;
+  } else {
+    auto* typeDef = (TypeDef*)id;
+    return typeDef->isNullable();
+  }
+}
+
 size_t Type::size() const { return expand().size(); }
 
 const TypeList& Type::expand() const {

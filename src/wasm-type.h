@@ -90,6 +90,7 @@ public:
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   bool isTuple() const;
   bool isRef() const;
+  bool isNullable() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
