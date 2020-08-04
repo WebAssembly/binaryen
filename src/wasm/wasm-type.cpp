@@ -48,6 +48,13 @@ size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
   return res;
 }
 
+size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
+  auto res = hash<uint64_t>{}(field.type.getID());
+  wasm::hash_combine(res, uint32_t(field.packedType));
+  wasm::hash_combine(res, field.mutable_);
+  return res;
+}
+
 size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
   auto kind = typeDef.kind;
   auto res = hash<uint32_t>{}(uint32_t(kind));
@@ -70,16 +77,14 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
       auto& fields = typeDef.structDef.struct_.fields;
       wasm::hash_combine(res, fields.size());
       for (auto f : fields) {
-        wasm::hash_combine(res, f.type.getID());
-        wasm::hash_combine(res, f.mutable_);
+        wasm::hash_combine(res, f);
       }
       wasm::hash_combine(res, typeDef.isNullable());
       return res;
     }
     case wasm::TypeDef::ArrayKind: {
       auto& array = typeDef.arrayDef.array;
-      wasm::hash_combine(res, array.element.type.getID());
-      wasm::hash_combine(res, array.element.mutable_);
+      wasm::hash_combine(res, array.element);
       wasm::hash_combine(res, typeDef.isNullable());
       return res;
     }
@@ -518,28 +523,43 @@ std::ostream& operator<<(std::ostream& os, Signature sig) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, Field::PackedType packedType) {
+  switch (packedType) {
+    case Field::PackedType::not_packed:
+      return os << "not_packed";
+    case Field::PackedType::i8:
+      return os << "i8";
+    case Field::PackedType::i16:
+      return os << "i16";
+  }
+  WASM_UNREACHABLE("unexpected type");
+}
+
+std::ostream& operator<<(std::ostream& os, Field field) {
+  if (field.mutable_) {
+    os << "(mut ";
+  }
+  if (field.isPacked()) {
+    os << field.packedType;
+  } else {
+    os << field.type;
+  }
+  if (field.mutable_) {
+    os << ")";
+  }
+  return os;
+};
+
 std::ostream& operator<<(std::ostream& os, Struct struct_) {
   os << "struct";
-  auto& fields = struct_.fields;
-  for (auto f : fields) {
-    if (f.mutable_) {
-      os << " (mut " << f.type << ")";
-    } else {
-      os << " " << f.type;
-    }
+  for (auto f : struct_.fields) {
+    os << " " << f;
   }
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, Array array) {
-  os << "array ";
-  auto& element = array.element;
-  if (element.mutable_) {
-    os << "(mut " << element.type << ")";
-  } else {
-    os << element.type;
-  }
-  return os;
+  return os << "array " << array.element;
 }
 
 std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {

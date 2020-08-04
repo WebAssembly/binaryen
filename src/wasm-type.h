@@ -195,10 +195,31 @@ struct Signature {
 
 struct Field {
   Type type;
+  enum PackedType : uint32_t {
+    not_packed,
+    i8,
+    i16,
+  } packedType; // applicable iff type=i32
   bool mutable_;
-  Field(Type type, bool mutable_ = false) : type(type), mutable_(mutable_) {}
+
+  Field(Type type, bool mutable_ = false)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(Type::BasicID type, bool mutable_ = false)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(PackedType packedType, bool mutable_ = false)
+    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
+
+  constexpr bool isPacked() const {
+    if (packedType != not_packed) {
+      assert(type.getID() == Type::BasicID::i32 && "unexpected type");
+      return true;
+    }
+    return false;
+  }
+
   bool operator==(const Field& other) const {
-    return type == other.type && mutable_ == other.mutable_;
+    return type == other.type && packedType == other.packedType &&
+           mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
   std::string toString() const;
@@ -338,14 +359,16 @@ struct TypeDef {
   std::string toString() const;
 };
 
-std::ostream& operator<<(std::ostream& os, Type t);
-std::ostream& operator<<(std::ostream& os, ParamType t);
-std::ostream& operator<<(std::ostream& os, ResultType t);
-std::ostream& operator<<(std::ostream& os, Tuple t);
-std::ostream& operator<<(std::ostream& os, Signature t);
-std::ostream& operator<<(std::ostream& os, Struct t);
-std::ostream& operator<<(std::ostream& os, Array t);
-std::ostream& operator<<(std::ostream& os, TypeDef t);
+std::ostream& operator<<(std::ostream&, Type);
+std::ostream& operator<<(std::ostream&, ParamType);
+std::ostream& operator<<(std::ostream&, ResultType);
+std::ostream& operator<<(std::ostream&, Tuple);
+std::ostream& operator<<(std::ostream&, Signature);
+std::ostream& operator<<(std::ostream&, Field::PackedType);
+std::ostream& operator<<(std::ostream&, Field);
+std::ostream& operator<<(std::ostream&, Struct);
+std::ostream& operator<<(std::ostream&, Array);
+std::ostream& operator<<(std::ostream&, TypeDef);
 
 } // namespace wasm
 
@@ -353,12 +376,17 @@ namespace std {
 
 template<> class hash<wasm::Type> {
 public:
-  size_t operator()(const wasm::Type& type) const;
+  size_t operator()(const wasm::Type&) const;
 };
 
 template<> class hash<wasm::Signature> {
 public:
-  size_t operator()(const wasm::Signature& sig) const;
+  size_t operator()(const wasm::Signature&) const;
+};
+
+template<> class hash<wasm::Field> {
+public:
+  size_t operator()(const wasm::Field&) const;
 };
 
 template<> class hash<wasm::TypeDef> {
