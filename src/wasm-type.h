@@ -358,28 +358,34 @@ struct TypeDef {
     if (&other == this) {
       return *this;
     }
+    switch (kind) {
+      case TupleKind:
+        tupleDef.~TupleDef();
+        break;
+      case SignatureKind:
+        signatureDef.~SignatureDef();
+        break;
+      case StructKind:
+        structDef.~StructDef();
+        break;
+      case ArrayKind:
+        arrayDef.~ArrayDef();
+        break;
+    }
     kind = other.kind;
     switch (kind) {
-      case TupleKind: {
-        tupleDef.~TupleDef();
+      case TupleKind:
         new (&tupleDef) auto(other.tupleDef);
         return *this;
-      }
-      case SignatureKind: {
-        signatureDef.~SignatureDef();
+      case SignatureKind:
         new (&signatureDef) auto(other.signatureDef);
         return *this;
-      }
-      case StructKind: {
-        structDef.~StructDef();
+      case StructKind:
         new (&structDef) auto(other.structDef);
         return *this;
-      }
-      case ArrayKind: {
-        arrayDef.~ArrayDef();
+      case ArrayKind:
         new (&arrayDef) auto(other.arrayDef);
         return *this;
-      }
     }
     WASM_UNREACHABLE("unexpected kind");
   }
