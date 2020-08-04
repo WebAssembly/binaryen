@@ -18,18 +18,19 @@ using namespace wasm;
 
 #define RESET    "\x1b[0m"
 
-static int assertFailCount = 0;
+static int failCounts = 0;
 
 template<typename T, typename U>
-void assert_equal_(T x, U y, int line, const char* file) {
-  if (x != y) {
+void assert_equal_(T a, U b, int line, const char* file) {
+  if (a != b) {
     std::cerr << '\n'
               << BG_RED FG_BLACK << "  ASSERTION ERROR    "
-              << ++assertFailCount << "    " << RESET FG_RED << "\n"
-              << FG_RED          << "   Actual:   " << x << '\n'
-              << FG_GREEN        << "   Expected: " << y << "\n\n"
-              << FG_YELLOW       << "   Line: " << line << '\n'
-              << FG_YELLOW       << "   File: " << file << '\n'
+              << ++failCounts    << "    "
+              << RESET FG_RED    << "\n"
+              << FG_RED          << "   Actual:   " << a << '\n'
+              << FG_GREEN        << "   Expected: " << b << "\n\n"
+              << FG_YELLOW       << "   Line: "     << line << '\n'
+              << FG_YELLOW       << "   File: "     << file << '\n'
               << RESET           << std::endl;
   }
 }
@@ -167,7 +168,7 @@ int main() {
   test_bits();
   test_cost();
 
-  if (assertFailCount > 0) {
+  if (failCounts > 0) {
     abort();
   } else {
     std::cout << "Success" << std::endl;
