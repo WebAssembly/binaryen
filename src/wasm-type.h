@@ -210,7 +210,7 @@ struct Field {
 
   constexpr bool isPacked() const {
     if (packedType != not_packed) {
-      assert(type.getID() == Type::BasicID::i32 && "unexpected type");
+      assert(type == Type::i32 && "unexpected type");
       return true;
     }
     return false;
