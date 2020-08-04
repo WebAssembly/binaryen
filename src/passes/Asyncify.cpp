@@ -672,7 +672,7 @@ public:
       [verbose](Info& info, Function* reason) {
         if (verbose && !info.canChangeState) {
           std::cout << "[asyncify] " << info.name
-                    << " can change the state due to propagation from "
+                    << " can change the state due to "
                     << reason->name << "\n";
         }
         info.canChangeState = true;

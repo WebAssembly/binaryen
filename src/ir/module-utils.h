@@ -354,9 +354,6 @@ template<typename T> struct CallGraphPropertyAnalysis {
   // canHaveProperty() - Check if the property could be present.
   // addProperty() - Adds the property. This receives a second parameter which
   //                 is the function due to which we are adding the property.
-  //                 The second parameter is null if the change is not due to
-  //                 propagation (that is, it is null during the initial setup
-  //                 before propagation).
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
                      std::function<void(T&, Function*)> addProperty,
@@ -367,7 +364,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
       if (hasProperty(map[func.get()]) ||
           (indirectCalls == IndirectCallsHaveProperty &&
            map[func.get()].hasIndirectCall)) {
-        addProperty(map[func.get()], nullptr);
+        addProperty(map[func.get()], func.get());
         work.push(func.get());
       }
     }
