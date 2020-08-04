@@ -121,7 +121,7 @@ struct DummyLocalInfoProvider {
   }
 };
 
-// returns the maximum amount of bits used in an integer expression
+// Returns the maximum amount of bits used in an integer expression
 // not extremely precise (doesn't look into add operands, etc.)
 // LocalInfoProvider is an optional class that can provide answers about
 // local.get.

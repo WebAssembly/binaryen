@@ -30,14 +30,124 @@ void assert_equal(T x, U y) {
 }
 
 void test_bits() {
-  Const c;
+  Const c, c0, c1;
+  Binary b;
+
+  // --- //
+  // i32 //
+  // --- //
+
+  // Const: i32
+
   c.type = Type::i32;
+  c.value = Literal(int32_t(0));
+  assert_equal(Bits::getMaxBits(&c), 0);
   c.value = Literal(int32_t(1));
   assert_equal(Bits::getMaxBits(&c), 1);
   c.value = Literal(int32_t(2));
   assert_equal(Bits::getMaxBits(&c), 2);
-  c.value = Literal(int32_t(3));
+  c.value = Literal(int32_t(-1));
+  assert_equal(Bits::getMaxBits(&c), 32);
+
+  b.type  = Type::i32;
+  c0.type = Type::i32;
+  c1.type = Type::i32;
+
+  b.left = &c0;
+  b.right = &c1;
+
+  // Binary: AddInt32
+  b.op = AddInt32;
+  c0.value = Literal(int32_t(0xFFFF));
+  c1.value = Literal(int32_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 32);
+  c0.value = Literal(int32_t(-1));
+  c1.value = Literal(int32_t(2));
+  assert_equal(Bits::getMaxBits(&b), 32);
+
+  // Binary: AddInt32
+  b.op = SubInt32;
+  c0.value = Literal(int32_t(0xFFFF));
+  c1.value = Literal(int32_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 32);
+  c0.value = Literal(int32_t(-1));
+  c1.value = Literal(int32_t(2));
+  assert_equal(Bits::getMaxBits(&b), 32);
+
+  // Binary: MulInt32
+  b.op = MulInt32;
+  c0.value = Literal(int32_t(0xFFFF));
+  c1.value = Literal(int32_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 21);
+  c0.value = Literal(int32_t(0));
+  c1.value = Literal(int32_t(1));
+  assert_equal(Bits::getMaxBits(&b), 0);
+  c0.value = Literal(int32_t(1));
+  c1.value = Literal(int32_t(0));
+  assert_equal(Bits::getMaxBits(&b), 0);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(3));
+  assert_equal(Bits::getMaxBits(&b), 4);
+  c0.value = Literal(int32_t(2));
+  c1.value = Literal(int32_t(-2));
+  assert_equal(Bits::getMaxBits(&b), 32);
+
+  // --- //
+  // i64 //
+  // --- //
+
+  c.type = Type::i64;
+
+  // Const: i64
+
+  c.value = Literal(int64_t(0));
+  assert_equal(Bits::getMaxBits(&c), 0);
+  c.value = Literal(int64_t(1));
+  assert_equal(Bits::getMaxBits(&c), 1);
+  c.value = Literal(int64_t(2));
   assert_equal(Bits::getMaxBits(&c), 2);
+  c.value = Literal(int64_t(-1));
+  assert_equal(Bits::getMaxBits(&c), 64);
+
+  c0.type = Type::i64;
+  c1.type = Type::i64;
+  b.type  = Type::i64;
+
+  // Binary: AddInt64
+  b.op = AddInt64;
+  c0.value = Literal(int64_t(0xFFFF));
+  c1.value = Literal(int64_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 64);
+  c0.value = Literal(int64_t(-1));
+  c1.value = Literal(int64_t(2));
+  assert_equal(Bits::getMaxBits(&b), 64);
+
+  // Binary: AddInt64
+  b.op = SubInt64;
+  c0.value = Literal(int64_t(0xFFFF));
+  c1.value = Literal(int64_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 64);
+  c0.value = Literal(int64_t(-1));
+  c1.value = Literal(int64_t(2));
+  assert_equal(Bits::getMaxBits(&b), 64);
+
+  // Binary: MulInt64
+  b.op = MulInt64;
+  c0.value = Literal(int64_t(0xFFFF));
+  c1.value = Literal(int64_t(0x11));
+  assert_equal(Bits::getMaxBits(&b), 21);
+  c0.value = Literal(int64_t(0));
+  c1.value = Literal(int64_t(1));
+  assert_equal(Bits::getMaxBits(&b), 0);
+  c0.value = Literal(int64_t(1));
+  c1.value = Literal(int64_t(0));
+  assert_equal(Bits::getMaxBits(&b), 0);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(3));
+  assert_equal(Bits::getMaxBits(&b), 4);
+  c0.value = Literal(int64_t(2));
+  c1.value = Literal(int64_t(-2));
+  assert_equal(Bits::getMaxBits(&b), 64);
 }
 
 void test_cost() {
