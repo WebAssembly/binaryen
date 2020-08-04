@@ -349,9 +349,15 @@ template<typename T> struct CallGraphPropertyAnalysis {
   enum IndirectCalls { IgnoreIndirectCalls, IndirectCallsHaveProperty };
 
   // Propagate a property from a function to those that call it.
+  //
+  // hasProperty() - Check if the property is present.
+  // canHaveProperty() - Check if the property could be present. This is checked
+  //                     before adding it.
+  // addProperty() - Adds the property. This receives a second parameter which
+  //                 is the function due to which we are adding the property.
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&)> addProperty,
+                     std::function<void(T&), Function*> addProperty,
                      IndirectCalls indirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
@@ -369,7 +375,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
         // If we don't already have the property, and we are not forbidden
         // from getting it, then it propagates back to us now.
         if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
-          addProperty(map[caller]);
+          addProperty(map[caller], func);
           work.push(caller);
         }
       }

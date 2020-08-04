@@ -233,7 +233,8 @@
 //
 //   --pass-arg=asyncify-verbose
 //
-//      This logs out instrumentation decisions to the console.
+//      Logs out instrumentation decisions to the console. This can help figure
+//      out why a certain function was instrumented.
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -668,11 +669,12 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [verbose](Info& info) {
+                          [verbose](Info& info, Function* reason) {
                             if (verbose && !info.canChangeState) {
                               std::cout
                                 << "[asyncify] " << info.name
-                                << " can change the state due to propagation\n";
+                                << " can change the state due to propagation from "
+                                << reason->name << "\n";
                             }
                             info.canChangeState = true;
                           },
