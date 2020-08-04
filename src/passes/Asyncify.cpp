@@ -231,6 +231,10 @@
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only-list / remove-list, see later).
 //
+//   --pass-arg=asyncify-verbose
+//
+//      This logs out instrumentation decisions to the console.
+//
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
 // application - for example, if a function is called that should be
@@ -486,6 +490,8 @@ class ModuleAnalyzer {
 
   struct Info
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+    // The function name.
+    Name name;
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -513,9 +519,10 @@ public:
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
                  const String::Split& onlyListInput,
-                 bool asserts)
+                 bool asserts,
+                 bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeGlobals(module), asserts(asserts) {
+      fakeGlobals(module), asserts(asserts), verbose(verbose) {
 
     PatternMatcher removeList("remove", module, removeListInput);
     PatternMatcher addList("add", module, addListInput);
@@ -548,6 +555,7 @@ public:
     // name.
     ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
+        info.name = func->name;
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
           if (func->module == ASYNCIFY &&
@@ -556,6 +564,10 @@ public:
           } else {
             info.canChangeState =
               canImportChangeState(func->module, func->base);
+            if (verbose && info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is an import that can change the state\n";
+            }
           }
           return;
         }
@@ -609,6 +621,10 @@ public:
           //       the bottom-most runtime also doing top-most runtime stuff
           //       like starting and unwinding.
         }
+        if (verbose && info.canChangeState) {
+          std::cout << "[asyncify] " << func->name
+                    << " can change the state due to initial scan\n";
+        }
       });
 
     // Functions in the remove-list are assumed to not change the state.
@@ -617,6 +633,10 @@ public:
       auto& info = pair.second;
       if (removeList.match(func->name)) {
         info.inRemoveList = true;
+        if (verbose && info.canChangeState) {
+          std::cout << "[asyncify] " << func->name
+                    << " is in the remove-list, ignore\n";
+        }
         info.canChangeState = false;
       }
     }
@@ -648,7 +668,14 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [](Info& info) { info.canChangeState = true; },
+                          [verbose](Info& info) {
+                            if (verbose && !info.canChangeState) {
+                              std::cout
+                                << "[asyncify] " << info.name
+                                << " can change the state due to propagation\n";
+                            }
+                            info.canChangeState = true;
+                          },
                           scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
@@ -663,6 +690,11 @@ public:
           if (matched) {
             info.addedFromList = true;
           }
+          if (verbose) {
+            std::cout << "[asyncify] " << func->name
+                      << "'s state is set based on the only-list to " << matched
+                      << '\n';
+          }
         }
       }
     }
@@ -671,6 +703,10 @@ public:
       for (auto& func : module.functions) {
         if (!func->imported() && addList.match(func->name)) {
           auto& info = map[func.get()];
+          if (verbose && !info.canChangeState) {
+            std::cout << "[asyncify] " << func->name
+                      << " is in the add-list, add\n";
+          }
           info.canChangeState = true;
           info.addedFromList = true;
         }
@@ -741,6 +777,7 @@ public:
 
   FakeGlobalHelper fakeGlobals;
   bool asserts;
+  bool verbose;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -1397,6 +1434,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(onlyListInput)), ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
+    auto verbose =
+      runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1427,7 +1466,8 @@ struct Asyncify : public Pass {
                             removeList,
                             addList,
                             onlyList,
-                            asserts);
+                            asserts,
+                            verbose);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
