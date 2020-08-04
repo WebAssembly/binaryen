@@ -664,21 +664,20 @@ public:
       module.removeFunction(name);
     }
 
-    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
-                          [](const Info& info) {
-                            return !info.isBottomMostRuntime &&
-                                   !info.inRemoveList;
-                          },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
-                              std::cout
-                                << "[asyncify] " << info.name
-                                << " can change the state due to propagation from "
-                                << reason->name << "\n";
-                            }
-                            info.canChangeState = true;
-                          },
-                          scanner.IgnoreIndirectCalls);
+    scanner.propagateBack(
+      [](const Info& info) { return info.canChangeState; },
+      [](const Info& info) {
+        return !info.isBottomMostRuntime && !info.inRemoveList;
+      },
+      [verbose](Info& info, Function* reason) {
+        if (verbose && !info.canChangeState) {
+          std::cout << "[asyncify] " << info.name
+                    << " can change the state due to propagation from "
+                    << reason->name << "\n";
+        }
+        info.canChangeState = true;
+      },
+      scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
 
