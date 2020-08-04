@@ -120,6 +120,12 @@ std::vector<std::unique_ptr<TypeDef>> constructedTypes;
 
 // Maps from constructed types to the canonical Type ID.
 std::unordered_map<TypeDef, uintptr_t> indices = {
+  // If a Type is constructed from a list of types, the list of types becomes
+  // implicitly converted to a TypeDef before canonicalizing its id. This is
+  // also the case if a list of just one type is provided, even though such a
+  // list of types will be canonicalized to the BasicID of the single type. As
+  // such, the following entries are solely placeholders to enable the lookup
+  // of lists of just one type to the BasicID of the single type.
   {TypeDef(Tuple()), Type::none},
   {TypeDef({Type::unreachable}), Type::unreachable},
   {TypeDef({Type::i32}), Type::i32},
