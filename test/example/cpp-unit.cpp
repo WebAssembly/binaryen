@@ -8,9 +8,10 @@
 
 using namespace wasm;
 
-#define FG_RED   "\x1b[31m"
-#define FG_GREEN "\x1b[32m"
-#define FG_BLACK "\x1b[30m"
+#define FG_RED    "\x1b[31m"
+#define FG_GREEN  "\x1b[32m"
+#define FG_BLACK  "\x1b[30m"
+#define FG_YELLOW "\x1b[33m"
 
 #define BG_RED   "\x1b[41m"
 #define BG_BLACK "\x1b[40m"
@@ -18,16 +19,20 @@ using namespace wasm;
 #define RESET    "\x1b[0m"
 
 template<typename T, typename U>
-void assert_equal(T x, U y) {
+void assert_equal_(T x, U y, int line, const char* file) {
   if (x != y) {
     std::cerr << '\n'
               << BG_RED FG_BLACK << "  ASSERTION ERROR       " << RESET FG_RED << "\n"
               << FG_RED          << "   Actual:   " << x << '\n'
-              << FG_GREEN        << "   Expected: " << y << '\n'
+              << FG_GREEN        << "   Expected: " << y << "\n\n"
+              << FG_YELLOW       << "   Line: " << line << '\n'
+              << FG_YELLOW       << "   File: " << file << '\n'
               << RESET           << std::endl;
     abort();
   }
 }
+
+#define assert_equal(a, b) assert_equal_((a), (b), __LINE__, __FILE__)
 
 void test_bits() {
   Const c, c0, c1;
@@ -41,7 +46,7 @@ void test_bits() {
 
   c.type = Type::i32;
   c.value = Literal(int32_t(0));
-  assert_equal(Bits::getMaxBits(&c), 0);
+  assert_equal(Bits::getMaxBits(&c), 1);
   c.value = Literal(int32_t(1));
   assert_equal(Bits::getMaxBits(&c), 1);
   c.value = Literal(int32_t(2));
