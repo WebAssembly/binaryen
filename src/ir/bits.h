@@ -430,7 +430,8 @@ Index getMaxBits(Expression* curr,
       case GtFloat64:
       case GeFloat64:
         return 1;
-      default: {}
+      default: {
+      }
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
@@ -452,7 +453,8 @@ Index getMaxBits(Expression* curr,
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
         return maxBits == 32 ? Index(64) : maxBits;
       }
-      default: {}
+      default: {
+      }
     }
   } else if (auto* set = curr->dynCast<LocalSet>()) {
     // a tee passes through the value
