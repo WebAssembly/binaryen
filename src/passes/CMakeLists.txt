@@ -28,6 +28,7 @@ set(passes_SOURCES
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  GenerateDynCalls.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
