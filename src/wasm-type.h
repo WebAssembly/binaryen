@@ -355,6 +355,35 @@ struct TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
   bool operator!=(const TypeDef& other) const { return !(*this == other); }
+  TypeDef& operator=(const TypeDef& other) {
+    if (&other == this) {
+      return *this;
+    }
+    kind = other.kind;
+    switch (kind) {
+      case TupleKind: {
+        tupleDef.~TupleDef();
+        new (&tupleDef) auto(other.tupleDef);
+        return *this;
+      }
+      case SignatureKind: {
+        signatureDef.~SignatureDef();
+        new (&signatureDef) auto(other.signatureDef);
+        return *this;
+      }
+      case StructKind: {
+        structDef.~StructDef();
+        new (&structDef) auto(other.structDef);
+        return *this;
+      }
+      case ArrayKind: {
+        arrayDef.~ArrayDef();
+        new (&arrayDef) auto(other.arrayDef);
+        return *this;
+      }
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
 
   std::string toString() const;
 };
