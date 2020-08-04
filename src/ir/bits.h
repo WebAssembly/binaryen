@@ -125,8 +125,9 @@ struct DummyLocalInfoProvider {
 // not extremely precise (doesn't look into add operands, etc.)
 // LocalInfoProvider is an optional class that can provide answers about
 // local.get.
-template<typename LocalInfoProvider>
-Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
+template<typename LocalInfoProvider = DummyLocalInfoProvider>
+Index getMaxBits(Expression* curr,
+                 LocalInfoProvider* localInfoProvider = nullptr) {
   if (auto* c = curr->dynCast<Const>()) {
     switch (curr->type.getSingle()) {
       case Type::i32:
