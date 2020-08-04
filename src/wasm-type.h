@@ -204,8 +204,6 @@ struct Field {
 
   Field(Type type, bool mutable_ = false)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
-  Field(Type::BasicID type, bool mutable_ = false)
-    : type(type), packedType(not_packed), mutable_(mutable_) {}
   Field(PackedType packedType, bool mutable_ = false)
     : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
 
