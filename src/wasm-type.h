@@ -398,7 +398,6 @@ std::ostream& operator<<(std::ostream&, ParamType);
 std::ostream& operator<<(std::ostream&, ResultType);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
-std::ostream& operator<<(std::ostream&, Field::PackedType);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);

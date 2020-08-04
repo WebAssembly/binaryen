@@ -538,24 +538,19 @@ std::ostream& operator<<(std::ostream& os, Signature sig) {
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, Field::PackedType packedType) {
-  switch (packedType) {
-    case Field::PackedType::not_packed:
-      return os << "not_packed";
-    case Field::PackedType::i8:
-      return os << "i8";
-    case Field::PackedType::i16:
-      return os << "i16";
-  }
-  WASM_UNREACHABLE("unexpected type");
-}
-
 std::ostream& operator<<(std::ostream& os, Field field) {
   if (field.mutable_) {
     os << "(mut ";
   }
   if (field.isPacked()) {
-    os << field.packedType;
+    auto packedType = field.packedType;
+    if (packedType == Field::PackedType::i8) {
+      os << "i8";
+    } else if (packedType == Field::PackedType::i16) {
+      os << "i16";
+    } else {
+      WASM_UNREACHABLE("unexpected packed type");
+    }
   } else {
     os << field.type;
   }
