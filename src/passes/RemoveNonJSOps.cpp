@@ -27,7 +27,7 @@
 // after walking the current module.
 //
 // StubUnsupportedJSOps stubs out operations that are not fully supported
-// even with RemoveNonJSOpsPass. For example, i64->f32 conversions do not have
+// even with RemoveNonJSOps. For example, i64->f32 conversions do not have
 // perfect rounding in all cases. StubUnsupportedJSOps removes those entirely
 // and replaces them with "stub" operations that do nothing. This is only
 // really useful for fuzzing as it changes the behavior of the program.
