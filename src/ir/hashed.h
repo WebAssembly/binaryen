@@ -56,7 +56,7 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     for (auto& func : module->functions) {
       // ensure an entry for each function - we must not modify the map shape in
       // parallel, just the values
-      hashes[func.get()] = hash(0);
+      hashes[func.get()] = hash32();
     }
     return hashes;
   }
