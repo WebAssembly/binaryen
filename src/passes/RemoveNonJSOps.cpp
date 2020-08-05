@@ -340,6 +340,8 @@ struct StubUnsupportedJSOpsPass
   void visitUnary(Unary* curr) {
     switch (curr->op) {
       case ConvertUInt64ToFloat32:
+        // See detailed comment in lowerConvertIntToFloat in
+        // I64ToI32Lowering.cpp.
         stubOut(curr->value, curr->type);
         break;
       default: {
