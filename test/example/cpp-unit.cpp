@@ -190,6 +190,56 @@ void test_bits() {
   c1.value = Literal(uint32_t(0x7FFFFFFF));
   assert_equal(getMaxBits(&b), 31);
 
+  b.op = AndInt32;
+  c0.value = Literal(int32_t(0));
+  c1.value = Literal(int32_t(0xF));
+  assert_equal(getMaxBits(&b), 0);
+  c0.value = Literal(int32_t(0xF));
+  c1.value = Literal(int32_t(0));
+  assert_equal(getMaxBits(&b), 0);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int32_t(-1));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(-1));
+  assert_equal(getMaxBits(&b), 2);
+
+  b.op = OrInt32;
+  c0.value = Literal(int32_t(0));
+  c1.value = Literal(int32_t(0xF));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int32_t(0xF));
+  c1.value = Literal(int32_t(0));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int32_t(-1));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 32);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(-1));
+  assert_equal(getMaxBits(&b), 32);
+
+  b.op = XorInt32;
+  c0.value = Literal(int32_t(0));
+  c1.value = Literal(int32_t(0xF));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int32_t(0xF));
+  c1.value = Literal(int32_t(0));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int32_t(-1));
+  c1.value = Literal(int32_t(3));
+  assert_equal(getMaxBits(&b), 32);
+  c0.value = Literal(int32_t(3));
+  c1.value = Literal(int32_t(-1));
+  assert_equal(getMaxBits(&b), 32);
 
   // --- //
   // i64 //
@@ -330,6 +380,57 @@ void test_bits() {
   c0.value = Literal(uint64_t(0x7FFFFFFFFFFFFFFF));
   c1.value = Literal(uint64_t(0x7FFFFFFFFFFFFFFF));
   assert_equal(getMaxBits(&b), 63);
+
+  b.op = AndInt64;
+  c0.value = Literal(int64_t(0));
+  c1.value = Literal(int64_t(0xF));
+  assert_equal(getMaxBits(&b), 0);
+  c0.value = Literal(int64_t(0xF));
+  c1.value = Literal(int64_t(0));
+  assert_equal(getMaxBits(&b), 0);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int64_t(-1));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(-1));
+  assert_equal(getMaxBits(&b), 2);
+
+  b.op = OrInt64;
+  c0.value = Literal(int64_t(0));
+  c1.value = Literal(int64_t(0xF));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int64_t(0xF));
+  c1.value = Literal(int64_t(0));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int64_t(-1));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 64);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(-1));
+  assert_equal(getMaxBits(&b), 64);
+
+  b.op = XorInt64;
+  c0.value = Literal(int64_t(0));
+  c1.value = Literal(int64_t(0xF));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int64_t(0xF));
+  c1.value = Literal(int64_t(0));
+  assert_equal(getMaxBits(&b), 4);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 2);
+  c0.value = Literal(int64_t(-1));
+  c1.value = Literal(int64_t(3));
+  assert_equal(getMaxBits(&b), 64);
+  c0.value = Literal(int64_t(3));
+  c1.value = Literal(int64_t(-1));
+  assert_equal(getMaxBits(&b), 64);
 }
 
 void test_cost() {
