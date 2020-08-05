@@ -355,39 +355,11 @@ struct TypeDef {
   }
   bool operator!=(const TypeDef& other) const { return !(*this == other); }
   TypeDef& operator=(const TypeDef& other) {
-    if (&other == this) {
-      return *this;
+    if (&other != this) {
+      (*this).~TypeDef();
+      new (this) auto(other);
     }
-    switch (kind) {
-      case TupleKind:
-        tupleDef.~TupleDef();
-        break;
-      case SignatureKind:
-        signatureDef.~SignatureDef();
-        break;
-      case StructKind:
-        structDef.~StructDef();
-        break;
-      case ArrayKind:
-        arrayDef.~ArrayDef();
-        break;
-    }
-    kind = other.kind;
-    switch (kind) {
-      case TupleKind:
-        new (&tupleDef) auto(other.tupleDef);
-        return *this;
-      case SignatureKind:
-        new (&signatureDef) auto(other.signatureDef);
-        return *this;
-      case StructKind:
-        new (&structDef) auto(other.structDef);
-        return *this;
-      case ArrayKind:
-        new (&arrayDef) auto(other.arrayDef);
-        return *this;
-    }
-    WASM_UNREACHABLE("unexpected kind");
+    return *this;
   }
 
   std::string toString() const;
