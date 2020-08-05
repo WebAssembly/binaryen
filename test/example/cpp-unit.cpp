@@ -431,6 +431,53 @@ void test_bits() {
   c0.value = Literal(int64_t(3));
   c1.value = Literal(int64_t(-1));
   assert_equal(getMaxBits(&b), 64);
+
+  // Unary
+  Unary u;
+  c0.type = Type::i32;
+  u.value = &c0;
+
+  u.type = Type::i64;
+
+  u.op = ExtendUInt32;
+  c0.value = Literal(int32_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int32_t(1));
+  assert_equal(getMaxBits(&u), 1);
+  c0.value = Literal(int32_t(0xF));
+  assert_equal(getMaxBits(&u), 4);
+  c0.value = Literal(int32_t(-1));
+  assert_equal(getMaxBits(&u), 32);
+
+  u.op = ExtendSInt32;
+  c0.value = Literal(int32_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int32_t(1));
+  assert_equal(getMaxBits(&u), 1);
+  c0.value = Literal(int32_t(0xF));
+  assert_equal(getMaxBits(&u), 4);
+  c0.value = Literal(int32_t(0x7FFFFFFF));
+  assert_equal(getMaxBits(&u), 31);
+  c0.value = Literal(int32_t(0x80000000));
+  assert_equal(getMaxBits(&u), 64);
+  c0.value = Literal(int32_t(-1));
+  assert_equal(getMaxBits(&u), 64);
+
+  u.type = Type::i32;
+  c0.type = Type::i64;
+
+  u.op = WrapInt64;
+  c0.value = Literal(int64_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int64_t(0x7FFFFFFF));
+  assert_equal(getMaxBits(&u), 31);
+  c0.value = Literal(int64_t(0xFFFFFFFF));
+  assert_equal(getMaxBits(&u), 32);
+  c0.value = Literal(int64_t(0xFFFFFFFFFF));
+  assert_equal(getMaxBits(&u), 32);
+  c0.value = Literal(int64_t(-1));
+  assert_equal(getMaxBits(&u), 32);
+
 }
 
 void test_cost() {
