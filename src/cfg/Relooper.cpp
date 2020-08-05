@@ -1009,7 +1009,7 @@ private:
     wasm::rehash32<uint8_t>(digest, 2);
     for (auto& Pair : Curr->BranchesOut) { // InsertOrderedMap
       // Hash the Block* as a pointer TODO: full hash?
-      wasm::rehash32(digest, reinterpret_cast<size_t>(Pair.first));
+      wasm::rehash32<uint64_t>(digest, reinterpret_cast<size_t>(Pair.first));
       // Hash the Branch info properly
       wasm::hash32_combine(digest, Hash(Pair.second));
     }
