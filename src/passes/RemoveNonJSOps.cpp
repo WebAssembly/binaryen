@@ -15,7 +15,7 @@
  */
 
 //
-// RemoveNonJSOpsPass removes operations that aren't inherently implementable
+// RemoveNonJSOps removes operations that aren't inherently implementable
 // in JS. This includes things like 64-bit division, `f32.nearest`,
 // `f64.copysign`, etc. Most operations are lowered to a call to an injected
 // intrinsic implementation. Intrinsics don't use themselves to implement
