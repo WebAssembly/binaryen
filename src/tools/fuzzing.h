@@ -2544,6 +2544,7 @@ private:
   }
 
   Expression* makeSIMDLoad() {
+    // TODO: add Load{32,64}Zero if merged to proposal
     SIMDLoadOp op = pick(LoadSplatVec8x16,
                          LoadSplatVec16x8,
                          LoadSplatVec32x4,
@@ -2575,6 +2576,9 @@ private:
       case LoadExtUVec32x2ToVecI64x2:
         align = pick(1, 2, 4, 8);
         break;
+      case Load32Zero:
+      case Load64Zero:
+        WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();
     return builder.makeSIMDLoad(op, offset, align, ptr);

@@ -1139,6 +1139,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     case LoadSplatVec8x16:
     case LoadSplatVec16x8:
     case LoadSplatVec32x4:
+    case Load32Zero:
       memAlignType = Type::i32;
       break;
     case LoadSplatVec64x2:
@@ -1148,6 +1149,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       memAlignType = Type::i64;
       break;
   }

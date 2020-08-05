@@ -287,7 +287,9 @@ int main(int argc, const char* argv[]) {
 
   if (!standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
-    generator.generateDynCallThunks();
+    PassRunner passRunner(&wasm);
+    passRunner.add("generate-dyncalls");
+    passRunner.run();
     // This is also not needed in standalone mode since standalone mode uses
     // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
     generator.renameMainArgcArgv();

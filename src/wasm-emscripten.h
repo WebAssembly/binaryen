@@ -40,10 +40,6 @@ public:
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
 
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void generateDynCallThunks();
-
   // Remove the import of a mutable __stack_pointer and instead initialize the
   // stack pointer from an immutable import.
   void internalizeStackPointerGlobal();
@@ -66,6 +62,8 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
+  void generateDynCallThunk(Signature sig);
+
 private:
   Module& wasm;
   Builder builder;
@@ -76,8 +74,6 @@ private:
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
-
-  void generateDynCallThunk(Signature sig);
 };
 
 } // namespace wasm
