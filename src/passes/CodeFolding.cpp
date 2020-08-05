@@ -606,9 +606,9 @@ private:
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
       // subset
-      std::map<Expression*, HashType> hashes; // expression => hash value
+      std::map<Expression*, size_t> hashes; // expression => hash value
       // hash value => expressions with that hash
-      std::map<HashType, std::vector<Expression*>> hashed;
+      std::map<size_t, std::vector<Expression*>> hashed;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
@@ -616,15 +616,15 @@ private:
       }
       // look at each hash value exactly once. we do this in a deterministic
       // order.
-      std::set<HashType> seen;
+      std::set<size_t> seen;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
-        auto hash = hashes[item];
-        if (seen.count(hash)) {
+        auto digest = hashes[item];
+        if (seen.count(digest)) {
           continue;
         }
-        seen.insert(hash);
-        auto& items = hashed[hash];
+        seen.insert(digest);
+        auto& items = hashed[digest];
         if (items.size() == 1) {
           continue;
         }

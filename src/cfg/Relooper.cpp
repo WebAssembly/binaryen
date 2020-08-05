@@ -669,8 +669,7 @@ struct Optimizer : public RelooperRecursor {
       std::cout << "at parent " << ParentBlock->Id << '\n';
 #endif
       if (ParentBlock->BranchesOut.size() >= 2) {
-        std::unordered_map<wasm::HashType, std::vector<BranchBlock>>
-          HashedBranchesOut;
+        std::unordered_map<size_t, std::vector<BranchBlock>> HashedBranchesOut;
         std::vector<Block*> BlocksToErase;
         for (auto& iter : ParentBlock->BranchesOut) {
           Block* CurrBlock = iter.first;
@@ -999,41 +998,42 @@ private:
   // (like Shapes). Only partially hashes the branches out, no
   // recursion: hashes the branch infos, looks at raw pointers
   // for the blocks.
-  wasm::HashType Hash(Block* Curr) {
-    wasm::HashType Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
-    Ret = wasm::rehash(Ret, 1);
+  size_t Hash(Block* Curr) {
+    auto digest = wasm::ExpressionAnalyzer::hash(Curr->Code);
+    wasm::rehash(digest, 1);
     if (Curr->SwitchCondition) {
-      Ret = wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition);
+      wasm::hash_combine(digest,
+                         wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
     }
-    Ret = wasm::rehash(Ret, 2);
+    wasm::rehash(digest, 2);
     for (auto& Pair : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
-      Ret =
-        wasm::rehash(Ret, wasm::HashType(reinterpret_cast<size_t>(Pair.first)));
+      wasm::rehash(digest, reinterpret_cast<size_t>(Pair.first));
       // Hash the Branch info properly
-      Ret = wasm::rehash(Ret, Hash(Pair.second));
+      wasm::hash_combine(digest, Hash(Pair.second));
     }
-    return Ret;
+    return digest;
   }
 
   // Hashes the direct block contents, but not Relooper internals
   // (like Shapes).
-  wasm::HashType Hash(Branch* Curr) {
-    wasm::HashType Ret = 0;
+  size_t Hash(Branch* Curr) {
+    auto digest = wasm::hash(0);
     if (Curr->SwitchValues) {
       for (auto i : *Curr->SwitchValues) {
-        Ret = wasm::rehash(Ret, i); // TODO hash i
+        wasm::rehash(digest, i); // TODO hash i
       }
     } else {
       if (Curr->Condition) {
-        Ret = wasm::ExpressionAnalyzer::hash(Curr->Condition);
+        wasm::hash_combine(digest,
+                           wasm::ExpressionAnalyzer::hash(Curr->Condition));
       }
     }
-    Ret = wasm::rehash(Ret, 1);
+    wasm::rehash(digest, 1);
     if (Curr->Code) {
-      Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
+      wasm::hash_combine(digest, wasm::ExpressionAnalyzer::hash(Curr->Code));
     }
-    return Ret;
+    return digest;
   }
 };
 
