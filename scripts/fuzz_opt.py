@@ -520,14 +520,17 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.6
+    frequency = 1 # 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # legalize the wasm files first, so that comparisons to the interpreter
-        # later make sense (if we don't do this, the wasm may have i64 exports
         # which wasm2js will have legalized into i32s)
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
+        before_wasm_temp = before_wasm + '.temp.wasm'
+        after_wasm_temp = after_wasm + '.temp.wasm'
+        # legalize the before wasm, so that comparisons to the interpreter
+        # later make sense (if we don't do this, the wasm may have i64 exports).
+        # after applying other necessary fixes, we'll recreate the after wasm
+        # from scratch.
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:
@@ -543,11 +546,12 @@ class Wasm2JS(TestCaseHandler):
                 # operations (by forcing alignment 1, then lowering those into aligned
                 # components, which means all loads and stores are of a single byte).
                 simplification_passes += ['--dealign', '--alignment-lowering']
-            run([in_bin('wasm-opt'), before_wasm, '-o', before_wasm] + simplification_passes + FEATURE_OPTS)
-            run([in_bin('wasm-opt'), after_wasm, '-o', after_wasm] + simplification_passes + FEATURE_OPTS)
+            run([in_bin('wasm-opt'), before_wasm_temp, '-o', before_wasm_temp] + simplification_passes + FEATURE_OPTS)
+        # now that the before wasm is fixed up, generate a proper after wasm
+        run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
         # always check for compiler crashes
-        before = self.run(before_wasm)
-        after = self.run(after_wasm)
+        before = self.run(before_wasm_temp)
+        after = self.run(after_wasm_temp)
         if NANS:
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
@@ -558,7 +562,7 @@ class Wasm2JS(TestCaseHandler):
         # the trap, which lets us compare at least some results in some cases.
         # (this is why wasm2js is not in CompareVMs, which does full
         # comparisons - we need to limit the comparison in a special way here)
-        interpreter = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        interpreter = run([in_bin('wasm-opt'), before_wasm_temp, '--fuzz-exec-before'])
         if TRAP_PREFIX in interpreter:
             trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
@@ -684,11 +688,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
 ]
 
 
@@ -704,7 +708,7 @@ def test_one(random_input, opts, given_wasm):
         # apply properties like not having any NaNs, which the original fuzz
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
-        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS)
+        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
