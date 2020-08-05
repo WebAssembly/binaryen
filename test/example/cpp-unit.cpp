@@ -8,15 +8,15 @@
 
 using namespace wasm;
 
+#define RESET     "\x1b[0m"
+
+#define FG_BLACK  "\x1b[30m"
 #define FG_RED    "\x1b[31m"
 #define FG_GREEN  "\x1b[32m"
-#define FG_BLACK  "\x1b[30m"
 #define FG_YELLOW "\x1b[33m"
 
-#define BG_RED   "\x1b[41m"
-#define BG_BLACK "\x1b[40m"
-
-#define RESET    "\x1b[0m"
+#define BG_BLACK  "\x1b[40m"
+#define BG_RED    "\x1b[41m"
 
 static int failsCount = 0;
 
