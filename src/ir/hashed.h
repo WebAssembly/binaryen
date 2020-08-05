@@ -18,7 +18,7 @@
 #define _wasm_ir_hashed_h
 
 #include "ir/utils.h"
-#include "support/hash.h"
+#include "support/hash_deterministic.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -26,13 +26,13 @@ namespace wasm {
 // An expression with a cached hash value
 struct HashedExpression {
   Expression* expr;
-  size_t digest;
+  hash32_t digest;
 
   HashedExpression(Expression* expr) : expr(expr) {
     if (expr) {
       digest = ExpressionAnalyzer::hash(expr);
     } else {
-      digest = hash(0);
+      digest = hash32();
     }
   }
 
@@ -45,7 +45,7 @@ struct HashedExpression {
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
-  struct Map : public std::map<Function*, size_t> {};
+  struct Map : public std::map<Function*, hash32_t> {};
 
   FunctionHasher(Map* output) : output(output) {}
 
@@ -63,13 +63,14 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
 
   void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
 
-  static size_t hashFunction(Function* func) {
-    auto digest = hash(func->sig.params.getID());
-    rehash(digest, func->sig.results.getID());
+  // Hash a function deterministically
+  static hash32_t hashFunction(Function* func) {
+    auto digest = hash32(func->sig.params.getID());
+    rehash32(digest, func->sig.results.getID());
     for (auto type : func->vars) {
-      rehash(digest, type.getID());
+      rehash32(digest, type.getID());
     }
-    hash_combine(digest, ExpressionAnalyzer::hash(func->body));
+    hash32_combine(digest, ExpressionAnalyzer::hash(func->body));
     return digest;
   }
 

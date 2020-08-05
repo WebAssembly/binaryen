@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "pass.h"
+#include "support/hash_deterministic.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -76,9 +77,9 @@ struct ExpressionAnalyzer {
     return flexibleEqual(left, right, comparer);
   }
 
-  // hash an expression, ignoring superficial details like specific internal
-  // names
-  static size_t hash(Expression* curr);
+  // hash an expression deterministically, ignoring superficial details like
+  // specific internal names
+  static hash32_t hash(Expression* curr);
 };
 
 // Re-Finalizes all node types. This can be run after code was modified in

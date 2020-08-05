@@ -17,7 +17,7 @@
 #include "ir/iteration.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
-#include "support/hash.h"
+#include "support/hash_deterministic.h"
 #include "support/small_vector.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -407,10 +407,11 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   return Comparer().compare(left, right, comparer);
 }
 
-// hash an expression, ignoring superficial details like specific internal names
-size_t ExpressionAnalyzer::hash(Expression* curr) {
+// hash an expression deterministically, ignoring superficial details like
+// specific internal names
+hash32_t ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
-    size_t digest = wasm::hash(0);
+    hash32_t digest = hash32();
 
     Index internalCounter = 0;
     // for each internal name, its unique id
@@ -432,7 +433,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
         if (!curr) {
           continue;
         }
-        rehash(digest, uint32_t(curr->_id));
+        rehash32(digest, uint32_t(curr->_id));
         // we often don't need to hash the type, as it is tied to other values
         // we are hashing anyhow, but there are exceptions: for example, a
         // local.get's type is determined by the function, so if we are
@@ -441,7 +442,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
         // if we hash between modules, then we need to take int account
         // call_imports type, etc. The simplest thing is just to hash the
         // type for all of them.
-        rehash(digest, curr->type.getID());
+        rehash32(digest, curr->type.getID());
         // Blocks and loops introduce scoping.
         if (auto* block = curr->dynCast<Block>()) {
           noteScopeName(block->name);
@@ -459,7 +460,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
         }
         // Sometimes children are optional, e.g. return, so we must hash
         // their number as well.
-        rehash(digest, counter);
+        rehash32(digest, counter);
       }
     }
 
@@ -470,21 +471,30 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");
       assert(internalNames.find(curr) != internalNames.end());
-      rehash(digest, internalNames[curr]);
+      rehash32(digest, internalNames[curr]);
     }
-    void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
-    void visitInt(int32_t curr) { rehash(digest, curr); }
-    void visitLiteral(Literal curr) { rehash(digest, curr); }
-    void visitType(Type curr) { rehash(digest, curr.getID()); }
+    void visitNonScopeName(Name curr) { rehash32(digest, uint64_t(curr.str)); }
+    void visitInt(int32_t curr) { rehash32(digest, uint32_t(curr)); }
+    void visitLiteral(Literal curr) {
+      // can't use std::hash overload here
+      uint8_t bytes[16];
+      curr.getBits(bytes);
+      uint64_t chunks[2];
+      memcpy(chunks, bytes, sizeof(chunks));
+      rehash32(digest, curr.type.getID());
+      rehash32(digest, chunks[0]);
+      rehash32(digest, chunks[1]);
+    }
+    void visitType(Type curr) { rehash32(digest, curr.getID()); }
     void visitIndex(Index curr) {
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");
-      rehash(digest, curr);
+      rehash32(digest, curr);
     }
     void visitAddress(Address curr) {
       static_assert(sizeof(Address) == sizeof(int32_t),
                     "wasm64 will need changes here");
-      rehash(digest, curr.addr);
+      rehash32(digest, curr.addr); // careful when changing, determinism?
     }
   };
 

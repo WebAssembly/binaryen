@@ -20,6 +20,10 @@
 #include <functional>
 #include <stdint.h>
 
+// Standard library hashing utilities. Suitable to use with the standard library
+// and will automatically pick up overloaded hash implementations. Not
+// guaranteed to be deterministic (see hash_deterministic.h instead).
+
 namespace wasm {
 
 // Computes the digest of `value`.
