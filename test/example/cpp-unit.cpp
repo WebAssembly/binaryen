@@ -44,7 +44,7 @@ void assert_equal_(T a, U b, int line, const char* file) {
 #define assert_equal(a, b) assert_equal_((a), (b), __LINE__, __FILE__)
 
 void test_bits() {
-  Const c, c0, c1;
+  Const c0, c1;
   Binary b;
 
   b.left = &c0;
@@ -54,19 +54,20 @@ void test_bits() {
   // i32 //
   // --- //
 
-  c.type  = Type::i32;
   c0.type = Type::i32;
   c1.type = Type::i32;
   b.type  = Type::i32;
 
-  c.value = Literal(int32_t(0));
-  assert_equal(Bits::getMaxBits(&c), 0);
-  c.value = Literal(int32_t(1));
-  assert_equal(Bits::getMaxBits(&c), 1);
-  c.value = Literal(int32_t(2));
-  assert_equal(Bits::getMaxBits(&c), 2);
-  c.value = Literal(int32_t(-1));
-  assert_equal(Bits::getMaxBits(&c), 32);
+  c0.value = Literal(int32_t(0));
+  assert_equal(Bits::getMaxBits(&c0), 0);
+  c0.value = Literal(int32_t(1));
+  assert_equal(Bits::getMaxBits(&c0), 1);
+  c0.value = Literal(int32_t(2));
+  assert_equal(Bits::getMaxBits(&c0), 2);
+  c0.value = Literal(int32_t(0x80000));
+  assert_equal(Bits::getMaxBits(&c0), 20);
+  c0.value = Literal(int32_t(-1));
+  assert_equal(Bits::getMaxBits(&c0), 32);
 
   b.op = AddInt32;
   c0.value = Literal(int32_t(0xFFFF));
@@ -153,21 +154,22 @@ void test_bits() {
   // i64 //
   // --- //
 
-  c.type  = Type::i64;
   c0.type = Type::i64;
   c1.type = Type::i64;
   b.type  = Type::i64;
 
   // Const: i64
 
-  c.value = Literal(int64_t(0));
-  assert_equal(Bits::getMaxBits(&c), 0);
-  c.value = Literal(int64_t(1));
-  assert_equal(Bits::getMaxBits(&c), 1);
-  c.value = Literal(int64_t(2));
-  assert_equal(Bits::getMaxBits(&c), 2);
-  c.value = Literal(int64_t(-1));
-  assert_equal(Bits::getMaxBits(&c), 64);
+  c0.value = Literal(int64_t(0));
+  assert_equal(Bits::getMaxBits(&c0), 0);
+  c0.value = Literal(int64_t(1));
+  assert_equal(Bits::getMaxBits(&c0), 1);
+  c0.value = Literal(int64_t(2));
+  assert_equal(Bits::getMaxBits(&c0), 2);
+  c0.value = Literal(int64_t(0x80000));
+  assert_equal(Bits::getMaxBits(&c0), 20);
+  c0.value = Literal(int64_t(-1));
+  assert_equal(Bits::getMaxBits(&c0), 64);
 
   b.op = AddInt64;
   c0.value = Literal(int64_t(0xFFFF));
