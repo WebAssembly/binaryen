@@ -32,6 +32,12 @@ void assert_equal_(T a, U b, int line, const char* file) {
               << FG_YELLOW       << "   Line: "     << line << '\n'
               << FG_YELLOW       << "   File: "     << file << '\n'
               << RESET           << std::endl;
+
+    std::cout << "actual: "     << a
+              << ", expected: " << b
+              << ", line "      << line
+              << ", file "      << file
+              << std::endl;
   }
 }
 
