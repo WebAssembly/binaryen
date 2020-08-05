@@ -79,7 +79,7 @@ def run_unchecked(cmd):
 
 
 def randomize_pass_debug():
-    if random.random() < 0.125:
+    if random.random() < 0.1:
         print('[pass-debug]')
         os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
@@ -355,7 +355,7 @@ class FuzzExec(TestCaseHandler):
 
 
 class CompareVMs(TestCaseHandler):
-    frequency = 0.5
+    frequency = 0.6
 
     def __init__(self):
         super(CompareVMs, self).__init__()
@@ -397,6 +397,9 @@ class CompareVMs(TestCaseHandler):
                     return False
                 # if we legalize for JS, the ABI is not what C wants
                 if LEGALIZE:
+                    return False
+                # relatively slow, so run it less frequently
+                if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
                 return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
@@ -447,6 +450,9 @@ class CompareVMs(TestCaseHandler):
                 return run_d8_js('a.out.js')
 
             def can_run(self, wasm):
+                # quite slow (more steps), so run it less frequently
+                if random.random() < 0.8:
+                    return False
                 # prefer not to run if the wasm is very large, as it can OOM
                 # the JS engine.
                 return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
@@ -502,7 +508,7 @@ class CompareVMs(TestCaseHandler):
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
     # not that important
-    frequency = 0.3
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
