@@ -349,9 +349,9 @@ struct StubUnsupportedJSOpsPass
     }
   }
 
-  void stubOut(Expression* value, Type type) {
+  void stubOut(Expression* value, Type outputType) {
     Builder builder(*getModule());
-    if (type == Type::unreachable) {
+    if (outputType == Type::unreachable) {
       // This is unreachable anyhow; just leave the value instead of the
       // original node.
       assert(value->type == Type::unreachable);
@@ -359,7 +359,7 @@ struct StubUnsupportedJSOpsPass
     } else {
       // Drop the value, and return something with the right output type.
       replaceCurrent(builder.makeSequence(
-        builder.makeDrop(value), LiteralUtils::makeZero(type, *getModule())));
+        builder.makeDrop(value), LiteralUtils::makeZero(outputType, *getModule())));
     }
   }
 };
