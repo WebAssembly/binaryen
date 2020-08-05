@@ -15,7 +15,7 @@
  */
 
 //
-// Removes all operations in a wasm module that aren't inherently implementable
+// RemoveNonJSOpsPass removes operations that aren't inherently implementable
 // in JS. This includes things like 64-bit division, `f32.nearest`,
 // `f64.copysign`, etc. Most operations are lowered to a call to an injected
 // intrinsic implementation. Intrinsics don't use themselves to implement
@@ -26,6 +26,12 @@
 // needed intrinsics from this module into the module that we're optimizing
 // after walking the current module.
 //
+// StubUnsupportedJSOps pass stubs out operatios that are not fully supported
+// even with RemoveNonJSOpsPass. For example, i64->f32 conversions do not have
+// perfect rounding in all cases. StubUnsupportedJSOps removes those entirely
+// and replaces them with "stub" operations that do nothing. This is only
+// really useful for fuzzing as it changes the behavior of the program.
+//
 
 #include <pass.h>
 #include <wasm.h>
@@ -33,6 +39,7 @@
 #include "abi/js.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
+#include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "passes/intrinsics-module.h"
@@ -324,6 +331,41 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
+struct StubUnsupportedJSOpsPass
+  : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new StubUnsupportedJSOpsPass; }
+
+  void visitUnary(Unary* curr) {
+    switch (curr->op) {
+      case ConvertUInt64ToFloat32:
+        stubOut(curr->value, curr->type);
+        break;
+      default: {
+      }
+    }
+  }
+
+  void stubOut(Expression* value, Type type) {
+    Builder builder(*getModule());
+    if (type == Type::unreachable) {
+      // Type is unreachable anyhow; just leave the value instead of the
+      // original node.
+      assert(value->type == Type::unreachable);
+      replaceCurrent(value);
+    } else {
+      // Drop the value, and return something with the right output type.
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(value), LiteralUtils::makeZero(type, *getModule())));
+    }
+  }
+};
+
 Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
+
+Pass* createStubUnsupportedJSOpsPass() {
+  return new StubUnsupportedJSOpsPass();
+}
 
 } // namespace wasm
