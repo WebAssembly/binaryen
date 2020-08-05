@@ -528,15 +528,23 @@ class Wasm2JS(TestCaseHandler):
         # which wasm2js will have legalized into i32s)
         run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
-        compare_to_interpreter = random.random() < 0.5
-        if compare_to_interpreter:
-            # unexpectedly-unaligned loads/stores work fine in wasm in general but
-            # not in wasm2js, since typed arrays silently round down, effectively.
-            # if we want to compare to the interpreter, remove unaligned
-            # operations (by forcing alignment 1, then lowering those into aligned
-            # components, which means all loads and stores are of a single byte).
-            run([in_bin('wasm-opt'), before_wasm, '--dealign', '--alignment-lowering', '-o', before_wasm] + FEATURE_OPTS)
-            run([in_bin('wasm-opt'), after_wasm, '--dealign', '--alignment-lowering', '-o', after_wasm] + FEATURE_OPTS)
+        compare_before_to_after = random.random() < 0.5
+        compare_to_interpreter = compare_before_to_after and random.random() < 0.5
+        if compare_before_to_after:
+            # to compare the wasm before and after optimizations, we must
+            # remove operations that wasm2js does not support with full
+            # precision, such as i64-to-f32, as the optimizer can give different
+            # results.
+            simplification_passes = ['--stub-unsupported-js']
+            if compare_to_interpreter:
+                # unexpectedly-unaligned loads/stores work fine in wasm in general but
+                # not in wasm2js, since typed arrays silently round down, effectively.
+                # if we want to compare to the interpreter, remove unaligned
+                # operations (by forcing alignment 1, then lowering those into aligned
+                # components, which means all loads and stores are of a single byte).
+                simplification_passes += ['--dealign', '--alignment-lowering']
+            run([in_bin('wasm-opt'), before_wasm, '-o', before_wasm] + simplification_passes + FEATURE_OPTS)
+            run([in_bin('wasm-opt'), after_wasm, '-o', after_wasm] + simplification_passes + FEATURE_OPTS)
         # always check for compiler crashes
         before = self.run(before_wasm)
         after = self.run(after_wasm)
@@ -585,11 +593,11 @@ class Wasm2JS(TestCaseHandler):
 
         before = fix_output_for_js(before)
         after = fix_output_for_js(after)
-        compare_between_vms(before, after, 'Wasm2JS (before/after)')
-
-        if compare_to_interpreter:
-            interpreter = fix_output_for_js(interpreter)
-            compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
+        if compare_before_to_after:
+            compare_between_vms(before, after, 'Wasm2JS (before/after)')
+            if compare_to_interpreter:
+                interpreter = fix_output_for_js(interpreter)
+                compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
