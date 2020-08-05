@@ -352,7 +352,7 @@ struct StubUnsupportedJSOpsPass
   void stubOut(Expression* value, Type type) {
     Builder builder(*getModule());
     if (type == Type::unreachable) {
-      // Type is unreachable anyhow; just leave the value instead of the
+      // This is unreachable anyhow; just leave the value instead of the
       // original node.
       assert(value->type == Type::unreachable);
       replaceCurrent(value);
