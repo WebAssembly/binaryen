@@ -340,7 +340,9 @@ void PassRegistry::registerPasses() {
   registerPass("spill-pointers",
                "spill pointers to the C stack (useful for Boehm-style GC)",
                createSpillPointersPass);
-  registerPass("stub-unsupported-js", "stub out unsupported JS operations", createStubUnsupportedJSOpsPass);
+  registerPass("stub-unsupported-js",
+               "stub out unsupported JS operations",
+               createStubUnsupportedJSOpsPass);
   registerPass("ssa",
                "ssa-ify variables so that they have a single assignment",
                createSSAifyPass);

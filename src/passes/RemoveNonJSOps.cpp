@@ -331,7 +331,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
-struct StubUnsupportedJSOpsPass : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
+struct StubUnsupportedJSOpsPass
+  : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new StubUnsupportedJSOpsPass; }
@@ -341,7 +342,8 @@ struct StubUnsupportedJSOpsPass : public WalkerPass<PostWalker<StubUnsupportedJS
       case ConvertUInt64ToFloat32:
         stubOut(curr->value, curr->type);
         break;
-      default: {}
+      default: {
+      }
     }
   }
 
@@ -355,15 +357,15 @@ struct StubUnsupportedJSOpsPass : public WalkerPass<PostWalker<StubUnsupportedJS
     } else {
       // Drop the value, and return something with the right output type.
       replaceCurrent(builder.makeSequence(
-        builder.makeDrop(value),
-        LiteralUtils::makeZero(type, *getModule())
-      ));
+        builder.makeDrop(value), LiteralUtils::makeZero(type, *getModule())));
     }
   }
 };
 
 Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
 
-Pass* createStubUnsupportedJSOpsPass() { return new StubUnsupportedJSOpsPass(); }
+Pass* createStubUnsupportedJSOpsPass() {
+  return new StubUnsupportedJSOpsPass();
+}
 
 } // namespace wasm
