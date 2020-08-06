@@ -178,12 +178,6 @@ def compare(x, y, context):
         ))
 
 
-# check if a number is 0 or a subnormal, which is basically zero
-def is_basically_zero(x):
-    # to check if something is a subnormal, compare it to the largest one
-    return x >= 0 and x <= 2.22507385850720088902e-308
-
-
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
@@ -583,6 +577,11 @@ class Wasm2JS(TestCaseHandler):
         def fix_output_for_js(x):
             # start with the normal output fixes that all VMs need
             x = fix_output(x)
+
+            # check if a number is 0 or a subnormal, which is basically zero
+            def is_basically_zero(x):
+                # to check if something is a subnormal, compare it to the largest one
+                return x >= 0 and x <= 2.22507385850720088902e-308
 
             def fix_number(x):
                 x = x.group(1)
