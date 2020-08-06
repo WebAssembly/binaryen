@@ -595,6 +595,8 @@ class Wasm2JS(TestCaseHandler):
                     pass
                 return ' => ' + str(x)
 
+            # logging notation is "function_name => result", look for that with
+            # a floating-point result that may need to be fixed up
             return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
 
         before = fix_output_for_js(before)
