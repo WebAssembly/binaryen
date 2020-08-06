@@ -255,11 +255,11 @@ int main(int argc, const char* argv[]) {
     if (!standaloneWasm) {
       // In standalone mode we don't set a handler at all.. which means
       // just trap on overflow.
-      passRunner.options.arguments["stack-check-handler"] = "__handle_stack_overflow";
+      passRunner.options.arguments["stack-check-handler"] =
+        "__handle_stack_overflow";
     }
     passRunner.add("stack-check");
   }
-
 
   if (sideModule) {
     passRunner.add("replace-stack-pointer");
