@@ -605,7 +605,7 @@ private:
     // if we have enough to investigate, do so
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
-      // subset. do this deterministically.
+      // subset. Do this deterministically.
       std::map<Expression*, hash32_t> hashes; // expression => hash value
       // hash value => expressions with that hash
       std::map<hash32_t, std::vector<Expression*>> hashed;
