@@ -51,8 +51,7 @@ namespace {
   }
 
   inline char preferred_separator(Style style) {
-    if (real_style(style) == Style::windows)
-      return '\\';
+    // XXX BINARYEN: always use unix-style separators for consistency
     return '/';
   }
 
