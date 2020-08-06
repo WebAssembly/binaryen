@@ -26,17 +26,23 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_f32 (func (result f32)))
- (table $0 1 1 funcref)
- (elem (i32.const 0) $return-f32)
+ (table $0 2 2 funcref)
+ (elem (i32.const 1) $return-f32)
  (func $return-f32 (result f32)
-  (f32.const 1)
+  (f32.const 3.141590118408203)
  )
  (func $bad-indirect-call
+  (drop
+   (i32.const 1)
+  )
  )
  (func $bad-indirect-call-2 (result i32)
   (block
    (drop
     (i64.const 1234)
+   )
+   (drop
+    (i32.const 1)
    )
   )
   (i32.const 0)

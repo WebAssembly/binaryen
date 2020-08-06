@@ -15,20 +15,20 @@
 (module
  (type $none_=>_none (func))
  (type $i64_=>_i32 (func (param $foo i64) (result i32)))
- (table $0 1 1 funcref)
- (elem (i32.const 0) $return-f32)
+ (table $0 2 2 funcref)
+ (elem (i32.const 1) $return-f32)
  (func $return-f32 (result f32)
-  (f32.const 1)
+  (f32.const 3.14159)
  )
  (func $bad-indirect-call
   (call_indirect (type $none_=>_none) ;; note how it's the wrong type
-   (i32.const 0)
+   (i32.const 1)
   )
  )
  (func $bad-indirect-call-2 (result i32)
   (call_indirect (type $i64_=>_i32) ;; note how it's the wrong type
    (i64.const 1234)
-   (i32.const 0)
+   (i32.const 1)
   )
  )
 )

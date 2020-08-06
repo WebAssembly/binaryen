@@ -357,6 +357,7 @@ struct StubUnsupportedJSOpsPass
     for (auto* operand : curr->operands) {
       items.push_back(builder.makeDrop(operand));
     }
+    items.push_back(builder.makeDrop(curr->target));
     stubOut(builder.makeBlock(items), curr->type);
   }
 
