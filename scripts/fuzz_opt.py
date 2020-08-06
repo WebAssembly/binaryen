@@ -529,7 +529,6 @@ class Wasm2JS(TestCaseHandler):
     frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # which wasm2js will have legalized into i32s)
         before_wasm_temp = before_wasm + '.temp.wasm'
         after_wasm_temp = after_wasm + '.temp.wasm'
         # legalize the before wasm, so that comparisons to the interpreter
