@@ -187,9 +187,7 @@ def numbers_are_close_enough(x, y):
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
-        fx = float(x)
-        fy = float(y)
-        return fx == fy
+        return float(x) == float(y)
     except Exception:
         pass
     # otherwise, try a full eval which can handle i64s too
