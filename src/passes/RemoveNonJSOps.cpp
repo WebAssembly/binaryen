@@ -374,9 +374,8 @@ struct StubUnsupportedJSOpsPass
         value = builder.makeDrop(value);
       }
       // Return something with the right output type.
-      replacement =
-        builder.makeSequence(value,
-                             LiteralUtils::makeZero(outputType, *getModule()));
+      replacement = builder.makeSequence(
+        value, LiteralUtils::makeZero(outputType, *getModule()));
     }
     replaceCurrent(replacement);
   }
