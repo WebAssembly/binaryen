@@ -22,3 +22,23 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_f32 (func (result f32)))
+ (table $0 1 1 funcref)
+ (elem (i32.const 0) $return-f32)
+ (func $return-f32 (result f32)
+  (f32.const 1)
+ )
+ (func $bad-indirect-call
+ )
+ (func $bad-indirect-call-2 (result i32)
+  (block
+   (drop
+    (i64.const 1234)
+   )
+  )
+  (i32.const 0)
+ )
+)

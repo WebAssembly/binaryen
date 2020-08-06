@@ -349,19 +349,36 @@ struct StubUnsupportedJSOpsPass
     }
   }
 
+  void visitCallIndirect(CallIndirect* curr) {
+    // Indirect calls of the wrong type trap in wasm, but not in wasm2js. Remove
+    // the indirect call, but leave the arguments.
+    Builder builder(*getModule());
+    std::vector<Expression*> items;
+    for (auto* operand : curr->operands) {
+      items.push_back(builder.makeDrop(operand));
+    }
+    stubOut(builder.makeBlock(items), curr->type);
+  }
+
   void stubOut(Expression* value, Type outputType) {
     Builder builder(*getModule());
+    // In some cases we can just replace with the value.
+    auto* replacement = value;
     if (outputType == Type::unreachable) {
       // This is unreachable anyhow; just leave the value instead of the
       // original node.
       assert(value->type == Type::unreachable);
-      replaceCurrent(value);
-    } else {
-      // Drop the value, and return something with the right output type.
-      replaceCurrent(
-        builder.makeSequence(builder.makeDrop(value),
-                             LiteralUtils::makeZero(outputType, *getModule())));
+    } else if (outputType != Type::none) {
+      // Drop the value if we need to.
+      if (value->type != Type::none) {
+        value = builder.makeDrop(value);
+      }
+      // Return something with the right output type.
+      replacement =
+        builder.makeSequence(value,
+                             LiteralUtils::makeZero(outputType, *getModule()));
     }
+    replaceCurrent(replacement);
   }
 };
 
