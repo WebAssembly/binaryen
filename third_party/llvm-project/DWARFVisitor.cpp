@@ -8,6 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <unordered_map>
+
 #include "DWARFVisitor.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 
@@ -49,19 +51,27 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
   // TODO: This code appears to assume that abbreviation codes increment by 1
   // so that lookups are linear. In LLVM output that is true, but it might not
   // be in general.
+  // Create a map of [byte offset into the abbreviation section] => [index in
+  // DebugInfo.AbbrevDecls]. This avoids linear search for each CU.
+  std::unordered_map<size_t, size_t> abbrByteOffsetToDeclsIndex;
+  for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
+    auto offset = DebugInfo.AbbrevDecls[i].ListOffset;
+    // The offset is the same for all entries for the same CU, so only note the
+    // first as that is where the list begins.
+    if (abbrByteOffsetToDeclsIndex.count(offset)) {
+      continue;
+    }
+    abbrByteOffsetToDeclsIndex[offset] = i;
+  }
   for (auto &Unit : DebugInfo.CompileUnits) {
     // AbbrOffset is the byte offset into the abbreviation section, which we
     // need to find among the Abbrev's ListOffsets (which are the byte offsets
     // of where that abbreviation list begins).
     // TODO: Optimize this to not be O(#CUs * #abbrevs).
-    size_t AbbrevStart = -1;
-    for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
-      if (DebugInfo.AbbrevDecls[i].ListOffset == Unit.AbbrOffset) {
-        AbbrevStart = i;
-        break;
-      }
-    }
-    assert(AbbrevStart != -1); // must find the list
+    auto offset = Unit.AbbrOffset;
+    assert(abbrByteOffsetToDeclsIndex.count(offset));
+    size_t AbbrevStart = abbrByteOffsetToDeclsIndex[offset];
+    assert(DebugInfo.AbbrevDecls[AbbrevStart].ListOffset == offset);
     // Find the last entry in this abbreviation list.
     size_t AbbrevEnd = AbbrevStart;
     while (AbbrevEnd < DebugInfo.AbbrevDecls.size() &&
