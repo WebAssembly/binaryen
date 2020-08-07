@@ -153,25 +153,21 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 }
 
 template<> bool IsPowerOf2Float<double>(double v) {
-  const double MIN_POT = bit_cast<double>(0x001ULL << 52); // 0x1p-1022
-  const double MAX_POT = bit_cast<double>(0x7FDULL << 52); // 0x1p+1022
-  const uint64_t EXP_MASK = 0x7FFULL << 52;
-  double x = bit_cast<double>(bit_cast<uint64_t>(v) & EXP_MASK);
-  if (x < MIN_POT || x > MAX_POT) {
-    return false;
-  }
-  return x == v;
+  const uint64_t MIN_POT = 0x001ULL << 52; // 0x1p-1022
+  const uint64_t MAX_POT = 0x7FDULL << 52; // 0x1p+1022
+  const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent
+  const uint64_t SIGN_MASK = ~0ULL >> 1; // mask everything except sign
+  auto u = bit_cast<uint64_t>(v);
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == (u & SIGN_MASK);
 }
 
 template<> bool IsPowerOf2Float<float>(float v) {
-  const float MIN_POT = bit_cast<float>(0x01U << 23); // 0x1p-126
-  const float MAX_POT = bit_cast<float>(0xFDU << 23); // 0x1p+126
-  const uint32_t EXP_MASK = 0xFFU << 23;
-  float x = bit_cast<float>(bit_cast<uint32_t>(v) & EXP_MASK);
-  if (x < MIN_POT || x > MAX_POT) {
-    return false;
-  }
-  return x == v;
+  const uint32_t MIN_POT = 0x01U << 23; // 0x1p-126
+  const uint32_t MAX_POT = 0xFDU << 23; // 0x1p+126
+  const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
+  const uint32_t SIGN_MASK = ~0U >> 1; // mask everything except sign
+  auto u = bit_cast<uint32_t>(v);
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == (u & SIGN_MASK);
 }
 
 uint32_t Log2(uint32_t v) {
