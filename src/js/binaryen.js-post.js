@@ -3030,6 +3030,16 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
+// Gets the function size which we inline when there is only one caller.
+Module['getAllowHeavyweight'] = function() {
+  return Module['_BinaryenGetAllowHeavyweight']();
+};
+
+// Sets the function size which we inline when there is only one caller.
+Module['setAllowHeavyweight'] = function(value) {
+  Module['_BinaryenSetAllowHeavyweight'](value);
+};
+
 // Expression wrappers
 
 // Makes a wrapper class with the specified static members while
