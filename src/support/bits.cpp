@@ -116,7 +116,10 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanReverse(&count, v);
-  return (int)count;
+  // BitScanReverse gives the bit position (0 for the LSB, then 1, etc.) of the
+  // first bit that is 1, when looking from the MSB. To count leading zeros, we
+  // need to adjust that.
+  return 31 - int(count);
 #else
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -142,7 +145,7 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 #elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanReverse64(&count, v);
-  return (int)count;
+  return 63 - int(count);
 #else
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);

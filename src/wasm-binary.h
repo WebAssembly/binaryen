@@ -833,12 +833,12 @@ enum ASTNodes {
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
   I32x4Sub = 0xb1,
-  I32x4DotSVecI16x8 = 0xb4,
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
   I32x4MaxS = 0xb8,
   I32x4MaxU = 0xb9,
+  I32x4DotSVecI16x8 = 0xba,
 
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
@@ -888,8 +888,11 @@ enum ASTNodes {
   F32x4ConvertSI32x4 = 0xfa,
   F32x4ConvertUI32x4 = 0xfb,
 
-  F32x4QFMA = 0xfc,
-  F32x4QFMS = 0xfd,
+  V128Load32Zero = 0xfc,
+  V128Load64Zero = 0xfd,
+
+  F32x4QFMA = 0xb4,
+  F32x4QFMS = 0xd4,
   F64x2QFMA = 0xfe,
   F64x2QFMS = 0xff,
 
