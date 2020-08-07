@@ -669,8 +669,7 @@ struct Optimizer : public RelooperRecursor {
       std::cout << "at parent " << ParentBlock->Id << '\n';
 #endif
       if (ParentBlock->BranchesOut.size() >= 2) {
-        std::unordered_map<wasm::hash32_t, std::vector<BranchBlock>>
-          HashedBranchesOut;
+        std::unordered_map<size_t, std::vector<BranchBlock>> HashedBranchesOut;
         std::vector<Block*> BlocksToErase;
         for (auto& iter : ParentBlock->BranchesOut) {
           Block* CurrBlock = iter.first;
@@ -998,41 +997,41 @@ private:
   // Hashes the direct block contents, but not Relooper internals
   // (like Shapes). Only partially hashes the branches out, no
   // recursion: hashes the branch infos, looks at raw pointers
-  // for the blocks. Deterministic.
-  wasm::hash32_t Hash(Block* Curr) {
+  // for the blocks.
+  size_t Hash(Block* Curr) {
     auto digest = wasm::ExpressionAnalyzer::hash(Curr->Code);
-    wasm::rehash32<uint8_t>(digest, 1);
+    wasm::rehash(digest, uint8_t(1));
     if (Curr->SwitchCondition) {
-      wasm::hash32_combine(
-        digest, wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
+      wasm::hash_combine(digest,
+                         wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
     }
-    wasm::rehash32<uint8_t>(digest, 2);
-    for (auto& Pair : Curr->BranchesOut) { // InsertOrderedMap
+    wasm::rehash(digest, uint8_t(2));
+    for (auto& Pair : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
-      wasm::rehash32<uint64_t>(digest, reinterpret_cast<size_t>(Pair.first));
+      wasm::rehash(digest, reinterpret_cast<size_t>(Pair.first));
       // Hash the Branch info properly
-      wasm::hash32_combine(digest, Hash(Pair.second));
+      wasm::hash_combine(digest, Hash(Pair.second));
     }
     return digest;
   }
 
   // Hashes the direct block contents, but not Relooper internals
-  // (like Shapes). Deterministic.
-  wasm::hash32_t Hash(Branch* Curr) {
-    auto digest = wasm::hash32();
+  // (like Shapes).
+  size_t Hash(Branch* Curr) {
+    auto digest = wasm::hash(0);
     if (Curr->SwitchValues) {
       for (auto i : *Curr->SwitchValues) {
-        wasm::rehash32(digest, i); // TODO hash i
+        wasm::rehash(digest, i); // TODO hash i
       }
     } else {
       if (Curr->Condition) {
-        wasm::hash32_combine(digest,
-                             wasm::ExpressionAnalyzer::hash(Curr->Condition));
+        wasm::hash_combine(digest,
+                           wasm::ExpressionAnalyzer::hash(Curr->Condition));
       }
     }
-    wasm::rehash32<uint8_t>(digest, 1);
+    wasm::rehash(digest, uint8_t(1));
     if (Curr->Code) {
-      wasm::hash32_combine(digest, wasm::ExpressionAnalyzer::hash(Curr->Code));
+      wasm::hash_combine(digest, wasm::ExpressionAnalyzer::hash(Curr->Code));
     }
     return digest;
   }

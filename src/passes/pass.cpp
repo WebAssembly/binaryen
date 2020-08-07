@@ -683,8 +683,7 @@ struct AfterEffectFunctionChecker {
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
   bool beganWithStackIR;
-  // Original deterministic hash of the function
-  hash32_t originalFunctionHash;
+  size_t originalFunctionHash;
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.

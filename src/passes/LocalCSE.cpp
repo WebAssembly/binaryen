@@ -63,8 +63,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   struct UsableHasher {
     size_t operator()(const Usable value) const {
-      // Note: Deterministic to standard hash (no longer deterministic)
-      auto digest = wasm::hash(value.hashed.digest);
+      auto digest = value.hashed.digest;
       wasm::rehash(digest, value.localType.getID());
       return digest;
     }
