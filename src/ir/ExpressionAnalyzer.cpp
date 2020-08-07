@@ -432,7 +432,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
         if (!curr) {
           continue;
         }
-        rehash(digest, uint32_t(curr->_id));
+        rehash(digest, curr->_id);
         // we often don't need to hash the type, as it is tied to other values
         // we are hashing anyhow, but there are exceptions: for example, a
         // local.get's type is determined by the function, so if we are
