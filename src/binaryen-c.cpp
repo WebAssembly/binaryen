@@ -3526,6 +3526,14 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
+bool BinaryenGetAllowHeavyweight(void) {
+  return globalPassOptions.inlining.allowHeavyweight;
+}
+
+void BinaryenSetAllowHeavyweight(bool enabled) {
+  globalPassOptions.inlining.allowHeavyweight = enabled;
+}
+
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
                              const char** passes,
                              BinaryenIndex numPasses) {
