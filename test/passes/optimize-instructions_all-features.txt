@@ -12,6 +12,8 @@
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
+ (type $f32_=>_none (func (param f32)))
+ (type $f64_=>_none (func (param f64)))
  (type $none_=>_f64 (func (result f64)))
  (type $none_=>_externref (func (result externref)))
  (memory $0 0)
@@ -2741,6 +2743,154 @@
    )
   )
   (unreachable)
+ )
+ (func $fdiv-32-power-2 (param $x f32)
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 0.5)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -0.5)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 2.3283064365386963e-10)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 5.421010862427522e-20)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 4253529586511730793292182e13)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 8507059173023461586584365e13)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 1.1754943508222875e-38)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -8507059173023461586584365e13)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -1.1754943508222875e-38)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 5.877471754111438e-39)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 5.877471754111438e-39)
+   )
+  )
+ )
+ (func $fdiv-64-power-2 (param $x f64)
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 0.5)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -0.5)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 2.3283064365386963e-10)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 5.421010862427522e-20)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 2.350988701370884e-38)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 4494232837155789769323262e283)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 2.2250738585072014e-308)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -4494232837155789769323262e283)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -2.2250738585072014e-308)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 1.1125369292536007e-308)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 8988465674311579538646525e283)
+   )
+  )
  )
  (func $srem-by-1 (param $x i32) (param $y i64)
   (drop

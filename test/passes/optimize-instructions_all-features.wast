@@ -3093,6 +3093,106 @@
     )
     (unreachable)
   )
+  (func $fdiv-32-power-2 (param $x f32)
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 4294967296)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 18446744073709551616)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1.ffffffffp-126f)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+  )
+  (func $fdiv-64-power-2 (param $x f64)
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 4294967296)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 18446744073709551616)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1.ffffffffp-126f)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1023) ;; skip
+    ))
+  )
   (func $srem-by-1 (param $x i32) (param $y i64)
     ;; (signed)x % 1
     (drop (i32.rem_s
