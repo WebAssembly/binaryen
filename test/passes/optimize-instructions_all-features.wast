@@ -3116,10 +3116,6 @@
     ))
     (drop (f32.div
       (local.get $x)
-      (f32.const 0x1.ffffffffp-126f)
-    ))
-    (drop (f32.div
-      (local.get $x)
       (f32.const 0x1p-126)
     ))
     (drop (f32.div
@@ -3163,10 +3159,6 @@
     (drop (f64.div
       (local.get $x)
       (f64.const 18446744073709551616)
-    ))
-    (drop (f64.div
-      (local.get $x)
-      (f64.const 0x1.ffffffffp-126f)
     ))
     (drop (f64.div
       (local.get $x)

@@ -2778,12 +2778,6 @@
   (drop
    (f32.mul
     (local.get $x)
-    (f32.const 4253529586511730793292182e13)
-   )
-  )
-  (drop
-   (f32.mul
-    (local.get $x)
     (f32.const 8507059173023461586584365e13)
    )
   )
@@ -2847,12 +2841,6 @@
    (f64.mul
     (local.get $x)
     (f64.const 5.421010862427522e-20)
-   )
-  )
-  (drop
-   (f64.div
-    (local.get $x)
-    (f64.const 2.350988701370884e-38)
    )
   )
   (drop
