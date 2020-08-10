@@ -45,6 +45,9 @@ def test_wasm_opt():
 
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
+        if 'translate-to-fuzz' in t and shared.get_platform() == 'windows':
+            print('skipping fuzz translation tests due to known issues')
+            continue
         binary = '.wasm' in t
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
