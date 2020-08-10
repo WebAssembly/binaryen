@@ -526,7 +526,10 @@ def with_pass_debug(check):
                 del os.environ['BINARYEN_PASS_DEBUG']
 
 
-def skip_on_windows(name):
+# checks if we are on windows, and if so logs out that a test is being skipped,
+# and returns True. This is a central location for all test skipping on
+# windows, so that we can easily find which tests are skipped.
+def skip_if_on_windows(name):
     if get_platform() == 'windows':
         print('skipping test "%s" on windows' % name)
         return True
