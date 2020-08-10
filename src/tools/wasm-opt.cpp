@@ -377,8 +377,7 @@ int main(int argc, const char* argv[]) {
     auto secondOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
     if (firstOutput != secondOutput) {
-      std::cerr << "extra fuzz command output differs\n";
-      abort();
+      Fatal() << "extra fuzz command output differs\n";
     }
   }
   return 0;
