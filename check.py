@@ -343,7 +343,7 @@ def run_unittest():
 
     # windows has some failures that need to be investigated
     if shared.skip_if_on_windows('unit'):
-        continue
+        return
 
     # equivalent to `python -m unittest discover -s ./test -v`
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))
