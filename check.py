@@ -288,6 +288,9 @@ def run_gcc_tests():
     if not shared.NATIVECC or not shared.NATIVEXX:
         shared.fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
+    # windows + gcc will need some work
+    if shared.skip_if_on_windows('gcc'):
+        return
 
     for t in sorted(os.listdir(shared.get_test_dir('example'))):
         output_file = 'example'
