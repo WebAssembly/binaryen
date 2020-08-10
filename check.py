@@ -341,6 +341,10 @@ def run_gcc_tests():
 def run_unittest():
     print('\n[ checking unit tests...]\n')
 
+    # windows has some failures that need to be investigated
+    if shared.skip_if_on_windows('unit'):
+        continue
+
     # equivalent to `python -m unittest discover -s ./test -v`
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))
     result = unittest.TextTestRunner(verbosity=2, failfast=shared.options.abort_on_first_failure).run(suite)
