@@ -99,12 +99,11 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return ret;
 }
 
-void WasmBinaryWriter::writeResizableLimits(Address initial,
-                                            Address maximum,
-                                            bool hasMaximum,
-                                            bool shared) {
+void WasmBinaryWriter::writeResizableLimits(
+  Address initial, Address maximum, bool hasMaximum, bool shared, bool is64) {
   uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U);
+                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
+                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -203,7 +202,8 @@ void WasmBinaryWriter::writeMemory() {
   writeResizableLimits(wasm->memory.initial,
                        wasm->memory.max,
                        wasm->memory.hasMax(),
-                       wasm->memory.shared);
+                       wasm->memory.shared,
+                       wasm->memory.is64());
   finishSection(start);
 }
 
@@ -267,7 +267,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->memory.initial,
                          wasm->memory.max,
                          wasm->memory.hasMax(),
-                         wasm->memory.shared);
+                         wasm->memory.shared,
+                         wasm->memory.is64());
   }
   if (wasm->table.imported()) {
     BYN_TRACE("write one table\n");
@@ -277,7 +278,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->table.initial,
                          wasm->table.max,
                          wasm->table.hasMax(),
-                         /*shared=*/false);
+                         /*shared=*/false,
+                         /*is64*/ false);
   }
   finishSection(start);
 }
@@ -505,7 +507,8 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   writeResizableLimits(wasm->table.initial,
                        wasm->table.max,
                        wasm->table.hasMax(),
-                       /*shared=*/false);
+                       /*shared=*/false,
+                       /*is64*/ false);
   finishSection(start);
 }
 
@@ -752,6 +755,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::MultivalueFeature;
       case FeatureSet::GC:
         return BinaryConsts::UserSections::GCFeature;
+      case FeatureSet::Memory64:
+        return BinaryConsts::UserSections::Memory64Feature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1317,6 +1322,7 @@ void WasmBinaryBuilder::readMemory() {
   getResizableLimits(wasm.memory.initial,
                      wasm.memory.max,
                      wasm.memory.shared,
+                     wasm.memory.indexType,
                      Memory::kUnlimitedSize);
 }
 
@@ -1370,15 +1376,18 @@ Name WasmBinaryBuilder::getEventName(Index index) {
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
                                            Address& max,
                                            bool& shared,
+                                           Type& indexType,
                                            Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
   bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
   bool isShared = (flags & BinaryConsts::IsShared) != 0;
+  bool is64 = (flags & BinaryConsts::Is64) != 0;
   if (isShared && !hasMax) {
     throwError("shared memory must have max size");
   }
   shared = isShared;
+  indexType = is64 ? Type::i64 : Type::i32;
   if (hasMax) {
     max = getU32LEB();
   } else {
@@ -1425,10 +1434,17 @@ void WasmBinaryBuilder::readImports() {
         }
         wasm.table.exists = true;
         bool is_shared;
-        getResizableLimits(
-          wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+        Type indexType;
+        getResizableLimits(wasm.table.initial,
+                           wasm.table.max,
+                           is_shared,
+                           indexType,
+                           Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
+        }
+        if (indexType == Type::i64) {
+          throwError("Tables may not be 64-bit");
         }
         break;
       }
@@ -1440,6 +1456,7 @@ void WasmBinaryBuilder::readImports() {
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
                            wasm.memory.shared,
+                           wasm.memory.indexType,
                            Memory::kUnlimitedSize);
         break;
       }
@@ -2096,10 +2113,17 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
     throwError("ElementType must be funcref in MVP");
   }
   bool is_shared;
-  getResizableLimits(
-    wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+  Type indexType;
+  getResizableLimits(wasm.table.initial,
+                     wasm.table.max,
+                     is_shared,
+                     indexType,
+                     Table::kUnlimitedSize);
   if (is_shared) {
     throwError("Tables may not be shared");
+  }
+  if (indexType == Type::i64) {
+    throwError("Tables may not be 64-bit");
   }
 }
 
@@ -2309,6 +2333,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setMultivalue();
       } else if (name == BinaryConsts::UserSections::GCFeature) {
         wasm.features.setGC();
+      } else if (name == BinaryConsts::UserSections::Memory64Feature) {
+        wasm.features.setMemory64();
       }
     }
   }
@@ -2452,14 +2478,24 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnExn:
       visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
-    case BinaryConsts::MemorySize:
-      visitMemorySize(
-        (curr = allocator.alloc<MemorySize>())->cast<MemorySize>());
+    case BinaryConsts::MemorySize: {
+      auto size = allocator.alloc<MemorySize>();
+      if (wasm.memory.is64()) {
+        size->make64();
+      }
+      curr = size;
+      visitMemorySize(size);
       break;
-    case BinaryConsts::MemoryGrow:
-      visitMemoryGrow(
-        (curr = allocator.alloc<MemoryGrow>())->cast<MemoryGrow>());
+    }
+    case BinaryConsts::MemoryGrow: {
+      auto grow = allocator.alloc<MemoryGrow>();
+      if (wasm.memory.is64()) {
+        grow->make64();
+      }
+      curr = grow;
+      visitMemoryGrow(grow);
       break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
