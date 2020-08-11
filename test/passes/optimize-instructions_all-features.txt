@@ -3775,6 +3775,12 @@
     (local.get $src)
    )
   )
+  (v128.store align=4
+   (local.get $dst)
+   (v128.load align=4
+    (local.get $src)
+   )
+  )
   (memory.copy
    (local.get $dst)
    (local.get $src)

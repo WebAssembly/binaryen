@@ -1400,6 +1400,7 @@ private:
   Expression* optimizeBulkMemory(Expression* curr) {
     if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
       FeatureSet features = getModule()->features;
+      PassOptions options = getPassOptions();
 
       // memory.copy(x, x, sz)  ==>  nop
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source) &&
@@ -1440,8 +1441,24 @@ private:
                 builder.makeLoad(size, false, 0, 4, memCopy->source, Type::i64),
                 Type::i64);
             }
+            case 16: {
+              if (options.shrinkLevel == 0) {
+                // this increase add extra 2 bytes so apply it only for
+                // minmal shrink levels
+                if (features.hasSIMD()) {
+                  return builder.makeStore(
+                    size, // bytes
+                    0,    // offset
+                    4,    // align
+                    memCopy->dest,
+                    builder.makeLoad(
+                      size, false, 0, 4, memCopy->source, Type::v128),
+                    Type::v128);
+                }
+              }
+            }
             // TODO:
-            // case 3, 5, 6, 7 and 16 (if SIMD available)
+            // case 3, 5, 6, 7 ... 15? But for -O4?
             default: {
             }
           }

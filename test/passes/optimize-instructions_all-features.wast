@@ -4294,6 +4294,12 @@
       (i32.const 8)
     )
 
+     (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
     (memory.copy  ;; skip
       (local.get $dst)
       (local.get $src)
