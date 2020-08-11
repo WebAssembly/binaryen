@@ -1445,7 +1445,7 @@ private:
             case 16: {
               if (options.shrinkLevel == 0) {
                 // this increase add extra 2 bytes so apply it only for
-                // minmal shrink levels
+                // minimal shrink level
                 if (features.hasSIMD()) {
                   return builder.makeStore(
                     bytes, // bytes
