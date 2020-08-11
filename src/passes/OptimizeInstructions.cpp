@@ -1414,9 +1414,9 @@ private:
                .hasSideEffects() &&
             !EffectAnalyzer(getPassOptions(), features, memCopy->source)
                .hasSideEffects()) {
-          auto size = csize->value.geti32();
+          auto bytes = csize->value.geti32();
           Builder builder(*getModule());
-          switch (size) {
+          switch (bytes) {
             case 0: {
               return builder.makeNop();
             }
@@ -1424,21 +1424,22 @@ private:
             case 2:
             case 4: {
               return builder.makeStore(
-                size, // bytes
-                0,    // offset
-                size, // align
+                bytes, // bytes
+                0,     // offset
+                bytes, // align
                 memCopy->dest,
                 builder.makeLoad(
-                  size, false, 0, size, memCopy->source, Type::i32),
+                  bytes, false, 0, bytes, memCopy->source, Type::i32),
                 Type::i32);
             }
             case 8: {
               return builder.makeStore(
-                size, // bytes
-                0,    // offset
-                4,    // align
+                bytes, // bytes
+                0,     // offset
+                bytes, // align
                 memCopy->dest,
-                builder.makeLoad(size, false, 0, 4, memCopy->source, Type::i64),
+                builder.makeLoad(
+                  bytes, false, 0, bytes, memCopy->source, Type::i64),
                 Type::i64);
             }
             case 16: {
@@ -1447,12 +1448,12 @@ private:
                 // minmal shrink levels
                 if (features.hasSIMD()) {
                   return builder.makeStore(
-                    size, // bytes
-                    0,    // offset
-                    4,    // align
+                    bytes, // bytes
+                    0,     // offset
+                    bytes, // align
                     memCopy->dest,
                     builder.makeLoad(
-                      size, false, 0, 4, memCopy->source, Type::v128),
+                      bytes, false, 0, bytes, memCopy->source, Type::v128),
                     Type::v128);
                 }
               }
