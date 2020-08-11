@@ -709,6 +709,12 @@ struct OptimizeInstructions
           store->value = unary->value;
         }
       }
+    } else {
+      if (features.hasBulkMemory()) {
+        if (auto* ret = optimizeBulkMemory(curr)) {
+          return ret;
+        }
+      }
     }
     return nullptr;
   }
@@ -1389,6 +1395,59 @@ private:
     rightConst->value = rightConst->value.sub(extra);
     binary->left = left->left;
     return binary;
+  }
+
+  Expression* optimizeBulkMemory(Expression* curr) {
+    if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
+      FeatureSet features = getModule()->features;
+
+      // memory.copy(x, x, sz)  ==>  nop
+      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source) &&
+          !EffectAnalyzer(getPassOptions(), features, memCopy->dest)
+             .hasSideEffects()) {
+        return Builder(*getModule()).makeNop();
+      }
+      // memory.copy(dst, src, C)  ==>  store(dst, load(src))
+      if (auto* csize = memCopy->size->dynCast<Const>()) {
+        if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
+               .hasSideEffects() &&
+            !EffectAnalyzer(getPassOptions(), features, memCopy->source)
+               .hasSideEffects()) {
+          auto size = csize->value.geti32();
+          Builder builder(*getModule());
+          switch (size) {
+            case 0: {
+              return builder.makeNop();
+            }
+            case 1:
+            case 2:
+            case 4: {
+              return builder.makeStore(
+                size, // bytes
+                0,    // offset
+                size,    // align
+                memCopy->dest,
+                builder.makeLoad(size, false, 0, size, memCopy->source, Type::i32),
+                Type::i32);
+            }
+            case 8: {
+              return builder.makeStore(
+                size, // bytes
+                0,    // offset
+                4,    // align
+                memCopy->dest,
+                builder.makeLoad(size, false, 0, 4, memCopy->source, Type::i64),
+                Type::i64);
+            }
+            // TODO:
+            // case 3, 5, 6, 7 and 16 (if SIMD available)
+            default: {
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 
   // given a binary expression with equal children and no side effects in
