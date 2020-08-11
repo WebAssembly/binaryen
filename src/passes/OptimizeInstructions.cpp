@@ -992,6 +992,9 @@ private:
     }
     if (auto* c = walked->dynCast<Const>()) {
       assert(c->value.getInteger() == 0LL);
+      // Accumulated 64-bit constant value in 32-bit context will be wrapped
+      // during downcasting. So it's valid unification for 32-bit and 64-bit
+      // values.
       c->value = Literal::makeFromInt64(constant, c->type);
       return c;
     }
