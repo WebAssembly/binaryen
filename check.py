@@ -102,8 +102,6 @@ def run_wasm_dis_tests():
 
         shared.with_pass_debug(check)
 
-        shared.validate_binary(t)
-
 
 def run_crash_tests():
     print("\n[ checking we don't crash on tricky inputs... ]\n")

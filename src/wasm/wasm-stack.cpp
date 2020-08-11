@@ -632,6 +632,12 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
     case LoadExtUVec32x2ToVecI64x2:
       o << U32LEB(BinaryConsts::I64x2LoadExtUVec32x2);
       break;
+    case Load32Zero:
+      o << U32LEB(BinaryConsts::V128Load32Zero);
+      break;
+    case Load64Zero:
+      o << U32LEB(BinaryConsts::V128Load64Zero);
+      break;
   }
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);

@@ -1528,6 +1528,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 2;
       break;
     case LoadSplatVec32x4:
+    case Load32Zero:
       defaultAlign = 4;
       break;
     case LoadSplatVec64x2:
@@ -1537,6 +1538,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       defaultAlign = 8;
       break;
   }
