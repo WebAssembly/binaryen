@@ -1425,9 +1425,10 @@ private:
               return builder.makeStore(
                 size, // bytes
                 0,    // offset
-                size,    // align
+                size, // align
                 memCopy->dest,
-                builder.makeLoad(size, false, 0, size, memCopy->source, Type::i32),
+                builder.makeLoad(
+                  size, false, 0, size, memCopy->source, Type::i32),
                 Type::i32);
             }
             case 8: {
