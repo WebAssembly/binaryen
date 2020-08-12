@@ -1410,58 +1410,59 @@ private:
       }
       // memory.copy(dst, src, C)  ==>  store(dst, load(src))
       if (auto* csize = memCopy->size->dynCast<Const>()) {
-        if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
-               .hasSideEffects() &&
-            !EffectAnalyzer(getPassOptions(), features, memCopy->source)
-               .hasSideEffects()) {
-          auto bytes = csize->value.geti32();
-          Builder builder(*getModule());
-          switch (bytes) {
-            case 0: {
+        auto bytes = csize->value.geti32();
+        Builder builder(*getModule());
+
+        switch (bytes) {
+          case 0: {
+            if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
+                   .hasSideEffects() &&
+                !EffectAnalyzer(getPassOptions(), features, memCopy->source)
+                   .hasSideEffects()) {
               return builder.makeNop();
             }
-            case 1:
-            case 2:
-            case 4: {
-              return builder.makeStore(
-                bytes, // bytes
-                0,     // offset
-                bytes, // align
-                memCopy->dest,
-                builder.makeLoad(
-                  bytes, false, 0, bytes, memCopy->source, Type::i32),
-                Type::i32);
-            }
-            case 8: {
-              return builder.makeStore(
-                bytes, // bytes
-                0,     // offset
-                bytes, // align
-                memCopy->dest,
-                builder.makeLoad(
-                  bytes, false, 0, bytes, memCopy->source, Type::i64),
-                Type::i64);
-            }
-            case 16: {
-              if (options.shrinkLevel == 0) {
-                // this increase add extra 2 bytes so apply it only for
-                // minimal shrink level
-                if (features.hasSIMD()) {
-                  return builder.makeStore(
-                    bytes, // bytes
-                    0,     // offset
-                    bytes, // align
-                    memCopy->dest,
-                    builder.makeLoad(
-                      bytes, false, 0, bytes, memCopy->source, Type::v128),
-                    Type::v128);
-                }
+          }
+          case 1:
+          case 2:
+          case 4: {
+            return builder.makeStore(
+              bytes, // bytes
+              0,     // offset
+              bytes, // align
+              memCopy->dest,
+              builder.makeLoad(
+                bytes, false, 0, bytes, memCopy->source, Type::i32),
+              Type::i32);
+          }
+          case 8: {
+            return builder.makeStore(
+              bytes, // bytes
+              0,     // offset
+              bytes, // align
+              memCopy->dest,
+              builder.makeLoad(
+                bytes, false, 0, bytes, memCopy->source, Type::i64),
+              Type::i64);
+          }
+          case 16: {
+            if (options.shrinkLevel == 0) {
+              // this increase add extra 2 bytes so apply it only for
+              // minimal shrink level
+              if (features.hasSIMD()) {
+                return builder.makeStore(
+                  bytes, // bytes
+                  0,     // offset
+                  bytes, // align
+                  memCopy->dest,
+                  builder.makeLoad(
+                    bytes, false, 0, bytes, memCopy->source, Type::v128),
+                  Type::v128);
               }
             }
-            // TODO:
-            // case 3, 5, 6, 7 ... 15? But for -O4?
-            default: {
-            }
+          }
+          // TODO:
+          // case 3, 5, 6, 7 ... 15? But for -O4?
+          default: {
           }
         }
       }
