@@ -376,13 +376,13 @@ else:
 
 # 11/27/2019: We updated the spec test suite to upstream spec repo. For some
 # files that started failing after this update, we added the new files to this
-# blacklist and preserved old ones by renaming them to 'old_[FILENAME].wast'
+# skip-list and preserved old ones by renaming them to 'old_[FILENAME].wast'
 # not to lose coverage. When the cause of the error is fixed or the unsupported
 # construct gets support so the new test passes, we can delete the
 # corresponding 'old_[FILENAME].wast' file. When you fix the new file and
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
-SPEC_TEST_BLACKLIST = [
+SPEC_TESTS_TO_SKIP = [
     # Stacky code / notation
     'block.wast',
     'call.wast',
@@ -437,7 +437,7 @@ SPEC_TEST_BLACKLIST = [
     'unreached-invalid.wast'  # 'assert_invalid' failure
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in SPEC_TEST_BLACKLIST]
+                      in SPEC_TESTS_TO_SKIP]
 
 
 # check utilities
@@ -507,3 +507,13 @@ def with_pass_debug(check):
         else:
             if 'BINARYEN_PASS_DEBUG' in os.environ:
                 del os.environ['BINARYEN_PASS_DEBUG']
+
+
+# checks if we are on windows, and if so logs out that a test is being skipped,
+# and returns True. This is a central location for all test skipping on
+# windows, so that we can easily find which tests are skipped.
+def skip_if_on_windows(name):
+    if get_platform() == 'windows':
+        print('skipping test "%s" on windows' % name)
+        return True
+    return False
