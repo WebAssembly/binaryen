@@ -1423,6 +1423,7 @@ private:
                    .hasSideEffects()) {
               return builder.makeNop();
             }
+            break;
           }
           case 1:
           case 2:
