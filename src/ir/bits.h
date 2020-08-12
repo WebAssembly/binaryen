@@ -150,6 +150,9 @@ Index getMaxBits(Expression* curr,
       }
       case SubInt32: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        if (maxBitsLeft == 32 || maxBitsLeft == 0) {
+          return 32;
+        }
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
         if (maxBitsLeft <= maxBitsRight) {
           return 32;
@@ -277,6 +280,9 @@ Index getMaxBits(Expression* curr,
       }
       case SubInt64: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        if (maxBitsLeft == 64 || maxBitsLeft == 0) {
+          return 64;
+        }
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
         if (maxBitsLeft <= maxBitsRight) {
           return 64;
