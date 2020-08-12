@@ -1,0 +1,69 @@
+(module
+ (type $0 (func))
+ (func $func1 (; 0 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $func2 (; 1 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $func3 (; 2 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $func4 (; 3 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $func5 (; 4 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $func6 (; 5 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+)

@@ -333,6 +333,9 @@ void PassRegistry::registerPasses() {
     "simplify-locals-notee-nostructure",
     "miscellaneous locals-related optimizations (no tees or structure)",
     createSimplifyLocalsNoTeeNoStructurePass);
+  registerPass("sort-blocks",
+               "reorders blocks canonically",
+               createSortBlocksPass);
   registerPass("souperify", "emit Souper IR in text form", createSouperifyPass);
   registerPass("souperify-single-use",
                "emit Souper IR in text form (single-use nodes only)",
@@ -463,6 +466,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs");   // coalesce-locals opens opportunities
   add("remove-unused-names"); // remove-unused-brs opens opportunities
   add("merge-blocks");        // clean up remove-unused-brs new blocks
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("sort-blocks");
+  }
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");

@@ -408,8 +408,10 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 }
 
 // hash an expression, ignoring superficial details like specific internal names
-HashType ExpressionAnalyzer::hash(Expression* curr) {
+HashType ExpressionAnalyzer::hash(Expression* curr, bool deterministic) {
   struct Hasher {
+    bool deterministic;
+
     HashType digest = 0;
 
     Index internalCounter = 0;
@@ -423,7 +425,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
     }
 
-    Hasher(Expression* curr) {
+    Hasher(Expression* curr, bool deterministic) : deterministic(deterministic) {
       stack.push_back(curr);
 
       while (stack.size() > 0) {
@@ -474,10 +476,21 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       // (block $y (br $y))
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");
-      assert(internalNames.find(curr) != internalNames.end());
-      return hash(internalNames[curr]);
+      auto iter = internalNames.find(curr);
+      if (iter != internalNames.end()) {
+        hash(iter->second);
+      } else {
+        // Not an internal name, so hash the actual string name.
+        hashString(curr.str);
+      }
     }
-    void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
+    void visitNonScopeName(Name curr) {
+      if (!deterministic) {
+        hash64(uint64_t(curr.str));
+      } else {
+        hashString(curr.str);
+      }
+    }
     void visitInt(int32_t curr) { hash(curr); }
     void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
     void visitType(Type curr) { hash(int32_t(curr.getSingle())); }
@@ -491,9 +504,18 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
                     "wasm64 will need changes here");
       hash(int32_t(curr));
     }
+
+  private:
+    void hashString(const char* str) {
+      auto* p = str;
+      while (p) {
+        hash(*p++);
+      }
+      hash(p - str);
+    }
   };
 
-  return Hasher(curr).digest;
+  return Hasher(curr, deterministic).digest;
 }
 
 } // namespace wasm
