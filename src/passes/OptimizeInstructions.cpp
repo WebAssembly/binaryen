@@ -1402,10 +1402,13 @@ private:
       FeatureSet features = getModule()->features;
       PassOptions options = getPassOptions();
 
+      auto destHasSideEffects =
+        EffectAnalyzer(getPassOptions(), features, memCopy->dest)
+          .hasSideEffects();
+
       // memory.copy(x, x, sz)  ==>  nop
-      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source) &&
-          !EffectAnalyzer(getPassOptions(), features, memCopy->dest)
-             .hasSideEffects()) {
+      if (!destHasSideEffects &&
+          ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
         return Builder(*getModule()).makeNop();
       }
       // memory.copy(dst, src, C)  ==>  store(dst, load(src))
@@ -1415,8 +1418,7 @@ private:
 
         switch (bytes) {
           case 0: {
-            if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
-                   .hasSideEffects() &&
+            if (!destHasSideEffects &&
                 !EffectAnalyzer(getPassOptions(), features, memCopy->source)
                    .hasSideEffects()) {
               return builder.makeNop();
