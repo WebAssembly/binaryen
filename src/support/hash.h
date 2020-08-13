@@ -22,27 +22,22 @@
 
 namespace wasm {
 
-typedef uint32_t HashType;
-
-inline HashType rehash(HashType x, HashType y) {
-  // see http://www.cse.yorku.ca/~oz/hash.html and
-  // https://stackoverflow.com/a/2595226/1176841
-  HashType hash = 5381;
-  while (x) {
-    hash = ((hash << 5) + hash) ^ (x & 0xff);
-    x >>= 8;
-  }
-  while (y) {
-    hash = ((hash << 5) + hash) ^ (y & 0xff);
-    y >>= 8;
-  }
-  return hash;
+// Computes the digest of `value`.
+template<typename T> inline std::size_t hash(const T& value) {
+  return std::hash<T>{}(value);
 }
 
-inline uint64_t rehash(uint64_t x, uint64_t y) {
-  auto ret = rehash(HashType(x), HashType(x >> 32));
-  ret = rehash(ret, HashType(y));
-  return rehash(ret, HashType(y >> 32));
+// Combines two digests into the first digest. Use instead of `rehash` if
+// `otherDigest` is another digest and not a `size_t` value.
+static inline void hash_combine(std::size_t& digest, std::size_t otherDigest) {
+  // see boost/container_hash/hash.hpp
+  digest ^= otherDigest + 0x9e3779b9 + (digest << 6) + (digest >> 2);
+}
+
+// Hashes `value` and combines the resulting digest into the existing digest.
+// Use instead of `hash_combine` if `value` is not another digest.
+template<typename T> inline void rehash(std::size_t& digest, const T& value) {
+  hash_combine(digest, hash(value));
 }
 
 } // namespace wasm
