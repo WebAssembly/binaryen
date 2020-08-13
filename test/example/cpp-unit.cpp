@@ -264,8 +264,6 @@ void test_bits() {
   c1.type = Type::i64;
   b.type  = Type::i64;
 
-  // Const: i64
-
   c0.value = Literal(int64_t(0));
   assert_equal(getMaxBits(&c0), 0);
   c0.value = Literal(int64_t(1));
@@ -462,7 +460,6 @@ void test_bits() {
   c1.value = Literal(int64_t(-1));
   assert_equal(getMaxBits(&b), 64);
 
-  // Unary
   Unary u;
   c0.type = Type::i32;
   u.value = &c0;
