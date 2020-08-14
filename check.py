@@ -21,7 +21,6 @@ import sys
 import unittest
 from collections import OrderedDict
 
-from scripts.test import asm2wasm
 from scripts.test import binaryenjs
 from scripts.test import lld
 from scripts.test import shared
@@ -354,8 +353,6 @@ def run_unittest():
 TEST_SUITES = OrderedDict([
     ('help-messages', run_help_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
-    ('asm2wasm', asm2wasm.test_asm2wasm),
-    ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
     ('wasm-dis', run_wasm_dis_tests),
     ('crash', run_crash_tests),
     ('dylink', run_dylink_tests),
