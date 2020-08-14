@@ -336,7 +336,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::map<Index, LocalSet*> sets;
 
   AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
-    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges), segmentOffsets(getSegmentOffsets(wasm)) {}
+    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges),
+      segmentOffsets(getSegmentOffsets(wasm)) {}
 
   void noteNonLinear(Expression* curr);
 
@@ -521,7 +522,8 @@ void AsmConstWalker::addImports() {
   }
 }
 
-static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm, bool minimizeWasmChanges) {
+static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
+                                                    bool minimizeWasmChanges) {
   // Collect imports to remove
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
@@ -765,7 +767,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   std::stringstream meta;
   meta << "{\n";
 
-  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
+  AsmConstWalker emAsmWalker =
+    fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
 
   // print
   commaFirst = true;

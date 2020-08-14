@@ -35,7 +35,9 @@ public:
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
   void setSideModule(bool sideModule_) { sideModule = sideModule_; }
-  void setMinimizeWasmChanges(bool minimizeWasmChanges_) { minimizeWasmChanges = minimizeWasmChanges_; }
+  void setMinimizeWasmChanges(bool minimizeWasmChanges_) {
+    minimizeWasmChanges = minimizeWasmChanges_;
+  }
 
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
