@@ -341,12 +341,10 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
 
   void visitLocalSet(LocalSet* curr);
   void visitCall(Call* curr);
-  void visitTable(Table* curr);
 
   void process();
 
 private:
-  Signature fixupName(Name& name, Signature baseSig, Proxying proxy);
   AsmConst&
   createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
   Signature asmConstSig(Signature baseSig);
@@ -425,8 +423,7 @@ void AsmConstWalker::visitCall(Call* curr) {
   auto* value = arg->cast<Const>();
   int32_t address = value->value.geti32();
   auto code = codeForConstAddr(wasm, segmentOffsets, address);
-  auto& asmConst = createAsmConst(address, code, sig, importName);
-  fixupName(curr->target, baseSig, asmConst.proxy);
+  createAsmConst(address, code, sig, importName);
 }
 
 Proxying AsmConstWalker::proxyType(Name name) {
@@ -438,38 +435,12 @@ Proxying AsmConstWalker::proxyType(Name name) {
   return Proxying::None;
 }
 
-void AsmConstWalker::visitTable(Table* curr) {
-  for (auto& segment : curr->segments) {
-    for (auto& name : segment.data) {
-      auto* func = wasm.getFunction(name);
-      if (func->imported() && func->base.hasSubstring(EM_ASM_PREFIX)) {
-        auto proxy = proxyType(func->base);
-        fixupName(name, func->sig, proxy);
-      }
-    }
-  }
-}
-
 void AsmConstWalker::process() {
   // Find and queue necessary imports
   walkModule(&wasm);
   // Add them after the walk, to avoid iterator invalidation on
   // the list of functions.
   addImports();
-}
-
-Signature
-AsmConstWalker::fixupName(Name& name, Signature baseSig, Proxying proxy) {
-  auto sig = asmConstSig(baseSig);
-  auto importName = nameForImportWithSig(sig, proxy);
-  name = importName;
-
-  auto pair = std::make_pair(sig, proxy);
-  if (allSigs.count(pair) == 0) {
-    allSigs.insert(pair);
-    queueImport(importName, baseSig);
-  }
-  return sig;
 }
 
 AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
@@ -516,23 +487,10 @@ void AsmConstWalker::addImports() {
 }
 
 AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
-  // Collect imports to remove
-  // This would find our generated functions if we ran it later
-  std::vector<Name> toRemove;
-  for (auto& import : wasm.functions) {
-    if (import->imported() && import->base.hasSubstring(EM_ASM_PREFIX)) {
-      toRemove.push_back(import->name);
-    }
-  }
-
   // Walk the module, generate _sig versions of EM_ASM functions
   AsmConstWalker walker(wasm);
   walker.process();
 
-  // Remove the base functions that we didn't generate
-  for (auto importName : toRemove) {
-    wasm.removeFunction(importName);
-  }
   return walker;
 }
 
@@ -810,7 +768,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
-        !import->base.startsWith(EM_ASM_PREFIX.str) &&
         !import->base.startsWith("invoke_")) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';

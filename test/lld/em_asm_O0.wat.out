@@ -4,9 +4,9 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (import "env" "emscripten_asm_const_i" (func $emscripten_asm_const_i (param i32) (result i32)))
- (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
- (import "env" "emscripten_asm_const_ii" (func $emscripten_asm_const_ii (param i32 i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJEEiPKcDpT_ (param i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJiiEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJiiEEiPKcDpT_ (param i32 i32 i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJiEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJiEEiPKcDpT_ (param i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
@@ -23,7 +23,7 @@
   (local $t1 i32)
   (local $t2 i32)
   (drop
-   (call $emscripten_asm_const_i
+   (call $_Z24emscripten_asm_const_intIJEEiPKcDpT_
     (i32.const 568)
    )
   )
@@ -34,9 +34,9 @@
    (i32.const 601)
   )
   (drop
-   (call $emscripten_asm_const_ii
+   (call $_Z24emscripten_asm_const_intIJiEEiPKcDpT_
     (local.get $t1)
-    (call $emscripten_asm_const_iii
+    (call $_Z24emscripten_asm_const_intIJiiEEiPKcDpT_
      (local.get $t2)
      (i32.const 13)
      (i32.const 27)
@@ -68,6 +68,9 @@
     "__wasm_call_ctors"
   ],
   "declares": [
+    "_Z24emscripten_asm_const_intIJEEiPKcDpT_",
+    "_Z24emscripten_asm_const_intIJiiEEiPKcDpT_",
+    "_Z24emscripten_asm_const_intIJiEEiPKcDpT_"
   ],
   "externs": [
   ],
