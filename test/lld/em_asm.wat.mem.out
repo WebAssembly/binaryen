@@ -4,7 +4,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
+ (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66208))
@@ -28,7 +28,7 @@
    )
   )
   (drop
-   (call $emscripten_asm_const_int
+   (call $emscripten_asm_const_iii
     (i32.const 568)
     (i32.const 601)
     (i32.const 0)
@@ -40,7 +40,7 @@
   )
   (i32.store
    (local.get $0)
-   (call $emscripten_asm_const_int
+   (call $emscripten_asm_const_iii
     (i32.const 602)
     (i32.const 622)
     (i32.add
@@ -50,7 +50,7 @@
    )
   )
   (drop
-   (call $emscripten_asm_const_int
+   (call $emscripten_asm_const_iii
     (i32.const 625)
     (i32.const 656)
     (local.get $0)
@@ -87,7 +87,6 @@
     "__wasm_call_ctors"
   ],
   "declares": [
-    "emscripten_asm_const_int"
   ],
   "externs": [
   ],

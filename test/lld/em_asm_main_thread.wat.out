@@ -6,7 +6,7 @@
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (import "env" "emscripten_asm_const_int_sync_on_main_thread" (func $emscripten_asm_const_int_sync_on_main_thread (param i32 i32 i32) (result i32)))
+ (import "env" "emscripten_asm_const_sync_on_main_thread_iii" (func $emscripten_asm_const_sync_on_main_thread_iii (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
@@ -38,7 +38,7 @@
    (call $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29)
   )
   (drop
-   (call $emscripten_asm_const_int_sync_on_main_thread
+   (call $emscripten_asm_const_sync_on_main_thread_iii
     (i32.const 568)
     (i32.add
      (local.get $0)
@@ -65,7 +65,7 @@
     (i32.const 24)
    )
    (local.tee $1
-    (call $emscripten_asm_const_int_sync_on_main_thread
+    (call $emscripten_asm_const_sync_on_main_thread_iii
      (i32.const 601)
      (i32.add
       (local.get $0)
@@ -83,7 +83,7 @@
    (local.get $1)
   )
   (drop
-   (call $emscripten_asm_const_int_sync_on_main_thread
+   (call $emscripten_asm_const_sync_on_main_thread_iii
     (i32.const 621)
     (i32.add
      (local.get $0)
@@ -210,7 +210,6 @@
     "__wasm_call_ctors"
   ],
   "declares": [
-    "emscripten_asm_const_int_sync_on_main_thread"
   ],
   "externs": [
   ],

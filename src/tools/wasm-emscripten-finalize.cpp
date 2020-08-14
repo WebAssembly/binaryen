@@ -169,7 +169,7 @@ int main(int argc, const char* argv[]) {
          "development as we reduce the number of changes to the wasm, as it "
          "lets emscripten control how much modifications to do.",
          Options::Arguments::Zero,
-         [&standaloneWasm](Options* o, const std::string&) {
+         [&minimizeWasmChanges](Options* o, const std::string&) {
            minimizeWasmChanges = true;
          })
     .add_positional("INFILE",
