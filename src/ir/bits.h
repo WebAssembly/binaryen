@@ -161,9 +161,6 @@ Index getMaxBits(Expression* curr,
       }
       case MulInt32: {
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
-        if (maxBitsRight == 32) {
-          return 32;
-        }
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         return std::min(Index(32), maxBitsLeft + maxBitsRight);
       }
@@ -291,9 +288,6 @@ Index getMaxBits(Expression* curr,
       }
       case MulInt64: {
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
-        if (maxBitsRight == 64) {
-          return 64;
-        }
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         return std::min(Index(64), maxBitsLeft + maxBitsRight);
       }
