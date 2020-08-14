@@ -91,6 +91,9 @@ void test_bits() {
   c0.value = Literal(int32_t(2));
   c1.value = Literal(int32_t(-1));
   assert_equal(getMaxBits(&b), 32);
+  c0.value = Literal(int32_t(0));
+  c1.value = Literal(int32_t(1));
+  assert_equal(getMaxBits(&b), 32);
   c0.value = Literal(int32_t(0x7FFFFFF0));
   c1.value = Literal(int32_t(0x7FFFFFFF));
   assert_equal(getMaxBits(&b), 32);
@@ -295,6 +298,9 @@ void test_bits() {
   assert_equal(getMaxBits(&b), 64);
   c0.value = Literal(int64_t(2));
   c1.value = Literal(int64_t(-1));
+  assert_equal(getMaxBits(&b), 64);
+  c0.value = Literal(int64_t(0));
+  c1.value = Literal(int64_t(1));
   assert_equal(getMaxBits(&b), 64);
   c0.value = Literal(int64_t(0x7FFFFFFFFFFFFFF0));
   c1.value = Literal(int64_t(0x7FFFFFFFFFFFFFFF));
