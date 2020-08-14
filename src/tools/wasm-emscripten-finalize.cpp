@@ -56,6 +56,7 @@ int main(int argc, const char* argv[]) {
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
+  bool minimizeWasmChanges = false;
 
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -161,6 +162,15 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&standaloneWasm](Options* o, const std::string&) {
            standaloneWasm = true;
+         })
+    .add("--minimize-wasm-changes",
+         "",
+         "Modify the wasm as little as possible. This is useful during "
+         "development as we reduce the number of changes to the wasm, as it "
+         "lets emscripten control how much modifications to do.",
+         Options::Arguments::Zero,
+         [&standaloneWasm](Options* o, const std::string&) {
+           minimizeWasmChanges = true;
          })
     .add_positional("INFILE",
                     Options::Arguments::One,
