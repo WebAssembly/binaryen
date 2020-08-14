@@ -320,6 +320,7 @@ std::string proxyingSuffix(Proxying proxy) {
 
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
+  bool minimizeWasmChanges;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   struct AsmConst {
@@ -334,8 +335,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
-  AsmConstWalker(Module& _wasm)
-    : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
+  AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
+    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges), segmentOffsets(getSegmentOffsets(wasm)) {}
 
   void noteNonLinear(Expression* curr);
 
@@ -520,7 +521,7 @@ void AsmConstWalker::addImports() {
   }
 }
 
-AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
+static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm, bool minimizeWasmChanges) {
   // Collect imports to remove
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
@@ -533,7 +534,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   }
 
   // Walk the module, generate _sig versions of EM_ASM functions
-  AsmConstWalker walker(wasm);
+  AsmConstWalker walker(wasm, minimizeWasmChanges);
   walker.process();
 
   if (!minimizeWasmChanges) {
@@ -764,7 +765,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   std::stringstream meta;
   meta << "{\n";
 
-  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
+  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
 
   // print
   commaFirst = true;

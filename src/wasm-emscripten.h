@@ -35,6 +35,7 @@ public:
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
   void setSideModule(bool sideModule_) { sideModule = sideModule_; }
+  void setMinimizeWasmChanges(bool minimizeWasmChanges_) { minimizeWasmChanges = minimizeWasmChanges_; }
 
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
@@ -71,6 +72,7 @@ private:
   bool useStackPointerGlobal;
   bool standalone;
   bool sideModule;
+  bool minimizeWasmChanges;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;

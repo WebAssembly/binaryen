@@ -234,6 +234,7 @@ int main(int argc, const char* argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.setStandalone(standaloneWasm);
   generator.setSideModule(sideModule);
+  generator.setMinimizeWasmChanges(minimizeWasmChanges);
 
   generator.fixInvokeFunctionNames();
 
