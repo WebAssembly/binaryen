@@ -1516,7 +1516,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             assert(params[i] == Type::f64 ||
                    curr->operands[i]->type == Type::unreachable);
             // overloaded, upgrade to f64
-            TODO_SINGLE_COMPOUND(curr->operands[i]->type);
             switch (curr->operands[i]->type.getBasic()) {
               case Type::i32:
                 curr->operands[i] = parent->builder.makeUnary(
@@ -1540,7 +1539,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           if (importResults == Type::f64) {
             // we use a JS f64 value which is the most general, and convert to
             // it
-            TODO_SINGLE_COMPOUND(old);
             switch (old.getBasic()) {
               case Type::i32: {
                 Unary* trunc =

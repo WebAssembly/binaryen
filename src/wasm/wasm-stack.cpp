@@ -668,7 +668,6 @@ void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
-  TODO_SINGLE_COMPOUND(curr->type);
   switch (curr->type.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());

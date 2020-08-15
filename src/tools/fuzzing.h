@@ -1797,7 +1797,9 @@ private:
 
     switch (type.getBasic()) {
       case Type::i32: {
-        switch (getSingleConcreteType().getBasic()) {
+        auto singleConcreteType = getSingleConcreteType();
+        TODO_SINGLE_COMPOUND(singleConcreteType);
+        switch (singleConcreteType.getBasic()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()

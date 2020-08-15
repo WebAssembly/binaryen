@@ -176,6 +176,7 @@ double Literal::getFloat() const {
 
 void Literal::getBits(uint8_t (&buf)[16]) const {
   memset(buf, 0, 16);
+  TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
