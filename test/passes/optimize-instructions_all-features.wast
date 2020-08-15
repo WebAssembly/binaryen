@@ -4233,6 +4233,71 @@
       )
     ))
   )
+  (func $duplicate-elimination (param $x i32) (param $y i32) (param $z f64)
+    ;; unary
+    (drop (f64.abs (f64.abs (local.get $z))))
+    (drop (f64.ceil (f64.ceil (local.get $z))))
+    (drop (f64.floor (f64.floor (local.get $z))))
+    (drop (f64.trunc (f64.trunc (local.get $z))))
+    (drop (f64.nearest (f64.nearest (local.get $z))))
+
+    (drop (f64.nearest (f64.trunc (local.get $z)))) ;; skip
+    (drop (f64.trunc (f64.nearest (local.get $z)))) ;; skip
+
+    (drop (f64.neg (f64.neg (local.get $z))))
+    (drop (f64.neg (f64.neg (f64.neg (local.get $z)))))
+    (drop (f64.neg (f64.neg (f64.neg (f64.neg (local.get $z))))))
+
+    ;; binary
+    ;; 0 - (0 - y)
+    (drop (i32.sub
+      (i32.const 0)
+      (i32.sub
+        (i32.const 0)
+        (local.get $y)
+      )
+    ))
+    ;; x - (x - y)
+    (drop (i32.sub
+      (local.get $x)
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; y - (x - y)
+    (drop (i32.sub ;; skip
+      (local.get $y)
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x ^ (x ^ y)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x & (x & y)
+    (drop (i32.and
+      (local.get $x)
+      (i32.and
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x | (x | y)
+    (drop (i32.or
+      (local.get $x)
+      (i32.or
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

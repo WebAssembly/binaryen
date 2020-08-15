@@ -10,6 +10,7 @@
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3721,6 +3722,88 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $duplicate-elimination (param $x i32) (param $y i32) (param $z f64)
+  (drop
+   (f64.abs
+    (local.get $z)
+   )
+  )
+  (drop
+   (f64.ceil
+    (local.get $z)
+   )
+  )
+  (drop
+   (f64.floor
+    (local.get $z)
+   )
+  )
+  (drop
+   (f64.trunc
+    (local.get $z)
+   )
+  )
+  (drop
+   (f64.nearest
+    (local.get $z)
+   )
+  )
+  (drop
+   (f64.nearest
+    (f64.trunc
+     (local.get $z)
+    )
+   )
+  )
+  (drop
+   (f64.trunc
+    (f64.nearest
+     (local.get $z)
+    )
+   )
+  )
+  (drop
+   (local.get $z)
+  )
+  (drop
+   (f64.neg
+    (local.get $z)
+   )
+  )
+  (drop
+   (local.get $z)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (i32.sub
+    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
+    (local.get $y)
    )
   )
  )
