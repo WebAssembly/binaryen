@@ -1520,16 +1520,16 @@ private:
       case SubInt64:
       case XorInt64:
         return LiteralUtils::makeZero(binary->left->type, *getModule());
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case GtSInt64:
-      case GtUInt64:
       case NeInt32:
       case LtSInt32:
       case LtUInt32:
       case GtSInt32:
       case GtUInt32:
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case GtSInt64:
+      case GtUInt64:
         return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
