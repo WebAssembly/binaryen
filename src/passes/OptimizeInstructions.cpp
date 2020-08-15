@@ -1378,31 +1378,28 @@ private:
   }
 
   Expression* deduplicateUnary(Unary* unaryOuter) {
-    Type type = unaryOuter->type;
-    if (type.isFloat()) {
-      if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-        // unaryOp(unaryOp(x))  ==>   unaryOp(x)
-        // neg(neg(x))          ==>   x
-        if (unaryInner->op == unaryOuter->op && type == unaryInner->type) {
-          switch (unaryInner->op) {
-            case AbsFloat32:
-            case CeilFloat32:
-            case FloorFloat32:
-            case TruncFloat32:
-            case NearestFloat32:
-            case AbsFloat64:
-            case CeilFloat64:
-            case FloorFloat64:
-            case TruncFloat64:
-            case NearestFloat64: {
-              return unaryInner;
-            }
-            case NegFloat32:
-            case NegFloat64: {
-              return unaryInner->value;
-            }
-            default: {
-            }
+    if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+      // unaryOp(unaryOp(x))  ==>   unaryOp(x)
+      // neg(neg(x))          ==>   x
+      if (unaryInner->op == unaryOuter->op) {
+        switch (unaryInner->op) {
+          case AbsFloat32:
+          case CeilFloat32:
+          case FloorFloat32:
+          case TruncFloat32:
+          case NearestFloat32:
+          case AbsFloat64:
+          case CeilFloat64:
+          case FloorFloat64:
+          case TruncFloat64:
+          case NearestFloat64: {
+            return unaryInner;
+          }
+          case NegFloat32:
+          case NegFloat64: {
+            return unaryInner->value;
+          }
+          default: {
           }
         }
       }
@@ -1414,7 +1411,7 @@ private:
     Type type = binaryOuter->type;
     if (type.isInteger()) {
       if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
-        if (binaryOuter->op == binaryInner->op && type == binaryInner->type) {
+        if (binaryOuter->op == binaryInner->op) {
           if (!EffectAnalyzer(
                  getPassOptions(), getModule()->features, binaryOuter->left)
                  .hasSideEffects()) {
