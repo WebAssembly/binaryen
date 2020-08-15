@@ -1414,14 +1414,14 @@ private:
       if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
         if (binaryOuter->op == binaryInner->op && type == binaryInner->type) {
           if (ExpressionAnalyzer::equal(binaryInner->left, binaryOuter->left)) {
-            // y - (y - x)  ==>   x
-            // y ^ (y ^ x)  ==>   x
+            // x - (x - y)  ==>   y
+            // x ^ (x ^ y)  ==>   y
             if (binaryOuter->op == Abstract::getBinary(type, Abstract::Sub) ||
                 binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
               return binaryInner->right;
             }
-            // y & (y & x)  ==>   y & x
-            // y | (y | x)  ==>   y | x
+            // x & (x & y)  ==>   x & y
+            // x | (x | y)  ==>   x | y
             if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
                 binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
               return binaryInner;
@@ -1437,8 +1437,8 @@ private:
             if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
               return binaryInner->left;
             }
-            // (x | y) | y  ==>   x | y
             // (x & y) & y  ==>   x & y
+            // (x | y) | y  ==>   x | y
             if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
                 binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
               return binaryInner;
