@@ -734,7 +734,8 @@ private:
         return 2;
       case 8:
         return 3;
-      default: {}
+      default: {
+      }
     }
     abort();
     return -1; // avoid warning
@@ -1515,7 +1516,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             assert(params[i] == Type::f64 ||
                    curr->operands[i]->type == Type::unreachable);
             // overloaded, upgrade to f64
-            switch (curr->operands[i]->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(curr->operands[i]->type);
+            switch (curr->operands[i]->type.getBasic()) {
               case Type::i32:
                 curr->operands[i] = parent->builder.makeUnary(
                   ConvertSInt32ToFloat64, curr->operands[i]);
@@ -1524,7 +1526,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
                 curr->operands[i] =
                   parent->builder.makeUnary(PromoteFloat32, curr->operands[i]);
                 break;
-              default: {} // f64, unreachable, etc., are all good
+              default: {
+                // f64, unreachable, etc., are all good
+              }
             }
           }
         }
@@ -1536,7 +1540,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           if (importResults == Type::f64) {
             // we use a JS f64 value which is the most general, and convert to
             // it
-            switch (old.getSingle()) {
+            TODO_SINGLE_COMPOUND(old);
+            switch (old.getBasic()) {
               case Type::i32: {
                 Unary* trunc =
                   parent->builder.makeUnary(TruncSFloat64ToInt32, curr);

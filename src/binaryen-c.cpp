@@ -51,7 +51,7 @@ static_assert(sizeof(BinaryenLiteral) == sizeof(Literal),
 BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
   ret.type = x.type.getID();
-  switch (x.type.getSingle()) {
+  switch (x.type.getBasic()) {
     case Type::i32:
       ret.i32 = x.geti32();
       break;
@@ -151,7 +151,8 @@ uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
 void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
   const std::vector<Type>& types = Type(t).expand();
   for (size_t i = 0; i < types.size(); ++i) {
-    buf[i] = types[i].getSingle();
+    TODO_SINGLE_COMPOUND(types[i]);
+    buf[i] = types[i].getBasic();
   }
 }
 
