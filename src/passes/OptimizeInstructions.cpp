@@ -1376,29 +1376,31 @@ private:
   }
 
   Expression* deduplicateUnary(Unary* unaryOuter) {
-    if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-      // unaryOp(unaryOp(x))  ==>   unaryOp(x)
-      // neg(neg(x))          ==>   x
-      if (unaryInner->op == unaryOuter->op &&
-          unaryInner->type == unaryOuter->type) {
-        switch (unaryInner->op) {
-          case AbsFloat32:
-          case CeilFloat32:
-          case FloorFloat32:
-          case TruncFloat32:
-          case NearestFloat32:
-          case AbsFloat64:
-          case CeilFloat64:
-          case FloorFloat64:
-          case TruncFloat64:
-          case NearestFloat64: {
-            return unaryInner;
-          }
-          case NegFloat32:
-          case NegFloat64: {
-            return unaryInner->value;
-          }
-          default: {
+    Type type = unaryOuter->type;
+    if (type.isFloat()) {
+      if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+        // unaryOp(unaryOp(x))  ==>   unaryOp(x)
+        // neg(neg(x))          ==>   x
+        if (unaryInner->op == unaryOuter->op && type == unaryInner->type) {
+          switch (unaryInner->op) {
+            case AbsFloat32:
+            case CeilFloat32:
+            case FloorFloat32:
+            case TruncFloat32:
+            case NearestFloat32:
+            case AbsFloat64:
+            case CeilFloat64:
+            case FloorFloat64:
+            case TruncFloat64:
+            case NearestFloat64: {
+              return unaryInner;
+            }
+            case NegFloat32:
+            case NegFloat64: {
+              return unaryInner->value;
+            }
+            default: {
+            }
           }
         }
       }
@@ -1407,38 +1409,40 @@ private:
   }
 
   Expression* deduplicateBinary(Binary* binaryOuter) {
-    if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
-      if (binaryOuter->op == binaryInner->op &&
-          binaryOuter->type == binaryInner->type) {
-        if (ExpressionAnalyzer::equal(binaryInner->left, binaryOuter->left)) {
-          // y - (y - x)  ==>   x
-          // y ^ (y ^ x)  ==>   x
-          if (binaryOuter->op == SubInt32 || binaryOuter->op == SubInt64 ||
-              binaryOuter->op == XorInt32 || binaryOuter->op == XorInt64) {
-            return binaryInner->right;
-          }
-          // y & (y & x)  ==>   y & x
-          // y | (y | x)  ==>   y | x
-          if (binaryOuter->op == AndInt32 || binaryOuter->op == AndInt64 ||
-              binaryOuter->op == OrInt32 || binaryOuter->op == OrInt64) {
-            return binaryInner;
+    Type type = binaryOuter->type;
+    if (type.isInteger()) {
+      if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
+        if (binaryOuter->op == binaryInner->op && type == binaryInner->type) {
+          if (ExpressionAnalyzer::equal(binaryInner->left, binaryOuter->left)) {
+            // y - (y - x)  ==>   x
+            // y ^ (y ^ x)  ==>   x
+            if (binaryOuter->op == Abstract::getBinary(type, Abstract::Sub) ||
+                binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
+              return binaryInner->right;
+            }
+            // y & (y & x)  ==>   y & x
+            // y | (y | x)  ==>   y | x
+            if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
+                binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
+              return binaryInner;
+            }
           }
         }
       }
-    }
-    if (auto* binaryInner = binaryOuter->left->dynCast<Binary>()) {
-      if (binaryOuter->op == binaryInner->op &&
-          binaryOuter->type == binaryInner->type) {
-        if (ExpressionAnalyzer::equal(binaryInner->right, binaryOuter->right)) {
-          // (x ^ y) ^ y  ==>   x
-          if (binaryOuter->op == XorInt32 || binaryOuter->op == XorInt64) {
-            return binaryInner->left;
-          }
-          // (x | y) | y  ==>   x | y
-          // (x & y) & y  ==>   x & y
-          if (binaryOuter->op == OrInt32 || binaryOuter->op == OrInt64 ||
-              binaryOuter->op == AndInt32 || binaryOuter->op == AndInt64) {
-            return binaryInner;
+      if (auto* binaryInner = binaryOuter->left->dynCast<Binary>()) {
+        if (binaryOuter->op == binaryInner->op && type == binaryInner->type) {
+          if (ExpressionAnalyzer::equal(binaryInner->right,
+                                        binaryOuter->right)) {
+            // (x ^ y) ^ y  ==>   x
+            if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
+              return binaryInner->left;
+            }
+            // (x | y) | y  ==>   x | y
+            // (x & y) & y  ==>   x & y
+            if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
+                binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
+              return binaryInner;
+            }
           }
         }
       }
