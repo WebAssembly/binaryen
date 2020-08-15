@@ -49,7 +49,7 @@ size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
 }
 
 size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
-  auto digest = hash<uint64_t>{}(field.type.getID());
+  auto digest = wasm::hash(field.type.getID());
   wasm::rehash(digest, uint32_t(field.packedType));
   wasm::rehash(digest, field.mutable_);
   return digest;
