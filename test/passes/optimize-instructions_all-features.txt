@@ -1299,10 +1299,7 @@
   (drop
    (i32.and
     (local.get $0)
-    (i32.and
-     (local.get $0)
-     (i32.const 11)
-    )
+    (i32.const 11)
    )
   )
   (drop

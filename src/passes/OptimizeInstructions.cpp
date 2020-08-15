@@ -204,6 +204,9 @@ struct OptimizeInstructions
       if (Properties::isSymmetric(binary)) {
         canonicalize(binary);
       }
+      if (auto* ret = deduplicateBinary(binary)) {
+        return ret;
+      }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
@@ -521,6 +524,9 @@ struct OptimizeInstructions
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
+      if (auto* ret = deduplicateUnary(unary)) {
+        return ret;
+      }
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to invert a relational operation using De Morgan's law
@@ -1362,6 +1368,80 @@ private:
                 }
               }
             }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* deduplicateUnary(Unary* unaryOuter) {
+    if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+      // unaryOp(unaryOp(x))  ==>   unaryOp(x)
+      // neg(neg(x))          ==>   x
+      if (unaryInner->op == unaryOuter->op &&
+          unaryInner->type == unaryOuter->type) {
+        switch (unaryInner->op) {
+          case AbsFloat32:
+          case CeilFloat32:
+          case FloorFloat32:
+          case TruncFloat32:
+          case NearestFloat32:
+          case AbsFloat64:
+          case CeilFloat64:
+          case FloorFloat64:
+          case TruncFloat64:
+          case NearestFloat64:
+          case ExtendSInt32:
+          case ExtendUInt32:
+          case WrapInt64: {
+            return unaryInner;
+          }
+          case NegFloat32:
+          case NegFloat64: {
+            return unaryInner->value;
+          }
+          default: {
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* deduplicateBinary(Binary* binaryOuter) {
+    if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
+      if (binaryOuter->op == binaryInner->op &&
+          binaryOuter->type == binaryInner->type) {
+        if (ExpressionAnalyzer::equal(binaryInner->left, binaryOuter->left)) {
+          // y - (y - x)  ==>   x
+          // y ^ (y ^ x)  ==>   x
+          if (binaryOuter->op == SubInt32 || binaryOuter->op == SubInt64 ||
+              binaryOuter->op == XorInt32 || binaryOuter->op == XorInt64) {
+            return binaryInner->right;
+          }
+          // y & (y & x)  ==>   y & x
+          // y | (y | x)  ==>   y | x
+          if (binaryOuter->op == AndInt32 || binaryOuter->op == AndInt64 ||
+              binaryOuter->op == OrInt32 || binaryOuter->op == OrInt64) {
+            return binaryInner;
+          }
+        }
+      }
+    }
+    if (auto* binaryInner = binaryOuter->left->dynCast<Binary>()) {
+      if (binaryOuter->op == binaryInner->op &&
+          binaryOuter->type == binaryInner->type) {
+        if (ExpressionAnalyzer::equal(binaryInner->right, binaryOuter->right)) {
+          // (x ^ y) ^ y  ==>   x
+          if (binaryOuter->op == XorInt32 || binaryOuter->op == XorInt64) {
+            return binaryInner->left;
+          }
+          // (x | y) | y  ==>   x | y
+          // (x & y) & y  ==>   x & y
+          if (binaryOuter->op == OrInt32 || binaryOuter->op == OrInt64 ||
+              binaryOuter->op == AndInt32 || binaryOuter->op == AndInt64) {
+            return binaryInner;
           }
         }
       }
