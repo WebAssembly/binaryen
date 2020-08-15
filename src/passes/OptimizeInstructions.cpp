@@ -204,9 +204,6 @@ struct OptimizeInstructions
       if (Properties::isSymmetric(binary)) {
         canonicalize(binary);
       }
-      if (auto* ret = deduplicateBinary(binary)) {
-        return ret;
-      }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
@@ -523,10 +520,11 @@ struct OptimizeInstructions
           return optimizeBinaryWithEqualEffectlessChildren(binary);
         }
       }
-    } else if (auto* unary = curr->dynCast<Unary>()) {
-      if (auto* ret = deduplicateUnary(unary)) {
+
+      if (auto* ret = deduplicateBinary(binary)) {
         return ret;
       }
+    } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to invert a relational operation using De Morgan's law
@@ -544,6 +542,10 @@ struct OptimizeInstructions
           unary->value = makeZeroExt(ext, bits);
           return unary;
         }
+      }
+
+      if (auto* ret = deduplicateUnary(unary)) {
+        return ret;
       }
     } else if (auto* set = curr->dynCast<GlobalSet>()) {
       // optimize out a set of a get
