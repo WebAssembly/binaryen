@@ -1391,10 +1391,7 @@ private:
           case CeilFloat64:
           case FloorFloat64:
           case TruncFloat64:
-          case NearestFloat64:
-          case ExtendSInt32:
-          case ExtendUInt32:
-          case WrapInt64: {
+          case NearestFloat64: {
             return unaryInner;
           }
           case NegFloat32:
