@@ -4233,20 +4233,20 @@
       )
     ))
   )
-  (func $duplicate-elimination (param $x i32) (param $y i32) (param $z f64)
+  (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
     ;; unary
-    (drop (f64.abs (f64.abs (local.get $z))))
-    (drop (f64.ceil (f64.ceil (local.get $z))))
-    (drop (f64.floor (f64.floor (local.get $z))))
-    (drop (f64.trunc (f64.trunc (local.get $z))))
-    (drop (f64.nearest (f64.nearest (local.get $z))))
+    (drop (f64.abs (f64.abs (local.get $w))))
+    (drop (f64.ceil (f64.ceil (local.get $w))))
+    (drop (f64.floor (f64.floor (local.get $w))))
+    (drop (f64.trunc (f64.trunc (local.get $w))))
+    (drop (f64.nearest (f64.nearest (local.get $w))))
 
-    (drop (f64.nearest (f64.trunc (local.get $z)))) ;; skip
-    (drop (f64.trunc (f64.nearest (local.get $z)))) ;; skip
+    (drop (f64.nearest (f64.trunc (local.get $w)))) ;; skip
+    (drop (f64.trunc (f64.nearest (local.get $w)))) ;; skip
 
-    (drop (f64.neg (f64.neg (local.get $z))))
-    (drop (f64.neg (f64.neg (f64.neg (local.get $z)))))
-    (drop (f64.neg (f64.neg (f64.neg (f64.neg (local.get $z))))))
+    (drop (f64.neg (f64.neg (local.get $w))))
+    (drop (f64.neg (f64.neg (f64.neg (local.get $w)))))
+    (drop (f64.neg (f64.neg (f64.neg (f64.neg (local.get $w))))))
 
     ;; binary
     ;; 0 - (0 - y)
@@ -4265,8 +4265,8 @@
         (local.get $y)
       )
     ))
-    ;; y - (x - y)
-    (drop (i32.sub ;; skip
+    ;; y - (x - y)   -   skip
+    (drop (i32.sub
       (local.get $y)
       (i32.sub
         (local.get $x)
@@ -4321,6 +4321,30 @@
         (local.get $y)
       )
     ))
+    ;; x & (y & x)
+    (drop (i32.and
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x & y) & x
+    (drop (i32.and
+      (i32.and
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y & x) & x
+    (drop (i32.and
+      (i32.and
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
     ;; x | (x | y)
     (drop (i32.or
       (local.get $x)
@@ -4328,6 +4352,46 @@
         (local.get $x)
         (local.get $y)
       )
+    ))
+    ;; x | (y | x)
+    (drop (i32.or
+      (local.get $x)
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x | y) | x
+    (drop (i32.or
+      (i32.or
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y | x) | x
+    (drop (i32.or
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; (y | x) | z   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $z)
+    ))
+    ;; (z | x) | y   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $z)
+        (local.get $x)
+      )
+      (local.get $y)
     ))
   )
 )
