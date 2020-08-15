@@ -3795,6 +3795,18 @@
    (local.get $y)
   )
   (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
    (i32.and
     (local.get $x)
     (local.get $y)

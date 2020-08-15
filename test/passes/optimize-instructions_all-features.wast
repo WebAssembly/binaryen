@@ -4281,6 +4281,38 @@
         (local.get $y)
       )
     ))
+    ;; x ^ (y ^ x)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x ^ y) ^ x
+    (drop (i32.xor
+      (i32.xor
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y ^ x) ^ x
+    (drop (i32.xor
+      (i32.xor
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; x ^ (x ^ x)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (local.get $x)
+      )
+    ))
     ;; x & (x & y)
     (drop (i32.and
       (local.get $x)
