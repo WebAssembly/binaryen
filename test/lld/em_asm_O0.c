@@ -1,7 +1,8 @@
 #include <emscripten.h>
 
-int main() {
+int main(int argc, char **argv) {
   EM_ASM({ Module.print("Hello world"); });
+  int ret = EM_ASM_INT({ return $0 + $1; }, 20, 30);
   EM_ASM({ Module.print("Got " + $0); }, 42);
-  return EM_ASM_INT({ return $0 + $1; }, 20, 30);
+  return ret;
 }
