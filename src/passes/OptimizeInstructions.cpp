@@ -1448,7 +1448,7 @@ private:
         }
       }
       if (auto* binaryInner = binaryOuter->left->dynCast<Binary>()) {
-        if (binaryOuter->op == binaryInner->op && type == binaryInner->type) {
+        if (binaryOuter->op == binaryInner->op) {
           if (!EffectAnalyzer(
                  getPassOptions(), getModule()->features, binaryOuter->right)
                  .hasSideEffects()) {
