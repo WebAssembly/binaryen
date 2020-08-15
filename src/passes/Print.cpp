@@ -485,6 +485,12 @@ struct PrintExpressionContents
       case LoadExtUVec32x2ToVecI64x2:
         o << "i64x2.load32x2_u";
         break;
+      case Load32Zero:
+        o << "v128.load32_zero";
+        break;
+      case Load64Zero:
+        o << "v128.load64_zero";
+        break;
     }
     restoreNormalColor(o);
     if (curr->offset) {

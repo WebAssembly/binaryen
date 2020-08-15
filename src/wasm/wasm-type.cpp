@@ -30,63 +30,63 @@ namespace std {
 template<> class hash<vector<wasm::Type>> {
 public:
   size_t operator()(const vector<wasm::Type>& types) const {
-    auto res = hash<size_t>{}(types.size());
+    auto digest = wasm::hash(types.size());
     for (auto t : types) {
-      wasm::hash_combine(res, t.getID());
+      wasm::rehash(digest, t.getID());
     }
-    return res;
+    return digest;
   }
 };
 
 size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
-  return hash<uint64_t>{}(type.getID());
+  return wasm::hash(type.getID());
 }
 
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
-  auto res = hash<uint64_t>{}(sig.params.getID());
-  wasm::hash_combine(res, sig.results.getID());
-  return res;
+  auto digest = wasm::hash(sig.params.getID());
+  wasm::rehash(digest, sig.results.getID());
+  return digest;
 }
 
 size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
-  auto res = hash<uint64_t>{}(field.type.getID());
-  wasm::hash_combine(res, uint32_t(field.packedType));
-  wasm::hash_combine(res, field.mutable_);
-  return res;
+  auto digest = hash<uint64_t>{}(field.type.getID());
+  wasm::rehash(digest, uint32_t(field.packedType));
+  wasm::rehash(digest, field.mutable_);
+  return digest;
 }
 
 size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
   auto kind = typeDef.kind;
-  auto res = hash<uint32_t>{}(uint32_t(kind));
+  auto digest = wasm::hash(uint32_t(kind));
   switch (kind) {
     case wasm::TypeDef::TupleKind: {
       auto& types = typeDef.tupleDef.tuple.types;
       for (auto t : types) {
-        wasm::hash_combine(res, t.getID());
+        wasm::rehash(digest, t.getID());
       }
-      return res;
+      return digest;
     }
     case wasm::TypeDef::SignatureKind: {
       auto& sig = typeDef.signatureDef.signature;
-      wasm::hash_combine(res, sig.params.getID());
-      wasm::hash_combine(res, sig.results.getID());
-      wasm::hash_combine(res, typeDef.isNullable());
-      return res;
+      wasm::rehash(digest, sig.params.getID());
+      wasm::rehash(digest, sig.results.getID());
+      wasm::rehash(digest, typeDef.isNullable());
+      return digest;
     }
     case wasm::TypeDef::StructKind: {
       auto& fields = typeDef.structDef.struct_.fields;
-      wasm::hash_combine(res, fields.size());
+      wasm::rehash(digest, fields.size());
       for (auto f : fields) {
-        wasm::hash_combine(res, f);
+        wasm::rehash(digest, f);
       }
-      wasm::hash_combine(res, typeDef.isNullable());
-      return res;
+      wasm::rehash(digest, typeDef.isNullable());
+      return digest;
     }
     case wasm::TypeDef::ArrayKind: {
       auto& array = typeDef.arrayDef.array;
-      wasm::hash_combine(res, array.element);
-      wasm::hash_combine(res, typeDef.isNullable());
-      return res;
+      wasm::rehash(digest, array.element);
+      wasm::rehash(digest, typeDef.isNullable());
+      return digest;
     }
   }
   WASM_UNREACHABLE("unexpected kind");

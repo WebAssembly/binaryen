@@ -15,6 +15,15 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v96
+---
+- Fuzzing: Compare wasm2js to the interpreter (#3026)
+- Fix CountLeadingZeroes on MSVC, which lead to bad optimizations (#3028)
+- Asyncify verbose option (#3022)
+- wasm2js: Add an "Export" scope for name resolution, avoids annoying
+  warnings (#2998)
+- Extend the C- and JS-APIs (#2586)
+
 v95
 ---
 

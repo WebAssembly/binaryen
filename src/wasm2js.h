@@ -85,7 +85,13 @@ IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
+//
+// Export: Export names
+// Top: The main scope which contains functions and globals
+// Local: Local variables in a function.
+// Label: Label identifiers in a function
 enum class NameScope {
+  Export,
   Top,
   Local,
   Label,
@@ -181,11 +187,15 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& mangledScope = mangledNames[(int)scope];
-    auto it = mangledScope.find(name.c_str());
-    if (it != mangledScope.end()) {
+    auto& map = wasmNameToMangledName[(int)scope];
+    auto it = map.find(name.c_str());
+    if (it != map.end()) {
       return it->second;
     }
+    // The mangled names in our scope.
+    auto& scopeMangledNames = mangledNames[(int)scope];
+    // In some cases (see below) we need to also check the Top scope.
+    auto& topMangledNames = mangledNames[int(NameScope::Top)];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -203,28 +213,30 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!allMangledNames.count(ret)) {
-        break;
+      if (scopeMangledNames.count(ret)) {
+        // When export names collide things may be confusing, as this is
+        // observable externally by the person using the JS. Report a warning.
+        if (scope == NameScope::Export) {
+          std::cerr << "wasm2js: warning: export names colliding: " << mangled
+                    << '\n';
+        }
+        continue;
       }
-
-      // In the global scope that's how you refer to actual function exports, so
-      // it's a bug currently if they're not globally unique. This should
-      // probably be fixed via a different namespace for exports or something
-      // like that.
-      // XXX This is not actually a valid check atm, since functions are not in
-      //     the global-most scope, but rather in the "asmFunc" scope which is
-      //     inside it. Also, for emscripten style glue, we emit the exports as
-      //     a return, so there is no name placed into the scope. For these
-      //     reasons, just warn here, don't error.
-      if (scope == NameScope::Top) {
-        std::cerr << "wasm2js: warning: global scope may be colliding with "
-                     "other scope: "
-                  << mangled << '\n';
+      // The Local scope is special: a Local name must not collide with a Top
+      // name, as they are in a single namespace in JS and can conflict:
+      //
+      // function foo(bar) {
+      //   var bar = 0;
+      // }
+      // function bar() { ..
+      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+        continue;
       }
+      // We found a good name, use it.
+      scopeMangledNames.insert(ret);
+      map[name.c_str()] = ret;
+      return ret;
     }
-    allMangledNames.insert(ret);
-    mangledScope[name.c_str()] = ret;
-    return ret;
   }
 
 private:
@@ -238,8 +250,10 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNames[(int)NameScope::Max];
-  std::unordered_set<IString> allMangledNames;
+  std::unordered_map<const char*, IString>
+    wasmNameToMangledName[(int)NameScope::Max];
+  // Set of all mangled names in each scope.
+  std::unordered_set<IString> mangledNames[(int)NameScope::Max];
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -383,16 +397,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
 
-  // make sure exports get their expected names
-  for (auto& e : wasm->exports) {
-    if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Top);
-    }
-  }
+  // Note the names of functions. We need to do this here as when generating
+  // mangled local names we need them not to conflict with these (see fromName)
+  // so we can't wait until we parse each function to note its name.
   for (auto& f : wasm->functions) {
     fromName(f->name, NameScope::Top);
   }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
+
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
@@ -589,7 +600,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObjectWithQuotes(
         exports,
-        fromName(export_->name, NameScope::Top),
+        fromName(export_->name, NameScope::Export),
         ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -615,7 +626,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
                               IString("prototype")));
       ValueBuilder::appendToCall(memory, descs);
       ValueBuilder::appendToObjectWithQuotes(
-        exports, fromName(export_->name, NameScope::Top), memory);
+        exports, fromName(export_->name, NameScope::Export), memory);
     }
   }
   if (wasm->memory.exists) {

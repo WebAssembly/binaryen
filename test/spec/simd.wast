@@ -232,6 +232,8 @@
  (func (export "i32x4.load16x4_s") (param $0 i32) (result v128) (i32x4.load16x4_s (local.get $0)))
  (func (export "i64x2.load32x2_u") (param $0 i32) (result v128) (i64x2.load32x2_u (local.get $0)))
  (func (export "i64x2.load32x2_s") (param $0 i32) (result v128) (i64x2.load32x2_s (local.get $0)))
+ (func (export "v128.load32_zero") (param $0 i32) (result v128) (v128.load32_zero (local.get $0)))
+ (func (export "v128.load64_zero") (param $0 i32) (result v128) (v128.load64_zero (local.get $0)))
  (func (export "v8x16.swizzle") (param $0 v128) (param $1 v128) (result v128) (v8x16.swizzle (local.get $0) (local.get $1)))
 )
 
@@ -944,6 +946,8 @@
 (assert_return (invoke "i32x4.load16x4_u" (i32.const 256)) (v128.const i32x4 0x00009080 0x0000b0a0 0x0000d0c0 0x0000f0e0))
 (assert_return (invoke "i64x2.load32x2_s" (i32.const 256)) (v128.const i64x2 0xffffffffb0a09080 0xfffffffff0e0d0c0))
 (assert_return (invoke "i64x2.load32x2_u" (i32.const 256)) (v128.const i64x2 0x00000000b0a09080 0x00000000f0e0d0c0))
+(assert_return (invoke "v128.load32_zero" (i32.const 256)) (v128.const i32x4 0xb0a09080 0 0 0))
+(assert_return (invoke "v128.load64_zero" (i32.const 256)) (v128.const i64x2 0xf0e0d0c0b0a09080 0))
 (assert_return
   (invoke "v8x16.swizzle"
     (v128.const i8x16 0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7 0xf8 0xf9 0xfa 0xfb 0xfc 0xfd 0xfe 0xff)

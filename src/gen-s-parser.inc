@@ -2676,9 +2676,20 @@ switch (op[0]) {
               case 'c':
                 if (strcmp(op, "v128.const") == 0) { return makeConst(s, Type::v128); }
                 goto parse_error;
-              case 'l':
-                if (strcmp(op, "v128.load") == 0) { return makeLoad(s, Type::v128, /*isAtomic=*/false); }
-                goto parse_error;
+              case 'l': {
+                switch (op[9]) {
+                  case '\0':
+                    if (strcmp(op, "v128.load") == 0) { return makeLoad(s, Type::v128, /*isAtomic=*/false); }
+                    goto parse_error;
+                  case '3':
+                    if (strcmp(op, "v128.load32_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32Zero); }
+                    goto parse_error;
+                  case '6':
+                    if (strcmp(op, "v128.load64_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64Zero); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'n':
                 if (strcmp(op, "v128.not") == 0) { return makeUnary(s, UnaryOp::NotVec128); }
                 goto parse_error;

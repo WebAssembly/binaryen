@@ -1546,6 +1546,38 @@ private:
       }
     }
 
+    // Optional tweaking of the value by a small adjustment.
+    auto tweak = [this, type](Literal value) {
+      // +- 1
+      switch (upTo(5)) {
+        case 0:
+          value = value.add(Literal::makeFromInt32(-1, type));
+          break;
+        case 1:
+          value = value.add(Literal::makeFromInt32(1, type));
+          break;
+        default: {
+        }
+      }
+      // For floats, optionally add a non-integer adjustment in +- [-1, 1]
+      if (type.isFloat() && oneIn(2)) {
+        const int RANGE = 1000;
+        auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
+        // adjustment -> [0, 2 * RANGE]
+        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
+        // adjustment -> [-RANGE, RANGE]
+        adjustment = adjustment.sub(RANGE_LITERAL);
+        // adjustment -> [-1, 1]
+        adjustment = adjustment.div(RANGE_LITERAL);
+        value = value.add(adjustment);
+      }
+      // Flip sign.
+      if (oneIn(2)) {
+        value = value.mul(Literal::makeFromInt32(-1, type));
+      }
+      return value;
+    };
+
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
@@ -1680,14 +1712,7 @@ private:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
-        // tweak around special values
-        if (oneIn(3)) { // +- 1
-          value = value.add(Literal::makeFromInt32(upTo(3) - 1, type));
-        }
-        if (oneIn(2)) { // flip sign
-          value = value.mul(Literal::makeFromInt32(-1, type));
-        }
-        return value;
+        return tweak(value);
       }
       case 3: {
         // powers of 2
@@ -1714,14 +1739,10 @@ private:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
-        // maybe negative
-        if (oneIn(2)) {
-          value = value.mul(Literal::makeFromInt32(-1, type));
-        }
-        return value;
+        return tweak(value);
       }
     }
-    WASM_UNREACHABLE("invalide value");
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeConst(Type type) {
@@ -2523,6 +2544,7 @@ private:
   }
 
   Expression* makeSIMDLoad() {
+    // TODO: add Load{32,64}Zero if merged to proposal
     SIMDLoadOp op = pick(LoadSplatVec8x16,
                          LoadSplatVec16x8,
                          LoadSplatVec32x4,
@@ -2554,6 +2576,9 @@ private:
       case LoadExtUVec32x2ToVecI64x2:
         align = pick(1, 2, 4, 8);
         break;
+      case Load32Zero:
+      case Load64Zero:
+        WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();
     return builder.makeSIMDLoad(op, offset, align, ptr);

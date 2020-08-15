@@ -4600,6 +4600,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDLoad>();
       curr->op = LoadExtUVec32x2ToVecI64x2;
       break;
+    case BinaryConsts::V128Load32Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load32Zero;
+      break;
+    case BinaryConsts::V128Load64Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load64Zero;
+      break;
     default:
       return false;
   }
