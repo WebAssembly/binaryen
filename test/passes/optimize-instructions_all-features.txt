@@ -3887,6 +3887,21 @@
     (call $ne0)
    )
   )
+  (drop
+   (i32.or
+    (call $ne0)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.or
+    (call $ne0)
+    (i32.or
+     (call $ne0)
+     (local.get $x)
+    )
+   )
+  )
  )
 )
 (module
