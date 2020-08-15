@@ -4393,6 +4393,22 @@
       )
       (local.get $y)
     ))
+    ;; (SE() | x) | x
+    (drop (i32.or
+      (i32.or
+        (call $ne0) ;; side effect
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; (x | SE()) | SE()   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $x)
+        (call $ne0) ;; side effect
+      )
+      (call $ne0) ;; side effect
+    ))
   )
 )
 (module
