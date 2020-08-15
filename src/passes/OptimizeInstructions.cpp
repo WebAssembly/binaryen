@@ -1512,7 +1512,6 @@ private:
 
   // given a binary expression with equal children and no side effects in
   // either, we can fold various things
-  // TODO: trinaries, things like (x & (y & x)) ?
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
     // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {
