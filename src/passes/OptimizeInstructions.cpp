@@ -1427,7 +1427,8 @@ private:
               return binaryInner;
             }
           }
-          if (ExpressionAnalyzer::equal(binaryInner->right, binaryOuter->left)) {
+          if (ExpressionAnalyzer::equal(binaryInner->right,
+                                        binaryOuter->left)) {
             // x ^ (y ^ x)  ==>   y
             if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
               return binaryInner->left;
