@@ -809,12 +809,6 @@ void Unary::finalize() {
 
 bool Binary::isRelational() {
   switch (op) {
-    case EqFloat64:
-    case NeFloat64:
-    case LtFloat64:
-    case LeFloat64:
-    case GtFloat64:
-    case GeFloat64:
     case EqInt32:
     case NeInt32:
     case LtSInt32:
@@ -841,6 +835,12 @@ bool Binary::isRelational() {
     case LeFloat32:
     case GtFloat32:
     case GeFloat32:
+    case EqFloat64:
+    case NeFloat64:
+    case LtFloat64:
+    case LeFloat64:
+    case GtFloat64:
+    case GeFloat64:
       return true;
     default:
       return false;
