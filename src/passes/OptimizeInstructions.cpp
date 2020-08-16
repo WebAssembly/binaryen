@@ -367,13 +367,11 @@ struct OptimizeInstructions
             }
           }
         }
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       } else if (binary->op == SubInt32) {
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       }
@@ -400,8 +398,7 @@ struct OptimizeInstructions
           }
         }
         // some math operations have trivial results
-        Expression* ret = optimizeWithConstantOnRight(binary);
-        if (ret) {
+        if (auto* ret = optimizeWithConstantOnRight(binary)) {
           return ret;
         }
         // the square of some operations can be merged
@@ -464,8 +461,7 @@ struct OptimizeInstructions
       }
       // a bunch of operations on a constant left side can be simplified
       if (binary->left->is<Const>()) {
-        Expression* ret = optimizeWithConstantOnLeft(binary);
-        if (ret) {
+        if (auto* ret = optimizeWithConstantOnLeft(binary)) {
           return ret;
         }
       }
