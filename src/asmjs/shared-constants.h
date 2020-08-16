@@ -103,6 +103,12 @@ extern cashew::IString WASM_I64_SDIV;
 extern cashew::IString WASM_I64_UDIV;
 extern cashew::IString WASM_I64_SREM;
 extern cashew::IString WASM_I64_UREM;
+// wasm2js constants
+extern cashew::IString ASM_FUNC;
+extern cashew::IString ABORT_FUNC;
+extern cashew::IString FUNCTION_TABLE;
+extern cashew::IString NO_RESULT;
+extern cashew::IString EXPRESSION_RESULT;
 } // namespace wasm
 
 #endif // wasm_asmjs_shared_constants_h

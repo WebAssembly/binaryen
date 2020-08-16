@@ -794,7 +794,7 @@
   )
  )
  (func $test
-  (local $0 anyref)
+  (local $0 externref)
   (local $1 nullref)
   (local $2 nullref)
   (block $label$1

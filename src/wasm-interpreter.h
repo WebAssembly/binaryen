@@ -495,12 +495,28 @@ public:
         return value.negF32x4();
       case SqrtVecF32x4:
         return value.sqrtF32x4();
+      case CeilVecF32x4:
+        return value.ceilF32x4();
+      case FloorVecF32x4:
+        return value.floorF32x4();
+      case TruncVecF32x4:
+        return value.truncF32x4();
+      case NearestVecF32x4:
+        return value.nearestF32x4();
       case AbsVecF64x2:
         return value.absF64x2();
       case NegVecF64x2:
         return value.negF64x2();
       case SqrtVecF64x2:
         return value.sqrtF64x2();
+      case CeilVecF64x2:
+        return value.ceilF64x2();
+      case FloorVecF64x2:
+        return value.floorF64x2();
+      case TruncVecF64x2:
+        return value.truncF64x2();
+      case NearestVecF64x2:
+        return value.nearestF64x2();
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
@@ -1222,6 +1238,7 @@ public:
   Flow visitSIMDLoad(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
@@ -1626,7 +1643,7 @@ public:
         case Type::v128:
           return Literal(load128(addr).data());
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:
@@ -1683,7 +1700,7 @@ public:
           store128(addr, value.getv128());
           break;
         case Type::funcref:
-        case Type::anyref:
+        case Type::externref:
         case Type::nullref:
         case Type::exnref:
         case Type::none:
@@ -2158,6 +2175,9 @@ private:
         case LoadExtSVec32x2ToVecI64x2:
         case LoadExtUVec32x2ToVecI64x2:
           return visitSIMDLoadExtend(curr);
+        case Load32Zero:
+        case Load64Zero:
+          return visitSIMDLoadZero(curr);
       }
       WASM_UNREACHABLE("invalid op");
     }
@@ -2249,6 +2269,24 @@ private:
           WASM_UNREACHABLE("unexpected op");
       }
       WASM_UNREACHABLE("invalid op");
+    }
+    Flow visitSIMDLoadZero(SIMDLoad* curr) {
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address src = instance.getFinalAddress(
+        curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
+      auto zero =
+        Literal::makeSingleZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
+      if (curr->op == Load32Zero) {
+        auto val = Literal(instance.externalInterface->load32u(src));
+        return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
+      } else {
+        auto val = Literal(instance.externalInterface->load64u(src));
+        return Literal(std::array<Literal, 2>{{val, zero}});
+      }
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");

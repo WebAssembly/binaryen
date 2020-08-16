@@ -1749,4 +1749,54 @@
       )
     )
   )
+
+  (func $bar (result i32) (i32.const 3))
+  (func $call-cannot-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee should NOT be sinked into 'try' below, because it may
+      ;; throw
+      (local.tee $0 (call $bar))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
+
+  (func $non-call-can-be-sinked-into-try (local $0 i32)
+    (drop
+      ;; This local.tee can be sinked into 'try' below, because it cannot throw
+      (local.tee $0 (i32.const 3))
+    )
+    (try
+      (do
+        (drop (local.get $0))
+      )
+      (catch
+        (drop (exnref.pop))
+      )
+    )
+  )
+)
+;; data.drop has global side effects
+(module
+ (memory $0 (shared 1 1))
+ (data passive "data")
+ (func "foo" (result i32)
+  (local $0 i32)
+  (block (result i32)
+   (local.set $0
+    (i32.rem_u     ;; will trap, so cannot be reordered to the end
+     (i32.const 0)
+     (i32.const 0)
+    )
+   )
+   (data.drop 0)   ;; has global side effects that may be noticed later
+   (local.get $0)
+  )
+ )
 )

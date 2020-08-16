@@ -18,7 +18,6 @@
 // wasm2js console tool
 //
 
-#include "wasm2js.h"
 #include "optimization-options.h"
 #include "pass.h"
 #include "support/colors.h"
@@ -63,7 +62,7 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
 template<typename T> static void printJS(Ref ast, T& output) {
   JSPrinter jser(true, true, ast);
   jser.printAst();
-  output << jser.buffer << std::endl;
+  output << jser.buffer << '\n';
 }
 
 // Traversals
@@ -255,29 +254,34 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBinary(node, XOR, 1)) {
-      // x ^ 1  =>  !x
-      node[0]->setString(UNARY_PREFIX);
-      node[1]->setString(L_NOT);
-      node[3]->setNull();
-    } else if (isOrZero(node) || isTrshiftZero(node)) {
-      // Just being different from 0 is enough, casts don't matter. However,
-      // in deterministic mode we care about corner cases that would trap in
-      // wasm, like an integer divide by zero:
-      //
-      //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
-      //
-      // while
-      //
-      //  if (1 / 0)  =>  condition is Infinity which is truthy
-      //
-      // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
-      // which has the right truthiness).
-      if (!(flags.deterministic && isBinary(node[2], DIV))) {
-        return node[2];
-      }
-    }
+    // TODO: in some cases it may be possible to turn
+    //
+    //   if (x | 0)
+    //
+    // into
+    //
+    //   if (x)
+    //
+    // In general this is unsafe if e.g. x is -2147483648 + -2147483648 (which
+    // the | 0 turns into 0, but without it is a truthy value).
+    //
+    // Another issue is that in deterministic mode we care about corner cases
+    // that would trap in wasm, like an integer divide by zero:
+    //
+    //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
+    //
+    // while
+    //
+    //  if (1 / 0)  =>  condition is Infinity which is truthy
+    //
+    // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
+    // which has the right truthiness), so we could perhaps do
+    //
+    //   if (!(flags.deterministic && isBinary(node[2], DIV))) return node[2];
+    //
+    // (but there is still the first issue).
     return node;
   };
 
@@ -564,6 +568,11 @@ private:
                          Element& e,
                          Name testFuncName,
                          Name asmModule);
+  Ref emitInvokeFunc(Builder& wasmBuilder,
+                     Element& e,
+                     Name testFuncName,
+                     Name asmModule);
+  bool isInvokeHandled(Element& e);
   bool isAssertHandled(Element& e);
   void fixCalls(Ref asmjs, Name asmModule);
 
@@ -587,8 +596,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* body = nullptr;
   if (e.size() == 2) {
     if (actual->type == Type::none) {
-      body = wasmBuilder.blockify(actual,
-                                  wasmBuilder.makeConst(Literal(uint32_t(1))));
+      body = wasmBuilder.blockify(actual, wasmBuilder.makeConst(uint32_t(1)));
     } else {
       body = actual;
     }
@@ -689,6 +697,28 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   emitFunction(outerFunc);
   return outerFunc;
+}
+
+Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
+                                     Element& e,
+                                     Name testFuncName,
+                                     Name asmModule) {
+  Expression* body = sexpBuilder.parseExpression(e);
+  std::unique_ptr<Function> testFunc(
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             body->type,
+                             std::vector<NameType>{},
+                             body));
+  Ref jsFunc = processFunction(testFunc.get());
+  fixCalls(jsFunc, asmModule);
+  emitFunction(jsFunc);
+  return jsFunc;
+}
+
+bool AssertionEmitter::isInvokeHandled(Element& e) {
+  return e.isList() && e.size() >= 2 && e[0]->isStr() &&
+         e[0]->str() == Name("invoke");
 }
 
 bool AssertionEmitter::isAssertHandled(Element& e) {
@@ -797,19 +827,31 @@ void AssertionEmitter::emit() {
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
-    if (!isAssertHandled(e)) {
+    if (!isInvokeHandled(e) && !isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
     }
     Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isInvoke = (e[0]->str() == Name("invoke"));
     bool isReturn = (e[0]->str() == Name("assert_return"));
     bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
-    Element& testOp = *e[1];
+    Element* assertOp;
+    // An assertion of an invoke has the invoke inside the assert.
+    if (isAssertHandled(e)) {
+      assertOp = e[1];
+    } else {
+      assertOp = &e;
+    }
     // Replace "invoke" with "call"
-    testOp[0]->setString(IString("call"), false, false);
+    (*assertOp)[0]->setString(IString("call"), false, false);
     // Need to claim dollared to get string as function target
-    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
-
+    (*assertOp)[1]->setString((*assertOp)[1]->str(), /*dollared=*/true, false);
+    if (isInvoke) {
+      emitInvokeFunc(wasmBuilder, e, testFuncName, asmModule);
+      out << testFuncName.str << "();\n";
+      continue;
+    }
+    // Otherwise, this is some form of assertion.
     if (isReturn) {
       emitAssertReturnFunc(wasmBuilder, e, testFuncName, asmModule);
     } else if (isReturnNan) {

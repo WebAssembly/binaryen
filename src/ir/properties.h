@@ -200,7 +200,9 @@ inline Index getZeroExtBits(Expression* curr) {
 }
 
 // Returns a falling-through value, that is, it looks through a local.tee
-// and other operations that receive a value and let it flow through them.
+// and other operations that receive a value and let it flow through them. If
+// there is no value falling through, returns the node itself (as that is the
+// value that trivially falls through, with 0 steps in the middle).
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
                                   FeatureSet features) {
@@ -239,6 +241,25 @@ inline Expression* getFallthrough(Expression* curr,
     }
   }
   return curr;
+}
+
+// Returns whether the resulting value here must fall through without being
+// modified. For example, a tee always does so. That is, this returns false if
+// and only if the return value may have some computation performed on it to
+// change it from the inputs the instruction receives.
+// This differs from getFallthrough() which returns a single value that falls
+// through - here if more than one value can fall through, like in if-else,
+// we can return true. That is, there we care about a value falling through and
+// for us to get that actual value to look at; here we just care whether the
+// value falls through without being changed, even if it might be one of
+// several options.
+inline bool isResultFallthrough(Expression* curr) {
+  // Note that we don't check if there is a return value here; the node may be
+  // unreachable, for example, but then there is no meaningful answer to give
+  // anyhow.
+  return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
+         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
+         curr->is<Break>();
 }
 
 } // namespace Properties

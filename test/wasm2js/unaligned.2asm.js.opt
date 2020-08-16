@@ -1,7 +1,7 @@
 import { setTempRet0 } from 'env';
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -23,7 +23,7 @@ import { setTempRet0 } from 'env';
   }
       
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       
 function asmFunc(global, env, buffer) {
@@ -59,7 +59,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $2() {
-  return Math_fround((wasm2js_scratch_store_i32(0, HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24)), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(2, HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24)), wasm2js_scratch_load_f32()));
  }
  
  function $3() {
@@ -128,6 +128,7 @@ function asmFunc(global, env, buffer) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
+var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export var i32_load = retasmFunc.i32_load;
 export var i64_load = retasmFunc.i64_load;

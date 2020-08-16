@@ -44,17 +44,26 @@ static unsigned getRefSize(const DWARFYAML::Unit &Unit) {
 }
 
 template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
-  // XXX BINARYEN: Handle multiple linked compile units. Each one has its own
-  // range of values, terminated by a zero. AbbrevStart refers to the start
-  // index for the current unit, and AbbrevEnd to one past the last one
-  // (which is the index of the 0 terminator).
+  // XXX BINARYEN: Handle multiple linked compile units, each of which can
+  // refer to a different abbreviation list.
   // TODO: This code appears to assume that abbreviation codes increment by 1
   // so that lookups are linear. In LLVM output that is true, but it might not
   // be in general.
-  size_t AbbrevStart = 0, AbbrevEnd = -1;
   for (auto &Unit : DebugInfo.CompileUnits) {
-    // Skip the 0 terminator.
-    AbbrevEnd = AbbrevStart = AbbrevEnd + 1;
+    // AbbrOffset is the byte offset into the abbreviation section, which we
+    // need to find among the Abbrev's ListOffsets (which are the byte offsets
+    // of where that abbreviation list begins).
+    // TODO: Optimize this to not be O(#CUs * #abbrevs).
+    size_t AbbrevStart = -1;
+    for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
+      if (DebugInfo.AbbrevDecls[i].ListOffset == Unit.AbbrOffset) {
+        AbbrevStart = i;
+        break;
+      }
+    }
+    assert(AbbrevStart != -1); // must find the list
+    // Find the last entry in this abbreviation list.
+    size_t AbbrevEnd = AbbrevStart;
     while (AbbrevEnd < DebugInfo.AbbrevDecls.size() &&
            DebugInfo.AbbrevDecls[AbbrevEnd].Code) {
       AbbrevEnd++;

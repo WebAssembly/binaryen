@@ -177,9 +177,17 @@ enum UnaryOp {
   AbsVecF32x4,
   NegVecF32x4,
   SqrtVecF32x4,
+  CeilVecF32x4,
+  FloorVecF32x4,
+  TruncVecF32x4,
+  NearestVecF32x4,
   AbsVecF64x2,
   NegVecF64x2,
   SqrtVecF64x2,
+  CeilVecF64x2,
+  FloorVecF64x2,
+  TruncVecF64x2,
+  NearestVecF64x2,
 
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
@@ -473,7 +481,9 @@ enum SIMDLoadOp {
   LoadExtSVec16x4ToVecI32x4,
   LoadExtUVec16x4ToVecI32x4,
   LoadExtSVec32x2ToVecI64x2,
-  LoadExtUVec32x2ToVecI64x2
+  LoadExtUVec32x2ToVecI64x2,
+  Load32Zero,
+  Load64Zero
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -580,6 +590,9 @@ public:
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
+
+  // Print the expression to stderr. Meant for use while debugging.
+  void dump();
 };
 
 const char* getExpressionName(Expression* curr);
@@ -851,6 +864,8 @@ public:
   // other orderings may be added in the future. This field is reserved for
   // that, and currently set to 0.
   uint8_t order = 0;
+
+  void finalize();
 };
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {

@@ -1139,6 +1139,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     case LoadSplatVec8x16:
     case LoadSplatVec16x8:
     case LoadSplatVec32x4:
+    case Load32Zero:
       memAlignType = Type::i32;
       break;
     case LoadSplatVec64x2:
@@ -1148,6 +1149,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       memAlignType = Type::i64;
       break;
   }
@@ -1260,7 +1262,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -1704,9 +1706,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:
+    case CeilVecF32x4:
+    case FloorVecF32x4:
+    case TruncVecF32x4:
+    case NearestVecF32x4:
     case AbsVecF64x2:
     case NegVecF64x2:
     case SqrtVecF64x2:
+    case CeilVecF64x2:
+    case FloorVecF64x2:
+    case TruncVecF64x2:
+    case NearestVecF64x2:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
     case TruncSatSVecF64x2ToVecI64x2:
@@ -2060,7 +2070,7 @@ void FunctionValidator::validateAlignment(
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:

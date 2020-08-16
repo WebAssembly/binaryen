@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "wasm-debug.h"
 
 namespace wasm {
 
@@ -188,7 +189,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // a load
         return;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -290,7 +291,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
           << U32LEB(BinaryConsts::V128Store);
         break;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -631,6 +632,12 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
     case LoadExtUVec32x2ToVecI64x2:
       o << U32LEB(BinaryConsts::I64x2LoadExtUVec32x2);
       break;
+    case Load32Zero:
+      o << U32LEB(BinaryConsts::V128Load32Zero);
+      break;
+    case Load64Zero:
+      o << U32LEB(BinaryConsts::V128Load64Zero);
+      break;
   }
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
@@ -687,7 +694,7 @@ void BinaryInstWriter::visitConst(Const* curr) {
       break;
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -981,6 +988,19 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case SqrtVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sqrt);
       break;
+    case CeilVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ceil);
+      break;
+    case FloorVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Floor);
+      break;
+    case TruncVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Trunc);
+      break;
+    case NearestVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4Nearest);
+      break;
     case AbsVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Abs);
       break;
@@ -989,6 +1009,19 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       break;
     case SqrtVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sqrt);
+      break;
+    case CeilVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ceil);
+      break;
+    case FloorVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Floor);
+      break;
+    case TruncVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Trunc);
+      break;
+    case NearestVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2Nearest);
       break;
     case TruncSatSVecF32x4ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1754,8 +1787,25 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   assert(func && "BinaryInstWriter: function is not set");
   // Map params
   for (Index i = 0; i < func->getNumParams(); i++) {
-    size_t curr = mappedLocals.size();
-    mappedLocals[std::make_pair(i, 0)] = curr;
+    mappedLocals[std::make_pair(i, 0)] = i;
+  }
+  // Normally we map all locals of the same type into a range of adjacent
+  // addresses, which is more compact. However, if we need to keep DWARF valid,
+  // do not do any reordering at all - instead, do a trivial mapping that
+  // keeps everything unmoved.
+  if (DWARF) {
+    FindAll<TupleExtract> extracts(func->body);
+    if (!extracts.list.empty()) {
+      Fatal() << "DWARF + multivalue is not yet complete";
+    }
+    Index varStart = func->getVarIndexBase();
+    Index varEnd = varStart + func->getNumVars();
+    o << U32LEB(func->getNumVars());
+    for (Index i = varStart; i < varEnd; i++) {
+      mappedLocals[std::make_pair(i, 0)] = i;
+      o << U32LEB(1) << binaryType(func->getLocalType(i));
+    }
+    return;
   }
   for (auto type : func->vars) {
     for (auto t : type.expand()) {

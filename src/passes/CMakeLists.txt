@@ -6,6 +6,7 @@ add_custom_command(
   COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
+FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
@@ -18,14 +19,17 @@ set(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  DeAlign.cpp
   DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  EmscriptenPIC.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  GenerateDynCalls.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
@@ -61,6 +65,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
+  ReplaceStackPointer.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
@@ -73,9 +78,11 @@ set(passes_SOURCES
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp
+  StackCheck.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  ${passes_HEADERS}
 )
 add_library(passes OBJECT ${passes_SOURCES})

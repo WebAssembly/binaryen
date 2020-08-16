@@ -160,14 +160,14 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
 
-    def test_reference_types_anyref(self):
+    def test_reference_types_externref(self):
         module = '''
         (module
-         (import "env" "test1" (func $test1 (param anyref) (result anyref)))
-         (import "env" "test2" (global $test2 anyref))
-         (export "test1" (func $test1 (param anyref) (result anyref)))
+         (import "env" "test1" (func $test1 (param externref) (result externref)))
+         (import "env" "test2" (global $test2 externref))
+         (export "test1" (func $test1 (param externref) (result externref)))
          (export "test2" (global $test2))
-         (func $anyref_test (param $0 anyref) (result anyref)
+         (func $externref_test (param $0 externref) (result externref)
           (return
            (call $test1
             (local.get $0)
@@ -298,7 +298,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         filename = 'reference_types_target_feature.wasm'
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types'])
-        self.assertIn('anyref', self.disassemble(filename))
+        self.assertIn('externref', self.disassemble(filename))
 
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
@@ -354,4 +354,4 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-tail-call',
             '--enable-reference-types',
             '--enable-multivalue'
-        ], p2.stdout.split())
+        ], p2.stdout.splitlines())

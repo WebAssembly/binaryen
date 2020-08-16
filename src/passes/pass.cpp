@@ -104,6 +104,9 @@ void PassRegistry::registerPasses() {
                createConstHoistingPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("dealign",
+               "forces all loads and stores to have alignment 1",
+               createDeAlignPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);
@@ -123,6 +126,12 @@ void PassRegistry::registerPasses() {
   registerPass("emit-target-features",
                "emit the target features section in the output",
                createEmitTargetFeaturesPass);
+  registerPass("emscripten-pic",
+               "Convert PIC ABI from llvm to emscripten",
+               createEmscriptenPICPass);
+  registerPass("emscripten-pic-main-module",
+               "Convert PIC ABI from llvm to emscripten",
+               createEmscriptenPICMainModulePass);
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);
@@ -134,6 +143,9 @@ void PassRegistry::registerPasses() {
                createFuncCastEmulationPass);
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
+  registerPass("generate-dyncalls",
+               "generate dynCall fuctions used by emscripten ABI",
+               createGenerateDynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -285,6 +297,10 @@ void PassRegistry::registerPasses() {
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
+  registerPass("replace-stack-pointer",
+               "Replace llvm-generated stack pointer global with calls with "
+               "imported functions.",
+               createReplaceStackPointerPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("roundtrip",
@@ -324,6 +340,9 @@ void PassRegistry::registerPasses() {
   registerPass("spill-pointers",
                "spill pointers to the C stack (useful for Boehm-style GC)",
                createSpillPointersPass);
+  registerPass("stub-unsupported-js",
+               "stub out unsupported JS operations",
+               createStubUnsupportedJSOpsPass);
   registerPass("ssa",
                "ssa-ify variables so that they have a single assignment",
                createSSAifyPass);
@@ -333,6 +352,9 @@ void PassRegistry::registerPasses() {
     createSSAifyNoMergePass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
+  registerPass("stack-check",
+               "enforce limits on llvm's __stack_pointer global",
+               createStackCheckPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
@@ -664,7 +686,7 @@ struct AfterEffectFunctionChecker {
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
   bool beganWithStackIR;
-  HashType originalFunctionHash;
+  size_t originalFunctionHash;
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.

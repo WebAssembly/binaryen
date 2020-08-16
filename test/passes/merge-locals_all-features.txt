@@ -458,7 +458,7 @@
   )
  )
  (func $subtype-test
-  (local $0 anyref)
+  (local $0 externref)
   (local $1 nullref)
   (local $2 nullref)
   (local.set $0

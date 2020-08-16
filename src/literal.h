@@ -100,7 +100,7 @@ public:
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -429,6 +429,10 @@ public:
   Literal maxF32x4(const Literal& other) const;
   Literal pminF32x4(const Literal& other) const;
   Literal pmaxF32x4(const Literal& other) const;
+  Literal ceilF32x4() const;
+  Literal floorF32x4() const;
+  Literal truncF32x4() const;
+  Literal nearestF32x4() const;
   Literal absF64x2() const;
   Literal negF64x2() const;
   Literal sqrtF64x2() const;
@@ -440,6 +444,10 @@ public:
   Literal maxF64x2(const Literal& other) const;
   Literal pminF64x2(const Literal& other) const;
   Literal pmaxF64x2(const Literal& other) const;
+  Literal ceilF64x2() const;
+  Literal floorF64x2() const;
+  Literal truncF64x2() const;
+  Literal nearestF64x2() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal truncSatToSI64x2() const;
@@ -520,18 +528,19 @@ template<> struct hash<wasm::Literal> {
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
-    return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
-                                     uint64_t(hash<int64_t>()(chunks[0]))),
-                        uint64_t(hash<int64_t>()(chunks[1])));
+    auto digest = wasm::hash(a.type.getID());
+    wasm::rehash(digest, chunks[0]);
+    wasm::rehash(digest, chunks[1]);
+    return digest;
   }
 };
 template<> struct hash<wasm::Literals> {
   size_t operator()(const wasm::Literals& a) const {
-    size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
+    auto digest = wasm::hash(a.size());
     for (const auto& lit : a) {
-      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
+      wasm::rehash(digest, lit);
     }
-    return h;
+    return digest;
   }
 };
 template<> struct less<wasm::Literal> {
@@ -554,7 +563,7 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::v128:
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
-      case wasm::Type::anyref:
+      case wasm::Type::externref:
       case wasm::Type::nullref:
       case wasm::Type::exnref:
       case wasm::Type::none:

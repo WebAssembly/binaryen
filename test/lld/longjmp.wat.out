@@ -177,9 +177,9 @@
   "invokeFuncs": [
     "invoke_vii"
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

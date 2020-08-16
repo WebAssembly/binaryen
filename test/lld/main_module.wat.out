@@ -24,9 +24,9 @@
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
  (export "__data_end" (global $global))
+ (export "dynCall_i" (func $dynCall_i))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
- (export "dynCall_i" (func $dynCall_i))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
@@ -59,11 +59,6 @@
    (global.get $gimport$5)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
  (func $__assign_got_enties
   (global.set $gimport$5
    (call $g$external_var)
@@ -81,6 +76,11 @@
  (func $dynCall_i (param $fptr i32) (result i32)
   (call_indirect (type $none_=>_i32)
    (local.get $fptr)
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
   )
  )
 )
@@ -106,9 +106,9 @@
   "exports": [
     "__wasm_call_ctors",
     "_Z13print_messagev",
+    "dynCall_i",
     "__growWasmMemory",
-    "__assign_got_enties",
-    "dynCall_i"
+    "__assign_got_enties"
   ],
   "namedGlobals": {
     "ptr_puts" : "16",
@@ -117,9 +117,9 @@
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

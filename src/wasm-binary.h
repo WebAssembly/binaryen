@@ -345,8 +345,8 @@ enum EncodedType {
   v128 = -0x5, // 0x7b
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque reference type
-  anyref = -0x11, // 0x6f
+  // opaque host reference type
+  externref = -0x11, // 0x6f
   // null reference type
   nullref = -0x12, // 0x6e
   // exception reference type
@@ -833,12 +833,12 @@ enum ASTNodes {
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
   I32x4Sub = 0xb1,
-  I32x4DotSVecI16x8 = 0xb4,
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
   I32x4MaxS = 0xb8,
   I32x4MaxU = 0xb9,
+  I32x4DotSVecI16x8 = 0xba,
 
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
@@ -862,6 +862,15 @@ enum ASTNodes {
   F32x4PMin = 0xea,
   F32x4PMax = 0xeb,
 
+  F32x4Ceil = 0xd8,
+  F32x4Floor = 0xd9,
+  F32x4Trunc = 0xda,
+  F32x4Nearest = 0xdb,
+  F64x2Ceil = 0xdc,
+  F64x2Floor = 0xdd,
+  F64x2Trunc = 0xde,
+  F64x2Nearest = 0xdf,
+
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
   F64x2Sqrt = 0xef,
@@ -879,8 +888,11 @@ enum ASTNodes {
   F32x4ConvertSI32x4 = 0xfa,
   F32x4ConvertUI32x4 = 0xfb,
 
-  F32x4QFMA = 0xfc,
-  F32x4QFMS = 0xfd,
+  V128Load32Zero = 0xfc,
+  V128Load64Zero = 0xfd,
+
+  F32x4QFMA = 0xb4,
+  F32x4QFMS = 0xd4,
   F64x2QFMA = 0xfe,
   F64x2QFMS = 0xff,
 
@@ -952,8 +964,8 @@ inline S32LEB binaryType(Type type) {
     case Type::funcref:
       ret = BinaryConsts::EncodedType::funcref;
       break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
+    case Type::externref:
+      ret = BinaryConsts::EncodedType::externref;
       break;
     case Type::nullref:
       ret = BinaryConsts::EncodedType::nullref;

@@ -64,10 +64,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
- )
  (func $__assign_got_enties
   (global.set $gimport$8
    (call $g$waka_mine)
@@ -81,6 +77,10 @@
   (global.set $gimport$7
    (call $fp$_Z14waka_func_minei$ii)
   )
+ )
+ (func $__post_instantiate
+  (call $__assign_got_enties)
+  (call $__wasm_call_ctors)
  )
  ;; dylink section
  ;;   memorysize: 4
@@ -118,9 +118,9 @@
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

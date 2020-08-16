@@ -844,6 +844,26 @@
    (local.get $1)
   )
  )
+ (func $f32x4.ceil (param $0 v128) (result v128)
+  (f32x4.ceil
+   (local.get $0)
+  )
+ )
+ (func $f32x4.floor (param $0 v128) (result v128)
+  (f32x4.floor
+   (local.get $0)
+  )
+ )
+ (func $f32x4.trunc (param $0 v128) (result v128)
+  (f32x4.trunc
+   (local.get $0)
+  )
+ )
+ (func $f32x4.nearest (param $0 v128) (result v128)
+  (f32x4.nearest
+   (local.get $0)
+  )
+ )
  (func $f32x4.abs (param $0 v128) (result v128)
   (f32x4.abs
    (local.get $0)
@@ -919,6 +939,26 @@
   (f64x2.pmax
    (local.get $0)
    (local.get $1)
+  )
+ )
+ (func $f64x2.ceil (param $0 v128) (result v128)
+  (f64x2.ceil
+   (local.get $0)
+  )
+ )
+ (func $f64x2.floor (param $0 v128) (result v128)
+  (f64x2.floor
+   (local.get $0)
+  )
+ )
+ (func $f64x2.trunc (param $0 v128) (result v128)
+  (f64x2.trunc
+   (local.get $0)
+  )
+ )
+ (func $f64x2.nearest (param $0 v128) (result v128)
+  (f64x2.nearest
+   (local.get $0)
   )
  )
  (func $f64x2.abs (param $0 v128) (result v128)
@@ -1101,6 +1141,16 @@
  )
  (func $i64x2.load32x2_u (param $0 i32) (result v128)
   (i64x2.load32x2_u
+   (local.get $0)
+  )
+ )
+ (func $v128.load32_zero (param $0 i32) (result v128)
+  (v128.load32_zero
+   (local.get $0)
+  )
+ )
+ (func $v128.load64_zero (param $0 i32) (result v128)
+  (v128.load64_zero
    (local.get $0)
   )
  )

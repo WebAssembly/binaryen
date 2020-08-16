@@ -11,9 +11,9 @@
  (global $sp (mut i32) (global.get $sp_import))
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
+ (export "dynCall_v" (func $dynCall_v))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
- (export "dynCall_v" (func $dynCall_v))
  (func $__stdio_write
   (nop)
  )
@@ -22,11 +22,6 @@
  )
  (func $stuff
   (nop)
- )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
  )
  (func $__assign_got_enties
   (global.set $gimport$9
@@ -39,6 +34,11 @@
  (func $dynCall_v (param $fptr i32)
   (call_indirect (type $none_=>_none)
    (local.get $fptr)
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
   )
  )
 )
@@ -58,18 +58,18 @@
   ],
   "exports": [
     "__stdio_write",
+    "dynCall_v",
     "__growWasmMemory",
-    "__assign_got_enties",
-    "dynCall_v"
+    "__assign_got_enties"
   ],
   "namedGlobals": {
     "__data_end" : "42"
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

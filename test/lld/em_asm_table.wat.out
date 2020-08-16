@@ -12,14 +12,9 @@
  (global $global$0 (mut i32) (i32.const 1024))
  (global $global$1 i32 (i32.const 1048))
  (export "__data_end" (global $global$1))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (export "dynCall_vii" (func $dynCall_vii))
  (export "dynCall_iiii" (func $dynCall_iiii))
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
+ (export "__growWasmMemory" (func $__growWasmMemory))
  (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
@@ -35,6 +30,11 @@
    (local.get $fptr)
   )
  )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
 )
 (;
 --BEGIN METADATA --
@@ -47,18 +47,18 @@
   "externs": [
   ],
   "exports": [
-    "__growWasmMemory",
     "dynCall_vii",
-    "dynCall_iiii"
+    "dynCall_iiii",
+    "__growWasmMemory"
   ],
   "namedGlobals": {
     "__data_end" : "1048"
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

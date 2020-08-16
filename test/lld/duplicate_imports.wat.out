@@ -33,11 +33,6 @@
  (func $__wasm_call_ctors
   (nop)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
  (func $legalfunc$puts2 (param $0 i64) (result i32)
   (call $legalimport$puts2
    (i32.wrap_i64
@@ -49,6 +44,11 @@
      (i64.const 32)
     )
    )
+  )
+ )
+ (func $__growWasmMemory (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
   )
  )
 )
@@ -77,9 +77,9 @@
   "invokeFuncs": [
     "invoke_ffd"
   ],
+  "mainReadsParams": 1,
   "features": [
-  ],
-  "mainReadsParams": 1
+  ]
 }
 -- END METADATA --
 ;)

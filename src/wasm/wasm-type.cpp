@@ -30,21 +30,22 @@ namespace std {
 template<> class hash<vector<wasm::Type>> {
 public:
   size_t operator()(const vector<wasm::Type>& types) const {
-    uint64_t res = wasm::rehash(0, uint32_t(types.size()));
+    auto digest = wasm::hash(types.size());
     for (auto t : types) {
-      res = wasm::rehash(res, t.getID());
+      wasm::rehash(digest, t.getID());
     }
-    return res;
+    return digest;
   }
 };
 
 size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
-  return hash<uint64_t>{}(type.getID());
+  return wasm::hash(type.getID());
 }
 
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
-  return wasm::rehash(uint64_t(hash<uint64_t>{}(sig.params.getID())),
-                      uint64_t(hash<uint64_t>{}(sig.results.getID())));
+  auto digest = wasm::hash(sig.params.getID());
+  wasm::rehash(digest, sig.results.getID());
+  return digest;
 }
 
 } // namespace std
@@ -64,7 +65,7 @@ std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
    {Type::f64},
    {Type::v128},
    {Type::funcref},
-   {Type::anyref},
+   {Type::externref},
    {Type::nullref},
    {Type::exnref}}};
 
@@ -81,7 +82,7 @@ std::unordered_map<std::vector<Type>, uintptr_t> indices = {
   {{Type::f64}, Type::f64},
   {{Type::v128}, Type::v128},
   {{Type::funcref}, Type::funcref},
-  {{Type::anyref}, Type::anyref},
+  {{Type::externref}, Type::externref},
   {{Type::nullref}, Type::nullref},
   {{Type::exnref}, Type::exnref},
 };
@@ -156,7 +157,7 @@ unsigned Type::getByteSize() const {
       case Type::v128:
         return 16;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
       case Type::exnref:
       case Type::none:
@@ -191,7 +192,7 @@ Type Type::reinterpret() const {
       return i64;
     case Type::v128:
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -207,7 +208,7 @@ FeatureSet Type::getFeatures() const {
       case Type::v128:
         return FeatureSet::SIMD;
       case Type::funcref:
-      case Type::anyref:
+      case Type::externref:
       case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
@@ -249,7 +250,7 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isRef() && right.isRef() &&
-      (right == Type::anyref || left == Type::nullref)) {
+      (right == Type::externref || left == Type::nullref)) {
     return true;
   }
   if (left.isMulti() && right.isMulti()) {
@@ -303,7 +304,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::nullref) {
     return a;
   }
-  return Type::anyref;
+  return Type::externref;
 }
 
 namespace {
@@ -379,8 +380,8 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       case Type::funcref:
         os << "funcref";
         break;
-      case Type::anyref:
-        os << "anyref";
+      case Type::externref:
+        os << "externref";
         break;
       case Type::nullref:
         os << "nullref";

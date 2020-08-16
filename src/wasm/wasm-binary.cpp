@@ -307,6 +307,7 @@ void WasmBinaryWriter::writeFunctions() {
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
+  bool DWARF = Debug::hasDWARFSections(*getModule());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
@@ -315,12 +316,12 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present, and if we can
-    if (func->stackIR && !sourceMap) {
+    if (func->stackIR && !sourceMap && !DWARF) {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter(*this, o, func).write();
     } else {
       BYN_TRACE("write Binaryen IR\n");
-      BinaryenIRToBinaryWriter(*this, o, func, sourceMap).write();
+      BinaryenIRToBinaryWriter(*this, o, func, sourceMap, DWARF).write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -1132,8 +1133,8 @@ Type WasmBinaryBuilder::getType() {
       return Type::v128;
     case BinaryConsts::EncodedType::funcref:
       return Type::funcref;
-    case BinaryConsts::EncodedType::anyref:
-      return Type::anyref;
+    case BinaryConsts::EncodedType::externref:
+      return Type::externref;
     case BinaryConsts::EncodedType::nullref:
       return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
@@ -4194,6 +4195,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = SqrtVecF32x4;
       break;
+    case BinaryConsts::F32x4Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF32x4;
+      break;
+    case BinaryConsts::F32x4Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF32x4;
+      break;
+    case BinaryConsts::F32x4Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF32x4;
+      break;
+    case BinaryConsts::F32x4Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF32x4;
+      break;
     case BinaryConsts::F64x2Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF64x2;
@@ -4205,6 +4222,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2Sqrt:
       curr = allocator.alloc<Unary>();
       curr->op = SqrtVecF64x2;
+      break;
+    case BinaryConsts::F64x2Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF64x2;
+      break;
+    case BinaryConsts::F64x2Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF64x2;
+      break;
+    case BinaryConsts::F64x2Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF64x2;
+      break;
+    case BinaryConsts::F64x2Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF64x2;
       break;
     case BinaryConsts::I32x4TruncSatSF32x4:
       curr = allocator.alloc<Unary>();
@@ -4564,6 +4597,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2LoadExtUVec32x2:
       curr = allocator.alloc<SIMDLoad>();
       curr->op = LoadExtUVec32x2ToVecI64x2;
+      break;
+    case BinaryConsts::V128Load32Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load32Zero;
+      break;
+    case BinaryConsts::V128Load64Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load64Zero;
       break;
     default:
       return false;

@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "wasm-printing.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -90,8 +91,16 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
+Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
+
+void Expression::dump() {
+  WasmPrinter::printExpression(this,
+                               std::cerr,
+                               /*minify=*/false,
+                               /*full=*/true);
+}
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
@@ -514,6 +523,8 @@ void AtomicNotify::finalize() {
   }
 }
 
+void AtomicFence::finalize() { type = Type::none; }
+
 void SIMDExtract::finalize() {
   assert(vec);
   switch (op) {
@@ -618,6 +629,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadSplatVec16x8:
       return 2;
     case LoadSplatVec32x4:
+    case Load32Zero:
       return 4;
     case LoadSplatVec64x2:
     case LoadExtSVec8x8ToVecI16x8:
@@ -626,6 +638,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -746,9 +759,17 @@ void Unary::finalize() {
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:
+    case CeilVecF32x4:
+    case FloorVecF32x4:
+    case TruncVecF32x4:
+    case NearestVecF32x4:
     case AbsVecF64x2:
     case NegVecF64x2:
     case SqrtVecF64x2:
+    case CeilVecF64x2:
+    case FloorVecF64x2:
+    case TruncVecF64x2:
+    case NearestVecF64x2:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
     case TruncSatSVecF64x2ToVecI64x2:

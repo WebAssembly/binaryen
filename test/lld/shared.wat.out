@@ -52,10 +52,6 @@
    (global.get $gimport$5)
   )
  )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
- )
  (func $__assign_got_enties
   (global.set $gimport$5
    (call $g$external_var)
@@ -66,6 +62,10 @@
   (global.set $gimport$7
    (call $fp$_Z13print_messagev$i)
   )
+ )
+ (func $__post_instantiate
+  (call $__assign_got_enties)
+  (call $__wasm_call_ctors)
  )
 )
 (;
@@ -93,9 +93,9 @@
   },
   "invokeFuncs": [
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

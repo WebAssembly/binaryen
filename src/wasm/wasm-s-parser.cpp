@@ -866,8 +866,8 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::funcref;
   }
-  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::anyref;
+  if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
+    return Type::externref;
   }
   if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::nullref;
@@ -1528,6 +1528,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 2;
       break;
     case LoadSplatVec32x4:
+    case Load32Zero:
       defaultAlign = 4;
       break;
     case LoadSplatVec64x2:
@@ -1537,6 +1538,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       defaultAlign = 8;
       break;
   }

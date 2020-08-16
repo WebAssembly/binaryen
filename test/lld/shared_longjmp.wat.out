@@ -149,10 +149,6 @@
    (local.get $fptr)
   )
  )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $0)
- )
  (func $__assign_got_enties
   (global.set $gimport$13
    (call $g$__THREW__)
@@ -163,6 +159,10 @@
   (global.set $gimport$14
    (call $fp$emscripten_longjmp$vii)
   )
+ )
+ (func $__post_instantiate
+  (call $__assign_got_enties)
+  (call $0)
  )
 )
 (;
@@ -198,9 +198,9 @@
   "invokeFuncs": [
     "invoke_vii"
   ],
+  "mainReadsParams": 0,
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

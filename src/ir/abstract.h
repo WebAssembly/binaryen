@@ -44,8 +44,17 @@ enum Op {
   Or,
   Xor,
   // Relational
+  EqZ,
   Eq,
   Ne,
+  LtS,
+  LtU,
+  LeS,
+  LeU,
+  GtS,
+  GtU,
+  GeS,
+  GeU
 };
 
 // Provide a wasm type and an abstract op and get the concrete one. For example,
@@ -54,10 +63,22 @@ enum Op {
 inline UnaryOp getUnary(Type type, Op op) {
   switch (type.getSingle()) {
     case Type::i32: {
-      return InvalidUnary;
+      switch (op) {
+        case EqZ:
+          return EqZInt32;
+        default:
+          return InvalidUnary;
+      }
+      break;
     }
     case Type::i64: {
-      return InvalidUnary;
+      switch (op) {
+        case EqZ:
+          return EqZInt64;
+        default:
+          return InvalidUnary;
+      }
+      break;
     }
     case Type::f32: {
       switch (op) {
@@ -81,7 +102,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
@@ -126,6 +147,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt32;
         case Ne:
           return NeInt32;
+        case LtS:
+          return LtSInt32;
+        case LtU:
+          return LtUInt32;
+        case LeS:
+          return LeSInt32;
+        case LeU:
+          return LeUInt32;
+        case GtS:
+          return GtSInt32;
+        case GtU:
+          return GtUInt32;
+        case GeS:
+          return GeSInt32;
+        case GeU:
+          return GeUInt32;
         default:
           return InvalidBinary;
       }
@@ -163,6 +200,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt64;
         case Ne:
           return NeInt64;
+        case LtS:
+          return LtSInt64;
+        case LtU:
+          return LtUInt64;
+        case LeS:
+          return LeSInt64;
+        case LeU:
+          return LeUInt64;
+        case GtS:
+          return GtSInt64;
+        case GtU:
+          return GtUInt64;
+        case GeS:
+          return GeSInt64;
+        case GeU:
+          return GeUInt64;
         default:
           return InvalidBinary;
       }
@@ -214,7 +267,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
     case Type::funcref:
-    case Type::anyref:
+    case Type::externref:
     case Type::nullref:
     case Type::exnref:
     case Type::none:
