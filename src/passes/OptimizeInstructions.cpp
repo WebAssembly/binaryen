@@ -517,7 +517,9 @@ struct OptimizeInstructions
       if (!EffectAnalyzer(getPassOptions(), features, binary->left)
              .hasSideEffects()) {
         if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
-          return optimizeBinaryWithEqualEffectlessChildren(binary);
+          if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(binary)) {
+            return ret;
+          }
         }
       }
 
