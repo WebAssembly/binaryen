@@ -1397,6 +1397,15 @@ private:
           case NegFloat64: {
             return unaryInner->value;
           }
+          case EqZInt32: {
+            if (auto* unaryInner2 = unaryInner->value->dynCast<Unary>()) {
+              // eqz(eqz(eqz(x)))  ==>   eqz(x)
+              if (unaryInner2->op == EqZInt32 || unaryInner2->op == EqZInt64) {
+                return unaryInner2;
+              }
+            }
+            break;
+          }
           default: {
           }
         }

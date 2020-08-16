@@ -4248,6 +4248,10 @@
     (drop (f64.neg (f64.neg (f64.neg (local.get $w)))))
     (drop (f64.neg (f64.neg (f64.neg (f64.neg (local.get $w))))))
 
+    (drop (i32.eqz (i32.eqz (local.get $x))))
+    (drop (i32.eqz (i32.eqz (i32.eqz (local.get $x)))))
+    (drop (i32.eqz (i32.eqz (i64.eqz (i64.const 1)))))
+
     ;; binary
     ;; 0 - (0 - y)
     (drop (i32.sub
