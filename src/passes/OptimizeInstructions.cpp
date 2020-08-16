@@ -1377,8 +1377,6 @@ private:
 
   Expression* deduplicateUnary(Unary* unaryOuter) {
     if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-      // unaryOp(unaryOp(x))  ==>   unaryOp(x)
-      // neg(neg(x))          ==>   x
       if (unaryInner->op == unaryOuter->op) {
         switch (unaryInner->op) {
           case AbsFloat32:
@@ -1391,10 +1389,12 @@ private:
           case FloorFloat64:
           case TruncFloat64:
           case NearestFloat64: {
+            // unaryOp(unaryOp(x))  ==>   unaryOp(x)
             return unaryInner;
           }
           case NegFloat32:
           case NegFloat64: {
+            // neg(neg(x))  ==>   x
             return unaryInner->value;
           }
           case EqZInt32: {
