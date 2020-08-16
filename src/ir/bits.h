@@ -142,22 +142,12 @@ Index getMaxBits(Expression* curr,
       // 32-bit
       case RotLInt32:
       case RotRInt32:
+      case SubInt32:
         return 32;
       case AddInt32: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
         return std::min(Index(32), std::max(maxBitsLeft, maxBitsRight) + 1);
-      }
-      case SubInt32: {
-        auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-        if (maxBitsLeft == 32 || maxBitsLeft == 0) {
-          return 32;
-        }
-        auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
-        if (maxBitsLeft <= maxBitsRight) {
-          return 32;
-        }
-        return maxBitsLeft;
       }
       case MulInt32: {
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
@@ -269,22 +259,12 @@ Index getMaxBits(Expression* curr,
       }
       case RotLInt64:
       case RotRInt64:
+      case SubInt64:
         return 64;
       case AddInt64: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
         return std::min(Index(64), std::max(maxBitsLeft, maxBitsRight) + 1);
-      }
-      case SubInt64: {
-        auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-        if (maxBitsLeft == 64 || maxBitsLeft == 0) {
-          return 64;
-        }
-        auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);
-        if (maxBitsLeft <= maxBitsRight) {
-          return 64;
-        }
-        return maxBitsLeft;
       }
       case MulInt64: {
         auto maxBitsRight = getMaxBits(binary->right, localInfoProvider);

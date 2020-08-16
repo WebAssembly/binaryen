@@ -1,8 +1,6 @@
 (module
   (memory 0)
   (type $0 (func (param i32 i64)))
-  (global $g0 (mut i32) (i32.const 0))
-  (export "g0" (global $g0))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (if
       (i32.eqz
@@ -4233,37 +4231,6 @@
         (i32.const 0)
         (local.get $x)
       )
-    ))
-  )
-  (func $sub_with_masks (param $x i32) (param $y i32) (result i32)
-    (i32.sub
-      (i32.and (local.get $x) (i32.const 255))
-      (i32.and (local.get $y) (i32.const 127))
-    )
-  )
-  (func $test_get_maxbits_for_sub (param $x i32)
-    ;; should not remove i32.and
-    (drop (i32.and
-      (call $sub_with_masks (i32.const 0) (i32.const 1))
-      (i32.const 1023)
-    ))
-    ;; should not remove i32.and
-    (drop (i32.and
-      (call $sub_with_masks (global.get $g0) (i32.const 1))
-      (i32.const 1023)
-    ))
-    ;; should not remove i32.and
-    (drop (i32.and
-      (i32.sub
-        (i32.and (i32.const 0) (i32.const 255))
-        (i32.and (i32.const 1) (i32.const 127))
-      )
-      (i32.const 1023)
-    ))
-    ;; should remove i32.and
-    (drop (i32.and
-      (i32.and (local.get $x) (i32.const 255))
-      (i32.const 1023)
     ))
   )
 )
