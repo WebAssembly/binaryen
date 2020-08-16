@@ -3,8 +3,8 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
@@ -3718,6 +3718,35 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $sub_with_masks (param $x i32) (param $y i32) (result i32)
+  (i32.sub
+   (i32.and
+    (local.get $x)
+    (i32.const 255)
+   )
+   (i32.and
+    (local.get $y)
+    (i32.const 127)
+   )
+  )
+ )
+ (func $test_get_maxbits_for_sub (param $x i32)
+  (drop
+   (i32.and
+    (call $sub_with_masks
+     (i32.const 0)
+     (i32.const 1)
+    )
+    (i32.const 255)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.const 127)
    )
   )
  )

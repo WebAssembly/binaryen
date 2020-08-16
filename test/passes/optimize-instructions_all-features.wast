@@ -4233,6 +4233,24 @@
       )
     ))
   )
+  (func $sub_with_masks (param $x i32) (param $y i32) (result i32)
+    (i32.sub
+      (i32.and (local.get $x) (i32.const 255))
+      (i32.and (local.get $y) (i32.const 127))
+    )
+  )
+  (func $test_get_maxbits_for_sub (param $x i32)
+    ;; should not remove i32.and
+    (drop (i32.and
+      (call $sub_with_masks (i32.const 0) (i32.const 1))
+      (i32.const 255)
+    ))
+    ;; should remove i32.and
+    (drop (i32.and
+      (i32.and (local.get $x) (i32.const 127))
+      (i32.const 255)
+    ))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
