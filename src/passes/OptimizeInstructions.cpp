@@ -1410,6 +1410,7 @@ private:
                 return binaryInner2;
               }
             }
+            // eqz(eqz(bool(x)))  ==>   bool(x)
             if (Bits::getMaxBits(unaryInner->value, this) == 1) {
               return unaryInner->value;
             }
