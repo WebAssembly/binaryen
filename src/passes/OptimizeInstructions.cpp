@@ -1410,6 +1410,9 @@ private:
                 return binaryInner2;
               }
             }
+            if (Bits::getMaxBits(unaryInner->value, this) == 1) {
+              return unaryInner->value;
+            }
             break;
           }
           default: {

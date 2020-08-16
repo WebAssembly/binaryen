@@ -3800,6 +3800,12 @@
    )
   )
   (drop
+   (i32.and
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
    (local.get $y)
   )
   (drop
