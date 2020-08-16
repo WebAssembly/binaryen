@@ -3794,6 +3794,12 @@
    )
   )
   (drop
+   (i32.ne
+    (local.get $x)
+    (i32.const 2)
+   )
+  )
+  (drop
    (local.get $y)
   )
   (drop

@@ -1400,8 +1400,14 @@ private:
           case EqZInt32: {
             if (auto* unaryInner2 = unaryInner->value->dynCast<Unary>()) {
               // eqz(eqz(eqz(x)))  ==>   eqz(x)
-              if (unaryInner2->op == EqZInt32 || unaryInner2->op == EqZInt64) {
+              if (unaryInner2->isRelational()) {
                 return unaryInner2;
+              }
+            }
+            if (auto* binaryInner2 = unaryInner->value->dynCast<Binary>()) {
+              // eqz(eqz(x <=> y))  ==>   x <=> y
+              if (binaryInner2->isRelational()) {
+                return binaryInner2;
               }
             }
             break;

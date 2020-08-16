@@ -4251,6 +4251,7 @@
     (drop (i32.eqz (i32.eqz (local.get $x))))
     (drop (i32.eqz (i32.eqz (i32.eqz (local.get $x)))))
     (drop (i32.eqz (i32.eqz (i64.eqz (i64.const 1)))))
+    (drop (i32.eqz (i32.eqz (i32.ne (local.get $x) (i32.const 2)))))
 
     ;; binary
     ;; 0 - (0 - y)
