@@ -72,12 +72,9 @@ public:
   const std::vector<Type>& expand() const;
 
   // Predicates
-  //                 
-  //                 ┌ Basic
-  //                 |   ┌ Compound
-  //                 |   |   ┌ Single
-  //   Type          |   |   |   ┌ Concrete  
-  // ╞═════════════╬═══╪═══╪═══╪═══╪═══════╡
+  //                 Compound Concrete
+  //   Type        Basic │ Single│
+  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
   // │ none        ║ x │   │   │   │       │
   // │ unreachable ║ x │   │   │   │       │
   // ├─────────────╫───┼───┼───┼───┤───────┤
