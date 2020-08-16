@@ -2,6 +2,7 @@
   (memory 0)
   (type $0 (func (param i32 i64)))
   (global $g0 (mut i32) (i32.const 0))
+  (export "g0" (global $g0))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (if
       (i32.eqz
