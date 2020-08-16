@@ -1398,18 +1398,6 @@ private:
             return unaryInner->value;
           }
           case EqZInt32: {
-            if (auto* unaryInner2 = unaryInner->value->dynCast<Unary>()) {
-              // eqz(eqz(eqz(x)))  ==>   eqz(x)
-              if (unaryInner2->isRelational()) {
-                return unaryInner2;
-              }
-            }
-            if (auto* binaryInner2 = unaryInner->value->dynCast<Binary>()) {
-              // eqz(eqz(x <=> y))  ==>   x <=> y
-              if (binaryInner2->isRelational()) {
-                return binaryInner2;
-              }
-            }
             // eqz(eqz(bool(x)))  ==>   bool(x)
             if (Bits::getMaxBits(unaryInner->value, this) == 1) {
               return unaryInner->value;
