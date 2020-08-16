@@ -1379,6 +1379,11 @@ private:
     if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
       if (unaryInner->op == unaryOuter->op) {
         switch (unaryInner->op) {
+          case NegFloat32:
+          case NegFloat64: {
+            // neg(neg(x))  ==>   x
+            return unaryInner->value;
+          }
           case AbsFloat32:
           case CeilFloat32:
           case FloorFloat32:
@@ -1391,11 +1396,6 @@ private:
           case NearestFloat64: {
             // unaryOp(unaryOp(x))  ==>   unaryOp(x)
             return unaryInner;
-          }
-          case NegFloat32:
-          case NegFloat64: {
-            // neg(neg(x))  ==>   x
-            return unaryInner->value;
           }
           case EqZInt32: {
             // eqz(eqz(bool(x)))  ==>   bool(x)
