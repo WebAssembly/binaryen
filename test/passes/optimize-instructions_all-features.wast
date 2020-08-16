@@ -4252,9 +4252,17 @@
       (call $sub_with_masks (global.get $g0) (i32.const 1))
       (i32.const 1023)
     ))
+    ;; should not remove i32.and
+    (drop (i32.and
+      (i32.sub
+        (i32.and (i32.const 0) (i32.const 255))
+        (i32.and (i32.const 1) (i32.const 127))
+      )
+      (i32.const 1023)
+    ))
     ;; should remove i32.and
     (drop (i32.and
-      (i32.and (local.get $x) (i32.const 127))
+      (i32.and (local.get $x) (i32.const 255))
       (i32.const 1023)
     ))
   )
