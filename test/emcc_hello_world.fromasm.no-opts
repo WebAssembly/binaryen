@@ -428,7 +428,7 @@
         (local.set $$mul
          (f64.mul
           (local.get $$x)
-          (f64.const 18446744073709551615)
+          (f64.const 18446744073709551616)
          )
         )
         (local.set $$call

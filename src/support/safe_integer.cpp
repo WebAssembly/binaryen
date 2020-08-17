@@ -50,13 +50,15 @@ int32_t wasm::toSInteger32(double x) {
 }
 
 bool wasm::isUInteger64(double x) {
-  return !std::signbit(x) && isInteger(x) &&
-         x <= std::numeric_limits<uint64_t>::max();
+  static_assert(std::numeric_limits<double>::is_iec559,
+                "this function only works with IEEE 754 floating point");
+  return !std::signbit(x) && isInteger(x) && x < 0x1p64;
 }
 
 bool wasm::isSInteger64(double x) {
-  return isInteger(x) && x >= std::numeric_limits<int64_t>::min() &&
-         x <= std::numeric_limits<int64_t>::max();
+  static_assert(std::numeric_limits<double>::is_iec559,
+                "this function only works with IEEE 754 floating point");
+  return isInteger(x) && x >= -0x1p63 && x < 0x1p63;
 }
 
 uint64_t wasm::toUInteger64(double x) {

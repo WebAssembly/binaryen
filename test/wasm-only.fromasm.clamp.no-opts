@@ -412,7 +412,7 @@
    (if (result i64)
     (f32.ge
      (local.get $0)
-     (f32.const 18446744073709551615)
+     (f32.const 18446744073709551616)
     )
     (i64.const 0)
     (if (result i64)
@@ -438,7 +438,7 @@
    (if (result i64)
     (f64.ge
      (local.get $0)
-     (f64.const 18446744073709551615)
+     (f64.const 18446744073709551616)
     )
     (i64.const 0)
     (if (result i64)

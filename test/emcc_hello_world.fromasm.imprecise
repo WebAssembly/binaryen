@@ -205,7 +205,7 @@
         (call $_frexp
          (f64.mul
           (local.get $0)
-          (f64.const 18446744073709551615)
+          (f64.const 18446744073709551616)
          )
          (local.get $1)
         )
