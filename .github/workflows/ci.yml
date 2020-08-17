@@ -92,9 +92,6 @@ jobs:
 
     - name: test
       run: python check.py --binaryen-bin=out/install/bin
-      # Currently disabled on windows due to a single test failure.
-      # https://github.com/WebAssembly/binaryen/issues/2781
-      if: matrix.os != 'windows-latest'
 
   build-clang:
     name: clang

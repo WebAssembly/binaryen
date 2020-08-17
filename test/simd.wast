@@ -1144,6 +1144,16 @@
    (local.get $0)
   )
  )
+ (func $v128.load32_zero (param $0 i32) (result v128)
+  (v128.load32_zero
+   (local.get $0)
+  )
+ )
+ (func $v128.load64_zero (param $0 i32) (result v128)
+  (v128.load64_zero
+   (local.get $0)
+  )
+ )
  (func $v8x16.swizzle (param $0 v128) (param $1 v128) (result v128)
   (v8x16.swizzle
    (local.get $0)

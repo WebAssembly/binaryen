@@ -528,18 +528,19 @@ template<> struct hash<wasm::Literal> {
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
-    return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
-                                     uint64_t(hash<int64_t>()(chunks[0]))),
-                        uint64_t(hash<int64_t>()(chunks[1])));
+    auto digest = wasm::hash(a.type.getID());
+    wasm::rehash(digest, chunks[0]);
+    wasm::rehash(digest, chunks[1]);
+    return digest;
   }
 };
 template<> struct hash<wasm::Literals> {
   size_t operator()(const wasm::Literals& a) const {
-    size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
+    auto digest = wasm::hash(a.size());
     for (const auto& lit : a) {
-      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
+      wasm::rehash(digest, lit);
     }
-    return h;
+    return digest;
   }
 };
 template<> struct less<wasm::Literal> {
