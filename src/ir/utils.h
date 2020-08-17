@@ -102,12 +102,27 @@ struct ReFinalize
   : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new ReFinalize; }
+  bool hasDefaultProfile;
+  IRProfile defaultProfile;
 
-  IRProfile profile;
-
-  ReFinalize(IRProfile profile = IRProfile::Normal) : profile(profile) {
+  ReFinalize() : hasDefaultProfile(false) { name = "refinalize"; }
+  ReFinalize(IRProfile profile)
+    : hasDefaultProfile(true), defaultProfile(profile) {
     name = "refinalize";
+  }
+
+  Pass* create() override {
+    return hasDefaultProfile ? new ReFinalize(defaultProfile) : new ReFinalize;
+  }
+
+  IRProfile getProfile() {
+    if (auto* func = getFunction()) {
+      return func->profile;
+    } else if (hasDefaultProfile) {
+      return defaultProfile;
+    } else {
+      WASM_UNREACHABLE("Cannot determine IR profile to use");
+    }
   }
 
   // block finalization is O(bad) if we do each block by itself, so do it in

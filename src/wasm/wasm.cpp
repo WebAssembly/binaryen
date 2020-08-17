@@ -258,13 +258,13 @@ static void finalizeNormalBlock(Block* block) {
 }
 
 static void finalizeStackyBlock(Block* block) {
-  // Similar rules apply to stacky blocks, although the type they produce
-  // is not just the type of their last instruction.
+  // Similar rules apply to stacky blocks, although the type they produce is not
+  // just the type of their last instruction. Stacky blocks can also be
+  // unreachable even they produce a concrete value after the unreachable
+  // instruction because unreachable stacky blocks will have their types
+  // inferred before binary writing.
   StackSignature sig(block->list.begin(), block->list.end());
-  block->type = sig.results;
-  if (block->type == Type::none) {
-    block->type = sig.unreachable ? Type::unreachable : Type::none;
-  }
+  block->type = sig.unreachable ? Type::unreachable : sig.results;
 }
 
 struct TypeSeeker : public PostWalker<TypeSeeker> {
@@ -305,12 +305,15 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   void visitBlock(Block* curr) {
     if (curr == target) {
       if (profile == IRProfile::Normal) {
-        finalizeNormalBlock(curr);
+        if (curr->list.size() > 0) {
+          types.push_back(curr->list.back()->type);
+        } else {
+          types.push_back(Type::none);
+        }
       } else {
-        assert(profile == IRProfile::Stacky);
-        finalizeStackyBlock(curr);
+        StackSignature sig(curr->list.begin(), curr->list.end());
+        types.push_back(sig.results);
       }
-      types.push_back(curr->type);
     } else if (curr->name == targetName) {
       // ignore all breaks til now, they were captured by someone with the same
       // name
@@ -332,6 +335,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
 static void handleUnreachable(Block* block,
+                              IRProfile profile,
                               bool breakabilityKnown = false,
                               bool hasBreak = false) {
   if (block->type == Type::unreachable) {
@@ -342,8 +346,8 @@ static void handleUnreachable(Block* block,
   }
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
-  // or the final child flows out a value)
-  if (block->type.isConcrete()) {
+  // or the final child flows out a value).
+  if (block->type.isConcrete() && profile == IRProfile::Normal) {
     return;
   }
   // look for an unreachable child
@@ -366,9 +370,7 @@ void Block::finalize(IRProfile profile) {
   if (name.is()) {
     TypeSeeker seeker(this, this->name, profile);
     type = Type::mergeTypes(seeker.types);
-    if (profile == IRProfile::Normal) {
-      handleUnreachable(this);
-    }
+    handleUnreachable(this, profile);
   } else {
     // nothing branches here, so this is easy
     switch (profile) {
@@ -386,16 +388,12 @@ void Block::finalize(IRProfile profile) {
 
 void Block::finalize(Type type_, IRProfile profile) {
   type = type_;
-  if (type == Type::none && list.size() > 0 && profile == IRProfile::Normal) {
-    handleUnreachable(this);
-  }
+  handleUnreachable(this, profile);
 }
 
 void Block::finalize(Type type_, bool hasBreak, IRProfile profile) {
   type = type_;
-  if (type == Type::none && list.size() > 0 && profile == IRProfile::Normal) {
-    handleUnreachable(this, true, hasBreak);
-  }
+  handleUnreachable(this, profile, true, hasBreak);
 }
 
 void If::finalize(Type type_) {

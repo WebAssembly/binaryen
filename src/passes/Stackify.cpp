@@ -364,6 +364,7 @@ class StackifyPass : public Pass {
     lowerTupleGlobals(module);
     PassRunner subRunner(runner);
     subRunner.add(std::make_unique<StackifyFunctionsPass>());
+    subRunner.add(std::make_unique<ReFinalize>());
     subRunner.run();
   }
 

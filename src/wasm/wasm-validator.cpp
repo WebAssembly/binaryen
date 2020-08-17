@@ -2097,7 +2097,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       // check if a node type is 'stale', i.e., we forgot to finalize() the
       // node.
       auto profile = getFunction() ? getFunction()->profile : IRProfile::Normal;
-      if (profile == IRProfile::Normal || !curr->is<Block>()) {
+      if (profile == IRProfile::Normal || !curr->is<Block>() ||
+          curr->type == Type::unreachable) {
         auto oldType = curr->type;
         ReFinalizeNode(profile).visit(curr);
         auto newType = curr->type;

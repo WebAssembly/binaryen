@@ -25,13 +25,22 @@ namespace wasm {
 struct StackDCEPass : public WalkerPass<PostWalker<StackDCEPass>> {
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new StackDCEPass; }
+  bool changed = false;
 
   void visitBlock(Block* curr) {
     for (size_t i = 0, size = curr->list.size(); i < size; ++i) {
       if (curr->list[i]->type == Type::unreachable) {
         curr->list.resize(i + 1);
+        changed = true;
         return;
       }
+    }
+  }
+
+  void doWalkFunction(Function* func) {
+    super::doWalkFunction(func);
+    if (changed) {
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
   }
 };

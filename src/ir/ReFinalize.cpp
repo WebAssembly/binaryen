@@ -47,15 +47,12 @@ void ReFinalize::visitBlock(Block* curr) {
   }
   // Get the least upper bound type of the last element and all branch return
   // values
-  if (profile == IRProfile::Normal) {
+  if (getProfile() == IRProfile::Normal) {
     curr->type = curr->list.back()->type;
   } else {
-    assert(profile == IRProfile::Stacky);
+    assert(getProfile() == IRProfile::Stacky);
     StackSignature sig(curr->list.begin(), curr->list.end());
-    curr->type = sig.results;
-    if (curr->type == Type::none) {
-      curr->type = sig.unreachable ? Type::unreachable : Type::none;
-    }
+    curr->type = sig.unreachable ? Type::unreachable : sig.results;
   }
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
@@ -68,7 +65,7 @@ void ReFinalize::visitBlock(Block* curr) {
     return;
   }
   // type is none, but we might be unreachable
-  if (curr->type == Type::none && profile == IRProfile::Normal) {
+  if (curr->type == Type::none && getProfile() == IRProfile::Normal) {
     for (auto* child : curr->list) {
       if (child->type == Type::unreachable) {
         curr->type = Type::unreachable;
