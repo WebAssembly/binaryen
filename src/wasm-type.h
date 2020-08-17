@@ -21,6 +21,14 @@
 #include <ostream>
 #include <vector>
 
+// TODO: At various code locations we were assuming that single types are basic
+// types, but this is going to change with the introduction of the compound
+// Signature, Struct and Array types that will be single but not basic. To
+// prepare for this change, the following macro marks affected code locations.
+#define TODO_SINGLE_COMPOUND(type)                                             \
+  assert(!type.isTuple() && "Unexpected tuple type");                          \
+  assert(!type.isCompound() && "TODO: handle compound types");
+
 namespace wasm {
 
 class Type;
@@ -82,13 +90,39 @@ public:
   const TypeList& expand() const;
 
   // Predicates
-  constexpr bool isSingle() const { return id >= i32 && id <= _last_basic_id; }
+  //                 Compound Concrete
+  //   Type        Basic │ Single│
+  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
+  // │ none        ║ x │   │   │   │       │
+  // │ unreachable ║ x │   │   │   │       │
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ i32         ║ x │   │ x │ x │ I     │ ┐ Number
+  // │ i64         ║ x │   │ x │ x │ I     │ │  I_nteger
+  // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
+  // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
+  // │ v128        ║ x │   │ x │ x │     V │ ┘
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ funcref     ║ x │   │ x │ x │ f     │ ┐ Ref
+  // │ externref   ║ x │   │ x │ x │       │ │  f_unc
+  // │ nullref     ║ x │   │ x │ x │       │ │
+  // │ exnref      ║ x │   │ x │ x │       │ │
+  // ├─────────────╫───┼───┼───┼───┤───────┤ │
+  // │ Signature   ║   │ x │ x │ x │ f     │ │
+  // │ Struct      ║   │ x │ x │ x │       │ │
+  // │ Array       ║   │ x │ x │ x │       │ ┘
+  // │ Tuple       ║   │ x │   │ x │       │
+  // └─────────────╨───┴───┴───┴───┴───────┘
+  constexpr bool isBasic() const { return id <= _last_basic_id; }
+  constexpr bool isCompound() const { return id > _last_basic_id; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   bool isTuple() const;
+  bool isSingle() const {
+    return id >= i32 && (id <= _last_basic_id || !isTuple());
+  }
   bool isRef() const;
   bool isNullable() const;
 
@@ -107,8 +141,8 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  BasicID getSingle() const {
-    assert(!isTuple() && "Unexpected tuple type");
+  constexpr BasicID getBasic() const {
+    assert(isBasic() && "Basic type expected");
     return static_cast<BasicID>(id);
   }
 

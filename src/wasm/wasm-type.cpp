@@ -161,7 +161,7 @@ Type::Type(const Tuple& tuple) {
   auto& types = tuple.types;
 #ifndef NDEBUG
   for (Type t : types) {
-    assert(t.isSingle() && t.isConcrete());
+    assert(!t.isTuple() && t.isConcrete());
   }
 #endif
   if (types.size() == 0) {
@@ -245,18 +245,21 @@ const TypeList& Type::expand() const {
 bool Type::operator<(const Type& other) const {
   const TypeList& these = expand();
   const TypeList& others = other.expand();
-  return std::lexicographical_compare(
-    these.begin(),
-    these.end(),
-    others.begin(),
-    others.end(),
-    [](const Type& a, const Type& b) { return a.getSingle() < b.getSingle(); });
+  return std::lexicographical_compare(these.begin(),
+                                      these.end(),
+                                      others.begin(),
+                                      others.end(),
+                                      [](const Type& a, const Type& b) {
+                                        TODO_SINGLE_COMPOUND(a);
+                                        TODO_SINGLE_COMPOUND(b);
+                                        return a.getBasic() < b.getBasic();
+                                      });
 }
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
-    switch (t.getSingle()) {
+    switch (t.getBasic()) {
       case Type::i32:
       case Type::f32:
         return 4;
@@ -276,21 +279,19 @@ unsigned Type::getByteSize() const {
     WASM_UNREACHABLE("invalid type");
   };
 
-  if (isSingle()) {
-    return getSingleByteSize(*this);
+  if (isTuple()) {
+    unsigned size = 0;
+    for (auto t : expand()) {
+      size += getSingleByteSize(t);
+    }
+    return size;
   }
-
-  unsigned size = 0;
-  for (auto t : expand()) {
-    size += getSingleByteSize(t);
-  }
-  return size;
+  return getSingleByteSize(*this);
 }
 
 Type Type::reinterpret() const {
-  assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
+  switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -313,7 +314,8 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
-    switch (t.getSingle()) {
+    TODO_SINGLE_COMPOUND(t);
+    switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
       case Type::funcref:
@@ -327,15 +329,14 @@ FeatureSet Type::getFeatures() const {
     }
   };
 
-  if (isSingle()) {
-    return getSingleFeatures(*this);
+  if (isTuple()) {
+    FeatureSet feats = FeatureSet::Multivalue;
+    for (Type t : expand()) {
+      feats |= getSingleFeatures(t);
+    }
+    return feats;
   }
-
-  FeatureSet feats = FeatureSet::Multivalue;
-  for (Type t : expand()) {
-    feats |= getSingleFeatures(t);
-  }
-  return feats;
+  return getSingleFeatures(*this);
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -463,42 +464,56 @@ bool Signature::operator<(const Signature& other) const {
 }
 
 std::ostream& operator<<(std::ostream& os, Type type) {
-  auto id = type.getID();
-  switch (id) {
-    case Type::none:
-      return os << "none";
-    case Type::unreachable:
-      return os << "unreachable";
-    case Type::i32:
-      return os << "i32";
-    case Type::i64:
-      return os << "i64";
-    case Type::f32:
-      return os << "f32";
-    case Type::f64:
-      return os << "f64";
-    case Type::v128:
-      return os << "v128";
-    case Type::funcref:
-      return os << "funcref";
-    case Type::externref:
-      return os << "externref";
-    case Type::nullref:
-      return os << "nullref";
-    case Type::exnref:
-      return os << "exnref";
+  if (type.isBasic()) {
+    switch (static_cast<Type::BasicID>(type.getID())) {
+      case Type::none:
+        os << "none";
+        break;
+      case Type::unreachable:
+        os << "unreachable";
+        break;
+      case Type::i32:
+        os << "i32";
+        break;
+      case Type::i64:
+        os << "i64";
+        break;
+      case Type::f32:
+        os << "f32";
+        break;
+      case Type::f64:
+        os << "f64";
+        break;
+      case Type::v128:
+        os << "v128";
+        break;
+      case Type::funcref:
+        os << "funcref";
+        break;
+      case Type::externref:
+        os << "externref";
+        break;
+      case Type::nullref:
+        os << "nullref";
+        break;
+      case Type::exnref:
+        os << "exnref";
+        break;
+    }
+  } else {
+    auto* typeDef = (TypeDef*)type.getID();
+    switch (typeDef->kind) {
+      case TypeDef::TupleKind:
+        break;
+      case TypeDef::SignatureKind:
+      case TypeDef::StructKind:
+      case TypeDef::ArrayKind:
+        os << "ref ";
+        break;
+    }
+    os << *typeDef;
   }
-  auto* typeDef = (TypeDef*)id;
-  switch (typeDef->kind) {
-    case TypeDef::TupleKind:
-      break;
-    case TypeDef::SignatureKind:
-    case TypeDef::StructKind:
-    case TypeDef::ArrayKind:
-      os << "ref ";
-      break;
-  }
-  return os << *typeDef;
+  return os;
 }
 
 std::ostream& operator<<(std::ostream& os, ParamType param) {

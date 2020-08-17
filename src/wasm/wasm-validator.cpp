@@ -172,7 +172,7 @@ struct ValidationInfo {
                                 Expression* curr,
                                 const char* text,
                                 Function* func = nullptr) {
-    switch (ty.getSingle()) {
+    switch (ty.getBasic()) {
       case Type::i32:
       case Type::i64:
       case Type::unreachable: {
@@ -1236,7 +1236,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
 void FunctionValidator::validateMemBytes(uint8_t bytes,
                                          Type type,
                                          Expression* curr) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4,
                    curr,
@@ -1770,12 +1770,12 @@ void FunctionValidator::visitSelect(Select* curr) {
                curr,
                "select condition must be valid");
   if (curr->ifTrue->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ifTrue->type.isSingle(), curr, "select value may not be a tuple");
+    shouldBeFalse(
+      curr->ifTrue->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->ifFalse->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ifFalse->type.isSingle(), curr, "select value may not be a tuple");
+    shouldBeFalse(
+      curr->ifFalse->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->type != Type::unreachable) {
     shouldBeTrue(Type::isSubType(curr->ifTrue->type, curr->type),
@@ -2055,7 +2055,8 @@ void FunctionValidator::validateAlignment(
     }
   }
   shouldBeTrue(align <= bytes, curr, "alignment must not exceed natural");
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
     case Type::f32: {
       shouldBeTrue(align <= 4, curr, "alignment must not exceed natural");
@@ -2159,8 +2160,8 @@ static void validateImports(Module& module, ValidationInfo& info) {
       info.shouldBeFalse(
         curr->mutable_, curr->name, "Imported global cannot be mutable");
     }
-    info.shouldBeTrue(
-      curr->type.isSingle(), curr->name, "Imported global cannot be tuple");
+    info.shouldBeFalse(
+      curr->type.isTuple(), curr->name, "Imported global cannot be tuple");
   });
 }
 
@@ -2189,8 +2190,8 @@ static void validateExports(Module& module, ValidationInfo& info) {
           info.shouldBeFalse(
             g->mutable_, g->name, "Exported global cannot be mutable");
         }
-        info.shouldBeTrue(
-          g->type.isSingle(), g->name, "Exported global cannot be tuple");
+        info.shouldBeFalse(
+          g->type.isTuple(), g->name, "Exported global cannot be tuple");
       }
     }
   }

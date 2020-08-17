@@ -1602,7 +1602,7 @@ public:
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
     virtual Literal load(Load* load, Address addr) {
-      switch (load->type.getSingle()) {
+      switch (load->type.getBasic()) {
         case Type::i32: {
           switch (load->bytes) {
             case 1:
@@ -1653,7 +1653,7 @@ public:
       WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
-      switch (store->valueType.getSingle()) {
+      switch (store->valueType.getBasic()) {
         case Type::i32: {
           switch (store->bytes) {
             case 1:
