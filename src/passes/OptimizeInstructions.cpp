@@ -384,23 +384,13 @@ struct OptimizeInstructions
                 Abstract::getUnary(binary->type, Abstract::Abs)) {
               if (auto* rightUnary = binary->right->dynCast<Unary>()) {
                 if (leftUnary->op == rightUnary->op) { // both are abs ops
-                  // abs(x) * abs(x)   ==>   x * x
-                  // abs(x) / abs(x)   ==>   x / x
-                  if (ExpressionAnalyzer::equal(leftUnary->value,
-                                                rightUnary->value)) {
-                    binary->left = leftUnary->value;
-                    binary->right = rightUnary->value;
-                    return binary;
-                  } else {
-                    // abs(x) * abs(y)   ==>   abs(x * y)
-                    // abs(x) / abs(y)   ==>   abs(x / y)
-                    binary->left = leftUnary->value;
-                    binary->right = rightUnary->value;
-                    return Builder(*getModule())
-                      .makeUnary(
-                        Abstract::getUnary(binary->type, Abstract::Abs),
-                        binary);
-                  }
+                  // abs(x) * abs(y)   ==>   abs(x * y)
+                  // abs(x) / abs(y)   ==>   abs(x / y)
+                  binary->left = leftUnary->value;
+                  binary->right = rightUnary->value;
+                  return Builder(*getModule())
+                    .makeUnary(Abstract::getUnary(binary->type, Abstract::Abs),
+                               binary);
                 }
               }
             }
@@ -567,6 +557,17 @@ struct OptimizeInstructions
           auto bits = Properties::getSignExtBits(unary->value);
           unary->value = makeZeroExt(ext, bits);
           return unary;
+        }
+      } else if (unary->op == AbsFloat32 || unary->op == AbsFloat64) {
+        if (auto* binary = unary->value->dynCast<Binary>()) {
+          if (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) {
+            // abs(x * x)   ==>   x * x
+            // abs(x / x)   ==>   x / x
+            if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
+              return binary;
+            }
+          }
         }
       }
     } else if (auto* set = curr->dynCast<GlobalSet>()) {
