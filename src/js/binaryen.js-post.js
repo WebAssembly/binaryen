@@ -3030,12 +3030,12 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
-// Gets the function size which we inline when there is only one caller.
+// Gets the value which allow inline functions that are not "lightweight".
 Module['getAllowHeavyweight'] = function() {
   return Module['_BinaryenGetAllowHeavyweight']();
 };
 
-// Sets the function size which we inline when there is only one caller.
+// Sets the value which allow inline functions that are not "lightweight".
 Module['setAllowHeavyweight'] = function(value) {
   Module['_BinaryenSetAllowHeavyweight'](value);
 };
