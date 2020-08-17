@@ -1061,7 +1061,9 @@ private:
   }
 
   // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
+  //   (x  >  y) | (x   <  y)   ==>   x != y
+  //   (x <=> y) | (x  ==  y)   ==>   x <=> y
+  //   (x <=> y) | (x >!=< y)   ==>   1
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
     FeatureSet features = getModule()->features;
@@ -1075,15 +1077,119 @@ private:
             !EffectAnalyzer(getPassOptions(), features, left->right)
                .hasSideEffects()) {
           switch (left->op) {
-            //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
-              if (right->op == GtSInt32) {
-                left->op = GeSInt32;
-                return left;
+              switch (right->op) {
+                //   (x == y) | (x >  y)   ==>    x >= y
+                //   (x == y) | (x >= y)   ==>    x >= y
+                case GtSInt32:
+                case GeSInt32: {
+                  left->op = GeSInt32;
+                  return left;
+                }
+                case GtUInt32:
+                case GeUInt32: {
+                  left->op = GeUInt32;
+                  return left;
+                }
+                //   (x == y) | (x  < y)    ==>    x <= y
+                //   (x == y) | (x <= y)    ==>    x <= y
+                case LtSInt32:
+                case LeSInt32: {
+                  left->op = LeSInt32;
+                  return left;
+                }
+                case LtUInt32:
+                case LeUInt32: {
+                  left->op = LeUInt32;
+                  return left;
+                }
+                //   (x == y) | (x != y)   ==>    1
+                case NeInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
               }
               break;
             }
-            default: {}
+            case NeInt32: {
+              switch (right->op) {
+                //   (x != y) | (x == y)   ==>    1
+                case EqInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            case LtSInt32: {
+              switch (right->op) {
+                //   (x < y) | (x > y)    ==>    x != y
+                case GtSInt32: {
+                  left->op = NeInt32;
+                  return left;
+                }
+                //   (x < y) | (x >= y)    ==>    1
+                case GeSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            case LtUInt32: {
+              switch (right->op) {
+                //   (x < y) | (x > y)    ==>    x != y
+                case GtUInt32: {
+                  left->op = NeInt32;
+                  return left;
+                }
+                //   (x < y) | (x >= y)    ==>    1
+                case GeUInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            case LeSInt32: {
+              switch (right->op) {
+                //   (x <= y) | (x >= y)    ==>    1
+                //   (x <= y) | (x >  y)    ==>    1
+                case GeSInt32:
+                case GtSInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            case LeUInt32: {
+              switch (right->op) {
+                //   (x <= y) | (x >= y)    ==>    1
+                //   (x <= y) | (x >  y)    ==>    1
+                case GeUInt32:
+                case GtUInt32: {
+                  return LiteralUtils::makeFromInt32(
+                    1, Type::i32, *getModule());
+                }
+                default:
+                  break;
+              }
+              break;
+            }
+            // GeSInt32 and GeUInt32 don't need due to canonization
+            default:
+              break;
           }
         }
       }

@@ -4123,6 +4123,9 @@
     ))
   )
   (func $pre-combine-or (param $x i32) (param $y i32)
+    ;;
+    ;; x > y | x == y --> pass
+    ;;
     (drop (i32.or
       (i32.gt_s
         (local.get $x)
@@ -4133,6 +4136,7 @@
         (local.get $x)
       )
     ))
+    ;; x == y | x > y --> pass
     (drop (i32.or
       (i32.eq ;; ordering should not stop us
         (local.get $y)
@@ -4143,6 +4147,31 @@
         (local.get $y)
       )
     ))
+    ;;
+    ;; x >= y | x == y --> pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
+    ;; x == y | x >= y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x > y | x == 1 --> skip
     (drop (i32.or
       (i32.gt_s
         (local.get $x)
@@ -4153,6 +4182,7 @@
         (i32.const 1) ;; not equal
       )
     ))
+    ;; x > 1 | x == y --> skip
     (drop (i32.or
       (i32.gt_s
         (local.get $x)
@@ -4163,6 +4193,7 @@
         (local.get $y)
       )
     ))
+    ;; fn() > y | fn() == y --> skip
     (drop (i32.or
       (i32.gt_s
         (call $ne0) ;; side effects
@@ -4173,6 +4204,7 @@
         (local.get $y)
       )
     ))
+    ;; y > fn() | y == fn() --> skip
     (drop (i32.or
       (i32.gt_s
         (local.get $y)
@@ -4181,6 +4213,466 @@
       (i32.eq
         (local.get $y)
         (call $ne0)
+      )
+    ))
+    ;;
+    ;; x < y | x == y --> pass
+    ;;
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
+    ;; x <= y | x == y --> pass
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
+    ;; x == y | x < y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x == y | x <= y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x < y | x == 1 --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    ;; x < 1 | x == y --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; fn() < y | fn() == y --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (call $ne0) ;; side effects
+        (local.get $y)
+      )
+      (i32.eq
+        (call $ne0)
+        (local.get $y)
+      )
+    ))
+    ;; y < fn() | y == fn() --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.eq
+        (local.get $y)
+        (call $ne0)
+      )
+    ))
+    ;;
+    ;; x != y | x == y --> pass
+    ;;
+    (drop (i32.or
+      (i32.ne
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $y) ;; ordering should not stop us
+        (local.get $x)
+      )
+    ))
+    ;; x == y | x != y --> pass
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (local.get $y)
+        (local.get $x)
+      )
+      (i32.ne
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x != y | x == 1 --> skip
+    (drop (i32.or
+      (i32.ne
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    ;; x != 1 | x == y --> skip
+    (drop (i32.or
+      (i32.ne
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; fn() != y | fn() == y --> skip
+    (drop (i32.or
+      (i32.ne
+        (call $ne0) ;; side effects
+        (local.get $y)
+      )
+      (i32.eq
+        (call $ne0)
+        (local.get $y)
+      )
+    ))
+    ;; y != fn() | y == fn() --> skip
+    (drop (i32.or
+      (i32.ne
+        (local.get $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.eq
+        (local.get $y)
+        (call $ne0)
+      )
+    ))
+    ;;
+    ;; x < y | x > y --> pass
+    ;;
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x > y | x < y --> pass
+    (drop (i32.or
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x < y | x > 1 --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    ;; x < 1 | x > y --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; fn() < y | fn() > y --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (call $ne0) ;; side effects
+        (local.get $y)
+      )
+      (i32.gt_s
+        (call $ne0)
+        (local.get $y)
+      )
+    ))
+    ;; y < fn() | y > fn() --> skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.gt_s
+        (local.get $y)
+        (call $ne0)
+      )
+    ))
+    ;;
+    ;; x >= y | x <= y    ==>    pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x <= y | x >= y --> pass
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x <= y | x >= 1 --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    ;; x <= 1 | x >= y --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; fn() <= y | fn() >= y --> skip
+    (drop (i32.or
+      (i32.le_s
+        (call $ne0) ;; side effects
+        (local.get $y)
+      )
+      (i32.ge_s
+        (call $ne0)
+        (local.get $y)
+      )
+    ))
+    ;; y <= fn() | y >= fn() --> skip
+    (drop (i32.or
+      (i32.le_s
+        (local.get $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.ge_s
+        (local.get $y)
+        (call $ne0)
+      )
+    ))
+    ;;
+    ;; x != y | x == y   -->    pass
+    ;;
+    (drop (i32.or
+      (i32.ne
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x >= y | x < y    -->    pass
+    ;;
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x > y | x <= y    -->    pass
+    ;;
+    (drop (i32.or
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x <= y | x > y    -->    pass
+    ;;
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x < y | x >= y    -->    pass
+    ;;
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;;
+    ;; x <= y | x >= y    -->    pass
+    ;;
+    (drop (i32.or
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (signed)x < y | (unsigned)x > y   -->   skip
+    (drop (i32.or
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (unsigned)x < y | (signed)x > y   -->   skip
+    (drop (i32.or
+      (i32.lt_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (unsigned)x > y | (signed)x < y   -->   skip
+    (drop (i32.or
+      (i32.gt_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (signed)x > y | (unsigned)x < y   -->   skip
+    (drop (i32.or
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (unsigned)x >= y | (signed)x < y   -->   skip
+    (drop (i32.or
+      (i32.ge_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (signed)x >= y | (unsigned)x < y   -->   skip
+    (drop (i32.or
+      (i32.ge_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.lt_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (unsigned)x > y | (signed)x <= y   -->   skip
+    (drop (i32.or
+      (i32.gt_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_s
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; mixed (signed)x > y | (unsigned)x <= y   -->   skip
+    (drop (i32.or
+      (i32.gt_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.le_u
+        (local.get $x)
+        (local.get $y)
       )
     ))
   )
