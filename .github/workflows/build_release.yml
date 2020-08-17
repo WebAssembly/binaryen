@@ -45,7 +45,7 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release install
+      run: cmake --build out --config Release --target install
 
     - name: strip
       run: find out/install/ -type f -perm -u=x -exec strip -x {} +
@@ -119,7 +119,7 @@ jobs:
 
     - name: build
       run: |
-        ./alpine.sh ninja
+        ./alpine.sh ninja install
 
     - name: test
       run: ./alpine.sh python3 ./check.py
