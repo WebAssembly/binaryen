@@ -1400,7 +1400,6 @@ private:
   Expression* optimizeBulkMemory(Expression* curr) {
     if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
       FeatureSet features = getModule()->features;
-      PassOptions options = getPassOptions();
 
       auto destHasSideEffects =
         EffectAnalyzer(getPassOptions(), features, memCopy->dest)
@@ -1409,25 +1408,25 @@ private:
       // memory.copy(x, x, sz)  ==>  nop
       if (!destHasSideEffects &&
           ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
-        return Builder(*getModule()).makeNop();
+        return ExpressionManipulator::nop(curr);
       }
       // memory.copy(dst, src, C)  ==>  store(dst, load(src))
       if (auto* csize = memCopy->size->dynCast<Const>()) {
         auto bytes = csize->value.geti32();
-        Builder builder(*getModule());
 
         switch (bytes) {
           case 0: {
             if (!destHasSideEffects &&
                 !EffectAnalyzer(getPassOptions(), features, memCopy->source)
                    .hasSideEffects()) {
-              return builder.makeNop();
+              return ExpressionManipulator::nop(curr);
             }
             break;
           }
           case 1:
           case 2:
           case 4: {
+            Builder builder(*getModule());
             return builder.makeStore(
               bytes, // bytes
               0,     // offset
@@ -1438,6 +1437,7 @@ private:
               Type::i32);
           }
           case 8: {
+            Builder builder(*getModule());
             return builder.makeStore(
               bytes, // bytes
               0,     // offset
@@ -1448,10 +1448,11 @@ private:
               Type::i64);
           }
           case 16: {
-            if (options.shrinkLevel == 0) {
+            if (getPassOptions().shrinkLevel == 0) {
               // this increase add extra 2 bytes so apply it only for
               // minimal shrink level
               if (features.hasSIMD()) {
+                Builder builder(*getModule());
                 return builder.makeStore(
                   bytes, // bytes
                   0,     // offset
