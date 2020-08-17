@@ -52,7 +52,7 @@ def download(release):
             temp.write(url.read())
     with tarfile.open(tempfile, "r") as archive:
         for member in archive.getmembers():
-            match = re.match("^wabt\-[^/]+/bin/", member.name)
+            match = re.match("^wabt-[^/]+/bin/", member.name)
             if match:
                 name = member.name[match.span(0)[1]:]
                 with archive.extractfile(member) as infile:
