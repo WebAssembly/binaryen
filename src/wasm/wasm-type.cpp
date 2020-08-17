@@ -30,21 +30,22 @@ namespace std {
 template<> class hash<vector<wasm::Type>> {
 public:
   size_t operator()(const vector<wasm::Type>& types) const {
-    uint64_t res = wasm::rehash(0, uint32_t(types.size()));
+    auto digest = wasm::hash(types.size());
     for (auto t : types) {
-      res = wasm::rehash(res, t.getID());
+      wasm::rehash(digest, t.getID());
     }
-    return res;
+    return digest;
   }
 };
 
 size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
-  return hash<uint64_t>{}(type.getID());
+  return wasm::hash(type.getID());
 }
 
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
-  return wasm::rehash(uint64_t(hash<uint64_t>{}(sig.params.getID())),
-                      uint64_t(hash<uint64_t>{}(sig.results.getID())));
+  auto digest = wasm::hash(sig.params.getID());
+  wasm::rehash(digest, sig.results.getID());
+  return digest;
 }
 
 } // namespace std
@@ -91,7 +92,7 @@ std::unordered_map<std::vector<Type>, uintptr_t> indices = {
 void Type::init(const std::vector<Type>& types) {
 #ifndef NDEBUG
   for (Type t : types) {
-    assert(t.isSingle() && t.isConcrete());
+    assert(!t.isMulti() && t.isConcrete());
   }
 #endif
 
@@ -135,18 +136,21 @@ const std::vector<Type>& Type::expand() const {
 bool Type::operator<(const Type& other) const {
   const std::vector<Type>& these = expand();
   const std::vector<Type>& others = other.expand();
-  return std::lexicographical_compare(
-    these.begin(),
-    these.end(),
-    others.begin(),
-    others.end(),
-    [](const Type& a, const Type& b) { return a.getSingle() < b.getSingle(); });
+  return std::lexicographical_compare(these.begin(),
+                                      these.end(),
+                                      others.begin(),
+                                      others.end(),
+                                      [](const Type& a, const Type& b) {
+                                        TODO_SINGLE_COMPOUND(a);
+                                        TODO_SINGLE_COMPOUND(b);
+                                        return a.getBasic() < b.getBasic();
+                                      });
 }
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
-    switch (t.getSingle()) {
+    switch (t.getBasic()) {
       case Type::i32:
       case Type::f32:
         return 4;
@@ -166,21 +170,19 @@ unsigned Type::getByteSize() const {
     WASM_UNREACHABLE("invalid type");
   };
 
-  if (isSingle()) {
-    return getSingleByteSize(*this);
+  if (isMulti()) {
+    unsigned size = 0;
+    for (auto t : expand()) {
+      size += getSingleByteSize(t);
+    }
+    return size;
   }
-
-  unsigned size = 0;
-  for (auto t : expand()) {
-    size += getSingleByteSize(t);
-  }
-  return size;
+  return getSingleByteSize(*this);
 }
 
 Type Type::reinterpret() const {
-  assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
+  switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -203,7 +205,8 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
-    switch (t.getSingle()) {
+    TODO_SINGLE_COMPOUND(t);
+    switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
       case Type::funcref:
@@ -217,15 +220,14 @@ FeatureSet Type::getFeatures() const {
     }
   };
 
-  if (isSingle()) {
-    return getSingleFeatures(*this);
+  if (isMulti()) {
+    FeatureSet feats = FeatureSet::Multivalue;
+    for (Type t : expand()) {
+      feats |= getSingleFeatures(t);
+    }
+    return feats;
   }
-
-  FeatureSet feats = FeatureSet::Multivalue;
-  for (Type t : expand()) {
-    feats |= getSingleFeatures(t);
-  }
-  return feats;
+  return getSingleFeatures(*this);
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -354,7 +356,8 @@ std::ostream& operator<<(std::ostream& os, Type type) {
     }
     os << ')';
   } else {
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::none:
         os << "none";
         break;

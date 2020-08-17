@@ -129,7 +129,7 @@ template<typename LocalInfoProvider = DummyLocalInfoProvider>
 Index getMaxBits(Expression* curr,
                  LocalInfoProvider* localInfoProvider = nullptr) {
   if (auto* const_ = curr->dynCast<Const>()) {
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32:
         return 32 - const_->value.countLeadingZeroes().geti32();
       case Type::i64:
@@ -256,7 +256,7 @@ Index getMaxBits(Expression* curr,
       return 8 * load->bytes;
     }
   }
-  switch (curr->type.getSingle()) {
+  switch (curr->type.getBasic()) {
     case Type::i32:
       return 32;
     case Type::i64:

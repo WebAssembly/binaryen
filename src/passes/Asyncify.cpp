@@ -192,7 +192,7 @@
 // unwinding/rewinding finishes, and not at the specific spot where the
 // stack end was exceeded.
 //
-// By default this pass is very carefuly: it assumes that any import and
+// By default this pass is very careful: it assumes that any import and
 // any indirect call may start an unwind/rewind operation. If you know more
 // specific information you can inform asyncify about that, which can reduce
 // a great deal of overhead, as it can instrument less code. The relevant

@@ -6,6 +6,7 @@ add_custom_command(
   COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
+FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
@@ -82,5 +83,6 @@ set(passes_SOURCES
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  ${passes_HEADERS}
 )
 add_library(passes OBJECT ${passes_SOURCES})
