@@ -165,8 +165,8 @@ struct OptimizationOptions : public ToolOptions {
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
-      .add("--allow-heavyweight-functions",
-           "-ahf",
+      .add("--inline-heavyweight-functions",
+           "-ihf",
            "Allow inlining heavyweight functions which determine as globals",
            Options::Arguments::Zero,
            [this](Options* o, const std::string&) {
