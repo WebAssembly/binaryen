@@ -67,7 +67,7 @@ def mozjs_download(platform, version):
             os.chmod(os.path.join(mozjs_bin, "mozjs"), 0o755)
         else:
             os.rename(os.path.join(mozjs_bin, "js.exe"), os.path.join(mozjs_bin, "mozjs.exe"))
-        
+
 
 def mozjs_is_installed():
     return os.path.exists(os.path.join(mozjs_bin, "mozjs.exe" if sys.platform == "win32" else "mozjs"))
@@ -139,6 +139,7 @@ def v8_main():
         print("Complete - consider adding the download directory to path!")
     else:
         print("Something went wrong :(")
+
 
 # WABT
 # see: https://github.com/WebAssembly/wabt/releases
