@@ -622,7 +622,8 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    switch (value.type.getSingle()) {
+    TODO_SINGLE_COMPOUND(value.type);
+    switch (value.type.getBasic()) {
       case Type::nullref:
         return makeRefNull();
       case Type::funcref:
@@ -799,7 +800,8 @@ public:
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->type);
+    switch (curr->type.getBasic()) {
       case Type::i32:
         value = Literal(int32_t(0));
         break;
