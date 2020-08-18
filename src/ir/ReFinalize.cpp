@@ -45,6 +45,11 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = Type::none;
     return;
   }
+
+  // Stacky blocks can be unreachable even if they yield concrete values as long
+  // as they are not branch targets as well.
+  bool unreachableIfNotBranchTarget = false;
+
   // Get the least upper bound type of the last element and all branch return
   // values
   if (getProfile() == IRProfile::Normal) {
@@ -52,7 +57,10 @@ void ReFinalize::visitBlock(Block* curr) {
   } else {
     assert(getProfile() == IRProfile::Stacky);
     StackSignature sig(curr->list.begin(), curr->list.end());
-    curr->type = sig.unreachable ? Type::unreachable : sig.results;
+    curr->type = (sig.results == Type::none && sig.unreachable)
+                   ? Type::unreachable
+                   : sig.results;
+    unreachableIfNotBranchTarget = sig.unreachable;
   }
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
@@ -60,6 +68,9 @@ void ReFinalize::visitBlock(Block* curr) {
       curr->type = Type::getLeastUpperBound(curr->type, iter->second);
       return;
     }
+  }
+  if (unreachableIfNotBranchTarget) {
+    curr->type = Type::unreachable;
   }
   if (curr->type == Type::unreachable) {
     return;
