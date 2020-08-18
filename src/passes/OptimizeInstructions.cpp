@@ -559,6 +559,14 @@ struct OptimizeInstructions
           return unary;
         }
       } else if (unary->op == AbsFloat32 || unary->op == AbsFloat64) {
+        if (auto* unaryInner = unary->value->dynCast<Unary>()) {
+          if (unaryInner->op ==
+              Abstract::getUnary(unaryInner->type, Abstract::Neg)) {
+            // abs(-x)   ==>   abs(x)
+            unary->value = unaryInner->value;
+            return unary;
+          }
+        }
         if (auto* binary = unary->value->dynCast<Binary>()) {
           if (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
               binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) {
@@ -566,6 +574,22 @@ struct OptimizeInstructions
             // abs(x / x)   ==>   x / x
             if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
               return binary;
+            }
+          }
+          if (binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
+            // abs(0 - x)   ==>   abs(x)
+            // abs(x - 0)   ==>   abs(x)
+            if (auto* c = binary->left->dynCast<Const>()) {
+              if (c->value.getFloat() == 0.0) {
+                unary->value = binary->right;
+                return unary;
+              }
+            }
+            if (auto* c = binary->right->dynCast<Const>()) {
+              if (c->value.getFloat() == 0.0) {
+                unary->value = binary->left;
+                return unary;
+              }
             }
           }
         }

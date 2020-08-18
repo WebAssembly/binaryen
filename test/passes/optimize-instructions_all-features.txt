@@ -3800,6 +3800,36 @@
    )
   )
   (drop
+   (f64.abs
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.abs
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.abs
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.abs
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.abs
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.abs
+    (local.get $y0)
+   )
+  )
+  (drop
    (f64.div
     (local.get $x0)
     (local.get $x0)
@@ -3837,6 +3867,30 @@
      (local.get $y1)
      (local.get $y0)
     )
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $y0)
+    (local.get $y0)
    )
   )
   (drop

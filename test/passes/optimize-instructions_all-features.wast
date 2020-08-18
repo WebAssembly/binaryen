@@ -4271,6 +4271,43 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
 
+
+    ;; abs(-x)   ==>   abs(x)
+    (drop (f64.abs
+      (f64.neg (local.get $x0))
+    ))
+    (drop (f32.abs
+      (f32.neg (local.get $y0))
+    ))
+
+    ;; abs(0 - x)   ==>   abs(x)
+    (drop (f64.abs
+      (f64.sub
+        (f64.const 0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.sub
+        (f32.const 0)
+        (local.get $y0)
+      )
+    ))
+
+    ;; abs(x - 0)   ==>   abs(x)
+    (drop (f64.abs
+      (f64.sub
+        (local.get $x0)
+        (f64.const 0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.sub
+        (local.get $y0)
+        (f32.const 0)
+      )
+    ))
+
     ;; abs(x) / abs(x)   ==>   x / x
     (drop (f64.div
       (f64.abs (local.get $x0))
@@ -4293,6 +4330,34 @@
     (drop (f32.div
       (f32.abs (local.get $y1))
       (f32.abs (local.get $y0))
+    ))
+
+    ;; abs(x * x)   ==>   x * x
+    (drop (f64.abs
+      (f64.mul
+        (local.get $x0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.mul
+        (local.get $y0)
+        (local.get $y0)
+      )
+    ))
+
+    ;; abs(x / x)   ==>   x / x
+    (drop (f64.abs
+      (f64.div
+        (local.get $x0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.div
+        (local.get $y0)
+        (local.get $y0)
+      )
     ))
 
     (drop (f64.div
