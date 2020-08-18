@@ -25,6 +25,128 @@
 #include "wasm-features.h"
 #include "wasm-type.h"
 
+namespace wasm {
+
+struct TypeDef {
+  enum Kind { TupleKind, SignatureRefKind, StructRefKind, ArrayRefKind } kind;
+  struct SignatureRef {
+    Signature signature;
+    bool nullable;
+  };
+  struct StructRef {
+    Struct struct_;
+    bool nullable;
+  };
+  struct ArrayRef {
+    Array array;
+    bool nullable;
+  };
+  union {
+    Tuple tuple;
+    SignatureRef signatureRef;
+    StructRef structRef;
+    ArrayRef arrayRef;
+  };
+
+  TypeDef(Tuple tuple) : kind(TupleKind), tuple(tuple) {}
+  TypeDef(Signature signature, bool nullable)
+    : kind(SignatureRefKind), signatureRef{signature, nullable} {}
+  TypeDef(Struct struct_, bool nullable)
+    : kind(StructRefKind), structRef{struct_, nullable} {}
+  TypeDef(Array array, bool nullable)
+    : kind(ArrayRefKind), arrayRef{array, nullable} {}
+  TypeDef(const TypeDef& other) {
+    kind = other.kind;
+    switch (kind) {
+      case TupleKind:
+        new (&tuple) auto(other.tuple);
+        return;
+      case SignatureRefKind:
+        new (&signatureRef) auto(other.signatureRef);
+        return;
+      case StructRefKind:
+        new (&structRef) auto(other.structRef);
+        return;
+      case ArrayRefKind:
+        new (&arrayRef) auto(other.arrayRef);
+        return;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  ~TypeDef() {
+    switch (kind) {
+      case TupleKind: {
+        tuple.~Tuple();
+        return;
+      }
+      case SignatureRefKind: {
+        signatureRef.~SignatureRef();
+        return;
+      }
+      case StructRefKind: {
+        structRef.~StructRef();
+        return;
+      }
+      case ArrayRefKind: {
+        arrayRef.~ArrayRef();
+        return;
+      }
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+
+  constexpr bool isTuple() const { return kind == TupleKind; }
+  constexpr bool isSignatureRef() const { return kind == SignatureRefKind; }
+  constexpr bool isStructRef() const { return kind == StructRefKind; }
+  constexpr bool isArrayRef() const { return kind == ArrayRefKind; }
+
+  bool isNullable() const {
+    switch (kind) {
+      case TupleKind:
+        return false;
+      case SignatureRefKind:
+        return signatureRef.nullable;
+      case StructRefKind:
+        return structRef.nullable;
+      case ArrayRefKind:
+        return arrayRef.nullable;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+
+  bool operator==(const TypeDef& other) const {
+    if (kind != other.kind) {
+      return false;
+    }
+    switch (kind) {
+      case TupleKind:
+        return tuple == other.tuple;
+      case SignatureRefKind:
+        return signatureRef.nullable == other.signatureRef.nullable &&
+               signatureRef.signature == other.signatureRef.signature;
+      case StructRefKind:
+        return structRef.nullable == other.structRef.nullable &&
+               structRef.struct_ == other.structRef.struct_;
+      case ArrayRefKind:
+        return arrayRef.nullable == other.arrayRef.nullable &&
+               arrayRef.array == other.arrayRef.array;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  bool operator!=(const TypeDef& other) const { return !(*this == other); }
+  TypeDef& operator=(const TypeDef& other) {
+    if (&other != this) {
+      (*this).~TypeDef();
+      new (this) auto(other);
+    }
+    return *this;
+  }
+
+  std::string toString() const;
+};
+
+} // namespace wasm
+
 namespace std {
 
 template<> class hash<vector<wasm::Type>> {
