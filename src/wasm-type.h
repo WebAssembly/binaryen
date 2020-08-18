@@ -144,7 +144,7 @@ public:
     assert(isBasic() && "Basic type expected");
     return static_cast<BasicID>(id);
   }
-  constexpr TypeDef* getDef() const {
+  TypeDef* getDef() const {
     assert(isCompound() && "Compound type expected");
     return (TypeDef*)id;
   }
