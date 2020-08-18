@@ -144,10 +144,6 @@ public:
     assert(isBasic() && "Basic type expected");
     return static_cast<BasicID>(id);
   }
-  TypeDef* getDef() const {
-    assert(isCompound() && "Compound type expected");
-    return (TypeDef*)id;
-  }
 
   // (In)equality must be defined for both Type and BasicID because it is
   // otherwise ambiguous whether to convert both this and other to int or

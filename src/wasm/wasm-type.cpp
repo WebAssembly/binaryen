@@ -155,6 +155,8 @@ static uintptr_t canonicalize(const TypeDef& typeDef) {
   return id;
 }
 
+static TypeDef* getDef(Type type) { return (TypeDef*)type.getID(); }
+
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
 Type::Type(const Tuple& tuple) {
@@ -197,7 +199,7 @@ bool Type::isTuple() const {
   if (isBasic()) {
     return false;
   } else {
-    return getDef()->isTuple();
+    return getDef(*this)->isTuple();
   }
 }
 
@@ -205,7 +207,7 @@ bool Type::isRef() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    switch (getDef()->kind) {
+    switch (getDef(*this)->kind) {
       case TypeDef::TupleKind:
         return false;
       case TypeDef::SignatureRefKind:
@@ -221,7 +223,7 @@ bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    return getDef()->isNullable();
+    return getDef(*this)->isNullable();
   }
 }
 
@@ -231,7 +233,7 @@ const TypeList& Type::expand() const {
   if (isBasic()) {
     return basicTuples[id];
   } else {
-    auto* typeDef = getDef();
+    auto* typeDef = getDef(*this);
     assert(typeDef->isTuple() && "can only expand tuple types");
     return typeDef->tuple.types;
   }
@@ -496,7 +498,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
     }
   } else {
-    auto* typeDef = type.getDef();
+    auto* typeDef = getDef(type);
     switch (typeDef->kind) {
       case TypeDef::TupleKind:
         break;
