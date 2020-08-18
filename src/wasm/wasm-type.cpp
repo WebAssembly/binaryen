@@ -620,7 +620,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
     }
   } else {
-    os << "(" << *getDef(type) << ")";
+    os << *getDef(type);
   }
   return os;
 }
@@ -636,17 +636,18 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
 std::ostream& operator<<(std::ostream& os, Tuple tuple) {
   auto& types = tuple.types;
   auto size = types.size();
+  os << "(";
   if (size) {
     os << types[0];
     for (size_t i = 1; i < size; ++i) {
       os << " " << types[i];
     }
   }
-  return os;
+  return os << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, Signature sig) {
-  os << "func";
+  os << "(func";
   if (sig.params.getID() != Type::none) {
     os << " ";
     printPrefixedTypes(os, "param", sig.params);
@@ -655,7 +656,7 @@ std::ostream& operator<<(std::ostream& os, Signature sig) {
     os << " ";
     printPrefixedTypes(os, "result", sig.results);
   }
-  return os;
+  return os << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, Field field) {
@@ -681,15 +682,19 @@ std::ostream& operator<<(std::ostream& os, Field field) {
 };
 
 std::ostream& operator<<(std::ostream& os, Struct struct_) {
-  os << "struct";
-  for (auto f : struct_.fields) {
-    os << " " << f;
+  os << "(struct";
+  if (struct_.fields.size()) {
+    os << " (field";
+    for (auto f : struct_.fields) {
+      os << " " << f;
+    }
+    os << ")";
   }
-  return os;
+  return os << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, Array array) {
-  return os << "array " << array.element;
+  return os << "(array " << array.element << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
@@ -698,25 +703,25 @@ std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
       return os << typeDef.tuple;
     }
     case TypeDef::SignatureRefKind: {
-      os << "ref ";
+      os << "(ref ";
       if (typeDef.signatureRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.signatureRef.signature;
+      return os << typeDef.signatureRef.signature << ")";
     }
     case TypeDef::StructRefKind: {
-      os << "ref ";
+      os << "(ref ";
       if (typeDef.structRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.structRef.struct_;
+      return os << typeDef.structRef.struct_ << ")";
     }
     case TypeDef::ArrayRefKind: {
-      os << "ref ";
+      os << "(ref ";
       if (typeDef.arrayRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.arrayRef.array;
+      return os << typeDef.arrayRef.array << ")";
     }
   }
   WASM_UNREACHABLE("unexpected kind");

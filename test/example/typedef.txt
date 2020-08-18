@@ -1,18 +1,18 @@
 # Signature
-func (param i32)
-(ref func (param i32))
-(ref null func (param i32))
+(func (param i32))
+(ref (func (param i32)))
+(ref null (func (param i32)))
 # Struct
-struct i32 i64 (mut f32) (mut f64) externref
-(ref struct i32 i64 (mut f32) (mut f64) externref)
-(ref null struct i32 i64 (mut f32) (mut f64) externref)
+(struct (field i32 i64 (mut f32) (mut f64) externref))
+(ref (struct (field i32 i64 (mut f32) (mut f64) externref)))
+(ref null (struct (field i32 i64 (mut f32) (mut f64) externref)))
 # Array
-array i32
-(ref array i32)
-(ref null array i32)
-array (mut externref)
-(ref array (mut externref))
-(ref null array (mut externref))
+(array i32)
+(ref (array i32))
+(ref null (array i32))
+(array (mut externref))
+(ref (array (mut externref)))
+(ref null (array (mut externref)))
 # Tuple
-i32 f64 externref
+(i32 f64 externref)
 (i32 f64 externref)
