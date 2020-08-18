@@ -47,6 +47,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   void doWalkFunction(Function* curr) {
     Index num = curr->getNumLocals();
+    if (num == 0) return; // nothing to do
     counts.resize(num);
     std::fill(counts.begin(), counts.end(), 0);
     firstUses.resize(num);
