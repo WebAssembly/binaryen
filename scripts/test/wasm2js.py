@@ -121,6 +121,8 @@ def test_asserts_output():
 
 def test_wasm2js():
     print('\n[ checking wasm2js testcases... ]\n')
+    if shared.skip_if_on_windows('wasm2js'):
+        return
     test_wasm2js_output()
     test_asserts_output()
 

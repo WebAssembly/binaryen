@@ -26,16 +26,18 @@ namespace wasm {
 // An expression with a cached hash value
 struct HashedExpression {
   Expression* expr;
-  HashType hash;
+  size_t digest;
 
   HashedExpression(Expression* expr) : expr(expr) {
     if (expr) {
-      hash = ExpressionAnalyzer::hash(expr);
+      digest = ExpressionAnalyzer::hash(expr);
+    } else {
+      digest = hash(0);
     }
   }
 
   HashedExpression(const HashedExpression& other)
-    : expr(other.expr), hash(other.hash) {}
+    : expr(other.expr), digest(other.digest) {}
 };
 
 // A pass that hashes all functions
@@ -43,7 +45,7 @@ struct HashedExpression {
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
-  struct Map : public std::map<Function*, HashType> {};
+  struct Map : public std::map<Function*, size_t> {};
 
   FunctionHasher(Map* output) : output(output) {}
 
@@ -54,22 +56,21 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     for (auto& func : module->functions) {
       // ensure an entry for each function - we must not modify the map shape in
       // parallel, just the values
-      hashes[func.get()] = 0;
+      hashes[func.get()] = hash(0);
     }
     return hashes;
   }
 
   void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
 
-  static HashType hashFunction(Function* func) {
-    HashType ret = 0;
-    ret = rehash(ret, (HashType)func->sig.params.getID());
-    ret = rehash(ret, (HashType)func->sig.results.getID());
+  static size_t hashFunction(Function* func) {
+    auto digest = hash(func->sig.params.getID());
+    rehash(digest, func->sig.results.getID());
     for (auto type : func->vars) {
-      ret = rehash(ret, (HashType)type.getID());
+      rehash(digest, type.getID());
     }
-    ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
-    return ret;
+    hash_combine(digest, ExpressionAnalyzer::hash(func->body));
+    return digest;
   }
 
 private:
