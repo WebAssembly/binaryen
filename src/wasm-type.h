@@ -32,6 +32,7 @@
 namespace wasm {
 
 class Type;
+struct TypeDef;
 struct Tuple;
 struct Signature;
 struct Struct;
@@ -120,9 +121,7 @@ public:
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   bool isTuple() const;
-  bool isSingle() const {
-    return isConcrete() && !isTuple();
-  }
+  bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
   bool isNullable() const;
 
@@ -144,6 +143,10 @@ public:
   constexpr BasicID getBasic() const {
     assert(isBasic() && "Basic type expected");
     return static_cast<BasicID>(id);
+  }
+  constexpr TypeDef* getDef() const {
+    assert(isCompound() && "Compound type expected");
+    return (TypeDef*)id;
   }
 
   // (In)equality must be defined for both Type and BasicID because it is
@@ -230,7 +233,7 @@ struct Signature {
 
 struct Field {
   Type type;
-  enum PackedType : uint32_t {
+  enum PackedType {
     not_packed,
     i8,
     i16,

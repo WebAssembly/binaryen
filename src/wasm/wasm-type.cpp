@@ -194,20 +194,18 @@ Type::Type(const Array& array, bool nullable) {
 }
 
 bool Type::isTuple() const {
-  if (id <= _last_basic_id) {
+  if (isBasic()) {
     return false;
   } else {
-    auto* typeDef = (TypeDef*)id;
-    return typeDef->isTuple();
+    return getDef()->isTuple();
   }
 }
 
 bool Type::isRef() const {
-  if (id <= _last_basic_id) {
+  if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    auto* typeDef = (TypeDef*)id;
-    switch (typeDef->kind) {
+    switch (getDef()->kind) {
       case TypeDef::TupleKind:
         return false;
       case TypeDef::SignatureRefKind:
@@ -220,21 +218,20 @@ bool Type::isRef() const {
 }
 
 bool Type::isNullable() const {
-  if (id <= _last_basic_id) {
+  if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    auto* typeDef = (TypeDef*)id;
-    return typeDef->isNullable();
+    return getDef()->isNullable();
   }
 }
 
 size_t Type::size() const { return expand().size(); }
 
 const TypeList& Type::expand() const {
-  if (id <= Type::_last_basic_id) {
+  if (isBasic()) {
     return basicTuples[id];
   } else {
-    auto* typeDef = (TypeDef*)id;
+    auto* typeDef = getDef();
     assert(typeDef->isTuple() && "can only expand tuple types");
     return typeDef->tuple.types;
   }
@@ -463,7 +460,7 @@ bool Signature::operator<(const Signature& other) const {
 
 std::ostream& operator<<(std::ostream& os, Type type) {
   if (type.isBasic()) {
-    switch (static_cast<Type::BasicID>(type.getID())) {
+    switch (type.getBasic()) {
       case Type::none:
         os << "none";
         break;
@@ -499,7 +496,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
     }
   } else {
-    auto* typeDef = (TypeDef*)type.getID();
+    auto* typeDef = type.getDef();
     switch (typeDef->kind) {
       case TypeDef::TupleKind:
         break;
