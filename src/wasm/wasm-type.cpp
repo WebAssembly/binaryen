@@ -189,9 +189,7 @@ Type::Type(const Struct& struct_, bool nullable) {
 }
 
 Type::Type(const Array& array, bool nullable) {
-#ifndef NDEBUG
-  assert(array.element.type.isSingle() && array.element.type.isConcrete());
-#endif
+  assert(array.element.type.isSingle());
   id = canonicalize(TypeDef(array, nullable));
 }
 
