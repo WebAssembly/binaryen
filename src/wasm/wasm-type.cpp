@@ -60,21 +60,21 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
   auto digest = wasm::hash(uint32_t(kind));
   switch (kind) {
     case wasm::TypeDef::TupleKind: {
-      auto& types = typeDef.tupleDef.tuple.types;
+      auto& types = typeDef.tuple.types;
       for (auto t : types) {
         wasm::rehash(digest, t.getID());
       }
       return digest;
     }
-    case wasm::TypeDef::SignatureKind: {
-      auto& sig = typeDef.signatureDef.signature;
+    case wasm::TypeDef::SignatureRefKind: {
+      auto& sig = typeDef.signatureRef.signature;
       wasm::rehash(digest, sig.params.getID());
       wasm::rehash(digest, sig.results.getID());
       wasm::rehash(digest, typeDef.isNullable());
       return digest;
     }
-    case wasm::TypeDef::StructKind: {
-      auto& fields = typeDef.structDef.struct_.fields;
+    case wasm::TypeDef::StructRefKind: {
+      auto& fields = typeDef.structRef.struct_.fields;
       wasm::rehash(digest, fields.size());
       for (auto f : fields) {
         wasm::rehash(digest, f);
@@ -82,8 +82,8 @@ size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
       wasm::rehash(digest, typeDef.isNullable());
       return digest;
     }
-    case wasm::TypeDef::ArrayKind: {
-      auto& array = typeDef.arrayDef.array;
+    case wasm::TypeDef::ArrayRefKind: {
+      auto& array = typeDef.arrayRef.array;
       wasm::rehash(digest, array.element);
       wasm::rehash(digest, typeDef.isNullable());
       return digest;
@@ -212,9 +212,9 @@ bool Type::isRef() const {
     switch (typeDef->kind) {
       case TypeDef::TupleKind:
         return false;
-      case TypeDef::SignatureKind:
-      case TypeDef::StructKind:
-      case TypeDef::ArrayKind:
+      case TypeDef::SignatureRefKind:
+      case TypeDef::StructRefKind:
+      case TypeDef::ArrayRefKind:
         return true;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -238,7 +238,7 @@ const TypeList& Type::expand() const {
   } else {
     auto* typeDef = (TypeDef*)id;
     assert(typeDef->isTuple() && "can only expand tuple types");
-    return typeDef->tupleDef.tuple.types;
+    return typeDef->tuple.types;
   }
 }
 
@@ -505,9 +505,9 @@ std::ostream& operator<<(std::ostream& os, Type type) {
     switch (typeDef->kind) {
       case TypeDef::TupleKind:
         break;
-      case TypeDef::SignatureKind:
-      case TypeDef::StructKind:
-      case TypeDef::ArrayKind:
+      case TypeDef::SignatureRefKind:
+      case TypeDef::StructRefKind:
+      case TypeDef::ArrayRefKind:
         os << "ref ";
         break;
     }
@@ -590,25 +590,25 @@ std::ostream& operator<<(std::ostream& os, Array array) {
 std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
   switch (typeDef.kind) {
     case TypeDef::TupleKind: {
-      return os << typeDef.tupleDef.tuple;
+      return os << typeDef.tuple;
     }
-    case TypeDef::SignatureKind: {
-      if (typeDef.signatureDef.nullable) {
+    case TypeDef::SignatureRefKind: {
+      if (typeDef.signatureRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.signatureDef.signature;
+      return os << typeDef.signatureRef.signature;
     }
-    case TypeDef::StructKind: {
-      if (typeDef.structDef.nullable) {
+    case TypeDef::StructRefKind: {
+      if (typeDef.structRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.structDef.struct_;
+      return os << typeDef.structRef.struct_;
     }
-    case TypeDef::ArrayKind: {
-      if (typeDef.arrayDef.nullable) {
+    case TypeDef::ArrayRefKind: {
+      if (typeDef.arrayRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.arrayDef.array;
+      return os << typeDef.arrayRef.array;
     }
   }
   WASM_UNREACHABLE("unexpected kind");

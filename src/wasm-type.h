@@ -279,50 +279,47 @@ struct Array {
 };
 
 struct TypeDef {
-  enum Kind { TupleKind, SignatureKind, StructKind, ArrayKind } kind;
-  struct TupleDef {
-    Tuple tuple;
-  };
-  struct SignatureDef {
+  enum Kind { TupleKind, SignatureRefKind, StructRefKind, ArrayRefKind } kind;
+  struct SignatureRef {
     Signature signature;
     bool nullable;
   };
-  struct StructDef {
+  struct StructRef {
     Struct struct_;
     bool nullable;
   };
-  struct ArrayDef {
+  struct ArrayRef {
     Array array;
     bool nullable;
   };
   union {
-    TupleDef tupleDef;
-    SignatureDef signatureDef;
-    StructDef structDef;
-    ArrayDef arrayDef;
+    Tuple tuple;
+    SignatureRef signatureRef;
+    StructRef structRef;
+    ArrayRef arrayRef;
   };
 
-  TypeDef(Tuple tuple) : kind(TupleKind), tupleDef{tuple} {}
+  TypeDef(Tuple tuple) : kind(TupleKind), tuple(tuple) {}
   TypeDef(Signature signature, bool nullable)
-    : kind(SignatureKind), signatureDef{signature, nullable} {}
+    : kind(SignatureRefKind), signatureRef{signature, nullable} {}
   TypeDef(Struct struct_, bool nullable)
-    : kind(StructKind), structDef{struct_, nullable} {}
+    : kind(StructRefKind), structRef{struct_, nullable} {}
   TypeDef(Array array, bool nullable)
-    : kind(ArrayKind), arrayDef{array, nullable} {}
+    : kind(ArrayRefKind), arrayRef{array, nullable} {}
   TypeDef(const TypeDef& other) {
     kind = other.kind;
     switch (kind) {
       case TupleKind:
-        new (&tupleDef) auto(other.tupleDef);
+        new (&tuple) auto(other.tuple);
         return;
-      case SignatureKind:
-        new (&signatureDef) auto(other.signatureDef);
+      case SignatureRefKind:
+        new (&signatureRef) auto(other.signatureRef);
         return;
-      case StructKind:
-        new (&structDef) auto(other.structDef);
+      case StructRefKind:
+        new (&structRef) auto(other.structRef);
         return;
-      case ArrayKind:
-        new (&arrayDef) auto(other.arrayDef);
+      case ArrayRefKind:
+        new (&arrayRef) auto(other.arrayRef);
         return;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -330,19 +327,19 @@ struct TypeDef {
   ~TypeDef() {
     switch (kind) {
       case TupleKind: {
-        tupleDef.~TupleDef();
+        tuple.~Tuple();
         return;
       }
-      case SignatureKind: {
-        signatureDef.~SignatureDef();
+      case SignatureRefKind: {
+        signatureRef.~SignatureRef();
         return;
       }
-      case StructKind: {
-        structDef.~StructDef();
+      case StructRefKind: {
+        structRef.~StructRef();
         return;
       }
-      case ArrayKind: {
-        arrayDef.~ArrayDef();
+      case ArrayRefKind: {
+        arrayRef.~ArrayRef();
         return;
       }
     }
@@ -350,20 +347,20 @@ struct TypeDef {
   }
 
   constexpr bool isTuple() const { return kind == TupleKind; }
-  constexpr bool isSignature() const { return kind == SignatureKind; }
-  constexpr bool isStruct() const { return kind == StructKind; }
-  constexpr bool isArray() const { return kind == ArrayKind; }
+  constexpr bool isSignatureRef() const { return kind == SignatureRefKind; }
+  constexpr bool isStructRef() const { return kind == StructRefKind; }
+  constexpr bool isArrayRef() const { return kind == ArrayRefKind; }
 
   bool isNullable() const {
     switch (kind) {
       case TupleKind:
         return false;
-      case SignatureKind:
-        return signatureDef.nullable;
-      case StructKind:
-        return structDef.nullable;
-      case ArrayKind:
-        return arrayDef.nullable;
+      case SignatureRefKind:
+        return signatureRef.nullable;
+      case StructRefKind:
+        return structRef.nullable;
+      case ArrayRefKind:
+        return arrayRef.nullable;
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -374,16 +371,16 @@ struct TypeDef {
     }
     switch (kind) {
       case TupleKind:
-        return tupleDef.tuple == other.tupleDef.tuple;
-      case SignatureKind:
-        return signatureDef.nullable == other.signatureDef.nullable &&
-               signatureDef.signature == other.signatureDef.signature;
-      case StructKind:
-        return structDef.nullable == other.structDef.nullable &&
-               structDef.struct_ == other.structDef.struct_;
-      case ArrayKind:
-        return arrayDef.nullable == other.arrayDef.nullable &&
-               arrayDef.array == other.arrayDef.array;
+        return tuple == other.tuple;
+      case SignatureRefKind:
+        return signatureRef.nullable == other.signatureRef.nullable &&
+               signatureRef.signature == other.signatureRef.signature;
+      case StructRefKind:
+        return structRef.nullable == other.structRef.nullable &&
+               structRef.struct_ == other.structRef.struct_;
+      case ArrayRefKind:
+        return arrayRef.nullable == other.arrayRef.nullable &&
+               arrayRef.array == other.arrayRef.array;
     }
     WASM_UNREACHABLE("unexpected kind");
   }
