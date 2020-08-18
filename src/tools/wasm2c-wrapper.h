@@ -123,7 +123,8 @@ int main(int argc, char** argv) {
     if (result != Type::none) {
       ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str +
              " => ";
-      switch (result.getSingle()) {
+      TODO_SINGLE_COMPOUND(result);
+      switch (result.getBasic()) {
         case Type::i32:
           ret += "%d\\n\", ";
           break;
@@ -146,7 +147,8 @@ int main(int argc, char** argv) {
     auto params = func->sig.params.expand();
 
     auto wasm2cSignature = [](Type type) {
-      switch (type.getSingle()) {
+      TODO_SINGLE_COMPOUND(type);
+      switch (type.getBasic()) {
         case Type::none:
           return 'v';
         case Type::i32:

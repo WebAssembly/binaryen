@@ -80,7 +80,8 @@ int main(int argc, const char* argv[]) {
          [&DWARF](Options*, const std::string&) { DWARF = true; })
     .add("--emit-text",
          "-S",
-         "Emit text instead of binary for the output file",
+         "Emit text instead of binary for the output file. "
+         "In this mode if no output file is specified, we write to stdout.",
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
     .add("--global-base",
@@ -171,9 +172,6 @@ int main(int argc, const char* argv[]) {
 
   if (infile == "") {
     Fatal() << "Need to specify an infile\n";
-  }
-  if (outfile == "" && emitBinary) {
-    Fatal() << "Need to specify an outfile, or use text output\n";
   }
 
   Module wasm;
@@ -335,23 +333,29 @@ int main(int argc, const char* argv[]) {
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
                       WasmPrinter::printModule(&wasm, std::cerr));
 
-  Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-  ModuleWriter writer;
-  writer.setDebugInfo(debugInfo);
-  // writer.setSymbolMap(symbolMap);
-  writer.setBinary(emitBinary);
-  if (outputSourceMapFilename.size()) {
-    writer.setSourceMapFilename(outputSourceMapFilename);
-    writer.setSourceMapUrl(outputSourceMapUrl);
+  // Write the modified wasm if the user asked us to, either by specifying an
+  // output file, or requesting text output (which goes to stdout by default).
+  if (outfile.size() > 0 || !emitBinary) {
+    Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
+    ModuleWriter writer;
+    writer.setDebugInfo(debugInfo);
+    // writer.setSymbolMap(symbolMap);
+    writer.setBinary(emitBinary);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
+    writer.write(wasm, output);
+    if (!emitBinary) {
+      output << "(;\n";
+      output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
+      output << ";)\n";
+    }
   }
-  writer.write(wasm, output);
+  // If we emit text then we emitted the metadata together with that text
+  // earlier. Otherwise emit it to stdout.
   if (emitBinary) {
     std::cout << metadata;
-  } else {
-    output << "(;\n";
-    output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
-    output << ";)\n";
   }
-
   return 0;
 }

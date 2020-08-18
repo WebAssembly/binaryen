@@ -99,7 +99,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
-        switch (import->type.getSingle()) {
+        TODO_SINGLE_COMPOUND(import->type);
+        switch (import->type.getBasic()) {
           case Type::i32:
             globals[import->name] = {Literal(int32_t(666))};
             break;
