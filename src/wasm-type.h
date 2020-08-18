@@ -121,7 +121,7 @@ public:
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
   bool isTuple() const;
   bool isSingle() const {
-    return id >= i32 && (id <= _last_basic_id || !isTuple());
+    return isConcrete() && !isTuple();
   }
   bool isRef() const;
   bool isNullable() const;
