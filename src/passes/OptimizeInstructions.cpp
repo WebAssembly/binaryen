@@ -1404,12 +1404,9 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     FeatureSet features = getModule()->features;
 
-    auto destHasSideEffects =
-      EffectAnalyzer(getPassOptions(), features, memCopy->dest)
-        .hasSideEffects();
-
     // memory.copy(x, x, sz)  ==>  nop
-    if (!destHasSideEffects &&
+    if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
+           .hasSideEffects() &&
         ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
       return ExpressionManipulator::nop(memCopy);
     }
