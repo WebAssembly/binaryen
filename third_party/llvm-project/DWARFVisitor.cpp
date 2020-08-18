@@ -57,7 +57,21 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
   for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
     auto offset = DebugInfo.AbbrevDecls[i].ListOffset;
     // The offset is the same for all entries for the same CU, so only note the
-    // first as that is where the list begins.
+    // first as that is where the list for the CU (that LLVM DeclSet) begins.
+    // That is, DebugInfo.AbbrevDecls looks like this:
+    //
+    //  i  CU   Abbrev  ListOffset
+    // ============================
+    //  0   X     X1      150
+    //  1   X     X2      150
+    //  2   X     X3      150
+    //           ..
+    //  6   Y     Y1      260
+    //  7   Y     Y2      260
+    //
+    // Note how multiple rows i have the same CU. All those abbrevs have the
+    // same ListOffset, which is the byte offset into the abbreviation section
+    // for that set of abbreviations.
     if (abbrByteOffsetToDeclsIndex.count(offset)) {
       continue;
     }
