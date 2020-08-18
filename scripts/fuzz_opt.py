@@ -51,7 +51,7 @@ def in_binaryen(*args):
 
 
 def in_bin(tool):
-    return os.path.join(shared.options.binaryen_root, 'bin', tool)
+    return os.path.join(shared.options.binaryen_bin, tool)
 
 
 def random_size():
@@ -877,11 +877,11 @@ if __name__ == '__main__':
     # instead of the randomly generating one. this can be useful for
     # reduction.
     given_wasm = None
-    if len(sys.argv) >= 2:
-        given_seed = int(sys.argv[1])
+    if len(shared.requested) >= 1:
+        given_seed = int(shared.requested[0])
         print('checking a single given seed', given_seed)
-        if len(sys.argv) >= 3:
-            given_wasm = sys.argv[2]
+        if len(shared.requested) >= 2:
+            given_wasm = shared.requested[1]
             print('using given wasm file', given_wasm)
     else:
         given_seed = None

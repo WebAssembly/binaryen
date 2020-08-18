@@ -315,7 +315,8 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::externref:
         if (wasm.features.hasExceptionHandling()) {
           options.push_back(Type::exnref);
@@ -1315,7 +1316,7 @@ private:
   Expression* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         bool signed_ = get() & 1;
         switch (upTo(3)) {
@@ -1421,7 +1422,7 @@ private:
     auto offset = logify(get());
     auto ptr = makePointer();
     auto value = make(type);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -1581,7 +1582,7 @@ private:
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(get32());
           case Type::i64:
@@ -1626,7 +1627,7 @@ private:
           default:
             WASM_UNREACHABLE("invalid value");
         }
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(int32_t(small));
           case Type::i64:
@@ -1649,7 +1650,7 @@ private:
       case 2: {
         // special values
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value =
               Literal(pick<int32_t>(0,
@@ -1717,7 +1718,7 @@ private:
       case 3: {
         // powers of 2
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value = Literal(int32_t(1) << upTo(32));
             break;
@@ -1794,9 +1795,11 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
-        switch (getSingleConcreteType().getSingle()) {
+        auto singleConcreteType = getSingleConcreteType();
+        TODO_SINGLE_COMPOUND(singleConcreteType);
+        switch (singleConcreteType.getBasic()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -2015,7 +2018,7 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(4)) {
           case 0:
@@ -2319,7 +2322,7 @@ private:
       }
     }
     Index bytes;
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -2410,7 +2413,7 @@ private:
 
   Expression* makeSIMDExtract(Type type) {
     auto op = static_cast<SIMDExtractOp>(0);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32:
         op = pick(ExtractLaneSVecI8x16,
                   ExtractLaneUVecI8x16,
