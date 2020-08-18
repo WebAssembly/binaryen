@@ -620,17 +620,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
     }
   } else {
-    auto* typeDef = getDef(type);
-    switch (typeDef->kind) {
-      case TypeDef::TupleKind:
-        break;
-      case TypeDef::SignatureRefKind:
-      case TypeDef::StructRefKind:
-      case TypeDef::ArrayRefKind:
-        os << "ref ";
-        break;
-    }
-    os << *typeDef;
+    os << "(" << *getDef(type) << ")";
   }
   return os;
 }
@@ -644,7 +634,6 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
 }
 
 std::ostream& operator<<(std::ostream& os, Tuple tuple) {
-  os << "(";
   auto& types = tuple.types;
   auto size = types.size();
   if (size) {
@@ -653,21 +642,18 @@ std::ostream& operator<<(std::ostream& os, Tuple tuple) {
       os << " " << types[i];
     }
   }
-  os << ")";
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, Signature sig) {
   os << "func";
   if (sig.params.getID() != Type::none) {
-    os << " (";
+    os << " ";
     printPrefixedTypes(os, "param", sig.params);
-    os << ")";
   }
   if (sig.results.getID() != Type::none) {
-    os << " (";
+    os << " ";
     printPrefixedTypes(os, "result", sig.results);
-    os << ")";
   }
   return os;
 }
@@ -712,18 +698,21 @@ std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
       return os << typeDef.tuple;
     }
     case TypeDef::SignatureRefKind: {
+      os << "ref ";
       if (typeDef.signatureRef.nullable) {
         os << "null ";
       }
       return os << typeDef.signatureRef.signature;
     }
     case TypeDef::StructRefKind: {
+      os << "ref ";
       if (typeDef.structRef.nullable) {
         os << "null ";
       }
       return os << typeDef.structRef.struct_;
     }
     case TypeDef::ArrayRefKind: {
+      os << "ref ";
       if (typeDef.arrayRef.nullable) {
         os << "null ";
       }
