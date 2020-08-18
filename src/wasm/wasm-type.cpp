@@ -182,7 +182,7 @@ Type::Type(const Signature signature, bool nullable) {
 Type::Type(const Struct& struct_, bool nullable) {
 #ifndef NDEBUG
   for (Field f : struct_.fields) {
-    assert(f.type.isSingle() && f.type.isConcrete());
+    assert(f.type.isSingle());
   }
 #endif
   id = canonicalize(TypeDef(struct_, nullable));
