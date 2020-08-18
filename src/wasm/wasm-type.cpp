@@ -161,7 +161,7 @@ Type::Type(const Tuple& tuple) {
   auto& types = tuple.types;
 #ifndef NDEBUG
   for (Type t : types) {
-    assert(!t.isTuple() && t.isConcrete());
+    assert(t.isSingle());
   }
 #endif
   if (types.size() == 0) {
