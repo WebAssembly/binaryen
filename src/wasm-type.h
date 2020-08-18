@@ -70,7 +70,7 @@ public:
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
 
-  // Construct tuple from lists of elementary types
+  // Construct tuple from a list of single types
   Type(std::initializer_list<Type>);
 
   // Construct from tuple description
