@@ -207,7 +207,7 @@ struct ResultType {
 
 struct Tuple {
   TypeList types;
-  Tuple() : types({}) {}
+  Tuple() : types() {}
   Tuple(std::initializer_list<Type> types) : types(types) {}
   Tuple(TypeList types) : types(types) {}
   bool operator==(const Tuple& other) const { return types == other.types; }
