@@ -144,7 +144,6 @@ int main(int argc, char** argv) {
 
     // Emit the callee's name with wasm2c name mangling.
     ret += std::string("(*Z_") + exp->name.str + "Z_";
-    auto params = func->sig.params.expand();
 
     auto wasm2cSignature = [](Type type) {
       TODO_SINGLE_COMPOUND(type);
@@ -165,18 +164,18 @@ int main(int argc, char** argv) {
     };
 
     ret += wasm2cSignature(result);
-    if (params.empty()) {
-      ret += wasm2cSignature(Type::none);
-    } else {
-      for (auto param : params) {
+    if (func->sig.params.isMulti()) {
+      for (auto& param : func->sig.params) {
         ret += wasm2cSignature(param);
       }
+    } else {
+      ret += wasm2cSignature(func->sig.params);
     }
     ret += ")(";
 
     // Emit the parameters (all 0s, like the other wrappers).
     bool first = true;
-    for (auto param : params) {
+    for (auto param : func->sig.params) {
       WASM_UNUSED(param);
       if (!first) {
         ret += ", ";

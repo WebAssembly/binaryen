@@ -123,23 +123,18 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
 
-size_t Type::size() const { return expand().size(); }
-
-const std::vector<Type>& Type::expand() const {
-  if (id <= _last_value_type) {
-    return basicTypes[id];
-  } else {
-    return *(std::vector<Type>*)id;
+size_t Type::size() const {
+  if (isMulti()) {
+    return (*(std::vector<Type>*)getID()).size();
   }
+  return size_t(getID() != Type::none);
 }
 
 bool Type::operator<(const Type& other) const {
-  const std::vector<Type>& these = expand();
-  const std::vector<Type>& others = other.expand();
-  return std::lexicographical_compare(these.begin(),
-                                      these.end(),
-                                      others.begin(),
-                                      others.end(),
+  return std::lexicographical_compare((*this).begin(),
+                                      (*this).end(),
+                                      other.begin(),
+                                      other.end(),
                                       [](const Type& a, const Type& b) {
                                         TODO_SINGLE_COMPOUND(a);
                                         TODO_SINGLE_COMPOUND(b);
@@ -172,7 +167,7 @@ unsigned Type::getByteSize() const {
 
   if (isMulti()) {
     unsigned size = 0;
-    for (auto t : expand()) {
+    for (auto& t : *this) {
       size += getSingleByteSize(t);
     }
     return size;
@@ -181,7 +176,7 @@ unsigned Type::getByteSize() const {
 }
 
 Type Type::reinterpret() const {
-  Type singleType = *expand().begin();
+  auto singleType = *(*this).begin();
   switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
@@ -222,7 +217,7 @@ FeatureSet Type::getFeatures() const {
 
   if (isMulti()) {
     FeatureSet feats = FeatureSet::Multivalue;
-    for (Type t : expand()) {
+    for (auto& t : *this) {
       feats |= getSingleFeatures(t);
     }
     return feats;
@@ -255,13 +250,11 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isMulti() && right.isMulti()) {
-    const auto& leftElems = left.expand();
-    const auto& rightElems = right.expand();
-    if (leftElems.size() != rightElems.size()) {
+    if (left.size() != right.size()) {
       return false;
     }
-    for (size_t i = 0; i < leftElems.size(); ++i) {
-      if (!isSubType(leftElems[i], rightElems[i])) {
+    for (size_t i = 0; i < left.size(); ++i) {
+      if (!isSubType(left[i], right[i])) {
         return false;
       }
     }
@@ -286,10 +279,8 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.isMulti()) {
     std::vector<Type> types;
     types.resize(a.size());
-    const auto& as = a.expand();
-    const auto& bs = b.expand();
     for (size_t i = 0; i < types.size(); ++i) {
-      types[i] = getLeastUpperBound(as[i], bs[i]);
+      types[i] = getLeastUpperBound(a[i], b[i]);
       if (types[i] == Type::none) {
         return Type::none;
       }
@@ -313,7 +304,7 @@ namespace {
 std::ostream&
 printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
   os << '(' << prefix;
-  for (auto t : type.expand()) {
+  for (auto& t : type) {
     os << " " << t;
   }
   os << ')';
@@ -347,12 +338,10 @@ bool Signature::operator<(const Signature& other) const {
 std::ostream& operator<<(std::ostream& os, Type type) {
   if (type.isMulti()) {
     os << '(';
-    const std::vector<Type>& types = type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      os << types[i];
-      if (i < types.size() - 1) {
-        os << ", ";
-      }
+    auto sep = "";
+    for (auto& t : type) {
+      os << sep << t;
+      sep = ", ";
     }
     os << ')';
   } else {

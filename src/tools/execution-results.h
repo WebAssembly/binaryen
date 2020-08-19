@@ -144,7 +144,7 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (Type param : func->sig.params.expand()) {
+      for (auto& param : func->sig.params) {
         // zeros in arguments TODO: more?
         arguments.push_back(Literal::makeSingleZero(param));
       }

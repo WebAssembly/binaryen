@@ -1808,17 +1808,16 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     return;
   }
   for (auto type : func->vars) {
-    for (auto t : type.expand()) {
+    for (auto& t : type) {
       numLocalsByType[t]++;
     }
   }
   countScratchLocals();
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    const std::vector<Type> types = func->getLocalType(i).expand();
-    for (Index j = 0; j < types.size(); j++) {
-      Type type = types[j];
-      auto fullIndex = std::make_pair(i, j);
+    Index j = 0;
+    for (auto& type : func->getLocalType(i)) {
+      auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {

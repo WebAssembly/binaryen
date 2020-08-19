@@ -67,15 +67,16 @@ struct SExprType {
 static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
   if (type.isMulti()) {
-    const std::vector<Type>& types = type.expand();
-    o << '(' << types[0];
-    for (size_t i = 1; i < types.size(); ++i) {
-      o << ' ' << types[i];
+    o << '(';
+    auto ws = "";
+    for (auto& t : type) {
+      o << ws << t;
+      ws = " ";
     }
     o << ')';
-    return o;
+  } else {
+    o << type;
   }
-  o << type;
   return o;
 }
 
@@ -90,12 +91,10 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
     if (type == Type::none) {
       os << "none";
     } else {
-      const std::vector<Type>& types = type.expand();
-      for (size_t i = 0; i < types.size(); ++i) {
-        if (i != 0) {
-          os << '_';
-        }
-        os << types[i];
+      auto us = "";
+      for (auto& t : type) {
+        os << us << t;
+        us = "_";
       }
     }
   };
@@ -2169,14 +2168,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    const std::vector<Type>& params = curr->sig.params.expand();
-    if (params.size() > 0) {
-      for (size_t i = 0; i < params.size(); i++) {
+    if (curr->sig.params.size() > 0) {
+      Index i = 0;
+      for (auto& param : curr->sig.params) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << params[i] << ')';
+        o << ' ' << param << ')';
+        ++i;
       }
     }
     if (curr->sig.results != Type::none) {

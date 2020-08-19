@@ -193,13 +193,13 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    const std::vector<Type>& params = func->sig.params.expand();
     Type type = func->sig.results;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
-    for (Index i = 0; i < params.size(); i++) {
+    Index i = 0;
+    for (auto& param : func->sig.params) {
       callOperands.push_back(
-        fromABI(builder.makeLocalGet(i, Type::i64), params[i], module));
+        fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
