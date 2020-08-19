@@ -56,19 +56,6 @@ namespace {
 
 std::mutex mutex;
 
-std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
-  {{},
-   {Type::unreachable},
-   {Type::i32},
-   {Type::i64},
-   {Type::f32},
-   {Type::f64},
-   {Type::v128},
-   {Type::funcref},
-   {Type::externref},
-   {Type::nullref},
-   {Type::exnref}}};
-
 // Track unique_ptrs for constructed types to avoid leaks
 std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
 
@@ -122,13 +109,6 @@ void Type::init(const std::vector<Type>& types) {
 Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
-
-size_t Type::size() const {
-  if (isMulti()) {
-    return (*(std::vector<Type>*)getID()).size();
-  }
-  return size_t(getID() != Type::none);
-}
 
 bool Type::operator<(const Type& other) const {
   return std::lexicographical_compare((*this).begin(),
