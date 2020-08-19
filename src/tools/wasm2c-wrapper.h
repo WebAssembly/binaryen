@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
 
     // Emit the parameters (all 0s, like the other wrappers).
     bool first = true;
-    for (auto param : func->sig.params) {
+    for (auto& param : func->sig.params) {
       WASM_UNUSED(param);
       if (!first) {
         ret += ", ";

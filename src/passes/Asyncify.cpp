@@ -1306,7 +1306,7 @@ private:
       }
       auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
-      for (auto type : localType) {
+      for (auto& type : localType) {
         auto size = type.getByteSize();
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
@@ -1350,7 +1350,7 @@ private:
       }
       auto localType = func->getLocalType(i);
       size_t j = 0;
-      for (auto type : localType) {
+      for (auto& type : localType) {
         auto size = type.getByteSize();
         Expression* localGet = builder->makeLocalGet(i, localType);
         if (localType.size() > 1) {

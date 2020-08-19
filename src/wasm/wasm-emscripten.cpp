@@ -486,12 +486,12 @@ AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
 }
 
 Signature AsmConstWalker::asmConstSig(Signature baseSig) {
-  std::vector<Type> params(baseSig.params.begin(), baseSig.params.end());
-  assert(params.size() >= 1);
+  assert(baseSig.params.size() >= 1);
   // Omit the signature of the "code" parameter, taken as a string, as the
   // first argument
-  params.erase(params.begin());
-  return Signature(Type(params), baseSig.results);
+  return Signature(
+    Type(std::vector<Type>(baseSig.params.begin() + 1, baseSig.params.end())),
+    baseSig.results);
 }
 
 Name AsmConstWalker::nameForImportWithSig(Signature sig, Proxying proxy) {
