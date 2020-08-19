@@ -210,6 +210,7 @@ public:
       if (parent->isMulti()) {
         return (*(std::vector<Type>*)parent->getID())[index];
       }
+      assert(*parent != Type::none);
       return *parent;
     }
   };
