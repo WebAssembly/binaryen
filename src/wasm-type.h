@@ -211,7 +211,8 @@ public:
     if (isMulti()) {
       return Iterator(this, (*(std::vector<Type>*)getID()).size());
     } else {
-      // TODO: unreachable expands to {unreachable} currently. change to {}?
+      // TODO: unreachable is special and expands to {unreachable} currently.
+      // see also: https://github.com/WebAssembly/binaryen/issues/3062
       return Iterator(this, size_t(id != Type::none));
     }
   }
