@@ -47,10 +47,10 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   enum { Unseen = 0 };
 
   void doWalkFunction(Function* curr) {
-    Index num = curr->getNumLocals();
-    if (num == curr->getNumParams()) {
+    if (curr->getNumVars() == 0) {
       return; // nothing to do. All locals are parameters
     }
+    Index num = curr->getNumLocals();
     counts.resize(num);
     std::fill(counts.begin(), counts.end(), 0);
     firstUses.resize(num);
