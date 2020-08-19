@@ -154,15 +154,15 @@ void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
   std::vector<NameType> params;
   params.emplace_back("fptr", Type::i32); // function pointer param
   int p = 0;
-  const std::vector<Type>& paramTypes = sig.params.expand();
-  for (const auto& ty : paramTypes) {
-    params.emplace_back(std::to_string(p++), ty);
+  for (auto& param : sig.params) {
+    params.emplace_back(std::to_string(p++), param);
   }
   Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
-  for (unsigned i = 0; i < paramTypes.size(); ++i) {
-    args.push_back(builder.makeLocalGet(i + 1, paramTypes[i]));
+  Index i = 0;
+  for (auto& param : sig.params) {
+    args.push_back(builder.makeLocalGet(++i, param));
   }
   Expression* call = builder.makeCallIndirect(fptr, args, sig);
   f->body = call;
@@ -493,12 +493,12 @@ AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
 }
 
 Signature AsmConstWalker::asmConstSig(Signature baseSig) {
-  std::vector<Type> params = baseSig.params.expand();
-  assert(params.size() >= 1);
+  assert(baseSig.params.size() >= 1);
   // Omit the signature of the "code" parameter, taken as a string, as the
   // first argument
-  params.erase(params.begin());
-  return Signature(Type(params), baseSig.results);
+  return Signature(
+    Type(std::vector<Type>(baseSig.params.begin() + 1, baseSig.params.end())),
+    baseSig.results);
 }
 
 Name AsmConstWalker::nameForImportWithSig(Signature sig, Proxying proxy) {
@@ -662,8 +662,7 @@ struct FixInvokeFunctionNamesWalker
       return name;
     }
 
-    const std::vector<Type>& params = sig.params.expand();
-    std::vector<Type> newParams(params.begin() + 1, params.end());
+    std::vector<Type> newParams(sig.params.begin() + 1, sig.params.end());
     Signature sigWoOrigFunc = Signature(Type(newParams), sig.results);
     invokeSigs.insert(sigWoOrigFunc);
     return Name("invoke_" +

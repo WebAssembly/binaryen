@@ -67,10 +67,6 @@ public:
   Type(std::initializer_list<Type> types);
   explicit Type(const std::vector<Type>& types);
 
-  // Accessors
-  size_t size() const;
-  const std::vector<Type>& expand() const;
-
   // Predicates
   //                 Compound Concrete
   //   Type        Basic │ Single│
@@ -116,8 +112,8 @@ public:
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
-    for (auto t : expand()) {
-      if ((t.*pred)()) {
+    for (auto& type : *this) {
+      if ((type.*pred)()) {
         return true;
       }
     }
@@ -177,6 +173,57 @@ public:
   }
 
   std::string toString() const;
+
+  struct Iterator
+    : std::iterator<std::random_access_iterator_tag, Type, long, Type*, Type&> {
+    const Type* parent;
+    size_t index;
+    Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
+    bool operator==(const Iterator& other) const {
+      return index == other.index && parent == other.parent;
+    }
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
+    void operator++() { index++; }
+    Iterator& operator+=(difference_type off) {
+      index += off;
+      return *this;
+    }
+    const Iterator operator+(difference_type off) const {
+      return Iterator(*this) += off;
+    }
+    difference_type operator-(const Iterator& other) {
+      assert(parent == other.parent);
+      return index - other.index;
+    }
+    const value_type& operator*() const {
+      if (parent->isMulti()) {
+        return (*(std::vector<Type>*)parent->getID())[index];
+      } else {
+        // see TODO in Type::end()
+        assert(index == 0 && parent->id != Type::none && "Index out of bounds");
+        return *parent;
+      }
+    }
+  };
+
+  Iterator begin() const { return Iterator(this, 0); }
+  Iterator end() const {
+    if (isMulti()) {
+      return Iterator(this, (*(std::vector<Type>*)getID()).size());
+    } else {
+      // TODO: unreachable is special and expands to {unreachable} currently.
+      // see also: https://github.com/WebAssembly/binaryen/issues/3062
+      return Iterator(this, size_t(id != Type::none));
+    }
+  }
+  size_t size() const { return end() - begin(); }
+  const Type& operator[](size_t i) const {
+    if (isMulti()) {
+      return (*(std::vector<Type>*)getID())[i];
+    } else {
+      return *begin();
+    }
+  }
 };
 
 // Wrapper type for formatting types as "(param i32 i64 f32)"

@@ -150,9 +150,10 @@ BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
 uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
 
 void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
-  const std::vector<Type>& types = Type(t).expand();
-  for (size_t i = 0; i < types.size(); ++i) {
-    buf[i] = types[i].getID();
+  Type types(t);
+  size_t i = 0;
+  for (auto& type : types) {
+    buf[i++] = type.getID();
   }
 }
 
