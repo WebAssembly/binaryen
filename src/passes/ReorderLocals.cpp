@@ -47,11 +47,8 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   enum { Unseen = 0 };
 
   void doWalkFunction(Function* curr) {
-    Index i = 0, num = curr->getNumLocals();
-    while (i < num && curr->isParam(i)) {
-      i++;
-    }
-    if (num == i) {
+    Index num = curr->getNumLocals();
+    if (num == curr->getNumParams()) {
       return; // nothing to do. All locals are parameters
     }
     counts.resize(num);
