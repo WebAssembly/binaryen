@@ -102,7 +102,7 @@
   },
   "invokeFuncs": [
   ],
-  "mainReadsParams": 1,
+  "mainReadsParams": 0,
   "features": [
   ]
 }
