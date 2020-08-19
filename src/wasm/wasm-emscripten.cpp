@@ -320,6 +320,7 @@ std::string proxyingSuffix(Proxying proxy) {
 
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
+  bool minimizeWasmChanges;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   struct AsmConst {
@@ -334,8 +335,9 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
-  AsmConstWalker(Module& _wasm)
-    : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
+  AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
+    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges),
+      segmentOffsets(getSegmentOffsets(wasm)) {}
 
   void noteNonLinear(Expression* curr);
 
@@ -426,7 +428,9 @@ void AsmConstWalker::visitCall(Call* curr) {
   int32_t address = value->value.geti32();
   auto code = codeForConstAddr(wasm, segmentOffsets, address);
   auto& asmConst = createAsmConst(address, code, sig, importName);
-  fixupName(curr->target, baseSig, asmConst.proxy);
+  if (!minimizeWasmChanges) {
+    fixupName(curr->target, baseSig, asmConst.proxy);
+  }
 }
 
 Proxying AsmConstWalker::proxyType(Name name) {
@@ -439,6 +443,9 @@ Proxying AsmConstWalker::proxyType(Name name) {
 }
 
 void AsmConstWalker::visitTable(Table* curr) {
+  if (minimizeWasmChanges) {
+    return;
+  }
   for (auto& segment : curr->segments) {
     for (auto& name : segment.data) {
       auto* func = wasm.getFunction(name);
@@ -515,24 +522,30 @@ void AsmConstWalker::addImports() {
   }
 }
 
-AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
+static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
+                                                    bool minimizeWasmChanges) {
   // Collect imports to remove
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
-  for (auto& import : wasm.functions) {
-    if (import->imported() && import->base.hasSubstring(EM_ASM_PREFIX)) {
-      toRemove.push_back(import->name);
+  if (!minimizeWasmChanges) {
+    for (auto& import : wasm.functions) {
+      if (import->imported() && import->base.hasSubstring(EM_ASM_PREFIX)) {
+        toRemove.push_back(import->name);
+      }
     }
   }
 
   // Walk the module, generate _sig versions of EM_ASM functions
-  AsmConstWalker walker(wasm);
+  AsmConstWalker walker(wasm, minimizeWasmChanges);
   walker.process();
 
-  // Remove the base functions that we didn't generate
-  for (auto importName : toRemove) {
-    wasm.removeFunction(importName);
+  if (!minimizeWasmChanges) {
+    // Remove the base functions that we didn't generate
+    for (auto importName : toRemove) {
+      wasm.removeFunction(importName);
+    }
   }
+
   return walker;
 }
 
@@ -754,7 +767,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   std::stringstream meta;
   meta << "{\n";
 
-  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
+  AsmConstWalker emAsmWalker =
+    fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
 
   // print
   commaFirst = true;
@@ -810,7 +824,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
-        !import->base.startsWith(EM_ASM_PREFIX.str) &&
+        (minimizeWasmChanges || !import->base.startsWith(EM_ASM_PREFIX.str)) &&
         !import->base.startsWith("invoke_")) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
