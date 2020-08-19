@@ -68,10 +68,10 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
   if (type.isMulti()) {
     o << '(';
-    auto ws = "";
+    auto sep = "";
     for (auto& t : type) {
-      o << ws << t;
-      ws = " ";
+      o << sep << t;
+      sep = " ";
     }
     o << ')';
   } else {
@@ -91,10 +91,10 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
     if (type == Type::none) {
       os << "none";
     } else {
-      auto us = "";
+      auto sep = "";
       for (auto& t : type) {
-        os << us << t;
-        us = "_";
+        os << sep << t;
+        sep = "_";
       }
     }
   };
