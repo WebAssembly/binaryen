@@ -177,7 +177,7 @@ public:
 
   std::string toString() const;
 
-  Type& operator[](size_t i) {
+  const Type& operator[](size_t i) const {
     if (isMulti()) {
       return (*(std::vector<Type>*)getID())[i];
     }
