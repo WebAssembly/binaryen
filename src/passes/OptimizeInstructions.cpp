@@ -710,13 +710,10 @@ struct OptimizeInstructions
           store->value = unary->value;
         }
       }
-    } else {
-      if (features.hasBulkMemory()) {
-        if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
-          if (auto* ret = optimizeMemoryCopy(memCopy)) {
-            return ret;
-          }
-        }
+    } else if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
+      assert(features.hasBulkMemory());
+      if (auto* ret = optimizeMemoryCopy(memCopy)) {
+        return ret;
       }
     }
     return nullptr;
