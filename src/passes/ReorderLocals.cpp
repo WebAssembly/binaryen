@@ -51,6 +51,13 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     if (num == 0) {
       return; // nothing to do
     }
+    Index i = 0;
+    while (i < num && curr->isParam(i)) {
+      i++;
+    }
+    if (i == num) {
+      return; // nothing to do. All locals are parameters
+    }
     counts.resize(num);
     std::fill(counts.begin(), counts.end(), 0);
     firstUses.resize(num);
