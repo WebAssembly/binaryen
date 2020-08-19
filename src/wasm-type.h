@@ -210,7 +210,7 @@ public:
       if (parent->isMulti()) {
         return (*(std::vector<Type>*)parent->getID())[index];
       }
-      assert(*parent != Type::none);
+      assert(index == 0 && *parent != Type::none && "Index out of bounds");
       return *parent;
     }
   };
