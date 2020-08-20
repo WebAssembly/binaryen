@@ -147,7 +147,7 @@ unsigned Type::getByteSize() const {
 
   if (isMulti()) {
     unsigned size = 0;
-    for (auto& t : *this) {
+    for (const auto& t : *this) {
       size += getSingleByteSize(t);
     }
     return size;
@@ -197,7 +197,7 @@ FeatureSet Type::getFeatures() const {
 
   if (isMulti()) {
     FeatureSet feats = FeatureSet::Multivalue;
-    for (auto& t : *this) {
+    for (const auto& t : *this) {
       feats |= getSingleFeatures(t);
     }
     return feats;
@@ -284,7 +284,7 @@ namespace {
 std::ostream&
 printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
   os << '(' << prefix;
-  for (auto& t : type) {
+  for (const auto& t : type) {
     os << " " << t;
   }
   os << ')';
@@ -319,7 +319,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
   if (type.isMulti()) {
     os << '(';
     auto sep = "";
-    for (auto& t : type) {
+    for (const auto& t : type) {
       os << sep << t;
       sep = ", ";
     }

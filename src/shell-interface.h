@@ -169,7 +169,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       trap("callIndirect: bad # of arguments");
     }
     size_t i = 0;
-    for (auto& param : func->sig.params) {
+    for (const auto& param : func->sig.params) {
       if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }

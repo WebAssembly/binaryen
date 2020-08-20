@@ -152,7 +152,7 @@ uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
 void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
   Type types(t);
   size_t i = 0;
-  for (auto& type : types) {
+  for (const auto& type : types) {
     buf[i++] = type.getID();
   }
 }

@@ -69,7 +69,7 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   if (type.isMulti()) {
     o << '(';
     auto sep = "";
-    for (auto& t : type) {
+    for (const auto& t : type) {
       o << sep << t;
       sep = " ";
     }
@@ -92,7 +92,7 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
       os << "none";
     } else {
       auto sep = "";
-      for (auto& t : type) {
+      for (const auto& t : type) {
         os << sep << t;
         sep = "_";
       }
@@ -2170,7 +2170,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr->sig.params.size() > 0) {
       Index i = 0;
-      for (auto& param : curr->sig.params) {
+      for (const auto& param : curr->sig.params) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");

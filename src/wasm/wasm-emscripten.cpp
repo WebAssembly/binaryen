@@ -154,14 +154,14 @@ void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
   std::vector<NameType> params;
   params.emplace_back("fptr", Type::i32); // function pointer param
   int p = 0;
-  for (auto& param : sig.params) {
+  for (const auto& param : sig.params) {
     params.emplace_back(std::to_string(p++), param);
   }
   Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
   Index i = 0;
-  for (auto& param : sig.params) {
+  for (const auto& param : sig.params) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
   Expression* call = builder.makeCallIndirect(fptr, args, sig);
