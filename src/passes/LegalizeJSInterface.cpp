@@ -183,7 +183,7 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    for (auto& param : t->sig.params) {
+    for (const auto& param : t->sig.params) {
       if (param == Type::i64) {
         return true;
       }
@@ -223,7 +223,7 @@ private:
     call->type = func->sig.results;
 
     std::vector<Type> legalParams;
-    for (auto& param : func->sig.params) {
+    for (const auto& param : func->sig.params) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legalParams.size(), legalParams.size() + 1));
@@ -278,7 +278,7 @@ private:
 
     std::vector<Type> params;
     Index i = 0;
-    for (auto& param : im->sig.params) {
+    for (const auto& param : im->sig.params) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));

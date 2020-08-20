@@ -104,7 +104,7 @@ std::string getSig(Type results, Type params) {
   assert(!results.isTuple());
   std::string sig;
   sig += getSig(results);
-  for (auto& param : params) {
+  for (const auto& param : params) {
     sig += getSig(param);
   }
   return sig;

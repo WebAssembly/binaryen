@@ -371,7 +371,7 @@ unsigned Type::getByteSize() const {
 
   if (isTuple()) {
     unsigned size = 0;
-    for (auto& t : *this) {
+    for (const auto& t : *this) {
       size += getSingleByteSize(t);
     }
     return size;
@@ -381,8 +381,7 @@ unsigned Type::getByteSize() const {
 
 Type Type::reinterpret() const {
   assert(!isTuple() && "Unexpected tuple type");
-  auto& singleType = *(*this).begin();
-  switch (singleType.getBasic()) {
+  switch ((*begin()).getBasic()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -415,7 +414,7 @@ FeatureSet Type::getFeatures() const {
 
   if (isTuple()) {
     FeatureSet feats = FeatureSet::Multivalue;
-    for (auto& t : *this) {
+    for (const auto& t : *this) {
       feats |= getSingleFeatures(t);
     }
     return feats;
@@ -531,7 +530,7 @@ namespace {
 std::ostream&
 printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
   os << '(' << prefix;
-  for (auto& t : type) {
+  for (const auto& t : type) {
     os << " " << t;
   }
   os << ')';

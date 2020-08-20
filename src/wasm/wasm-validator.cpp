@@ -647,7 +647,7 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   size_t i = 0;
-  for (auto& param : target->sig.params) {
+  for (const auto& param : target->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
                                              param,
                                              curr,
@@ -703,7 +703,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     return;
   }
   size_t i = 0;
-  for (auto& param : curr->sig.params) {
+  for (const auto& param : curr->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
                                              param,
                                              curr,
@@ -1874,7 +1874,7 @@ void FunctionValidator::visitThrow(Throw* curr) {
     return;
   }
   size_t i = 0;
-  for (auto& param : event->sig.params) {
+  for (const auto& param : event->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
                                              param,
                                              curr->operands[i],
@@ -1975,15 +1975,15 @@ void FunctionValidator::visitFunction(Function* curr) {
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
-  for (auto& param : curr->sig.params) {
+  for (const auto& param : curr->sig.params) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
   }
-  for (auto& result : curr->sig.results) {
+  for (const auto& result : curr->sig.results) {
     features |= result.getFeatures();
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
-  for (auto& var : curr->vars) {
+  for (const auto& var : curr->vars) {
     features |= var.getFeatures();
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
   }
@@ -2144,13 +2144,13 @@ static void validateImports(Module& module, ValidationInfo& info) {
                         "(multivalue is not enabled)");
     }
     if (info.validateWeb) {
-      for (auto& param : curr->sig.params) {
+      for (const auto& param : curr->sig.params) {
         info.shouldBeUnequal(param,
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 parameters");
       }
-      for (auto& result : curr->sig.results) {
+      for (const auto& result : curr->sig.results) {
         info.shouldBeUnequal(result,
                              Type(Type::i64),
                              curr->name,
@@ -2173,14 +2173,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        for (auto& param : f->sig.params) {
+        for (const auto& param : f->sig.params) {
           info.shouldBeUnequal(
             param,
             Type(Type::i64),
             f->name,
             "Exported function must not have i64 parameters");
         }
-        for (auto& result : f->sig.results) {
+        for (const auto& result : f->sig.results) {
           info.shouldBeUnequal(result,
                                Type(Type::i64),
                                f->name,
@@ -2352,7 +2352,7 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                         curr->name,
                         "Multivalue event type (multivalue is not enabled)");
     }
-    for (auto& param : curr->sig.params) {
+    for (const auto& param : curr->sig.params) {
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,
                         "Values in an event should have concrete types");

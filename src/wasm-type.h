@@ -123,7 +123,7 @@ public:
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
-    for (auto& type : *this) {
+    for (const auto& type : *this) {
       if ((type.*pred)()) {
         return true;
       }

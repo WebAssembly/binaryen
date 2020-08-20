@@ -220,7 +220,7 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
-      for (auto& type : sigType) {
+      for (const auto& type : sigType) {
         o << binaryType(type);
       }
     }
@@ -386,7 +386,7 @@ void WasmBinaryWriter::writeGlobals() {
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one\n");
     size_t i = 0;
-    for (auto& t : global->type) {
+    for (const auto& t : global->type) {
       o << binaryType(t);
       o << U32LEB(global->mutable_);
       if (global->type.size() == 1) {

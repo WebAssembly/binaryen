@@ -102,7 +102,7 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
 Literals Literal::makeZero(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
-  for (auto& t : type) {
+  for (const auto& t : type) {
     zeroes.push_back(makeSingleZero(t));
   }
   return zeroes;
