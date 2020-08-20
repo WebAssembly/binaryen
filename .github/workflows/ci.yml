@@ -112,7 +112,7 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
-  build-clang:
+  build-clang-debug:
     name: clang-debug
     runs-on: ubuntu-latest
     steps:
