@@ -367,7 +367,7 @@ def get_tests(test_dir, extensions=[]):
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
     if options.test_name_filter:
-        tests = list(filter(lambda n: n.find(options.test_name_filter) >= 0, tests))
+        tests = [t for t in tests if t.find(options.test_name_filter) >= 0]
     return sorted(tests)
 
 
