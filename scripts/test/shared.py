@@ -81,6 +81,10 @@ def parse_args(args):
     parser.add_argument(
         '--list-suites', action='store_true',
         help='List the test suites that can be run.')
+    parser.add_argument(
+        '--filter', dest='test_name_filter', default='',
+        help=('Specifies a filter. Only tests whose paths contains this '
+              'substring will be run'))
 
     return parser.parse_args(args)
 
@@ -362,6 +366,8 @@ def get_tests(test_dir, extensions=[]):
         tests += glob.glob(os.path.join(test_dir, '*'))
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
+    if options.test_name_filter:
+        tests = list(filter(lambda n: n.find(options.test_name_filter) >= 0, tests))
     return sorted(tests)
 
 
