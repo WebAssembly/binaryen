@@ -315,7 +315,10 @@ int main(int argc, const char* argv[]) {
         if (!valid) {
           WasmPrinter::printModule(modules[moduleName].get());
         }
-        assert(valid);
+        if (!valid) {
+          std::cerr << "Invalid module!\n";
+          abort();
+        }
         run_asserts(moduleName,
                     &i,
                     &checked,
