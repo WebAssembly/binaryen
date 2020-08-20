@@ -380,7 +380,8 @@ unsigned Type::getByteSize() const {
 }
 
 Type Type::reinterpret() const {
-  auto singleType = *(*this).begin();
+  assert(!isTuple() && "Unexpected tuple type");
+  auto& singleType = *(*this).begin();
   switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
@@ -390,16 +391,9 @@ Type Type::reinterpret() const {
       return i32;
     case Type::f64:
       return i64;
-    case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE("invalid type");
 }
 
 FeatureSet Type::getFeatures() const {
