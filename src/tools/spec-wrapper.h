@@ -30,7 +30,7 @@ static std::string generateSpecWrapper(Module& wasm) {
     }
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
            exp->name.str + "\" ";
-    for (Type param : func->sig.params.expand()) {
+    for (auto& param : func->sig.params) {
       // zeros in arguments TODO more?
       TODO_SINGLE_COMPOUND(param);
       switch (param.getBasic()) {

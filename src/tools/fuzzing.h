@@ -308,7 +308,7 @@ private:
   Type getSubType(Type type) {
     if (type.isTuple()) {
       std::vector<Type> types;
-      for (auto t : type.expand()) {
+      for (auto& t : type) {
         types.push_back(getSubType(t));
       }
       return Type(types);
@@ -770,7 +770,7 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto type : func->sig.params.expand()) {
+      for (auto& type : func->sig.params) {
         args.push_back(makeConst(type));
       }
       Expression* invoke =
@@ -1166,7 +1166,7 @@ private:
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto argType : target->sig.params.expand()) {
+      for (auto& argType : target->sig.params) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1210,7 +1210,7 @@ private:
       target = make(Type::i32);
     }
     std::vector<Expression*> args;
-    for (auto type : targetFn->sig.params.expand()) {
+    for (auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
@@ -1267,7 +1267,7 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isTuple());
     std::vector<Expression*> elements;
-    for (auto t : type.expand()) {
+    for (auto& t : type) {
       elements.push_back(make(t));
     }
     return builder.makeTupleMake(std::move(elements));
@@ -1277,20 +1277,21 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tupleType = getTupleType();
-    auto& elements = tupleType.expand();
 
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
-    for (size_t i = 0; i < elements.size(); ++i) {
-      if (elements[i] == type) {
+    size_t i = 0;
+    for (auto& t : tupleType) {
+      if (t == type) {
         extractIndices.push_back(i);
       }
+      ++i;
     }
 
     // If there are none, inject one
     if (extractIndices.size() == 0) {
-      auto newElements = elements;
-      size_t injected = upTo(elements.size());
+      std::vector<Type> newElements(tupleType.begin(), tupleType.end());
+      size_t injected = upTo(newElements.size());
       newElements[injected] = type;
       tupleType = Type(newElements);
       extractIndices.push_back(injected);
@@ -1766,7 +1767,7 @@ private:
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
-      for (auto t : type.expand()) {
+      for (auto& t : type) {
         operands.push_back(makeConst(t));
       }
       return builder.makeTupleMake(std::move(operands));

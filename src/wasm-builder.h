@@ -657,7 +657,7 @@ public:
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    std::vector<Type> params = func->sig.params.expand();
+    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
     params.push_back(type);
     func->sig.params = Type(params);
     Index index = func->localNames.size();

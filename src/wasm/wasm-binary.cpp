@@ -220,7 +220,7 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
-      for (auto type : sigType.expand()) {
+      for (auto& type : sigType) {
         o << binaryType(type);
       }
     }
@@ -385,16 +385,17 @@ void WasmBinaryWriter::writeGlobals() {
   o << U32LEB(num);
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one\n");
-    const auto& types = global->type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      o << binaryType(types[i]);
+    size_t i = 0;
+    for (auto& t : global->type) {
+      o << binaryType(t);
       o << U32LEB(global->mutable_);
-      if (types.size() == 1) {
+      if (global->type.size() == 1) {
         writeExpression(global->init);
       } else {
         writeExpression(global->init->cast<TupleMake>()->operands[i]);
       }
       o << int8_t(BinaryConsts::End);
+      ++i;
     }
   });
   finishSection(start);
@@ -1797,8 +1798,7 @@ void WasmBinaryBuilder::pushExpression(Expression* curr) {
     Builder builder(wasm);
     Index tuple = builder.addVar(currFunction, curr->type);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    const std::vector<Type> types = curr->type.expand();
-    for (Index i = 0; i < types.size(); ++i) {
+    for (Index i = 0; i < curr->type.size(); ++i) {
       expressionStack.push_back(
         builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
     }

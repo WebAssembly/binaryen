@@ -222,21 +222,6 @@ namespace {
 
 std::mutex mutex;
 
-// Maps basic types to tuples of the single basic type.
-std::array<TypeList, Type::_last_basic_id + 1> basicTuples = {{
-  {},
-  {Type::unreachable},
-  {Type::i32},
-  {Type::i64},
-  {Type::f32},
-  {Type::f64},
-  {Type::v128},
-  {Type::funcref},
-  {Type::externref},
-  {Type::nullref},
-  {Type::exnref},
-}};
-
 // Track unique_ptrs for constructed types to avoid leaks
 std::vector<std::unique_ptr<TypeDef>> constructedTypes;
 
@@ -349,25 +334,11 @@ bool Type::isNullable() const {
   }
 }
 
-size_t Type::size() const { return expand().size(); }
-
-const TypeList& Type::expand() const {
-  if (isBasic()) {
-    return basicTuples[id];
-  } else {
-    auto* typeDef = getDef(*this);
-    assert(typeDef->isTuple() && "can only expand tuple types");
-    return typeDef->tuple.types;
-  }
-}
-
 bool Type::operator<(const Type& other) const {
-  const TypeList& these = expand();
-  const TypeList& others = other.expand();
-  return std::lexicographical_compare(these.begin(),
-                                      these.end(),
-                                      others.begin(),
-                                      others.end(),
+  return std::lexicographical_compare((*this).begin(),
+                                      (*this).end(),
+                                      other.begin(),
+                                      other.end(),
                                       [](const Type& a, const Type& b) {
                                         TODO_SINGLE_COMPOUND(a);
                                         TODO_SINGLE_COMPOUND(b);
@@ -400,7 +371,7 @@ unsigned Type::getByteSize() const {
 
   if (isTuple()) {
     unsigned size = 0;
-    for (auto t : expand()) {
+    for (auto& t : *this) {
       size += getSingleByteSize(t);
     }
     return size;
@@ -409,7 +380,7 @@ unsigned Type::getByteSize() const {
 }
 
 Type Type::reinterpret() const {
-  Type singleType = *expand().begin();
+  auto singleType = *(*this).begin();
   switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
@@ -450,7 +421,7 @@ FeatureSet Type::getFeatures() const {
 
   if (isTuple()) {
     FeatureSet feats = FeatureSet::Multivalue;
-    for (Type t : expand()) {
+    for (auto& t : *this) {
       feats |= getSingleFeatures(t);
     }
     return feats;
@@ -483,13 +454,11 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isTuple() && right.isTuple()) {
-    const auto& leftElems = left.expand();
-    const auto& rightElems = right.expand();
-    if (leftElems.size() != rightElems.size()) {
+    if (left.size() != right.size()) {
       return false;
     }
-    for (size_t i = 0; i < leftElems.size(); ++i) {
-      if (!isSubType(leftElems[i], rightElems[i])) {
+    for (size_t i = 0; i < left.size(); ++i) {
+      if (!isSubType(left[i], right[i])) {
         return false;
       }
     }
@@ -514,10 +483,8 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.isTuple()) {
     TypeList types;
     types.resize(a.size());
-    const auto& as = a.expand();
-    const auto& bs = b.expand();
     for (size_t i = 0; i < types.size(); ++i) {
-      types[i] = getLeastUpperBound(as[i], bs[i]);
+      types[i] = getLeastUpperBound(a[i], b[i]);
       if (types[i] == Type::none) {
         return Type::none;
       }
@@ -536,12 +503,41 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   return Type::externref;
 }
 
+Type::Iterator Type::end() const {
+  if (isTuple()) {
+    return Iterator(this, getDef(*this)->tuple.types.size());
+  } else {
+    // TODO: unreachable is special and expands to {unreachable} currently.
+    // see also: https://github.com/WebAssembly/binaryen/issues/3062
+    return Iterator(this, size_t(id != Type::none));
+  }
+}
+
+const Type& Type::Iterator::operator*() const {
+  if (parent->isTuple()) {
+    return getDef(*parent)->tuple.types[index];
+  } else {
+    // TODO: see comment in Type::end()
+    assert(index == 0 && parent->id != Type::none && "Index out of bounds");
+    return *parent;
+  }
+}
+
+const Type& Type::operator[](size_t index) const {
+  if (isTuple()) {
+    return getDef(*this)->tuple.types[index];
+  } else {
+    assert(index == 0 && "Index out of bounds");
+    return *begin();
+  }
+}
+
 namespace {
 
 std::ostream&
 printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
   os << '(' << prefix;
-  for (auto t : type.expand()) {
+  for (auto& t : type) {
     os << " " << t;
   }
   os << ')';
