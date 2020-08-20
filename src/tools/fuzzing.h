@@ -308,7 +308,7 @@ private:
   Type getSubType(Type type) {
     if (type.isMulti()) {
       std::vector<Type> types;
-      for (auto& t : type) {
+      for (const auto& t : type) {
         types.push_back(getSubType(t));
       }
       return Type(types);
@@ -770,7 +770,7 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto& type : func->sig.params) {
+      for (const auto& type : func->sig.params) {
         args.push_back(makeConst(type));
       }
       Expression* invoke =
@@ -1166,7 +1166,7 @@ private:
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto& argType : target->sig.params) {
+      for (const auto& argType : target->sig.params) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1210,7 +1210,7 @@ private:
       target = make(Type::i32);
     }
     std::vector<Expression*> args;
-    for (auto& type : targetFn->sig.params) {
+    for (const auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
@@ -1267,7 +1267,7 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isMulti());
     std::vector<Expression*> elements;
-    for (auto& t : type) {
+    for (const auto& t : type) {
       elements.push_back(make(t));
     }
     return builder.makeTupleMake(std::move(elements));
@@ -1281,7 +1281,7 @@ private:
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
     size_t i = 0;
-    for (auto& t : tupleType) {
+    for (const auto& t : tupleType) {
       if (t == type) {
         extractIndices.push_back(i);
       }
@@ -1767,7 +1767,7 @@ private:
     }
     if (type.isMulti()) {
       std::vector<Expression*> operands;
-      for (auto& t : type) {
+      for (const auto& t : type) {
         operands.push_back(makeConst(t));
       }
       return builder.makeTupleMake(std::move(operands));

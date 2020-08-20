@@ -197,7 +197,7 @@ private:
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     Index i = 0;
-    for (auto& param : func->sig.params) {
+    for (const auto& param : func->sig.params) {
       callOperands.push_back(
         fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }
