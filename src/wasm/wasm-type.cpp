@@ -335,8 +335,8 @@ bool Type::isNullable() const {
 }
 
 bool Type::operator<(const Type& other) const {
-  return std::lexicographical_compare((*this).begin(),
-                                      (*this).end(),
+  return std::lexicographical_compare(begin(),
+                                      end(),
                                       other.begin(),
                                       other.end(),
                                       [](const Type& a, const Type& b) {
