@@ -7,10 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-# We default to assertions enabled, even in release builds so that we get
-# more useful error reports from users.
-option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
-
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -152,11 +148,6 @@ if(MSVC)
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
 
-  if(BYN_ENABLE_ASSERTIONS)
-    # On non-Debug builds cmake automatically defines NDEBUG, so we
-    # explicitly undefine it:
-    add_nondebug_compile_flag("/UNDEBUG") # Keep asserts.
-  endif()
   # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
   if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
     foreach(flags_var_to_scrub
@@ -223,11 +214,6 @@ else()
     add_nondebug_compile_flag("-Oz")
   else()
     add_nondebug_compile_flag("-O2")
-  endif()
-  if(BYN_ENABLE_ASSERTIONS)
-    # On non-Debug builds cmake automatically defines NDEBUG, so we
-    # explicitly undefine it:
-    add_nondebug_compile_flag("-UNDEBUG")
   endif()
 endif()
 

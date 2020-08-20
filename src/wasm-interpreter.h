@@ -1432,8 +1432,7 @@ public:
     if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) && module != nullptr) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
-      auto* global = module->getGlobal(curr->name);
-      assert(global->mutable_);
+      assert(module->getGlobal(curr->name)->mutable_);
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (!setFlow.breaking()) {
         setGlobalValue(curr->name, setFlow.values);
