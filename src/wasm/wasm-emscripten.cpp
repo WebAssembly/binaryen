@@ -445,9 +445,9 @@ void AsmConstWalker::process() {
 }
 
 void AsmConstWalker::createAsmConst(uint32_t id,
-                                                         std::string code,
-                                                         Signature sig,
-                                                         Name name) {
+                                    std::string code,
+                                    Signature sig,
+                                    Name name) {
   AsmConst asmConst;
   asmConst.id = id;
   asmConst.code = code;
