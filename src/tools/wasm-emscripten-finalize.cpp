@@ -56,6 +56,7 @@ int main(int argc, const char* argv[]) {
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
+  // TODO: remove after https://github.com/WebAssembly/binaryen/issues/3043
   bool minimizeWasmChanges = false;
 
   ToolOptions options("wasm-emscripten-finalize",
