@@ -16,6 +16,7 @@ from __future__ import print_function
 
 import argparse
 import difflib
+import fnmatch
 import glob
 import os
 import shutil
@@ -367,7 +368,7 @@ def get_tests(test_dir, extensions=[]):
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
     if options.test_name_filter:
-        tests = list(filter(lambda n: n.find(options.test_name_filter) >= 0, tests))
+        tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
 
 
