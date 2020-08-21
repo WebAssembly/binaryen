@@ -23,7 +23,6 @@
 //
 
 #include <memory>
-#include <numeric>
 
 #include <pass.h>
 #include <wasm.h>
@@ -59,8 +58,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     walk(curr->body);
     // Use the information about local usages.
     std::vector<Index> newToOld((size_t)num);
-    // Fill newToOld from "0" to "num".
-    std::iota(newToOld.begin(), newToOld.end(), 0);
+    for (size_t i = 0; i < num; i++) {
+      newToOld[i] = i;
+    }
     // sort, keeping params in front (where they will not be moved)
     sort(
       newToOld.begin(), newToOld.end(), [this, curr](Index a, Index b) -> bool {
@@ -132,10 +132,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     auto oldLocalIndices = curr->localIndices;
     curr->localNames.clear();
     curr->localIndices.clear();
-    auto end = oldLocalNames.end();
     for (size_t i = 0; i < newToOld.size(); i++) {
       auto iter = oldLocalNames.find(newToOld[i]);
-      if (iter != end) {
+      if (iter != oldLocalNames.end()) {
         auto old = iter->second;
         curr->localNames[i] = old;
         curr->localIndices[old] = i;
