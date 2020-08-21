@@ -48,12 +48,13 @@ struct TypeInfo {
     ArrayRef arrayRef;
   };
 
-  TypeInfo(Tuple tuple) : kind(TupleKind), tuple(tuple) {}
-  TypeInfo(Signature signature, bool nullable)
+  TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
+  TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
+  TypeInfo(const Signature& signature, bool nullable)
     : kind(SignatureRefKind), signatureRef{signature, nullable} {}
-  TypeInfo(Struct struct_, bool nullable)
+  TypeInfo(const Struct& struct_, bool nullable)
     : kind(StructRefKind), structRef{struct_, nullable} {}
-  TypeInfo(Array array, bool nullable)
+  TypeInfo(const Array& array, bool nullable)
     : kind(ArrayRefKind), arrayRef{array, nullable} {}
   TypeInfo(const TypeInfo& other) {
     kind = other.kind;
@@ -281,7 +282,9 @@ static uintptr_t canonicalize(const TypeInfo& info) {
   return id;
 }
 
-static TypeInfo* getTypeInfo(Type type) { return (TypeInfo*)type.getID(); }
+static TypeInfo* getTypeInfo(const Type& type) {
+  return (TypeInfo*)type.getID();
+}
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
@@ -303,7 +306,7 @@ Type::Type(const Tuple& tuple) {
   id = canonicalize(TypeInfo(tuple));
 }
 
-Type::Type(const Signature signature, bool nullable) {
+Type::Type(const Signature& signature, bool nullable) {
   id = canonicalize(TypeInfo(signature, nullable));
 }
 
@@ -415,7 +418,7 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [](Type t) -> FeatureSet {
+  auto getSingleFeatures = [](const Type& t) -> FeatureSet {
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
       case Type::v128:
@@ -457,7 +460,7 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::isSubType(Type left, Type right) {
+bool Type::isSubType(const Type& left, const Type& right) {
   if (left == right) {
     return true;
   }
@@ -479,7 +482,7 @@ bool Type::isSubType(Type left, Type right) {
   return false;
 }
 
-Type Type::getLeastUpperBound(Type a, Type b) {
+Type Type::getLeastUpperBound(const Type& a, const Type& b) {
   if (a == b) {
     return a;
   }

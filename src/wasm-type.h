@@ -76,7 +76,7 @@ public:
   explicit Type(const Tuple&);
 
   // Construct from signature description
-  explicit Type(const Signature, bool nullable);
+  explicit Type(const Signature&, bool nullable);
 
   // Construct from struct description
   explicit Type(const Struct&, bool nullable);
@@ -143,9 +143,9 @@ public:
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const BasicID& other) const { return id == other; }
+  bool operator==(BasicID otherId) const { return id == otherId; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const BasicID& other) const { return id != other; }
+  bool operator!=(BasicID otherId) const { return id != otherId; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
@@ -165,12 +165,12 @@ public:
   static Type get(unsigned byteSize, bool float_);
 
   // Returns true if left is a subtype of right. Subtype includes itself.
-  static bool isSubType(Type left, Type right);
+  static bool isSubType(const Type& left, const Type& right);
 
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
   // the common supertype does not exist, returns none, a poison value.
-  static Type getLeastUpperBound(Type a, Type b);
+  static Type getLeastUpperBound(const Type& a, const Type& b);
 
   // Computes the least upper bound for all types in the given list.
   template<typename T> static Type mergeTypes(const T& types) {
@@ -216,14 +216,14 @@ public:
 // Wrapper type for formatting types as "(param i32 i64 f32)"
 struct ParamType {
   Type type;
-  ParamType(Type type) : type(type) {}
+  ParamType(const Type& type) : type(type) {}
   std::string toString() const;
 };
 
 // Wrapper type for formatting types as "(result i32 i64 f32)"
 struct ResultType {
   Type type;
-  ResultType(Type type) : type(type) {}
+  ResultType(const Type& type) : type(type) {}
   std::string toString() const;
 };
 
@@ -231,7 +231,8 @@ struct Tuple {
   TypeList types;
   Tuple() : types() {}
   Tuple(std::initializer_list<Type> types) : types(types) {}
-  Tuple(TypeList types) : types(types) {}
+  Tuple(const TypeList& types) : types(types) {}
+  Tuple(TypeList&& types) : types(std::move(types)) {}
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
   std::string toString() const;
@@ -241,7 +242,8 @@ struct Signature {
   Type params;
   Type results;
   Signature() : params(Type::none), results(Type::none) {}
-  Signature(Type params, Type results) : params(params), results(results) {}
+  Signature(const Type& params, const Type& results)
+    : params(params), results(results) {}
   bool operator==(const Signature& other) const {
     return params == other.params && results == other.results;
   }
@@ -259,7 +261,7 @@ struct Field {
   } packedType; // applicable iff type=i32
   bool mutable_;
 
-  Field(Type type, bool mutable_ = false)
+  Field(const Type& type, bool mutable_ = false)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
   Field(PackedType packedType, bool mutable_ = false)
     : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
@@ -285,7 +287,8 @@ typedef std::vector<Field> FieldList;
 struct Struct {
   FieldList fields;
   Struct(const Struct& other) : fields(other.fields) {}
-  Struct(FieldList fields) : fields(fields) {}
+  Struct(const FieldList& fields) : fields(fields) {}
+  Struct(FieldList&& fields) : fields(std::move(fields)) {}
   bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
   std::string toString() const;
@@ -294,7 +297,8 @@ struct Struct {
 struct Array {
   Field element;
   Array(const Array& other) : element(other.element) {}
-  Array(Field element) : element(element) {}
+  Array(const Field& element) : element(element) {}
+  Array(Field&& element) : element(std::move(element)) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   std::string toString() const;
