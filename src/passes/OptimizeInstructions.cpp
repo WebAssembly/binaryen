@@ -1440,7 +1440,7 @@ private:
         }
         case 16: {
           if (getPassOptions().shrinkLevel == 0) {
-            // this increase add extra 2 bytes so apply it only for
+            // This adds an extra 2 bytes so apply it only for
             // minimal shrink level
             if (features.hasSIMD()) {
               return builder.makeStore(
