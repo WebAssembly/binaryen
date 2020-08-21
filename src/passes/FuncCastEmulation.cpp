@@ -26,12 +26,12 @@
 //
 // This should work even with dynamic linking, however, the number of
 // params must be identical, i.e., the "ABI" must match.
+//
 
 #include <asm_v_wasm.h>
 #include <ir/literal-utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <wasm-emscripten.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -44,7 +44,7 @@ static const int NUM_PARAMS = 16;
 // Converts a value to the ABI type of i64.
 static Expression* toABI(Expression* value, Module* module) {
   Builder builder(*module);
-  switch (value->type.getSingle()) {
+  switch (value->type.getBasic()) {
     case Type::i32: {
       value = builder.makeUnary(ExtendUInt32, value);
       break;
@@ -88,7 +88,7 @@ static Expression* toABI(Expression* value, Module* module) {
 // Converts a value from the ABI type of i64 to the expected type
 static Expression* fromABI(Expression* value, Type type, Module* module) {
   Builder builder(*module);
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32: {
       value = builder.makeUnary(WrapInt64, value);
       break;
@@ -165,11 +165,6 @@ struct FuncCastEmulation : public Pass {
     // we just need the one ABI function type for all indirect calls
     Signature ABIType(Type(std::vector<Type>(NUM_PARAMS, Type::i64)),
                       Type::i64);
-    // Add a way for JS to call into the table (as our i64 ABI means an i64
-    // is returned when there is a return value, which JS engines will fail on),
-    // using dynCalls
-    EmscriptenGlueGenerator generator(*module);
-    generator.generateDynCallThunks();
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
     for (auto& segment : module->table.segments) {
@@ -198,13 +193,13 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    const std::vector<Type>& params = func->sig.params.expand();
     Type type = func->sig.results;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
-    for (Index i = 0; i < params.size(); i++) {
+    Index i = 0;
+    for (const auto& param : func->sig.params) {
       callOperands.push_back(
-        fromABI(builder.makeLocalGet(i, Type::i64), params[i], module));
+        fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;

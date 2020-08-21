@@ -28,11 +28,10 @@ effective**:
 
 Compilers using Binaryen include:
 
- * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a subset of TypeScript to WebAssembly
  * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
- * ['Grain'](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
+ * [`Grain`](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
@@ -168,9 +167,6 @@ This repository contains code that builds the following tools in `bin/`:
    also run the spec test suite.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
    performs emscripten-specific passes over it.
- * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm
-   optimizer infrastructure. This is used by Emscripten in Binaryen mode when it
-   uses Emscripten's fastcomp asm.js backend.
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
@@ -323,66 +319,13 @@ Things keep to in mind with wasm2js's output:
    int/float conversions do not trap, and so forth. There may also be slight
    differences in corner cases of conversions, like non-trapping float to int.
 
-### asm2wasm
-
-Run
-
-```
-bin/asm2wasm [input.asm.js file]
-```
-
-This will print out a WebAssembly module in s-expression format to the console.
-
-For example, try
-
-```
-$ bin/asm2wasm test/hello_world.asm.js
-```
-
-That input file contains
-
-```javascript
-function () {
-  "use asm";
-  function add(x, y) {
-    x = x | 0;
-    y = y | 0;
-    return x + y | 0;
-  }
-  return { add: add };
-}
-```
-
-You should see something like this:
-
-![example output](https://raw.github.com/WebAssembly/wasm-emscripten/master/media/example.png)
-
-By default you should see pretty colors as in that image. Set `COLORS=0` in the
-env to disable colors if you prefer that. On Linux and Mac, you can set
-`COLORS=1` in the env to force colors (useful when piping to `more`, for
-example). For Windows, pretty colors are only available when `stdout/stderr` are
-not redirected/piped.
-
-Pass `--debug` on the command line to see debug info, about asm.js functions as
-they are parsed, etc.
-
-### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
-
-When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to
-WebAssembly. This lets you compile C and C++ to WebAssembly, with emscripten
-using asm.js internally as a build step. Since emscripten's asm.js generation is
-very stable, and asm2wasm is a fairly simple process, this method of compiling C
-and C++ to WebAssembly is usable already. See the [emscripten
-wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details
-about how to use it.
-
 ## Testing
 
 ```
 ./check.py
 ```
 
-(or `python check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, etc. on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `wasm-shell`, `wasm-opt`, etc. on the testcases in `test/`, and verify their outputs.
 
 The `check.py` script supports some options:
 

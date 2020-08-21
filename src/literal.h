@@ -81,33 +81,23 @@ public:
   bool isNone() const { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32:
         return Literal(int32_t(x));
-        break;
       case Type::i64:
         return Literal(int64_t(x));
-        break;
       case Type::f32:
         return Literal(float(x));
-        break;
       case Type::f64:
         return Literal(double(x));
-        break;
       case Type::v128:
         return Literal(std::array<Literal, 4>{{Literal(x),
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
-      case Type::funcref:
-      case Type::externref:
-      case Type::nullref:
-      case Type::exnref:
-      case Type::none:
-      case Type::unreachable:
+      default:
         WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE("unexpected type");
   }
 
   static Literals makeZero(Type type);
@@ -528,18 +518,19 @@ template<> struct hash<wasm::Literal> {
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
-    return wasm::rehash(wasm::rehash(uint64_t(hash<uint32_t>()(a.type.getID())),
-                                     uint64_t(hash<int64_t>()(chunks[0]))),
-                        uint64_t(hash<int64_t>()(chunks[1])));
+    auto digest = wasm::hash(a.type.getID());
+    wasm::rehash(digest, chunks[0]);
+    wasm::rehash(digest, chunks[1]);
+    return digest;
   }
 };
 template<> struct hash<wasm::Literals> {
   size_t operator()(const wasm::Literals& a) const {
-    size_t h = wasm::rehash(uint64_t(0), uint64_t(a.size()));
+    auto digest = wasm::hash(a.size());
     for (const auto& lit : a) {
-      h = wasm::rehash(uint64_t(h), uint64_t(hash<wasm::Literal>{}(lit)));
+      wasm::rehash(digest, lit);
     }
-    return h;
+    return digest;
   }
 };
 template<> struct less<wasm::Literal> {
@@ -550,7 +541,8 @@ template<> struct less<wasm::Literal> {
     if (b.type < a.type) {
       return false;
     }
-    switch (a.type.getSingle()) {
+    TODO_SINGLE_COMPOUND(a.type);
+    switch (a.type.getBasic()) {
       case wasm::Type::i32:
         return a.geti32() < b.geti32();
       case wasm::Type::f32:

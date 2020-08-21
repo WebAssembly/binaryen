@@ -21,6 +21,14 @@
 #include <ostream>
 #include <vector>
 
+// TODO: At various code locations we were assuming that single types are basic
+// types, but this is going to change with the introduction of the compound
+// Signature, Struct and Array types that will be single but not basic. To
+// prepare for this change, the following macro marks affected code locations.
+#define TODO_SINGLE_COMPOUND(type)                                             \
+  assert(!type.isMulti() && "Unexpected multi-value type");                    \
+  assert(!type.isCompound() && "TODO: handle compound types");
+
 namespace wasm {
 
 class Type {
@@ -59,26 +67,53 @@ public:
   Type(std::initializer_list<Type> types);
   explicit Type(const std::vector<Type>& types);
 
-  // Accessors
-  size_t size() const;
-  const std::vector<Type>& expand() const;
-
   // Predicates
+  //                 Compound Concrete
+  //   Type        Basic │ Single│
+  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
+  // │ none        ║ x │   │   │   │       │
+  // │ unreachable ║ x │   │   │   │       │
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ i32         ║ x │   │ x │ x │ I     │ ┐ Number
+  // │ i64         ║ x │   │ x │ x │ I     │ │  I_nteger
+  // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
+  // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
+  // │ v128        ║ x │   │ x │ x │     V │ ┘
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ funcref     ║ x │   │ x │ x │ f     │ ┐ Ref
+  // │ externref   ║ x │   │ x │ x │       │ │  f_unc
+  // │ nullref     ║ x │   │ x │ x │       │ │
+  // │ exnref      ║ x │   │ x │ x │       │ │
+  // ├─────────────╫───┼───┼───┼───┤───────┤ │
+  // │ Signature   ║   │ x │ x │ x │ f     │ │ ┐
+  // │ Struct      ║   │ x │ x │ x │       │ │ │ TODO (GC)
+  // │ Array       ║   │ x │ x │ x │       │ ┘ ┘
+  // │ Multi       ║   │ x │   │ x │       │
+  // └─────────────╨───┴───┴───┴───┴───────┘
+  constexpr bool isBasic() const { return id <= _last_value_type; }
+  constexpr bool isCompound() const { return id > _last_value_type; }
   constexpr bool isSingle() const {
+    // TODO: Compound types Signature, Struct and Array are single
     return id >= i32 && id <= _last_value_type;
   }
-  constexpr bool isMulti() const { return id > _last_value_type; }
+  constexpr bool isMulti() const {
+    // TODO: Compound types Signature, Struct and Array are not multi
+    return id > _last_value_type;
+  }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  constexpr bool isRef() const { return id >= funcref && id <= exnref; }
+  constexpr bool isRef() const {
+    // TODO: Compound types Signature, Struct and Array are ref
+    return id >= funcref && id <= exnref;
+  }
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
-    for (auto t : expand()) {
-      if ((t.*pred)()) {
+    for (const auto& type : *this) {
+      if ((type.*pred)()) {
         return true;
       }
     }
@@ -90,8 +125,8 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  constexpr ValueType getSingle() const {
-    assert(!isMulti() && "Unexpected multivalue type");
+  constexpr ValueType getBasic() const {
+    assert(isBasic() && "Basic type expected");
     return static_cast<ValueType>(id);
   }
 
@@ -138,6 +173,57 @@ public:
   }
 
   std::string toString() const;
+
+  struct Iterator
+    : std::iterator<std::random_access_iterator_tag, Type, long, Type*, Type&> {
+    const Type* parent;
+    size_t index;
+    Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
+    bool operator==(const Iterator& other) const {
+      return index == other.index && parent == other.parent;
+    }
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
+    void operator++() { index++; }
+    Iterator& operator+=(difference_type off) {
+      index += off;
+      return *this;
+    }
+    const Iterator operator+(difference_type off) const {
+      return Iterator(*this) += off;
+    }
+    difference_type operator-(const Iterator& other) {
+      assert(parent == other.parent);
+      return index - other.index;
+    }
+    const value_type& operator*() const {
+      if (parent->isMulti()) {
+        return (*(std::vector<Type>*)parent->getID())[index];
+      } else {
+        // see TODO in Type::end()
+        assert(index == 0 && parent->id != Type::none && "Index out of bounds");
+        return *parent;
+      }
+    }
+  };
+
+  Iterator begin() const { return Iterator(this, 0); }
+  Iterator end() const {
+    if (isMulti()) {
+      return Iterator(this, (*(std::vector<Type>*)getID()).size());
+    } else {
+      // TODO: unreachable is special and expands to {unreachable} currently.
+      // see also: https://github.com/WebAssembly/binaryen/issues/3062
+      return Iterator(this, size_t(id != Type::none));
+    }
+  }
+  size_t size() const { return end() - begin(); }
+  const Type& operator[](size_t i) const {
+    if (isMulti()) {
+      return (*(std::vector<Type>*)getID())[i];
+    } else {
+      return *begin();
+    }
+  }
 };
 
 // Wrapper type for formatting types as "(param i32 i64 f32)"
