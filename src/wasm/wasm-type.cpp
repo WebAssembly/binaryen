@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct TypeDef {
+struct TypeInfo {
   enum Kind { TupleKind, SignatureRefKind, StructRefKind, ArrayRefKind } kind;
   struct SignatureRef {
     Signature signature;
@@ -48,14 +48,14 @@ struct TypeDef {
     ArrayRef arrayRef;
   };
 
-  TypeDef(Tuple tuple) : kind(TupleKind), tuple(tuple) {}
-  TypeDef(Signature signature, bool nullable)
+  TypeInfo(Tuple tuple) : kind(TupleKind), tuple(tuple) {}
+  TypeInfo(Signature signature, bool nullable)
     : kind(SignatureRefKind), signatureRef{signature, nullable} {}
-  TypeDef(Struct struct_, bool nullable)
+  TypeInfo(Struct struct_, bool nullable)
     : kind(StructRefKind), structRef{struct_, nullable} {}
-  TypeDef(Array array, bool nullable)
+  TypeInfo(Array array, bool nullable)
     : kind(ArrayRefKind), arrayRef{array, nullable} {}
-  TypeDef(const TypeDef& other) {
+  TypeInfo(const TypeInfo& other) {
     kind = other.kind;
     switch (kind) {
       case TupleKind:
@@ -73,7 +73,7 @@ struct TypeDef {
     }
     WASM_UNREACHABLE("unexpected kind");
   }
-  ~TypeDef() {
+  ~TypeInfo() {
     switch (kind) {
       case TupleKind: {
         tuple.~Tuple();
@@ -114,7 +114,7 @@ struct TypeDef {
     WASM_UNREACHABLE("unexpected kind");
   }
 
-  bool operator==(const TypeDef& other) const {
+  bool operator==(const TypeInfo& other) const {
     if (kind != other.kind) {
       return false;
     }
@@ -133,10 +133,10 @@ struct TypeDef {
     }
     WASM_UNREACHABLE("unexpected kind");
   }
-  bool operator!=(const TypeDef& other) const { return !(*this == other); }
-  TypeDef& operator=(const TypeDef& other) {
+  bool operator!=(const TypeInfo& other) const { return !(*this == other); }
+  TypeInfo& operator=(const TypeInfo& other) {
     if (&other != this) {
-      (*this).~TypeDef();
+      this->~TypeInfo();
       new (this) auto(other);
     }
     return *this;
@@ -145,18 +145,60 @@ struct TypeDef {
   std::string toString() const;
 };
 
+std::ostream& operator<<(std::ostream&, TypeInfo);
+
 } // namespace wasm
 
 namespace std {
 
-template<> class hash<vector<wasm::Type>> {
+template<> class hash<wasm::TypeList> {
 public:
-  size_t operator()(const vector<wasm::Type>& types) const {
+  size_t operator()(const wasm::TypeList& types) const {
     auto digest = wasm::hash(types.size());
-    for (auto t : types) {
-      wasm::rehash(digest, t.getID());
+    for (auto type : types) {
+      wasm::rehash(digest, type);
     }
     return digest;
+  }
+};
+
+template<> class hash<wasm::FieldList> {
+public:
+  size_t operator()(const wasm::FieldList& fields) const {
+    auto digest = wasm::hash(fields.size());
+    for (auto field : fields) {
+      wasm::rehash(digest, field);
+    }
+    return digest;
+  }
+};
+
+template<> class hash<wasm::TypeInfo> {
+public:
+  size_t operator()(const wasm::TypeInfo& info) const {
+    auto digest = wasm::hash(info.kind);
+    switch (info.kind) {
+      case wasm::TypeInfo::TupleKind: {
+        wasm::rehash(digest, info.tuple.types);
+        return digest;
+      }
+      case wasm::TypeInfo::SignatureRefKind: {
+        wasm::rehash(digest, info.signatureRef.signature);
+        wasm::rehash(digest, info.signatureRef.nullable);
+        return digest;
+      }
+      case wasm::TypeInfo::StructRefKind: {
+        wasm::rehash(digest, info.structRef.struct_);
+        wasm::rehash(digest, info.structRef.nullable);
+        return digest;
+      }
+      case wasm::TypeInfo::ArrayRefKind: {
+        wasm::rehash(digest, info.arrayRef.array);
+        wasm::rehash(digest, info.arrayRef.nullable);
+        return digest;
+      }
+    }
+    WASM_UNREACHABLE("unexpected kind");
   }
 };
 
@@ -164,54 +206,31 @@ size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
   return wasm::hash(type.getID());
 }
 
+size_t hash<wasm::Tuple>::operator()(const wasm::Tuple& tuple) const {
+  return wasm::hash(tuple.types);
+}
+
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
-  auto digest = wasm::hash(sig.params.getID());
-  wasm::rehash(digest, sig.results.getID());
+  auto digest = wasm::hash(sig.params);
+  wasm::rehash(digest, sig.results);
   return digest;
 }
 
 size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
-  auto digest = wasm::hash(field.type.getID());
-  wasm::rehash(digest, uint32_t(field.packedType));
+  auto digest = wasm::hash(field.type);
+  wasm::rehash(digest, field.packedType);
   wasm::rehash(digest, field.mutable_);
   return digest;
 }
 
-size_t hash<wasm::TypeDef>::operator()(const wasm::TypeDef& typeDef) const {
-  auto kind = typeDef.kind;
-  auto digest = wasm::hash(uint32_t(kind));
-  switch (kind) {
-    case wasm::TypeDef::TupleKind: {
-      auto& types = typeDef.tuple.types;
-      for (auto t : types) {
-        wasm::rehash(digest, t.getID());
-      }
-      return digest;
-    }
-    case wasm::TypeDef::SignatureRefKind: {
-      auto& sig = typeDef.signatureRef.signature;
-      wasm::rehash(digest, sig.params.getID());
-      wasm::rehash(digest, sig.results.getID());
-      wasm::rehash(digest, typeDef.isNullable());
-      return digest;
-    }
-    case wasm::TypeDef::StructRefKind: {
-      auto& fields = typeDef.structRef.struct_.fields;
-      wasm::rehash(digest, fields.size());
-      for (auto f : fields) {
-        wasm::rehash(digest, f);
-      }
-      wasm::rehash(digest, typeDef.isNullable());
-      return digest;
-    }
-    case wasm::TypeDef::ArrayRefKind: {
-      auto& array = typeDef.arrayRef.array;
-      wasm::rehash(digest, array.element);
-      wasm::rehash(digest, typeDef.isNullable());
-      return digest;
-    }
-  }
-  WASM_UNREACHABLE("unexpected kind");
+size_t hash<wasm::Struct>::operator()(const wasm::Struct& struct_) const {
+  auto digest = wasm::hash(0);
+  wasm::rehash(digest, struct_.fields);
+  return digest;
+}
+
+size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
+  return wasm::hash(array.element);
 }
 
 } // namespace std
@@ -223,46 +242,46 @@ namespace {
 std::mutex mutex;
 
 // Track unique_ptrs for constructed types to avoid leaks
-std::vector<std::unique_ptr<TypeDef>> constructedTypes;
+std::vector<std::unique_ptr<TypeInfo>> constructedTypes;
 
 // Maps from constructed types to the canonical Type ID.
-std::unordered_map<TypeDef, uintptr_t> indices = {
+std::unordered_map<TypeInfo, uintptr_t> indices = {
   // If a Type is constructed from a list of types, the list of types becomes
-  // implicitly converted to a TypeDef before canonicalizing its id. This is
+  // implicitly converted to a TypeInfo before canonicalizing its id. This is
   // also the case if a list of just one type is provided, even though such a
   // list of types will be canonicalized to the BasicID of the single type. As
   // such, the following entries are solely placeholders to enable the lookup
   // of lists of just one type to the BasicID of the single type.
-  {TypeDef(Tuple()), Type::none},
-  {TypeDef({Type::unreachable}), Type::unreachable},
-  {TypeDef({Type::i32}), Type::i32},
-  {TypeDef({Type::i64}), Type::i64},
-  {TypeDef({Type::f32}), Type::f32},
-  {TypeDef({Type::f64}), Type::f64},
-  {TypeDef({Type::v128}), Type::v128},
-  {TypeDef({Type::funcref}), Type::funcref},
-  {TypeDef({Type::externref}), Type::externref},
-  {TypeDef({Type::nullref}), Type::nullref},
-  {TypeDef({Type::exnref}), Type::exnref},
+  {TypeInfo(Tuple()), Type::none},
+  {TypeInfo({Type::unreachable}), Type::unreachable},
+  {TypeInfo({Type::i32}), Type::i32},
+  {TypeInfo({Type::i64}), Type::i64},
+  {TypeInfo({Type::f32}), Type::f32},
+  {TypeInfo({Type::f64}), Type::f64},
+  {TypeInfo({Type::v128}), Type::v128},
+  {TypeInfo({Type::funcref}), Type::funcref},
+  {TypeInfo({Type::externref}), Type::externref},
+  {TypeInfo({Type::nullref}), Type::nullref},
+  {TypeInfo({Type::exnref}), Type::exnref},
 };
 
 } // anonymous namespace
 
-static uintptr_t canonicalize(const TypeDef& typeDef) {
+static uintptr_t canonicalize(const TypeInfo& info) {
   std::lock_guard<std::mutex> lock(mutex);
-  auto indexIt = indices.find(typeDef);
+  auto indexIt = indices.find(info);
   if (indexIt != indices.end()) {
     return indexIt->second;
   }
-  auto ptr = std::make_unique<TypeDef>(typeDef);
+  auto ptr = std::make_unique<TypeInfo>(info);
   auto id = uintptr_t(ptr.get());
   constructedTypes.push_back(std::move(ptr));
   assert(id > Type::_last_basic_id);
-  indices[typeDef] = id;
+  indices[info] = id;
   return id;
 }
 
-static TypeDef* getDef(Type type) { return (TypeDef*)type.getID(); }
+static TypeInfo* getTypeInfo(Type type) { return (TypeInfo*)type.getID(); }
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
@@ -281,11 +300,11 @@ Type::Type(const Tuple& tuple) {
     *this = types[0];
     return;
   }
-  id = canonicalize(TypeDef(tuple));
+  id = canonicalize(TypeInfo(tuple));
 }
 
 Type::Type(const Signature signature, bool nullable) {
-  id = canonicalize(TypeDef(signature, nullable));
+  id = canonicalize(TypeInfo(signature, nullable));
 }
 
 Type::Type(const Struct& struct_, bool nullable) {
@@ -294,19 +313,19 @@ Type::Type(const Struct& struct_, bool nullable) {
     assert(f.type.isSingle());
   }
 #endif
-  id = canonicalize(TypeDef(struct_, nullable));
+  id = canonicalize(TypeInfo(struct_, nullable));
 }
 
 Type::Type(const Array& array, bool nullable) {
   assert(array.element.type.isSingle());
-  id = canonicalize(TypeDef(array, nullable));
+  id = canonicalize(TypeInfo(array, nullable));
 }
 
 bool Type::isTuple() const {
   if (isBasic()) {
     return false;
   } else {
-    return getDef(*this)->isTuple();
+    return getTypeInfo(*this)->isTuple();
   }
 }
 
@@ -314,12 +333,12 @@ bool Type::isRef() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    switch (getDef(*this)->kind) {
-      case TypeDef::TupleKind:
+    switch (getTypeInfo(*this)->kind) {
+      case TypeInfo::TupleKind:
         return false;
-      case TypeDef::SignatureRefKind:
-      case TypeDef::StructRefKind:
-      case TypeDef::ArrayRefKind:
+      case TypeInfo::SignatureRefKind:
+      case TypeInfo::StructRefKind:
+      case TypeInfo::ArrayRefKind:
         return true;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -330,7 +349,7 @@ bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
   } else {
-    return getDef(*this)->isNullable();
+    return getTypeInfo(*this)->isNullable();
   }
 }
 
@@ -498,7 +517,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
 
 Type::Iterator Type::end() const {
   if (isTuple()) {
-    return Iterator(this, getDef(*this)->tuple.types.size());
+    return Iterator(this, getTypeInfo(*this)->tuple.types.size());
   } else {
     // TODO: unreachable is special and expands to {unreachable} currently.
     // see also: https://github.com/WebAssembly/binaryen/issues/3062
@@ -508,7 +527,7 @@ Type::Iterator Type::end() const {
 
 const Type& Type::Iterator::operator*() const {
   if (parent->isTuple()) {
-    return getDef(*parent)->tuple.types[index];
+    return getTypeInfo(*parent)->tuple.types[index];
   } else {
     // TODO: see comment in Type::end()
     assert(index == 0 && parent->id != Type::none && "Index out of bounds");
@@ -518,7 +537,7 @@ const Type& Type::Iterator::operator*() const {
 
 const Type& Type::operator[](size_t index) const {
   if (isTuple()) {
-    return getDef(*this)->tuple.types[index];
+    return getTypeInfo(*this)->tuple.types[index];
   } else {
     assert(index == 0 && "Index out of bounds");
     return *begin();
@@ -559,7 +578,7 @@ std::string Struct::toString() const { return genericToString(*this); }
 
 std::string Array::toString() const { return genericToString(*this); }
 
-std::string TypeDef::toString() const { return genericToString(*this); }
+std::string TypeInfo::toString() const { return genericToString(*this); }
 
 bool Signature::operator<(const Signature& other) const {
   if (results < other.results) {
@@ -609,7 +628,7 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
     }
   } else {
-    os << *getDef(type);
+    os << *getTypeInfo(type);
   }
   return os;
 }
@@ -686,31 +705,31 @@ std::ostream& operator<<(std::ostream& os, Array array) {
   return os << "(array " << array.element << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, TypeDef typeDef) {
-  switch (typeDef.kind) {
-    case TypeDef::TupleKind: {
-      return os << typeDef.tuple;
+std::ostream& operator<<(std::ostream& os, TypeInfo info) {
+  switch (info.kind) {
+    case TypeInfo::TupleKind: {
+      return os << info.tuple;
     }
-    case TypeDef::SignatureRefKind: {
+    case TypeInfo::SignatureRefKind: {
       os << "(ref ";
-      if (typeDef.signatureRef.nullable) {
+      if (info.signatureRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.signatureRef.signature << ")";
+      return os << info.signatureRef.signature << ")";
     }
-    case TypeDef::StructRefKind: {
+    case TypeInfo::StructRefKind: {
       os << "(ref ";
-      if (typeDef.structRef.nullable) {
+      if (info.structRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.structRef.struct_ << ")";
+      return os << info.structRef.struct_ << ")";
     }
-    case TypeDef::ArrayRefKind: {
+    case TypeInfo::ArrayRefKind: {
       os << "(ref ";
-      if (typeDef.arrayRef.nullable) {
+      if (info.arrayRef.nullable) {
         os << "null ";
       }
-      return os << typeDef.arrayRef.array << ")";
+      return os << info.arrayRef.array << ")";
     }
   }
   WASM_UNREACHABLE("unexpected kind");

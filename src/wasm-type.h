@@ -31,14 +31,12 @@
 
 namespace wasm {
 
-class Type;
-struct TypeDef;
 struct Tuple;
 struct Signature;
 struct Struct;
 struct Array;
 
-typedef std::vector<Type> TypeList;
+typedef std::vector<class Type> TypeList;
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
@@ -310,7 +308,6 @@ std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, TypeDef);
 
 } // namespace wasm
 
@@ -320,20 +317,25 @@ template<> class hash<wasm::Type> {
 public:
   size_t operator()(const wasm::Type&) const;
 };
-
+template<> class hash<wasm::Tuple> {
+public:
+  size_t operator()(const wasm::Tuple&) const;
+};
 template<> class hash<wasm::Signature> {
 public:
   size_t operator()(const wasm::Signature&) const;
 };
-
 template<> class hash<wasm::Field> {
 public:
   size_t operator()(const wasm::Field&) const;
 };
-
-template<> class hash<wasm::TypeDef> {
+template<> class hash<wasm::Struct> {
 public:
-  size_t operator()(const wasm::TypeDef&) const;
+  size_t operator()(const wasm::Struct&) const;
+};
+template<> class hash<wasm::Array> {
+public:
+  size_t operator()(const wasm::Array&) const;
 };
 
 } // namespace std
