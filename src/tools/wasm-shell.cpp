@@ -190,10 +190,9 @@ static void run_asserts(Name moduleName,
       }
       if (!invalid) {
         Colors::red(std::cerr);
-        std::cerr << "[should have been invalid]\n";
         Colors::normal(std::cerr);
         std::cerr << &wasm << '\n';
-        abort();
+        Fatal() << "[should have been invalid]";
       }
     } else if (id == INVOKE) {
       assert(wasm);
@@ -222,8 +221,7 @@ static void run_asserts(Name moduleName,
         }
         std::cerr << "seen " << result << ", expected " << expected << '\n';
         if (expected != result) {
-          std::cout << "unexpected, should be identical\n";
-          abort();
+          Fatal() << "unexpected, should be identical";
         }
       }
       if (id == ASSERT_TRAP) {
@@ -316,8 +314,7 @@ int main(int argc, const char* argv[]) {
           WasmPrinter::printModule(modules[moduleName].get());
         }
         if (!valid) {
-          std::cerr << "Invalid module!\n";
-          abort();
+          Fatal() << "Invalid module!";
         }
         run_asserts(moduleName,
                     &i,
@@ -332,7 +329,7 @@ int main(int argc, const char* argv[]) {
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
-    abort();
+    Fatal() << "parse exception";
   }
 
   if (checked) {
