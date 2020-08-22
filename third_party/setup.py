@@ -24,6 +24,43 @@ import tarfile
 import urllib.request
 import zipfile
 
+def download_json(url):
+    with urllib.request.urlopen(url) as res:
+        return json.loads(res.read().decode())
+
+
+def download_zip(url, dir):
+    with urllib.request.urlopen(url) as res:
+        data = io.BytesIO(res.read())
+        archive = zipfile.ZipFile(data)
+        for name in archive.namelist():
+            file = archive.open(name)
+            with open(os.path.join(dir, name), "wb") as output:
+                output.write(file.read())
+                
+
+def download_tar(url, dir):
+    tempfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "temp.tar.gz")
+    with urllib.request.urlopen(url) as res:
+        with open(tempfile, "wb") as temp:
+            temp.write(res.read())
+    with tarfile.open(tempfile, "r") as archive:
+        for member in archive.getmembers():
+            match = re.match("^[^/]+/", member.name)
+            if match:
+                outname = os.path.join(wabt_dir, member.name[match.span(0)[1]:])
+                if member.isdir():
+                    if not os.path.exists(outname):
+                        os.mkdir(outname)
+                elif member.isfile():
+                    with archive.extractfile(member) as infile:
+                        with open(outname, "wb") as outfile:
+                            outfile.write(infile.read())
+                        if sys.platform != "win32":
+                            os.chmod(outname, member.mode)
+    os.remove(tempfile)
+
+
 # mozjs
 # see: https://github.com/GoogleChromeLabs/jsvu/tree/main/engines/spidermonkey
 
@@ -43,30 +80,23 @@ def mozjs_determine_platform():
 
 
 def mozjs_determine_version(platform):
-    with urllib.request.urlopen("https://product-details.mozilla.org/1.0/firefox_history_development_releases.json") as url:
-        data = json.loads(url.read().decode())
-        latest = ""
-        version = ""
-        for v, t in data.items():
-            if t > latest:
-                latest = t
-                version = v
-        return version
+    data = download_json("https://product-details.mozilla.org/1.0/firefox_history_development_releases.json")
+    latest = ""
+    version = ""
+    for v, t in data.items():
+        if t > latest:
+            latest = t
+            version = v
+    return version
 
 
 def mozjs_download(platform, version):
-    with urllib.request.urlopen("https://archive.mozilla.org/pub/firefox/releases/" + version + "/jsshell/jsshell-" + platform + ".zip") as url:
-        data = io.BytesIO(url.read())
-        archive = zipfile.ZipFile(data)
-        for name in archive.namelist():
-            file = archive.open(name)
-            with open(os.path.join(mozjs_bin, name), "wb") as output:
-                output.write(file.read())
-        if sys.platform != "win32":
-            os.rename(os.path.join(mozjs_bin, "js"), os.path.join(mozjs_bin, "mozjs"))
-            os.chmod(os.path.join(mozjs_bin, "mozjs"), 0o755)
-        else:
-            os.rename(os.path.join(mozjs_bin, "js.exe"), os.path.join(mozjs_bin, "mozjs.exe"))
+    download_zip("https://archive.mozilla.org/pub/firefox/releases/" + version + "/jsshell/jsshell-" + platform + ".zip", mozjs_bin)
+    if sys.platform != "win32":
+        os.rename(os.path.join(mozjs_bin, "js"), os.path.join(mozjs_bin, "mozjs"))
+        os.chmod(os.path.join(mozjs_bin, "mozjs"), 0o755)
+    else:
+        os.rename(os.path.join(mozjs_bin, "js.exe"), os.path.join(mozjs_bin, "mozjs.exe"))
 
 
 def mozjs_is_installed():
@@ -82,9 +112,9 @@ def mozjs_main():
     print("* Downloading to '" + mozjs_bin + "'")
     mozjs_download(platform, version)
     if mozjs_is_installed():
-        print("Complete - consider adding the download directory to path!")
+        print("* Complete")
     else:
-        print("Something went wrong :(")
+        print("* Something went wrong :(")
 
 
 # V8
@@ -106,21 +136,14 @@ def v8_determine_platform():
 
 
 def v8_determine_version(platform):
-    with urllib.request.urlopen("https://storage.googleapis.com/chromium-v8/official/canary/v8-" + platform + "-rel-latest.json") as url:
-        data = json.loads(url.read().decode())
-        return data["version"]
+    data = download_json("https://storage.googleapis.com/chromium-v8/official/canary/v8-" + platform + "-rel-latest.json")
+    return data["version"]
 
 
 def v8_download(platform, version):
-    with urllib.request.urlopen("https://storage.googleapis.com/chromium-v8/official/canary/v8-" + platform + "-rel-" + version + ".zip") as url:
-        data = io.BytesIO(url.read())
-        archive = zipfile.ZipFile(data)
-        for name in archive.namelist():
-            file = archive.open(name)
-            with open(os.path.join(v8_bin, name), "wb") as output:
-                output.write(file.read())
-        if sys.platform != "win32":
-            os.chmod(os.path.join(v8_bin, "d8"), 0o755)
+    download_zip("https://storage.googleapis.com/chromium-v8/official/canary/v8-" + platform + "-rel-" + version + ".zip", v8_bin)
+    if sys.platform != "win32":
+        os.chmod(os.path.join(v8_bin, "d8"), 0o755)
 
 
 def v8_is_installed():
@@ -136,15 +159,16 @@ def v8_main():
     print("* Downloading to '" + v8_bin + "'")
     v8_download(platform, version)
     if v8_is_installed():
-        print("Complete - consider adding the download directory to path!")
+        print("* Complete")
     else:
-        print("Something went wrong :(")
+        print("* Something went wrong :(")
 
 
 # WABT
 # see: https://github.com/WebAssembly/wabt/releases
 
-wabt_bin = os.path.join(os.path.dirname(os.path.realpath(__file__)), "wabt")
+wabt_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "wabt")
+wabt_bin = os.path.join(wabt_dir, "bin")
 
 
 def wabt_determine_platform():
@@ -159,36 +183,20 @@ def wabt_determine_platform():
 
 
 def wabt_determine_release(platform):
-    with urllib.request.urlopen("https://api.github.com/repos/WebAssembly/wabt/releases/latest") as url:
-        data = json.loads(url.read().decode())
-        for asset in data["assets"]:
-            if asset["name"].endswith("-" + platform + ".tar.gz"):
-                return asset["browser_download_url"]
+    data = download_json("https://api.github.com/repos/WebAssembly/wabt/releases/latest")
+    for asset in data["assets"]:
+        if asset["name"].endswith("-" + platform + ".tar.gz"):
+            return asset["browser_download_url"]
     print("Cannot determine release")
     return ""
 
 
 def wabt_download(release):
-    tempfile = os.path.join(wabt_bin, "temp.tar.gz")
-    with urllib.request.urlopen(release) as url:
-        with open(tempfile, "wb") as temp:
-            temp.write(url.read())
-    with tarfile.open(tempfile, "r") as archive:
-        for member in archive.getmembers():
-            match = re.match("^wabt-[^/]+/bin/", member.name)
-            if match:
-                name = member.name[match.span(0)[1]:]
-                with archive.extractfile(member) as infile:
-                    outname = os.path.join(wabt_bin, name)
-                    with open(outname, "wb") as outfile:
-                        outfile.write(infile.read())
-                    if sys.platform != "win32":
-                        os.chmod(outname, 0o755)
-    os.remove(tempfile)
+    download_tar(release, wabt_dir)
 
 
 def wabt_is_installed():
-    return os.path.exists(os.path.join(wabt_bin, "wasm-validate.exe" if sys.platform == "win32" else "wasm-validate"))
+    return os.path.exists(os.path.join(wabt_bin, "wasm2c.exe" if sys.platform == "win32" else "wasm2c"))
 
 
 def wabt_main():
@@ -200,9 +208,9 @@ def wabt_main():
     print("* Downloading to '" + wabt_bin + "'")
     wabt_download(release)
     if wabt_is_installed():
-        print("Complete - consider adding the download directory to path!")
+        print("* Complete")
     else:
-        print("Something went wrong :(")
+        print("* Something went wrong :(")
 
 
 TOOLS = collections.OrderedDict([
