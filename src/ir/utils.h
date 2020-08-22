@@ -78,7 +78,7 @@ struct ExpressionAnalyzer {
 
   // hash an expression, ignoring superficial details like specific internal
   // names
-  static HashType hash(Expression* curr);
+  static size_t hash(Expression* curr);
 };
 
 // Re-Finalizes all node types. This can be run after code was modified in

@@ -308,14 +308,15 @@ private:
   Type getSubType(Type type) {
     if (type.isMulti()) {
       std::vector<Type> types;
-      for (auto t : type.expand()) {
+      for (const auto& t : type) {
         types.push_back(getSubType(t));
       }
       return Type(types);
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::externref:
         if (wasm.features.hasExceptionHandling()) {
           options.push_back(Type::exnref);
@@ -769,7 +770,7 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto type : func->sig.params.expand()) {
+      for (const auto& type : func->sig.params) {
         args.push_back(makeConst(type));
       }
       Expression* invoke =
@@ -1165,7 +1166,7 @@ private:
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto argType : target->sig.params.expand()) {
+      for (const auto& argType : target->sig.params) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1209,7 +1210,7 @@ private:
       target = make(Type::i32);
     }
     std::vector<Expression*> args;
-    for (auto type : targetFn->sig.params.expand()) {
+    for (const auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
@@ -1266,7 +1267,7 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isMulti());
     std::vector<Expression*> elements;
-    for (auto t : type.expand()) {
+    for (const auto& t : type) {
       elements.push_back(make(t));
     }
     return builder.makeTupleMake(std::move(elements));
@@ -1276,20 +1277,21 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tupleType = getTupleType();
-    auto& elements = tupleType.expand();
 
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
-    for (size_t i = 0; i < elements.size(); ++i) {
-      if (elements[i] == type) {
+    size_t i = 0;
+    for (const auto& t : tupleType) {
+      if (t == type) {
         extractIndices.push_back(i);
       }
+      ++i;
     }
 
     // If there are none, inject one
     if (extractIndices.size() == 0) {
-      auto newElements = elements;
-      size_t injected = upTo(elements.size());
+      std::vector<Type> newElements(tupleType.begin(), tupleType.end());
+      size_t injected = upTo(newElements.size());
       newElements[injected] = type;
       tupleType = Type(newElements);
       extractIndices.push_back(injected);
@@ -1315,7 +1317,7 @@ private:
   Expression* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         bool signed_ = get() & 1;
         switch (upTo(3)) {
@@ -1421,7 +1423,7 @@ private:
     auto offset = logify(get());
     auto ptr = makePointer();
     auto value = make(type);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -1581,7 +1583,7 @@ private:
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(get32());
           case Type::i64:
@@ -1626,7 +1628,7 @@ private:
           default:
             WASM_UNREACHABLE("invalid value");
         }
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(int32_t(small));
           case Type::i64:
@@ -1649,7 +1651,7 @@ private:
       case 2: {
         // special values
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value =
               Literal(pick<int32_t>(0,
@@ -1717,7 +1719,7 @@ private:
       case 3: {
         // powers of 2
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value = Literal(int32_t(1) << upTo(32));
             break;
@@ -1765,7 +1767,7 @@ private:
     }
     if (type.isMulti()) {
       std::vector<Expression*> operands;
-      for (auto t : type.expand()) {
+      for (const auto& t : type) {
         operands.push_back(makeConst(t));
       }
       return builder.makeTupleMake(std::move(operands));
@@ -1794,9 +1796,11 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
-        switch (getSingleConcreteType().getSingle()) {
+        auto singleConcreteType = getSingleConcreteType();
+        TODO_SINGLE_COMPOUND(singleConcreteType);
+        switch (singleConcreteType.getBasic()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -2015,7 +2019,7 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(4)) {
           case 0:
@@ -2319,7 +2323,7 @@ private:
       }
     }
     Index bytes;
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -2410,7 +2414,7 @@ private:
 
   Expression* makeSIMDExtract(Type type) {
     auto op = static_cast<SIMDExtractOp>(0);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32:
         op = pick(ExtractLaneSVecI8x16,
                   ExtractLaneUVecI8x16,
@@ -2544,6 +2548,7 @@ private:
   }
 
   Expression* makeSIMDLoad() {
+    // TODO: add Load{32,64}Zero if merged to proposal
     SIMDLoadOp op = pick(LoadSplatVec8x16,
                          LoadSplatVec16x8,
                          LoadSplatVec32x4,
@@ -2575,6 +2580,9 @@ private:
       case LoadExtUVec32x2ToVecI64x2:
         align = pick(1, 2, 4, 8);
         break;
+      case Load32Zero:
+      case Load64Zero:
+        WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();
     return builder.makeSIMDLoad(op, offset, align, ptr);

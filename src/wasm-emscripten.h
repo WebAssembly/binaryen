@@ -35,14 +35,13 @@ public:
 
   void setStandalone(bool standalone_) { standalone = standalone_; }
   void setSideModule(bool sideModule_) { sideModule = sideModule_; }
+  void setMinimizeWasmChanges(bool minimizeWasmChanges_) {
+    minimizeWasmChanges = minimizeWasmChanges_;
+  }
 
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
-
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void generateDynCallThunks();
 
   // Remove the import of a mutable __stack_pointer and instead initialize the
   // stack pointer from an immutable import.
@@ -66,6 +65,8 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
+  void generateDynCallThunk(Signature sig);
+
 private:
   Module& wasm;
   Builder builder;
@@ -73,11 +74,10 @@ private:
   bool useStackPointerGlobal;
   bool standalone;
   bool sideModule;
+  bool minimizeWasmChanges;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
-
-  void generateDynCallThunk(Signature sig);
 };
 
 } // namespace wasm

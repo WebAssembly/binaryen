@@ -76,7 +76,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;
-    switch (curr->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->type);
+    switch (curr->type.getBasic()) {
       case Type::i32:
         import = get_i32;
         break;
@@ -124,7 +125,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
 
     Builder builder(*getModule());
     Name import;
-    switch (curr->value->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->value->type);
+    switch (curr->value->type.getBasic()) {
       case Type::i32:
         import = set_i32;
         break;

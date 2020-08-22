@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 95)
+project(binaryen LANGUAGES C CXX VERSION 96)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -321,7 +321,6 @@ endfunction()
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
 binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
 binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
-binaryen_add_executable(asm2wasm src/tools/asm2wasm.cpp)
 binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
 binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
 binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
@@ -384,18 +383,3 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Testing
-#
-# Currently just some very simple smoke tests.
-
-enable_testing()
-
-add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
-add_test(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
-add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
-add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

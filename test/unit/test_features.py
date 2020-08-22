@@ -354,4 +354,4 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-tail-call',
             '--enable-reference-types',
             '--enable-multivalue'
-        ], p2.stdout.split())
+        ], p2.stdout.splitlines())

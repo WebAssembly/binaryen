@@ -134,7 +134,7 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 
 void BinaryInstWriter::visitLoad(Load* curr) {
   if (!curr->isAtomic) {
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -197,7 +197,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -244,7 +244,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic) {
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -300,7 +300,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -348,7 +348,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 #define CASE_FOR_OP(Op)                                                        \
   case Op:                                                                     \
-    switch (curr->type.getSingle()) {                                          \
+    switch (curr->type.getBasic()) {                                           \
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
@@ -404,7 +404,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->type.getSingle()) {
+  switch (curr->type.getBasic()) {
     case Type::i32:
       switch (curr->bytes) {
         case 1:
@@ -446,7 +446,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->expectedType.getSingle()) {
+  switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
       emitMemoryAccess(4, 4, curr->offset);
@@ -632,6 +632,12 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
     case LoadExtUVec32x2ToVecI64x2:
       o << U32LEB(BinaryConsts::I64x2LoadExtUVec32x2);
       break;
+    case Load32Zero:
+      o << U32LEB(BinaryConsts::V128Load32Zero);
+      break;
+    case Load64Zero:
+      o << U32LEB(BinaryConsts::V128Load64Zero);
+      break;
   }
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
@@ -662,7 +668,7 @@ void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
-  switch (curr->type.getSingle()) {
+  switch (curr->type.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
       break;
@@ -1802,17 +1808,16 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     return;
   }
   for (auto type : func->vars) {
-    for (auto t : type.expand()) {
+    for (const auto& t : type) {
       numLocalsByType[t]++;
     }
   }
   countScratchLocals();
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    const std::vector<Type> types = func->getLocalType(i).expand();
-    for (Index j = 0; j < types.size(); j++) {
-      Type type = types[j];
-      auto fullIndex = std::make_pair(i, j);
+    Index j = 0;
+    for (const auto& type : func->getLocalType(i)) {
+      auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {

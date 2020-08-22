@@ -16,7 +16,6 @@
 
 #include "ir/load-utils.h"
 #include "ir/utils.h"
-#include "support/hash.h"
 
 namespace wasm {
 
