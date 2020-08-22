@@ -167,7 +167,7 @@ struct OptimizationOptions : public ToolOptions {
            })
       .add("--inline-heavyweight-functions",
            "-ihf",
-           "Allow inlining heavyweight functions which determine as globals",
+           "Allow inlining heavyweight functions",
            Options::Arguments::Zero,
            [this](Options* o, const std::string&) {
              passOptions.inlining.allowHeavyweight = true;
