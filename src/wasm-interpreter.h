@@ -1890,14 +1890,12 @@ private:
         WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
-      const std::vector<Type>& params = function->sig.params.expand();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          assert(i < params.size());
-          if (!Type::isSubType(arguments[i].type, params[i])) {
+          if (!Type::isSubType(arguments[i].type, function->sig.params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << params[i] << " for parameter " << i << ", got "
-                      << arguments[i].type << "." << std::endl;
+                      << function->sig.params[i] << " for parameter " << i
+                      << ", got " << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = {arguments[i]};

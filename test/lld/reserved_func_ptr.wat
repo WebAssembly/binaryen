@@ -106,6 +106,6 @@
   )
   (i32.const 0)
  )
- ;; custom section "producers", size 112
+ ;; custom section "producers", size 157
 )
 

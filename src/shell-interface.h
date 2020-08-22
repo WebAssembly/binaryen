@@ -165,12 +165,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (sig != func->sig) {
       trap("callIndirect: function signatures don't match");
     }
-    const std::vector<Type>& params = func->sig.params.expand();
-    if (params.size() != arguments.size()) {
+    if (func->sig.params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < params.size(); i++) {
-      if (!Type::isSubType(arguments[i].type, params[i])) {
+    size_t i = 0;
+    for (const auto& param : func->sig.params) {
+      if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }

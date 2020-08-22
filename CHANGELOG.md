@@ -14,6 +14,8 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- Remove asm2wasm, which supported Emscripten's fastcomp backend, after fastcomp
+  was removed.
 
 v96
 ---
