@@ -157,39 +157,41 @@ Index getMaxBits(Expression* curr,
       case DivSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+          // if maxBitsLeft is negative
           if (maxBitsLeft == 32) {
             return 32;
           }
+          // properly handle zero for divisible
           if (maxBitsLeft == 0) {
             return 0;
           }
-          auto value = c->value.geti32();
-          auto maxBitsRight = 31 - Index(CountLeadingZeroes(value));
-          return std::max(Index(0), maxBitsLeft - maxBitsRight);
+          auto bitsRight = 31 - Index(c->value.countLeadingZeroes().geti32());
+          return std::max(Index(0), maxBitsLeft - bitsRight);
         }
         return 32;
       }
       case DivUInt32: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        // properly handle zero for divisible
         if (maxBitsLeft == 0) {
           return 0;
         }
         if (auto* c = binary->right->dynCast<Const>()) {
-          auto value = c->value.geti32();
-          auto maxBitsRight = 31 - Index(CountLeadingZeroes(value));
-          return std::max(Index(0), maxBitsLeft - maxBitsRight);
+          auto bitsRight = 31 - Index(c->value.countLeadingZeroes().geti32());
+          return std::max(Index(0), maxBitsLeft - bitsRight);
         }
         return maxBitsLeft;
       }
       case RemSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+          // if maxBitsLeft is negative
           if (maxBitsLeft == 32) {
             return 32;
           }
           auto value = c->value.geti32();
-          auto maxBitsRight = 32 - Index(CountLeadingZeroes(value - 1));
-          return std::min(maxBitsLeft, maxBitsRight);
+          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));
+          return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
       }
@@ -197,8 +199,8 @@ Index getMaxBits(Expression* curr,
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti32();
-          auto maxBitsRight = 32 - Index(CountLeadingZeroes(value - 1));
-          return std::min(maxBitsLeft, maxBitsRight);
+          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));
+          return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
       }
@@ -209,6 +211,7 @@ Index getMaxBits(Expression* curr,
       case OrInt32:
       case XorInt32: {
         auto maxBits = getMaxBits(binary->right, localInfoProvider);
+        // if maxBits is negative
         if (maxBits == 32) {
           return 32;
         }
@@ -235,6 +238,7 @@ Index getMaxBits(Expression* curr,
       case ShrSInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          // if maxBits is negative
           if (maxBits == 32) {
             return 32;
           }
@@ -262,33 +266,35 @@ Index getMaxBits(Expression* curr,
       case DivSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+          // if maxBitsLeft is negative
           if (maxBitsLeft == 64) {
             return 64;
           }
+          // properly handle zero for divisible
           if (maxBitsLeft == 0) {
             return 0;
           }
-          auto value = c->value.geti64();
-          auto maxBitsRight = 63 - Index(CountLeadingZeroes(value));
-          return std::max(Index(0), maxBitsLeft - maxBitsRight);
+          auto bitsRight = 63 - Index(c->value.countLeadingZeroes().geti64());
+          return std::max(Index(0), maxBitsLeft - bitsRight);
         }
         return 64;
       }
       case DivUInt64: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+        // properly handle zero for divisible
         if (maxBitsLeft == 0) {
           return 0;
         }
         if (auto* c = binary->right->dynCast<Const>()) {
-          auto value = c->value.geti64();
-          auto maxBitsRight = 63 - Index(CountLeadingZeroes(value));
-          return std::max(Index(0), maxBitsLeft - maxBitsRight);
+          auto bitsRight = 63 - Index(c->value.countLeadingZeroes().geti64());
+          return std::max(Index(0), maxBitsLeft - bitsRight);
         }
         return maxBitsLeft;
       }
       case RemSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
+          // if maxBitsLeft is negative
           if (maxBitsLeft == 64) {
             return 64;
           }
@@ -314,6 +320,7 @@ Index getMaxBits(Expression* curr,
       case OrInt64:
       case XorInt64: {
         auto maxBits = getMaxBits(binary->right, localInfoProvider);
+        // if maxBits is negative
         if (maxBits == 64) {
           return 64;
         }
@@ -340,6 +347,7 @@ Index getMaxBits(Expression* curr,
       case ShrSInt64: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
+          // if maxBits is negative
           if (maxBits == 64) {
             return 64;
           }
