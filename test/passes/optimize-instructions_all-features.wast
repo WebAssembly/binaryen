@@ -4197,6 +4197,137 @@
     ))
     ;; TODO: more stuff here
   )
+  (func $simplify-complements-with-and (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; (x ^ -1) & (y ^ -1)
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.xor
+        (local.get $y)
+        (i32.const -1)
+      )
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const -1)  ;; mirror
+        (local.get $x)
+      )
+      (i32.xor
+        (i32.const -1)  ;; mirror
+        (local.get $y)
+      )
+    ))
+    (drop (i64.and
+      (i64.xor
+        (local.get $z)
+        (i64.const -1)
+      )
+      (i64.xor
+        (local.get $w)
+        (i64.const -1)
+      )
+    ))
+    (drop (i64.and
+      (i64.xor
+        (i64.const -1)  ;; mirror
+        (local.get $z)
+      )
+      (i64.xor
+        (i64.const -1)  ;; mirror
+        (local.get $w)
+      )
+    ))
+  )
+  (func $self-complement-with-and (param $x i32) (param $y i64)
+    ;; (x ^ -1) & x
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (local.get $x)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const -1) ;; mirror
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (call $ne0)     ;; side effects
+        (i32.const -1)
+      )
+      (call $ne0)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const -1)
+        (call $ne0)     ;; side effects
+      )
+      (call $ne0)
+    ))
+    (drop (i64.and
+      (i64.xor
+        (local.get $y)
+        (i64.const -1)
+      )
+      (local.get $y)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (i32.const 2)  ;; skip
+        (i32.const -1)
+      )
+      (local.get $x)
+    ))
+    (drop (i32.and
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.const -1)   ;; skip
+    ))
+    ;; x & (x ^ -1)
+    (drop (i32.and
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (i32.const -1)
+      )
+    ))
+    (drop (i32.and
+      (local.get $x)
+      (i32.xor
+        (i32.const -1) ;; mirror
+        (local.get $x)
+      )
+    ))
+    (drop (i32.and
+      (call $ne0)       ;; side effects
+      (i32.xor
+        (call $ne0)
+        (i32.const -1)
+      )
+    ))
+    (drop (i32.and
+      (call $ne0)       ;; side effects
+      (i32.xor
+        (i32.const -1)
+        (call $ne0)
+      )
+    ))
+    (drop (i64.and
+      (local.get $y)
+      (i64.xor
+        (local.get $y)
+        (i64.const -1)
+      )
+    ))
+  )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if
       (select
