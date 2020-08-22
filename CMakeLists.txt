@@ -383,18 +383,3 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Testing
-#
-# Currently just some very simple smoke tests.
-
-enable_testing()
-
-add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
-add_test(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
-add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
-add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

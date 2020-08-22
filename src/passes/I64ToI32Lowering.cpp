@@ -272,7 +272,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     visitGenericCall<CallIndirect>(
       curr, [&](std::vector<Expression*>& args, Type results) {
         std::vector<Type> params;
-        for (auto param : curr->sig.params.expand()) {
+        for (const auto& param : curr->sig.params) {
           if (param == Type::i64) {
             params.push_back(Type::i32);
             params.push_back(Type::i32);
