@@ -104,8 +104,8 @@ std::string getSig(Type results, Type params) {
   assert(!results.isMulti());
   std::string sig;
   sig += getSig(results);
-  for (Type t : params.expand()) {
-    sig += getSig(t);
+  for (const auto& param : params) {
+    sig += getSig(param);
   }
   return sig;
 }

@@ -27,33 +27,6 @@ from scripts.test import wasm2js
 from scripts.test import wasm_opt
 
 
-def update_bin_fmt_tests():
-    print('\n[ checking binary format testcases... ]\n')
-    for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        for debug_info in [0, 1]:
-            cmd = shared.WASM_AS + [wast, '-o', 'a.wasm', '-all']
-            if debug_info:
-                cmd += ['-g']
-            print(' '.join(cmd))
-            if os.path.exists('a.wasm'):
-                os.unlink('a.wasm')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wasm')
-
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
-            print(' '.join(cmd))
-            if os.path.exists('a.wast'):
-                os.unlink('a.wast')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wast')
-            actual = open('a.wast').read()
-            binary_file = wast + '.fromBinary'
-            if not debug_info:
-                binary_file += '.noDebugInfo'
-            with open(binary_file, 'w') as o:
-                o.write(actual)
-
-
 def update_example_tests():
     print('\n[ checking example testcases... ]\n')
     for t in shared.get_tests(shared.get_test_dir('example')):
@@ -187,7 +160,6 @@ TEST_SUITES = OrderedDict([
     ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
-    ('binfmt', update_bin_fmt_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),
 ])
 
