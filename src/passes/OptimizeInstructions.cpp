@@ -1490,29 +1490,31 @@ private:
         //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
         switch (bytes) {
           case 2: {
-            return builder.makeStore(2, // bytes
-                                     0, // offset
-                                     1, // align
-                                     memFill->dest,
-                                     builder.makeConst(value * 0x0101U),
-                                     Type::i32);
-          }
-          case 4: {
-            return builder.makeStore(4, // bytes
-                                     0, // offset
-                                     1, // align
-                                     memFill->dest,
-                                     builder.makeConst(value * 0x01010101U),
-                                     Type::i32);
-          }
-          case 8: {
             return builder.makeStore(
-              8, // bytes
+              2, // bytes
               0, // offset
               1, // align
               memFill->dest,
-              builder.makeConst((uint64_t)value * 0x0101010101010101ULL),
-              Type::i64);
+              builder.makeConst<uint32_t>(value * 0x0101U),
+              Type::i32);
+          }
+          case 4: {
+            return builder.makeStore(
+              4, // bytes
+              0, // offset
+              1, // align
+              memFill->dest,
+              builder.makeConst<uint32_t>(value * 0x01010101U),
+              Type::i32);
+          }
+          case 8: {
+            return builder.makeStore(8, // bytes
+                                     0, // offset
+                                     1, // align
+                                     memFill->dest,
+                                     builder.makeConst<uint64_t>(
+                                       (uint64_t)value * 0x0101010101010101ULL),
+                                     Type::i64);
           }
           default: {
           }
