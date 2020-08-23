@@ -1499,7 +1499,7 @@ private:
               Type::i32);
           }
           case 4: {
-            // transform only when value equal zero or shrinkLevel == 0 due to
+            // transform only when "value" or shrinkLevel equal to zero due to
             // it could increase size by several bytes
             if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
@@ -1512,7 +1512,7 @@ private:
             }
           }
           case 8: {
-            // transform only when value equal zero or shrinkLevel == 0 due to
+            // transform only when "value" or shrinkLevel equal to zero due to
             // it could increase size by several bytes
             if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
