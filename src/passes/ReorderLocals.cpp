@@ -57,7 +57,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     // Gather information about local usages.
     walk(curr->body);
     // Use the information about local usages.
-    std::vector<Index> newToOld((size_t)num);
+    std::vector<Index> newToOld(num);
     for (size_t i = 0; i < num; i++) {
       newToOld[i] = i;
     }
