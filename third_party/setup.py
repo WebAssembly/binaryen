@@ -25,7 +25,7 @@ import urllib.request
 import zipfile
 
 
-def download_json(url):
+def fetch_json(url):
     with urllib.request.urlopen(url) as res:
         return json.loads(res.read().decode())
 
@@ -49,7 +49,7 @@ def download_tar(url, dir):
         for member in archive.getmembers():
             match = re.match('^[^/]+/', member.name)
             if match:
-                outname = os.path.join(wabt_dir, member.name[match.span(0)[1]:])
+                outname = os.path.join(dir, member.name[match.span(0)[1]:])
                 if member.isdir():
                     if not os.path.exists(outname):
                         os.mkdir(outname)
@@ -81,7 +81,7 @@ def mozjs_determine_platform():
 
 
 def mozjs_determine_version(platform):
-    data = download_json('https://product-details.mozilla.org/1.0/firefox_history_development_releases.json')
+    data = fetch_json('https://product-details.mozilla.org/1.0/firefox_history_development_releases.json')
     latest = ''
     version = ''
     for v, t in data.items():
@@ -137,7 +137,7 @@ def v8_determine_platform():
 
 
 def v8_determine_version(platform):
-    data = download_json('https://storage.googleapis.com/chromium-v8/official/canary/v8-' + platform + '-rel-latest.json')
+    data = fetch_json('https://storage.googleapis.com/chromium-v8/official/canary/v8-' + platform + '-rel-latest.json')
     return data['version']
 
 
@@ -184,7 +184,7 @@ def wabt_determine_platform():
 
 
 def wabt_determine_release(platform):
-    data = download_json('https://api.github.com/repos/WebAssembly/wabt/releases/latest')
+    data = fetch_json('https://api.github.com/repos/WebAssembly/wabt/releases/latest')
     for asset in data['assets']:
         if asset['name'].endswith('-' + platform + '.tar.gz'):
             return asset['browser_download_url']
