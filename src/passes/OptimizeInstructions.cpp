@@ -715,6 +715,11 @@ struct OptimizeInstructions
       if (auto* ret = optimizeMemoryCopy(memCopy)) {
         return ret;
       }
+    } else if (auto* memInit = curr->dynCast<MemoryFill>()) {
+      assert(features.hasBulkMemory());
+      if (auto* ret = optimizeMemoryFill(memInit)) {
+        return ret;
+      }
     }
     return nullptr;
   }
@@ -1455,6 +1460,62 @@ private:
           }
         }
         default: {
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* optimizeMemoryFill(MemoryFill* memFill) {
+    if (auto* csize = memFill->size->dynCast<Const>()) {
+      auto bytes = csize->value.geti32();
+      Builder builder(*getModule());
+      // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
+      if (bytes == 0) {
+        return builder.makeBlock(
+          {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+      }
+      // memory.fill(d, v, 1)  ==>  store8(d, v)
+      if (bytes == 1) {
+        return builder.makeStore(1, // bytes
+                                 0, // offset
+                                 1, // align
+                                 memFill->dest,
+                                 memFill->value,
+                                 Type::i32);
+      }
+      if (auto* cvalue = memFill->value->dynCast<Const>()) {
+        uint32_t value = csize->value.geti32() & 0xFF;
+        // memory.fill(d, C1, C2)  ==>
+        //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
+        switch (bytes) {
+          case 2: {
+            return builder.makeStore(2, // bytes
+                                     0, // offset
+                                     1, // align
+                                     memFill->dest,
+                                     builder.makeConst(value * 0x0101U),
+                                     Type::i32);
+          }
+          case 4: {
+            return builder.makeStore(4, // bytes
+                                     0, // offset
+                                     1, // align
+                                     memFill->dest,
+                                     builder.makeConst(value * 0x01010101U),
+                                     Type::i32);
+          }
+          case 8: {
+            return builder.makeStore(
+              8, // bytes
+              0, // offset
+              1, // align
+              memFill->dest,
+              builder.makeConst((uint64_t)value * 0x0101010101010101ULL),
+              Type::i64);
+          }
+          default: {
+          }
         }
       }
     }
