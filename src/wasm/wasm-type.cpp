@@ -306,7 +306,7 @@ Type::Type(const Tuple& tuple) {
   id = canonicalize(TypeInfo(tuple));
 }
 
-Type::Type(const Signature& signature, bool nullable) {
+Type::Type(const Signature signature, bool nullable) {
   id = canonicalize(TypeInfo(signature, nullable));
 }
 
@@ -418,7 +418,7 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [](const Type& t) -> FeatureSet {
+  auto getSingleFeatures = [](Type t) -> FeatureSet {
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
       case Type::v128:
@@ -460,7 +460,7 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::isSubType(const Type& left, const Type& right) {
+bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
@@ -482,7 +482,7 @@ bool Type::isSubType(const Type& left, const Type& right) {
   return false;
 }
 
-Type Type::getLeastUpperBound(const Type& a, const Type& b) {
+Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
   }

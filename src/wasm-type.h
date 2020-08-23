@@ -76,7 +76,7 @@ public:
   explicit Type(const Tuple&);
 
   // Construct from signature description
-  explicit Type(const Signature&, bool nullable);
+  explicit Type(const Signature, bool nullable);
 
   // Construct from struct description
   explicit Type(const Struct&, bool nullable);
@@ -143,9 +143,9 @@ public:
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(BasicID otherId) const { return id == otherId; }
+  bool operator==(const BasicID& otherId) const { return id == otherId; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(BasicID otherId) const { return id != otherId; }
+  bool operator!=(const BasicID& otherId) const { return id != otherId; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
@@ -165,12 +165,12 @@ public:
   static Type get(unsigned byteSize, bool float_);
 
   // Returns true if left is a subtype of right. Subtype includes itself.
-  static bool isSubType(const Type& left, const Type& right);
+  static bool isSubType(Type left, Type right);
 
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
   // the common supertype does not exist, returns none, a poison value.
-  static Type getLeastUpperBound(const Type& a, const Type& b);
+  static Type getLeastUpperBound(Type a, Type b);
 
   // Computes the least upper bound for all types in the given list.
   template<typename T> static Type mergeTypes(const T& types) {
@@ -216,14 +216,14 @@ public:
 // Wrapper type for formatting types as "(param i32 i64 f32)"
 struct ParamType {
   Type type;
-  ParamType(const Type& type) : type(type) {}
+  ParamType(Type type) : type(type) {}
   std::string toString() const;
 };
 
 // Wrapper type for formatting types as "(result i32 i64 f32)"
 struct ResultType {
   Type type;
-  ResultType(const Type& type) : type(type) {}
+  ResultType(Type type) : type(type) {}
   std::string toString() const;
 };
 
