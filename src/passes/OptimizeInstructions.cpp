@@ -1527,6 +1527,20 @@ private:
             }
             break;
           }
+          case 16: {
+            if (getModule()->features.hasSIMD()) {
+              if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
+                uint8_t values[16] = {(uint8_t)byteValue};
+                return builder.makeStore(16, // bytes
+                                         0,  // offset
+                                         1,  // align
+                                         memFill->dest,
+                                         builder.makeConst(Literal(values)),
+                                         Type::v128);
+              }
+            }
+            break;
+          }
           default: {
           }
         }
