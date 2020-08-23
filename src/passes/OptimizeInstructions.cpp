@@ -1501,7 +1501,7 @@ private:
           case 4: {
             // transform only when value equal zero or shrinkLevel == 0 due to
             // it could increase size by several bytes
-            if (byteValue != 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
                 4, // bytes
                 0, // offset
@@ -1514,7 +1514,7 @@ private:
           case 8: {
             // transform only when value equal zero or shrinkLevel == 0 due to
             // it could increase size by several bytes
-            if (byteValue != 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
                 8, // bytes
                 0, // offset
