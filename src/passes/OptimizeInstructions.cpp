@@ -1485,7 +1485,7 @@ private:
                                  Type::i32);
       }
       if (auto* cvalue = memFill->value->dynCast<Const>()) {
-        uint32_t value = csize->value.geti32() & 0xFF;
+        uint32_t value = cvalue->value.geti32() & 0xFF;
         // memory.fill(d, C1, C2)  ==>
         //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
         switch (bytes) {
