@@ -3793,6 +3793,13 @@
    (local.get $src)
    (local.get $sz)
   )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 0)
+   (i32.load
+    (i32.const 3)
+   )
+  )
  )
 )
 (module

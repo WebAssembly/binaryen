@@ -1404,6 +1404,8 @@ private:
     // memory.copy(x, x, sz)  ==>  nop
     if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
            .hasSideEffects() &&
+        !EffectAnalyzer(getPassOptions(), features, memCopy->size)
+           .hasSideEffects() &&
         ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
       return ExpressionManipulator::nop(memCopy);
     }
