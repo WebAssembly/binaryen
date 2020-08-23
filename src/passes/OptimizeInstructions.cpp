@@ -1499,22 +1499,31 @@ private:
               Type::i32);
           }
           case 4: {
-            return builder.makeStore(
-              4, // bytes
-              0, // offset
-              1, // align
-              memFill->dest,
-              builder.makeConst<uint32_t>(value * 0x01010101U),
-              Type::i32);
+            // transform only when value equal zero or shrinkLevel == 0 due to
+            // it could increase size by several bytes
+            if (value != 0 || getPassOptions().shrinkLevel == 0) {
+              return builder.makeStore(
+                4, // bytes
+                0, // offset
+                1, // align
+                memFill->dest,
+                builder.makeConst<uint32_t>(value * 0x01010101U),
+                Type::i32);
+            }
           }
           case 8: {
-            return builder.makeStore(8, // bytes
-                                     0, // offset
-                                     1, // align
-                                     memFill->dest,
-                                     builder.makeConst<uint64_t>(
-                                       (uint64_t)value * 0x0101010101010101ULL),
-                                     Type::i64);
+            // transform only when value equal zero or shrinkLevel == 0 due to
+            // it could increase size by several bytes
+            if (value != 0 || getPassOptions().shrinkLevel == 0) {
+              return builder.makeStore(
+                8, // bytes
+                0, // offset
+                1, // align
+                memFill->dest,
+                builder.makeConst<uint64_t>((uint64_t)value *
+                                            0x0101010101010101ULL),
+                Type::i64);
+            }
           }
           default: {
           }
