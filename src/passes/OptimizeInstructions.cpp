@@ -1510,6 +1510,7 @@ private:
                 builder.makeConst<uint32_t>(byteValue * 0x01010101U),
                 Type::i32);
             }
+            break;
           }
           case 8: {
             // transform only when "value" or shrinkLevel equal to zero due to
@@ -1524,6 +1525,7 @@ private:
                                             0x0101010101010101ULL),
                 Type::i64);
             }
+            break;
           }
           default: {
           }
