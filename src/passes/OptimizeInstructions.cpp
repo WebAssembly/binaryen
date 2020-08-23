@@ -1485,7 +1485,7 @@ private:
                                  Type::i32);
       }
       if (auto* cvalue = memFill->value->dynCast<Const>()) {
-        uint32_t value = cvalue->value.geti32() & 0xFF;
+        uint32_t byteValue = cvalue->value.geti32() & 0xFF;
         // memory.fill(d, C1, C2)  ==>
         //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
         switch (bytes) {
@@ -1495,32 +1495,32 @@ private:
               0, // offset
               1, // align
               memFill->dest,
-              builder.makeConst<uint32_t>(value * 0x0101U),
+              builder.makeConst<uint32_t>(byteValue * 0x0101U),
               Type::i32);
           }
           case 4: {
             // transform only when value equal zero or shrinkLevel == 0 due to
             // it could increase size by several bytes
-            if (value != 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue != 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
                 4, // bytes
                 0, // offset
                 1, // align
                 memFill->dest,
-                builder.makeConst<uint32_t>(value * 0x01010101U),
+                builder.makeConst<uint32_t>(byteValue * 0x01010101U),
                 Type::i32);
             }
           }
           case 8: {
             // transform only when value equal zero or shrinkLevel == 0 due to
             // it could increase size by several bytes
-            if (value != 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue != 0 || getPassOptions().shrinkLevel == 0) {
               return builder.makeStore(
                 8, // bytes
                 0, // offset
                 1, // align
                 memFill->dest,
-                builder.makeConst<uint64_t>((uint64_t)value *
+                builder.makeConst<uint64_t>((uint64_t)byteValue *
                                             0x0101010101010101ULL),
                 Type::i64);
             }
