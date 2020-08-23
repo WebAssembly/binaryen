@@ -4234,7 +4234,7 @@
     ))
   )
   (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
-    (memory.copy  ;; nop
+    (memory.copy  ;; skip
       (local.get $dst)
       (local.get $dst)
       (local.get $sz)
@@ -4294,7 +4294,7 @@
       (i32.const 8)
     )
 
-     (memory.copy
+    (memory.copy
       (local.get $dst)
       (local.get $src)
       (i32.const 16)
@@ -4304,6 +4304,14 @@
       (local.get $dst)
       (local.get $src)
       (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (i32.const 0)
+      (i32.const 0)
+      (i32.load
+        (i32.const 3) ;; side effect
+      )
     )
   )
 )

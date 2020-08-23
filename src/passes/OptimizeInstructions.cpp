@@ -1404,14 +1404,6 @@ private:
   }
 
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
-    FeatureSet features = getModule()->features;
-
-    // memory.copy(x, x, sz)  ==>  nop
-    if (!EffectAnalyzer(getPassOptions(), features, memCopy->dest)
-           .hasSideEffects() &&
-        ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
-      return ExpressionManipulator::nop(memCopy);
-    }
     // memory.copy(dst, src, C)  ==>  store(dst, load(src))
     if (auto* csize = memCopy->size->dynCast<Const>()) {
       auto bytes = csize->value.geti32();
@@ -1447,7 +1439,7 @@ private:
           if (getPassOptions().shrinkLevel == 0) {
             // This adds an extra 2 bytes so apply it only for
             // minimal shrink level
-            if (features.hasSIMD()) {
+            if (getModule()->features.hasSIMD()) {
               return builder.makeStore(
                 bytes, // bytes
                 0,     // offset
