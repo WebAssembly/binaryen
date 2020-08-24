@@ -242,8 +242,7 @@ struct Signature {
   Type params;
   Type results;
   Signature() : params(Type::none), results(Type::none) {}
-  Signature(const Type& params, const Type& results)
-    : params(params), results(results) {}
+  Signature(Type params, Type results) : params(params), results(results) {}
   bool operator==(const Signature& other) const {
     return params == other.params && results == other.results;
   }
