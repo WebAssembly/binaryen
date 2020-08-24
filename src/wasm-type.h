@@ -97,15 +97,19 @@ public:
   // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─────────────╫───┼───┼───┼───┤───────┤
-  // │ funcref     ║ x │   │ x │ x │ f     │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │       │ │  f_unc
-  // │ nullref     ║ x │   │ x │ x │       │ │
-  // │ exnref      ║ x │   │ x │ x │       │ │
+  // │ funcref     ║ x │   │ x │ x │ f n   │ ┐ Ref
+  // │ externref   ║ x │   │ x │ x │   n   │ │  f_unc
+  // │ anyref      ║ x │   │ x │ x │   n   │ │ ┐
+  // │ eqref       ║ x │   │ x │ x │   n   │ │ │ TODO (GC)
+  // │ i31ref      ║ x │   │ x │ x │   n   │ │ ┘
+  // │ nullref     ║ x │   │ x │ x │   n   │ │ ◄ TODO (removed)
+  // │ exnref      ║ x │   │ x │ x │   n   │ │
   // ├─────────────╫───┼───┼───┼───┤───────┤ │
   // │ Signature   ║   │ x │ x │ x │ f     │ │
   // │ Struct      ║   │ x │ x │ x │       │ │
   // │ Array       ║   │ x │ x │ x │       │ ┘
   // │ Tuple       ║   │ x │   │ x │       │
+  // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_id; }
   constexpr bool isCompound() const { return id > _last_basic_id; }
@@ -118,6 +122,7 @@ public:
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
   bool isNullable() const;
+  bool isRtt() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -303,6 +308,112 @@ struct Array {
   std::string toString() const;
 };
 
+struct Rtt {
+  enum Kind {
+    // Basic heap types
+    FuncKind,
+    ExternKind,
+    AnyKind,
+    EqKind,
+    I31Kind,
+    _last_basic_kind = I31Kind,
+    // Compound heap types
+    SignatureKind,
+    StructKind,
+    ArrayKind,
+  } kind;
+  uint32_t depth;
+  union {
+    Signature signature;
+    Struct struct_;
+    Array array;
+  };
+  Rtt(Kind kind) : kind(kind) { assert(kind <= _last_basic_kind); }
+  Rtt(const Signature& signature) : kind(SignatureKind), signature(signature) {}
+  Rtt(Signature&& signature)
+    : kind(SignatureKind), signature(std::move(signature)) {}
+  Rtt(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
+  Rtt(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
+  Rtt(const Array& array) : kind(ArrayKind), array(array) {}
+  Rtt(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
+  Rtt(const Rtt& other) {
+    kind = other.kind;
+    depth = other.depth;
+    switch (kind) {
+      case FuncKind:
+      case ExternKind:
+      case AnyKind:
+      case EqKind:
+      case I31Kind:
+        return;
+      case SignatureKind:
+        new (&signature) auto(other.signature);
+        return;
+      case StructKind:
+        new (&struct_) auto(other.struct_);
+        return;
+      case ArrayKind:
+        new (&array) auto(other.array);
+        return;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  ~Rtt() {
+    switch (kind) {
+      case FuncKind:
+      case ExternKind:
+      case AnyKind:
+      case EqKind:
+      case I31Kind:
+        return;
+      case SignatureKind:
+        signature.~Signature();
+        return;
+      case StructKind:
+        struct_.~Struct();
+        return;
+      case ArrayKind:
+        array.~Array();
+        return;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  bool operator==(const Rtt& other) const {
+    if (kind != other.kind || depth != other.depth) {
+      return false;
+    }
+    switch (kind) {
+      case FuncKind:
+      case ExternKind:
+      case AnyKind:
+      case EqKind:
+      case I31Kind:
+        return true;
+      case SignatureKind:
+        return signature == other.signature;
+      case StructKind:
+        return struct_ == other.struct_;
+      case ArrayKind:
+        return array == other.array;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  bool operator!=(const Rtt& other) const { return !(*this == other); }
+  Rtt& operator=(const Rtt& other) {
+    if (&other != this) {
+      this->~Rtt();
+      new (this) auto(other);
+    }
+    return *this;
+  }
+  bool isBasic() const { return kind <= _last_basic_kind; }
+  bool isCompound() const { return kind > _last_basic_kind; }
+  bool isSignature() const { return kind == SignatureKind; }
+  bool isStruct() const { return kind == StructKind; }
+  bool isArray() const { return kind == ArrayKind; }
+  std::string toString() const;
+};
+
 std::ostream& operator<<(std::ostream&, Type);
 std::ostream& operator<<(std::ostream&, ParamType);
 std::ostream& operator<<(std::ostream&, ResultType);
@@ -311,6 +422,7 @@ std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
+std::ostream& operator<<(std::ostream&, Rtt);
 
 } // namespace wasm
 
@@ -339,6 +451,10 @@ public:
 template<> class hash<wasm::Array> {
 public:
   size_t operator()(const wasm::Array&) const;
+};
+template<> class hash<wasm::Rtt> {
+public:
+  size_t operator()(const wasm::Rtt&) const;
 };
 
 } // namespace std

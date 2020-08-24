@@ -28,7 +28,13 @@
 namespace wasm {
 
 struct TypeInfo {
-  enum Kind { TupleKind, SignatureRefKind, StructRefKind, ArrayRefKind } kind;
+  enum Kind {
+    TupleKind,
+    SignatureRefKind,
+    StructRefKind,
+    ArrayRefKind,
+    RttKind,
+  } kind;
   struct SignatureRef {
     Signature signature;
     bool nullable;
@@ -46,6 +52,7 @@ struct TypeInfo {
     SignatureRef signatureRef;
     StructRef structRef;
     ArrayRef arrayRef;
+    Rtt rtt;
   };
 
   TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
@@ -56,6 +63,7 @@ struct TypeInfo {
     : kind(StructRefKind), structRef{struct_, nullable} {}
   TypeInfo(const Array& array, bool nullable)
     : kind(ArrayRefKind), arrayRef{array, nullable} {}
+  TypeInfo(const Rtt& rtt) : kind(RttKind), rtt(rtt) {}
   TypeInfo(const TypeInfo& other) {
     kind = other.kind;
     switch (kind) {
@@ -70,6 +78,9 @@ struct TypeInfo {
         return;
       case ArrayRefKind:
         new (&arrayRef) auto(other.arrayRef);
+        return;
+      case RttKind:
+        new (&rtt) auto(other.rtt);
         return;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -92,6 +103,10 @@ struct TypeInfo {
         arrayRef.~ArrayRef();
         return;
       }
+      case RttKind: {
+        rtt.~Rtt();
+        return;
+      }
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -100,10 +115,12 @@ struct TypeInfo {
   constexpr bool isSignatureRef() const { return kind == SignatureRefKind; }
   constexpr bool isStructRef() const { return kind == StructRefKind; }
   constexpr bool isArrayRef() const { return kind == ArrayRefKind; }
+  constexpr bool isRtt() const { return kind == RttKind; }
 
   bool isNullable() const {
     switch (kind) {
       case TupleKind:
+      case RttKind:
         return false;
       case SignatureRefKind:
         return signatureRef.nullable;
@@ -131,6 +148,8 @@ struct TypeInfo {
       case ArrayRefKind:
         return arrayRef.nullable == other.arrayRef.nullable &&
                arrayRef.array == other.arrayRef.array;
+      case RttKind:
+        return rtt == other.rtt;
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -180,7 +199,7 @@ public:
     auto digest = wasm::hash(info.kind);
     switch (info.kind) {
       case wasm::TypeInfo::TupleKind: {
-        wasm::rehash(digest, info.tuple.types);
+        wasm::rehash(digest, info.tuple);
         return digest;
       }
       case wasm::TypeInfo::SignatureRefKind: {
@@ -196,6 +215,10 @@ public:
       case wasm::TypeInfo::ArrayRefKind: {
         wasm::rehash(digest, info.arrayRef.array);
         wasm::rehash(digest, info.arrayRef.nullable);
+        return digest;
+      }
+      case wasm::TypeInfo::RttKind: {
+        wasm::rehash(digest, info.rtt);
         return digest;
       }
     }
@@ -225,13 +248,34 @@ size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
 }
 
 size_t hash<wasm::Struct>::operator()(const wasm::Struct& struct_) const {
-  auto digest = wasm::hash(0);
-  wasm::rehash(digest, struct_.fields);
-  return digest;
+  return wasm::hash(struct_.fields);
 }
 
 size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
   return wasm::hash(array.element);
+}
+
+size_t hash<wasm::Rtt>::operator()(const wasm::Rtt& rtt) const {
+  auto digest = wasm::hash(rtt.kind);
+  wasm::rehash(digest, rtt.depth);
+  switch (rtt.kind) {
+    case wasm::Rtt::FuncKind:
+    case wasm::Rtt::ExternKind:
+    case wasm::Rtt::AnyKind:
+    case wasm::Rtt::EqKind:
+    case wasm::Rtt::I31Kind:
+      return digest;
+    case wasm::Rtt::SignatureKind:
+      wasm::rehash(digest, rtt.signature);
+      return digest;
+    case wasm::Rtt::StructKind:
+      wasm::rehash(digest, rtt.struct_);
+      return digest;
+    case wasm::Rtt::ArrayKind:
+      wasm::rehash(digest, rtt.array);
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 } // namespace std
@@ -338,6 +382,7 @@ bool Type::isRef() const {
   } else {
     switch (getTypeInfo(*this)->kind) {
       case TypeInfo::TupleKind:
+      case TypeInfo::RttKind:
         return false;
       case TypeInfo::SignatureRefKind:
       case TypeInfo::StructRefKind:
@@ -353,6 +398,14 @@ bool Type::isNullable() const {
     return id >= funcref && id <= exnref;
   } else {
     return getTypeInfo(*this)->isNullable();
+  }
+}
+
+bool Type::isRtt() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getTypeInfo(*this)->isRtt();
   }
 }
 
@@ -581,6 +634,8 @@ std::string Struct::toString() const { return genericToString(*this); }
 
 std::string Array::toString() const { return genericToString(*this); }
 
+std::string Rtt::toString() const { return genericToString(*this); }
+
 std::string TypeInfo::toString() const { return genericToString(*this); }
 
 bool Signature::operator<(const Signature& other) const {
@@ -708,6 +763,29 @@ std::ostream& operator<<(std::ostream& os, Array array) {
   return os << "(array " << array.element << ")";
 }
 
+std::ostream& operator<<(std::ostream& os, Rtt rtt) {
+  os << "(rtt " << rtt.depth << " ";
+  switch (rtt.kind) {
+    case wasm::Rtt::FuncKind:
+      return os << "func)";
+    case wasm::Rtt::ExternKind:
+      return os << "extern)";
+    case wasm::Rtt::AnyKind:
+      return os << "any)";
+    case wasm::Rtt::EqKind:
+      return os << "eq)";
+    case wasm::Rtt::I31Kind:
+      return os << "i31)";
+    case wasm::Rtt::SignatureKind:
+      return os << rtt.signature << ")";
+    case wasm::Rtt::StructKind:
+      return os << rtt.struct_ << ")";
+    case wasm::Rtt::ArrayKind:
+      return os << rtt.array << ")";
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
 std::ostream& operator<<(std::ostream& os, TypeInfo info) {
   switch (info.kind) {
     case TypeInfo::TupleKind: {
@@ -733,6 +811,9 @@ std::ostream& operator<<(std::ostream& os, TypeInfo info) {
         os << "null ";
       }
       return os << info.arrayRef.array << ")";
+    }
+    case TypeInfo::RttKind: {
+      return os << info.rtt;
     }
   }
   WASM_UNREACHABLE("unexpected kind");
