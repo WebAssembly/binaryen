@@ -328,14 +328,21 @@ struct Rtt {
     Struct struct_;
     Array array;
   };
-  Rtt(Kind kind) : kind(kind) { assert(kind <= _last_basic_kind); }
-  Rtt(const Signature& signature) : kind(SignatureKind), signature(signature) {}
-  Rtt(Signature&& signature)
-    : kind(SignatureKind), signature(std::move(signature)) {}
-  Rtt(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
-  Rtt(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
-  Rtt(const Array& array) : kind(ArrayKind), array(array) {}
-  Rtt(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
+  Rtt(uint32_t depth, Kind kind) : kind(kind), depth(depth) {
+    assert(kind <= _last_basic_kind);
+  }
+  Rtt(uint32_t depth, const Signature& signature)
+    : kind(SignatureKind), depth(depth), signature(signature) {}
+  Rtt(uint32_t depth, Signature&& signature)
+    : kind(SignatureKind), depth(depth), signature(std::move(signature)) {}
+  Rtt(uint32_t depth, const Struct& struct_)
+    : kind(StructKind), depth(depth), struct_(struct_) {}
+  Rtt(uint32_t depth, Struct&& struct_)
+    : kind(StructKind), depth(depth), struct_(std::move(struct_)) {}
+  Rtt(uint32_t depth, const Array& array)
+    : kind(ArrayKind), depth(depth), array(array) {}
+  Rtt(uint32_t depth, Array&& array)
+    : kind(ArrayKind), depth(depth), array(std::move(array)) {}
   Rtt(const Rtt& other) {
     kind = other.kind;
     depth = other.depth;
