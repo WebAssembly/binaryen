@@ -1405,11 +1405,6 @@ private:
       Builder builder(*getModule());
 
       switch (bytes) {
-        case 0: {
-          return builder.makeBlock({builder.makeDrop(memCopy->dest),
-                                    builder.makeDrop(memCopy->source)});
-          break;
-        }
         case 1:
         case 2:
         case 4: {
