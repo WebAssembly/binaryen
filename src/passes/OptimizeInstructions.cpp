@@ -1475,10 +1475,12 @@ private:
 
   Expression* optimizeMemoryFill(MemoryFill* memFill) {
     if (auto* csize = memFill->size->dynCast<Const>()) {
+      PassOptions options = getPassOptions();
+
       auto bytes = csize->value.geti32();
       Builder builder(*getModule());
-      // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
-      if (bytes == 0) {
+      if (bytes == 0 && options.ignoreImplicitTraps) {
+        // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
         return builder.makeBlock(
           {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
       }
@@ -1508,7 +1510,7 @@ private:
           case 4: {
             // transform only when "value" or shrinkLevel equal to zero due to
             // it could increase size by several bytes
-            if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue == 0 || options.shrinkLevel == 0) {
               return builder.makeStore(
                 4, // bytes
                 0, // offset
@@ -1522,7 +1524,7 @@ private:
           case 8: {
             // transform only when "value" or shrinkLevel equal to zero due to
             // it could increase size by several bytes
-            if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
+            if (byteValue == 0 || options.shrinkLevel == 0) {
               return builder.makeStore(
                 8, // bytes
                 0, // offset
@@ -1536,7 +1538,7 @@ private:
           }
           case 16: {
             if (getModule()->features.hasSIMD()) {
-              if (byteValue == 0 || getPassOptions().shrinkLevel == 0) {
+              if (byteValue == 0 || options.shrinkLevel == 0) {
                 return builder.makeStore(
                   16, // bytes
                   0,  // offset
