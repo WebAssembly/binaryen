@@ -1399,6 +1399,16 @@ private:
   }
 
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
+    PassOptions options = getPassOptions();
+
+    if (options.ignoreImplicitTraps) {
+      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+        Builder builder(*getModule());
+        return builder.makeBlock(
+          {builder.makeDrop(memCopy->dest), builder.makeDrop(memCopy->source)});
+      }
+    }
+
     // memory.copy(dst, src, C)  ==>  store(dst, load(src))
     if (auto* csize = memCopy->size->dynCast<Const>()) {
       auto bytes = csize->value.geti32();
@@ -1406,8 +1416,10 @@ private:
 
       switch (bytes) {
         case 0: {
-          return builder.makeBlock({builder.makeDrop(memCopy->dest),
-                                    builder.makeDrop(memCopy->source)});
+          if (options.ignoreImplicitTraps) {
+            return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                      builder.makeDrop(memCopy->source)});
+          }
           break;
         }
         case 1:
@@ -1431,7 +1443,7 @@ private:
             Type::i64);
         }
         case 16: {
-          if (getPassOptions().shrinkLevel == 0) {
+          if (options.shrinkLevel == 0) {
             // This adds an extra 2 bytes so apply it only for
             // minimal shrink level
             if (getModule()->features.hasSIMD()) {

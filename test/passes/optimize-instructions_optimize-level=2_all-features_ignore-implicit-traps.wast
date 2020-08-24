@@ -361,5 +361,18 @@
   )
   (f64.const -nan:0xfffffffffffff)
  )
+ (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+  (memory.copy  ;; nop
+    (local.get $dst)
+    (local.get $dst)
+    (local.get $sz)
+  )
+
+  (memory.copy  ;; nop
+    (local.get $dst)
+    (local.get $src)
+    (i32.const 0)
+  )
+ )
 )
 
