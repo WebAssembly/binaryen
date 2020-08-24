@@ -97,17 +97,17 @@ public:
   // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─────────────╫───┼───┼───┼───┤───────┤
-  // │ funcref     ║ x │   │ x │ x │ f n   │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │   n   │ │  f_unc
-  // │ anyref      ║ x │   │ x │ x │   n   │ │ ┐
-  // │ eqref       ║ x │   │ x │ x │   n   │ │ │ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │   n   │ │ ┘
-  // │ nullref     ║ x │   │ x │ x │   n   │ │ ◄ TODO (removed)
-  // │ exnref      ║ x │   │ x │ x │   n   │ │
+  // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
+  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc, n_ullable
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
+  // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
+  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
+  // │ nullref     ║ x │   │ x │ x │ f? n  │ │ ◄ TODO (removed)
+  // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─────────────╫───┼───┼───┼───┤───────┤ │
-  // │ Signature   ║   │ x │ x │ x │ f     │ │
-  // │ Struct      ║   │ x │ x │ x │       │ │
-  // │ Array       ║   │ x │ x │ x │       │ ┘
+  // │ Signature   ║   │ x │ x │ x │ f  n? │ │
+  // │ Struct      ║   │ x │ x │ x │    n? │ │
+  // │ Array       ║   │ x │ x │ x │    n? │ ┘
   // │ Tuple       ║   │ x │   │ x │       │
   // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
