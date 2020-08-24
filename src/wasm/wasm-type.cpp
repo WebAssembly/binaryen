@@ -56,19 +56,6 @@ namespace {
 
 std::mutex mutex;
 
-std::array<std::vector<Type>, Type::_last_value_type + 1> basicTypes = {
-  {{},
-   {Type::unreachable},
-   {Type::i32},
-   {Type::i64},
-   {Type::f32},
-   {Type::f64},
-   {Type::v128},
-   {Type::funcref},
-   {Type::externref},
-   {Type::nullref},
-   {Type::exnref}}};
-
 // Track unique_ptrs for constructed types to avoid leaks
 std::vector<std::unique_ptr<std::vector<Type>>> constructedTypes;
 
@@ -92,7 +79,7 @@ std::unordered_map<std::vector<Type>, uintptr_t> indices = {
 void Type::init(const std::vector<Type>& types) {
 #ifndef NDEBUG
   for (Type t : types) {
-    assert(t.isSingle() && t.isConcrete());
+    assert(!t.isMulti() && t.isConcrete());
   }
 #endif
 
@@ -123,31 +110,22 @@ Type::Type(std::initializer_list<Type> types) { init(types); }
 
 Type::Type(const std::vector<Type>& types) { init(types); }
 
-size_t Type::size() const { return expand().size(); }
-
-const std::vector<Type>& Type::expand() const {
-  if (id <= _last_value_type) {
-    return basicTypes[id];
-  } else {
-    return *(std::vector<Type>*)id;
-  }
-}
-
 bool Type::operator<(const Type& other) const {
-  const std::vector<Type>& these = expand();
-  const std::vector<Type>& others = other.expand();
-  return std::lexicographical_compare(
-    these.begin(),
-    these.end(),
-    others.begin(),
-    others.end(),
-    [](const Type& a, const Type& b) { return a.getSingle() < b.getSingle(); });
+  return std::lexicographical_compare((*this).begin(),
+                                      (*this).end(),
+                                      other.begin(),
+                                      other.end(),
+                                      [](const Type& a, const Type& b) {
+                                        TODO_SINGLE_COMPOUND(a);
+                                        TODO_SINGLE_COMPOUND(b);
+                                        return a.getBasic() < b.getBasic();
+                                      });
 }
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
-    switch (t.getSingle()) {
+    switch (t.getBasic()) {
       case Type::i32:
       case Type::f32:
         return 4;
@@ -167,21 +145,19 @@ unsigned Type::getByteSize() const {
     WASM_UNREACHABLE("invalid type");
   };
 
-  if (isSingle()) {
-    return getSingleByteSize(*this);
+  if (isMulti()) {
+    unsigned size = 0;
+    for (const auto& t : *this) {
+      size += getSingleByteSize(t);
+    }
+    return size;
   }
-
-  unsigned size = 0;
-  for (auto t : expand()) {
-    size += getSingleByteSize(t);
-  }
-  return size;
+  return getSingleByteSize(*this);
 }
 
 Type Type::reinterpret() const {
-  assert(isSingle() && "reinterpretType only works with single types");
-  Type singleType = *expand().begin();
-  switch (singleType.getSingle()) {
+  auto singleType = *(*this).begin();
+  switch (singleType.getBasic()) {
     case Type::i32:
       return f32;
     case Type::i64:
@@ -204,7 +180,8 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
-    switch (t.getSingle()) {
+    TODO_SINGLE_COMPOUND(t);
+    switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
       case Type::funcref:
@@ -218,15 +195,14 @@ FeatureSet Type::getFeatures() const {
     }
   };
 
-  if (isSingle()) {
-    return getSingleFeatures(*this);
+  if (isMulti()) {
+    FeatureSet feats = FeatureSet::Multivalue;
+    for (const auto& t : *this) {
+      feats |= getSingleFeatures(t);
+    }
+    return feats;
   }
-
-  FeatureSet feats = FeatureSet::Multivalue;
-  for (Type t : expand()) {
-    feats |= getSingleFeatures(t);
-  }
-  return feats;
+  return getSingleFeatures(*this);
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -254,13 +230,11 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isMulti() && right.isMulti()) {
-    const auto& leftElems = left.expand();
-    const auto& rightElems = right.expand();
-    if (leftElems.size() != rightElems.size()) {
+    if (left.size() != right.size()) {
       return false;
     }
-    for (size_t i = 0; i < leftElems.size(); ++i) {
-      if (!isSubType(leftElems[i], rightElems[i])) {
+    for (size_t i = 0; i < left.size(); ++i) {
+      if (!isSubType(left[i], right[i])) {
         return false;
       }
     }
@@ -285,10 +259,8 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.isMulti()) {
     std::vector<Type> types;
     types.resize(a.size());
-    const auto& as = a.expand();
-    const auto& bs = b.expand();
     for (size_t i = 0; i < types.size(); ++i) {
-      types[i] = getLeastUpperBound(as[i], bs[i]);
+      types[i] = getLeastUpperBound(a[i], b[i]);
       if (types[i] == Type::none) {
         return Type::none;
       }
@@ -312,7 +284,7 @@ namespace {
 std::ostream&
 printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
   os << '(' << prefix;
-  for (auto t : type.expand()) {
+  for (const auto& t : type) {
     os << " " << t;
   }
   os << ')';
@@ -346,16 +318,15 @@ bool Signature::operator<(const Signature& other) const {
 std::ostream& operator<<(std::ostream& os, Type type) {
   if (type.isMulti()) {
     os << '(';
-    const std::vector<Type>& types = type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      os << types[i];
-      if (i < types.size() - 1) {
-        os << ", ";
-      }
+    auto sep = "";
+    for (const auto& t : type) {
+      os << sep << t;
+      sep = ", ";
     }
     os << ')';
   } else {
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::none:
         os << "none";
         break;

@@ -27,78 +27,6 @@ from scripts.test import wasm2js
 from scripts.test import wasm_opt
 
 
-def update_asm_js_tests():
-    print('[ processing and updating testcases... ]\n')
-    for asm in shared.get_tests(shared.options.binaryen_test, ['.asm.js']):
-        basename = os.path.basename(asm)
-        for precise in [0, 1, 2]:
-            for opts in [1, 0]:
-                cmd = shared.ASM2WASM + [asm]
-                if 'threads' in basename:
-                    cmd += ['--enable-threads']
-                wasm = asm.replace('.asm.js', '.fromasm')
-                if not precise:
-                    cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
-                    wasm += '.imprecise'
-                elif precise == 2:
-                    cmd += ['--trap-mode=clamp']
-                    wasm += '.clamp'
-                if not opts:
-                    wasm += '.no-opts'
-                    if precise:
-                        cmd += ['-O0']  # test that -O0 does nothing
-                else:
-                    cmd += ['-O']
-                if 'debugInfo' in basename:
-                    cmd += ['-g']
-                if 'noffi' in basename:
-                    cmd += ['--no-legalize-javascript-ffi']
-                if precise and opts:
-                    # test mem init importing
-                    open('a.mem', 'wb').write(bytes(basename, 'utf-8'))
-                    cmd += ['--mem-init=a.mem']
-                    if basename[0] == 'e':
-                        cmd += ['--mem-base=1024']
-                if '4GB' in basename:
-                    cmd += ['--mem-max=4294967296']
-                if 'i64' in basename or 'wasm-only' in basename or 'noffi' in basename:
-                    cmd += ['--wasm-only']
-                print(' '.join(cmd))
-                actual = support.run_command(cmd)
-                with open(os.path.join(shared.options.binaryen_test, wasm), 'w') as o:
-                    o.write(actual)
-                if 'debugInfo' in basename:
-                    cmd += ['--source-map', os.path.join(shared.options.binaryen_test, wasm + '.map'), '-o', 'a.wasm']
-                    support.run_command(cmd)
-
-
-def update_bin_fmt_tests():
-    print('\n[ checking binary format testcases... ]\n')
-    for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        for debug_info in [0, 1]:
-            cmd = shared.WASM_AS + [wast, '-o', 'a.wasm', '-all']
-            if debug_info:
-                cmd += ['-g']
-            print(' '.join(cmd))
-            if os.path.exists('a.wasm'):
-                os.unlink('a.wasm')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wasm')
-
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
-            print(' '.join(cmd))
-            if os.path.exists('a.wast'):
-                os.unlink('a.wast')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wast')
-            actual = open('a.wast').read()
-            binary_file = wast + '.fromBinary'
-            if not debug_info:
-                binary_file += '.noDebugInfo'
-            with open(binary_file, 'w') as o:
-                o.write(actual)
-
-
 def update_example_tests():
     print('\n[ checking example testcases... ]\n')
     for t in shared.get_tests(shared.get_test_dir('example')):
@@ -224,7 +152,6 @@ def update_spec_tests():
 
 TEST_SUITES = OrderedDict([
     ('wasm-opt', wasm_opt.update_wasm_opt_tests),
-    ('asm2wasm', update_asm_js_tests),
     ('wasm-dis', update_wasm_dis_tests),
     ('example', update_example_tests),
     ('ctor-eval', update_ctor_eval_tests),
@@ -233,7 +160,6 @@ TEST_SUITES = OrderedDict([
     ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
-    ('binfmt', update_bin_fmt_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),
 ])
 

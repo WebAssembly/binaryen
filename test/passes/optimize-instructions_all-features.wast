@@ -4233,6 +4233,79 @@
       )
     ))
   )
+  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+    (memory.copy  ;; nop
+      (local.get $dst)
+      (local.get $dst)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; nop
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 0)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 1)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 2)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 3)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 4)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 5)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 6)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 7)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 8)
+    )
+
+     (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (local.get $sz)
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

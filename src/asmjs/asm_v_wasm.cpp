@@ -42,7 +42,8 @@ Type asmToWasmType(AsmType asmType) {
 }
 
 AsmType wasmToAsmType(Type type) {
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
       return ASM_INT;
     case Type::f32:
@@ -67,7 +68,8 @@ AsmType wasmToAsmType(Type type) {
 }
 
 char getSig(Type type) {
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
       return 'i';
     case Type::i64:
@@ -102,8 +104,8 @@ std::string getSig(Type results, Type params) {
   assert(!results.isMulti());
   std::string sig;
   sig += getSig(results);
-  for (Type t : params.expand()) {
-    sig += getSig(t);
+  for (const auto& param : params) {
+    sig += getSig(param);
   }
   return sig;
 }

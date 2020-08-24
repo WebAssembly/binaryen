@@ -84,7 +84,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   private:
     void freeIdx() {
-      auto& freeList = pass.freeTemps[ty.getSingle()];
+      auto& freeList = pass.freeTemps[ty.getBasic()];
       assert(std::find(freeList.begin(), freeList.end(), idx) ==
              freeList.end());
       freeList.push_back(idx);
@@ -272,7 +272,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     visitGenericCall<CallIndirect>(
       curr, [&](std::vector<Expression*>& args, Type results) {
         std::vector<Type> params;
-        for (auto param : curr->sig.params.expand()) {
+        for (const auto& param : curr->sig.params) {
           if (param == Type::i64) {
             params.push_back(Type::i32);
             params.push_back(Type::i32);
@@ -1525,7 +1525,7 @@ private:
 
   TempVar getTemp(Type ty = Type::i32) {
     Index ret;
-    auto& freeList = freeTemps[ty.getSingle()];
+    auto& freeList = freeTemps[ty.getBasic()];
     if (freeList.size() > 0) {
       ret = freeList.back();
       freeList.pop_back();
