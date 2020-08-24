@@ -26,21 +26,27 @@
 // Signature, Struct and Array types that will be single but not basic. To
 // prepare for this change, the following macro marks affected code locations.
 #define TODO_SINGLE_COMPOUND(type)                                             \
-  assert(!type.isMulti() && "Unexpected multi-value type");                    \
+  assert(!type.isTuple() && "Unexpected tuple type");                          \
   assert(!type.isCompound() && "TODO: handle compound types");
 
 namespace wasm {
 
+struct Tuple;
+struct Signature;
+struct Struct;
+struct Array;
+
+typedef std::vector<class Type> TypeList;
+
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `ValueType`
+  // comparison of the ids. For basic types the `id` is just the `BasicID`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
-  void init(const std::vector<Type>&);
 
 public:
-  enum ValueType : uint32_t {
+  enum BasicID : uint32_t {
     none,
     unreachable,
     i32,
@@ -52,20 +58,31 @@ public:
     externref,
     nullref,
     exnref,
-    _last_value_type = exnref
+    _last_basic_id = exnref
   };
 
   Type() = default;
 
-  // ValueType can be implicitly upgraded to Type
-  constexpr Type(ValueType id) : id(id){};
+  // BasicID can be implicitly upgraded to Type
+  constexpr Type(BasicID id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
 
-  // Construct from lists of elementary types
-  Type(std::initializer_list<Type> types);
-  explicit Type(const std::vector<Type>& types);
+  // Construct tuple from a list of single types
+  Type(std::initializer_list<Type>);
+
+  // Construct from tuple description
+  explicit Type(const Tuple&);
+
+  // Construct from signature description
+  explicit Type(const Signature, bool nullable);
+
+  // Construct from struct description
+  explicit Type(const Struct&, bool nullable);
+
+  // Construct from array description
+  explicit Type(const Array&, bool nullable);
 
   // Predicates
   //                 Compound Concrete
@@ -85,30 +102,22 @@ public:
   // │ nullref     ║ x │   │ x │ x │       │ │
   // │ exnref      ║ x │   │ x │ x │       │ │
   // ├─────────────╫───┼───┼───┼───┤───────┤ │
-  // │ Signature   ║   │ x │ x │ x │ f     │ │ ┐
-  // │ Struct      ║   │ x │ x │ x │       │ │ │ TODO (GC)
-  // │ Array       ║   │ x │ x │ x │       │ ┘ ┘
-  // │ Multi       ║   │ x │   │ x │       │
+  // │ Signature   ║   │ x │ x │ x │ f     │ │
+  // │ Struct      ║   │ x │ x │ x │       │ │
+  // │ Array       ║   │ x │ x │ x │       │ ┘
+  // │ Tuple       ║   │ x │   │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
-  constexpr bool isBasic() const { return id <= _last_value_type; }
-  constexpr bool isCompound() const { return id > _last_value_type; }
-  constexpr bool isSingle() const {
-    // TODO: Compound types Signature, Struct and Array are single
-    return id >= i32 && id <= _last_value_type;
-  }
-  constexpr bool isMulti() const {
-    // TODO: Compound types Signature, Struct and Array are not multi
-    return id > _last_value_type;
-  }
+  constexpr bool isBasic() const { return id <= _last_basic_id; }
+  constexpr bool isCompound() const { return id > _last_basic_id; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  constexpr bool isRef() const {
-    // TODO: Compound types Signature, Struct and Array are ref
-    return id >= funcref && id <= exnref;
-  }
+  bool isTuple() const;
+  bool isSingle() const { return isConcrete() && !isTuple(); }
+  bool isRef() const;
+  bool isNullable() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -125,18 +134,18 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  constexpr ValueType getBasic() const {
+  constexpr BasicID getBasic() const {
     assert(isBasic() && "Basic type expected");
-    return static_cast<ValueType>(id);
+    return static_cast<BasicID>(id);
   }
 
-  // (In)equality must be defined for both Type and ValueType because it is
+  // (In)equality must be defined for both Type and BasicID because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const ValueType& other) const { return id == other; }
+  bool operator==(const BasicID& otherId) const { return id == otherId; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const ValueType& other) const { return id != other; }
+  bool operator!=(const BasicID& otherId) const { return id != otherId; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
@@ -195,35 +204,13 @@ public:
       assert(parent == other.parent);
       return index - other.index;
     }
-    const value_type& operator*() const {
-      if (parent->isMulti()) {
-        return (*(std::vector<Type>*)parent->getID())[index];
-      } else {
-        // see TODO in Type::end()
-        assert(index == 0 && parent->id != Type::none && "Index out of bounds");
-        return *parent;
-      }
-    }
+    const value_type& operator*() const;
   };
 
   Iterator begin() const { return Iterator(this, 0); }
-  Iterator end() const {
-    if (isMulti()) {
-      return Iterator(this, (*(std::vector<Type>*)getID()).size());
-    } else {
-      // TODO: unreachable is special and expands to {unreachable} currently.
-      // see also: https://github.com/WebAssembly/binaryen/issues/3062
-      return Iterator(this, size_t(id != Type::none));
-    }
-  }
+  Iterator end() const;
   size_t size() const { return end() - begin(); }
-  const Type& operator[](size_t i) const {
-    if (isMulti()) {
-      return (*(std::vector<Type>*)getID())[i];
-    } else {
-      return *begin();
-    }
-  }
+  const Type& operator[](size_t i) const;
 };
 
 // Wrapper type for formatting types as "(param i32 i64 f32)"
@@ -240,6 +227,17 @@ struct ResultType {
   std::string toString() const;
 };
 
+struct Tuple {
+  TypeList types;
+  Tuple() : types() {}
+  Tuple(std::initializer_list<Type> types) : types(types) {}
+  Tuple(const TypeList& types) : types(types) {}
+  Tuple(TypeList&& types) : types(std::move(types)) {}
+  bool operator==(const Tuple& other) const { return types == other.types; }
+  bool operator!=(const Tuple& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
 struct Signature {
   Type params;
   Type results;
@@ -250,12 +248,69 @@ struct Signature {
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
   bool operator<(const Signature& other) const;
+  std::string toString() const;
 };
 
-std::ostream& operator<<(std::ostream& os, Type t);
-std::ostream& operator<<(std::ostream& os, ParamType t);
-std::ostream& operator<<(std::ostream& os, ResultType t);
-std::ostream& operator<<(std::ostream& os, Signature t);
+struct Field {
+  Type type;
+  enum PackedType {
+    not_packed,
+    i8,
+    i16,
+  } packedType; // applicable iff type=i32
+  bool mutable_;
+
+  Field(Type type, bool mutable_ = false)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(PackedType packedType, bool mutable_ = false)
+    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
+
+  constexpr bool isPacked() const {
+    if (packedType != not_packed) {
+      assert(type == Type::i32 && "unexpected type");
+      return true;
+    }
+    return false;
+  }
+
+  bool operator==(const Field& other) const {
+    return type == other.type && packedType == other.packedType &&
+           mutable_ == other.mutable_;
+  }
+  bool operator!=(const Field& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
+typedef std::vector<Field> FieldList;
+
+struct Struct {
+  FieldList fields;
+  Struct(const Struct& other) : fields(other.fields) {}
+  Struct(const FieldList& fields) : fields(fields) {}
+  Struct(FieldList&& fields) : fields(std::move(fields)) {}
+  bool operator==(const Struct& other) const { return fields == other.fields; }
+  bool operator!=(const Struct& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
+struct Array {
+  Field element;
+  Array(const Array& other) : element(other.element) {}
+  Array(const Field& element) : element(element) {}
+  Array(Field&& element) : element(std::move(element)) {}
+  bool operator==(const Array& other) const { return element == other.element; }
+  bool operator!=(const Array& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
+std::ostream& operator<<(std::ostream&, Type);
+std::ostream& operator<<(std::ostream&, ParamType);
+std::ostream& operator<<(std::ostream&, ResultType);
+std::ostream& operator<<(std::ostream&, Tuple);
+std::ostream& operator<<(std::ostream&, Signature);
+std::ostream& operator<<(std::ostream&, Field);
+std::ostream& operator<<(std::ostream&, Struct);
+std::ostream& operator<<(std::ostream&, Array);
 
 } // namespace wasm
 
@@ -263,12 +318,27 @@ namespace std {
 
 template<> class hash<wasm::Type> {
 public:
-  size_t operator()(const wasm::Type& type) const;
+  size_t operator()(const wasm::Type&) const;
 };
-
+template<> class hash<wasm::Tuple> {
+public:
+  size_t operator()(const wasm::Tuple&) const;
+};
 template<> class hash<wasm::Signature> {
 public:
-  size_t operator()(const wasm::Signature& sig) const;
+  size_t operator()(const wasm::Signature&) const;
+};
+template<> class hash<wasm::Field> {
+public:
+  size_t operator()(const wasm::Field&) const;
+};
+template<> class hash<wasm::Struct> {
+public:
+  size_t operator()(const wasm::Struct&) const;
+};
+template<> class hash<wasm::Array> {
+public:
+  size_t operator()(const wasm::Array&) const;
 };
 
 } // namespace std
