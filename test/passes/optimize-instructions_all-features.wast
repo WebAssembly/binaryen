@@ -4240,7 +4240,7 @@
       (local.get $sz)
     )
 
-    (memory.copy  ;; nop
+    (memory.copy  ;; skip
       (local.get $dst)
       (local.get $src)
       (i32.const 0)

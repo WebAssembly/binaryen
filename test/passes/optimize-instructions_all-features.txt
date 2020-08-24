@@ -3734,13 +3734,10 @@
    (local.get $dst)
    (local.get $sz)
   )
-  (block
-   (drop
-    (local.get $dst)
-   )
-   (drop
-    (local.get $src)
-   )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 0)
   )
   (i32.store8
    (local.get $dst)
