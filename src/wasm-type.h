@@ -260,7 +260,7 @@ struct Field {
   } packedType; // applicable iff type=i32
   bool mutable_;
 
-  Field(const Type& type, bool mutable_ = false)
+  Field(Type type, bool mutable_ = false)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
   Field(PackedType packedType, bool mutable_ = false)
     : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
