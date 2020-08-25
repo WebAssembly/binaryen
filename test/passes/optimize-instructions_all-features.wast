@@ -4314,6 +4314,133 @@
       )
     )
   )
+  (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 0)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 1)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (local.get $val)
+      (i32.const 1)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 1)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1023)
+      (i32.const 1)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 2)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 2)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 255)
+      (i32.const 2)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 4)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 8)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 16)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 4)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 8)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 16)
+    )
+
+    (memory.fill
+      (local.get $dst)
+      (i32.const 1023)
+      (i32.const 16)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (local.get $val)
+      (i32.const 0)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (i32.const 0)
+      (local.get $sz)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (local.get $val)
+      (local.get $sz)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 3)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (i32.const 1)
+      (i32.const 3)
+    )
+
+    (memory.fill  ;; skip
+      (local.get $dst)
+      (i32.const 0)
+      (i32.const 17)
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

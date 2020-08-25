@@ -381,4 +381,39 @@
    )
   )
  )
+ (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
+  (block
+   (drop
+    (local.get $dst)
+   )
+   (drop
+    (i32.const 0)
+   )
+  )
+  (block
+   (drop
+    (local.get $dst)
+   )
+   (drop
+    (local.get $val)
+   )
+  )
+  (block
+   (drop
+    (i32.load
+     (i32.const -1)
+    )
+   )
+   (drop
+    (i32.const 0)
+   )
+  )
+  (memory.fill
+   (i32.const 0)
+   (i32.const 0)
+   (i32.load
+    (i32.const -1)
+   )
+  )
+ )
 )

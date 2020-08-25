@@ -8,9 +8,9 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3800,6 +3800,105 @@
    (i32.load
     (i32.const 3)
    )
+  )
+ )
+ (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
+  (memory.fill
+   (local.get $dst)
+   (i32.const 0)
+   (i32.const 0)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.const 0)
+  )
+  (i32.store8
+   (local.get $dst)
+   (local.get $val)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.const 1)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.const 1023)
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.const 0)
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.const 257)
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.const 65535)
+  )
+  (i32.store align=1
+   (local.get $dst)
+   (i32.const 0)
+  )
+  (i64.store align=1
+   (local.get $dst)
+   (i64.const 0)
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (i8x16.splat
+    (i32.const 0)
+   )
+  )
+  (i32.store align=1
+   (local.get $dst)
+   (i32.const 16843009)
+  )
+  (i64.store align=1
+   (local.get $dst)
+   (i64.const 72340172838076673)
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (i8x16.splat
+    (i32.const 1)
+   )
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (i8x16.splat
+    (i32.const 255)
+   )
+  )
+  (memory.fill
+   (local.get $dst)
+   (local.get $val)
+   (i32.const 0)
+  )
+  (memory.fill
+   (local.get $dst)
+   (i32.const 0)
+   (local.get $sz)
+  )
+  (memory.fill
+   (local.get $dst)
+   (local.get $val)
+   (local.get $sz)
+  )
+  (memory.fill
+   (local.get $dst)
+   (i32.const 0)
+   (i32.const 3)
+  )
+  (memory.fill
+   (local.get $dst)
+   (i32.const 1)
+   (i32.const 3)
+  )
+  (memory.fill
+   (local.get $dst)
+   (i32.const 0)
+   (i32.const 17)
   )
  )
 )
