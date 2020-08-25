@@ -1,3 +1,26 @@
+;; Heap types
+func
+funcref
+(ref func)
+extern
+externref
+(ref extern)
+any
+(ref null any)
+(ref any)
+eq
+(ref null eq)
+(ref eq)
+i31
+(ref null i31)
+(ref i31)
+exn
+exnref
+(ref exn)
+(func)
+(struct)
+(array i32)
+
 ;; Signature
 (func)
 (ref (func))
@@ -63,7 +86,7 @@ none
 ((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
 ((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
 
-;; Recursive
+;; Recursive (not really)
 (func (param (ref (func))))
 (ref (func (param (ref (func)))))
 (func (param (ref (array (ref (func))))))

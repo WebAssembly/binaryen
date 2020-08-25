@@ -7,6 +7,49 @@ using namespace wasm;
 
 void test_compound() {
   {
+    HeapType func(HeapType::FuncKind);
+    assert(Type(func, true).getID() == Type::funcref);
+    assert(Type(func, false).getID() == Type(func, false).getID());
+    assert(Type(func, false).getID() != Type(func, true).getID());
+    HeapType sameFunc(HeapType::FuncKind);
+    assert(Type(func, false).getID() == Type(sameFunc, false).getID());
+
+    HeapType extern_(HeapType::ExternKind);
+    assert(Type(extern_, true).getID() == Type::externref);
+    assert(Type(extern_, false).getID() == Type(extern_, false).getID());
+    assert(Type(extern_, false).getID() != Type(extern_, true).getID());
+    HeapType sameExtern(HeapType::ExternKind);
+    assert(Type(extern_, false).getID() == Type(sameExtern, false).getID());
+
+    HeapType any(HeapType::AnyKind);
+    // assert(Type(any, true).getID() == Type::anyref);
+    assert(Type(any, false).getID() == Type(any, false).getID());
+    assert(Type(any, false).getID() != Type(any, true).getID());
+    HeapType sameAny(HeapType::AnyKind);
+    assert(Type(any, false).getID() == Type(sameAny, false).getID());
+
+    HeapType eq(HeapType::EqKind);
+    // assert(Type(eq, true).getID() == Type::eqref);
+    assert(Type(eq, false).getID() == Type(eq, false).getID());
+    assert(Type(eq, false).getID() != Type(eq, true).getID());
+    HeapType sameEq(HeapType::EqKind);
+    assert(Type(eq, false).getID() == Type(sameEq, false).getID());
+
+    HeapType i31(HeapType::I31Kind);
+    // assert(Type(i31, false).getID() == Type::i31ref);
+    assert(Type(i31, false).getID() == Type(i31, false).getID());
+    assert(Type(i31, false).getID() != Type(i31, true).getID());
+    HeapType sameI31(HeapType::I31Kind);
+    assert(Type(i31, false).getID() == Type(sameI31, false).getID());
+
+    HeapType exn(HeapType::ExnKind);
+    assert(Type(exn, true).getID() == Type::exnref);
+    assert(Type(exn, false).getID() == Type(exn, false).getID());
+    assert(Type(exn, false).getID() != Type(exn, true).getID());
+    HeapType sameExn(HeapType::ExnKind);
+    assert(Type(exn, false).getID() == Type(sameExn, false).getID());
+  }
+  {
     Signature signature(Type::i32, Type::none);
     assert(Type(signature, false).getID() == Type(signature, false).getID());
     assert(Type(signature, false).getID() != Type(signature, true).getID());
@@ -58,7 +101,31 @@ void test_compound() {
 
 void test_printing() {
   {
-    std::cout << ";; Signature\n";
+    std::cout << ";; Heap types\n";
+    std::cout << HeapType(HeapType::FuncKind) << "\n";
+    std::cout << Type(HeapType::FuncKind, true) << "\n";
+    std::cout << Type(HeapType::FuncKind, false) << "\n";
+    std::cout << HeapType(HeapType::ExternKind) << "\n";
+    std::cout << Type(HeapType::ExternKind, true) << "\n";
+    std::cout << Type(HeapType::ExternKind, false) << "\n";
+    std::cout << HeapType(HeapType::AnyKind) << "\n";
+    std::cout << Type(HeapType::AnyKind, true) << "\n";
+    std::cout << Type(HeapType::AnyKind, false) << "\n";
+    std::cout << HeapType(HeapType::EqKind) << "\n";
+    std::cout << Type(HeapType::EqKind, true) << "\n";
+    std::cout << Type(HeapType::EqKind, false) << "\n";
+    std::cout << HeapType(HeapType::I31Kind) << "\n";
+    std::cout << Type(HeapType::I31Kind, true) << "\n";
+    std::cout << Type(HeapType::I31Kind, false) << "\n";
+    std::cout << HeapType(HeapType::ExnKind) << "\n";
+    std::cout << Type(HeapType::ExnKind, true) << "\n";
+    std::cout << Type(HeapType::ExnKind, false) << "\n";
+    std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
+    std::cout << HeapType(Struct({})) << "\n";
+    std::cout << HeapType(Array({Type::i32, false})) << "\n";
+  }
+  {
+    std::cout << "\n;; Signature\n";
     Signature emptySignature(Type::none, Type::none);
     std::cout << emptySignature << "\n";
     std::cout << Type(emptySignature, false) << "\n";
@@ -197,7 +264,7 @@ void test_printing() {
   }
   // TODO: Think about recursive types. Currently impossible to construct.
   {
-    std::cout << "\n;; Recursive\n";
+    std::cout << "\n;; Recursive (not really)\n";
     Signature signatureSignature(Type::none, Type::none);
     signatureSignature.params = Type(signatureSignature, false);
     //                                ^ copies
