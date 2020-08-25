@@ -69,10 +69,15 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
   bool isFunctionParallel() override { return true; }
 
-  AccessInstrumenter* create(Name funcToIgnore) override { return new AccessInstrumenter(funcToIgnore); }
+  AccessInstrumenter* create() override {
+    return new AccessInstrumenter(funcToIgnore);
+  }
+
+  AccessInstrumenter(Name funcToIgnore) : funcToIgnore(funcToIgnore) {}
 
   void visitLoad(Load* curr) {
-    if (getFunction()->name == funcToIgnore || curr->type == Type::unreachable) {
+    if (getFunction()->name == funcToIgnore ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -86,7 +91,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == funcToIgnore || curr->type == Type::unreachable) {
+    if (getFunction()->name == funcToIgnore ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -123,8 +129,7 @@ struct SafeHeap : public Pass {
     // Newer emscripten imports or exports emscripten_get_sbrk_ptr().
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
-    } else if (auto* existing =
-                 info.getImportedFunction(ENV, GET_SBRK_PTR)) {
+    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
