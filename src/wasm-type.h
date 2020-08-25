@@ -31,13 +31,6 @@
 
 namespace wasm {
 
-struct Tuple;
-struct Signature;
-struct Struct;
-struct Array;
-
-typedef std::vector<class Type> TypeList;
-
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `BasicID`
@@ -73,16 +66,14 @@ public:
   Type(std::initializer_list<Type>);
 
   // Construct from tuple description
-  explicit Type(const Tuple&);
+  explicit Type(const struct Tuple&);
 
-  // Construct from signature description
-  explicit Type(const Signature, bool nullable);
+  // Construct from a heap type description. Also covers construction from
+  // Signature, Struct or Array via implicit conversion to HeapType.
+  explicit Type(const struct HeapType&, bool nullable);
 
-  // Construct from struct description
-  explicit Type(const Struct&, bool nullable);
-
-  // Construct from array description
-  explicit Type(const Array&, bool nullable);
+  // Construct from rtt description
+  explicit Type(const struct Rtt&);
 
   // Predicates
   //                 Compound Concrete
@@ -232,6 +223,8 @@ struct ResultType {
   std::string toString() const;
 };
 
+typedef std::vector<Type> TypeList;
+
 struct Tuple {
   TypeList types;
   Tuple() : types() {}
@@ -308,50 +301,42 @@ struct Array {
   std::string toString() const;
 };
 
-struct Rtt {
+struct HeapType {
   enum Kind {
-    // Basic heap types
     FuncKind,
     ExternKind,
     AnyKind,
     EqKind,
     I31Kind,
-    _last_basic_kind = I31Kind,
-    // Compound heap types
+    ExnKind,
+    _last_basic_kind = ExnKind,
     SignatureKind,
     StructKind,
     ArrayKind,
   } kind;
-  uint32_t depth;
   union {
     Signature signature;
     Struct struct_;
     Array array;
   };
-  Rtt(uint32_t depth, Kind kind) : kind(kind), depth(depth) {
-    assert(kind <= _last_basic_kind);
-  }
-  Rtt(uint32_t depth, const Signature& signature)
-    : kind(SignatureKind), depth(depth), signature(signature) {}
-  Rtt(uint32_t depth, Signature&& signature)
-    : kind(SignatureKind), depth(depth), signature(std::move(signature)) {}
-  Rtt(uint32_t depth, const Struct& struct_)
-    : kind(StructKind), depth(depth), struct_(struct_) {}
-  Rtt(uint32_t depth, Struct&& struct_)
-    : kind(StructKind), depth(depth), struct_(std::move(struct_)) {}
-  Rtt(uint32_t depth, const Array& array)
-    : kind(ArrayKind), depth(depth), array(array) {}
-  Rtt(uint32_t depth, Array&& array)
-    : kind(ArrayKind), depth(depth), array(std::move(array)) {}
-  Rtt(const Rtt& other) {
+  HeapType(Kind kind) : kind(kind) { assert(kind <= _last_basic_kind); }
+  HeapType(const Signature& signature)
+    : kind(SignatureKind), signature(signature) {}
+  HeapType(Signature&& signature)
+    : kind(SignatureKind), signature(std::move(signature)) {}
+  HeapType(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
+  HeapType(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
+  HeapType(const Array& array) : kind(ArrayKind), array(array) {}
+  HeapType(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
+  HeapType(const HeapType& other) {
     kind = other.kind;
-    depth = other.depth;
     switch (kind) {
       case FuncKind:
       case ExternKind:
       case AnyKind:
       case EqKind:
       case I31Kind:
+      case ExnKind:
         return;
       case SignatureKind:
         new (&signature) auto(other.signature);
@@ -365,13 +350,14 @@ struct Rtt {
     }
     WASM_UNREACHABLE("unexpected kind");
   }
-  ~Rtt() {
+  ~HeapType() {
     switch (kind) {
       case FuncKind:
       case ExternKind:
       case AnyKind:
       case EqKind:
       case I31Kind:
+      case ExnKind:
         return;
       case SignatureKind:
         signature.~Signature();
@@ -385,8 +371,8 @@ struct Rtt {
     }
     WASM_UNREACHABLE("unexpected kind");
   }
-  bool operator==(const Rtt& other) const {
-    if (kind != other.kind || depth != other.depth) {
+  bool operator==(const HeapType& other) const {
+    if (kind != other.kind) {
       return false;
     }
     switch (kind) {
@@ -395,6 +381,7 @@ struct Rtt {
       case AnyKind:
       case EqKind:
       case I31Kind:
+      case ExnKind:
         return true;
       case SignatureKind:
         return signature == other.signature;
@@ -405,19 +392,43 @@ struct Rtt {
     }
     WASM_UNREACHABLE("unexpected kind");
   }
-  bool operator!=(const Rtt& other) const { return !(*this == other); }
-  Rtt& operator=(const Rtt& other) {
+  bool operator!=(const HeapType& other) const { return !(*this == other); }
+  HeapType& operator=(const HeapType& other) {
     if (&other != this) {
-      this->~Rtt();
+      this->~HeapType();
       new (this) auto(other);
     }
     return *this;
   }
-  bool isBasic() const { return kind <= _last_basic_kind; }
-  bool isCompound() const { return kind > _last_basic_kind; }
   bool isSignature() const { return kind == SignatureKind; }
+  Signature getSignature() const {
+    assert(isSignature() && "Not a signature");
+    return signature;
+  }
   bool isStruct() const { return kind == StructKind; }
+  Struct getStruct() const {
+    assert(isStruct() && "Not a struct");
+    return struct_;
+  }
   bool isArray() const { return kind == ArrayKind; }
+  Array getArray() const {
+    assert(isArray() && "Not an array");
+    return array;
+  }
+  std::string toString() const;
+};
+
+struct Rtt {
+  uint32_t depth;
+  HeapType heapType;
+  Rtt(uint32_t depth, const HeapType& heapType)
+    : depth(depth), heapType(heapType) {}
+  Rtt(uint32_t depth, HeapType&& heapType)
+    : depth(depth), heapType(std::move(heapType)) {}
+  bool operator==(const Rtt& other) const {
+    return depth == other.depth && heapType == other.heapType;
+  }
+  bool operator!=(const Rtt& other) const { return !(*this == other); }
   std::string toString() const;
 };
 
@@ -429,6 +440,7 @@ std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
+std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, Rtt);
 
 } // namespace wasm
@@ -458,6 +470,10 @@ public:
 template<> class hash<wasm::Array> {
 public:
   size_t operator()(const wasm::Array&) const;
+};
+template<> class hash<wasm::HeapType> {
+public:
+  size_t operator()(const wasm::HeapType&) const;
 };
 template<> class hash<wasm::Rtt> {
 public:
