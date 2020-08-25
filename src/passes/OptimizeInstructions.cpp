@@ -1490,13 +1490,12 @@ private:
         //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
         switch (bytes) {
           case 1: {
-            return builder.makeStore(
-              1, // bytes
-              0, // offset
-              1, // align
-              memFill->dest,
-              builder.makeConst<uint32_t>(byteValue),
-              Type::i32);
+            return builder.makeStore(1, // bytes
+                                     0, // offset
+                                     1, // align
+                                     memFill->dest,
+                                     builder.makeConst<uint32_t>(byteValue),
+                                     Type::i32);
           }
           case 2: {
             return builder.makeStore(
