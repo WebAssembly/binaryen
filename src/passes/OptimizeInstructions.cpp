@@ -711,6 +711,11 @@ struct OptimizeInstructions
           store->value = unary->value;
         }
       }
+    } else if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
+      assert(features.hasBulkMemory());
+      if (auto* ret = optimizeMemoryCopy(memCopy)) {
+        return ret;
+      }
     }
     return nullptr;
   }
@@ -1405,6 +1410,76 @@ private:
     rightConst->value = rightConst->value.sub(extra);
     binary->left = left->left;
     return binary;
+  }
+
+  Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
+    PassOptions options = getPassOptions();
+
+    if (options.ignoreImplicitTraps) {
+      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+        // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
+        Builder builder(*getModule());
+        return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                  builder.makeDrop(memCopy->source),
+                                  builder.makeDrop(memCopy->size)});
+      }
+    }
+
+    // memory.copy(dst, src, C)  ==>  store(dst, load(src))
+    if (auto* csize = memCopy->size->dynCast<Const>()) {
+      auto bytes = csize->value.geti32();
+      Builder builder(*getModule());
+
+      switch (bytes) {
+        case 0: {
+          if (options.ignoreImplicitTraps) {
+            // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
+            return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                      builder.makeDrop(memCopy->source)});
+          }
+          break;
+        }
+        case 1:
+        case 2:
+        case 4: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i32),
+            Type::i32);
+        }
+        case 8: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i64),
+            Type::i64);
+        }
+        case 16: {
+          if (options.shrinkLevel == 0) {
+            // This adds an extra 2 bytes so apply it only for
+            // minimal shrink level
+            if (getModule()->features.hasSIMD()) {
+              return builder.makeStore(
+                bytes, // bytes
+                0,     // offset
+                1,     // align
+                memCopy->dest,
+                builder.makeLoad(
+                  bytes, false, 0, 1, memCopy->source, Type::v128),
+                Type::v128);
+            }
+          }
+        }
+        default: {
+        }
+      }
+    }
+    return nullptr;
   }
 
   // given a binary expression with equal children and no side effects in

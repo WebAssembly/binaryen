@@ -1793,7 +1793,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 }
 
 void WasmBinaryBuilder::pushExpression(Expression* curr) {
-  if (curr->type.isMulti()) {
+  if (curr->type.isTuple()) {
     // Store tuple to local and push individual extracted values
     Builder builder(wasm);
     Index tuple = builder.addVar(currFunction, curr->type);
@@ -1822,7 +1822,7 @@ Expression* WasmBinaryBuilder::popExpression() {
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
-  assert(!ret->type.isMulti());
+  assert(!ret->type.isTuple());
   expressionStack.pop_back();
   return ret;
 }
@@ -1885,7 +1885,7 @@ Expression* WasmBinaryBuilder::popTuple(size_t numElems) {
 Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
   if (type.isSingle()) {
     return popNonVoidExpression();
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     return popTuple(type.size());
   } else {
     WASM_UNREACHABLE("Invalid popped type");

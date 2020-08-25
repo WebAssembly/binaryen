@@ -101,7 +101,7 @@ std::string getSig(Function* func) {
 }
 
 std::string getSig(Type results, Type params) {
-  assert(!results.isMulti());
+  assert(!results.isTuple());
   std::string sig;
   sig += getSig(results);
   for (const auto& param : params) {

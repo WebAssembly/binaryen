@@ -1,0 +1,70 @@
+;; Signature
+(func)
+(ref (func))
+(ref null (func))
+(func (param i32) (result f64))
+(ref (func (param i32) (result f64)))
+(ref null (func (param i32) (result f64)))
+
+;; Struct
+(struct)
+(ref (struct))
+(ref null (struct))
+(struct (field i32 i64 (mut f32) (mut f64) externref))
+(ref (struct (field i32 i64 (mut f32) (mut f64) externref)))
+(ref null (struct (field i32 i64 (mut f32) (mut f64) externref)))
+
+;; Array
+(array i32)
+(ref (array i32))
+(ref null (array i32))
+(array (mut externref))
+(ref (array (mut externref)))
+(ref null (array (mut externref)))
+
+;; Tuple
+()
+none
+(i32 f64 externref)
+(i32 f64 externref)
+
+;; Signature of references (param/result)
+(func (param (ref null (struct))) (result (ref (array (mut i32)))))
+
+;; Signature of references (params/results)
+(func (param (ref null (struct)) (ref (array (mut i32)))) (result (ref (struct)) (ref null (array i32))))
+
+;; Struct of references
+(struct (field (ref (func)) (mut (ref (func))) (ref null (func)) (mut (ref null (func)))))
+(ref (struct (field (ref (func)) (mut (ref (func))) (ref null (func)) (mut (ref null (func))))))
+(ref null (struct (field (ref (func)) (mut (ref (func))) (ref null (func)) (mut (ref null (func))))))
+(struct (field (ref (struct)) (mut (ref (struct))) (ref null (struct)) (mut (ref null (struct)))))
+(ref (struct (field (ref (struct)) (mut (ref (struct))) (ref null (struct)) (mut (ref null (struct))))))
+(ref null (struct (field (ref (struct)) (mut (ref (struct))) (ref null (struct)) (mut (ref null (struct))))))
+(struct (field (ref (array i32)) (mut (ref (array i32))) (ref null (array i32)) (mut (ref null (array i32)))))
+(ref (struct (field (ref (array i32)) (mut (ref (array i32))) (ref null (array i32)) (mut (ref null (array i32))))))
+(ref null (struct (field (ref (array i32)) (mut (ref (array i32))) (ref null (array i32)) (mut (ref null (array i32))))))
+(struct (field (mut i32) (mut (ref null (func))) (mut (ref null (struct))) (mut (ref null (array (mut i32))))))
+(ref (struct (field (mut i32) (mut (ref null (func))) (mut (ref null (struct))) (mut (ref null (array (mut i32)))))))
+(ref null (struct (field (mut i32) (mut (ref null (func))) (mut (ref null (struct))) (mut (ref null (array (mut i32)))))))
+
+;; Array of references
+(array (ref null (func)))
+(ref (array (ref null (func))))
+(ref null (array (ref null (func))))
+(array (mut (ref null (struct))))
+(ref (array (mut (ref null (struct)))))
+(ref null (array (mut (ref null (struct)))))
+(array (ref null (array i32)))
+(ref (array (ref null (array i32))))
+(ref null (array (ref null (array i32))))
+
+;; Tuple of references
+((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
+((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
+
+;; Recursive
+(func (param (ref (func))))
+(ref (func (param (ref (func)))))
+(func (param (ref (array (ref (func))))))
+(ref (func (param (ref (array (ref (func)))))))

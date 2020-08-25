@@ -409,7 +409,7 @@ collectSignatures(Module& wasm,
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
-          if (curr->type.isMulti()) {
+          if (curr->type.isTuple()) {
             counts[Signature(Type::none, curr->type)]++;
           }
         }

@@ -795,7 +795,7 @@ public:
   // minimal contents. as a replacement, this may reuse the
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZero(curr->type));
     }
     Literal value;
