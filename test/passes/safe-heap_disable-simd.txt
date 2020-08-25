@@ -5753,8 +5753,7 @@
  (export "emscripten_get_sbrk_ptr" (func $foo))
  (func $foo (result i32)
   (drop
-   (call $SAFE_HEAP_LOAD_i32_4_4
-    (i32.const 0)
+   (i32.load
     (i32.const 0)
    )
   )
