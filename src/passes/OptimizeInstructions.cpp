@@ -1536,8 +1536,8 @@ private:
             break;
           }
           case 16: {
-            if (getModule()->features.hasSIMD()) {
-              if (byteValue == 0 || options.shrinkLevel == 0) {
+            if (options.shrinkLevel == 0) {
+              if (getModule()->features.hasSIMD()) {
                 return builder.makeStore(
                   16, // bytes
                   0,  // offset
