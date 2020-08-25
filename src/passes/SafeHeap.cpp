@@ -68,19 +68,18 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   // If the getSbrkPtr function is implemented in the wasm, we must not
   // instrument that, as it would lead to infinite recursion of it calling
   // SAFE_HEAP_LOAD that calls it and so forth.
-  Name getSbrkPtrName;
+  Name getSbrkPtr;
 
   bool isFunctionParallel() override { return true; }
 
   AccessInstrumenter* create() override {
-    return new AccessInstrumenter(getSbrkPtrName);
+    return new AccessInstrumenter(getSbrkPtr);
   }
 
-  AccessInstrumenter(Name getSbrkPtrName) : getSbrkPtrName(getSbrkPtrName) {}
+  AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
-    if (getFunction()->name == getSbrkPtrName ||
-        curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -94,8 +93,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == getSbrkPtrName ||
-        curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -112,14 +110,13 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
 struct SafeHeap : public Pass {
   PassOptions options;
-  Name getSbrkPtrName;
 
   void run(PassRunner* runner, Module* module) override {
     options = runner->options;
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter(getSbrkPtrName).run(runner, module);
+    AccessInstrumenter(getSbrkPtr).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
@@ -136,7 +133,6 @@ struct SafeHeap : public Pass {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
-      getSbrkPtrName = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
