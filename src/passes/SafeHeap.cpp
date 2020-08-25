@@ -65,18 +65,21 @@ static Name getStoreName(Store* curr) {
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
-  Name funcToIgnore;
+  // If the getSbrkPtr function is implemented in the wasm, we must not
+  // instrument that, as it would lead to infinite recursion of it calling
+  // SAFE_HEAP_LOAD that calls it and so forth.
+  Name getSbrkPtrName;
 
   bool isFunctionParallel() override { return true; }
 
   AccessInstrumenter* create() override {
-    return new AccessInstrumenter(funcToIgnore);
+    return new AccessInstrumenter(getSbrkPtrName);
   }
 
-  AccessInstrumenter(Name funcToIgnore) : funcToIgnore(funcToIgnore) {}
+  AccessInstrumenter(Name getSbrkPtrName) : getSbrkPtrName(getSbrkPtrName) {}
 
   void visitLoad(Load* curr) {
-    if (getFunction()->name == funcToIgnore ||
+    if (getFunction()->name == getSbrkPtrName ||
         curr->type == Type::unreachable) {
       return;
     }
@@ -91,7 +94,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == funcToIgnore ||
+    if (getFunction()->name == getSbrkPtrName ||
         curr->type == Type::unreachable) {
       return;
     }
@@ -109,14 +112,14 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
 struct SafeHeap : public Pass {
   PassOptions options;
-  Name funcToIgnore;
+  Name getSbrkPtrName;
 
   void run(PassRunner* runner, Module* module) override {
     options = runner->options;
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter(funcToIgnore).run(runner, module);
+    AccessInstrumenter(getSbrkPtrName).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
@@ -133,10 +136,7 @@ struct SafeHeap : public Pass {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
-      // We must not instrument the implementation that gets the sbrk ptr, as
-      // if we do that would lead to infinite recursion of it calling
-      // SAFE_HEAP_LOAD that calls it and so forth.
-      funcToIgnore = existing->value;
+      getSbrkPtrName = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
