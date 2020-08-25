@@ -1484,20 +1484,20 @@ private:
         return builder.makeBlock(
           {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
       }
-      // memory.fill(d, v, 1)  ==>  store8(d, v)
-      if (bytes == 1) {
-        return builder.makeStore(1, // bytes
-                                 0, // offset
-                                 1, // align
-                                 memFill->dest,
-                                 memFill->value,
-                                 Type::i32);
-      }
       if (auto* cvalue = memFill->value->dynCast<Const>()) {
         uint32_t byteValue = cvalue->value.geti32() & 0xFF;
         // memory.fill(d, C1, C2)  ==>
         //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
         switch (bytes) {
+          case 1: {
+            return builder.makeStore(
+              1, // bytes
+              0, // offset
+              1, // align
+              memFill->dest,
+              builder.makeConst<uint32_t>(byteValue),
+              Type::i32);
+          }
           case 2: {
             return builder.makeStore(
               2, // bytes
@@ -1555,6 +1555,15 @@ private:
           default: {
           }
         }
+      }
+      // memory.fill(d, v, 1)  ==>  store8(d, v)
+      if (bytes == 1) {
+        return builder.makeStore(1, // bytes
+                                 0, // offset
+                                 1, // align
+                                 memFill->dest,
+                                 memFill->value,
+                                 Type::i32);
       }
     }
     return nullptr;

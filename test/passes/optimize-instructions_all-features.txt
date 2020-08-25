@@ -3822,7 +3822,7 @@
   )
   (i32.store8
    (local.get $dst)
-   (i32.const 1023)
+   (i32.const 255)
   )
   (i32.store16 align=1
    (local.get $dst)
