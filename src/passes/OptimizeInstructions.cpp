@@ -1122,13 +1122,9 @@ private:
         auto features = getModule()->features;
         int bitSize = type.getByteSize() * 8;
 
-        auto hasSideEffects = [&](Expression* left,
-                                  Expression* right = nullptr) {
-          return EffectAnalyzer(getPassOptions(), features, left)
-                   .hasSideEffects() ||
-                 (right != nullptr &&
-                  EffectAnalyzer(getPassOptions(), features, right)
-                    .hasSideEffects());
+        auto hasSideEffects = [&](Expression* expr) {
+          return EffectAnalyzer(getPassOptions(), features, expr)
+            .hasSideEffects();
         };
 
         // try match rotl
@@ -1163,7 +1159,7 @@ private:
                     if (c->value == Literal::makeFromInt32(bitSize, type)) {
                       if (ExpressionAnalyzer::equal(left->right,
                                                     rightRight->right) &&
-                          !hasSideEffects(left->left, left->right)) {
+                          !hasSideEffects(left)) {
                         left->op = Abstract::getBinary(type, Abstract::RotL);
                         return left;
                       }
@@ -1187,7 +1183,7 @@ private:
                             if (c->value.getInteger() == 0LL) {
                               if (ExpressionAnalyzer::equal(
                                     left->right, rightRightLeft->right) &&
-                                  !hasSideEffects(left->left, left->right)) {
+                                  !hasSideEffects(left)) {
                                 left->op =
                                   Abstract::getBinary(type, Abstract::RotL);
                                 return left;
@@ -1235,7 +1231,7 @@ private:
                     if (c->value == Literal::makeFromInt32(bitSize, type)) {
                       if (ExpressionAnalyzer::equal(left->right,
                                                     rightRight->right) &&
-                          !hasSideEffects(left->left, left->right)) {
+                          !hasSideEffects(left)) {
                         left->op = Abstract::getBinary(type, Abstract::RotR);
                         return left;
                       }
@@ -1259,7 +1255,7 @@ private:
                             if (c->value.getInteger() == 0LL) {
                               if (ExpressionAnalyzer::equal(
                                     left->right, rightRightLeft->right) &&
-                                  !hasSideEffects(left->left, left->right)) {
+                                  !hasSideEffects(left)) {
                                 left->op =
                                   Abstract::getBinary(type, Abstract::RotR);
                                 return left;
