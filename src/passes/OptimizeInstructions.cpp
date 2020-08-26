@@ -1187,9 +1187,9 @@ private:
           if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* c = rightRight->left->dynCast<Const>()) {
               if (c->value == Literal::makeFromInt32(bitSize, type)) {
-                if (ExpressionAnalyzer::equal(left->right,
-                                              rightRight->right)) {
-                  left->op = Abstract::getBinary(type, maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                if (ExpressionAnalyzer::equal(left->right, rightRight->right)) {
+                  left->op = Abstract::getBinary(
+                    type, maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
                   return left;
                 }
               }
@@ -1209,22 +1209,24 @@ private:
                     if (auto* c = rightRightLeft->left->dynCast<Const>()) {
                       if (c->value.getInteger() == 0LL) {
                         Expression* shiftExpr = left->right;
-                        if (auto* leftRightBinary = shiftExpr->dynCast<Binary>()) {
+                        if (auto* leftRightBinary =
+                              shiftExpr->dynCast<Binary>()) {
                           // check (y &? M)
                           if (leftRightBinary->op ==
                               Abstract::getBinary(type, Abstract::And)) {
                             if (auto* leftRightRightConst =
-                                leftRightBinary->right->dynCast<Const>()) {
+                                  leftRightBinary->right->dynCast<Const>()) {
                               if (leftRightRightConst->value == literalMask) {
                                 shiftExpr = leftRightBinary->left;
                               }
                             }
                           }
                         }
-                        if (ExpressionAnalyzer::equal(
-                              shiftExpr, rightRightLeft->right)) {
-                          left->op =
-                            Abstract::getBinary(type, maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                        if (ExpressionAnalyzer::equal(shiftExpr,
+                                                      rightRightLeft->right)) {
+                          left->op = Abstract::getBinary(
+                            type,
+                            maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
                           return left;
                         }
                       }
