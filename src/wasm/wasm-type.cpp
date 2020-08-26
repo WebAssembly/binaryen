@@ -329,6 +329,8 @@ Type::Type(const HeapType& heapType, bool nullable) {
   id = canonicalize(TypeInfo(heapType, nullable));
 }
 
+Type::Type(const Rtt& rtt) { id = canonicalize(TypeInfo(rtt)); }
+
 bool Type::isTuple() const {
   if (isBasic()) {
     return false;

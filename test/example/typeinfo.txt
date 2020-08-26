@@ -51,6 +51,12 @@ none
 (i32 f64 externref)
 (i32 f64 externref)
 
+;; Rtt
+(rtt 0 func)
+(rtt 0 func)
+(rtt 1 (struct))
+(rtt 1 (struct))
+
 ;; Signature of references (param/result)
 (func (param (ref null (struct))) (result (ref (array (mut i32)))))
 

@@ -97,6 +97,33 @@ void test_compound() {
     Tuple otherTuple({Type::f64, Type::externref});
     assert(Type(tuple).getID() != Type(otherTuple).getID());
   }
+  {
+    Rtt rtt(0, HeapType::FuncKind);
+    assert(Type(rtt).getID() == Type(rtt).getID());
+
+    Rtt sameRtt(0, HeapType::FuncKind);
+    assert(rtt == sameRtt);
+    assert(Type(rtt).getID() == Type(sameRtt).getID());
+
+    Rtt otherDepthRtt(1, HeapType::FuncKind);
+    assert(rtt != otherDepthRtt);
+    assert(Type(rtt).getID() != Type(otherDepthRtt).getID());
+
+    Rtt otherHeapTypeRtt(0, HeapType::AnyKind);
+    assert(rtt != otherHeapTypeRtt);
+    assert(Type(rtt).getID() != Type(otherHeapTypeRtt).getID());
+
+    Rtt structRtt(0, Struct({}));
+    assert(Type(structRtt).getID() == Type(structRtt).getID());
+
+    Rtt sameStructRtt(0, Struct({}));
+    assert(structRtt == sameStructRtt);
+    assert(Type(structRtt).getID() == Type(sameStructRtt).getID());
+
+    Rtt otherStructRtt(0, Struct({{Type::i32, false}}));
+    assert(structRtt != otherStructRtt);
+    assert(Type(structRtt).getID() != Type(otherStructRtt).getID());
+  }
 }
 
 void test_printing() {
@@ -175,6 +202,15 @@ void test_printing() {
     });
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";
+  }
+  {
+    std::cout << "\n;; Rtt\n";
+    Rtt rtt(0, HeapType::FuncKind);
+    std::cout << rtt << "\n";
+    std::cout << Type(rtt) << "\n";
+    Rtt rttCompound(1, Struct({}));
+    std::cout << rttCompound << "\n";
+    std::cout << Type(rttCompound) << "\n";
   }
   {
     std::cout << "\n;; Signature of references (param/result)\n";
