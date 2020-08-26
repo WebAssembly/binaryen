@@ -11,6 +11,7 @@
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3699,6 +3700,56 @@
    (i32.ge_s
     (local.get $x)
     (local.get $y)
+   )
+  )
+ )
+ (func $combine-rot (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $w)
+    (i64.const 63)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $w)
+    (i64.const 1)
    )
   )
  )

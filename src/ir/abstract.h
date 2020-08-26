@@ -40,6 +40,8 @@ enum Op {
   Shl,
   ShrU,
   ShrS,
+  RotL,
+  RotR,
   And,
   Or,
   Xor,
@@ -137,6 +139,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt32;
         case ShrS:
           return ShrSInt32;
+        case RotL:
+          return RotLInt32;
+        case RotR:
+          return RotRInt32;
         case And:
           return AndInt32;
         case Or:
@@ -190,6 +196,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt64;
         case ShrS:
           return ShrSInt64;
+        case RotL:
+          return RotLInt64;
+        case RotR:
+          return RotRInt64;
         case And:
           return AndInt64;
         case Or:
