@@ -1190,11 +1190,9 @@ private:
 
         Expression* leftRight = left->right;
         bool rightMaskRequired = false;
-        if (auto* leftRightBinary =
-              leftRight->dynCast<Binary>()) {
+        if (auto* leftRightBinary = leftRight->dynCast<Binary>()) {
           // (y &? M) ==>  y  ==>  leftRight
-          if (leftRightBinary->op ==
-              Abstract::getBinary(type, Abstract::And)) {
+          if (leftRightBinary->op == Abstract::getBinary(type, Abstract::And)) {
             if (auto* leftRightRightConst =
                   leftRightBinary->right->dynCast<Const>()) {
               if (leftRightRightConst->value == literalMask) {
