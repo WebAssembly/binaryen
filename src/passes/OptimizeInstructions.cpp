@@ -1136,17 +1136,17 @@ private:
                  right->op == Abstract::getBinary(type, Abstract::ShrU)) ||
                 (right->op == Abstract::getBinary(type, Abstract::Shl) &&
                  left->op == Abstract::getBinary(type, Abstract::ShrU))) {
-              Index leftShift = Bits::getEffectiveShifts(leftRightConst);
-              Index rightShift = Bits::getEffectiveShifts(rightRightConst);
-              if (leftShift == Index(bitSize) - rightShift) {
+              int32_t leftShift = Bits::getEffectiveShifts(leftRightConst);
+              int32_t rightShift = Bits::getEffectiveShifts(rightRightConst);
+              if (leftShift == bitSize - rightShift) {
                 if (!hasSideEffects(left->left)) {
                   if (leftShift > rightShift) {
                     leftRightConst->value =
-                      Literal::makeFromInt32(int32_t(rightShift), type);
+                      Literal::makeFromInt32(rightShift, type);
                     left->op = Abstract::getBinary(type, Abstract::RotR);
                   } else {
                     leftRightConst->value =
-                      Literal::makeFromInt32(int32_t(leftShift), type);
+                      Literal::makeFromInt32(leftShift, type);
                     left->op = Abstract::getBinary(type, Abstract::RotL);
                   }
                   return left;
