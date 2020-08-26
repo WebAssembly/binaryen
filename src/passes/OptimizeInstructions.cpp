@@ -1212,6 +1212,7 @@ private:
                   if (ExpressionAnalyzer::equal(leftRight, rightRight->right)) {
                     left->op = Abstract::getBinary(
                       type, maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                    left->right = leftRight;
                     return left;
                   }
                 }
@@ -1237,6 +1238,7 @@ private:
                           left->op = Abstract::getBinary(
                             type,
                             maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                          left->right = leftRight;
                           return left;
                         }
                       }

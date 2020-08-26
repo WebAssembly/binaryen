@@ -4260,6 +4260,45 @@
     (drop (i32.or
       (i32.shl
         (local.get $x)
+        (local.get $y)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.and
+          (i32.sub
+            (i32.const 32)
+            (local.get $y)
+          )
+          (i32.const 31)
+        )
+      )
+    ))
+
+    ;; i32.rotl
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.and
+          (local.get $y)
+          (i32.const 31)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.and
+          (i32.sub
+            (i32.const 32)
+            (local.get $y)
+          )
+          (i32.const 31)
+        )
+      )
+    ))
+
+    ;; i32.rotl
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
         (i32.const 31)
       )
       (i32.shr_u
