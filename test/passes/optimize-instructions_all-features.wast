@@ -4248,6 +4248,18 @@
 
     ;; i32.rotl
     (drop (i32.or
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 16)
+      )
+      (i32.shl
+        (local.get $x)
+        (i32.const 16)
+      )
+    ))
+
+    ;; i32.rotl
+    (drop (i32.or
       (i32.shl
         (local.get $x)
         (i32.const 1)
@@ -4300,6 +4312,18 @@
       (i64.shr_u
         (local.get $w)
         (i64.const 1)
+      )
+    ))
+
+    ;; i64.rotl
+    (drop (i64.or
+    (i64.shr_u
+        (local.get $w)
+        (i64.const 32)
+      )
+      (i64.shl
+        (local.get $w)
+        (i64.const 32)
       )
     ))
 
@@ -4364,6 +4388,18 @@
       )
     ))
 
+    ;; i32.rotl
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.const 16)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 16)
+      )
+    ))
+
     ;; i32.rotr
     (drop (i32.or
       (i32.shl
@@ -4419,6 +4455,18 @@
       (i64.shr_u
         (local.get $w)
         (i64.const 63)
+      )
+    ))
+
+    ;; i64.rotl
+    (drop (i64.or
+      (i64.shl
+        (local.get $w)
+        (i64.const 32)
+      )
+      (i64.shr_u
+        (local.get $w)
+        (i64.const 32)
       )
     ))
 

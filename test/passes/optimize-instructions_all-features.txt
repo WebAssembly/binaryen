@@ -3717,9 +3717,15 @@
    )
   )
   (drop
+   (i32.rotr
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
    (i32.rotl
     (local.get $x)
-    (i32.const 31)
+    (i32.const 16)
    )
   )
   (drop
@@ -3741,9 +3747,15 @@
    )
   )
   (drop
+   (i64.rotr
+    (local.get $w)
+    (i64.const 1)
+   )
+  )
+  (drop
    (i64.rotl
     (local.get $w)
-    (i64.const 63)
+    (i64.const 32)
    )
   )
   (drop
@@ -3794,7 +3806,13 @@
   (drop
    (i32.rotl
     (local.get $x)
-    (i32.const 31)
+    (i32.const 16)
+   )
+  )
+  (drop
+   (i32.rotr
+    (local.get $x)
+    (i32.const 1)
    )
   )
   (drop
@@ -3839,7 +3857,13 @@
   (drop
    (i64.rotl
     (local.get $w)
-    (i64.const 63)
+    (i64.const 32)
+   )
+  )
+  (drop
+   (i64.rotr
+    (local.get $w)
+    (i64.const 1)
    )
   )
  )
