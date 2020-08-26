@@ -1113,9 +1113,10 @@ private:
   // (x >>> C) | (x  << (N - C))  ==>  (i32|i64).rot(r|l)(x, C)
   //
   // where
-  //   M = (31 | 63),
-  //   N = (32 | 64),
-  //   &? - optional operation
+  //   M   -> (31 | 63),
+  //   N   -> (32 | 64),
+  //   &?  -> optional "bitwise AND",
+  //   >>> -> unsigned shift
   Expression* combineBitwiseRotation(Binary* binary) {
     assert(binary->op == OrInt32 || binary->op == OrInt64);
 
