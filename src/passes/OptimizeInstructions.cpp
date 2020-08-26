@@ -1109,12 +1109,10 @@ private:
   // (x <<  y) | (x >>> ((32|64) - y))     ==>  (i32|i64).rotl(x, y)
   // (x >>> y) | (x  << ((32|64) - y))     ==>  (i32|i64).rotr(x, y)
   // or
-  // (x <<  C) | (x >>> ((32|64) - C))     ==>  (i32|i64).rotl(x, C)
-  // (x >>> C) | (x  << ((32|64) - C))     ==>  (i32|i64).rotr(x, C)
+  // (x <<  C) | (x >>> ((32|64) - C))     ==>  (i32|i64).rot(l|r)(x, C)
+  // (x >>> C) | (x  << ((32|64) - C))     ==>  (i32|i64).rot(r|l)(x, C)
   Expression* combineRot(Binary* binary) {
     assert(binary->op == OrInt32 || binary->op == OrInt64);
-
-    // TODO: canonicalize (x << complex) | (x >> y) to (x >> y) | (x << complex)
 
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
@@ -1127,9 +1125,9 @@ private:
             .hasSideEffects();
         };
 
-        // (x << C) | (x >>> ((32|64) - C))  ==>  (i32|64).rotl(x, C)
+        // (x << C) | (x >>> ((32|64) - C))  ==>  (i32|64).rot(l|r)(x, C)
         // or
-        // (x >>> C) | (x << ((32|64) - C))  ==>  (i32|64).rotr(x, C)
+        // (x >>> C) | (x << ((32|64) - C))  ==>  (i32|64).rot(r|l)(x, C)
         if (auto* leftRightConst = left->right->dynCast<Const>()) {
           if (auto* rightRightConst = right->right->dynCast<Const>()) {
             if ((left->op == Abstract::getBinary(type, Abstract::Shl) &&
@@ -1155,6 +1153,8 @@ private:
             }
           }
         }
+
+        // TODO: canonicalize (x << complex) | (x >> y) to (x >> y) | (x << complex)
 
         // try match rotl
         if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
