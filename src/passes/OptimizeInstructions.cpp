@@ -1122,9 +1122,13 @@ private:
         auto features = getModule()->features;
         int bitSize = type.getByteSize() * 8;
 
-        auto hasSideEffects = [&](Expression* left, Expression* right = nullptr) {
-          return EffectAnalyzer(getPassOptions(), features, left).hasSideEffects() ||
-                 (right != nullptr && EffectAnalyzer(getPassOptions(), features, right).hasSideEffects());
+        auto hasSideEffects = [&](Expression* left,
+                                  Expression* right = nullptr) {
+          return EffectAnalyzer(getPassOptions(), features, left)
+                   .hasSideEffects() ||
+                 (right != nullptr &&
+                  EffectAnalyzer(getPassOptions(), features, right)
+                    .hasSideEffects());
         };
 
         // try match rotl
@@ -1141,8 +1145,10 @@ private:
                   if (leftShift == Index(bitSize) - rightShift) {
                     if (!hasSideEffects(left->left)) {
                       left->op = Abstract::getBinary(type, Abstract::RotL);
-                      // it's not strictly necessar but possibly reduce shift value
-                      leftRightConst->value = Literal::makeFromInt32(int32_t(leftShift), type);
+                      // it's not strictly necessar but possibly
+                      // reduce shift value
+                      leftRightConst->value =
+                        Literal::makeFromInt32(int32_t(leftShift), type);
                       return left;
                     }
                   }
@@ -1151,10 +1157,12 @@ private:
 
               if (auto* rightRight = right->right->dynCast<Binary>()) {
                 // (x << y) | (x >>> ((32|64) - y))  ==>  (i32|64).rotl(x, y)
-                if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
+                if (rightRight->op ==
+                    Abstract::getBinary(type, Abstract::Sub)) {
                   if (auto* c = rightRight->left->dynCast<Const>()) {
                     if (c->value == Literal::makeFromInt32(bitSize, type)) {
-                      if (ExpressionAnalyzer::equal(left->right, rightRight->right) &&
+                      if (ExpressionAnalyzer::equal(left->right,
+                                                    rightRight->right) &&
                           !hasSideEffects(left->left, left->right)) {
                         left->op = Abstract::getBinary(type, Abstract::RotL);
                         return left;
@@ -1163,18 +1171,25 @@ private:
                   }
                 }
 
-                // (x << y) | (x >>> ((0 - y) & (31|63)))  ==>  (i32|i64).rotl(x, y)
-                if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
+                // (x << y) | (x >>> ((-y) & (31|63))) ==> (i32|i64).rotl(x, y)
+                if (rightRight->op ==
+                    Abstract::getBinary(type, Abstract::And)) {
                   if (auto* maskConst = rightRight->right->dynCast<Const>()) {
-                    if (maskConst->value == Literal::makeFromInt32(bitSize - 1, type)) {
+                    if (maskConst->value ==
+                        Literal::makeFromInt32(bitSize - 1, type)) {
                       // check 0 - y
-                      if (auto* rightRightLeft = rightRight->left->dynCast<Binary>()) {
-                        if (rightRightLeft->op == Abstract::getBinary(type, Abstract::Sub)) {
-                          if (auto* c = rightRightLeft->left->dynCast<Const>()) {
+                      if (auto* rightRightLeft =
+                            rightRight->left->dynCast<Binary>()) {
+                        if (rightRightLeft->op ==
+                            Abstract::getBinary(type, Abstract::Sub)) {
+                          if (auto* c =
+                                rightRightLeft->left->dynCast<Const>()) {
                             if (c->value.getInteger() == 0LL) {
-                              if (ExpressionAnalyzer::equal(left->right, rightRightLeft->right) &&
+                              if (ExpressionAnalyzer::equal(
+                                    left->right, rightRightLeft->right) &&
                                   !hasSideEffects(left->left, left->right)) {
-                                left->op = Abstract::getBinary(type, Abstract::RotL);
+                                left->op =
+                                  Abstract::getBinary(type, Abstract::RotL);
                                 return left;
                               }
                             }
