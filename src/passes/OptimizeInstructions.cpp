@@ -1205,7 +1205,7 @@ private:
 
         if (auto* rightRight = right->right->dynCast<Binary>()) {
           if (!rightMaskRequired) {
-            // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
+            // (x << (y &? M)) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value == Literal::makeFromInt32(bitSize, type)) {
@@ -1220,7 +1220,8 @@ private:
             }
           }
 
-          // (x << (y &? M)) | (x >>> ((-y) & M)) ==> (i32|i64).rotl(x, y)
+          // (x << (y &? M)) | (x >>> ((0 - y) & M)) ==> (i32|i64).rotl(x, y)
+          // (x << (y & M))  | (x >>> ((N - y) & M)) ==> (i32|i64).rotl(x, y)
           if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
             if (auto* maskConst = rightRight->right->dynCast<Const>()) {
               if (maskConst->value == literalMask) {
