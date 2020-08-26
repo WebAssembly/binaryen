@@ -3713,6 +3713,15 @@
   (drop
    (i32.rotl
     (local.get $x)
+    (i32.and
+     (local.get $y)
+     (i32.const 31)
+    )
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
     (local.get $y)
    )
   )
@@ -3768,6 +3777,15 @@
    (i32.rotl
     (local.get $x)
     (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (i32.and
+     (local.get $y)
+     (i32.const 31)
+    )
    )
   )
   (drop
