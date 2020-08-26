@@ -3765,36 +3765,15 @@
    )
   )
   (drop
-   (i32.or
-    (i32.shl
-     (local.get $x)
-     (i32.and
-      (i32.sub
-       (i32.const 0)
-       (local.get $y)
-      )
-      (i32.const 31)
-     )
-    )
-    (i32.shr_u
-     (local.get $x)
-     (local.get $y)
-    )
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop
-   (i32.or
-    (i32.shl
-     (local.get $x)
-     (i32.sub
-      (i32.const 32)
-      (local.get $y)
-     )
-    )
-    (i32.shr_u
-     (local.get $x)
-     (local.get $y)
-    )
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop
@@ -3816,36 +3795,15 @@
    )
   )
   (drop
-   (i64.or
-    (i64.shl
-     (local.get $z)
-     (i64.and
-      (i64.sub
-       (i64.const 0)
-       (local.get $w)
-      )
-      (i64.const 63)
-     )
-    )
-    (i64.shr_u
-     (local.get $z)
-     (local.get $w)
-    )
+   (i64.rotl
+    (local.get $z)
+    (local.get $w)
    )
   )
   (drop
-   (i64.or
-    (i64.shl
-     (local.get $z)
-     (i64.sub
-      (i64.const 64)
-      (local.get $w)
-     )
-    )
-    (i64.shr_u
-     (local.get $z)
-     (local.get $w)
-    )
+   (i64.rotl
+    (local.get $z)
+    (local.get $w)
    )
   )
   (drop
