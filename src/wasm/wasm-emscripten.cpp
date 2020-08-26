@@ -143,7 +143,7 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
   wasm.addExport(exp);
 }
 
-static bool needsDynCall(Signature sig) {
+static bool hasI64(Signature sig) {
   // We only generate dynCall functions for signatures that contain
   // i64.  This is because any other function can be called directly
   // from JavaScript using the wasm table.
@@ -161,7 +161,7 @@ static bool needsDynCall(Signature sig) {
 }
 
 void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
-  if (noDynCalls || (onlyI64DynCalls && !needsDynCall(sig))) {
+  if (noDynCalls || (onlyI64DynCalls && !hasI64(sig))) {
     return;
   }
   if (!sigs.insert(sig).second) {

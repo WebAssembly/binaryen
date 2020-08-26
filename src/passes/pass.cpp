@@ -147,9 +147,9 @@ void PassRegistry::registerPasses() {
                "generate dynCall fuctions used by emscripten ABI",
                createGenerateDynCallsPass);
   registerPass("generate-i64-dyncalls",
-               "generate dynCall fuctions used by emscripten ABI, but only for "
-               "functions with i64 in thier signature (which cannot be invoked "
-               "via the wasm table without JavaScritp BigInt support).",
+               "generate dynCall functions used by emscripten ABI, but only for "
+               "functions with i64 in their signature (which cannot be invoked "
+               "via the wasm table without JavaScript BigInt support).",
                createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);

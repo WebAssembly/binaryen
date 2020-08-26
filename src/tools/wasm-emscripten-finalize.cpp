@@ -297,7 +297,7 @@ int main(int argc, const char* argv[]) {
   if (!noDynCalls && !standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
     if (onlyI64DynCalls) {
-      passRunner.add("generate-dyncalls-i64");
+      passRunner.add("generate-i64-dyncalls");
     } else {
       passRunner.add("generate-dyncalls");
     }
