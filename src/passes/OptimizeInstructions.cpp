@@ -1191,7 +1191,7 @@ private:
         Expression* leftRight = left->right;
         bool rightMaskRequired = false;
         if (auto* leftRightBinary = leftRight->dynCast<Binary>()) {
-          // (y &? M) ==>  y  ==>  leftRight
+          // extract "y" from (y &? M) to "leftRight"
           if (leftRightBinary->op == Abstract::getBinary(type, Abstract::And)) {
             if (auto* leftRightRightConst =
                   leftRightBinary->right->dynCast<Const>()) {
@@ -1205,7 +1205,7 @@ private:
 
         if (auto* rightRight = right->right->dynCast<Binary>()) {
           if (!rightMaskRequired) {
-            // (x << y) | (x >>> ((32|64) - y))  ==>  (i32|64).rotl(x, y)
+            // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value == Literal::makeFromInt32(bitSize, type)) {
@@ -1224,8 +1224,7 @@ private:
           if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
             if (auto* maskConst = rightRight->right->dynCast<Const>()) {
               if (maskConst->value == literalMask) {
-                // check
-                // (0 - y) & M or ((32|64) - y) & M
+                // check (0 - y) & M or (N - y) & M
                 if (auto* rightRightLeft =
                       rightRight->left->dynCast<Binary>()) {
                   if (rightRightLeft->op ==
