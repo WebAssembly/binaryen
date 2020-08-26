@@ -326,78 +326,9 @@ struct HeapType {
   HeapType(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
   HeapType(const Array& array) : kind(ArrayKind), array(array) {}
   HeapType(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
-  HeapType(const HeapType& other) {
-    kind = other.kind;
-    switch (kind) {
-      case FuncKind:
-      case ExternKind:
-      case AnyKind:
-      case EqKind:
-      case I31Kind:
-      case ExnKind:
-        return;
-      case SignatureKind:
-        new (&signature) auto(other.signature);
-        return;
-      case StructKind:
-        new (&struct_) auto(other.struct_);
-        return;
-      case ArrayKind:
-        new (&array) auto(other.array);
-        return;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  }
-  ~HeapType() {
-    switch (kind) {
-      case FuncKind:
-      case ExternKind:
-      case AnyKind:
-      case EqKind:
-      case I31Kind:
-      case ExnKind:
-        return;
-      case SignatureKind:
-        signature.~Signature();
-        return;
-      case StructKind:
-        struct_.~Struct();
-        return;
-      case ArrayKind:
-        array.~Array();
-        return;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  }
-  bool operator==(const HeapType& other) const {
-    if (kind != other.kind) {
-      return false;
-    }
-    switch (kind) {
-      case FuncKind:
-      case ExternKind:
-      case AnyKind:
-      case EqKind:
-      case I31Kind:
-      case ExnKind:
-        return true;
-      case SignatureKind:
-        return signature == other.signature;
-      case StructKind:
-        return struct_ == other.struct_;
-      case ArrayKind:
-        return array == other.array;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  }
-  bool operator!=(const HeapType& other) const { return !(*this == other); }
-  HeapType& operator=(const HeapType& other) {
-    if (&other != this) {
-      this->~HeapType();
-      new (this) auto(other);
-    }
-    return *this;
-  }
+  HeapType(const HeapType& other);
+  ~HeapType();
+
   bool isSignature() const { return kind == SignatureKind; }
   Signature getSignature() const {
     assert(isSignature() && "Not a signature");
@@ -413,6 +344,10 @@ struct HeapType {
     assert(isArray() && "Not an array");
     return array;
   }
+
+  bool operator==(const HeapType& other) const;
+  bool operator!=(const HeapType& other) const { return !(*this == other); }
+  HeapType& operator=(const HeapType& other);
   std::string toString() const;
 };
 

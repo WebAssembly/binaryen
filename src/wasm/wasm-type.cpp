@@ -554,6 +554,80 @@ const Type& Type::operator[](size_t index) const {
   }
 }
 
+HeapType::HeapType(const HeapType& other) {
+  kind = other.kind;
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return;
+    case SignatureKind:
+      new (&signature) auto(other.signature);
+      return;
+    case StructKind:
+      new (&struct_) auto(other.struct_);
+      return;
+    case ArrayKind:
+      new (&array) auto(other.array);
+      return;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+HeapType::~HeapType() {
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return;
+    case SignatureKind:
+      signature.~Signature();
+      return;
+    case StructKind:
+      struct_.~Struct();
+      return;
+    case ArrayKind:
+      array.~Array();
+      return;
+  }
+}
+
+bool HeapType::operator==(const HeapType& other) const {
+  if (kind != other.kind) {
+    return false;
+  }
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return true;
+    case SignatureKind:
+      return signature == other.signature;
+    case StructKind:
+      return struct_ == other.struct_;
+    case ArrayKind:
+      return array == other.array;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+HeapType& HeapType::operator=(const HeapType& other) {
+  if (&other != this) {
+    this->~HeapType();
+    new (this) auto(other);
+  }
+  return *this;
+}
+
 namespace {
 
 std::ostream&
