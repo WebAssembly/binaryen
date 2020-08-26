@@ -1186,10 +1186,10 @@ private:
           }
         }
 
-        auto literalMask = Literal::makeFromInt32(bitSize - 1, type);
+        Literal literalMask = Literal::makeFromInt32(bitSize - 1, type);
 
-        Expression* leftRight = left->right;
         bool rightMaskRequired = false;
+        Expression* leftRight = left->right;
         if (auto* leftRightBinary = leftRight->dynCast<Binary>()) {
           // extract "y" from (y &? M) to "leftRight"
           if (leftRightBinary->op == Abstract::getBinary(type, Abstract::And)) {
