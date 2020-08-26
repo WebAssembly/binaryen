@@ -205,12 +205,27 @@ void test_printing() {
   }
   {
     std::cout << "\n;; Rtt\n";
-    Rtt rtt(0, HeapType::FuncKind);
-    std::cout << rtt << "\n";
-    std::cout << Type(rtt) << "\n";
-    Rtt rttCompound(1, Struct({}));
-    std::cout << rttCompound << "\n";
-    std::cout << Type(rttCompound) << "\n";
+    std::cout << Rtt(0, HeapType::FuncKind) << "\n";
+    std::cout << Type(Rtt(0, HeapType::FuncKind)) << "\n";
+    std::cout << Rtt(1, HeapType::ExternKind) << "\n";
+    std::cout << Type(Rtt(1, HeapType::ExternKind)) << "\n";
+    std::cout << Rtt(2, HeapType::AnyKind) << "\n";
+    std::cout << Type(Rtt(2, HeapType::AnyKind)) << "\n";
+    std::cout << Rtt(3, HeapType::EqKind) << "\n";
+    std::cout << Type(Rtt(3, HeapType::EqKind)) << "\n";
+    std::cout << Rtt(4, HeapType::I31Kind) << "\n";
+    std::cout << Type(Rtt(4, HeapType::I31Kind)) << "\n";
+    std::cout << Rtt(5, HeapType::ExnKind) << "\n";
+    std::cout << Type(Rtt(5, HeapType::ExnKind)) << "\n";
+    Rtt signatureRtt(6, Signature(Type::none, Type::none));
+    std::cout << signatureRtt << "\n";
+    std::cout << Type(signatureRtt) << "\n";
+    Rtt structRtt(7, Struct({}));
+    std::cout << structRtt << "\n";
+    std::cout << Type(structRtt) << "\n";
+    Rtt arrayRtt(8, Array({Type::i32, false}));
+    std::cout << arrayRtt << "\n";
+    std::cout << Type(arrayRtt) << "\n";
   }
   {
     std::cout << "\n;; Signature of references (param/result)\n";
