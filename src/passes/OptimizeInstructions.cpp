@@ -508,7 +508,7 @@ struct OptimizeInstructions
             return ret;
           }
         }
-        if (auto* ret = combineRot(binary)) {
+        if (auto* ret = combineBitwiseRotation(binary)) {
           return ret;
         }
       }
@@ -1111,7 +1111,7 @@ private:
   // or
   // (x <<  C) | (x >>> ((32|64) - C))     ==>  (i32|i64).rot(l|r)(x, C)
   // (x >>> C) | (x  << ((32|64) - C))     ==>  (i32|i64).rot(r|l)(x, C)
-  Expression* combineRot(Binary* binary) {
+  Expression* combineBitwiseRotation(Binary* binary) {
     assert(binary->op == OrInt32 || binary->op == OrInt64);
 
     if (auto* left = binary->left->dynCast<Binary>()) {
