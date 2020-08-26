@@ -4198,6 +4198,10 @@
     ;; TODO: more stuff here
   )
   (func $combine-rot (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;;
+    ;;  rotate left
+    ;;
+
     ;; i32.rotl
     (drop (i32.or
       (i32.shl
@@ -4308,6 +4312,125 @@
       (i64.shr_u
         (local.get $w)
         (i64.const 63)
+      )
+    ))
+
+    ;;
+    ;;  rotate right
+    ;;
+
+    ;; i32.rotr
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.and
+          (i32.sub
+            (i32.const 0)
+            (local.get $y)
+          )
+          (i32.const 31)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+
+    ;; i32.rotr
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.sub
+          (i32.const 32)
+          (local.get $y)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+
+    ;; i32.rotr
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 31)
+      )
+    ))
+
+    ;; i32.rotr
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.const 31)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
+
+
+    ;; i64.rotr
+    (drop (i64.or
+      (i64.shl
+        (local.get $z)
+        (i64.and
+          (i64.sub
+            (i64.const 0)
+            (local.get $w)
+          )
+          (i64.const 63)
+        )
+      )
+      (i64.shr_u
+        (local.get $z)
+        (local.get $w)
+      )
+    ))
+
+    ;; i64.rotr
+    (drop (i64.or
+      (i64.shl
+        (local.get $z)
+        (i64.sub
+          (i64.const 64)
+          (local.get $w)
+        )
+      )
+      (i64.shr_u
+        (local.get $z)
+        (local.get $w)
+      )
+    ))
+
+    ;; i64.rotr
+    (drop (i64.or
+      (i64.shl
+        (local.get $w)
+        (i64.const 1)
+      )
+      (i64.shr_u
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+
+    ;; i64.rotr
+    (drop (i64.or
+      (i64.shl
+        (local.get $w)
+        (i64.const 63)
+      )
+      (i64.shr_u
+        (local.get $w)
+        (i64.const 1)
       )
     ))
   )

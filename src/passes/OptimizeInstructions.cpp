@@ -1208,7 +1208,70 @@ private:
         if (left->op == Abstract::getBinary(type, Abstract::ShrU)) {
           if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
             if (ExpressionAnalyzer::equal(left->left, right->left)) {
+              // (x >>> C) | (x < ((32|64) - C))  ==>  (i32|64).rotr(x, C)
+              if (auto* rightRightConst = right->right->dynCast<Const>()) {
+                if (auto* leftRightConst = left->right->dynCast<Const>()) {
+                  Index leftShift = Bits::getEffectiveShifts(leftRightConst);
+                  Index rightShift = Bits::getEffectiveShifts(rightRightConst);
 
+                  if (leftShift == Index(bitSize) - rightShift) {
+                    if (!hasSideEffects(left->left)) {
+                      left->op = Abstract::getBinary(type, Abstract::RotR);
+                      // it's not strictly necessar but possibly
+                      // reduce shift value
+                      leftRightConst->value =
+                        Literal::makeFromInt32(int32_t(leftShift), type);
+                      return left;
+                    }
+                  }
+                }
+              }
+
+              if (auto* rightRight = right->right->dynCast<Binary>()) {
+                // (x >>> y) | (x << ((32|64) - y))  ==>  (i32|64).rotr(x, y)
+                if (rightRight->op ==
+                    Abstract::getBinary(type, Abstract::Sub)) {
+                  if (auto* c = rightRight->left->dynCast<Const>()) {
+                    if (c->value == Literal::makeFromInt32(bitSize, type)) {
+                      if (ExpressionAnalyzer::equal(left->right,
+                                                    rightRight->right) &&
+                          !hasSideEffects(left->left, left->right)) {
+                        left->op = Abstract::getBinary(type, Abstract::RotR);
+                        return left;
+                      }
+                    }
+                  }
+                }
+
+                // (x >>> y) | (x << ((-y) & (31|63))) ==> (i32|i64).rotr(x, y)
+                if (rightRight->op ==
+                    Abstract::getBinary(type, Abstract::And)) {
+                  if (auto* maskConst = rightRight->right->dynCast<Const>()) {
+                    if (maskConst->value ==
+                        Literal::makeFromInt32(bitSize - 1, type)) {
+                      // check 0 - y
+                      if (auto* rightRightLeft =
+                            rightRight->left->dynCast<Binary>()) {
+                        if (rightRightLeft->op ==
+                            Abstract::getBinary(type, Abstract::Sub)) {
+                          if (auto* c =
+                                rightRightLeft->left->dynCast<Const>()) {
+                            if (c->value.getInteger() == 0LL) {
+                              if (ExpressionAnalyzer::equal(
+                                    left->right, rightRightLeft->right) &&
+                                  !hasSideEffects(left->left, left->right)) {
+                                left->op =
+                                  Abstract::getBinary(type, Abstract::RotR);
+                                return left;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
