@@ -1403,9 +1403,11 @@ private:
 
     if (options.ignoreImplicitTraps) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+        // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
-        return builder.makeBlock(
-          {builder.makeDrop(memCopy->dest), builder.makeDrop(memCopy->source)});
+        return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                  builder.makeDrop(memCopy->source),
+                                  builder.makeDrop(memCopy->size)});
       }
     }
 
@@ -1417,6 +1419,7 @@ private:
       switch (bytes) {
         case 0: {
           if (options.ignoreImplicitTraps) {
+            // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
           }

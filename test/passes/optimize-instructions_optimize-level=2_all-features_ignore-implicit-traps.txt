@@ -368,6 +368,9 @@
    (drop
     (local.get $dst)
    )
+   (drop
+    (local.get $sz)
+   )
   )
   (block
    (drop
