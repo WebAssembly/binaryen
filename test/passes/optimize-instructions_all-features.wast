@@ -4564,6 +4564,24 @@
         (i64.const 1)
       )
     ))
+
+    ;; skip
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.and
+          (local.get $y)
+          (i32.const 31)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.sub
+          (i32.const 32)
+          (local.get $y)
+        )
+      )
+    ))
   )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if
