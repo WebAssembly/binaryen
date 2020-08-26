@@ -87,7 +87,7 @@ public:
   // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
   // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
   // │ v128        ║ x │   │ x │ x │     V │ ┘
-  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
   // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc, n_ullable
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
@@ -95,10 +95,8 @@ public:
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
   // │ nullref     ║ x │   │ x │ x │ f? n  │ │ ◄ TODO (removed)
   // │ exnref      ║ x │   │ x │ x │    n  │ │
-  // ├─────────────╫───┼───┼───┼───┤───────┤ │
-  // │ Signature   ║   │ x │ x │ x │ f  n? │ │
-  // │ Struct      ║   │ x │ x │ x │    n? │ │
-  // │ Array       ║   │ x │ x │ x │    n? │ ┘
+  // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
+  // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
   // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
