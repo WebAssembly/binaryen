@@ -1118,11 +1118,6 @@ private:
       if (auto* right = binary->right->dynCast<Binary>()) {
 
         auto features = getModule()->features;
-        if (EffectAnalyzer(getPassOptions(), features, binary)
-            .hasSideEffects()) {
-          return nullptr;
-        }
-
         auto type = binary->type;
         int bitSize = type.getByteSize() * 8;
 
@@ -1138,6 +1133,15 @@ private:
           return nullptr;
         }
 
+        if (EffectAnalyzer(getPassOptions(), features, binary)
+              .hasSideEffects()) {
+          return nullptr;
+        }
+
+        if (!ExpressionAnalyzer::equal(left->left, right->left)) {
+          return nullptr;
+        }
+
         // (x  << C1) | (x >>> C2)  ==>  (i32|64).rot(l|r)(x, C)
         // (x >>> C1) | (x  << C2)  ==>  (i32|64).rot(r|l)(x, C)
         if (auto* leftRightConst = left->right->dynCast<Const>()) {
@@ -1150,8 +1154,7 @@ private:
                   Literal::makeFromInt32(rightShift, type);
                 left->op = Abstract::getBinary(type, Abstract::RotR);
               } else {
-                leftRightConst->value =
-                  Literal::makeFromInt32(leftShift, type);
+                leftRightConst->value = Literal::makeFromInt32(leftShift, type);
                 left->op = Abstract::getBinary(type, Abstract::RotL);
               }
               return left;
@@ -1166,8 +1169,10 @@ private:
             // (x sh (y - z)) | rhs  ==>  rhs | (x sh (y - z))
             // swap
             std::swap(left, right);
-          } else if (leftRight->op == Abstract::getBinary(type, Abstract::And)) {
-            if (leftRight->right->dynCast<Const>() && leftRight->left->dynCast<Binary>()) {
+          } else if (leftRight->op ==
+                     Abstract::getBinary(type, Abstract::And)) {
+            if (leftRight->right->dynCast<Const>() &&
+                leftRight->left->dynCast<Binary>()) {
               // (x sh ((y op z) & C)) | rhs  ==>  rhs | (x sh ((y op z) & C))
               // swap
               std::swap(left, right);
@@ -1177,40 +1182,37 @@ private:
 
         // try match rotl
         if (maybeLeftRotated) {
-          if (ExpressionAnalyzer::equal(left->left, right->left)) {
-
-            if (auto* rightRight = right->right->dynCast<Binary>()) {
-              // (x << y) | (x >>> ((32|64) - y))  ==>  (i32|64).rotl(x, y)
-              if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
-                if (auto* c = rightRight->left->dynCast<Const>()) {
-                  if (c->value == Literal::makeFromInt32(bitSize, type)) {
-                    if (ExpressionAnalyzer::equal(left->right,
-                                                  rightRight->right)) {
-                      left->op = Abstract::getBinary(type, Abstract::RotL);
-                      return left;
-                    }
+          if (auto* rightRight = right->right->dynCast<Binary>()) {
+            // (x << y) | (x >>> ((32|64) - y))  ==>  (i32|64).rotl(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
+              if (auto* c = rightRight->left->dynCast<Const>()) {
+                if (c->value == Literal::makeFromInt32(bitSize, type)) {
+                  if (ExpressionAnalyzer::equal(left->right,
+                                                rightRight->right)) {
+                    left->op = Abstract::getBinary(type, Abstract::RotL);
+                    return left;
                   }
                 }
               }
+            }
 
-              // (x << y) | (x >>> ((-y) & (31|63))) ==> (i32|i64).rotl(x, y)
-              if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
-                if (auto* maskConst = rightRight->right->dynCast<Const>()) {
-                  if (maskConst->value ==
-                      Literal::makeFromInt32(bitSize - 1, type)) {
-                    // check 0 - y
-                    if (auto* rightRightLeft =
-                          rightRight->left->dynCast<Binary>()) {
-                      if (rightRightLeft->op ==
-                          Abstract::getBinary(type, Abstract::Sub)) {
-                        if (auto* c = rightRightLeft->left->dynCast<Const>()) {
-                          if (c->value.getInteger() == 0LL) {
-                            if (ExpressionAnalyzer::equal(
-                                  left->right, rightRightLeft->right)) {
-                              left->op =
-                                Abstract::getBinary(type, Abstract::RotL);
-                              return left;
-                            }
+            // (x << y) | (x >>> ((-y) & (31|63))) ==> (i32|i64).rotl(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
+              if (auto* maskConst = rightRight->right->dynCast<Const>()) {
+                if (maskConst->value ==
+                    Literal::makeFromInt32(bitSize - 1, type)) {
+                  // check 0 - y
+                  if (auto* rightRightLeft =
+                        rightRight->left->dynCast<Binary>()) {
+                    if (rightRightLeft->op ==
+                        Abstract::getBinary(type, Abstract::Sub)) {
+                      if (auto* c = rightRightLeft->left->dynCast<Const>()) {
+                        if (c->value.getInteger() == 0LL) {
+                          if (ExpressionAnalyzer::equal(
+                                left->right, rightRightLeft->right)) {
+                            left->op =
+                              Abstract::getBinary(type, Abstract::RotL);
+                            return left;
                           }
                         }
                       }
@@ -1224,40 +1226,37 @@ private:
 
         // try match rotr
         if (maybeRigthRotated) {
-          if (ExpressionAnalyzer::equal(left->left, right->left)) {
-
-            if (auto* rightRight = right->right->dynCast<Binary>()) {
-              // (x >>> y) | (x << ((32|64) - y))  ==>  (i32|64).rotr(x, y)
-              if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
-                if (auto* c = rightRight->left->dynCast<Const>()) {
-                  if (c->value == Literal::makeFromInt32(bitSize, type)) {
-                    if (ExpressionAnalyzer::equal(left->right,
-                                                  rightRight->right)) {
-                      left->op = Abstract::getBinary(type, Abstract::RotR);
-                      return left;
-                    }
+          if (auto* rightRight = right->right->dynCast<Binary>()) {
+            // (x >>> y) | (x << ((32|64) - y))  ==>  (i32|64).rotr(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
+              if (auto* c = rightRight->left->dynCast<Const>()) {
+                if (c->value == Literal::makeFromInt32(bitSize, type)) {
+                  if (ExpressionAnalyzer::equal(left->right,
+                                                rightRight->right)) {
+                    left->op = Abstract::getBinary(type, Abstract::RotR);
+                    return left;
                   }
                 }
               }
+            }
 
-              // (x >>> y) | (x << ((-y) & (31|63))) ==> (i32|i64).rotr(x, y)
-              if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
-                if (auto* maskConst = rightRight->right->dynCast<Const>()) {
-                  if (maskConst->value ==
-                      Literal::makeFromInt32(bitSize - 1, type)) {
-                    // check 0 - y
-                    if (auto* rightRightLeft =
-                          rightRight->left->dynCast<Binary>()) {
-                      if (rightRightLeft->op ==
-                          Abstract::getBinary(type, Abstract::Sub)) {
-                        if (auto* c = rightRightLeft->left->dynCast<Const>()) {
-                          if (c->value.getInteger() == 0LL) {
-                            if (ExpressionAnalyzer::equal(
-                                  left->right, rightRightLeft->right)) {
-                              left->op =
-                                Abstract::getBinary(type, Abstract::RotR);
-                              return left;
-                            }
+            // (x >>> y) | (x << ((-y) & (31|63))) ==> (i32|i64).rotr(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
+              if (auto* maskConst = rightRight->right->dynCast<Const>()) {
+                if (maskConst->value ==
+                    Literal::makeFromInt32(bitSize - 1, type)) {
+                  // check 0 - y
+                  if (auto* rightRightLeft =
+                        rightRight->left->dynCast<Binary>()) {
+                    if (rightRightLeft->op ==
+                        Abstract::getBinary(type, Abstract::Sub)) {
+                      if (auto* c = rightRightLeft->left->dynCast<Const>()) {
+                        if (c->value.getInteger() == 0LL) {
+                          if (ExpressionAnalyzer::equal(
+                                left->right, rightRightLeft->right)) {
+                            left->op =
+                              Abstract::getBinary(type, Abstract::RotR);
+                            return left;
                           }
                         }
                       }
