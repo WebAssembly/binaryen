@@ -3703,7 +3703,31 @@
    )
   )
  )
- (func $combine-rot (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+ (func $combine-bitwise-rotations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
   (drop
    (i32.rotl
     (local.get $x)
@@ -3741,9 +3765,27 @@
    )
   )
   (drop
+   (i32.rotr
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
    (i32.rotl
     (local.get $x)
     (i32.const 16)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (i32.const 16)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (i32.const 1)
    )
   )
   (drop
@@ -3803,19 +3845,25 @@
   (drop
    (i32.rotl
     (local.get $x)
-    (i32.const 1)
+    (local.get $y)
    )
   )
   (drop
    (i32.rotl
     (local.get $x)
-    (i32.const 16)
+    (local.get $y)
    )
   )
   (drop
-   (i32.rotr
+   (i32.rotl
     (local.get $x)
-    (i32.const 1)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop
