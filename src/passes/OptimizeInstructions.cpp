@@ -1205,7 +1205,8 @@ private:
 
         if (auto* rightRight = right->right->dynCast<Binary>()) {
           if (!rightMaskRequired) {
-            // (x << (y &? M)) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
+            // only handle case without any masks
+            // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value == Literal::makeFromInt32(bitSize, type)) {
