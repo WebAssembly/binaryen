@@ -56,6 +56,10 @@ int main(int argc, const char* argv[]) {
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
+  // TODO: remove after https://github.com/WebAssembly/binaryen/issues/3043
+  bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
 
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -80,7 +84,8 @@ int main(int argc, const char* argv[]) {
          [&DWARF](Options*, const std::string&) { DWARF = true; })
     .add("--emit-text",
          "-S",
-         "Emit text instead of binary for the output file",
+         "Emit text instead of binary for the output file. "
+         "In this mode if no output file is specified, we write to stdout.",
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
     .add("--global-base",
@@ -162,6 +167,27 @@ int main(int argc, const char* argv[]) {
          [&standaloneWasm](Options* o, const std::string&) {
            standaloneWasm = true;
          })
+    .add("--minimize-wasm-changes",
+         "",
+         "Modify the wasm as little as possible. This is useful during "
+         "development as we reduce the number of changes to the wasm, as it "
+         "lets emscripten control how much modifications to do.",
+         Options::Arguments::Zero,
+         [&minimizeWasmChanges](Options* o, const std::string&) {
+           minimizeWasmChanges = true;
+         })
+    .add("--no-dyncalls",
+         "",
+         "",
+         Options::Arguments::Zero,
+         [&noDynCalls](Options* o, const std::string&) { noDynCalls = true; })
+    .add("--dyncalls-i64",
+         "",
+         "",
+         Options::Arguments::Zero,
+         [&onlyI64DynCalls](Options* o, const std::string&) {
+           onlyI64DynCalls = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
@@ -171,9 +197,6 @@ int main(int argc, const char* argv[]) {
 
   if (infile == "") {
     Fatal() << "Need to specify an infile\n";
-  }
-  if (outfile == "" && emitBinary) {
-    Fatal() << "Need to specify an outfile, or use text output\n";
   }
 
   Module wasm;
@@ -222,8 +245,11 @@ int main(int argc, const char* argv[]) {
   }
 
   EmscriptenGlueGenerator generator(wasm);
-  generator.setStandalone(standaloneWasm);
-  generator.setSideModule(sideModule);
+  generator.standalone = standaloneWasm;
+  generator.sideModule = sideModule;
+  generator.minimizeWasmChanges = minimizeWasmChanges;
+  generator.onlyI64DynCalls = onlyI64DynCalls;
+  generator.noDynCalls = noDynCalls;
 
   generator.fixInvokeFunctionNames();
 
@@ -268,9 +294,13 @@ int main(int argc, const char* argv[]) {
     passRunner.add("emscripten-pic-main-module");
   }
 
-  if (!standaloneWasm) {
+  if (!noDynCalls && !standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
-    passRunner.add("generate-dyncalls");
+    if (onlyI64DynCalls) {
+      passRunner.add("generate-i64-dyncalls");
+    } else {
+      passRunner.add("generate-dyncalls");
+    }
   }
 
   // Legalize the wasm, if BigInts don't make that moot.
@@ -335,23 +365,29 @@ int main(int argc, const char* argv[]) {
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
                       WasmPrinter::printModule(&wasm, std::cerr));
 
-  Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-  ModuleWriter writer;
-  writer.setDebugInfo(debugInfo);
-  // writer.setSymbolMap(symbolMap);
-  writer.setBinary(emitBinary);
-  if (outputSourceMapFilename.size()) {
-    writer.setSourceMapFilename(outputSourceMapFilename);
-    writer.setSourceMapUrl(outputSourceMapUrl);
+  // Write the modified wasm if the user asked us to, either by specifying an
+  // output file, or requesting text output (which goes to stdout by default).
+  if (outfile.size() > 0 || !emitBinary) {
+    Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
+    ModuleWriter writer;
+    writer.setDebugInfo(debugInfo);
+    // writer.setSymbolMap(symbolMap);
+    writer.setBinary(emitBinary);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
+    writer.write(wasm, output);
+    if (!emitBinary) {
+      output << "(;\n";
+      output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
+      output << ";)\n";
+    }
   }
-  writer.write(wasm, output);
+  // If we emit text then we emitted the metadata together with that text
+  // earlier. Otherwise emit it to stdout.
   if (emitBinary) {
     std::cout << metadata;
-  } else {
-    output << "(;\n";
-    output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
-    output << ";)\n";
   }
-
   return 0;
 }

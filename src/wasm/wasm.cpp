@@ -948,7 +948,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = tuple->type.expand()[index];
+    type = tuple->type[index];
   }
 }
 
@@ -1006,7 +1006,7 @@ Index Function::getVarIndexBase() { return sig.params.size(); }
 Type Function::getLocalType(Index index) {
   auto numParams = sig.params.size();
   if (index < numParams) {
-    return sig.params.expand()[index];
+    return sig.params[index];
   } else if (isVar(index)) {
     return vars[index - numParams];
   } else {

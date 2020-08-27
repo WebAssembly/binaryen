@@ -172,7 +172,7 @@ struct ValidationInfo {
                                 Expression* curr,
                                 const char* text,
                                 Function* func = nullptr) {
-    switch (ty.getSingle()) {
+    switch (ty.getBasic()) {
       case Type::i32:
       case Type::i64:
       case Type::unreachable: {
@@ -389,7 +389,7 @@ void FunctionValidator::noteLabelName(Name name) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(!curr->type.isMulti(),
+    shouldBeTrue(!curr->type.isTuple(),
                  curr,
                  "Multivalue block type (multivalue is not enabled)");
   }
@@ -641,20 +641,21 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  const std::vector<Type> params = target->sig.params.expand();
-  if (!shouldBeTrue(curr->operands.size() == params.size(),
+  if (!shouldBeTrue(curr->operands.size() == target->sig.params.size(),
                     curr,
                     "call param number must match")) {
     return;
   }
-  for (size_t i = 0; i < curr->operands.size(); i++) {
+  size_t i = 0;
+  for (const auto& param : target->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
-                                             params[i],
+                                             param,
                                              curr,
                                              "call param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
+    ++i;
   }
   if (curr->isReturn) {
     shouldBeEqual(curr->type,
@@ -692,24 +693,25 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  const std::vector<Type>& params = curr->sig.params.expand();
   shouldBeEqualOrFirstIsUnreachable(curr->target->type,
                                     Type(Type::i32),
                                     curr,
                                     "indirect call target must be an i32");
-  if (!shouldBeTrue(curr->operands.size() == params.size(),
+  if (!shouldBeTrue(curr->operands.size() == curr->sig.params.size(),
                     curr,
                     "call param number must match")) {
     return;
   }
-  for (size_t i = 0; i < curr->operands.size(); i++) {
+  size_t i = 0;
+  for (const auto& param : curr->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
-                                             params[i],
+                                             param,
                                              curr,
                                              "call param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
+    ++i;
   }
   if (curr->isReturn) {
     shouldBeEqual(curr->type,
@@ -1236,7 +1238,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
 void FunctionValidator::validateMemBytes(uint8_t bytes,
                                          Type type,
                                          Expression* curr) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4,
                    curr,
@@ -1770,12 +1772,12 @@ void FunctionValidator::visitSelect(Select* curr) {
                curr,
                "select condition must be valid");
   if (curr->ifTrue->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ifTrue->type.isSingle(), curr, "select value may not be a tuple");
+    shouldBeFalse(
+      curr->ifTrue->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->ifFalse->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ifFalse->type.isSingle(), curr, "select value may not be a tuple");
+    shouldBeFalse(
+      curr->ifFalse->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->type != Type::unreachable) {
     shouldBeTrue(Type::isSubType(curr->ifTrue->type, curr->type),
@@ -1871,15 +1873,16 @@ void FunctionValidator::visitThrow(Throw* curr) {
                     "event's param numbers must match")) {
     return;
   }
-  const std::vector<Type>& paramTypes = event->sig.params.expand();
-  for (size_t i = 0; i < curr->operands.size(); i++) {
+  size_t i = 0;
+  for (const auto& param : event->sig.params) {
     if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
-                                             paramTypes[i],
+                                             param,
                                              curr->operands[i],
                                              "event param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
+    ++i;
   }
 }
 
@@ -1957,7 +1960,7 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
     shouldBeTrue(inBounds, curr, "tuple.extract index out of bounds");
     if (inBounds) {
       shouldBeSubType(
-        curr->tuple->type.expand()[curr->index],
+        curr->tuple->type[curr->index],
         curr->type,
         curr,
         "tuple.extract type does not match the type of the extracted element");
@@ -1966,23 +1969,23 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->sig.results.isMulti()) {
+  if (curr->sig.results.isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
-  for (auto type : curr->sig.params.expand()) {
-    features |= type.getFeatures();
-    shouldBeTrue(type.isConcrete(), curr, "params must be concretely typed");
+  for (const auto& param : curr->sig.params) {
+    features |= param.getFeatures();
+    shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
   }
-  for (auto type : curr->sig.results.expand()) {
-    features |= type.getFeatures();
-    shouldBeTrue(type.isConcrete(), curr, "results must be concretely typed");
+  for (const auto& result : curr->sig.results) {
+    features |= result.getFeatures();
+    shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
-  for (auto type : curr->vars) {
-    features |= type.getFeatures();
-    shouldBeTrue(type.isConcrete(), curr, "vars must be concretely typed");
+  for (const auto& var : curr->vars) {
+    features |= var.getFeatures();
+    shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(features <= getModule()->features,
                curr,
@@ -2055,7 +2058,8 @@ void FunctionValidator::validateAlignment(
     }
   }
   shouldBeTrue(align <= bytes, curr, "alignment must not exceed natural");
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
     case Type::f32: {
       shouldBeTrue(align <= 4, curr, "alignment must not exceed natural");
@@ -2133,20 +2137,20 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
-    if (curr->sig.results.isMulti()) {
+    if (curr->sig.results.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Imported multivalue function "
                         "(multivalue is not enabled)");
     }
     if (info.validateWeb) {
-      for (Type param : curr->sig.params.expand()) {
+      for (const auto& param : curr->sig.params) {
         info.shouldBeUnequal(param,
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 parameters");
       }
-      for (Type result : curr->sig.results.expand()) {
+      for (const auto& result : curr->sig.results) {
         info.shouldBeUnequal(result,
                              Type(Type::i64),
                              curr->name,
@@ -2159,8 +2163,8 @@ static void validateImports(Module& module, ValidationInfo& info) {
       info.shouldBeFalse(
         curr->mutable_, curr->name, "Imported global cannot be mutable");
     }
-    info.shouldBeTrue(
-      curr->type.isSingle(), curr->name, "Imported global cannot be tuple");
+    info.shouldBeFalse(
+      curr->type.isTuple(), curr->name, "Imported global cannot be tuple");
   });
 }
 
@@ -2169,14 +2173,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        for (auto param : f->sig.params.expand()) {
+        for (const auto& param : f->sig.params) {
           info.shouldBeUnequal(
             param,
             Type(Type::i64),
             f->name,
             "Exported function must not have i64 parameters");
         }
-        for (auto result : f->sig.results.expand()) {
+        for (const auto& result : f->sig.results) {
           info.shouldBeUnequal(result,
                                Type(Type::i64),
                                f->name,
@@ -2189,8 +2193,8 @@ static void validateExports(Module& module, ValidationInfo& info) {
           info.shouldBeFalse(
             g->mutable_, g->name, "Exported global cannot be mutable");
         }
-        info.shouldBeTrue(
-          g->type.isSingle(), g->name, "Exported global cannot be tuple");
+        info.shouldBeFalse(
+          g->type.isTuple(), g->name, "Exported global cannot be tuple");
       }
     }
   }
@@ -2343,13 +2347,13 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                        Type(Type::none),
                        curr->name,
                        "Event type's result type should be none");
-    if (curr->sig.params.isMulti()) {
+    if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Multivalue event type (multivalue is not enabled)");
     }
-    for (auto type : curr->sig.params.expand()) {
-      info.shouldBeTrue(type.isConcrete(),
+    for (const auto& param : curr->sig.params) {
+      info.shouldBeTrue(param.isConcrete(),
                         curr->name,
                         "Values in an event should have concrete types");
     }

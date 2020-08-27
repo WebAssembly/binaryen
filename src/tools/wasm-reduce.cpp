@@ -578,9 +578,11 @@ struct Reducer
           continue; // no conversion
         }
         Expression* fixed = nullptr;
-        switch (curr->type.getSingle()) {
+        TODO_SINGLE_COMPOUND(curr->type);
+        switch (curr->type.getBasic()) {
           case Type::i32: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 WASM_UNREACHABLE("invalid type");
               case Type::i64:
@@ -605,7 +607,8 @@ struct Reducer
             break;
           }
           case Type::i64: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
@@ -630,7 +633,8 @@ struct Reducer
             break;
           }
           case Type::f32: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat32, child);
                 break;
@@ -655,7 +659,8 @@ struct Reducer
             break;
           }
           case Type::f64: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat64, child);
                 break;
@@ -1014,7 +1019,7 @@ struct Reducer
       RefNull* n = builder->makeRefNull();
       return tryToReplaceCurrent(n);
     }
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       Expression* n =
         builder->makeConstantExpression(Literal::makeZero(curr->type));
       return tryToReplaceCurrent(n);
