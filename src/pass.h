@@ -77,6 +77,9 @@ struct InliningOptions {
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
+  // Allow inlining of functions that are not "lightweight" in the sense the
+  // inlining pass estimates.
+  bool allowHeavyweight = false;
 };
 
 struct PassOptions {

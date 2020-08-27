@@ -10,6 +10,7 @@
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3718,6 +3719,80 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+  (memory.copy
+   (local.get $dst)
+   (local.get $dst)
+   (local.get $sz)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 0)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.load8_u
+    (local.get $src)
+   )
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.load16_u align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 3)
+  )
+  (i32.store align=1
+   (local.get $dst)
+   (i32.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 5)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 6)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 7)
+  )
+  (i64.store align=1
+   (local.get $dst)
+   (i64.load align=1
+    (local.get $src)
+   )
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (v128.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (local.get $sz)
+  )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 0)
+   (i32.load
+    (i32.const 3)
    )
   )
  )
