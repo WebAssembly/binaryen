@@ -4408,6 +4408,18 @@
 
     ;; i32.rotl
     (drop (i32.or
+      (i32.shr_u
+        (local.get $x)
+        (i32.const -16)
+      )
+      (i32.shl
+        (local.get $x)
+        (i32.const 16)
+      )
+    ))
+
+    ;; i32.rotl
+    (drop (i32.or
       (i32.shl
         (local.get $x)
         (i32.const 16)
@@ -4709,6 +4721,7 @@
     ))
 
     ;; skip
+    ;; LHS hasn't mask as `((32 - x) & 31)`
     (drop (i32.or
       (i32.shl
         (local.get $x)
@@ -4722,6 +4735,99 @@
         (i32.sub
           (i32.const 32)
           (local.get $y)
+        )
+      )
+    ))
+
+    ;; skip
+    ;; 31 + 2 != 32
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.const 2)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 31)
+      )
+    ))
+
+    ;; skip
+    ;; 15 + 17 != 64
+    (drop (i64.or
+      (i64.shr_u
+        (local.get $w)
+        (i64.const 15)
+      )
+      (i64.shl
+        (local.get $w)
+        (i64.const 17)
+      )
+    ))
+
+    ;; skip
+    ;; due to i64.shr_s
+    (drop (i64.or
+      (i64.shr_s
+        (local.get $w)
+        (i64.const 32)
+      )
+      (i64.shl
+        (local.get $w)
+        (i64.const 32)
+      )
+    ))
+
+    ;; skip
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.and
+          (i32.sub
+            (i32.const 0)
+            (local.get $y)
+          )
+          (i32.const 32) ;; wrong mask
+        )
+      )
+    ))
+
+    ;; skip
+    (drop (i32.or
+      (i32.shr_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.shl
+        (local.get $y) ;; should be $x
+        (i32.and
+          (i32.sub
+            (i32.const 0)
+            (local.get $y)
+          )
+          (i32.const 31)
+        )
+      )
+    ))
+
+    ;; skip
+    (drop (i32.or
+      (i32.shr_u
+        (i32.load (local.get $x)) ;; side effect
+        (local.get $y)
+      )
+      (i32.shl
+        (i32.load (local.get $x))
+        (i32.and
+          (i32.sub
+            (i32.const 0)
+            (local.get $y)
+          )
+          (i32.const 31)
         )
       )
     ))
