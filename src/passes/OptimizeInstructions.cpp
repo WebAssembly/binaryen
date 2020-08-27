@@ -1127,15 +1127,15 @@ private:
         auto type = binary->type;
         int bitSize = type.getByteSize() * 8;
 
-        bool maybeLeftRotated =
+        bool isRotateLeft =
           left->op == Abstract::getBinary(type, Abstract::Shl) &&
           right->op == Abstract::getBinary(type, Abstract::ShrU);
 
-        bool maybeRigthRotated =
+        bool isRotateRigth =
           left->op == Abstract::getBinary(type, Abstract::ShrU) &&
           right->op == Abstract::getBinary(type, Abstract::Shl);
 
-        if (!(maybeLeftRotated || maybeRigthRotated)) {
+        if (!(isRotateLeft || isRotateRigth)) {
           return nullptr;
         }
 
@@ -1211,7 +1211,7 @@ private:
                 if (c->value == Literal::makeFromInt32(bitSize, type)) {
                   if (ExpressionAnalyzer::equal(leftRight, rightRight->right)) {
                     left->op = Abstract::getBinary(
-                      type, maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                      type, isRotateLeft ? Abstract::RotL : Abstract::RotR);
                     left->right = leftRight;
                     return left;
                   }
@@ -1237,7 +1237,7 @@ private:
                                                       rightRightLeft->right)) {
                           left->op = Abstract::getBinary(
                             type,
-                            maybeLeftRotated ? Abstract::RotL : Abstract::RotR);
+                            isRotateLeft ? Abstract::RotL : Abstract::RotR);
                           left->right = leftRight;
                           return left;
                         }
