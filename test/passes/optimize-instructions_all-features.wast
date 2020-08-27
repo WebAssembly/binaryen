@@ -4766,6 +4766,19 @@
     ))
 
     ;; skip
+    ;; $x != $y
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.const 31)
+      )
+      (i32.shr_u
+        (local.get $y)
+        (i32.const 1)
+      )
+    ))
+
+    ;; skip
     ;; due to i64.shr_s
     (drop (i64.or
       (i64.shr_s
@@ -4828,6 +4841,40 @@
             (local.get $y)
           )
           (i32.const 31)
+        )
+      )
+    ))
+
+    ;; skip
+    ;; skipped mask for (x << (-y)) part
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.sub
+          (i32.const 0)
+          (local.get $y)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.and
+          (local.get $y)
+          (i32.const 31)
+        )
+      )
+    ))
+
+    ;; skip
+    (drop (i64.or
+      (i64.shl
+        (local.get $z)
+        (local.get $w)
+      )
+      (i64.shr_u
+        (local.get $z)
+        (i64.sub
+          (i64.const 32) ;; should be 64
+          (local.get $w)
         )
       )
     ))
