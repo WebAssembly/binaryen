@@ -3831,55 +3831,55 @@
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i32.rotl
+   (i32.rotr
     (local.get $x)
     (local.get $y)
    )
   )
   (drop
-   (i64.rotl
+   (i64.rotr
     (local.get $z)
     (local.get $w)
    )
   )
   (drop
-   (i64.rotl
+   (i64.rotr
     (local.get $z)
     (local.get $w)
    )

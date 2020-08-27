@@ -1175,6 +1175,7 @@ private:
             // (x sh (y - z)) | rhs  ==>  rhs | (x sh (y - z))
             // swap
             std::swap(left, right);
+            std::swap(isRotateLeft, isRotateRigth);
           } else if (leftRight->op ==
                      Abstract::getBinary(type, Abstract::And)) {
             if (leftRight->right->dynCast<Const>() &&
@@ -1182,6 +1183,7 @@ private:
               // (x sh ((y op z) & C)) | rhs  ==>  rhs | (x sh ((y op z) & C))
               // swap
               std::swap(left, right);
+              std::swap(isRotateLeft, isRotateRigth);
             }
           }
         }
