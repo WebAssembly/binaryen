@@ -1139,12 +1139,12 @@ private:
           return nullptr;
         }
 
-        if (EffectAnalyzer(getPassOptions(), features, binary)
-              .hasSideEffects()) {
+        if (!ExpressionAnalyzer::equal(left->left, right->left)) {
           return nullptr;
         }
 
-        if (!ExpressionAnalyzer::equal(left->left, right->left)) {
+        if (EffectAnalyzer(getPassOptions(), features, binary)
+              .hasSideEffects()) {
           return nullptr;
         }
 
