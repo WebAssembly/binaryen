@@ -3032,7 +3032,7 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
 
 // Gets the value which allow inline functions that are not "lightweight".
 Module['getAllowHeavyweight'] = function() {
-  return Module['_BinaryenGetAllowHeavyweight']();
+  return Boolean(Module['_BinaryenGetAllowHeavyweight']());
 };
 
 // Sets the value which allow inline functions that are not "lightweight".
