@@ -3528,11 +3528,11 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-bool BinaryenGetAllowHeavyweight(void) {
+int BinaryenGetAllowHeavyweight(void) {
   return globalPassOptions.inlining.allowHeavyweight;
 }
 
-void BinaryenSetAllowHeavyweight(bool enabled) {
+void BinaryenSetAllowHeavyweight(int enabled) {
   globalPassOptions.inlining.allowHeavyweight = enabled;
 }
 
