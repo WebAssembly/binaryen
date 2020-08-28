@@ -143,7 +143,7 @@ void test_bits() {
   c0.value = Literal(int32_t(0x0000FFFF));
   c1.value = Literal(int32_t(0xFF));
   assert_equal(getMaxBits(&b), 9);
-   c0.value = Literal(int32_t(0x00001000));
+  c0.value = Literal(int32_t(0x00001000));
   c1.value = Literal(int32_t(0x00000FFF));
   assert_equal(getMaxBits(&b), 2);
   c0.value = Literal(int32_t(0x80000000));
