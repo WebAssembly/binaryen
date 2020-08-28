@@ -157,8 +157,8 @@ Index getMaxBits(Expression* curr,
       case DivSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft is negative
-          if (maxBitsLeft == 32) {
+          // if maxBitsLeft or right constant is negative
+          if (maxBitsLeft == 32 || c->value.geti32() < 0) {
             return 32;
           }
           // properly handle zero for divisible
@@ -172,11 +172,14 @@ Index getMaxBits(Expression* curr,
       }
       case DivUInt32: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-        // properly handle zero for divisible
-        if (maxBitsLeft == 0) {
-          return 0;
-        }
         if (auto* c = binary->right->dynCast<Const>()) {
+          // properly handle zero for divisible
+          if (maxBitsLeft == 0) {
+            return 0;
+          }
+          if (c->value.geti32() < 0) {
+            return 1;
+          }
           auto bitsRight = getMaxBits(c);
           return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
@@ -190,7 +193,7 @@ Index getMaxBits(Expression* curr,
             return 32;
           }
           auto value = c->value.geti32();
-          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));
+          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -199,7 +202,7 @@ Index getMaxBits(Expression* curr,
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti32();
-          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));
+          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -266,8 +269,8 @@ Index getMaxBits(Expression* curr,
       case DivSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft is negative
-          if (maxBitsLeft == 64) {
+          // if maxBitsLeft or right const value is negative
+          if (maxBitsLeft == 64 || c->value.geti64() < 0) {
             return 64;
           }
           // properly handle zero for divisible
@@ -281,11 +284,14 @@ Index getMaxBits(Expression* curr,
       }
       case DivUInt64: {
         auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-        // properly handle zero for divisible
-        if (maxBitsLeft == 0) {
-          return 0;
-        }
         if (auto* c = binary->right->dynCast<Const>()) {
+          // properly handle zero for divisible
+          if (maxBitsLeft == 0) {
+            return 0;
+          }
+          if (c->value.geti64() < 0) {
+            return 1;
+          }
           auto bitsRight = getMaxBits(c);
           return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
@@ -299,7 +305,7 @@ Index getMaxBits(Expression* curr,
             return 64;
           }
           auto value = c->value.geti64();
-          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));
+          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
           return std::min(maxBitsLeft, maxBitsRight);
         }
         return 64;
@@ -308,7 +314,7 @@ Index getMaxBits(Expression* curr,
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti64();
-          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));
+          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
           return std::min(maxBitsLeft, maxBitsRight);
         }
         return 64;
