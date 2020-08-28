@@ -165,8 +165,8 @@ Index getMaxBits(Expression* curr,
           if (maxBitsLeft == 0) {
             return 0;
           }
-          auto bitsRight = 31 - Index(c->value.countLeadingZeroes().geti32());
-          return std::max(Index(0), maxBitsLeft - bitsRight);
+          auto bitsRight = getMaxBits(c);
+          return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
         return 32;
       }
@@ -177,8 +177,8 @@ Index getMaxBits(Expression* curr,
           return 0;
         }
         if (auto* c = binary->right->dynCast<Const>()) {
-          auto bitsRight = 31 - Index(c->value.countLeadingZeroes().geti32());
-          return std::max(Index(0), maxBitsLeft - bitsRight);
+          auto bitsRight = getMaxBits(c);
+          return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
         return maxBitsLeft;
       }
@@ -274,8 +274,8 @@ Index getMaxBits(Expression* curr,
           if (maxBitsLeft == 0) {
             return 0;
           }
-          auto bitsRight = 63 - Index(c->value.countLeadingZeroes().geti64());
-          return std::max(Index(0), maxBitsLeft - bitsRight);
+          auto bitsRight = getMaxBits(c);
+          return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
         return 64;
       }
@@ -286,8 +286,8 @@ Index getMaxBits(Expression* curr,
           return 0;
         }
         if (auto* c = binary->right->dynCast<Const>()) {
-          auto bitsRight = 63 - Index(c->value.countLeadingZeroes().geti64());
-          return std::max(Index(0), maxBitsLeft - bitsRight);
+          auto bitsRight = getMaxBits(c);
+          return std::max(Index(0), maxBitsLeft - bitsRight + 1);
         }
         return maxBitsLeft;
       }
