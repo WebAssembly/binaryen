@@ -218,7 +218,7 @@ public:
     Iterator operator-(difference_type off) const {
       return Iterator(*this) -= off;
     }
-    difference_type operator-(const Iterator& other) {
+    difference_type operator-(const Iterator& other) const {
       assert(parent == other.parent);
       return index - other.index;
     }
