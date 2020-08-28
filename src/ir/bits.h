@@ -169,9 +169,6 @@ Index getMaxBits(Expression* curr,
       case DivUInt32: {
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (c->value.geti32() < 0) {
-            return 1;
-          }
           int32_t bitsRight = getMaxBits(c);
           return std::max(0, maxBitsLeft - bitsRight + 1);
         }
@@ -275,9 +272,6 @@ Index getMaxBits(Expression* curr,
       case DivUInt64: {
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (c->value.geti64() < 0) {
-            return 1;
-          }
           int32_t bitsRight = getMaxBits(c);
           return std::max(0, maxBitsLeft - bitsRight + 1);
         }
