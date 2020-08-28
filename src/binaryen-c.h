@@ -2124,7 +2124,8 @@ BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
-// Gets the currently set of inlining heavyweight functions.
+// Gets whether heavyweight functions are allowed to be inlined.
+// Applies to all modules, globally.
 BINARYEN_API int BinaryenGetAllowHeavyweight(void);
 
 // Enables or disables inlining heavyweight functions.
