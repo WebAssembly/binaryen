@@ -185,7 +185,8 @@ Index getMaxBits(Expression* curr,
             return 32;
           }
           auto value = c->value.geti32();
-          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
+          auto bitsRight =
+            32 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -194,7 +195,8 @@ Index getMaxBits(Expression* curr,
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti32();
-          auto bitsRight = 32 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
+          auto bitsRight =
+            32 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -289,7 +291,8 @@ Index getMaxBits(Expression* curr,
             return 64;
           }
           auto value = c->value.geti64();
-          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
+          auto maxBitsRight =
+            64 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
           return std::min(maxBitsLeft, maxBitsRight);
         }
         return 64;
@@ -298,7 +301,8 @@ Index getMaxBits(Expression* curr,
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
           auto value = c->value.geti64();
-          auto maxBitsRight = 64 - Index(CountLeadingZeroes(value - 1));  // ceiled Log2
+          auto maxBitsRight =
+            64 - Index(CountLeadingZeroes(value - 1)); // ceiled Log2
           return std::min(maxBitsLeft, maxBitsRight);
         }
         return 64;
