@@ -1,0 +1,16 @@
+;; Test compact
+(block
+ (nop)
+ (i32.const 0)
+ (nop)
+ (i64.const 0)
+ (nop)
+ (nop)
+)
+(block
+ (i32.const 0)
+ (i64.const 0)
+)
+;; Test stack signature composition
+;; Test stack signature satisfaction
+;; Test stack flow
