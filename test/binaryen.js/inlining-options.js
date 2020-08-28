@@ -9,3 +9,7 @@ assert(binaryen.getFlexibleInlineMaxSize() == 22);
 console.log("// oneCallerInlineMaxSize=" + binaryen.getOneCallerInlineMaxSize());
 binaryen.setOneCallerInlineMaxSize(33);
 assert(binaryen.getOneCallerInlineMaxSize() == 33);
+
+console.log("// allowHeavyweight=" + Boolean(binaryen.getAllowHeavyweight()));
+binaryen.setAllowHeavyweight(true);
+assert(binaryen.getAllowHeavyweight() == true);
