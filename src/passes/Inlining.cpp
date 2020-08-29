@@ -48,8 +48,8 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
-  std::atomic<bool> hasCalls;
-  std::atomic<bool> hasLoops;
+  bool hasCalls;
+  bool hasLoops;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
