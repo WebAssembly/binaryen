@@ -83,12 +83,13 @@ struct FunctionInfo {
     }
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size, and if it's lightweight so a good candidate for
-    // speeding us up.
-    bool lightweight = !(hasCalls || hasLoops);
-    bool allowHeavyweight = !hasCalls && options.inlining.allowHeavyweight;
+    // about size, and if it's lightweight (hasn't loops of calls)
+    // so a good candidate for speeding us up.
+    if (hasCalls) {
+      return false;
+    }
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (lightweight || allowHeavyweight);
+           (!hasLoops || options.inlining.allowHeavyweight);
   }
 };
 
