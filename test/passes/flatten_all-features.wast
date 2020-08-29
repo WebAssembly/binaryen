@@ -1027,12 +1027,12 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  (func $subtype (result externref) (local $0 nullref)
+  (func $subtype (result externref) (local $0 externref)
     (block $label0 (result externref)
-      (block (result nullref)
+      (block (result externref)
         (local.tee $0
           (br_if $label0
-            (ref.null)
+            (ref.null extern)
             (i32.const 0)
           )
         )

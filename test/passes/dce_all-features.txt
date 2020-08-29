@@ -547,7 +547,7 @@
  )
  (func $rethrow
   (rethrow
-   (ref.null)
+   (ref.null exn)
   )
  )
 )

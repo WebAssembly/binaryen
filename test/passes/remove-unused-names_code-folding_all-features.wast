@@ -1254,7 +1254,7 @@
         (call $foo)
         (call $foo)
         (call $foo)
-        (return (ref.null))
+        (return (ref.null exn))
       )
       (catch
         (drop (exnref.pop))
@@ -1262,10 +1262,10 @@
         (call $foo)
         (call $foo)
         (call $foo)
-        (return (ref.null))
+        (return (ref.null exn))
       )
     )
-    (ref.null)
+    (ref.null exn)
   )
 
   (func $try-call-optimize-expression-tails (local $exn exnref)

@@ -205,11 +205,23 @@ void test_types() {
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
-  BinaryenType nullref = BinaryenTypeNullref();
-  printf("  // BinaryenTypeNullref: %d\n", nullref);
-  assert(BinaryenTypeArity(nullref) == 1);
-  BinaryenTypeExpand(nullref, &valueType);
-  assert(valueType == nullref);
+  BinaryenType anyref = BinaryenTypeAnyref();
+  printf("  // BinaryenTypeAnyref: %d\n", anyref);
+  assert(BinaryenTypeArity(anyref) == 1);
+  BinaryenTypeExpand(anyref, &valueType);
+  assert(valueType == anyref);
+
+  BinaryenType eqref = BinaryenTypeEqref();
+  printf("  // BinaryenTypeEqref: %d\n", eqref);
+  assert(BinaryenTypeArity(eqref) == 1);
+  BinaryenTypeExpand(eqref, &valueType);
+  assert(valueType == eqref);
+
+  BinaryenType i31ref = BinaryenTypeI31ref();
+  printf("  // BinaryenTypeI31ref: %d\n", i31ref);
+  assert(BinaryenTypeArity(i31ref) == 1);
+  BinaryenTypeExpand(i31ref, &valueType);
+  assert(valueType == i31ref);
 
   BinaryenType exnref = BinaryenTypeExnref();
   printf("  // BinaryenTypeExnref: %d\n", exnref);
@@ -247,6 +259,7 @@ void test_features() {
   printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
+  printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -294,7 +307,7 @@ void test_core() {
                         temp10 = makeInt32(module, 1), temp11 = makeInt32(module, 3), temp12 = makeInt32(module, 5),
                         temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
-  BinaryenExpressionRef nullrefExpr = BinaryenRefNull(module);
+  BinaryenExpressionRef anyrefExpr = BinaryenRefNull(module, BinaryenTypeAnyref());
   BinaryenExpressionRef funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker");
 
@@ -718,10 +731,10 @@ void test_core() {
                                iIfF,
                                BinaryenTypeInt32()),
     // Reference types
-    BinaryenRefIsNull(module, nullrefExpr),
+    BinaryenRefIsNull(module, anyrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
     BinaryenSelect(
-      module, temp10, nullrefExpr, funcrefExpr, BinaryenTypeFuncref()),
+      module, temp10, anyrefExpr, funcrefExpr, BinaryenTypeFuncref()),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
@@ -748,10 +761,9 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeFloat64()),
     BinaryenPop(module, BinaryenTypeFuncref()),
     BinaryenPop(module, BinaryenTypeExternref()),
-    BinaryenPop(module, BinaryenTypeNullref()),
-    BinaryenPop(module, BinaryenTypeExnref()),
-    BinaryenPop(module, BinaryenTypeFuncref()),
-    BinaryenPop(module, BinaryenTypeNullref()),
+    BinaryenPop(module, BinaryenTypeAnyref()),
+    BinaryenPop(module, BinaryenTypeEqref()),
+    BinaryenPop(module, BinaryenTypeI31ref()),
     BinaryenPop(module, BinaryenTypeExnref()),
 
     // TODO: Host

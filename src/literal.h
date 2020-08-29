@@ -35,12 +35,17 @@ struct ExceptionPackage;
 class Literal {
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
+  struct Exn {
+    bool hasPackage;
+    std::unique_ptr<ExceptionPackage> package; // only valid if hasPackage
+  };
   union {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
     Name func; // function name for funcref
-    std::unique_ptr<ExceptionPackage> exn;
+    Exn exn;
+    // TODO: literals of other reference types can only be `null`
   };
 
 public:
@@ -49,7 +54,10 @@ public:
 public:
   Literal() : v128(), type(Type::none) {}
   explicit Literal(Type type) : v128(), type(type) {
-    assert(type != Type::unreachable);
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    if (type.isException()) {
+      exn.hasPackage = false;
+    }
   }
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
@@ -67,18 +75,31 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage> exn)
-    : exn(std::move(exn)), type(Type::exnref) {}
+  explicit Literal(std::unique_ptr<ExceptionPackage> package)
+    : exn{true, std::move(package)}, type(Type::exnref) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal() {
-    if (type == Type::exnref) {
-      exn.~unique_ptr();
+    if (type.isException() && exn.hasPackage) {
+      exn.hasPackage = false;
+      exn.package.~unique_ptr();
     }
   }
 
   bool isConcrete() const { return type != Type::none; }
   bool isNone() const { return type == Type::none; }
+  bool isNull() const {
+    if (type.isNullable()) {
+      if (type.isFunction()) {
+        return func.isNull();
+      }
+      if (type.isException()) {
+        return !exn.hasPackage;
+      }
+      return true;
+    }
+    return false;
+  }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
@@ -103,7 +124,7 @@ public:
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
 
-  static Literal makeNullref() { return Literal(Type(Type::nullref)); }
+  static Literal makeNull(Type type) { return Literal(type); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
   static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
     return Literal(std::move(exn));
@@ -132,12 +153,12 @@ public:
   }
   std::array<uint8_t, 16> getv128() const;
   Name getFunc() const {
-    assert(type == Type::funcref);
+    assert(type.isFunction() && !func.isNull());
     return func;
   }
   const ExceptionPackage& getExceptionPackage() const {
-    assert(type == Type::exnref);
-    return *exn.get();
+    assert(type.isException() && exn.hasPackage);
+    return *exn.package.get();
   }
 
   // careful!
@@ -555,7 +576,9 @@ template<> struct less<wasm::Literal> {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
       case wasm::Type::externref:
-      case wasm::Type::nullref:
+      case wasm::Type::anyref:
+      case wasm::Type::eqref:
+      case wasm::Type::i31ref:
       case wasm::Type::exnref:
       case wasm::Type::none:
       case wasm::Type::unreachable:

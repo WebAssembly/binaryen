@@ -35,7 +35,9 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
+    ['anyref', 'Anyref'],
+    ['eqref', 'Eqref'],
+    ['i31ref', 'I31ref'],
     ['exnref', 'Exnref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
@@ -121,6 +123,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
+    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2058,9 +2061,21 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
+  self['anyref'] = {
     'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['eqref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['eqref']);
+    }
+  };
+
+  self['i31ref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['i31ref']);
     }
   };
 
@@ -2071,8 +2086,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);

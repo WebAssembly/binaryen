@@ -134,7 +134,7 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::nullref &&
+        } else if (singleValue.isNull() &&
                    curr->value->template is<RefNull>()) {
           return;
         } else if (singleValue.type == Type::funcref) {

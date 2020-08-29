@@ -212,10 +212,10 @@ struct Flatten
             // not be the same with the innermost block's return type. For
             // example,
             // (block $any (result externref)
-            //   (block (result nullref)
+            //   (block (result funcref)
             //     (local.tee $0
             //       (br_if $any
-            //         (ref.null)
+            //         (ref.null func)
             //         (i32.const 0)
             //       )
             //     )
@@ -223,7 +223,7 @@ struct Flatten
             // )
             // In this case we need two locals to store (ref.null); one with
             // externref type that's for the target block ($label0) and one more
-            // with nullref type in case for flowing out. Here we create the
+            // with funcref type in case for flowing out. Here we create the
             // second 'flowing out' local in case two block's types are
             // different.
             if (type != blockType) {

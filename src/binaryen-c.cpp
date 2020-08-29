@@ -69,12 +69,17 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
     case Type::funcref:
-      ret.func = x.getFunc().c_str();
-      break;
-    case Type::nullref:
+      if (!x.isNull()) {
+        ret.func = x.getFunc().c_str();
+      }
       break;
     case Type::externref:
+    case Type::anyref:
+    case Type::eqref:
     case Type::exnref:
+      assert(x.isNull());
+      break;
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -96,10 +101,12 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.v128);
     case Type::funcref:
       return Literal::makeFuncref(x.func);
-    case Type::nullref:
-      return Literal::makeNullref();
     case Type::externref:
+    case Type::anyref:
+    case Type::eqref:
     case Type::exnref:
+      return Literal::makeNull(Type(x.type));
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -133,7 +140,9 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
+BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
+BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
@@ -325,6 +334,9 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 }
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
+}
+BinaryenFeatures BinaryenFeatureGC(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::GC);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -1264,8 +1276,11 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
     Builder(*(Module*)module).makePop(Type(type)));
 }
 
-BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull());
+BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                      BinaryenType type) {
+  Type type_(type);
+  assert(type_.isNullable());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,

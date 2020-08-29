@@ -61,6 +61,8 @@
   )
 
   ;; Test subtype relationship
+  ;; TODO: This test used to test nullref <: exnref, but with nullref removed
+  ;; there are no testable subtypes of exnref anymore. Left in place fwiw.
   (func $subtype_test
     (try
       (do)
@@ -69,13 +71,13 @@
         (drop
           (block $l0 (result i32)
             (rethrow
-              (br_on_exn $l0 $e0 (ref.null))
+              (br_on_exn $l0 $e0 (ref.null exn)) ;; was nullref
             )
           )
         )
       )
     )
 
-    (throw $e1 (ref.null))
+    (throw $e1 (ref.null exn)) ;; was nullref
   )
 )

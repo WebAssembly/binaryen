@@ -7,8 +7,10 @@
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
-  // BinaryenTypeNullref: 9
-  // BinaryenTypeExnref: 10
+  // BinaryenTypeAnyref: 9
+  // BinaryenTypeEqref: 10
+  // BinaryenTypeI31ref: 11
+  // BinaryenTypeExnref: 12
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -21,7 +23,8 @@ BinaryenFeatureExceptionHandling: 64
 BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
-BinaryenFeatureAll: 1023
+BinaryenFeatureGC: 1024
+BinaryenFeatureAll: 2047
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1753,7 +1756,7 @@ BinaryenFeatureAll: 1023
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null any)
        )
       )
       (drop
@@ -1762,8 +1765,8 @@ BinaryenFeatureAll: 1023
        )
       )
       (drop
-       (select (result funcref)
-        (ref.null)
+       (select (result anyref)
+        (ref.null any)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -1846,16 +1849,13 @@ BinaryenFeatureAll: 1023
        (externref.pop)
       )
       (drop
-       (nullref.pop)
+       (anyref.pop)
       )
       (drop
-       (exnref.pop)
+       (eqref.pop)
       )
       (drop
-       (funcref.pop)
-      )
-      (drop
-       (nullref.pop)
+       (i31ref.pop)
       )
       (drop
        (exnref.pop)

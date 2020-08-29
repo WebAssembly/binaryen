@@ -67,7 +67,9 @@ static Expression* toABI(Expression* value, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
@@ -111,7 +113,9 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref: {
       WASM_UNREACHABLE("reference types cannot be converted from i64");
     }

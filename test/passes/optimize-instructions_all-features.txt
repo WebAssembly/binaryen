@@ -3713,7 +3713,7 @@
   )
  )
  (func $if-arms-subtype (result externref)
-  (ref.null)
+  (ref.null extern)
  )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if

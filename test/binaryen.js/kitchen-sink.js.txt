@@ -12,10 +12,18 @@
   // [ 5 ]
   // BinaryenTypeVec128: 6
   // [ 6 ]
+  // BinaryenTypeFuncref: 7
+  // [ 7 ]
   // BinaryenTypeExternref: 8
   // [ 8 ]
-  // BinaryenTypeExnref: 10
+  // BinaryenTypeAnyref: 9
+  // [ 9 ]
+  // BinaryenTypeEqref: 10
   // [ 10 ]
+  // BinaryenTypeI31ref: 11
+  // [ 11 ]
+  // BinaryenTypeExnref: 12
+  // [ 12 ]
   // BinaryenTypeAuto: -1
   // [ 2, 2 ]
   // [ 2, 2 ]
@@ -31,7 +39,7 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.All: 1023
+Features.All: 2047
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -1811,7 +1819,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
        )
       )
       (drop
@@ -1821,7 +1829,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -1907,7 +1915,13 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (funcref.pop)
       )
       (drop
-       (nullref.pop)
+       (anyref.pop)
+      )
+      (drop
+       (eqref.pop)
+      )
+      (drop
+       (i31ref.pop)
       )
       (drop
        (exnref.pop)
@@ -3649,7 +3663,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
        )
       )
       (drop
@@ -3659,7 +3673,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -3745,7 +3759,13 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (funcref.pop)
       )
       (drop
-       (nullref.pop)
+       (anyref.pop)
+      )
+      (drop
+       (eqref.pop)
+      )
+      (drop
+       (i31ref.pop)
       )
       (drop
        (exnref.pop)

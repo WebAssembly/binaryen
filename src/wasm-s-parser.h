@@ -160,6 +160,14 @@ private:
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
+  HeapType stringToHeapType(cashew::IString str,
+                            bool allowError = false,
+                            bool prefix = false) {
+    return stringToHeapType(str.str, allowError, prefix);
+  }
+  HeapType stringToHeapType(const char* str,
+                            bool allowError = false,
+                            bool prefix = false);
   Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {

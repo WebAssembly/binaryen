@@ -691,6 +691,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1136,12 +1138,50 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::nullref:
-      return Type::nullref;
+    case BinaryConsts::EncodedType::anyref:
+      return Type::anyref;
+    case BinaryConsts::EncodedType::eqref:
+      return Type::eqref;
+    case BinaryConsts::EncodedType::i31ref:
+      return Type::i31ref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
+  }
+  WASM_UNREACHABLE("unexpeced type");
+}
+
+HeapType WasmBinaryBuilder::getHeapType() {
+  int type = getS32LEB(); // FIXME: s33?
+  // Single value types are negative; signature indices are non-negative
+  if (type >= 0) {
+    // TODO: Handle block input types properly
+    if (size_t(type) >= signatures.size()) {
+      throwError("invalid signature index: " + std::to_string(type));
+    }
+    // TODO: Struct, Array in type section
+    return HeapType(signatures[type]);
+  }
+  switch (type) {
+    case BinaryConsts::EncodedHeapType::func:
+      return HeapType::FuncKind;
+    case BinaryConsts::EncodedHeapType::extern_:
+      return HeapType::ExternKind;
+    case BinaryConsts::EncodedHeapType::any:
+      return HeapType::AnyKind;
+    case BinaryConsts::EncodedHeapType::eq:
+      return HeapType::EqKind;
+    case BinaryConsts::EncodedHeapType::i31:
+      return HeapType::I31Kind;
+    case BinaryConsts::EncodedHeapType::exn:
+      return HeapType::ExnKind;
+    case BinaryConsts::EncodedHeapType::signature:
+    case BinaryConsts::EncodedHeapType::struct_:
+    case BinaryConsts::EncodedHeapType::array:
+      WASM_UNREACHABLE("TODO: structured GC types");
+    default:
+      throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpeced type");
 }
@@ -4689,7 +4729,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
-  curr->finalize();
+  curr->finalize(getHeapType());
 }
 
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {

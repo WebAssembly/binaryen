@@ -45,6 +45,7 @@ const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
+const char* GCFeature = "gc";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -209,8 +210,8 @@ const char* getExpressionName(Expression* curr) {
 Literal getSingleLiteralFromConstExpression(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal::makeNullref();
+  } else if (auto* n = curr->dynCast<RefNull>()) {
+    return Literal::makeNull(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
     return Literal::makeFuncref(r->func);
   } else {
@@ -896,7 +897,16 @@ void Host::finalize() {
   }
 }
 
-void RefNull::finalize() { type = Type::nullref; }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+
+void RefNull::finalize(Type type_) {
+  assert(type_ == Type::unreachable || type_.isNullable());
+  type = type_;
+}
+
+void RefNull::finalize() {
+  assert(type == Type::unreachable || type.isNullable());
+}
 
 void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {

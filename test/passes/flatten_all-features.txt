@@ -2377,50 +2377,46 @@
   (unreachable)
  )
  (func $subtype (result externref)
-  (local $0 nullref)
+  (local $0 externref)
   (local $1 externref)
-  (local $2 nullref)
-  (local $3 nullref)
-  (local $4 nullref)
-  (local $5 nullref)
-  (local $6 nullref)
-  (local $7 externref)
+  (local $2 externref)
+  (local $3 externref)
+  (local $4 externref)
+  (local $5 externref)
+  (local $6 externref)
   (block $label0
    (block $block
     (local.set $1
-     (ref.null)
-    )
-    (local.set $2
-     (ref.null)
+     (ref.null extern)
     )
     (br_if $label0
      (i32.const 0)
     )
-    (local.set $3
-     (local.get $2)
+    (local.set $2
+     (local.get $1)
     )
     (local.set $0
-     (local.get $3)
+     (local.get $2)
     )
-    (local.set $4
+    (local.set $3
      (local.get $0)
     )
-    (local.set $5
-     (local.get $4)
+    (local.set $4
+     (local.get $3)
     )
    )
-   (local.set $6
-    (local.get $5)
+   (local.set $5
+    (local.get $4)
    )
    (local.set $1
-    (local.get $6)
+    (local.get $5)
    )
   )
-  (local.set $7
+  (local.set $6
    (local.get $1)
   )
   (return
-   (local.get $7)
+   (local.get $6)
   )
  )
 )

@@ -766,17 +766,17 @@
 )
 (module
  (type $none_=>_none (func))
- (type $none_=>_funcref (func (result funcref)))
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 nullref)
-  (local $2 funcref)
-  (local $3 funcref)
+ (type $none_=>_externref (func (result externref)))
+ (func $subtype-test (result externref)
+  (local $0 funcref)
+  (local $1 funcref)
+  (local $2 externref)
+  (local $3 externref)
   (block
    (nop)
    (loop $label$1
     (local.set $0
-     (ref.null)
+     (ref.null func)
     )
    )
    (local.set $1
@@ -795,14 +795,14 @@
  )
  (func $test
   (local $0 externref)
-  (local $1 nullref)
-  (local $2 nullref)
+  (local $1 funcref)
+  (local $2 funcref)
   (block $label$1
    (local.set $0
-    (ref.null)
+    (ref.null func)
    )
    (local.set $1
-    (ref.null)
+    (ref.null func)
    )
   )
   (local.set $2

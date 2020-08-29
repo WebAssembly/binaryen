@@ -1799,7 +1799,7 @@
     (call $foo)
     (call $foo)
     (return
-     (ref.null)
+     (ref.null exn)
     )
    )
    (catch
@@ -1811,11 +1811,11 @@
     (call $foo)
     (call $foo)
     (return
-     (ref.null)
+     (ref.null exn)
     )
    )
   )
-  (ref.null)
+  (ref.null exn)
  )
  (func $try-call-optimize-expression-tails
   (local $exn exnref)

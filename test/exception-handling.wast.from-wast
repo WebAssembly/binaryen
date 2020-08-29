@@ -84,7 +84,7 @@
      (block $l0 (result i32)
       (rethrow
        (br_on_exn $l0 $e0
-        (ref.null)
+        (ref.null exn)
        )
       )
      )
@@ -92,7 +92,7 @@
    )
   )
   (throw $e1
-   (ref.null)
+   (ref.null exn)
   )
  )
 )

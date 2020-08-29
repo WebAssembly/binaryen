@@ -50,10 +50,22 @@ static std::string generateSpecWrapper(Module& wasm) {
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
         case Type::funcref:
+          ret += "(ref.null func)";
+          break;
         case Type::externref:
-        case Type::nullref:
+          ret += "(ref.null extern)";
+          break;
+        case Type::anyref:
+          ret += "(ref.null any)";
+          break;
+        case Type::eqref:
+          ret += "(ref.null eq)";
+          break;
         case Type::exnref:
-          ret += "(ref.null)";
+          ret += "(ref.null exn)";
+          break;
+        case Type::i31ref:
+          ret += "(i31.new (i32.const 0))";
           break;
         case Type::none:
         case Type::unreachable:

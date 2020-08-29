@@ -1656,10 +1656,10 @@
  )
 )
 (module
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
+ (func $subtype-test (result externref)
+  (local $0 funcref)
+  (local $1 externref)
+  (local $2 externref)
   (block
    (local.set $1
     (local.get $0)
@@ -1678,7 +1678,7 @@
       (local.set $0
         ;; br_on_exn's target block cannot be optimized to have a return value
         (br_on_exn $label$0 $event$0
-          (ref.null)
+          (ref.null exn)
         )
       )
     )
@@ -1692,7 +1692,7 @@
     (local.set $0
       (block $label$1 (result exnref)
         (br_on_exn $label$1 $event$1
-          (ref.null)
+          (ref.null exn)
         )
       )
     )
@@ -1704,7 +1704,7 @@
     (local.set $0
       (block $label$1 (result i32)
         (try
-          (do (rethrow (ref.null)))
+          (do (rethrow (ref.null exn)))
           (catch)
         )
         (i32.const 0)
@@ -1738,7 +1738,7 @@
         ;; try-catch, so it is OK.
         (local.set $0
           (try (result exnref)
-            (do (ref.null))
+            (do (ref.null exn))
             (catch (exnref.pop))
           )
         )

@@ -68,8 +68,20 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128));
 
+  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
+  console.log("  //", binaryen.expandType(binaryen.funcref));
+
   console.log("  // BinaryenTypeExternref: " + binaryen.externref);
   console.log("  //", binaryen.expandType(binaryen.externref));
+
+  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
+  console.log("  //", binaryen.expandType(binaryen.anyref));
+
+  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
+  console.log("  //", binaryen.expandType(binaryen.eqref));
+
+  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
+  console.log("  //", binaryen.expandType(binaryen.i31ref));
 
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
   console.log("  //", binaryen.expandType(binaryen.exnref));
@@ -100,6 +112,7 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
+  // console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -502,9 +515,9 @@ function test_core() {
     module.return_call_indirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
-    module.ref.is_null(module.ref.null()),
+    module.ref.is_null(module.ref.null(binaryen.externref)),
     module.ref.is_null(module.ref.func("kitchen()sinker")),
-    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), binaryen.funcref),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
 
     // Exception handling
     module.try(
@@ -563,7 +576,9 @@ function test_core() {
     module.v128.pop(),
     module.externref.pop(),
     module.funcref.pop(),
-    module.nullref.pop(),
+    module.anyref.pop(),
+    module.eqref.pop(),
+    module.i31ref.pop(),
     module.exnref.pop(),
     // TODO: Host
     module.nop(),

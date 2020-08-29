@@ -528,9 +528,9 @@ public:
     ret->finalize();
     return ret;
   }
-  RefNull* makeRefNull() {
+  RefNull* makeRefNull(Type type) {
     auto* ret = allocator.alloc<RefNull>();
-    ret->finalize();
+    ret->finalize(type);
     return ret;
   }
   RefIsNull* makeRefIsNull(Expression* value) {
@@ -624,13 +624,17 @@ public:
   Expression* makeConstantExpression(Literal value) {
     TODO_SINGLE_COMPOUND(value.type);
     switch (value.type.getBasic()) {
-      case Type::nullref:
-        return makeRefNull();
       case Type::funcref:
-        if (value.getFunc()[0] != 0) {
+        if (!value.isNull()) {
           return makeRefFunc(value.getFunc());
         }
-        return makeRefNull();
+        return makeRefNull(value.type);
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::exnref: // TODO: ExceptionPackage?
+        assert(value.isNull());
+        return makeRefNull(value.type);
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -822,9 +826,12 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
+      case Type::anyref:
+      case Type::eqref:
       case Type::exnref:
         return ExpressionManipulator::refNull(curr);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref"); // (i31.new (i32.const 0))
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

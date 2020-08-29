@@ -33,36 +33,55 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(const Literal& other) { *this = other; }
+Literal::Literal(const Literal& other) {
+  type = other.type;
+  if (type.isException()) {
+    if (other.exn.hasPackage) {
+      exn.hasPackage = true;
+      new (&exn.package) auto(
+        std::make_unique<ExceptionPackage>(*other.exn.package));
+    } else {
+      exn.hasPackage = false;
+    }
+  } else {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        break;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        break;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        break;
+      case Type::funcref:
+        func = other.func;
+        break;
+      case Type::none:
+        break;
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+        break; // null
+      case Type::i31ref:
+      case Type::exnref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+}
 
 Literal& Literal::operator=(const Literal& other) {
-  type = other.type;
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::funcref:
-      func = other.func;
-      break;
-    case Type::exnref:
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-      break;
-    case Type::none:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
-  }
+  // FIXME (dcode): Destructing the literal seems due, yet doing so corrupts
+  // `exn.package.values`, likely missing a check for equality or having
+  // something to do with passing around literals without `std::move`?
+  // Interestingly, code before the refactoring didn't destruct either.
+  // Affected test: wasm-shell test/spec/exception-handling.wast
+  // this->~Literal();
+  new (this) auto(other);
   return *this;
 }
 
@@ -111,7 +130,7 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    return makeNull(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -190,10 +209,16 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
       memcpy(buf, &v128, sizeof(v128));
       break;
     case Type::funcref:
-    case Type::nullref:
       break;
     case Type::externref:
+    case Type::anyref:
+    case Type::eqref:
     case Type::exnref:
+      if (isNull()) {
+        break;
+      }
+      // falls through
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -201,15 +226,11 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
+  if (isNull() && other.isNull()) {
+    return true;
+  }
+  if (type.isFunction() && other.type.isFunction()) {
+    return func == other.func;
   }
   if (type != other.type) {
     return false;
@@ -340,15 +361,32 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       literal.printVec128(o, literal.getv128());
       break;
     case Type::funcref:
-      o << "funcref(" << literal.getFunc() << ")";
+      if (literal.isNull()) {
+        o << "funcref(null)";
+      } else {
+        o << "funcref(" << literal.getFunc() << ")";
+      }
       break;
-    case Type::nullref:
-      o << "nullref";
+    case Type::anyref:
+      assert(literal.isNull());
+      o << "anyref(null)";
+      break;
+    case Type::eqref:
+      assert(literal.isNull());
+      o << "eqref(null)";
       break;
     case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      if (literal.isNull()) {
+        o << "exnref(null)";
+      } else {
+        o << "exnref(" << literal.getExceptionPackage() << ")";
+      }
       break;
     case Type::externref:
+      assert(literal.isNull());
+      o << "externref(null)";
+      break;
+    case Type::i31ref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -572,7 +610,9 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -594,7 +634,9 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -616,7 +658,9 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -721,7 +765,9 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -743,7 +789,9 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -836,7 +884,9 @@ Literal Literal::mul(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1090,7 +1140,9 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1112,7 +1164,9 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

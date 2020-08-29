@@ -256,11 +256,12 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
   {TypeInfo({Type::externref}), Type::externref},
   {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
-  // TODO (GC): Add canonical ids
-  // * `(ref null any) == anyref`
-  // * `(ref null eq) == eqref`
-  // * `(ref i31) == i31ref`
-  {TypeInfo({Type::nullref}), Type::nullref}, // TODO (removed)
+  {TypeInfo({Type::anyref}), Type::anyref},
+  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
+  {TypeInfo({Type::eqref}), Type::eqref},
+  {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
+  {TypeInfo({Type::i31ref}), Type::i31ref},
+  {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
 };
@@ -347,6 +348,24 @@ bool Type::isRef() const {
   }
 }
 
+bool Type::isFunction() const {
+  if (isBasic()) {
+    return id == funcref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isSignature();
+  }
+}
+
+bool Type::isException() const {
+  if (isBasic()) {
+    return id == exnref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isException();
+  }
+}
+
 bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
@@ -389,7 +408,9 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -432,8 +453,11 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::SIMD;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
         return FeatureSet::ReferenceTypes;
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       default:
@@ -449,6 +473,31 @@ FeatureSet Type::getFeatures() const {
     return feats;
   }
   return getSingleFeatures(*this);
+}
+
+HeapType Type::getHeapType() const {
+  if (isRef()) {
+    if (isCompound()) {
+      return getTypeInfo(*this)->ref.heapType;
+    }
+    switch (getBasic()) {
+      case funcref:
+        return HeapType::FuncKind;
+      case externref:
+        return HeapType::ExternKind;
+      case anyref:
+        return HeapType::AnyKind;
+      case eqref:
+        return HeapType::EqKind;
+      case i31ref:
+        return HeapType::I31Kind;
+      case exnref:
+        return HeapType::ExnKind;
+      default:
+        break;
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -471,9 +520,61 @@ bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
-  if (left.isRef() && right.isRef() &&
-      (right == Type::externref || left == Type::nullref)) {
-    return true;
+  if (left.isRef() && right.isRef()) {
+    // ╒═══════ HeapType ═══════╕ ╒═════ ValueType ═════╕
+    // │         extern         │ │        (any)        │
+    // │            │           │ │      ┌───┴───┐      │
+    // │           any          │ │  rtt n ht   ...     │
+    // │      ┌─────┼─────┐     │ │      │              │
+    // │    func    eq   exn    │ │  rtt n'>=n ht       │
+    // │      │     │           │ └─────────────────────┘
+    // │ signature* │           │ ╒════════ Ref ════════╕
+    // │            │           │ │     ref null ht     │
+    // │      ┌─────┼─────┐     │ │          │          │
+    // │    i31  struct* array* │ │        ref ht       │
+    // └────────────────────────┘ └─────────────────────┘
+    if (left.isNullable() && !right.isNullable()) {
+      // (ref null ht) is not a subtype of (ref ht)
+      return false;
+    }
+    auto leftHeapType = left.getHeapType();
+    auto rightHeapType = right.getHeapType();
+    switch (rightHeapType.kind) {
+      case HeapType::FuncKind:
+        // any function reference type is a subtype
+        switch (leftHeapType.kind) {
+          case HeapType::FuncKind:
+          case HeapType::SignatureKind:
+            return true;
+          default:
+            return false;
+        }
+      case HeapType::ExternKind:
+        // any reference type
+        return true;
+      case HeapType::AnyKind:
+        // any reference type except externref
+        return left != Type::externref;
+      case HeapType::EqKind:
+        // i31, struct, array and itself
+        switch (leftHeapType.kind) {
+          case HeapType::EqKind:
+          case HeapType::I31Kind:
+          case HeapType::StructKind:
+          case HeapType::ArrayKind:
+            return true;
+          default:
+            return false;
+        }
+      case HeapType::I31Kind:
+      case HeapType::ExnKind:
+      case HeapType::StructKind:
+      case HeapType::ArrayKind:     // TODO: structural subtyping
+      case HeapType::SignatureKind: // "
+        // exactly itself
+        return leftHeapType == rightHeapType;
+    }
+    WASM_UNREACHABLE("unexpected kind");
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
@@ -485,6 +586,12 @@ bool Type::isSubType(Type left, Type right) {
       }
     }
     return true;
+  }
+  if (left.isRtt() && right.isRtt()) {
+    auto leftRtt = getTypeInfo(left)->rtt;
+    auto rightRtt = getTypeInfo(right)->rtt;
+    return leftRtt.depth >= rightRtt.depth &&
+           leftRtt.heapType == rightRtt.heapType;
   }
   return false;
 }
@@ -513,16 +620,147 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
+  if (a.isRtt() && b.isRtt()) {
+    auto aRtt = getTypeInfo(a)->rtt;
+    auto bRtt = getTypeInfo(b)->rtt;
+    if (aRtt.heapType == bRtt.heapType) {
+      return Type(Rtt(std::min(aRtt.depth, bRtt.depth), aRtt.heapType));
+    }
+    return Type::none;
+  }
   if (!a.isRef() || !b.isRef()) {
     return Type::none;
   }
-  if (a == Type::nullref) {
-    return b;
+  // ╒═══════ HeapType ═══════╕ ╒═════ ValueType ═════╕
+  // │         extern         │ │        (any)        │
+  // │            │           │ │      ┌───┴───┐      │
+  // │           any          │ │  rtt n ht   ...     │
+  // │      ┌─────┼─────┐     │ │      │              │
+  // │    func    eq   exn    │ │  rtt n'>=n ht       │
+  // │      │     │           │ └─────────────────────┘
+  // │ signature* │           │ ╒════════ Ref ════════╕
+  // │            │           │ │     ref null ht     │
+  // │      ┌─────┼─────┐     │ │          │          │
+  // │    i31  struct* array* │ │        ref ht       │
+  // └────────────────────────┘ └─────────────────────┘
+  auto aHeapType = a.getHeapType();
+  auto bHeapType = b.getHeapType();
+  auto nullable = a.isNullable() || b.isNullable();
+  if (aHeapType == bHeapType) {
+    return Type(aHeapType, nullable);
   }
-  if (b == Type::nullref) {
-    return a;
+  // not the exact same Signature, Struct or Array from here on
+  switch (aHeapType.kind) {
+    case HeapType::FuncKind:
+    case HeapType::SignatureKind:
+      switch (bHeapType.kind) {
+        case HeapType::FuncKind:
+        case HeapType::SignatureKind:
+          return Type(HeapType::FuncKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::AnyKind:
+        case HeapType::EqKind:
+        case HeapType::I31Kind:
+        case HeapType::ExnKind:
+        case HeapType::StructKind:
+        case HeapType::ArrayKind:
+          return Type(HeapType::AnyKind, nullable);
+      }
+      break;
+    case HeapType::ExternKind:
+      return Type(HeapType::ExternKind, nullable);
+    case HeapType::AnyKind:
+      if (bHeapType.kind == HeapType::ExternKind) {
+        return Type(HeapType::ExternKind, nullable);
+      }
+      return Type(HeapType::AnyKind, nullable);
+    case HeapType::EqKind:
+      switch (bHeapType.kind) {
+        case HeapType::FuncKind:
+        case HeapType::SignatureKind:
+        case HeapType::ExnKind:
+          return Type(HeapType::AnyKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::AnyKind:
+          return Type(HeapType::AnyKind, nullable);
+        case HeapType::EqKind:
+        case HeapType::I31Kind:
+        case HeapType::StructKind:
+        case HeapType::ArrayKind:
+          return Type(HeapType::EqKind, nullable);
+      }
+      break;
+    case HeapType::ExnKind:
+      switch (bHeapType.kind) {
+        case HeapType::ExnKind:
+          return Type(HeapType::ExnKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::FuncKind:
+        case HeapType::AnyKind:
+        case HeapType::EqKind:
+        case HeapType::I31Kind:
+        case HeapType::SignatureKind:
+        case HeapType::StructKind:
+        case HeapType::ArrayKind:
+          return Type(HeapType::AnyKind, nullable);
+      }
+      break;
+    case HeapType::I31Kind:
+      switch (bHeapType.kind) {
+        case HeapType::I31Kind:
+          return Type(HeapType::I31Kind, nullable);
+        case HeapType::EqKind:
+        case HeapType::StructKind:
+        case HeapType::ArrayKind:
+          return Type(HeapType::EqKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::AnyKind:
+          return Type(HeapType::AnyKind, nullable);
+        case HeapType::FuncKind:
+        case HeapType::SignatureKind:
+        case HeapType::ExnKind:
+          return Type(HeapType::AnyKind, nullable);
+      }
+      break;
+    case HeapType::StructKind:
+      switch (bHeapType.kind) {
+        case HeapType::EqKind:
+        case HeapType::I31Kind:
+        case HeapType::StructKind: // TODO: structual subtyping
+        case HeapType::ArrayKind:
+          return Type(HeapType::EqKind, nullable);
+        case HeapType::FuncKind:
+        case HeapType::SignatureKind:
+        case HeapType::ExnKind:
+          return Type(HeapType::AnyKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::AnyKind:
+          return Type(HeapType::AnyKind, nullable);
+      }
+      break;
+    case HeapType::ArrayKind:
+      switch (bHeapType.kind) {
+        case HeapType::FuncKind:
+        case HeapType::SignatureKind:
+        case HeapType::AnyKind:
+        case HeapType::ExnKind:
+          return Type(HeapType::AnyKind, nullable);
+        case HeapType::ExternKind:
+          return Type(HeapType::ExternKind, nullable);
+        case HeapType::EqKind:
+        case HeapType::I31Kind:
+        case HeapType::StructKind:
+        case HeapType::ArrayKind: // TODO: structural subtyping
+          return Type(HeapType::EqKind, nullable);
+      }
+      break;
   }
-  return Type::externref;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type::Iterator Type::end() const {
@@ -554,8 +792,7 @@ const Type& Type::operator[](size_t index) const {
   }
 }
 
-HeapType::HeapType(const HeapType& other) {
-  kind = other.kind;
+HeapType::HeapType(const HeapType& other) : kind(other.kind) {
   switch (kind) {
     case FuncKind:
     case ExternKind:
@@ -708,8 +945,14 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       case Type::externref:
         os << "externref";
         break;
-      case Type::nullref:
-        os << "nullref";
+      case Type::anyref:
+        os << "anyref";
+        break;
+      case Type::eqref:
+        os << "eqref";
+        break;
+      case Type::i31ref:
+        os << "i31ref";
         break;
       case Type::exnref:
         os << "exnref";
