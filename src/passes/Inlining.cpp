@@ -48,13 +48,15 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
-  std::atomic<bool> lightweight;
+  std::atomic<bool> hasCalls;
+  std::atomic<bool> hasLoops;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
     refs = 0;
     size = 0;
-    lightweight = true;
+    hasCalls = false;
+    hasLoops = false;
     usedGlobally = false;
   }
 
@@ -83,8 +85,10 @@ struct FunctionInfo {
     // so only worth it if we really care about speed and don't care
     // about size, and if it's lightweight so a good candidate for
     // speeding us up.
+    bool lightweight = !(hasCalls || hasLoops);
+    bool allowHeavyweight = !hasCalls && options.inlining.allowHeavyweight;
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (lightweight || options.inlining.allowHeavyweight);
+           (lightweight || allowHeavyweight);
   }
 };
 
@@ -101,16 +105,16 @@ struct FunctionInfoScanner
   }
 
   void visitLoop(Loop* curr) {
-    // having a loop is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a loop
+    (*infos)[getFunction()->name].hasLoops = true;
   }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].refs++;
-    // having a call is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a call
+    (*infos)[getFunction()->name].hasCalls = true;
   }
 
   void visitRefFunc(RefFunc* curr) {
