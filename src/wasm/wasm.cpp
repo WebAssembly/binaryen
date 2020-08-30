@@ -213,7 +213,7 @@ Literal getSingleLiteralFromConstExpression(Expression* curr) {
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal::makeNull(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal::makeFuncref(r->func);
+    return Literal::makeFunc(r->func);
   } else {
     WASM_UNREACHABLE("Not a constant expression");
   }

@@ -1257,7 +1257,7 @@ public:
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFuncref(curr->func);
+    return Literal::makeFunc(curr->func);
   }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1268,12 +1268,11 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->event);
-    auto exn = std::make_unique<ExceptionPackage>();
-    exn->event = curr->event;
+    ExceptionPackage exn(curr->event);
     for (auto item : arguments) {
-      exn->values.push_back(item);
+      exn.values.push_back(item);
     }
-    throwException(Literal(std::move(exn)));
+    throwException(Literal::makeExn(exn));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {

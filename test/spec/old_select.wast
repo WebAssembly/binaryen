@@ -112,7 +112,7 @@
 (assert_return (invoke "select-f64-t" (f64.const 2) (f64.const nan:0x20304) (i32.const 0)) (f64.const nan:0x20304))
 
 (assert_return_func (invoke "join-funcref" (i32.const 1)))
-(assert_return (invoke "join-funcref" (i32.const 0)) (ref.null func))
+(assert_return (invoke "join-funcref" (i32.const 0)) (ref.null extern))
 
 (assert_return_func (invoke "join-externref" (i32.const 1) (ref.null extern)))
 (assert_return (invoke "join-externref" (i32.const 0) (ref.null extern)) (ref.null extern))

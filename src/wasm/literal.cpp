@@ -33,16 +33,14 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(const Literal& other) {
-  type = other.type;
+Literal::Literal(const Literal& other) : type(other.type), v128() {
   if (type.isException()) {
-    if (other.exn.hasPackage) {
-      exn.hasPackage = true;
-      new (&exn.package) auto(
-        std::make_unique<ExceptionPackage>(*other.exn.package));
-    } else {
-      exn.hasPackage = false;
-    }
+    auto* otherExn = other.exn;
+    exn = otherExn != nullptr
+            ? new ExceptionPackage(otherExn->event, otherExn->values)
+            : nullptr;
+  } else if (type.isFunction()) {
+    func = other.func;
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -57,15 +55,13 @@ Literal::Literal(const Literal& other) {
       case Type::v128:
         memcpy(&v128, other.v128, 16);
         break;
-      case Type::funcref:
-        func = other.func;
-        break;
       case Type::none:
         break;
       case Type::externref:
       case Type::anyref:
       case Type::eqref:
         break; // null
+      case Type::funcref:
       case Type::i31ref:
       case Type::exnref:
       case Type::unreachable:
@@ -74,14 +70,24 @@ Literal::Literal(const Literal& other) {
   }
 }
 
+Literal::Literal(ExceptionPackage& exn_) : type(Type::exnref) {
+  exn = new ExceptionPackage(exn_);
+}
+
+Literal::~Literal() {
+  if (type.isException() && exn != nullptr) {
+    delete exn;
+    exn = nullptr;
+  }
+}
+
 Literal& Literal::operator=(const Literal& other) {
-  // FIXME (dcode): Destructing the literal seems due, yet doing so corrupts
-  // `exn.package.values`, likely missing a check for equality or having
-  // something to do with passing around literals without `std::move`?
-  // Interestingly, code before the refactoring didn't destruct either.
-  // Affected test: wasm-shell test/spec/exception-handling.wast
-  // this->~Literal();
-  new (this) auto(other);
+  if (&other != this) {
+    // FIXME: uncommenting this explodes with memory corruption in
+    // wasm-shell test/spec/exception-handling.wast
+    // this->~Literal();
+    new (this) auto(other);
+  }
   return *this;
 }
 
@@ -145,29 +151,29 @@ std::array<uint8_t, 16> Literal::getv128() const {
 
 Literal Literal::castToF32() {
   assert(type == Type::i32);
-  Literal ret(i32);
-  ret.type = Type::f32;
+  Literal ret(Type::f32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToF64() {
   assert(type == Type::i64);
-  Literal ret(i64);
-  ret.type = Type::f64;
+  Literal ret(Type::f64);
+  ret.i64 = i64;
   return ret;
 }
 
 Literal Literal::castToI32() {
   assert(type == Type::f32);
-  Literal ret(i32);
-  ret.type = Type::i32;
+  Literal ret(Type::i32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToI64() {
   assert(type == Type::f64);
-  Literal ret(i64);
-  ret.type = Type::i64;
+  Literal ret(Type::i64);
+  ret.i64 = i64;
   return ret;
 }
 
@@ -226,17 +232,21 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (isNull() && other.isNull()) {
-    return true;
-  }
-  if (type.isFunction() && other.type.isFunction()) {
-    return func == other.func;
-  }
   if (type != other.type) {
     return false;
   }
   if (type == Type::none) {
     return true;
+  }
+  if (isNull() || other.isNull()) {
+    return isNull() == other.isNull();
+  }
+  if (type.isFunction()) {
+    return func == other.func;
+  }
+  if (type.isException()) {
+    assert(exn != nullptr && other.exn != nullptr);
+    return *exn == *other.exn;
   }
   uint8_t bits[16], other_bits[16];
   getBits(bits);

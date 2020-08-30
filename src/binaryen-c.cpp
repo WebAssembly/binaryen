@@ -100,7 +100,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::v128:
       return Literal(x.v128);
     case Type::funcref:
-      return Literal::makeFuncref(x.func);
+      return Literal::makeFunc(x.func);
     case Type::externref:
     case Type::anyref:
     case Type::eqref:

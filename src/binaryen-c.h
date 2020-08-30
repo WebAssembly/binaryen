@@ -233,6 +233,7 @@ struct BinaryenLiteral {
     double f64;
     uint8_t v128[16];
     const char* func;
+    // std::unique_ptr exn;
   };
 };
 

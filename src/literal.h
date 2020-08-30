@@ -33,40 +33,42 @@ class Literals;
 struct ExceptionPackage;
 
 class Literal {
+public:
+  // Type of the literal. Immutable because the literal's payload depends on it.
+  const Type type;
+
+private:
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
-  struct Exn {
-    bool hasPackage;
-    std::unique_ptr<ExceptionPackage> package; // only valid if hasPackage
-  };
   union {
+    // i32 or f32 bits
     int32_t i32;
+    // i64 or f64 bits
     int64_t i64;
+    // v128 bytes
     uint8_t v128[16];
-    Name func; // function name for funcref
-    Exn exn;
-    // TODO: literals of other reference types can only be `null`
+    // funcref function name. not set indicates `null`.
+    Name func;
+    // exnref package. `nullptr` indicates `null`. we use a pointer here to
+    // limit storage size, with the lifetime of the data managed by the literal.
+    ExceptionPackage* exn;
+    // literals of other reference types can only be `null`
   };
 
 public:
-  Type type;
-
-public:
-  Literal() : v128(), type(Type::none) {}
-  explicit Literal(Type type) : v128(), type(type) {
+  Literal() : type(Type::none), v128() {}
+  explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
+  explicit Literal(Type type) : type(type), v128() {
     assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-    if (type.isException()) {
-      exn.hasPackage = false;
-    }
   }
-  explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
-  explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
-  explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
-  explicit Literal(uint64_t init) : i64(init), type(Type::i64) {}
+  explicit Literal(int32_t init) : type(Type::i32), i32(init) {}
+  explicit Literal(uint32_t init) : type(Type::i32), i32(init) {}
+  explicit Literal(int64_t init) : type(Type::i64), i64(init) {}
+  explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
   explicit Literal(float init)
-    : i32(bit_cast<int32_t>(init)), type(Type::f32) {}
+    : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double init)
-    : i64(bit_cast<int64_t>(init)), type(Type::f64) {}
+    : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
   // v128 literal from bytes
   explicit Literal(const uint8_t init[16]);
   // v128 literal from lane value literals
@@ -74,17 +76,11 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func) : func(func), type(Type::funcref) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage> package)
-    : exn{true, std::move(package)}, type(Type::exnref) {}
+  explicit Literal(Name func) : type(Type::funcref), func(func) {}
+  explicit Literal(ExceptionPackage& exn_);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
-  ~Literal() {
-    if (type.isException() && exn.hasPackage) {
-      exn.hasPackage = false;
-      exn.package.~unique_ptr();
-    }
-  }
+  ~Literal();
 
   bool isConcrete() const { return type != Type::none; }
   bool isNone() const { return type == Type::none; }
@@ -94,7 +90,7 @@ public:
         return func.isNull();
       }
       if (type.isException()) {
-        return !exn.hasPackage;
+        return exn == nullptr;
       }
       return true;
     }
@@ -124,11 +120,12 @@ public:
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
 
-  static Literal makeNull(Type type) { return Literal(type); }
-  static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
-  static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
-    return Literal(std::move(exn));
+  static Literal makeNull(Type type) {
+    assert(type.isRef());
+    return Literal(type);
   }
+  static Literal makeFunc(Name func) { return Literal(func.c_str()); }
+  static Literal makeExn(ExceptionPackage& package) { return Literal(package); }
 
   Literal castToF32();
   Literal castToF64();
@@ -157,8 +154,8 @@ public:
     return func;
   }
   const ExceptionPackage& getExceptionPackage() const {
-    assert(type.isException() && exn.hasPackage);
-    return *exn.package.get();
+    assert(type.isException() && exn != nullptr);
+    return *exn;
   }
 
   // careful!
@@ -524,6 +521,17 @@ public:
 struct ExceptionPackage {
   Name event;
   Literals values;
+  ExceptionPackage(Name event) : event(event), values() {}
+  ExceptionPackage(Name event, Literals values)
+    : event(event), values(values) {}
+  ExceptionPackage(const ExceptionPackage& other)
+    : event(other.event), values(other.values) {}
+  bool operator==(const ExceptionPackage& other) const {
+    return event == other.event && values == other.values;
+  }
+  bool operator!=(const ExceptionPackage& other) const {
+    return !(*this == other);
+  }
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
