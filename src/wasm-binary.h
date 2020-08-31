@@ -1035,7 +1035,7 @@ inline S32LEB binaryHeapType(HeapType type) {
     case HeapType::ArrayKind:
       WASM_UNREACHABLE("TODO: structured GC types");
   }
-  return S32LEB(ret); // FIXME: s33?
+  return S32LEB(ret); // TODO: Actually encoded as s33
 }
 
 // Writes out wasm to the binary format

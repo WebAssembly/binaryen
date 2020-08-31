@@ -1153,10 +1153,9 @@ Type WasmBinaryBuilder::getType() {
 }
 
 HeapType WasmBinaryBuilder::getHeapType() {
-  int type = getS32LEB(); // FIXME: s33?
-  // Single value types are negative; signature indices are non-negative
+  int type = getS32LEB(); // TODO: Actually encoded as s33
+  // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
-    // TODO: Handle block input types properly
     if (size_t(type) >= signatures.size()) {
       throwError("invalid signature index: " + std::to_string(type));
     }
