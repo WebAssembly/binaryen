@@ -1268,11 +1268,12 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->event);
-    ExceptionPackage exn(curr->event);
+    auto exn = std::make_unique<ExceptionPackage>();
+    exn->event = curr->event;
     for (auto item : arguments) {
-      exn.values.push_back(item);
+      exn->values.push_back(item);
     }
-    throwException(Literal::makeExn(exn));
+    throwException(Literal(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
