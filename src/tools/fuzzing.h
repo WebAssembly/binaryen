@@ -319,24 +319,19 @@ private:
       TODO_SINGLE_COMPOUND(type);
       switch (type.getBasic()) {
         case Type::externref:
-          if (wasm.features.hasGC()) {
-            options.push_back(Type::anyref);
-          }
-          // falls through
-        case Type::anyref:
-          options.push_back(Type::funcref); // TODO: incl. funcref case
-          if (wasm.features.hasGC()) {
-            options.push_back(Type::eqref); // TODO: incl. eqref case
-          }
+          options.push_back(Type::funcref);
           if (wasm.features.hasExceptionHandling()) {
             options.push_back(Type::exnref);
           }
-          break;
+          // falls through
         case Type::funcref:
-          // TODO: compound signature?
+        case Type::exnref:
           break;
+        case Type::anyref:
         case Type::eqref:
-          // TODO: compound struct/array?
+        case Type::i31ref:
+          // TODO: GC types
+          WASM_UNREACHABLE("unexpected GC type");
           break;
         default:
           break;
@@ -2642,26 +2637,19 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    Type refType;
+    SmallVector<Type, 2> options;
+    options.push_back(Type::externref);
+    options.push_back(Type::funcref);
     if (wasm.features.hasExceptionHandling()) {
-      if (wasm.features.hasGC()) {
-        refType = pick(Type::funcref,
-                       Type::externref,
-                       Type::anyref,
-                       Type::eqref,
-                       Type::exnref);
-      } else {
-        refType = pick(Type::funcref, Type::externref, Type::exnref);
-      }
-    } else {
-      if (wasm.features.hasGC()) {
-        refType =
-          pick(Type::funcref, Type::externref, Type::anyref, Type::eqref);
-      } else {
-        refType = pick(Type::funcref, Type::externref);
-      }
+      options.push_back(Type::exnref);
     }
-    return builder.makeRefIsNull(make(refType));
+    // TODO: GC types
+    // if (wasm.features.hasGC()) {
+    //   options.push_back(Type::anyref);
+    //   options.push_back(Type::eqref);
+    //   options.push_back(Type::i31ref);
+    // }
+    return builder.makeRefIsNull(make(pick(options)));
   }
 
   Expression* makeMemoryInit() {
@@ -2725,10 +2713,11 @@ private:
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-             Type::anyref,
-             Type::eqref,
-             Type::i31ref)
+        // TODO: GC types
+        // .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+        //      Type::anyref,
+        //      Type::eqref,
+        //      Type::i31ref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
