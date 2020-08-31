@@ -1090,7 +1090,7 @@ public:
 };
 
 class RefNull : public SpecificExpression<Expression::RefNullId> {
-public :
+public:
   RefNull() = default;
   RefNull(MixedArena& allocator) {}
 };

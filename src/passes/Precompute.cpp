@@ -135,7 +135,7 @@ struct Precompute
             return;
           }
         } else if (singleValue.isNull()) {
-          if (auto *n = curr->value->template dynCast<RefNull>()) {
+          if (auto* n = curr->value->template dynCast<RefNull>()) {
             n->type = singleValue.type;
             n->finalize();
             curr->finalize();

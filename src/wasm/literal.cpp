@@ -206,7 +206,7 @@ bool Literal::operator==(const Literal& other) const {
   }
   if (type.isRef() && other.type.isRef()) {
     if (type == Type::funcref && other.type == Type::funcref) {
-      return (isNull() && other.isNull() )|| (getFunc() == other.getFunc());
+      return (isNull() && other.isNull()) || (getFunc() == other.getFunc());
     }
     if (type == Type::exnref && other.type == Type::exnref) {
       return (isNull() && other.isNull()) ||

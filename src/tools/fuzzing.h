@@ -2654,9 +2654,7 @@ private:
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes,
-             Type::funcref,
-             Type::externref)
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
