@@ -58,8 +58,7 @@ Literal& Literal::operator=(const Literal& other) {
       break;
     case Type::exnref:
       // Avoid calling the destructor, which may not be correct
-      new (&exn) auto(
-        std::move(std::make_unique<ExceptionPackage>(*other.exn)));
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
       break;
     case Type::none:
     case Type::nullref:
