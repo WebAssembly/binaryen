@@ -255,15 +255,10 @@ int main(int argc, const char* argv[]) {
 
   std::vector<Name> initializerFunctions;
 
-  if (wasm.table.imported()) {
-    if (wasm.table.base != "table") {
-      wasm.table.base = Name("table");
-    }
-  }
-  if (wasm.memory.imported()) {
-    if (wasm.table.base != "memory") {
-      wasm.memory.base = Name("memory");
-    }
+  // The wasm backend emits "__indirect_function_table" as the import name for
+  // the table, while older emscripten expects "table"
+  if (wasm.table.imported() && wasm.table.base != "table" && !minimizeWasmChanges) {
+    wasm.table.base = Name("table");
   }
   wasm.updateMaps();
 
