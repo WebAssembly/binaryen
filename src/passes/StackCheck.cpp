@@ -119,14 +119,11 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
         builder.makeBinary(
           BinaryOp::GtUInt32,
           builder.makeLocalTee(newSP, value, stackPointer->type),
-          builder.makeGlobalGet(stackBase->name, stackBase->type)
-        ),
+          builder.makeGlobalGet(stackBase->name, stackBase->type)),
         builder.makeBinary(
           BinaryOp::LtUInt32,
           builder.makeLocalGet(newSP, stackPointer->type),
-          builder.makeGlobalGet(stackLimit->name, stackLimit->type)
-        )
-      ),
+          builder.makeGlobalGet(stackLimit->name, stackLimit->type))),
       handlerExpr);
     // (global.set $__stack_pointer (local.get $newSP))
     auto newSet = builder.makeGlobalSet(
