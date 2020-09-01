@@ -47,8 +47,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     if (!other.exn) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     } else {
-      new (&exn) auto(
-        std::move(std::make_unique<ExceptionPackage>(*other.exn)));
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
     }
   } else if (type.isFunction()) {
     func = other.func;
