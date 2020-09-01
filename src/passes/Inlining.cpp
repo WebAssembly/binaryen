@@ -83,8 +83,8 @@ struct FunctionInfo {
     }
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size, and if it's lightweight (hasn't loops of calls)
-    // so a good candidate for speeding us up.
+    // about size, and if it hasn't calls so a good candidate
+    // for speeding us up.
     if (hasCalls) {
       return false;
     }
