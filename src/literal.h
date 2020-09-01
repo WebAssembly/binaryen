@@ -135,10 +135,7 @@ public:
     assert(type == Type::funcref);
     return func;
   }
-  const ExceptionPackage& getExceptionPackage() const {
-    assert(type == Type::exnref);
-    return *exn.get();
-  }
+  ExceptionPackage getExceptionPackage() const;
 
   // careful!
   int32_t* geti32Ptr() {

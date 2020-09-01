@@ -36,6 +36,9 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 Literal::Literal(const Literal& other) { *this = other; }
 
 Literal& Literal::operator=(const Literal& other) {
+  if (type == Type::exnref) {
+    exn.~unique_ptr();
+  }
   type = other.type;
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
@@ -54,7 +57,9 @@ Literal& Literal::operator=(const Literal& other) {
       func = other.func;
       break;
     case Type::exnref:
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+      // Avoid calling the destructor, which may not be correct
+      new (&exn) auto(
+        std::move(std::make_unique<ExceptionPackage>(*other.exn)));
       break;
     case Type::none:
     case Type::nullref:
@@ -122,6 +127,11 @@ std::array<uint8_t, 16> Literal::getv128() const {
   std::array<uint8_t, 16> ret;
   memcpy(ret.data(), v128, sizeof(ret));
   return ret;
+}
+
+ExceptionPackage Literal::getExceptionPackage() const {
+  assert(type == Type::exnref);
+  return *exn.get();
 }
 
 Literal Literal::castToF32() {

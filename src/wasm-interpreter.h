@@ -1297,7 +1297,7 @@ public:
     if (flow.getType() == Type::nullref) {
       trap("br_on_exn: argument is null");
     }
-    const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
+    auto ex = flow.getSingleValue().getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
