@@ -65,7 +65,7 @@ public:
   Name breakTo; // if non-null, a break is going on
 
   // A helper function for the common case where there is only one value
-  const Literal getSingleValue() {
+  const Literal& getSingleValue() {
     assert(values.size() == 1);
     return values[0];
   }
@@ -1250,7 +1250,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto value = flow.getSingleValue();
+    const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(value.isNull());
   }
@@ -1268,12 +1268,12 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->event);
-    auto exn = std::make_unique<ExceptionPackage>();
-    exn->event = curr->event;
+    ExceptionPackage exn;
+    exn.event = curr->event;
     for (auto item : arguments) {
-      exn->values.push_back(item);
+      exn.values.push_back(item);
     }
-    throwException(Literal(std::move(exn)));
+    throwException(Literal::makeExn(exn));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1282,7 +1282,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto value = flow.getSingleValue();
+    const auto& value = flow.getSingleValue();
     if (value.isNull()) {
       trap("rethrow: argument is null");
     }
@@ -1295,7 +1295,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto value = flow.getSingleValue();
+    const auto& value = flow.getSingleValue();
     if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }

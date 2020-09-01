@@ -44,7 +44,7 @@ private:
     // funcref function name. not set indicates `null`.
     Name func;
     // exnref package. not set indicates `null`.
-    std::unique_ptr<ExceptionPackage> exn;
+    ExceptionPackage* exn;
     // literals of other reference types can only be `null`
   };
 
@@ -72,8 +72,7 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
-    : exn(std::move(exn)), type(Type::exnref) {}
+  explicit Literal(ExceptionPackage& exn);
   Literal(const Literal& other);
   ~Literal();
   Literal& operator=(const Literal& other);
@@ -121,9 +120,7 @@ public:
     return Literal(type);
   }
   static Literal makeFunc(Name func) { return Literal(func.c_str()); }
-  static Literal makeExnref(std::unique_ptr<ExceptionPackage>&& exn) {
-    return Literal(std::move(exn));
-  }
+  static Literal makeExn(ExceptionPackage& exn) { return Literal(exn); }
 
   Literal castToF32();
   Literal castToF64();

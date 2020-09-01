@@ -29,26 +29,20 @@ namespace wasm {
 
 template<int N> using LaneArray = std::array<Literal, N>;
 
-Literal::Literal(Type type) : type(type) {
+Literal::Literal(Type type) : v128(), type(type) {
   assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-  if (type.isException()) {
-    new (&exn) std::unique_ptr<ExceptionPackage>();
-  } else {
-    memset(&v128, 0, 16);
-  }
 }
 
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(ExceptionPackage& exn)
+  : exn(new ExceptionPackage(exn)), type(Type::exnref) {}
+
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
-    if (!other.exn) {
-      new (&exn) std::unique_ptr<ExceptionPackage>();
-    } else {
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-    }
+    exn = other.exn ? new ExceptionPackage(*other.exn) : nullptr;
   } else if (type.isFunction()) {
     func = other.func;
   } else {
@@ -82,7 +76,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
 
 Literal::~Literal() {
   if (type.isException()) {
-    exn.~unique_ptr();
+    delete exn;
   }
 }
 
