@@ -14,21 +14,94 @@ using namespace wasm;
 MixedArena allocator;
 Builder builder(allocator);
 
-void test_compact() {
-  std::cout << ";; Test compact\n";
-  auto* block = builder.makeBlock({
-    builder.makeNop(),
-    builder.makeConst(Literal(int32_t(0))),
-    builder.makeNop(),
-    builder.makeConst(Literal(int64_t(0))),
-    builder.makeNop(),
-    builder.makeNop(),
-  });
+void test_remove_nops() {
+  std::cout << ";; Test removeNops\n";
+  auto* block = builder.makeBlock(
+    {
+      builder.makeNop(),
+      builder.makeConst(Literal(int32_t(0))),
+      builder.makeNop(),
+      builder.makeConst(Literal(int64_t(0))),
+      builder.makeNop(),
+      builder.makeNop(),
+    },
+    {Type::i32, Type::i64});
   WasmPrinter::printExpression(block, std::cout);
   std::cout << "\n";
-  StackUtils::compact(block);
+  StackUtils::removeNops(block);
   WasmPrinter::printExpression(block, std::cout);
   std::cout << "\n";
+}
+
+void test_stack_signatures() {
+  std::cout << ";; Test stack signatures\n";
+  // Typed block
+  auto* block = builder.makeBlock({builder.makeUnreachable()}, Type::f32);
+  assert(StackSignature(block) ==
+         (StackSignature{Type::none, Type::f32, false}));
+  // Unreachable block
+  auto* unreachable =
+    builder.makeBlock({builder.makeUnreachable()}, Type::unreachable);
+  assert(StackSignature(unreachable) ==
+         (StackSignature{Type::none, Type::none, true}));
+  {
+    // Typed loop
+    auto* loop = builder.makeLoop("loop", unreachable, Type::f32);
+    assert(StackSignature(loop) ==
+           (StackSignature{Type::none, Type::f32, false}));
+  }
+  {
+    // Unreachable loop
+    auto* loop = builder.makeLoop("loop", unreachable, Type::unreachable);
+    assert(StackSignature(loop) ==
+           (StackSignature{Type::none, Type::none, true}));
+  }
+  {
+    // If (no else)
+    auto* if_ = builder.makeIf(
+      builder.makePop(Type::i32), unreachable, nullptr, Type::none);
+    assert(StackSignature(if_) ==
+           (StackSignature{Type::i32, Type::none, false}));
+  }
+  {
+    // If (with else)
+    auto* if_ =
+      builder.makeIf(builder.makePop(Type::i32), block, block, Type::f32);
+    assert(StackSignature(if_) ==
+           (StackSignature{Type::i32, Type::f32, false}));
+  }
+  {
+    // Call
+    auto* call =
+      builder.makeCall("foo",
+                       {builder.makePop(Type::i32), builder.makePop(Type::f32)},
+                       {Type::i64, Type::f64});
+    assert(
+      StackSignature(call) ==
+      (StackSignature{{Type::i32, Type::f32}, {Type::i64, Type::f64}, false}));
+  }
+  {
+    // Return Call
+    auto* call =
+      builder.makeCall("bar",
+                       {builder.makePop(Type::i32), builder.makePop(Type::f32)},
+                       Type::unreachable,
+                       true);
+    assert(StackSignature(call) ==
+           (StackSignature{{Type::i32, Type::f32}, Type::none, true}));
+  }
+  {
+    // Return
+    auto* ret = builder.makeReturn(builder.makePop(Type::i32));
+    assert(StackSignature(ret) ==
+           (StackSignature{Type::i32, Type::none, true}));
+  }
+  {
+    // Multivalue return
+    auto* ret = builder.makeReturn(builder.makePop({Type::i32, Type::f32}));
+    assert(StackSignature(ret) ==
+           (StackSignature{{Type::i32, Type::f32}, Type::none, true}));
+  }
 }
 
 void test_signature_composition() {
@@ -362,7 +435,8 @@ void test_stack_flow() {
 }
 
 int main() {
-  test_compact();
+  test_remove_nops();
+  test_stack_signatures();
   test_signature_composition();
   test_signature_satisfaction();
   test_stack_flow();

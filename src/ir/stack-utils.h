@@ -14,6 +14,50 @@
  * limitations under the License.
  */
 
+//
+// stack-utils.h: Utilities for manipulating and analyzing stack machine code in
+// the form of Stacky IR.
+//
+// Stacky IR represents stack machine code using normal Binaryen IR types by
+// imposing the following structural constraints:
+//
+//  1. Function bodies and children of control flow (except If conditions) must
+//     be blocks.
+//
+//  2. Blocks may have any Expressions except for Pops as children. The sequence
+//     of instructions in a block follows the same validation rules as in
+//     WebAssembly. That means that any expression may have a concrete type, not
+//     just the final expression in the block.
+//
+//  3. All other children must be Pops, which are used to determine the input
+//     stack type of each instruction. Pops may not have `unreachable` type.
+//
+// For example, the following Binaryen IR Function:
+//
+//   (func $foo (result i32)
+//    (i32.add
+//     (i32.const 42)
+//     (i32.const 5)
+//    )
+//   )
+//
+// would look like this in Stacky IR:
+//
+//   (func $foo (result i32)
+//    (block
+//     (i32.const 42)
+//     (i32.const 5)
+//     (i32.add
+//      (i32.pop)
+//      (i32.pop)
+//     )
+//    )
+//   )
+//
+// Notice that the sequence of instructions in the block is now identical to the
+// sequence of instructions in raw WebAssembly.
+//
+
 #ifndef wasm_ir_stack_h
 #define wasm_ir_stack_h
 
@@ -26,7 +70,7 @@ namespace wasm {
 namespace StackUtils {
 
 // Iterate through `block` and remove nops.
-void compact(Block* block);
+void removeNops(Block* block);
 
 } // namespace StackUtils
 

@@ -20,7 +20,7 @@ namespace wasm {
 
 namespace StackUtils {
 
-void compact(Block* block) {
+void removeNops(Block* block) {
   size_t newIndex = 0;
   for (size_t i = 0, size = block->list.size(); i < size; ++i) {
     if (!block->list[i]->is<Nop>()) {
@@ -41,11 +41,7 @@ StackSignature::StackSignature(Expression* expr) {
   } else {
     std::vector<Type> inputs;
     for (auto* child : ChildIterator(expr)) {
-      if (child->type == Type::unreachable) {
-        // This instruction won't consume values from before the unreachable
-        inputs.clear();
-        continue;
-      }
+      assert(child->type.isConcrete());
       // Children might be tuple pops, so expand their types
       inputs.insert(inputs.end(), child->type.begin(), child->type.end());
     }
