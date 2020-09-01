@@ -74,7 +74,7 @@ static void generateSetStackLimitFunctions(Module& module) {
   addExportedFunction(module, limitFunc);
   // Two-parameter version
   Function* limitsFunc = builder.makeFunction(
-    SET_STACK_LIMIT, Signature({Type::i32, Type::i32}, Type::none), {});
+    SET_STACK_LIMITS, Signature({Type::i32, Type::i32}, Type::none), {});
   LocalGet* getBase = builder.makeLocalGet(0, Type::i32);
   Expression* storeBase = builder.makeGlobalSet(STACK_BASE, getBase);
   LocalGet* getLimit = builder.makeLocalGet(1, Type::i32);
@@ -123,7 +123,7 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
         ),
         builder.makeBinary(
           BinaryOp::LtUInt32,
-          builder.makeLocalTee(newSP, value, stackPointer->type),
+          builder.makeLocalGet(newSP, stackPointer->type),
           builder.makeGlobalGet(stackLimit->name, stackLimit->type)
         )
       ),
@@ -165,7 +165,7 @@ struct StackCheck : public Pass {
     }
 
     Builder builder(*module);
-    Global* stackBase = builder.makeGlobal(STACK_LIMIT,
+    Global* stackBase = builder.makeGlobal(STACK_BASE,
                                            stackPointer->type,
                                            builder.makeConst(int32_t(0)),
                                            Builder::Mutable);
