@@ -148,10 +148,6 @@ private:
     std::map<Name, Name> oldToNew;
     std::map<Name, Name> newToOld;
     auto process = [&](Name& name) {
-      // do not minifiy special imports, they must always exist
-      if (name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
-        return;
-      }
       auto iter = oldToNew.find(name);
       if (iter == oldToNew.end()) {
         auto newName = names.getName(soFar++);
@@ -172,6 +168,12 @@ private:
         process(curr->base);
       }
     };
+    if (module->memory.exists) {
+      processImport(&module->memory);
+    }
+    if (module->table.exists) {
+      processImport(&module->table);
+    }
     ModuleUtils::iterImportedGlobals(*module, processImport);
     ModuleUtils::iterImportedFunctions(*module, processImport);
     ModuleUtils::iterImportedEvents(*module, processImport);
