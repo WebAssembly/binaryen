@@ -37,12 +37,14 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(ExceptionPackage& exn)
-  : exn(new ExceptionPackage(exn)), type(Type::exnref) {}
-
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
-    exn = other.exn ? new ExceptionPackage(*other.exn) : nullptr;
+    // Avoid calling the destructor on an uninitialized value
+    if (other.exn != nullptr) {
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+    } else {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    }
   } else if (type.isFunction()) {
     func = other.func;
   } else {
@@ -71,12 +73,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
-  }
-}
-
-Literal::~Literal() {
-  if (type.isException()) {
-    delete exn;
   }
 }
 
@@ -147,7 +143,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type.isException() && !!exn);
+  assert(type.isException() && exn != nullptr);
   return *exn;
 }
 
