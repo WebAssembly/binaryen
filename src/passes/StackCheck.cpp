@@ -63,7 +63,7 @@ static void addExportedFunction(Module& module, Function* function) {
   module.addExport(export_);
 }
 
-static void generateSetStackLimitFunction(Module& module) {
+static void generateSetStackLimitFunctions(Module& module) {
   Builder builder(module);
   // One-parameter version
   Function* limitFunc =
@@ -73,8 +73,8 @@ static void generateSetStackLimitFunction(Module& module) {
   limitFunc->body = store;
   addExportedFunction(module, limitFunc);
   // Two-parameter version
-  Function* limitsFunc =
-    builder.makeFunction(SET_STACK_LIMIT, Signature({Type::i32, Type::i32}, Type::none), {});
+  Function* limitsFunc = builder.makeFunction(
+    SET_STACK_LIMIT, Signature({Type::i32, Type::i32}, Type::none), {});
   LocalGet* getBase = builder.makeLocalGet(0, Type::i32);
   Expression* storeBase = builder.makeGlobalSet(STACK_BASE, getBase);
   LocalGet* getLimit = builder.makeLocalGet(1, Type::i32);
@@ -85,21 +85,21 @@ static void generateSetStackLimitFunction(Module& module) {
 
 struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
   EnforceStackLimits(Global* stackPointer,
-                    Global* stackBase,
-                    Global* stackLimit,
-                    Builder& builder,
-                    Name handler)
-    : stackPointer(stackPointer), stackBase(stackBase), stackLimit(stackLimit), builder(builder),
-      handler(handler) {}
+                     Global* stackBase,
+                     Global* stackLimit,
+                     Builder& builder,
+                     Name handler)
+    : stackPointer(stackPointer), stackBase(stackBase), stackLimit(stackLimit),
+      builder(builder), handler(handler) {}
 
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override {
-    return new EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler);
+    return new EnforceStackLimits(
+      stackPointer, stackBase, stackLimit, builder, handler);
   }
 
-  Expression* stackBoundsCheck(Function* func,
-                               Expression* value) {
+  Expression* stackBoundsCheck(Function* func, Expression* value) {
     // Add a local to store the value of the expression. We need the value
     // twice: once to check if it has overflowed, and again to assign to store
     // it.
@@ -119,12 +119,12 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
         builder.makeBinary(
           BinaryOp::GtUInt32,
           builder.makeLocalTee(newSP, value, stackPointer->type),
-          builder.makeGlobalGet(stackBase->name, stackBase->type))
+          builder.makeGlobalGet(stackBase->name, stackBase->type)
         ),
         builder.makeBinary(
           BinaryOp::LtUInt32,
           builder.makeLocalTee(newSP, value, stackPointer->type),
-          builder.makeGlobalGet(stackLimit->name, stackLimit->type))
+          builder.makeGlobalGet(stackLimit->name, stackLimit->type)
         )
       ),
       handlerExpr);
@@ -136,8 +136,7 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
 
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      replaceCurrent(
-        stackBoundsCheck(getFunction(), curr->value));
+      replaceCurrent(stackBoundsCheck(getFunction(), curr->value));
     }
   }
 
@@ -167,9 +166,9 @@ struct StackCheck : public Pass {
 
     Builder builder(*module);
     Global* stackBase = builder.makeGlobal(STACK_LIMIT,
-                                            stackPointer->type,
-                                            builder.makeConst(int32_t(0)),
-                                            Builder::Mutable);
+                                           stackPointer->type,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable);
     module->addGlobal(stackBase);
 
     Global* stackLimit = builder.makeGlobal(STACK_LIMIT,
