@@ -151,10 +151,7 @@ public:
     assert(type.isFunction() && !func.isNull());
     return func;
   }
-  const ExceptionPackage& getExceptionPackage() const {
-    assert(type.isException() && exn);
-    return *exn;
-  }
+  ExceptionPackage getExceptionPackage() const;
 
   // careful!
   int32_t* geti32Ptr() {

@@ -47,7 +47,8 @@ Literal::Literal(const Literal& other) : type(other.type) {
     if (!other.exn) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     } else {
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+      new (&exn) auto(
+        std::move(std::make_unique<ExceptionPackage>(*other.exn)));
     }
   } else if (type.isFunction()) {
     func = other.func;
@@ -88,9 +89,7 @@ Literal::~Literal() {
 
 Literal& Literal::operator=(const Literal& other) {
   if (&other != this) {
-    // FIXME: uncommenting this explodes with memory corruption in
-    // wasm-shell test/spec/exception-handling.wast
-    // this->~Literal();
+    this->~Literal();
     new (this) auto(other);
   }
   return *this;
@@ -152,6 +151,11 @@ std::array<uint8_t, 16> Literal::getv128() const {
   std::array<uint8_t, 16> ret;
   memcpy(ret.data(), v128, sizeof(ret));
   return ret;
+}
+
+ExceptionPackage Literal::getExceptionPackage() const {
+  assert(type.isException() && !!exn);
+  return *exn;
 }
 
 Literal Literal::castToF32() {

@@ -65,7 +65,7 @@ public:
   Name breakTo; // if non-null, a break is going on
 
   // A helper function for the common case where there is only one value
-  const Literal& getSingleValue() {
+  const Literal getSingleValue() {
     assert(values.size() == 1);
     return values[0];
   }
@@ -1299,7 +1299,7 @@ public:
     if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }
-    const auto& ex = value.getExceptionPackage();
+    const auto ex = value.getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
