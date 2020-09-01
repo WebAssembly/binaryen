@@ -33,13 +33,7 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(const Literal& other) { *this = other; }
-
-Literal& Literal::operator=(const Literal& other) {
-  if (type == Type::exnref) {
-    exn.~unique_ptr();
-  }
-  type = other.type;
+Literal::Literal(const Literal& other) : type(other.type) {
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
@@ -57,7 +51,7 @@ Literal& Literal::operator=(const Literal& other) {
       func = other.func;
       break;
     case Type::exnref:
-      // Avoid calling the destructor, which may not be correct
+      // Avoid calling the destructor on an uninitialized value
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
       break;
     case Type::none:
@@ -66,6 +60,13 @@ Literal& Literal::operator=(const Literal& other) {
     case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal& Literal::operator=(const Literal& other) {
+  if (this != &other) {
+    this->~Literal();
+    new (this) auto(other);
   }
   return *this;
 }
