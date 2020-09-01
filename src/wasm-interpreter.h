@@ -1250,7 +1250,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto& value = flow.getSingleValue();
+    const auto value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(value.isNull());
   }
@@ -1282,7 +1282,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto& value = flow.getSingleValue();
+    const auto value = flow.getSingleValue();
     if (value.isNull()) {
       trap("rethrow: argument is null");
     }
@@ -1295,7 +1295,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    const auto& value = flow.getSingleValue();
+    const auto value = flow.getSingleValue();
     if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }
