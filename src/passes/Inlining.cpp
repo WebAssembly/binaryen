@@ -89,7 +89,7 @@ struct FunctionInfo {
       return false;
     }
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (!hasLoops || options.inlining.allowHeavyweight);
+           (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
 
