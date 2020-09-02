@@ -107,12 +107,18 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret,
 
 // Branch
 
-Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit)
-  : Condition(ConditionInit), Code(CodeInit) {}
+Branch::Branch(Relooper* relooper,
+               wasm::Expression* ConditionInit,
+               wasm::Expression* CodeInit)
+  : Condition(ConditionInit), Code(CodeInit) {
+  relooper->Branches.push_back(std::unique_ptr<Branch>(this));
+}
 
-Branch::Branch(std::vector<wasm::Index>&& ValuesInit,
+Branch::Branch(Relooper* relooper,
+               std::vector<wasm::Index>&& ValuesInit,
                wasm::Expression* CodeInit)
   : Condition(nullptr), Code(CodeInit) {
+  relooper->Branches.push_back(std::unique_ptr<Branch>(this));
   if (ValuesInit.size() > 0) {
     SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
@@ -140,17 +146,13 @@ Branch::Render(RelooperBuilder& Builder, Block* Target, bool SetLabel) {
 
 // Block
 
-Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit)
-  : Code(CodeInit), SwitchCondition(SwitchConditionInit),
-    IsCheckedMultipleEntry(false) {}
-
-Block::~Block() {
-  for (auto& iter : ProcessedBranchesOut) {
-    delete iter.second;
-  }
-  for (auto& iter : BranchesOut) {
-    delete iter.second;
-  }
+Block::Block(Relooper* relooper,
+             wasm::Expression* CodeInit,
+             wasm::Expression* SwitchConditionInit)
+  : relooper(relooper), Code(CodeInit), SwitchCondition(SwitchConditionInit),
+    IsCheckedMultipleEntry(false) {
+  Id = relooper->BlockIdCounter++;
+  relooper->Blocks.push_back(std::unique_ptr<Block>(this));
 }
 
 void Block::AddBranchTo(Block* Target,
@@ -158,7 +160,7 @@ void Block::AddBranchTo(Block* Target,
                         wasm::Expression* Code) {
   // cannot add more than one branch to the same target
   assert(!contains(BranchesOut, Target));
-  BranchesOut[Target] = new Branch(Condition, Code);
+  BranchesOut[Target] = new Branch(relooper, Condition, Code);
 }
 
 void Block::AddSwitchBranchTo(Block* Target,
@@ -166,7 +168,7 @@ void Block::AddSwitchBranchTo(Block* Target,
                               wasm::Expression* Code) {
   // cannot add more than one branch to the same target
   assert(!contains(BranchesOut, Target));
-  BranchesOut[Target] = new Branch(std::move(Values), Code);
+  BranchesOut[Target] = new Branch(relooper, std::move(Values), Code);
 }
 
 wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -423,6 +425,13 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   return Ret;
 }
 
+// Shape
+
+Shape::Shape(Relooper* relooper, ShapeType TypeInit) : Type(TypeInit) {
+  Id = relooper->ShapeIdCounter++;
+  relooper->Shapes.push_back(std::unique_ptr<Shape>(this));
+}
+
 // SimpleShape
 
 wasm::Expression* SimpleShape::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -484,20 +493,6 @@ wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
 Relooper::Relooper(wasm::Module* ModuleInit)
   : Module(ModuleInit), Root(nullptr), MinSize(false), BlockIdCounter(1),
     ShapeIdCounter(0) { // block ID 0 is reserved for clearings
-}
-
-Relooper::~Relooper() {
-  for (unsigned i = 0; i < Blocks.size(); i++) {
-    delete Blocks[i];
-  }
-  for (unsigned i = 0; i < Shapes.size(); i++) {
-    delete Shapes[i];
-  }
-}
-
-void Relooper::AddBlock(Block* New, int Id) {
-  New->Id = Id == -1 ? BlockIdCounter++ : Id;
-  Blocks.push_back(New);
 }
 
 namespace {
@@ -580,7 +575,7 @@ struct Optimizer : public RelooperRecursor {
   // We will be performing code comparisons, so do some basic canonicalization
   // to avoid things being unequal for silly reasons.
   void CanonicalizeCode() {
-    for (auto* Block : Parent->Blocks) {
+    for (auto& Block : Parent->Blocks) {
       Block->Code = Canonicalize(Block->Code);
       for (auto& iter : Block->BranchesOut) {
         auto* Branch = iter.second;
@@ -595,7 +590,7 @@ struct Optimizer : public RelooperRecursor {
   // and there is no phi or switch to worry us, just skip through.
   bool SkipEmptyBlocks() {
     bool Worked = false;
-    for (auto* CurrBlock : Parent->Blocks) {
+    for (auto& CurrBlock : Parent->Blocks) {
       // Generate a new set of branches out TODO optimize
       BlockBranchMap NewBranchesOut;
       for (auto& iter : CurrBlock->BranchesOut) {
@@ -653,7 +648,6 @@ struct Optimizer : public RelooperRecursor {
           NewBranchesOut[Replacement] = NextBranch;
         }
       }
-      // FIXME do we leak old unused Branches?
       CurrBlock->BranchesOut.swap(NewBranchesOut);
     }
     return Worked;
@@ -664,7 +658,7 @@ struct Optimizer : public RelooperRecursor {
   // equivalent in their *contents*.
   bool MergeEquivalentBranches() {
     bool Worked = false;
-    for (auto* ParentBlock : Parent->Blocks) {
+    for (auto& ParentBlock : Parent->Blocks) {
 #if RELOOPER_OPTIMIZER_DEBUG
       std::cout << "at parent " << ParentBlock->Id << '\n';
 #endif
@@ -722,20 +716,20 @@ struct Optimizer : public RelooperRecursor {
     bool Worked = false;
     // First, count predecessors.
     std::map<Block*, size_t> NumPredecessors;
-    for (auto* CurrBlock : Parent->Blocks) {
+    for (auto& CurrBlock : Parent->Blocks) {
       for (auto& iter : CurrBlock->BranchesOut) {
         auto* NextBlock = iter.first;
         NumPredecessors[NextBlock]++;
       }
     }
     NumPredecessors[Entry]++;
-    for (auto* CurrBlock : Parent->Blocks) {
+    for (auto& CurrBlock : Parent->Blocks) {
       if (CurrBlock->BranchesOut.size() == 1) {
         auto iter = CurrBlock->BranchesOut.begin();
         auto* NextBlock = iter->first;
         auto* NextBranch = iter->second;
         assert(NumPredecessors[NextBlock] > 0);
-        if (NextBlock != CurrBlock && NumPredecessors[NextBlock] == 1) {
+        if (NextBlock != CurrBlock.get() && NumPredecessors[NextBlock] == 1) {
           // Good to merge!
           wasm::Builder Builder(*Parent->Module);
           // Merge in code on the branch as well, if any.
@@ -747,9 +741,6 @@ struct Optimizer : public RelooperRecursor {
             Builder.makeSequence(CurrBlock->Code, NextBlock->Code);
           // Use the next block's branching behavior
           CurrBlock->BranchesOut.swap(NextBlock->BranchesOut);
-          for (auto& iter : NextBlock->BranchesOut) {
-            delete iter.second;
-          }
           NextBlock->BranchesOut.clear();
           CurrBlock->SwitchCondition = NextBlock->SwitchCondition;
           // The next block now has no predecessors.
@@ -765,7 +756,7 @@ struct Optimizer : public RelooperRecursor {
   // no switch is needed.
   bool UnSwitch() {
     bool Worked = false;
-    for (auto* ParentBlock : Parent->Blocks) {
+    for (auto& ParentBlock : Parent->Blocks) {
 #if RELOOPER_OPTIMIZER_DEBUG
       std::cout << "un-switching at " << ParentBlock->Id << ' '
                 << !!ParentBlock->SwitchCondition << ' '
@@ -1049,7 +1040,7 @@ void Relooper::Calculate(Block* Entry) {
 
   // Add incoming branches from live blocks, ignoring dead code
   for (unsigned i = 0; i < Blocks.size(); i++) {
-    Block* Curr = Blocks[i];
+    Block* Curr = Blocks[i].get();
     if (!contains(Live.Live, Curr)) {
       continue;
     }
@@ -1062,12 +1053,6 @@ void Relooper::Calculate(Block* Entry) {
 
   struct Analyzer : public RelooperRecursor {
     Analyzer(Relooper* Parent) : RelooperRecursor(Parent) {}
-
-    // Add a shape to the list of shapes in this Relooper calculation
-    void Notice(Shape* New) {
-      New->Id = Parent->ShapeIdCounter++;
-      Parent->Shapes.push_back(New);
-    }
 
     // Create a list of entries from a block. If LimitTo is provided, only
     // results in that set will appear
@@ -1109,8 +1094,7 @@ void Relooper::Calculate(Block* Entry) {
 
     Shape* MakeSimple(BlockSet& Blocks, Block* Inner, BlockSet& NextEntries) {
       PrintDebug("creating simple block with block #%d\n", Inner->Id);
-      SimpleShape* Simple = new SimpleShape;
-      Notice(Simple);
+      SimpleShape* Simple = new SimpleShape(Parent);
       Simple->Inner = Inner;
       Inner->Parent = Simple;
       if (Blocks.size() > 1) {
@@ -1219,8 +1203,7 @@ void Relooper::Calculate(Block* Entry) {
       DebugDump(Blocks, "  outer blocks:");
       DebugDump(NextEntries, "  outer entries:");
 
-      LoopShape* Loop = new LoopShape();
-      Notice(Loop);
+      LoopShape* Loop = new LoopShape(Parent);
 
       // Solipsize the loop, replacing with break/continue and marking branches
       // as Processed (will not affect later calculations) A. Branches to the
@@ -1386,8 +1369,7 @@ void Relooper::Calculate(Block* Entry) {
                         bool IsCheckedMultiple) {
       PrintDebug("creating multiple block with %d inner groups\n",
                  IndependentGroups.size());
-      MultipleShape* Multiple = new MultipleShape();
-      Notice(Multiple);
+      MultipleShape* Multiple = new MultipleShape(Parent);
       BlockSet CurrEntries;
       for (auto& iter : IndependentGroups) {
         Block* CurrEntry = iter.first;
