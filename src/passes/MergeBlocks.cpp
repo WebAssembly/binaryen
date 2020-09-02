@@ -199,7 +199,7 @@ static bool hasDeadCode(Block* block) {
 
 // core block optimizer routine
 static void
-optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
+optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils::BranchAccumulator* branchInfo=nullptr) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -294,7 +294,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::has(item, childName)) {
+          if (branchInfo ? branchInfo->allBranches[item].count(childName) : BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -395,8 +395,14 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   Pass* create() override { return new MergeBlocks; }
 
+  BranchUtils::BranchAccumulator branchInfo;
+
+  void doWalkFunction(Function* func) {
+    branchInfo.walk(func->body);
+  }
+
   void visitBlock(Block* curr) {
-    optimizeBlock(curr, getModule(), getPassOptions());
+    optimizeBlock(curr, getModule(), getPassOptions(), &branchInfo);
   }
 
   // given

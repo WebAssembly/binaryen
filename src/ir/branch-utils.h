@@ -17,6 +17,7 @@
 #ifndef wasm_ir_branch_h
 #define wasm_ir_branch_h
 
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -65,6 +66,16 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
 
 inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
+inline std::set<Name> getUniqueTargets(Expression* expr) {
+  if (auto* br = expr->dynCast<Break>()) {
+    return getUniqueTargets(br);
+  } if (auto* br = expr->dynCast<Switch>()) {
+    return getUniqueTargets(br);
+  } if (auto* br = expr->dynCast<BrOnExn>()) {
+    return getUniqueTargets(br);
+  }
+  return {};
+}
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   bool worked = false;
@@ -215,6 +226,22 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found;
+  }
+};
+
+// Accumulates a map of expression => all the branches in its children and
+// itself, in linear time.
+struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressionVisitor<BranchAccumulator>> {
+  std::unordered_map<Expression*, std::set<Name>> allBranches;
+
+  void visitExpression(Expression* curr) {
+    auto& branches = allBranches[curr];
+    for (auto child : ChildIterator(curr)) {
+      auto& childBranches = allBranches[child];
+      branches.insert(childBranches.begin(), childBranches.end());
+    }
+    auto selfBranches = getUniqueTargets(curr);
+    branches.insert(selfBranches.begin(), selfBranches.end());
   }
 };
 
