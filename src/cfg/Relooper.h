@@ -79,6 +79,7 @@ public:
   }
 };
 
+struct Relooper;
 struct Block;
 struct Shape;
 
@@ -244,8 +245,6 @@ template<typename Key, typename T> struct InsertOrderedMap {
 
 typedef InsertOrderedSet<Block*> BlockSet;
 typedef InsertOrderedMap<Block*, Branch*> BlockBranchMap;
-
-struct Relooper;
 
 // Represents a basic block of code - some instructions that end with a
 // control flow modifier (a branch, return or throw).
