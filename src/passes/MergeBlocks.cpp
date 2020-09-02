@@ -295,11 +295,11 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
           bool hasBranchToChild;
-          if (branchInfo && branchInfo->allBranches.count(item)) {
+          if (branchInfo && branchInfo->hasInfoFor(item)) {
 #ifdef MERGE_BLOCKS_DEBUG
-            assert(branchInfo->allBranches[item].count(childName) == BranchUtils::BranchSeeker::has(item, childName));
+            assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
 #endif
-            hasBranchToChild = branchInfo->allBranches[item].count(childName);
+            hasBranchToChild = branchInfo->hasBranch(item, childName);
           } else {
             hasBranchToChild = BranchUtils::BranchSeeker::has(item, childName);
           }

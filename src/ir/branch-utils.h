@@ -232,18 +232,52 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 // Accumulates a map of expression => all the branches in its children and
 // itself, in linear time.
 struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressionVisitor<BranchAccumulator>> {
-  std::unordered_map<Expression*, std::set<Name>> allBranches;
+  using NameSet = std::set<Name>;
+  // Sets of branch targets. We keep a unique index for each one because the
+  // same set may be reused a huge amount of times. In particular, a tower of
+  // blocks with a switch on top would have all the blocks with the same set.
+  std::unordered_map<Index, std::unique_ptr<NameSet>> indexToSet;
+  std::map<NameSet, Index> setToIndex;
+
+  std::unordered_map<Expression*, Index> exprToIndex;
 
   void visitExpression(Expression* curr) {
-    auto& branches = allBranches[curr];
-    // We may be re-run if part of the IR changes, so clear any previous data.
-    branches.clear();
+    // Find the branches, using the fact that children have already been
+    // computed.
+    NameSet branches;
     for (auto child : ChildIterator(curr)) {
-      auto& childBranches = allBranches[child];
+      auto& childBranches = *indexToSet[exprToIndex[child]].get();
       branches.insert(childBranches.begin(), childBranches.end());
     }
     auto selfBranches = getUniqueTargets(curr);
     branches.insert(selfBranches.begin(), selfBranches.end());
+    // Update the data structures.
+    Index index;
+    if (setToIndex.count(branches)) {
+      index = setToIndex[branches];
+    } else {
+      // This is a new set.
+      index = indexToSet.size();
+      // The index must not be used yet.
+      assert(indexToSet.count(index) == 0);
+      setToIndex[branches] = index;
+      auto& set = indexToSet[index] = make_unique<NameSet>();
+      set->swap(branches);
+    }
+    exprToIndex[curr] = index;
+  }
+
+  bool hasInfoFor(Expression* expr) {
+    return exprToIndex.count(expr);
+  }
+
+  bool hasBranch(Expression* expr, Name target) {
+    auto iter = exprToIndex.find(expr);
+    if (iter == exprToIndex.end()) {
+      return false;
+    }
+    auto index = iter->second;
+    return indexToSet[index]->count(target);
   }
 };
 
