@@ -2129,6 +2129,14 @@ BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
+// Gets whether heavyweight functions are allowed to be inlined.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetAllowHeavyweight(void);
+
+// Sets whether heavyweight functions are allowed to be inlined.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAllowHeavyweight(int enabled);
+
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
 BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,

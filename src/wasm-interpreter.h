@@ -1299,7 +1299,7 @@ public:
     if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }
-    const auto ex = value.getExceptionPackage();
+    auto ex = value.getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }

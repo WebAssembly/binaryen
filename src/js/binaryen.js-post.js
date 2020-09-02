@@ -3045,6 +3045,16 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
+// Gets the value which allow inline functions that are not "lightweight".
+Module['getAllowHeavyweight'] = function() {
+  return Boolean(Module['_BinaryenGetAllowHeavyweight']());
+};
+
+// Sets the value which allow inline functions that are not "lightweight".
+Module['setAllowHeavyweight'] = function(value) {
+  Module['_BinaryenSetAllowHeavyweight'](value);
+};
+
 // Expression wrappers
 
 // Makes a wrapper class with the specified static members while
