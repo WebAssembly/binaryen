@@ -3528,11 +3528,11 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-int BinaryenGetAllowFunctionsWithLoops(void) {
+int BinaryenGetAllowInliningFunctionsWithLoops(void) {
   return globalPassOptions.inlining.allowFunctionsWithLoops;
 }
 
-void BinaryenSetAllowFunctionsWithLoops(int enabled) {
+void BinaryenSetAllowInliningFunctionsWithLoops(int enabled) {
   globalPassOptions.inlining.allowFunctionsWithLoops = enabled;
 }
 

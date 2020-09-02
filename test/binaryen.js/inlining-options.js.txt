@@ -1,4 +1,4 @@
 // alwaysInlineMaxSize=2
 // flexibleInlineMaxSize=20
 // oneCallerInlineMaxSize=15
-// allowFunctionsWithLoops=false
+// allowInliningFunctionsWithLoops=false

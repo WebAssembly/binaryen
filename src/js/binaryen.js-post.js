@@ -3031,13 +3031,13 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
 };
 
 // Gets the value which allow inline functions that are not "lightweight".
-Module['getAllowFunctionsWithLoops'] = function() {
-  return Boolean(Module['_BinaryenGetAllowFunctionsWithLoops']());
+Module['getAllowInliningFunctionsWithLoops'] = function() {
+  return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
 };
 
 // Sets the value which allow inline functions that are not "lightweight".
-Module['setAllowFunctionsWithLoops'] = function(value) {
-  Module['_BinaryenSetAllowFunctionsWithLoops'](value);
+Module['setAllowInliningFunctionsWithLoops'] = function(value) {
+  Module['_BinaryenSetAllowInliningFunctionsWithLoops'](value);
 };
 
 // Expression wrappers

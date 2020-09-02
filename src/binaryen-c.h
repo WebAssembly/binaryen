@@ -2126,11 +2126,11 @@ BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
 // Gets whether functions with loops are allowed to be inlined.
 // Applies to all modules, globally.
-BINARYEN_API int BinaryenGetAllowFunctionsWithLoops(void);
+BINARYEN_API int BinaryenGetAllowInliningFunctionsWithLoops(void);
 
 // Sets whether functions with loops are allowed to be inlined.
 // Applies to all modules, globally.
-BINARYEN_API void BinaryenSetAllowFunctionsWithLoops(int enabled);
+BINARYEN_API void BinaryenSetAllowInliningFunctionsWithLoops(int enabled);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
