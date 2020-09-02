@@ -214,9 +214,16 @@ private:
   // JS calls the export, so it must call a legal stub that calls the actual
   // wasm function
   Name makeLegalStub(Function* func, Module* module) {
+    Name legalName(std::string("legalstub$") + func->name.str);
+
+    // a method may be exported multiple times
+    if (module->getFunctionOrNull(legalName)) {
+      return legalName;
+    }
+
     Builder builder(*module);
     auto* legal = new Function();
-    legal->name = Name(std::string("legalstub$") + func->name.str);
+    legal->name = legalName;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
@@ -254,11 +261,7 @@ private:
       legal->body = call;
     }
 
-    // a method may be exported multiple times
-    if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
-    }
-    return legal->name;
+    return module->addFunction(legal)->name;
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal
