@@ -294,7 +294,16 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (branchInfo ? branchInfo->allBranches[item].count(childName) : BranchUtils::BranchSeeker::has(item, childName)) {
+          bool hasBranchToChild;
+          if (branchInfo && branchInfo->allBranches.count(item)) {
+#ifdef MERGE_BLOCKS_DEBUG
+            assert(branchInfo->allBranches[item].count(childName) == BranchUtils::BranchSeeker::has(item, childName));
+#endif
+            hasBranchToChild = branchInfo->allBranches[item].count(childName);
+          } else {
+            hasBranchToChild = BranchUtils::BranchSeeker::has(item, childName);
+          }
+          if (hasBranchToChild) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -360,6 +369,12 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils
         if (loop) {
           loop->finalize();
         }
+        if (branchInfo) {
+          // Some items from the child were moved out; update the child's
+          // branch info. (If we merge all the child's items, the child won't
+          // exist anyhow.)
+          branchInfo->walk(child);
+        }
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
@@ -399,6 +414,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   void doWalkFunction(Function* func) {
     branchInfo.walk(func->body);
+    walk(func->body);
   }
 
   void visitBlock(Block* curr) {

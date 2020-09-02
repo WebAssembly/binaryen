@@ -236,6 +236,8 @@ struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressio
 
   void visitExpression(Expression* curr) {
     auto& branches = allBranches[curr];
+    // We may be re-run if part of the IR changes, so clear any previous data.
+    branches.clear();
     for (auto child : ChildIterator(curr)) {
       auto& childBranches = allBranches[child];
       branches.insert(childBranches.begin(), childBranches.end());
