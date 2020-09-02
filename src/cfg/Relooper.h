@@ -382,7 +382,7 @@ struct LoopShape : public Shape {
 //  3. Call Render().
 //
 // Implementation details: The Relooper instance takes ownership of the blocks,
-// branches and shapes when created using the `addBlock` etc. methods, and frees
+// branches and shapes when created using the `AddBlock` etc. methods, and frees
 // them when done.
 struct Relooper {
   wasm::Module* Module;
