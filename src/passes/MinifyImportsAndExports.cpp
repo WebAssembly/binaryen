@@ -149,7 +149,7 @@ private:
     std::map<Name, Name> newToOld;
     auto process = [&](Name& name) {
       // do not minifiy special imports, they must always exist
-      if (name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
+      if (name == MEMORY || name == TABLE || name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
         return;
       }
       auto iter = oldToNew.find(name);
