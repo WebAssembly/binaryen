@@ -107,18 +107,12 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret,
 
 // Branch
 
-Branch::Branch(Relooper* relooper,
-               wasm::Expression* ConditionInit,
-               wasm::Expression* CodeInit)
-  : Condition(ConditionInit), Code(CodeInit) {
-  relooper->Branches.push_back(std::unique_ptr<Branch>(this));
-}
+Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit)
+  : Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(Relooper* relooper,
-               std::vector<wasm::Index>&& ValuesInit,
+Branch::Branch(std::vector<wasm::Index>&& ValuesInit,
                wasm::Expression* CodeInit)
   : Condition(nullptr), Code(CodeInit) {
-  relooper->Branches.push_back(std::unique_ptr<Branch>(this));
   if (ValuesInit.size() > 0) {
     SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
@@ -150,17 +144,14 @@ Block::Block(Relooper* relooper,
              wasm::Expression* CodeInit,
              wasm::Expression* SwitchConditionInit)
   : relooper(relooper), Code(CodeInit), SwitchCondition(SwitchConditionInit),
-    IsCheckedMultipleEntry(false) {
-  Id = relooper->BlockIdCounter++;
-  relooper->Blocks.push_back(std::unique_ptr<Block>(this));
-}
+    IsCheckedMultipleEntry(false) {}
 
 void Block::AddBranchTo(Block* Target,
                         wasm::Expression* Condition,
                         wasm::Expression* Code) {
   // cannot add more than one branch to the same target
   assert(!contains(BranchesOut, Target));
-  BranchesOut[Target] = new Branch(relooper, Condition, Code);
+  BranchesOut[Target] = relooper->AddBranch(Condition, Code);
 }
 
 void Block::AddSwitchBranchTo(Block* Target,
@@ -168,7 +159,7 @@ void Block::AddSwitchBranchTo(Block* Target,
                               wasm::Expression* Code) {
   // cannot add more than one branch to the same target
   assert(!contains(BranchesOut, Target));
-  BranchesOut[Target] = new Branch(relooper, std::move(Values), Code);
+  BranchesOut[Target] = relooper->AddBranch(std::move(Values), Code);
 }
 
 wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -425,13 +416,6 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   return Ret;
 }
 
-// Shape
-
-Shape::Shape(Relooper* relooper, ShapeType TypeInit) : Type(TypeInit) {
-  Id = relooper->ShapeIdCounter++;
-  relooper->Shapes.push_back(std::unique_ptr<Shape>(this));
-}
-
 // SimpleShape
 
 wasm::Expression* SimpleShape::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -493,6 +477,55 @@ wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
 Relooper::Relooper(wasm::Module* ModuleInit)
   : Module(ModuleInit), Root(nullptr), MinSize(false), BlockIdCounter(1),
     ShapeIdCounter(0) { // block ID 0 is reserved for clearings
+}
+
+Block* Relooper::AddBlock(wasm::Expression* CodeInit,
+                          wasm::Expression* SwitchConditionInit) {
+
+  auto block = std::make_unique<Block>(this, CodeInit, SwitchConditionInit);
+  block->Id = BlockIdCounter++;
+  auto* blockPtr = block.get();
+  Blocks.push_back(std::move(block));
+  return blockPtr;
+}
+
+Branch* Relooper::AddBranch(wasm::Expression* ConditionInit,
+                            wasm::Expression* CodeInit) {
+  auto branch = std::make_unique<Branch>(ConditionInit, CodeInit);
+  auto* branchPtr = branch.get();
+  Branches.push_back(std::move(branch));
+  return branchPtr;
+}
+Branch* Relooper::AddBranch(std::vector<wasm::Index>&& ValuesInit,
+                            wasm::Expression* CodeInit) {
+  auto branch = std::make_unique<Branch>(std::move(ValuesInit), CodeInit);
+  auto* branchPtr = branch.get();
+  Branches.push_back(std::move(branch));
+  return branchPtr;
+}
+
+SimpleShape* Relooper::AddSimpleShape() {
+  auto shape = std::make_unique<SimpleShape>();
+  shape->Id = ShapeIdCounter++;
+  auto* shapePtr = shape.get();
+  Shapes.push_back(std::move(shape));
+  return shapePtr;
+}
+
+MultipleShape* Relooper::AddMultipleShape() {
+  auto shape = std::make_unique<MultipleShape>();
+  shape->Id = ShapeIdCounter++;
+  auto* shapePtr = shape.get();
+  Shapes.push_back(std::move(shape));
+  return shapePtr;
+}
+
+LoopShape* Relooper::AddLoopShape() {
+  auto shape = std::make_unique<LoopShape>();
+  shape->Id = ShapeIdCounter++;
+  auto* shapePtr = shape.get();
+  Shapes.push_back(std::move(shape));
+  return shapePtr;
 }
 
 namespace {
@@ -1094,7 +1127,7 @@ void Relooper::Calculate(Block* Entry) {
 
     Shape* MakeSimple(BlockSet& Blocks, Block* Inner, BlockSet& NextEntries) {
       PrintDebug("creating simple block with block #%d\n", Inner->Id);
-      SimpleShape* Simple = new SimpleShape(Parent);
+      SimpleShape* Simple = Parent->AddSimpleShape();
       Simple->Inner = Inner;
       Inner->Parent = Simple;
       if (Blocks.size() > 1) {
@@ -1203,7 +1236,7 @@ void Relooper::Calculate(Block* Entry) {
       DebugDump(Blocks, "  outer blocks:");
       DebugDump(NextEntries, "  outer entries:");
 
-      LoopShape* Loop = new LoopShape(Parent);
+      LoopShape* Loop = Parent->AddLoopShape();
 
       // Solipsize the loop, replacing with break/continue and marking branches
       // as Processed (will not affect later calculations) A. Branches to the
@@ -1369,7 +1402,7 @@ void Relooper::Calculate(Block* Entry) {
                         bool IsCheckedMultiple) {
       PrintDebug("creating multiple block with %d inner groups\n",
                  IndependentGroups.size());
-      MultipleShape* Multiple = new MultipleShape(Parent);
+      MultipleShape* Multiple = Parent->AddMultipleShape();
       BlockSet CurrEntries;
       for (auto& iter : IndependentGroups) {
         Block* CurrEntry = iter.first;

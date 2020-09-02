@@ -50,7 +50,7 @@ struct ReReloop final : public Pass {
   CFG::Block* currCFGBlock = nullptr;
 
   CFG::Block* makeCFGBlock() {
-    return new CFG::Block(relooper.get(), builder->makeBlock());
+    return relooper->AddBlock(builder->makeBlock());
   }
 
   CFG::Block* setCurrCFGBlock(CFG::Block* curr) {

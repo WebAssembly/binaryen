@@ -113,16 +113,9 @@ struct Branch {
   // useful for phis.
   wasm::Expression* Code;
 
-  // Creates a new branch in the context of the specified relooper. Branches are
-  // automatically cleaned up along their containing relooper.
-  Branch(Relooper* relooper,
-         wasm::Expression* ConditionInit,
-         wasm::Expression* CodeInit = nullptr);
+  Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit = nullptr);
 
-  // Creates a new branch in the context of the specified relooper. Branches are
-  // automatically cleaned up along their containing relooper.
-  Branch(Relooper* relooper,
-         std::vector<wasm::Index>&& ValuesInit,
+  Branch(std::vector<wasm::Index>&& ValuesInit,
          wasm::Expression* CodeInit = nullptr);
 
   // Emits code for branch
@@ -272,8 +265,6 @@ struct Block {
   // variable
   bool IsCheckedMultipleEntry;
 
-  // Creates a new block in the context of the specified relooper. Blocks are
-  // automatically cleaned up along their containing relooper.
   Block(Relooper* relooper,
         wasm::Expression* CodeInit,
         wasm::Expression* SwitchConditionInit = nullptr);
@@ -339,9 +330,7 @@ struct Shape {
   enum ShapeType { Simple, Multiple, Loop };
   ShapeType Type;
 
-  // Creates a new shape in the context of the specified relooper. Shapes are
-  // automatically cleaned up along their containing relooper.
-  Shape(Relooper* relooper, ShapeType TypeInit);
+  Shape(ShapeType TypeInit) : Type(TypeInit) {}
   virtual ~Shape() = default;
 
   virtual wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) = 0;
@@ -360,9 +349,7 @@ struct Shape {
 struct SimpleShape : public Shape {
   Block* Inner = nullptr;
 
-  // Creates a new simple shape in the context of the specified relooper. Shapes
-  // are automatically cleaned up along their containing relooper.
-  SimpleShape(Relooper* relooper) : Shape(relooper, Simple) {}
+  SimpleShape() : Shape(Simple) {}
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
@@ -371,9 +358,7 @@ typedef std::map<int, Shape*> IdShapeMap;
 struct MultipleShape : public Shape {
   IdShapeMap InnerMap; // entry block ID -> shape
 
-  // Creates a new multiple shape in the context of the specified relooper.
-  // Shapes are automatically cleaned up along their containing relooper.
-  MultipleShape(Relooper* relooper) : Shape(relooper, Multiple) {}
+  MultipleShape() : Shape(Multiple) {}
 
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
@@ -383,9 +368,7 @@ struct LoopShape : public Shape {
 
   BlockSet Entries; // we must visit at least one of these
 
-  // Creates a new loop shape in the context of the specified relooper. Shapes
-  // are automatically cleaned up along their containing relooper.
-  LoopShape(Relooper* relooper) : Shape(relooper, Loop) {}
+  LoopShape() : Shape(Loop) {}
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
@@ -393,13 +376,14 @@ struct LoopShape : public Shape {
 //
 // Usage:
 //  1. Instantiate this struct.
-//  2. Create the blocks you have. Each should already have
-//     its branchings in specified (the branchings out will
+//  2. Create the blocks you have. Each should have its
+//     branchings in specified (the branchings out will
 //     be calculated by the relooper).
 //  3. Call Render().
 //
-// Implementation details: The Relooper instance has ownership
-// of the blocks, branches and shapes, and frees them when done.
+// Implementation details: The Relooper instance takes ownership of the blocks,
+// branches and shapes when created using the `addBlock` etc. methods, and frees
+// them when done.
 struct Relooper {
   wasm::Module* Module;
   std::deque<std::unique_ptr<Block>> Blocks;
@@ -411,6 +395,25 @@ struct Relooper {
   int ShapeIdCounter;
 
   Relooper(wasm::Module* ModuleInit);
+
+  // Creates a new block associated with (and cleaned up along) this relooper.
+  Block* AddBlock(wasm::Expression* CodeInit,
+                  wasm::Expression* SwitchConditionInit = nullptr);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(wasm::Expression* ConditionInit,
+                    wasm::Expression* CodeInit);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(std::vector<wasm::Index>&& ValuesInit,
+                    wasm::Expression* CodeInit = nullptr);
+  // Creates a new simple shape associated with (and cleaned up along) this
+  // relooper.
+  SimpleShape* AddSimpleShape();
+  // Creates a new multiple shape associated with (and cleaned up along) this
+  // relooper.
+  MultipleShape* AddMultipleShape();
+  // Creates a new loop shape associated with (and cleaned up along) this
+  // relooper.
+  LoopShape* AddLoopShape();
 
   // Calculates the shapes
   void Calculate(Block* Entry);
