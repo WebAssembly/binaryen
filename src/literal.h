@@ -44,13 +44,15 @@ class Literal {
   };
 
 public:
-  Type type;
+  // Type of the literal. Immutable because the literal's payload depends on it.
+  const Type type;
 
-public:
   Literal() : v128(), type(Type::none) {}
   explicit Literal(Type type) : v128(), type(type) {
-    assert(type != Type::unreachable);
+    assert(type != Type::unreachable && type != Type::funcref &&
+           type != Type::exnref);
   }
+  explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
@@ -67,7 +69,7 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage> exn)
+  explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -105,7 +107,7 @@ public:
 
   static Literal makeNullref() { return Literal(Type(Type::nullref)); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
-  static Literal makeExnref(std::unique_ptr<ExceptionPackage> exn) {
+  static Literal makeExnref(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
   }
 

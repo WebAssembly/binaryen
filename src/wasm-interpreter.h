@@ -1273,7 +1273,7 @@ public:
     for (auto item : arguments) {
       exn->values.push_back(item);
     }
-    throwException(Literal(std::move(exn)));
+    throwException(Literal::makeExnref(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
