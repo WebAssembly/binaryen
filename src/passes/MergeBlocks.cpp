@@ -370,7 +370,7 @@ static void optimizeBlock(Block* curr,
         // already forgotten the child's info, so there is nothing to do here
         // for the child.
         // (We also don't need to do anything for the parent - we move code
-        // from a child into the parent, but that doens't change the total
+        // from a child into the parent, but that doesn't change the total
         // branches in the parent.)
       }
       // Add the rest of the parent block after the child.
