@@ -53,10 +53,12 @@ inline bool isBranchReachable(Expression* expr) {
   WASM_UNREACHABLE("unexpected expression type");
 }
 
-inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
+using NameSet = std::set<Name>;
 
-inline std::set<Name> getUniqueTargets(Switch* sw) {
-  std::set<Name> ret;
+inline NameSet getUniqueTargets(Break* br) { return {br->name}; }
+
+inline NameSet getUniqueTargets(Switch* sw) {
+  NameSet ret;
   for (auto target : sw->targets) {
     ret.insert(target);
   }
@@ -64,9 +66,9 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
   return ret;
 }
 
-inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
+inline NameSet getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
-inline std::set<Name> getUniqueTargets(Expression* expr) {
+inline NameSet getUniqueTargets(Expression* expr) {
   if (auto* br = expr->dynCast<Break>()) {
     return getUniqueTargets(br);
   } if (auto* br = expr->dynCast<Switch>()) {
@@ -108,9 +110,9 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 
 // returns the set of targets to which we branch that are
 // outside of a node
-inline std::set<Name> getExitingBranches(Expression* ast) {
+inline NameSet getExitingBranches(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+    NameSet targets;
 
     void visitBreak(Break* curr) { targets.insert(curr->name); }
     void visitSwitch(Switch* curr) {
@@ -139,9 +141,9 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
 
 // returns the list of all branch targets in a node
 
-inline std::set<Name> getBranchTargets(Expression* ast) {
+inline NameSet getBranchTargets(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+    NameSet targets;
 
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
@@ -229,12 +231,61 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 };
 
+// Accumulates all the branches in an entire tree.
 struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressionVisitor<BranchAccumulator>> {
-  std::set<Name> branches;
+  NameSet branches;
 
   void visitExpression(Expression* curr) {
     auto selfBranches = getUniqueTargets(curr);
     branches.insert(selfBranches.begin(), selfBranches.end());
+  }
+};
+
+// A helper structure for the common case of post-walking some IR while querying
+// whether a branch is present. We can cache results for children in order to
+// avoid quadratic time searches.
+// We assume that a node will be scanned *once* here. That means that if we
+// scan a node, we can discard all information for its children. This avoids
+// linearly increasing memory usage over time.
+class BranchSeekerCache {
+  // Maps all the branches present in an expression and all its nested children.
+  std::unordered_map<Expression*, NameSet> branches;
+
+public:
+  const NameSet& getBranches(Expression* curr) {
+    auto iter = branches.find(curr);
+    if (iter != branches.end()) {
+      return iter->second;
+    }
+    // Start with the parent's own branches.
+    auto currBranches = getUniqueTargets(curr);
+    // Add from the children, which are hopefully cached.
+    for (auto child : ChildIterator(curr)) {
+      auto iter = branches.find(child);
+      if (iter != branches.end()) {
+        auto& childBranches = iter->second;
+        currBranches.insert(childBranches.begin(), childBranches.end());
+        // We are scanning the parent, which means we assume the child will
+        // never be visited again.
+        branches.erase(iter);
+      } else {
+        // The child was not cached. Scan it manually.
+        BranchAccumulator childBranches;
+        childBranches.walk(child);
+        currBranches.insert(childBranches.branches.begin(), childBranches.branches.end());
+        // Don't bother caching anything - we are scanning the parent, so the
+        // child will presumably not be scanned again.
+      }
+    }
+    return branches[curr] = std::move(currBranches);
+  }
+
+  bool hasBranch(Expression* curr, Name target) {
+    return getBranches(curr).count(target);
+  }
+
+  void forget(Expression* curr) {
+    branches.erase(curr);
   }
 };
 

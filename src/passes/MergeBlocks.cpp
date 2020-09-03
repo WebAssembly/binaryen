@@ -197,38 +197,9 @@ static bool hasDeadCode(Block* block) {
   return false;
 }
 
-struct BranchInfo {
-  // Tracks branches we've seen in an expression. This is used to avoid
-  // re-querying the same things again and again. Note that this does not take
-  // into account IR changes: an expression may have a branch under it somewhere
-  // but have it moved outside. Therefore this data only says that at some point
-  // the branch existed there. That is enough for the common
-  std::unordered_map<Expression*, std::set<Name>> knownBranches;
-
-  // Checks if an expression has a branch to a particular target underneath it
-  // somewhere.
-  bool hasBranch(Expression* expr, Name target) {
-    // Check if we know the answer already.
-    if (knownBranches.count(expr)) {
-      return knownBranches[expr].count(target);
-    }
-    // Check the children.
-    for (auto child : ChildIterator(curr)) {
-      if (hasBranch(child, target)) {
-        return true;
-      }
-    }
-    return BranchUtils::getUniqueTargets(expr).count(target);
-  }
-
-  void forget(Expression* expr) {
-    knownBranches.erase(expr);
-  }
-};
-
 // core block optimizer routine
 static void
-optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchInfo* branchInfo=nullptr) {
+optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils::BranchSeekerCache* branchInfo=nullptr) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -324,7 +295,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchInfo*
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
           bool hasBranchToChild;
-          if (branchInfo && branchInfo->hasInfoFor(item)) {
+          if (branchInfo) {
 #ifdef MERGE_BLOCKS_DEBUG
             assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
 #endif
@@ -402,7 +373,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchInfo*
           // Some items from the child were moved out; update the child's
           // branch info. (If we merge all the child's items, the child won't
           // exist anyhow.)
-          branchInfo->walk(child);
+          branchInfo->forget(child);
         }
       }
       // Add the rest of the parent block after the child.
@@ -439,7 +410,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   Pass* create() override { return new MergeBlocks; }
 
-  BranchInfo branchInfo;
+  BranchUtils::BranchSeekerCache branchInfo;
 
   void visitBlock(Block* curr) {
     optimizeBlock(curr, getModule(), getPassOptions(), &branchInfo);
