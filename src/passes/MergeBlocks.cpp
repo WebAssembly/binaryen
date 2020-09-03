@@ -373,6 +373,9 @@ static void optimizeBlock(Block* curr,
         // in branchInfo. However, as we have scanned the parent, we have
         // already forgotten the child's info, so there is nothing to do here
         // for the child.
+        // (We also don't need to do anything for the parent - we move code
+        // from a child into the parent, but that doens't change the total
+        // branches in the parent.)
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
