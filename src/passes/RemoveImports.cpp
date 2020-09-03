@@ -38,8 +38,7 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
     if (type == Type::none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
-      Literal nopLiteral;
-      nopLiteral.type = type;
+      Literal nopLiteral(type);
       replaceCurrent(getModule()->allocator.alloc<Const>()->set(nopLiteral));
     }
   }

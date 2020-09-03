@@ -1273,7 +1273,7 @@ public:
     for (auto item : arguments) {
       exn->values.push_back(item);
     }
-    throwException(Literal(std::move(exn)));
+    throwException(Literal::makeExnref(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1297,7 +1297,7 @@ public:
     if (flow.getType() == Type::nullref) {
       trap("br_on_exn: argument is null");
     }
-    const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
+    auto ex = flow.getSingleValue().getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
