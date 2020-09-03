@@ -51,6 +51,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
+  bool legacyPIC = true;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -108,6 +109,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
+         })
+    .add("--new-pic-abi",
+         "",
+         "Use new/llvm PIC abi",
+         Options::Arguments::Zero,
+         [&legacyPIC](Options* o, const std::string& argument) {
+           legacyPIC = false;
          })
     .add("--input-source-map",
          "-ism",
@@ -284,9 +292,14 @@ int main(int argc, const char* argv[]) {
 
   if (sideModule) {
     passRunner.add("replace-stack-pointer");
-    passRunner.add("emscripten-pic");
-  } else {
-    passRunner.add("emscripten-pic-main-module");
+  }
+
+  if (legacyPIC) {
+    if (sideModule) {
+      passRunner.add("emscripten-pic");
+    } else {
+      passRunner.add("emscripten-pic-main-module");
+    }
   }
 
   if (!noDynCalls && !standaloneWasm) {
