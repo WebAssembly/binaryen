@@ -71,9 +71,11 @@ inline NameSet getUniqueTargets(BrOnExn* br) { return {br->name}; }
 inline NameSet getUniqueTargets(Expression* expr) {
   if (auto* br = expr->dynCast<Break>()) {
     return getUniqueTargets(br);
-  } if (auto* br = expr->dynCast<Switch>()) {
+  }
+  if (auto* br = expr->dynCast<Switch>()) {
     return getUniqueTargets(br);
-  } if (auto* br = expr->dynCast<BrOnExn>()) {
+  }
+  if (auto* br = expr->dynCast<BrOnExn>()) {
     return getUniqueTargets(br);
   }
   return {};
@@ -232,7 +234,9 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 };
 
 // Accumulates all the branches in an entire tree.
-struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressionVisitor<BranchAccumulator>> {
+struct BranchAccumulator
+  : public PostWalker<BranchAccumulator,
+                      UnifiedExpressionVisitor<BranchAccumulator>> {
   NameSet branches;
 
   void visitExpression(Expression* curr) {
@@ -295,9 +299,7 @@ public:
     return getBranches(curr).count(target);
   }
 
-  void forget(Expression* curr) {
-    branches.erase(curr);
-  }
+  void forget(Expression* curr) { branches.erase(curr); }
 };
 
 } // namespace BranchUtils
