@@ -229,6 +229,14 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
   }
 }
 
+template<typename T> inline void iterImports(Module& wasm, T visitor) {
+  iterImportedMemories(wasm, visitor);
+  iterImportedTables(wasm, visitor);
+  iterImportedGlobals(wasm, visitor);
+  iterImportedFunctions(wasm, visitor);
+  iterImportedEvents(wasm, visitor);
+}
+
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
