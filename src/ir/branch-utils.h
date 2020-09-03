@@ -229,19 +229,10 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 };
 
-// Accumulates a map of expression => all the branches in its children and
-// itself, in linear time.
 struct BranchAccumulator : public PostWalker<BranchAccumulator, UnifiedExpressionVisitor<BranchAccumulator>> {
-  std::unordered_map<Expression*, std::set<Name>> allBranches;
+  std::set<Name> branches;
 
   void visitExpression(Expression* curr) {
-    auto& branches = allBranches[curr];
-    // We may be re-run if part of the IR changes, so clear any previous data.
-    branches.clear();
-    for (auto child : ChildIterator(curr)) {
-      auto& childBranches = allBranches[child];
-      branches.insert(childBranches.begin(), childBranches.end());
-    }
     auto selfBranches = getUniqueTargets(curr);
     branches.insert(selfBranches.begin(), selfBranches.end());
   }
