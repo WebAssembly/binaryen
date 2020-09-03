@@ -4233,7 +4233,34 @@
       )
     ))
   )
-  (func $optimize-bhs-masked-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; i32
+    (drop (i32.shl
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_s
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_u
+      (local.get $x)
+      (i32.const 64)
+    ))
+    ;; i64
+    (drop (i64.shl
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_s
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.const 128)
+    ))
+
     ;; i32
     (drop (i32.shl
       (local.get $x)
