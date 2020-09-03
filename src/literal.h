@@ -52,7 +52,6 @@ public:
   // Type of the literal. Immutable because the literal's payload depends on it.
   const Type type;
 
-public:
   Literal() : v128(), type(Type::none) {}
   explicit Literal(Type type);
   explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
@@ -72,7 +71,7 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage> exn)
+  explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -125,7 +124,7 @@ public:
     return Literal(type);
   }
   static Literal makeFunc(Name func) { return Literal(func.c_str()); }
-  static Literal makeExn(std::unique_ptr<ExceptionPackage> exn) {
+  static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
   }
 
