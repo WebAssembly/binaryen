@@ -16,10 +16,10 @@
 
 //
 // stack-utils.h: Utilities for manipulating and analyzing stack machine code in
-// the form of Stacky IR.
+// the form of Poppy IR.
 //
-// Stacky IR represents stack machine code using normal Binaryen IR types by
-// imposing the following structural constraints:
+// Poppy IR represents stack machine code using normal Binaryen IR types by
+// imposing the following constraints:
 //
 //  1. Function bodies and children of control flow (except If conditions) must
 //     be blocks.
@@ -32,6 +32,9 @@
 //  3. All other children must be Pops, which are used to determine the input
 //     stack type of each instruction. Pops may not have `unreachable` type.
 //
+//  4. Only control flow structures and instructions that have polymorphic
+//     unreachable behavior in WebAssembly may have unreachable type.
+//
 // For example, the following Binaryen IR Function:
 //
 //   (func $foo (result i32)
@@ -41,7 +44,7 @@
 //    )
 //   )
 //
-// would look like this in Stacky IR:
+// would look like this in Poppy IR:
 //
 //   (func $foo (result i32)
 //    (block
@@ -78,7 +81,29 @@ void removeNops(Block* block);
 // represent the stack parameters and results of arbitrary sequences of stacky
 // instructions. They have to record whether they cover an unreachable
 // instruction because their composition takes into account the polymorphic
-// results of unreachable instructions.
+// results of unreachable instructions. For example, the following instruction
+// sequences both have params {i32, i32} and results {f32}, but only sequence B
+// is unreachable:
+//
+//  A:
+//    i32.add
+//    drop
+//    f32.const 42
+//
+//  B:
+//    i32.add
+//    unreachable
+//    f32.const 42
+//
+// Notice that this distinction is important because sequence B can be the body
+// of the blocks below but sequence A cannot. In other words, the stack
+// signature of sequence B satisfies the signatures of these blocks, but the
+// stack signature of sequence A does not.
+//
+//  (block (param f64 i32 i32) (result f32) ... )
+//  (block (param i32 i32) (result f64 f32) ... )
+//  (block (param f64 i32 i32) (result f64 f32) ... )
+//
 struct StackSignature {
   Type params;
   Type results;
@@ -101,7 +126,8 @@ struct StackSignature {
   template<class InputIt>
   explicit StackSignature(InputIt first, InputIt last)
     : params(Type::none), results(Type::none), unreachable(false) {
-    // TODO: It would be more efficient to build the params in reverse order
+    // TODO: It would be more efficient to build the signature directly and
+    // construct the params in reverse to avoid quadratic behavior.
     while (first != last) {
       *this += StackSignature(*first++);
     }
@@ -110,7 +136,8 @@ struct StackSignature {
   // Return `true` iff `next` composes after this stack signature.
   bool composes(const StackSignature& next) const;
 
-  // Whether a block with this stack signature could be typed with `sig`.
+  // Whether a block whose contents have this stack signature could be typed
+  // with `sig`.
   bool satisfies(Signature sig) const;
 
   // Compose stack signatures. Assumes they actually compose.
@@ -126,11 +153,13 @@ struct StackSignature {
 // Calculates stack machine data flow, associating the sources and destinations
 // of all values in a block.
 struct StackFlow {
-  // The input (output) location at which a value of type `type` is consumed
-  // (produced), representing the `index`th input into (output from) instruction
-  // `expr`. `unreachable` is true iff the corresponding value is consumed
-  // (produced) by the polymorphic behavior of an unreachable instruction
-  // without being used by that instruction.
+  // The destination (source) location at which a value of type `type` is
+  // consumed (produced), corresponding to the `index`th value consumed by
+  // (produced by) instruction `expr`. For destination locations, `unreachable`
+  // is true iff the corresponding value is consumed by the polymorphic behavior
+  // of an unreachable instruction rather than being used directly. For source
+  // locations, `unreachable` is true iff the corresponding value is produced by
+  // an unreachable instruction.
   struct Location {
     Expression* expr;
     Index index;
@@ -145,10 +174,10 @@ struct StackFlow {
 
   using LocationMap = std::unordered_map<Expression*, std::vector<Location>>;
 
-  // Maps each instruction to the set of output locations producing its inputs.
+  // Maps each instruction to the set of source locations producing its inputs.
   LocationMap srcs;
 
-  // Maps each instruction to the set of input locations consuming its results.
+  // Maps each instruction to the set of output locations consuming its results.
   LocationMap dests;
 
   // Gets the effective stack signature of `expr`, which must be a child of the

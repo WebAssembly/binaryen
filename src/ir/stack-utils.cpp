@@ -144,7 +144,11 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
 }
 
 StackFlow::StackFlow(Block* block) {
-  // Abstract out the logic for making a pass through the block
+  // Encapsulates the logic for treating the block and its children
+  // uniformly. The end of the block is treated as if it consumed values
+  // corresponding to the its result type and produced no values, which is why
+  // the block's result type is used as the params of its processed stack
+  // signature.
   auto processBlock = [&block](auto process) {
     for (auto* expr : block->list) {
       process(expr, StackSignature(expr));
@@ -219,6 +223,8 @@ StackFlow::StackFlow(Block* block) {
     for (Index i = 0; i < consumed; ++i) {
       if (i < unreachableConsumed) {
         // This value comes from the polymorphic stack of the last unreachable
+        // because the stack did not have enough values to satisfy this
+        // instruction.
         assert(consumed == sig.params.size());
         assert(lastUnreachable);
         assert(producedByUnreachable[lastUnreachable] >= unreachableConsumed);
