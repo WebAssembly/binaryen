@@ -507,6 +507,29 @@ struct OptimizeInstructions
           return ret;
         }
       }
+      // we could potentially elliminate masked rhs for shift operations
+      if (binary->op == ShlInt32 || binary->op == ShlInt64 ||
+          binary->op == ShrSInt32 || binary->op == ShrSInt64 ||
+          binary->op == ShrUInt32 || binary->op == ShrUInt64) {
+        if (auto* right = binary->right->dynCast<Binary>()) {
+          if (right->op == Abstract::getBinary(binary->type, Abstract::And)) {
+            if (auto* c = right->right->dynCast<Const>()) {
+              // x <<>> (y & (31 | 63))   ==>   x <<>> y
+              if (binary->type == Type::i32) {
+                if ((c->value.geti32() & 31) == 31) {
+                  binary->right = right->left;
+                  return binary;
+                }
+              } else if (binary->type == Type::i64) {
+                if ((c->value.geti64() & 63LL) == 63LL) {
+                  binary->right = right->left;
+                  return binary;
+                }
+              }
+            }
+          }
+        }
+      }
       // relation/comparisons allow for math optimizations
       if (binary->isRelational()) {
         if (auto* ret = optimizeRelational(binary)) {

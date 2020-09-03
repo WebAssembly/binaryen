@@ -11,6 +11,7 @@
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
@@ -3725,6 +3726,74 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $optimize-bhs-masked-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (drop
+   (i32.shl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.shl
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.shr_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.shr_u
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i64.shl
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.shl
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.shr_s
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i64.shr_u
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (drop
+   (i32.shl
+    (local.get $x)
+    (i32.and
+     (local.get $y)
+     (i32.const 32)
+    )
+   )
+  )
+  (drop
+   (i64.shr_u
+    (local.get $z)
+    (i64.and
+     (local.get $w)
+     (i64.const 31)
+    )
    )
   )
  )
