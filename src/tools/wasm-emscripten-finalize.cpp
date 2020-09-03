@@ -257,8 +257,7 @@ int main(int argc, const char* argv[]) {
 
   // The wasm backend emits "__indirect_function_table" as the import name for
   // the table, while older emscripten expects "table"
-  if (wasm.table.imported() && wasm.table.base != "table" &&
-      !minimizeWasmChanges) {
+  if (wasm.table.imported() && !minimizeWasmChanges) {
     wasm.table.base = Name("table");
   }
   wasm.updateMaps();
