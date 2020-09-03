@@ -98,7 +98,7 @@ bool StackSignature::satisfies(Signature sig) const {
     return true;
   }
   // Any additional provided params will pass through untouched, so they must be
-  // quivalent to the additional produced results.
+  // equivalent to the additional produced results.
   return std::equal(sig.params.begin(),
                     sig.params.end() - params.size(),
                     sig.results.begin(),
