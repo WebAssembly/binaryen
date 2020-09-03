@@ -330,9 +330,7 @@ private:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
-          // TODO: GC types
-          WASM_UNREACHABLE("unexpected GC type");
-          break;
+          WASM_UNREACHABLE("TODO: GC types");
         default:
           break;
       }
@@ -2643,12 +2641,6 @@ private:
     if (wasm.features.hasExceptionHandling()) {
       options.push_back(Type::exnref);
     }
-    // TODO: GC types
-    // if (wasm.features.hasGC()) {
-    //   options.push_back(Type::anyref);
-    //   options.push_back(Type::eqref);
-    //   options.push_back(Type::i31ref);
-    // }
     return builder.makeRefIsNull(make(pick(options)));
   }
 
@@ -2713,11 +2705,6 @@ private:
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        // TODO: GC types
-        // .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-        //      Type::anyref,
-        //      Type::eqref,
-        //      Type::i31ref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
@@ -2759,9 +2746,7 @@ private:
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref, aynref and eqref because these are
-  //   opaque
-  // - i31ref and compound types are TODO
+  // - there's no point in logging externref because it is opaque
   // - don't bother logging tuples
   std::vector<Type> getLoggableTypes() {
     return items(

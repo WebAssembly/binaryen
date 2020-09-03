@@ -1,33 +1,33 @@
   // BinaryenTypeNone: 0
-  // []
+  // 
   // BinaryenTypeUnreachable: 1
-  // [ 1 ]
+  // 1
   // BinaryenTypeInt32: 2
-  // [ 2 ]
+  // 2
   // BinaryenTypeInt64: 3
-  // [ 3 ]
+  // 3
   // BinaryenTypeFloat32: 4
-  // [ 4 ]
+  // 4
   // BinaryenTypeFloat64: 5
-  // [ 5 ]
+  // 5
   // BinaryenTypeVec128: 6
-  // [ 6 ]
+  // 6
   // BinaryenTypeFuncref: 7
-  // [ 7 ]
+  // 7
   // BinaryenTypeExternref: 8
-  // [ 8 ]
+  // 8
   // BinaryenTypeAnyref: 9
-  // [ 9 ]
+  // 9
   // BinaryenTypeEqref: 10
-  // [ 10 ]
+  // 10
   // BinaryenTypeI31ref: 11
-  // [ 11 ]
+  // 11
   // BinaryenTypeExnref: 12
-  // [ 12 ]
+  // 12
   // BinaryenTypeAuto: -1
-  // [ 2, 2 ]
-  // [ 2, 2 ]
-  // [ 4, 4 ]
+  // 2,2
+  // 2,2
+  // 4,4
 Features.MVP: 0
 Features.Atomics: 1
 Features.BulkMemory: 16
@@ -39,7 +39,7 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.All: 2047
+Features.All: 1023
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -1915,15 +1915,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (funcref.pop)
       )
       (drop
-       (anyref.pop)
-      )
-      (drop
-       (eqref.pop)
-      )
-      (drop
-       (i31ref.pop)
-      )
-      (drop
        (exnref.pop)
       )
       (nop)
@@ -3757,15 +3748,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (funcref.pop)
-      )
-      (drop
-       (anyref.pop)
-      )
-      (drop
-       (eqref.pop)
-      )
-      (drop
-       (i31ref.pop)
       )
       (drop
        (exnref.pop)

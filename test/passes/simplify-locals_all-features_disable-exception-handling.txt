@@ -1875,16 +1875,3 @@
   )
  )
 )
-(module
- (type $none_=>_externref (func (result externref)))
- (func $subtype-test (result externref)
-  (local $0 funcref)
-  (local $1 externref)
-  (local $2 externref)
-  (block $block
-   (nop)
-  )
-  (nop)
-  (local.get $0)
- )
-)

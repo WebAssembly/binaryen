@@ -398,7 +398,6 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
-extern const char* GCFeature;
 
 enum Subsection {
   NameFunction = 1,

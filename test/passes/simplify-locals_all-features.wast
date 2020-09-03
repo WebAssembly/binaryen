@@ -1655,22 +1655,23 @@
   )
  )
 )
-(module
- (func $subtype-test (result externref)
-  (local $0 funcref)
-  (local $1 externref)
-  (local $2 externref)
-  (block
-   (local.set $1
-    (local.get $0)
-   )
-  )
-  (local.set $2
-   (local.get $1)
-  )
-  (local.get $1)
- )
-)
+;; TODO (GC)
+;; (module
+;;  (func $subtype-test (result anyref)
+;;   (local $0 anyref)
+;;   (local $1 externref)
+;;   (local $2 externref)
+;;   (block
+;;    (local.set $1
+;;     (local.get $0)
+;;    )
+;;   )
+;;   (local.set $2
+;;    (local.get $1)
+;;   )
+;;   (local.get $1)
+;;  )
+;; )
 (module
   (event $event$0 (attr 0) (param))
   (func $unoptimizable-br_on_exn-block (result exnref) (local $0 exnref)

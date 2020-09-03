@@ -208,20 +208,25 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_externref,
                 {Type::i32, Type::i32, Type::externref},
                 Type::externref);
-      if (curr->features.hasGC()) {
-        addImport(
-          curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
-        addImport(
-          curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
-        addImport(
-          curr, get_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
-        addImport(
-          curr, set_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
-        addImport(
-          curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
-        addImport(
-          curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
-      }
+      // TODO (GC)
+      // if (curr->features.hasGC()) {
+      //   addImport(
+      //     curr, get_anyref, {Type::i32, Type::i32, Type::anyref},
+      //     Type::anyref);
+      //   addImport(
+      //     curr, set_anyref, {Type::i32, Type::i32, Type::anyref},
+      //     Type::anyref);
+      //   addImport(
+      //     curr, get_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+      //   addImport(
+      //     curr, set_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+      //   addImport(
+      //     curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref},
+      //     Type::i31ref);
+      //   addImport(
+      //     curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref},
+      //     Type::i31ref);
+      // }
     }
     if (curr->features.hasExceptionHandling()) {
       addImport(

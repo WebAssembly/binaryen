@@ -140,9 +140,6 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
-BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
-BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
@@ -334,9 +331,6 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 }
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
-}
-BinaryenFeatures BinaryenFeatureGC(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::GC);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);

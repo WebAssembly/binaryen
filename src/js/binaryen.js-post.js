@@ -35,9 +35,6 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['anyref', 'Anyref'],
-    ['eqref', 'Eqref'],
-    ['i31ref', 'I31ref'],
     ['exnref', 'Exnref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
@@ -123,7 +120,6 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
-    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2058,24 +2054,6 @@ function wrapModule(module, self = {}) {
   self['externref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['externref']);
-    }
-  };
-
-  self['anyref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['anyref']);
-    }
-  };
-
-  self['eqref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['eqref']);
-    }
-  };
-
-  self['i31ref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['i31ref']);
     }
   };
 

@@ -35,21 +35,6 @@
    (select (unreachable) (i32.const 0) (local.get $cond)))
   (func (export "select_trap_r") (param $cond i32) (result i32)
    (select (i32.const 0) (unreachable) (local.get $cond)))
-
-  (func (export "join-funcref") (param i32) (result externref)
-    (select (result externref)
-      (ref.func $dummy)
-      (ref.null extern)
-      (local.get 0)
-    )
-  )
-  (func (export "join-externref") (param i32) (param externref) (result externref)
-    (select (result externref)
-      (ref.func $dummy)
-      (local.get 1)
-      (local.get 0)
-    )
-  )
 )
 
 (assert_return (invoke "select_i32" (i32.const 1) (i32.const 2) (i32.const 1)) (i32.const 1))
@@ -84,14 +69,11 @@
 (assert_return (invoke "select-i64-t" (i64.const 2) (i64.const 1) (i32.const 1)) (i64.const 2))
 (assert_return (invoke "select-f32-t" (f32.const 1) (f32.const 2) (i32.const 1)) (f32.const 1))
 (assert_return (invoke "select-f64-t" (f64.const 1) (f64.const 2) (i32.const 1)) (f64.const 1))
-(assert_return (invoke "select-funcref" (ref.func "dummy") (ref.null func) (i32.const 1)) (ref.func "dummy"))
-(assert_return (invoke "select-externref" (ref.null extern) (ref.func "dummy") (i32.const 1)) (ref.null extern))
 
 (assert_return (invoke "select-i32-t" (i32.const 1) (i32.const 2) (i32.const 0)) (i32.const 2))
 (assert_return (invoke "select-i32-t" (i32.const 2) (i32.const 1) (i32.const 0)) (i32.const 1))
 (assert_return (invoke "select-i64-t" (i64.const 2) (i64.const 1) (i32.const -1)) (i64.const 2))
 (assert_return (invoke "select-i64-t" (i64.const 2) (i64.const 1) (i32.const 0xf0f0f0f0)) (i64.const 2))
-(assert_return (invoke "select-externref" (ref.null extern) (ref.func "dummy") (i32.const 0)) (ref.func "dummy"))
 
 (assert_return (invoke "select-f32-t" (f32.const nan) (f32.const 1) (i32.const 1)) (f32.const nan))
 (assert_return (invoke "select-f32-t" (f32.const nan:0x20304) (f32.const 1) (i32.const 1)) (f32.const nan:0x20304))
@@ -111,11 +93,10 @@
 (assert_return (invoke "select-f64-t" (f64.const 2) (f64.const nan) (i32.const 0)) (f64.const nan))
 (assert_return (invoke "select-f64-t" (f64.const 2) (f64.const nan:0x20304) (i32.const 0)) (f64.const nan:0x20304))
 
-(assert_return_func (invoke "join-funcref" (i32.const 1)))
-(assert_return (invoke "join-funcref" (i32.const 0)) (ref.null extern))
-
-(assert_return_func (invoke "join-externref" (i32.const 1) (ref.null extern)))
-(assert_return (invoke "join-externref" (i32.const 0) (ref.null extern)) (ref.null extern))
+(assert_return (invoke "select-funcref" (ref.func "dummy") (ref.null func) (i32.const 1)) (ref.func "dummy"))
+(assert_return (invoke "select-funcref" (ref.func "dummy") (ref.null func) (i32.const 0)) (ref.null func))
+(assert_return (invoke "select-externref" (ref.null extern) (ref.null extern) (i32.const 1)) (ref.null extern))
+(assert_return (invoke "select-externref" (ref.null extern) (ref.null extern) (i32.const 0)) (ref.null extern))
 
 (assert_trap (invoke "select_trap_l" (i32.const 1)) "unreachable executed")
 (assert_trap (invoke "select_trap_l" (i32.const 0)) "unreachable executed")

@@ -457,7 +457,7 @@ FeatureSet Type::getFeatures() const {
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
+        WASM_UNREACHABLE("TODO: GC types");
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       default:
@@ -520,62 +520,6 @@ bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
-  if (left.isRef() && right.isRef()) {
-    // ╒═══════ HeapType ═══════╕ ╒═════ ValueType ═════╕
-    // │         extern         │ │        (any)        │
-    // │            │           │ │      ┌───┴───┐      │
-    // │           any          │ │  rtt n ht   ...     │
-    // │      ┌─────┼─────┐     │ │      │              │
-    // │    func    eq   exn    │ │  rtt n'>=n ht       │
-    // │      │     │           │ └─────────────────────┘
-    // │ signature* │           │ ╒════════ Ref ════════╕
-    // │            │           │ │     ref null ht     │
-    // │      ┌─────┼─────┐     │ │          │          │
-    // │    i31  struct* array* │ │        ref ht       │
-    // └────────────────────────┘ └─────────────────────┘
-    if (left.isNullable() && !right.isNullable()) {
-      // (ref null ht) is not a subtype of (ref ht)
-      return false;
-    }
-    auto leftHeapType = left.getHeapType();
-    auto rightHeapType = right.getHeapType();
-    switch (rightHeapType.kind) {
-      case HeapType::FuncKind:
-        // any function reference type is a subtype
-        switch (leftHeapType.kind) {
-          case HeapType::FuncKind:
-          case HeapType::SignatureKind:
-            return true;
-          default:
-            return false;
-        }
-      case HeapType::ExternKind:
-        // any reference type
-        return true;
-      case HeapType::AnyKind:
-        // any reference type except externref
-        return left != Type::externref;
-      case HeapType::EqKind:
-        // i31, struct, array and itself
-        switch (leftHeapType.kind) {
-          case HeapType::EqKind:
-          case HeapType::I31Kind:
-          case HeapType::StructKind:
-          case HeapType::ArrayKind:
-            return true;
-          default:
-            return false;
-        }
-      case HeapType::I31Kind:
-      case HeapType::ExnKind:
-      case HeapType::StructKind:
-      case HeapType::ArrayKind:     // TODO: structural subtyping
-      case HeapType::SignatureKind: // "
-        // exactly itself
-        return leftHeapType == rightHeapType;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
       return false;
@@ -586,12 +530,6 @@ bool Type::isSubType(Type left, Type right) {
       }
     }
     return true;
-  }
-  if (left.isRtt() && right.isRtt()) {
-    auto leftRtt = getTypeInfo(left)->rtt;
-    auto rightRtt = getTypeInfo(right)->rtt;
-    return leftRtt.depth >= rightRtt.depth &&
-           leftRtt.heapType == rightRtt.heapType;
   }
   return false;
 }
@@ -620,147 +558,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
-  if (a.isRtt() && b.isRtt()) {
-    auto aRtt = getTypeInfo(a)->rtt;
-    auto bRtt = getTypeInfo(b)->rtt;
-    if (aRtt.heapType == bRtt.heapType) {
-      return Type(Rtt(std::min(aRtt.depth, bRtt.depth), aRtt.heapType));
-    }
-    return Type::none;
-  }
-  if (!a.isRef() || !b.isRef()) {
-    return Type::none;
-  }
-  // ╒═══════ HeapType ═══════╕ ╒═════ ValueType ═════╕
-  // │         extern         │ │        (any)        │
-  // │            │           │ │      ┌───┴───┐      │
-  // │           any          │ │  rtt n ht   ...     │
-  // │      ┌─────┼─────┐     │ │      │              │
-  // │    func    eq   exn    │ │  rtt n'>=n ht       │
-  // │      │     │           │ └─────────────────────┘
-  // │ signature* │           │ ╒════════ Ref ════════╕
-  // │            │           │ │     ref null ht     │
-  // │      ┌─────┼─────┐     │ │          │          │
-  // │    i31  struct* array* │ │        ref ht       │
-  // └────────────────────────┘ └─────────────────────┘
-  auto aHeapType = a.getHeapType();
-  auto bHeapType = b.getHeapType();
-  auto nullable = a.isNullable() || b.isNullable();
-  if (aHeapType == bHeapType) {
-    return Type(aHeapType, nullable);
-  }
-  // not the exact same Signature, Struct or Array from here on
-  switch (aHeapType.kind) {
-    case HeapType::FuncKind:
-    case HeapType::SignatureKind:
-      switch (bHeapType.kind) {
-        case HeapType::FuncKind:
-        case HeapType::SignatureKind:
-          return Type(HeapType::FuncKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::AnyKind:
-        case HeapType::EqKind:
-        case HeapType::I31Kind:
-        case HeapType::ExnKind:
-        case HeapType::StructKind:
-        case HeapType::ArrayKind:
-          return Type(HeapType::AnyKind, nullable);
-      }
-      break;
-    case HeapType::ExternKind:
-      return Type(HeapType::ExternKind, nullable);
-    case HeapType::AnyKind:
-      if (bHeapType.kind == HeapType::ExternKind) {
-        return Type(HeapType::ExternKind, nullable);
-      }
-      return Type(HeapType::AnyKind, nullable);
-    case HeapType::EqKind:
-      switch (bHeapType.kind) {
-        case HeapType::FuncKind:
-        case HeapType::SignatureKind:
-        case HeapType::ExnKind:
-          return Type(HeapType::AnyKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::AnyKind:
-          return Type(HeapType::AnyKind, nullable);
-        case HeapType::EqKind:
-        case HeapType::I31Kind:
-        case HeapType::StructKind:
-        case HeapType::ArrayKind:
-          return Type(HeapType::EqKind, nullable);
-      }
-      break;
-    case HeapType::ExnKind:
-      switch (bHeapType.kind) {
-        case HeapType::ExnKind:
-          return Type(HeapType::ExnKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::FuncKind:
-        case HeapType::AnyKind:
-        case HeapType::EqKind:
-        case HeapType::I31Kind:
-        case HeapType::SignatureKind:
-        case HeapType::StructKind:
-        case HeapType::ArrayKind:
-          return Type(HeapType::AnyKind, nullable);
-      }
-      break;
-    case HeapType::I31Kind:
-      switch (bHeapType.kind) {
-        case HeapType::I31Kind:
-          return Type(HeapType::I31Kind, nullable);
-        case HeapType::EqKind:
-        case HeapType::StructKind:
-        case HeapType::ArrayKind:
-          return Type(HeapType::EqKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::AnyKind:
-          return Type(HeapType::AnyKind, nullable);
-        case HeapType::FuncKind:
-        case HeapType::SignatureKind:
-        case HeapType::ExnKind:
-          return Type(HeapType::AnyKind, nullable);
-      }
-      break;
-    case HeapType::StructKind:
-      switch (bHeapType.kind) {
-        case HeapType::EqKind:
-        case HeapType::I31Kind:
-        case HeapType::StructKind: // TODO: structual subtyping
-        case HeapType::ArrayKind:
-          return Type(HeapType::EqKind, nullable);
-        case HeapType::FuncKind:
-        case HeapType::SignatureKind:
-        case HeapType::ExnKind:
-          return Type(HeapType::AnyKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::AnyKind:
-          return Type(HeapType::AnyKind, nullable);
-      }
-      break;
-    case HeapType::ArrayKind:
-      switch (bHeapType.kind) {
-        case HeapType::FuncKind:
-        case HeapType::SignatureKind:
-        case HeapType::AnyKind:
-        case HeapType::ExnKind:
-          return Type(HeapType::AnyKind, nullable);
-        case HeapType::ExternKind:
-          return Type(HeapType::ExternKind, nullable);
-        case HeapType::EqKind:
-        case HeapType::I31Kind:
-        case HeapType::StructKind:
-        case HeapType::ArrayKind: // TODO: structural subtyping
-          return Type(HeapType::EqKind, nullable);
-      }
-      break;
-  }
-  WASM_UNREACHABLE("unexpected type");
+  return Type::none;
 }
 
 Type::Iterator Type::end() const {

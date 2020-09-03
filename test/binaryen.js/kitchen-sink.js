@@ -74,15 +74,6 @@ function test_types() {
   console.log("  // BinaryenTypeExternref: " + binaryen.externref);
   console.log("  //", binaryen.expandType(binaryen.externref));
 
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref));
-
-  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
-  console.log("  //", binaryen.expandType(binaryen.eqref));
-
-  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
-  console.log("  //", binaryen.expandType(binaryen.i31ref));
-
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
   console.log("  //", binaryen.expandType(binaryen.exnref));
 
@@ -112,7 +103,6 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
-  // console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -516,6 +506,7 @@ function test_core() {
 
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
+    module.ref.is_null(module.ref.null(binaryen.funcref)),
     module.ref.is_null(module.ref.func("kitchen()sinker")),
     module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
 
@@ -576,9 +567,6 @@ function test_core() {
     module.v128.pop(),
     module.externref.pop(),
     module.funcref.pop(),
-    module.anyref.pop(),
-    module.eqref.pop(),
-    module.i31ref.pop(),
     module.exnref.pop(),
     // TODO: Host
     module.nop(),
