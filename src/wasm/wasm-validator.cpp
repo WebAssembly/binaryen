@@ -19,7 +19,6 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "ir/branch-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/module-utils.h"

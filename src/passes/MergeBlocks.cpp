@@ -145,8 +145,11 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
   PassOptions& passOptions;
+  BranchUtils::BranchSeekerCache& branchInfo;
 
-  BreakValueDropper(PassOptions& passOptions) : passOptions(passOptions) {}
+  BreakValueDropper(PassOptions& passOptions,
+                    BranchUtils::BranchSeekerCache& branchInfo)
+    : passOptions(passOptions), branchInfo(branchInfo) {}
 
   void visitBlock(Block* curr);
 
@@ -198,11 +201,10 @@ static bool hasDeadCode(Block* block) {
 }
 
 // core block optimizer routine
-static void
-optimizeBlock(Block* curr,
-              Module* module,
-              PassOptions& passOptions,
-              BranchUtils::BranchSeekerCache* branchInfo = nullptr) {
+static void optimizeBlock(Block* curr,
+                          Module* module,
+                          PassOptions& passOptions,
+                          BranchUtils::BranchSeekerCache& branchInfo) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -240,7 +242,7 @@ optimizeBlock(Block* curr,
                 childBlock = nullptr;
               } else {
                 // fix up breaks
-                BreakValueDropper fixer(passOptions);
+                BreakValueDropper fixer(passOptions, branchInfo);
                 fixer.origin = childBlock->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
@@ -297,17 +299,11 @@ optimizeBlock(Block* curr,
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          bool hasBranchToChild;
-          if (branchInfo) {
 //#ifdef MERGE_BLOCKS_DEBUG
-            assert(branchInfo->hasBranch(item, childName) ==
-                   BranchUtils::BranchSeeker::has(item, childName));
+          assert(branchInfo.hasBranch(item, childName) ==
+                 BranchUtils::BranchSeeker::has(item, childName));
 //#endif
-            hasBranchToChild = branchInfo->hasBranch(item, childName);
-          } else {
-            hasBranchToChild = BranchUtils::BranchSeeker::has(item, childName);
-          }
-          if (hasBranchToChild) {
+          if (branchInfo.hasBranch(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -404,7 +400,7 @@ optimizeBlock(Block* curr,
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
-  optimizeBlock(curr, getModule(), passOptions);
+  optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
@@ -415,7 +411,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   BranchUtils::BranchSeekerCache branchInfo;
 
   void visitBlock(Block* curr) {
-    optimizeBlock(curr, getModule(), getPassOptions(), &branchInfo);
+    optimizeBlock(curr, getModule(), getPassOptions(), branchInfo);
   }
 
   // given
