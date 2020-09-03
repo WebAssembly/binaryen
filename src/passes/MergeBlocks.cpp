@@ -299,10 +299,6 @@ static void optimizeBlock(Block* curr,
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-#ifdef MERGE_BLOCKS_DEBUG
-          assert(branchInfo.hasBranch(item, childName) ==
-                 BranchUtils::BranchSeeker::has(item, childName));
-#endif
           if (branchInfo.hasBranch(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;

@@ -296,7 +296,11 @@ public:
   }
 
   bool hasBranch(Expression* curr, Name target) {
-    return getBranches(curr).count(target);
+    bool result = getBranches(curr).count(target);
+#ifdef BRANCH_UTILS_DEBUG
+    assert(bresult == BranchSeeker::has(curr, target));
+#endif
+    return result;
   }
 };
 
