@@ -296,9 +296,9 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils
           auto* item = childList[j];
           bool hasBranchToChild;
           if (branchInfo) {
-#ifdef MERGE_BLOCKS_DEBUG
-//            assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
-#endif
+//#ifdef MERGE_BLOCKS_DEBUG
+            assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
+//#endif
             hasBranchToChild = branchInfo->hasBranch(item, childName);
           } else {
             hasBranchToChild = BranchUtils::BranchSeeker::has(item, childName);
