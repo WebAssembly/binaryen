@@ -299,10 +299,10 @@ optimizeBlock(Block* curr,
           auto* item = childList[j];
           bool hasBranchToChild;
           if (branchInfo) {
-            //#ifdef MERGE_BLOCKS_DEBUG
+//#ifdef MERGE_BLOCKS_DEBUG
             assert(branchInfo->hasBranch(item, childName) ==
                    BranchUtils::BranchSeeker::has(item, childName));
-            //#endif
+//#endif
             hasBranchToChild = branchInfo->hasBranch(item, childName);
           } else {
             hasBranchToChild = BranchUtils::BranchSeeker::has(item, childName);
@@ -373,12 +373,10 @@ optimizeBlock(Block* curr,
         if (loop) {
           loop->finalize();
         }
-        if (branchInfo) {
-          // Some items from the child were moved out; update the child's
-          // branch info. (If we merge all the child's items, the child won't
-          // exist anyhow.)
-          branchInfo->forget(child);
-        }
+        // Note that we modify the child block here, which invalidates info
+        // in branchInfo. However, as we have scanned the parent, we have
+        // already forgotten the child's info, so there is nothing to do here
+        // for the child.
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {

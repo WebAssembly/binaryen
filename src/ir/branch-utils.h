@@ -298,8 +298,6 @@ public:
   bool hasBranch(Expression* curr, Name target) {
     return getBranches(curr).count(target);
   }
-
-  void forget(Expression* curr) { branches.erase(curr); }
 };
 
 } // namespace BranchUtils
