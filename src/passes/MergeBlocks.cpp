@@ -297,7 +297,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions, BranchUtils
           bool hasBranchToChild;
           if (branchInfo) {
 #ifdef MERGE_BLOCKS_DEBUG
-            assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
+//            assert(branchInfo->hasBranch(item, childName) == BranchUtils::BranchSeeker::has(item, childName));
 #endif
             hasBranchToChild = branchInfo->hasBranch(item, childName);
           } else {

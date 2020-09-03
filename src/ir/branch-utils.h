@@ -257,26 +257,43 @@ public:
     if (iter != branches.end()) {
       return iter->second;
     }
-    // Start with the parent's own branches.
-    auto currBranches = getUniqueTargets(curr);
+    static int fast = 0, slow = 0, fast1 = 0, slow1 = 0;
+    NameSet currBranches;
+    auto add = [&](NameSet& moreBranches) {
+      // Make sure to do a fast swap for the first set of branches to arrive.
+      // This helps the case of the first child being a block with a very large
+      // set of names.
+      if (currBranches.empty()) {
+      fast1++;
+        currBranches.swap(moreBranches);
+      } else {
+      slow1++;
+        currBranches.insert(moreBranches.begin(), moreBranches.end());
+      }
+    };
     // Add from the children, which are hopefully cached.
     for (auto child : ChildIterator(curr)) {
       auto iter = branches.find(child);
       if (iter != branches.end()) {
-        auto& childBranches = iter->second;
-        currBranches.insert(childBranches.begin(), childBranches.end());
+        add(iter->second);
         // We are scanning the parent, which means we assume the child will
         // never be visited again.
         branches.erase(iter);
+if (child->is<Block>())        fast++;
       } else {
         // The child was not cached. Scan it manually.
         BranchAccumulator childBranches;
         childBranches.walk(child);
-        currBranches.insert(childBranches.branches.begin(), childBranches.branches.end());
+        add(childBranches.branches);
         // Don't bother caching anything - we are scanning the parent, so the
         // child will presumably not be scanned again.
+if (child->is<Block>())        slow++;
       }
+if (child->is<Block>())            std::cout << "bu fast / slow: " << fast << " / " << slow << "    :    " << fast1 << " : " << slow1 << '\n';
     }
+    // Finish with the parent's own branches.
+    auto selfBranches = getUniqueTargets(curr);
+    add(selfBranches);
     return branches[curr] = std::move(currBranches);
   }
 
