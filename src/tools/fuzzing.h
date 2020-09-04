@@ -319,16 +319,15 @@ private:
       TODO_SINGLE_COMPOUND(type);
       switch (type.getBasic()) {
         case Type::externref:
-          options.push_back(Type::funcref);
-          if (wasm.features.hasExceptionHandling()) {
-            options.push_back(Type::exnref);
-          }
-          // falls through
         case Type::funcref:
         case Type::exnref:
           break;
         case Type::anyref:
+          // TODO (GC)
+          // includes externref, funcref, exnref, eqref (incl. subtypes)
         case Type::eqref:
+          // TODO (GC)
+          // includes i31ref, concrete structs and arrays
         case Type::i31ref:
           WASM_UNREACHABLE("TODO: GC types");
         default:
