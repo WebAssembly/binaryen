@@ -41,8 +41,9 @@ template<typename InputType> inline Nop* nop(InputType* target) {
 }
 
 template<typename InputType> inline RefNull* refNull(InputType* target) {
+  auto targetType = target->type;
   auto* ret = convert<InputType, RefNull>(target);
-  ret->finalize();
+  ret->finalize(targetType);
   return ret;
 }
 
