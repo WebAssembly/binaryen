@@ -15,7 +15,7 @@
  */
 
 //
-// Removes all operations in a wasm module that aren't inherently implementable
+// RemoveNonJSOps removes operations that aren't inherently implementable
 // in JS. This includes things like 64-bit division, `f32.nearest`,
 // `f64.copysign`, etc. Most operations are lowered to a call to an injected
 // intrinsic implementation. Intrinsics don't use themselves to implement
@@ -26,6 +26,12 @@
 // needed intrinsics from this module into the module that we're optimizing
 // after walking the current module.
 //
+// StubUnsupportedJSOps stubs out operations that are not fully supported
+// even with RemoveNonJSOps. For example, i64->f32 conversions do not have
+// perfect rounding in all cases. StubUnsupportedJSOps removes those entirely
+// and replaces them with "stub" operations that do nothing. This is only
+// really useful for fuzzing as it changes the behavior of the program.
+//
 
 #include <pass.h>
 #include <wasm.h>
@@ -33,6 +39,7 @@
 #include "abi/js.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
+#include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "passes/intrinsics-module.h"
@@ -162,7 +169,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned loads of floats to unaligned loads of integers (which we
     // can actually implement) and then use reinterpretation to get the float
     // back out.
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::f32:
         curr->type = Type::i32;
         replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
@@ -184,7 +191,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned stores of floats to unaligned stores of integers (which
     // we can actually implement) and then use reinterpretation to store the
     // right value.
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::f32:
         curr->valueType = Type::i32;
         curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);
@@ -324,6 +331,61 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
+struct StubUnsupportedJSOpsPass
+  : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new StubUnsupportedJSOpsPass; }
+
+  void visitUnary(Unary* curr) {
+    switch (curr->op) {
+      case ConvertUInt64ToFloat32:
+        // See detailed comment in lowerConvertIntToFloat in
+        // I64ToI32Lowering.cpp.
+        stubOut(curr->value, curr->type);
+        break;
+      default: {
+      }
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    // Indirect calls of the wrong type trap in wasm, but not in wasm2js. Remove
+    // the indirect call, but leave the arguments.
+    Builder builder(*getModule());
+    std::vector<Expression*> items;
+    for (auto* operand : curr->operands) {
+      items.push_back(builder.makeDrop(operand));
+    }
+    items.push_back(builder.makeDrop(curr->target));
+    stubOut(builder.makeBlock(items), curr->type);
+  }
+
+  void stubOut(Expression* value, Type outputType) {
+    Builder builder(*getModule());
+    // In some cases we can just replace with the value.
+    auto* replacement = value;
+    if (outputType == Type::unreachable) {
+      // This is unreachable anyhow; just leave the value instead of the
+      // original node.
+      assert(value->type == Type::unreachable);
+    } else if (outputType != Type::none) {
+      // Drop the value if we need to.
+      if (value->type != Type::none) {
+        value = builder.makeDrop(value);
+      }
+      // Return something with the right output type.
+      replacement = builder.makeSequence(
+        value, LiteralUtils::makeZero(outputType, *getModule()));
+    }
+    replaceCurrent(replacement);
+  }
+};
+
 Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
+
+Pass* createStubUnsupportedJSOpsPass() {
+  return new StubUnsupportedJSOpsPass();
+}
 
 } // namespace wasm

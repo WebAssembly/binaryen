@@ -582,6 +582,7 @@ BINARYEN_API BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void);
+// TODO: Add Load{32,64}Zero to C and JS APIs once merged to proposal
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
@@ -854,261 +855,1010 @@ BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
 
+// Expression
+
+// Gets the id (kind) of the given expression.
 BINARYEN_API BinaryenExpressionId
 BinaryenExpressionGetId(BinaryenExpressionRef expr);
+// Gets the type of the given expression.
 BINARYEN_API BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
+// Sets the type of the given expression.
+BINARYEN_API void BinaryenExpressionSetType(BinaryenExpressionRef expr,
+                                            BinaryenType type);
+// Prints text format of the given expression to stdout.
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+// Re-finalizes an expression after it has been modified.
+BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
+// Makes a deep copy of the given expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
 
+// Block
+
+// Gets the name (label) of a `block` expression.
 BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
+// Sets the name (label) of a `block` expression.
+BINARYEN_API void BinaryenBlockSetName(BinaryenExpressionRef expr,
+                                       const char* name);
+// Gets the number of child expressions of a `block` expression.
 BINARYEN_API BinaryenIndex
 BinaryenBlockGetNumChildren(BinaryenExpressionRef expr);
+// Gets the child expression at the specified index of a `block` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenBlockGetChildAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets (replaces) the child expression at the specified index of a `block`
+// expression.
+BINARYEN_API void BinaryenBlockSetChildAt(BinaryenExpressionRef expr,
+                                          BinaryenIndex index,
+                                          BinaryenExpressionRef childExpr);
+// Appends a child expression to a `block` expression, returning its insertion
+// index.
+BINARYEN_API BinaryenIndex BinaryenBlockAppendChild(
+  BinaryenExpressionRef expr, BinaryenExpressionRef childExpr);
+// Inserts a child expression at the specified index of a `block` expression,
+// moving existing children including the one previously at that index one index
+// up.
+BINARYEN_API void BinaryenBlockInsertChildAt(BinaryenExpressionRef expr,
+                                             BinaryenIndex index,
+                                             BinaryenExpressionRef childExpr);
+// Removes the child expression at the specified index of a `block` expression,
+// moving all subsequent children one index down. Returns the child expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenBlockRemoveChildAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
+// If
+
+// Gets the condition expression of an `if` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenIfGetCondition(BinaryenExpressionRef expr);
+// Sets the condition expression of an `if` expression.
+BINARYEN_API void BinaryenIfSetCondition(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef condExpr);
+// Gets the ifTrue (then) expression of an `if` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenIfGetIfTrue(BinaryenExpressionRef expr);
+// Sets the ifTrue (then) expression of an `if` expression.
+BINARYEN_API void BinaryenIfSetIfTrue(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef ifTrueExpr);
+// Gets the ifFalse (else) expression, if any, of an `if` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenIfGetIfFalse(BinaryenExpressionRef expr);
+// Sets the ifFalse (else) expression, if any, of an `if` expression.
+BINARYEN_API void BinaryenIfSetIfFalse(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef ifFalseExpr);
 
+// Loop
+
+// Gets the name (label) of a `loop` expression.
 BINARYEN_API const char* BinaryenLoopGetName(BinaryenExpressionRef expr);
+// Sets the name (label) of a `loop` expression.
+BINARYEN_API void BinaryenLoopSetName(BinaryenExpressionRef expr,
+                                      const char* name);
+// Gets the body expression of a `loop` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenLoopGetBody(BinaryenExpressionRef expr);
+// Sets the body expression of a `loop` expression.
+BINARYEN_API void BinaryenLoopSetBody(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef bodyExpr);
 
+// Break
+
+// Gets the name (target label) of a `br` or `br_if` expression.
 BINARYEN_API const char* BinaryenBreakGetName(BinaryenExpressionRef expr);
+// Sets the name (target label) of a `br` or `br_if` expression.
+BINARYEN_API void BinaryenBreakSetName(BinaryenExpressionRef expr,
+                                       const char* name);
+// Gets the condition expression, if any, of a `br_if` expression. No condition
+// indicates a `br` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBreakGetCondition(BinaryenExpressionRef expr);
+// Sets the condition expression, if any, of a `br_if` expression. No condition
+// makes it a `br` expression.
+BINARYEN_API void BinaryenBreakSetCondition(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef condExpr);
+// Gets the value expression, if any, of a `br` or `br_if` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBreakGetValue(BinaryenExpressionRef expr);
+// Sets the value expression, if any, of a `br` or `br_if` expression.
+BINARYEN_API void BinaryenBreakSetValue(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef valueExpr);
 
+// Switch
+
+// Gets the number of names (target labels) of a `br_table` expression.
 BINARYEN_API BinaryenIndex
 BinaryenSwitchGetNumNames(BinaryenExpressionRef expr);
-BINARYEN_API const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
-                                               BinaryenIndex index);
+// Gets the name (target label) at the specified index of a `br_table`
+// expression.
+BINARYEN_API const char* BinaryenSwitchGetNameAt(BinaryenExpressionRef expr,
+                                                 BinaryenIndex index);
+// Sets the name (target label) at the specified index of a `br_table`
+// expression.
+BINARYEN_API void BinaryenSwitchSetNameAt(BinaryenExpressionRef expr,
+                                          BinaryenIndex index,
+                                          const char* name);
+// Appends a name to a `br_table` expression, returning its insertion index.
+BINARYEN_API BinaryenIndex BinaryenSwitchAppendName(BinaryenExpressionRef expr,
+                                                    const char* name);
+// Inserts a name at the specified index of a `br_table` expression, moving
+// existing names including the one previously at that index one index up.
+BINARYEN_API void BinaryenSwitchInsertNameAt(BinaryenExpressionRef expr,
+                                             BinaryenIndex index,
+                                             const char* name);
+// Removes the name at the specified index of a `br_table` expression, moving
+// all subsequent names one index down. Returns the name.
+BINARYEN_API const char* BinaryenSwitchRemoveNameAt(BinaryenExpressionRef expr,
+                                                    BinaryenIndex index);
+// Gets the default name (target label), if any, of a `br_table` expression.
 BINARYEN_API const char*
 BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr);
+// Sets the default name (target label), if any, of a `br_table` expression.
+BINARYEN_API void BinaryenSwitchSetDefaultName(BinaryenExpressionRef expr,
+                                               const char* name);
+// Gets the condition expression of a `br_table` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSwitchGetCondition(BinaryenExpressionRef expr);
+// Sets the condition expression of a `br_table` expression.
+BINARYEN_API void BinaryenSwitchSetCondition(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef condExpr);
+// Gets the value expression, if any, of a `br_table` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSwitchGetValue(BinaryenExpressionRef expr);
+// Sets the value expression, if any, of a `br_table` expression.
+BINARYEN_API void BinaryenSwitchSetValue(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef valueExpr);
 
-BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
+// Call
+
+// Gets the target function name of a `call` expression.
 BINARYEN_API const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
+// Sets the target function name of a `call` expression.
+BINARYEN_API void BinaryenCallSetTarget(BinaryenExpressionRef expr,
+                                        const char* target);
+// Gets the number of operands of a `call` expression.
 BINARYEN_API BinaryenIndex
 BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
+// Gets the operand expression at the specified index of a `call` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenCallGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand expression at the specified index of a `call` expression.
+BINARYEN_API void BinaryenCallSetOperandAt(BinaryenExpressionRef expr,
+                                           BinaryenIndex index,
+                                           BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `call` expression, returning its insertion
+// index.
+BINARYEN_API BinaryenIndex BinaryenCallAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `call` expression,
+// moving existing operands including the one previously at that index one index
+// up.
+BINARYEN_API void
+BinaryenCallInsertOperandAt(BinaryenExpressionRef expr,
+                            BinaryenIndex index,
+                            BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `call` expression,
+// moving all subsequent operands one index down. Returns the operand
+// expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether the specified `call` expression is a tail call.
+BINARYEN_API int BinaryenCallIsReturn(BinaryenExpressionRef expr);
+// Sets whether the specified `call` expression is a tail call.
+BINARYEN_API void BinaryenCallSetReturn(BinaryenExpressionRef expr,
+                                        int isReturn);
 
-BINARYEN_API int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr);
+// CallIndirect
+
+// Gets the target expression of a `call_indirect` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
+// Sets the target expression of a `call_indirect` expression.
+BINARYEN_API void
+BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef targetExpr);
+// Gets the number of operands of a `call_indirect` expression.
 BINARYEN_API BinaryenIndex
 BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets the operand expression at the specified index of a `call_indirect`
+// expression.
+BINARYEN_API BinaryenExpressionRef BinaryenCallIndirectGetOperandAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand expression at the specified index of a `call_indirect`
+// expression.
+BINARYEN_API void
+BinaryenCallIndirectSetOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `call_indirect` expression, returning its
+// insertion index.
+BINARYEN_API BinaryenIndex BinaryenCallIndirectAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `call_indirect`
+// expression, moving existing operands including the one previously at that
+// index one index up.
+BINARYEN_API void
+BinaryenCallIndirectInsertOperandAt(BinaryenExpressionRef expr,
+                                    BinaryenIndex index,
+                                    BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `call_indirect`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BINARYEN_API BinaryenExpressionRef BinaryenCallIndirectRemoveOperandAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether the specified `call_indirect` expression is a tail call.
+BINARYEN_API int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr);
+// Sets whether the specified `call_indirect` expression is a tail call.
+BINARYEN_API void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr,
+                                                int isReturn);
+// Gets the parameter types of the specified `call_indirect` expression.
+BINARYEN_API BinaryenType
+BinaryenCallIndirectGetParams(BinaryenExpressionRef expr);
+// Sets the parameter types of the specified `call_indirect` expression.
+BINARYEN_API void BinaryenCallIndirectSetParams(BinaryenExpressionRef expr,
+                                                BinaryenType params);
+// Gets the result types of the specified `call_indirect` expression.
+BINARYEN_API BinaryenType
+BinaryenCallIndirectGetResults(BinaryenExpressionRef expr);
+// Sets the result types of the specified `call_indirect` expression.
+BINARYEN_API void BinaryenCallIndirectSetResults(BinaryenExpressionRef expr,
+                                                 BinaryenType params);
 
+// LocalGet
+
+// Gets the local index of a `local.get` expression.
 BINARYEN_API BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr);
+// Sets the local index of a `local.get` expression.
+BINARYEN_API void BinaryenLocalGetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenIndex index);
 
+// LocalSet
+
+// Gets whether a `local.set` tees its value (is a `local.tee`). True if the
+// expression has a type other than `none`.
 BINARYEN_API int BinaryenLocalSetIsTee(BinaryenExpressionRef expr);
+// Gets the local index of a `local.set` or `local.tee` expression.
 BINARYEN_API BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr);
+// Sets the local index of a `local.set` or `local.tee` expression.
+BINARYEN_API void BinaryenLocalSetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenIndex index);
+// Gets the value expression of a `local.set` or `local.tee` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenLocalSetGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `local.set` or `local.tee` expression.
+BINARYEN_API void BinaryenLocalSetSetValue(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef valueExpr);
 
+// GlobalGet
+
+// Gets the name of the global being accessed by a `global.get` expression.
 BINARYEN_API const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr);
+// Sets the name of the global being accessed by a `global.get` expression.
+BINARYEN_API void BinaryenGlobalGetSetName(BinaryenExpressionRef expr,
+                                           const char* name);
 
+// GlobalSet
+
+// Gets the name of the global being accessed by a `global.set` expression.
 BINARYEN_API const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr);
+// Sets the name of the global being accessed by a `global.set` expression.
+BINARYEN_API void BinaryenGlobalSetSetName(BinaryenExpressionRef expr,
+                                           const char* name);
+// Gets the value expression of a `global.set` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `global.set` expression.
+BINARYEN_API void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
 
+// Host
+
+// Gets the operation being performed by a host expression.
 BINARYEN_API BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a host expression.
+BINARYEN_API void BinaryenHostSetOp(BinaryenExpressionRef expr, BinaryenOp op);
+// Gets the name operand, if any, of a host expression.
 BINARYEN_API const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr);
+// Sets the name operand, if any, of a host expression.
+BINARYEN_API void BinaryenHostSetNameOperand(BinaryenExpressionRef expr,
+                                             const char* nameOperand);
+// Gets the number of operands of a host expression.
 BINARYEN_API BinaryenIndex
 BinaryenHostGetNumOperands(BinaryenExpressionRef expr);
+// Gets the operand at the specified index of a host expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenHostGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenHostGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand at the specified index of a host expression.
+BINARYEN_API void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
+                                           BinaryenIndex index,
+                                           BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a host expression, returning its insertion
+// index.
+BINARYEN_API BinaryenIndex BinaryenHostAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a host expression,
+// moving existing operands including the one previously at that index one index
+// up.
+BINARYEN_API void
+BinaryenHostInsertOperandAt(BinaryenExpressionRef expr,
+                            BinaryenIndex index,
+                            BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a host expression,
+// moving all subsequent operands one index down. Returns the operand
+// expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenHostRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
+// Load
+
+// Gets whether a `load` expression is atomic (is an `atomic.load`).
 BINARYEN_API int BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
+// Sets whether a `load` expression is atomic (is an `atomic.load`).
+BINARYEN_API void BinaryenLoadSetAtomic(BinaryenExpressionRef expr,
+                                        int isAtomic);
+// Gets whether a `load` expression operates on a signed value (`_s`).
 BINARYEN_API int BinaryenLoadIsSigned(BinaryenExpressionRef expr);
+// Sets whether a `load` expression operates on a signed value (`_s`).
+BINARYEN_API void BinaryenLoadSetSigned(BinaryenExpressionRef expr,
+                                        int isSigned);
+// Gets the constant offset of a `load` expression.
 BINARYEN_API uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr);
+// Sets the constant offset of a `load` expression.
+BINARYEN_API void BinaryenLoadSetOffset(BinaryenExpressionRef expr,
+                                        uint32_t offset);
+// Gets the number of bytes loaded by a `load` expression.
 BINARYEN_API uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
+// Sets the number of bytes loaded by a `load` expression.
+BINARYEN_API void BinaryenLoadSetBytes(BinaryenExpressionRef expr,
+                                       uint32_t bytes);
+// Gets the byte alignment of a `load` expression.
 BINARYEN_API uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
+// Sets the byte alignment of a `load` expression.
+BINARYEN_API void BinaryenLoadSetAlign(BinaryenExpressionRef expr,
+                                       uint32_t align);
+// Gets the pointer expression of a `load` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenLoadGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of a `load` expression.
+BINARYEN_API void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef ptrExpr);
 
+// Store
+
+// Gets whether a `store` expression is atomic (is an `atomic.store`).
 BINARYEN_API int BinaryenStoreIsAtomic(BinaryenExpressionRef expr);
+// Sets whether a `store` expression is atomic (is an `atomic.store`).
+BINARYEN_API void BinaryenStoreSetAtomic(BinaryenExpressionRef expr,
+                                         int isAtomic);
+// Gets the number of bytes stored by a `store` expression.
 BINARYEN_API uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr);
+// Sets the number of bytes stored by a `store` expression.
+BINARYEN_API void BinaryenStoreSetBytes(BinaryenExpressionRef expr,
+                                        uint32_t bytes);
+// Gets the constant offset of a `store` expression.
 BINARYEN_API uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr);
+// Sets the constant offset of a `store` expression.
+BINARYEN_API void BinaryenStoreSetOffset(BinaryenExpressionRef expr,
+                                         uint32_t offset);
+// Gets the byte alignment of a `store` expression.
 BINARYEN_API uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr);
+// Sets the byte alignment of a `store` expression.
+BINARYEN_API void BinaryenStoreSetAlign(BinaryenExpressionRef expr,
+                                        uint32_t align);
+// Gets the pointer expression of a `store` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenStoreGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of a `store` expression.
+BINARYEN_API void BinaryenStoreSetPtr(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef ptrExpr);
+// Gets the value expression of a `store` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenStoreGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `store` expression.
+BINARYEN_API void BinaryenStoreSetValue(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef valueExpr);
+// Gets the value type of a `store` expression.
+BINARYEN_API BinaryenType BinaryenStoreGetValueType(BinaryenExpressionRef expr);
+// Sets the value type of a `store` expression.
+BINARYEN_API void BinaryenStoreSetValueType(BinaryenExpressionRef expr,
+                                            BinaryenType valueType);
 
+// Const
+
+// Gets the 32-bit integer value of an `i32.const` expression.
 BINARYEN_API int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Sets the 32-bit integer value of an `i32.const` expression.
+BINARYEN_API void BinaryenConstSetValueI32(BinaryenExpressionRef expr,
+                                           int32_t value);
+// Gets the 64-bit integer value of an `i64.const` expression.
 BINARYEN_API int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Sets the 64-bit integer value of an `i64.const` expression.
+BINARYEN_API void BinaryenConstSetValueI64(BinaryenExpressionRef expr,
+                                           int64_t value);
+// Gets the low 32-bits of the 64-bit integer value of an `i64.const`
+// expression.
 BINARYEN_API int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Sets the low 32-bits of the 64-bit integer value of an `i64.const`
+// expression.
+BINARYEN_API void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr,
+                                              int32_t valueLow);
+// Gets the high 32-bits of the 64-bit integer value of an `i64.const`
+// expression.
 BINARYEN_API int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Sets the high 32-bits of the 64-bit integer value of an `i64.const`
+// expression.
+BINARYEN_API void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
+                                               int32_t valueHigh);
+// Gets the 32-bit float value of a `f32.const` expression.
 BINARYEN_API float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Sets the 32-bit float value of a `f32.const` expression.
+BINARYEN_API void BinaryenConstSetValueF32(BinaryenExpressionRef expr,
+                                           float value);
+// Gets the 64-bit float (double) value of a `f64.const` expression.
 BINARYEN_API double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
+// Sets the 64-bit float (double) value of a `f64.const` expression.
+BINARYEN_API void BinaryenConstSetValueF64(BinaryenExpressionRef expr,
+                                           double value);
+// Reads the 128-bit vector value of a `v128.const` expression.
 BINARYEN_API void BinaryenConstGetValueV128(BinaryenExpressionRef expr,
                                             uint8_t* out);
+// Sets the 128-bit vector value of a `v128.const` expression.
+BINARYEN_API void BinaryenConstSetValueV128(BinaryenExpressionRef expr,
+                                            const uint8_t value[16]);
 
+// Unary
+
+// Gets the operation being performed by a unary expression.
 BINARYEN_API BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a unary expression.
+BINARYEN_API void BinaryenUnarySetOp(BinaryenExpressionRef expr, BinaryenOp op);
+// Gets the value expression of a unary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnaryGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a unary expression.
+BINARYEN_API void BinaryenUnarySetValue(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef valueExpr);
 
+// Binary
+
+// Gets the operation being performed by a binary expression.
 BINARYEN_API BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a binary expression.
+BINARYEN_API void BinaryenBinarySetOp(BinaryenExpressionRef expr,
+                                      BinaryenOp op);
+// Gets the left expression of a binary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBinaryGetLeft(BinaryenExpressionRef expr);
+// Sets the left expression of a binary expression.
+BINARYEN_API void BinaryenBinarySetLeft(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef leftExpr);
+// Gets the right expression of a binary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBinaryGetRight(BinaryenExpressionRef expr);
+// Sets the right expression of a binary expression.
+BINARYEN_API void BinaryenBinarySetRight(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef rightExpr);
 
+// Select
+
+// Gets the expression becoming selected by a `select` expression if the
+// condition turns out true.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSelectGetIfTrue(BinaryenExpressionRef expr);
+// Sets the expression becoming selected by a `select` expression if the
+// condition turns out true.
+BINARYEN_API void BinaryenSelectSetIfTrue(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef ifTrueExpr);
+// Gets the expression becoming selected by a `select` expression if the
+// condition turns out false.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSelectGetIfFalse(BinaryenExpressionRef expr);
+// Sets the expression becoming selected by a `select` expression if the
+// condition turns out false.
+BINARYEN_API void BinaryenSelectSetIfFalse(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef ifFalseExpr);
+// Gets the condition expression of a `select` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSelectGetCondition(BinaryenExpressionRef expr);
+// Sets the condition expression of a `select` expression.
+BINARYEN_API void BinaryenSelectSetCondition(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef condExpr);
 
+// Drop
+
+// Gets the value expression being dropped by a `drop` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenDropGetValue(BinaryenExpressionRef expr);
+// Sets the value expression being dropped by a `drop` expression.
+BINARYEN_API void BinaryenDropSetValue(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef valueExpr);
 
+// Return
+
+// Gets the value expression, if any, being returned by a `return` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnGetValue(BinaryenExpressionRef expr);
+// Sets the value expression, if any, being returned by a `return` expression.
+BINARYEN_API void BinaryenReturnSetValue(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef valueExpr);
 
+// AtomicRMW
+
+// Gets the operation being performed by an atomic read-modify-write expression.
 BINARYEN_API BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by an atomic read-modify-write expression.
+BINARYEN_API void BinaryenAtomicRMWSetOp(BinaryenExpressionRef expr,
+                                         BinaryenOp op);
+// Gets the number of bytes affected by an atomic read-modify-write expression.
 BINARYEN_API uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr);
+// Sets the number of bytes affected by an atomic read-modify-write expression.
+BINARYEN_API void BinaryenAtomicRMWSetBytes(BinaryenExpressionRef expr,
+                                            uint32_t bytes);
+// Gets the constant offset of an atomic read-modify-write expression.
 BINARYEN_API uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr);
+// Sets the constant offset of an atomic read-modify-write expression.
+BINARYEN_API void BinaryenAtomicRMWSetOffset(BinaryenExpressionRef expr,
+                                             uint32_t offset);
+// Gets the pointer expression of an atomic read-modify-write expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of an atomic read-modify-write expression.
+BINARYEN_API void BinaryenAtomicRMWSetPtr(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef ptrExpr);
+// Gets the value expression of an atomic read-modify-write expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of an atomic read-modify-write expression.
+BINARYEN_API void BinaryenAtomicRMWSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
 
+// AtomicCmpxchg
+
+// Gets the number of bytes affected by an atomic compare and exchange
+// expression.
 BINARYEN_API uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr);
+// Sets the number of bytes affected by an atomic compare and exchange
+// expression.
+BINARYEN_API void BinaryenAtomicCmpxchgSetBytes(BinaryenExpressionRef expr,
+                                                uint32_t bytes);
+// Gets the constant offset of an atomic compare and exchange expression.
 BINARYEN_API uint32_t
 BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr);
+// Sets the constant offset of an atomic compare and exchange expression.
+BINARYEN_API void BinaryenAtomicCmpxchgSetOffset(BinaryenExpressionRef expr,
+                                                 uint32_t offset);
+// Gets the pointer expression of an atomic compare and exchange expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of an atomic compare and exchange expression.
+BINARYEN_API void BinaryenAtomicCmpxchgSetPtr(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef ptrExpr);
+// Gets the expression representing the expected value of an atomic compare and
+// exchange expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr);
+// Sets the expression representing the expected value of an atomic compare and
+// exchange expression.
+BINARYEN_API void
+BinaryenAtomicCmpxchgSetExpected(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef expectedExpr);
+// Gets the replacement expression of an atomic compare and exchange expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr);
+// Sets the replacement expression of an atomic compare and exchange expression.
+BINARYEN_API void
+BinaryenAtomicCmpxchgSetReplacement(BinaryenExpressionRef expr,
+                                    BinaryenExpressionRef replacementExpr);
 
+// AtomicWait
+
+// Gets the pointer expression of an `atomic.wait` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of an `atomic.wait` expression.
+BINARYEN_API void BinaryenAtomicWaitSetPtr(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef ptrExpr);
+// Gets the expression representing the expected value of an `atomic.wait`
+// expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr);
+// Sets the expression representing the expected value of an `atomic.wait`
+// expression.
+BINARYEN_API void
+BinaryenAtomicWaitSetExpected(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef expectedExpr);
+// Gets the timeout expression of an `atomic.wait` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr);
+// Sets the timeout expression of an `atomic.wait` expression.
+BINARYEN_API void
+BinaryenAtomicWaitSetTimeout(BinaryenExpressionRef expr,
+                             BinaryenExpressionRef timeoutExpr);
+// Gets the expected type of an `atomic.wait` expression.
 BINARYEN_API BinaryenType
 BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
+// Sets the expected type of an `atomic.wait` expression.
+BINARYEN_API void BinaryenAtomicWaitSetExpectedType(BinaryenExpressionRef expr,
+                                                    BinaryenType expectedType);
 
+// AtomicNotify
+
+// Gets the pointer expression of an `atomic.notify` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of an `atomic.notify` expression.
+BINARYEN_API void BinaryenAtomicNotifySetPtr(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef ptrExpr);
+// Gets the notify count expression of an `atomic.notify` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr);
+// Sets the notify count expression of an `atomic.notify` expression.
+BINARYEN_API void
+BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef notifyCountExpr);
 
+// AtomicFence
+
+// Gets the order of an `atomic.fence` expression.
 BINARYEN_API uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
+// Sets the order of an `atomic.fence` expression.
+BINARYEN_API void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
+                                              uint8_t order);
 
+// SIMDExtract
+
+// Gets the operation being performed by a SIMD extract expression.
 BINARYEN_API BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a SIMD extract expression.
+BINARYEN_API void BinaryenSIMDExtractSetOp(BinaryenExpressionRef expr,
+                                           BinaryenOp op);
+// Gets the vector expression a SIMD extract expression extracts from.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr);
+// Sets the vector expression a SIMD extract expression extracts from.
+BINARYEN_API void BinaryenSIMDExtractSetVec(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef vecExpr);
+// Gets the index of the extracted lane of a SIMD extract expression.
 BINARYEN_API uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr);
+// Sets the index of the extracted lane of a SIMD extract expression.
+BINARYEN_API void BinaryenSIMDExtractSetIndex(BinaryenExpressionRef expr,
+                                              uint8_t index);
 
+// SIMDReplace
+
+// Gets the operation being performed by a SIMD replace expression.
 BINARYEN_API BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a SIMD replace expression.
+BINARYEN_API void BinaryenSIMDReplaceSetOp(BinaryenExpressionRef expr,
+                                           BinaryenOp op);
+// Gets the vector expression a SIMD replace expression replaces in.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr);
+// Sets the vector expression a SIMD replace expression replaces in.
+BINARYEN_API void BinaryenSIMDReplaceSetVec(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef vecExpr);
+// Gets the index of the replaced lane of a SIMD replace expression.
 BINARYEN_API uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr);
+// Sets the index of the replaced lane of a SIMD replace expression.
+BINARYEN_API void BinaryenSIMDReplaceSetIndex(BinaryenExpressionRef expr,
+                                              uint8_t index);
+// Gets the value expression a SIMD replace expression replaces with.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr);
+// Sets the value expression a SIMD replace expression replaces with.
+BINARYEN_API void BinaryenSIMDReplaceSetValue(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef valueExpr);
 
+// SIMDShuffle
+
+// Gets the left expression of a SIMD shuffle expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr);
+// Sets the left expression of a SIMD shuffle expression.
+BINARYEN_API void BinaryenSIMDShuffleSetLeft(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef leftExpr);
+// Gets the right expression of a SIMD shuffle expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr);
+// Sets the right expression of a SIMD shuffle expression.
+BINARYEN_API void BinaryenSIMDShuffleSetRight(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef rightExpr);
+// Gets the 128-bit mask of a SIMD shuffle expression.
 BINARYEN_API void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr,
                                              uint8_t* mask);
+// Sets the 128-bit mask of a SIMD shuffle expression.
+BINARYEN_API void BinaryenSIMDShuffleSetMask(BinaryenExpressionRef expr,
+                                             const uint8_t mask[16]);
 
+// SIMDTernary
+
+// Gets the operation being performed by a SIMD ternary expression.
 BINARYEN_API BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a SIMD ternary expression.
+BINARYEN_API void BinaryenSIMDTernarySetOp(BinaryenExpressionRef expr,
+                                           BinaryenOp op);
+// Gets the first operand expression of a SIMD ternary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr);
+// Sets the first operand expression of a SIMD ternary expression.
+BINARYEN_API void BinaryenSIMDTernarySetA(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef aExpr);
+// Gets the second operand expression of a SIMD ternary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr);
+// Sets the second operand expression of a SIMD ternary expression.
+BINARYEN_API void BinaryenSIMDTernarySetB(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef bExpr);
+// Gets the third operand expression of a SIMD ternary expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr);
+// Sets the third operand expression of a SIMD ternary expression.
+BINARYEN_API void BinaryenSIMDTernarySetC(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef cExpr);
 
+// SIMDShift
+
+// Gets the operation being performed by a SIMD shift expression.
 BINARYEN_API BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a SIMD shift expression.
+BINARYEN_API void BinaryenSIMDShiftSetOp(BinaryenExpressionRef expr,
+                                         BinaryenOp op);
+// Gets the expression being shifted by a SIMD shift expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr);
+// Sets the expression being shifted by a SIMD shift expression.
+BINARYEN_API void BinaryenSIMDShiftSetVec(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef vecExpr);
+// Gets the expression representing the shift of a SIMD shift expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr);
+// Sets the expression representing the shift of a SIMD shift expression.
+BINARYEN_API void BinaryenSIMDShiftSetShift(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef shiftExpr);
 
+// SIMDLoad
+
+// Gets the operation being performed by a SIMD load expression.
 BINARYEN_API BinaryenOp BinaryenSIMDLoadGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a SIMD load expression.
+BINARYEN_API void BinaryenSIMDLoadSetOp(BinaryenExpressionRef expr,
+                                        BinaryenOp op);
+// Gets the constant offset of a SIMD load expression.
 BINARYEN_API uint32_t BinaryenSIMDLoadGetOffset(BinaryenExpressionRef expr);
+// Sets the constant offset of a SIMD load expression.
+BINARYEN_API void BinaryenSIMDLoadSetOffset(BinaryenExpressionRef expr,
+                                            uint32_t offset);
+// Gets the byte alignment of a SIMD load expression.
 BINARYEN_API uint32_t BinaryenSIMDLoadGetAlign(BinaryenExpressionRef expr);
+// Sets the byte alignment of a SIMD load expression.
+BINARYEN_API void BinaryenSIMDLoadSetAlign(BinaryenExpressionRef expr,
+                                           uint32_t align);
+// Gets the pointer expression of a SIMD load expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDLoadGetPtr(BinaryenExpressionRef expr);
+// Sets the pointer expression of a SIMD load expression.
+BINARYEN_API void BinaryenSIMDLoadSetPtr(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef ptrExpr);
 
+// MemoryInit
+
+// Gets the index of the segment being initialized by a `memory.init`
+// expression.
 BINARYEN_API uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
+// Sets the index of the segment being initialized by a `memory.init`
+// expression.
+BINARYEN_API void BinaryenMemoryInitSetSegment(BinaryenExpressionRef expr,
+                                               uint32_t segmentIndex);
+// Gets the destination expression of a `memory.init` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInitGetDest(BinaryenExpressionRef expr);
+// Sets the destination expression of a `memory.init` expression.
+BINARYEN_API void BinaryenMemoryInitSetDest(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef destExpr);
+// Gets the offset expression of a `memory.init` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInitGetOffset(BinaryenExpressionRef expr);
+// Sets the offset expression of a `memory.init` expression.
+BINARYEN_API void BinaryenMemoryInitSetOffset(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef offsetExpr);
+// Gets the size expression of a `memory.init` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInitGetSize(BinaryenExpressionRef expr);
+// Sets the size expression of a `memory.init` expression.
+BINARYEN_API void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef sizeExpr);
 
+// DataDrop
+
+// Gets the index of the segment being dropped by a `memory.drop` expression.
 BINARYEN_API uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
+// Sets the index of the segment being dropped by a `memory.drop` expression.
+BINARYEN_API void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
+                                             uint32_t segmentIndex);
 
+// MemoryCopy
+
+// Gets the destination expression of a `memory.copy` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr);
+// Sets the destination expression of a `memory.copy` expression.
+BINARYEN_API void BinaryenMemoryCopySetDest(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef destExpr);
+// Gets the source expression of a `memory.copy` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryCopyGetSource(BinaryenExpressionRef expr);
+// Sets the source expression of a `memory.copy` expression.
+BINARYEN_API void BinaryenMemoryCopySetSource(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef sourceExpr);
+// Gets the size expression (number of bytes copied) of a `memory.copy`
+// expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr);
+// Sets the size expression (number of bytes copied) of a `memory.copy`
+// expression.
+BINARYEN_API void BinaryenMemoryCopySetSize(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef sizeExpr);
 
+// MemoryFill
+
+// Gets the destination expression of a `memory.fill` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryFillGetDest(BinaryenExpressionRef expr);
+// Sets the destination expression of a `memory.fill` expression.
+BINARYEN_API void BinaryenMemoryFillSetDest(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef destExpr);
+// Gets the value expression of a `memory.fill` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryFillGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `memory.fill` expression.
+BINARYEN_API void BinaryenMemoryFillSetValue(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef valueExpr);
+// Gets the size expression (number of bytes filled) of a `memory.fill`
+// expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
+// Sets the size expression (number of bytes filled) of a `memory.fill`
+// expression.
+BINARYEN_API void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef sizeExpr);
 
+// RefIsNull
+
+// Gets the value expression tested to be null of a `ref.is_null` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNullGetValue(BinaryenExpressionRef expr);
+// Sets the value expression tested to be null of a `ref.is_null` expression.
+BINARYEN_API void BinaryenRefIsNullSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
 
+// RefFunc
+
+// Gets the name of the function being wrapped by a `ref.func` expression.
 BINARYEN_API const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr);
+// Sets the name of the function being wrapped by a `ref.func` expression.
+BINARYEN_API void BinaryenRefFuncSetFunc(BinaryenExpressionRef expr,
+                                         const char* funcName);
 
+// Try
+
+// Gets the body expression of a `try` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTryGetBody(BinaryenExpressionRef expr);
+// Sets the body expression of a `try` expression.
+BINARYEN_API void BinaryenTrySetBody(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef bodyExpr);
+// Gets the catch body expression of a `try` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTryGetCatchBody(BinaryenExpressionRef expr);
+// Sets the catch body expression of a `try` expression.
+BINARYEN_API void BinaryenTrySetCatchBody(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef catchBodyExpr);
 
+// Throw
+
+// Gets the name of the event being thrown by a `throw` expression.
 BINARYEN_API const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenThrowGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the name of the event being thrown by a `throw` expression.
+BINARYEN_API void BinaryenThrowSetEvent(BinaryenExpressionRef expr,
+                                        const char* eventName);
+// Gets the number of operands of a `throw` expression.
 BINARYEN_API BinaryenIndex
 BinaryenThrowGetNumOperands(BinaryenExpressionRef expr);
+// Gets the operand at the specified index of a `throw` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand at the specified index of a `throw` expression.
+BINARYEN_API void BinaryenThrowSetOperandAt(BinaryenExpressionRef expr,
+                                            BinaryenIndex index,
+                                            BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `throw` expression, returning its
+// insertion index.
+BINARYEN_API BinaryenIndex BinaryenThrowAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `throw` expression,
+// moving existing operands including the one previously at that index one index
+// up.
+BINARYEN_API void
+BinaryenThrowInsertOperandAt(BinaryenExpressionRef expr,
+                             BinaryenIndex index,
+                             BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `throw`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
+// Rethrow
+
+// Gets the exception reference expression of a `rethrow` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenRethrowGetExnref(BinaryenExpressionRef expr);
+// Sets the exception reference expression of a `rethrow` expression.
+BINARYEN_API void BinaryenRethrowSetExnref(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef exnrefExpr);
 
+// BrOnExn
+
+// Gets the name of the event triggering a `br_on_exn` expression.
 BINARYEN_API const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr);
+// Sets the name of the event triggering a `br_on_exn` expression.
+BINARYEN_API void BinaryenBrOnExnSetEvent(BinaryenExpressionRef expr,
+                                          const char* eventName);
+// Gets the name (target label) of a `br_on_exn` expression.
 BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
+// Sets the name (target label) of a `br_on_exn` expression.
+BINARYEN_API void BinaryenBrOnExnSetName(BinaryenExpressionRef expr,
+                                         const char* name);
+// Gets the expression reference expression of a `br_on_exn` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
+// Sets the expression reference expression of a `br_on_exn` expression.
+BINARYEN_API void BinaryenBrOnExnSetExnref(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef exnrefExpr);
 
+// TupleMake
+
+// Gets the number of operands of a `tuple.make` expression.
 BINARYEN_API BinaryenIndex
 BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr);
+// Gets the operand at the specified index of a `tuple.make` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenTupleMakeGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenTupleMakeGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the operand at the specified index of a `tuple.make` expression.
+BINARYEN_API void
+BinaryenTupleMakeSetOperandAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              BinaryenExpressionRef operandExpr);
+// Appends an operand expression to a `tuple.make` expression, returning its
+// insertion index.
+BINARYEN_API BinaryenIndex BinaryenTupleMakeAppendOperand(
+  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
+// Inserts an operand expression at the specified index of a `tuple.make`
+// expression, moving existing operands including the one previously at that
+// index one index up.
+BINARYEN_API void
+BinaryenTupleMakeInsertOperandAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 BinaryenExpressionRef operandExpr);
+// Removes the operand expression at the specified index of a `tuple.make`
+// expression, moving all subsequent operands one index down. Returns the
+// operand expression.
+BINARYEN_API BinaryenExpressionRef BinaryenTupleMakeRemoveOperandAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
 
+// TupleExtract
+
+// Gets the tuple extracted from of a `tuple.extract` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr);
+// Sets the tuple extracted from of a `tuple.extract` expression.
+BINARYEN_API void BinaryenTupleExtractSetTuple(BinaryenExpressionRef expr,
+                                               BinaryenExpressionRef tupleExpr);
+// Gets the index extracted at of a `tuple.extract` expression.
 BINARYEN_API BinaryenIndex
 BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
+// Sets the index extracted at of a `tuple.extract` expression.
+BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
+                                               BinaryenIndex index);
 
 // Functions
 
@@ -1374,6 +2124,14 @@ BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
+// Gets whether heavyweight functions are allowed to be inlined.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetAllowHeavyweight(void);
+
+// Sets whether heavyweight functions are allowed to be inlined.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetAllowHeavyweight(int enabled);
+
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
 BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,
@@ -1479,6 +2237,9 @@ BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
 // Gets the body of the specified `Function`.
 BINARYEN_API BinaryenExpressionRef
 BinaryenFunctionGetBody(BinaryenFunctionRef func);
+// Sets the body of the specified `Function`.
+BINARYEN_API void BinaryenFunctionSetBody(BinaryenFunctionRef func,
+                                          BinaryenExpressionRef body);
 
 // Runs the standard optimization passes on the function. Uses the currently set
 // global optimize and shrink level.

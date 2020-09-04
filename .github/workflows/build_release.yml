@@ -24,7 +24,7 @@ jobs:
       with:
         submodules: true
 
-    - name: install ninja (osx)
+    - name: install ninja (macos)
       run: brew install ninja
       if: matrix.os == 'macos-latest'
 
@@ -35,20 +35,20 @@ jobs:
     - name: mkdir
       run: mkdir -p out
 
-    - name: cmake (osx)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release
+    - name: cmake (macos)
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
       # -G "Visual Studio 15 2017"
-      run: cmake -S . -B out
+      run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release
+      run: cmake --build out --config Release --target install
 
     - name: strip
-      run: find bin/ -type f -perm -u=x -exec strip {} +
+      run: find out/install/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
 
     - name: archive
@@ -59,7 +59,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        mv out/bin binaryen-$VERSION
+        mv out/install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         echo "::set-output name=tarball::$TARBALL"
         echo "::set-output name=shasum::$SHASUM"
@@ -115,11 +115,11 @@ jobs:
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
-        ./alpine.sh ninja
+        ./alpine.sh ninja install
 
     - name: test
       run: ./alpine.sh python3 ./check.py
@@ -131,8 +131,8 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        ./alpine find bin/ -type f -perm -u=x -exec strip {} +
-        mv bin binaryen-$VERSION
+        ./alpine.sh find install/ -type f -perm -u=x -exec strip {} +
+        mv install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         shasum -a 256 $TARBALL > $SHASUM
         echo "::set-output name=tarball::$TARBALL"

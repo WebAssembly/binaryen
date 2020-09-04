@@ -69,7 +69,6 @@ def generate_wat_files(llvm_bin, emscripten_root):
             '--export', '__wasm_call_ctors',
             '--export', '__data_end',
             '--global-base=568',
-            '--no-gc-sections',
         ]
         # We had a regression where this test only worked if debug names
         # were included.
@@ -79,6 +78,7 @@ def generate_wat_files(llvm_bin, emscripten_root):
             compile_cmd.append('-fPIC')
             compile_cmd.append('-fvisibility=default')
             link_cmd.append('-shared')
+            link_cmd.append('--experimental-pic')
         else:
             link_cmd.append('--entry=main')
 

@@ -220,7 +220,7 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
-      for (auto type : sigType.expand()) {
+      for (const auto& type : sigType) {
         o << binaryType(type);
       }
     }
@@ -307,6 +307,7 @@ void WasmBinaryWriter::writeFunctions() {
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
+  bool DWARF = Debug::hasDWARFSections(*getModule());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
@@ -315,12 +316,12 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present, and if we can
-    if (func->stackIR && !sourceMap) {
+    if (func->stackIR && !sourceMap && !DWARF) {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter(*this, o, func).write();
     } else {
       BYN_TRACE("write Binaryen IR\n");
-      BinaryenIRToBinaryWriter(*this, o, func, sourceMap).write();
+      BinaryenIRToBinaryWriter(*this, o, func, sourceMap, DWARF).write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -384,16 +385,17 @@ void WasmBinaryWriter::writeGlobals() {
   o << U32LEB(num);
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one\n");
-    const auto& types = global->type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      o << binaryType(types[i]);
+    size_t i = 0;
+    for (const auto& t : global->type) {
+      o << binaryType(t);
       o << U32LEB(global->mutable_);
-      if (types.size() == 1) {
+      if (global->type.size() == 1) {
         writeExpression(global->init);
       } else {
         writeExpression(global->init->cast<TupleMake>()->operands[i]);
       }
       o << int8_t(BinaryConsts::End);
+      ++i;
     }
   });
   finishSection(start);
@@ -1384,7 +1386,9 @@ void WasmBinaryBuilder::readImports() {
         wasm.addEvent(curr);
         break;
       }
-      default: { throwError("bad import kind"); }
+      default: {
+        throwError("bad import kind");
+      }
     }
   }
 }
@@ -1789,13 +1793,12 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 }
 
 void WasmBinaryBuilder::pushExpression(Expression* curr) {
-  if (curr->type.isMulti()) {
+  if (curr->type.isTuple()) {
     // Store tuple to local and push individual extracted values
     Builder builder(wasm);
     Index tuple = builder.addVar(currFunction, curr->type);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    const std::vector<Type> types = curr->type.expand();
-    for (Index i = 0; i < types.size(); ++i) {
+    for (Index i = 0; i < curr->type.size(); ++i) {
       expressionStack.push_back(
         builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
     }
@@ -1819,7 +1822,7 @@ Expression* WasmBinaryBuilder::popExpression() {
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
-  assert(!ret->type.isMulti());
+  assert(!ret->type.isTuple());
   expressionStack.pop_back();
   return ret;
 }
@@ -1882,7 +1885,7 @@ Expression* WasmBinaryBuilder::popTuple(size_t numElems) {
 Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
   if (type.isSingle()) {
     return popNonVoidExpression();
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     return popTuple(type.size());
   } else {
     WASM_UNREACHABLE("Invalid popped type");
@@ -4596,6 +4599,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2LoadExtUVec32x2:
       curr = allocator.alloc<SIMDLoad>();
       curr->op = LoadExtUVec32x2ToVecI64x2;
+      break;
+    case BinaryConsts::V128Load32Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load32Zero;
+      break;
+    case BinaryConsts::V128Load64Zero:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = Load64Zero;
       break;
     default:
       return false;

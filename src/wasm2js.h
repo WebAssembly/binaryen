@@ -85,7 +85,13 @@ IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
+//
+// Export: Export names
+// Top: The main scope which contains functions and globals
+// Local: Local variables in a function.
+// Label: Label identifiers in a function
 enum class NameScope {
+  Export,
   Top,
   Local,
   Label,
@@ -145,11 +151,12 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    if (frees[type.getSingle()].size() > 0) {
-      ret = frees[type.getSingle()].back();
-      frees[type.getSingle()].pop_back();
+    TODO_SINGLE_COMPOUND(type);
+    if (frees[type.getBasic()].size() > 0) {
+      ret = frees[type.getBasic()].back();
+      frees[type.getBasic()].pop_back();
     } else {
-      size_t index = temps[type.getSingle()]++;
+      size_t index = temps[type.getBasic()]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
@@ -163,7 +170,8 @@ public:
 
   // Free a temp var.
   void freeTemp(Type type, IString temp) {
-    frees[type.getSingle()].push_back(temp);
+    TODO_SINGLE_COMPOUND(type);
+    frees[type.getBasic()].push_back(temp);
   }
 
   // Generates a mangled name from `name` within the specified scope.
@@ -181,11 +189,15 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& mangledScope = mangledNames[(int)scope];
-    auto it = mangledScope.find(name.c_str());
-    if (it != mangledScope.end()) {
+    auto& map = wasmNameToMangledName[(int)scope];
+    auto it = map.find(name.c_str());
+    if (it != map.end()) {
       return it->second;
     }
+    // The mangled names in our scope.
+    auto& scopeMangledNames = mangledNames[(int)scope];
+    // In some cases (see below) we need to also check the Top scope.
+    auto& topMangledNames = mangledNames[int(NameScope::Top)];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -203,28 +215,30 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!allMangledNames.count(ret)) {
-        break;
+      if (scopeMangledNames.count(ret)) {
+        // When export names collide things may be confusing, as this is
+        // observable externally by the person using the JS. Report a warning.
+        if (scope == NameScope::Export) {
+          std::cerr << "wasm2js: warning: export names colliding: " << mangled
+                    << '\n';
+        }
+        continue;
       }
-
-      // In the global scope that's how you refer to actual function exports, so
-      // it's a bug currently if they're not globally unique. This should
-      // probably be fixed via a different namespace for exports or something
-      // like that.
-      // XXX This is not actually a valid check atm, since functions are not in
-      //     the global-most scope, but rather in the "asmFunc" scope which is
-      //     inside it. Also, for emscripten style glue, we emit the exports as
-      //     a return, so there is no name placed into the scope. For these
-      //     reasons, just warn here, don't error.
-      if (scope == NameScope::Top) {
-        std::cerr << "wasm2js: warning: global scope may be colliding with "
-                     "other scope: "
-                  << mangled << '\n';
+      // The Local scope is special: a Local name must not collide with a Top
+      // name, as they are in a single namespace in JS and can conflict:
+      //
+      // function foo(bar) {
+      //   var bar = 0;
+      // }
+      // function bar() { ..
+      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+        continue;
       }
+      // We found a good name, use it.
+      scopeMangledNames.insert(ret);
+      map[name.c_str()] = ret;
+      return ret;
     }
-    allMangledNames.insert(ret);
-    mangledScope[name.c_str()] = ret;
-    return ret;
   }
 
 private:
@@ -238,8 +252,10 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNames[(int)NameScope::Max];
-  std::unordered_set<IString> allMangledNames;
+  std::unordered_map<const char*, IString>
+    wasmNameToMangledName[(int)NameScope::Max];
+  // Set of all mangled names in each scope.
+  std::unordered_set<IString> mangledNames[(int)NameScope::Max];
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -383,16 +399,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
 
-  // make sure exports get their expected names
-  for (auto& e : wasm->exports) {
-    if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Top);
-    }
-  }
+  // Note the names of functions. We need to do this here as when generating
+  // mangled local names we need them not to conflict with these (see fromName)
+  // so we can't wait until we parse each function to note its name.
   for (auto& f : wasm->functions) {
     fromName(f->name, NameScope::Top);
   }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
+
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
@@ -411,13 +424,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   });
   if (generateFetchHighBits) {
     Builder builder(allocator);
-    asmFunc[3]->push_back(processFunction(
-      wasm,
-      builder.makeFunction(WASM_FETCH_HIGH_BITS,
-                           Signature(Type::none, Type::i32),
-                           {},
-                           builder.makeReturn(builder.makeGlobalGet(
-                             INT64_TO_32_HIGH_BITS, Type::i32)))));
+    asmFunc[3]->push_back(
+      processFunction(wasm,
+                      wasm->addFunction(builder.makeFunction(
+                        WASM_FETCH_HIGH_BITS,
+                        Signature(Type::none, Type::i32),
+                        {},
+                        builder.makeReturn(builder.makeGlobalGet(
+                          INT64_TO_32_HIGH_BITS, Type::i32))))));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
     e->value = WASM_FETCH_HIGH_BITS;
@@ -589,7 +603,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObjectWithQuotes(
         exports,
-        fromName(export_->name, NameScope::Top),
+        fromName(export_->name, NameScope::Export),
         ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -615,7 +629,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
                               IString("prototype")));
       ValueBuilder::appendToCall(memory, descs);
       ValueBuilder::appendToObjectWithQuotes(
-        exports, fromName(export_->name, NameScope::Top), memory);
+        exports, fromName(export_->name, NameScope::Export), memory);
     }
   }
   if (wasm->memory.exists) {
@@ -628,7 +642,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
-    switch (const_->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(const_->type);
+    switch (const_->type.getBasic()) {
       case Type::i32: {
         theValue = ValueBuilder::makeInt(const_->value.geti32());
         break;
@@ -645,7 +660,9 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
           ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE);
         break;
       }
-      default: { assert(false && "Top const type not supported"); }
+      default: {
+        assert(false && "Top const type not supported");
+      }
     }
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
@@ -1146,6 +1163,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           }
         }
       }
+      // Ensure the function pointer is a number. In general in wasm2js we are
+      // ok with true/false being present, as they are immediately cast to a
+      // number anyhow on their use. However, FUNCTION_TABLE[true] is *not* the
+      // same as FUNCTION_TABLE[1], so we must cast. This is a rare exception
+      // because FUNCTION_TABLE is just a normal JS object, not a typed array
+      // or a mathematical operation (all of which coerce to a number for us).
+      auto target = visit(curr->target, EXPRESSION_RESULT);
+      target = makeAsmCoercion(target, ASM_INT);
       if (mustReorder) {
         Ref ret;
         ScopedTemp idx(Type::i32, parent, func);
@@ -1155,7 +1180,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString temp = temps.back()->temp;
           sequenceAppend(ret, visitAndAssign(operand, temp));
         }
-        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        sequenceAppend(ret,
+                       ValueBuilder::makeBinary(
+                         ValueBuilder::makeName(idx.getName()), SET, target));
         Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
           ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
         for (size_t i = 0; i < temps.size(); i++) {
@@ -1172,9 +1199,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ret;
       } else {
         // Target has no side effects, emit simple code
-        Ref theCall = ValueBuilder::makeCall(
-          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                visit(curr->target, EXPRESSION_RESULT)));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE), target));
         for (auto* operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
@@ -1220,7 +1246,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // normal load
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1323,7 +1349,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->valueType.getSingle()) {
+      switch (curr->valueType.getBasic()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1371,7 +1397,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitDrop(Drop* curr) { return visit(curr->value, NO_RESULT); }
 
     Ref visitConst(Const* curr) {
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32:
           return ValueBuilder::makeInt(curr->value.geti32());
         // An i64 argument translates to two actual arguments to asm.js
@@ -1411,7 +1437,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitUnary(Unary* curr) {
       // normal unary
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->op) {
             case ClzInt32: {
@@ -1437,8 +1463,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_F32,
                                        visit(curr->value, EXPRESSION_RESULT));
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32,
-                                                ValueBuilder::makeInt(0));
+                                                ValueBuilder::makeInt(2));
               return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
@@ -1463,6 +1492,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                     B_NOT, visit(curr->value, EXPRESSION_RESULT))),
                 TRSHIFT,
                 ValueBuilder::makeNum(0));
+            }
+            case ExtendS8Int32: {
+              return ValueBuilder::makeBinary(
+                ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                         LSHIFT,
+                                         ValueBuilder::makeNum(24)),
+                RSHIFT,
+                ValueBuilder::makeNum(24));
+            }
+            case ExtendS16Int32: {
+              return ValueBuilder::makeBinary(
+                ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                         LSHIFT,
+                                         ValueBuilder::makeNum(16)),
+                RSHIFT,
+                ValueBuilder::makeNum(16));
             }
             default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
@@ -1512,9 +1557,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ABI::wasm2js::ensureHelpers(module,
                                           ABI::wasm2js::SCRATCH_LOAD_F32);
 
+              // 32-bit scratch memory uses index 2, so that it does not
+              // conflict with indexes 0, 1 which are used for 64-bit, see
+              // comment where |scratchBuffer| is defined.
               Ref store =
                 ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
-                                       ValueBuilder::makeNum(0),
+                                       ValueBuilder::makeNum(2),
                                        visit(curr->value, EXPRESSION_RESULT));
               Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_F32);
               return ValueBuilder::makeSeq(store, load);
@@ -1570,7 +1618,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->op) {
             case AddInt32:
@@ -2446,8 +2494,60 @@ void Wasm2JSGlue::emitSpecialSupport() {
     return;
   }
 
+  // Scratch memory uses 3 indexes, each referring to 4 bytes. Indexes 0, 1 are
+  // used for 64-bit operations, while 2 is for 32-bit. These operations need
+  // separate indexes because we need to handle the case where the optimizer
+  // reorders a 32-bit reinterpret in between a 64-bit's split-out parts.
+  // That situation can occur because the 64-bit reinterpret was split up into
+  // pieces early, in the 64-bit lowering pass, while the 32-bit reinterprets
+  // are lowered only at the very end, and until then the optimizer sees wasm
+  // reinterprets which have no side effects (but they will have the side effect
+  // of altering scratch memory). That is, conceptual code like this:
+  //
+  //   a = reinterpret_64(b)
+  //   x = reinterpret_32(y)
+  //
+  // turns into
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   a_high = scratch_read(1)
+  //   x = reinterpret_32(y)
+  //
+  // (Note how the single wasm instruction for a 64-bit reinterpret turns into
+  // multiple operations. We have to do such splitting, because in JS we will
+  // have to have separate operations to receive each 32-bit chunk anyhow. A
+  // *32*-bit reinterpret *could* be a single function, but given we have the
+  // separate functions anyhow for the 64-bit case, it's more compact to reuse
+  // those.)
+  // At this point, the scratch_* functions look like they have side effects to
+  // the optimizer (which is true, as they modify scratch memory), but the
+  // reinterpret_32 is still a normal wasm instruction without side effects, so
+  // the optimizer might do this:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   x = reinterpret_32(y)    ;; this moved one line up
+  //   a_high = scratch_read(1)
+  //
+  // When we do lower the reinterpret_32 into JS, we get:
+  //
+  //   scratch_write(b)
+  //   a_low = scratch_read(0)
+  //   scratch_write(y)
+  //   x = scratch_read()
+  //   a_high = scratch_read(1)
+  //
+  // The second write occurs before the first's values have been read, so they
+  // interfere.
+  //
+  // There isn't a problem with reordering 32-bit reinterprets with each other
+  // as each is lowered into a pair of write+read in JS (after the wasm
+  // optimizer runs), so they are guaranteed to be adjacent (and a JS optimizer
+  // that runs later will handle that ok since they are calls, which can always
+  // have side effects).
   out << R"(
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -2478,13 +2578,13 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
       out << R"(
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F32) {
       out << R"(
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F64) {

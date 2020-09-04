@@ -8,6 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <unordered_map>
+
 #include "DWARFVisitor.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 
@@ -44,17 +46,48 @@ static unsigned getRefSize(const DWARFYAML::Unit &Unit) {
 }
 
 template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
-  // XXX BINARYEN: Handle multiple linked compile units. Each one has its own
-  // range of values, terminated by a zero. AbbrevStart refers to the start
-  // index for the current unit, and AbbrevEnd to one past the last one
-  // (which is the index of the 0 terminator).
+  // XXX BINARYEN: Handle multiple linked compile units, each of which can
+  // refer to a different abbreviation list.
   // TODO: This code appears to assume that abbreviation codes increment by 1
   // so that lookups are linear. In LLVM output that is true, but it might not
   // be in general.
-  size_t AbbrevStart = 0, AbbrevEnd = -1;
+  // Create a map of [byte offset into the abbreviation section] => [index in
+  // DebugInfo.AbbrevDecls]. This avoids linear search for each CU.
+  std::unordered_map<size_t, size_t> abbrByteOffsetToDeclsIndex;
+  for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
+    auto offset = DebugInfo.AbbrevDecls[i].ListOffset;
+    // The offset is the same for all entries for the same CU, so only note the
+    // first as that is where the list for the CU (that LLVM DeclSet) begins.
+    // That is, DebugInfo.AbbrevDecls looks like this:
+    //
+    //  i  CU   Abbrev  ListOffset
+    // ============================
+    //  0   X     X1      150
+    //  1   X     X2      150
+    //  2   X     X3      150
+    //           ..
+    //  6   Y     Y1      260
+    //  7   Y     Y2      260
+    //
+    // Note how multiple rows i have the same CU. All those abbrevs have the
+    // same ListOffset, which is the byte offset into the abbreviation section
+    // for that set of abbreviations.
+    if (abbrByteOffsetToDeclsIndex.count(offset)) {
+      continue;
+    }
+    abbrByteOffsetToDeclsIndex[offset] = i;
+  }
   for (auto &Unit : DebugInfo.CompileUnits) {
-    // Skip the 0 terminator.
-    AbbrevEnd = AbbrevStart = AbbrevEnd + 1;
+    // AbbrOffset is the byte offset into the abbreviation section, which we
+    // need to find among the Abbrev's ListOffsets (which are the byte offsets
+    // of where that abbreviation list begins).
+    // TODO: Optimize this to not be O(#CUs * #abbrevs).
+    auto offset = Unit.AbbrOffset;
+    assert(abbrByteOffsetToDeclsIndex.count(offset));
+    size_t AbbrevStart = abbrByteOffsetToDeclsIndex[offset];
+    assert(DebugInfo.AbbrevDecls[AbbrevStart].ListOffset == offset);
+    // Find the last entry in this abbreviation list.
+    size_t AbbrevEnd = AbbrevStart;
     while (AbbrevEnd < DebugInfo.AbbrevDecls.size() &&
            DebugInfo.AbbrevDecls[AbbrevEnd].Code) {
       AbbrevEnd++;

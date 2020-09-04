@@ -192,7 +192,7 @@
 // unwinding/rewinding finishes, and not at the specific spot where the
 // stack end was exceeded.
 //
-// By default this pass is very carefuly: it assumes that any import and
+// By default this pass is very careful: it assumes that any import and
 // any indirect call may start an unwind/rewind operation. If you know more
 // specific information you can inform asyncify about that, which can reduce
 // a great deal of overhead, as it can instrument less code. The relevant
@@ -230,6 +230,11 @@
 //      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only-list / remove-list, see later).
+//
+//   --pass-arg=asyncify-verbose
+//
+//      Logs out instrumentation decisions to the console. This can help figure
+//      out why a certain function was instrumented.
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -486,6 +491,8 @@ class ModuleAnalyzer {
 
   struct Info
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+    // The function name.
+    Name name;
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -513,9 +520,10 @@ public:
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
                  const String::Split& onlyListInput,
-                 bool asserts)
+                 bool asserts,
+                 bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeGlobals(module), asserts(asserts) {
+      fakeGlobals(module), asserts(asserts), verbose(verbose) {
 
     PatternMatcher removeList("remove", module, removeListInput);
     PatternMatcher addList("add", module, addListInput);
@@ -548,6 +556,7 @@ public:
     // name.
     ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
+        info.name = func->name;
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
           if (func->module == ASYNCIFY &&
@@ -556,6 +565,10 @@ public:
           } else {
             info.canChangeState =
               canImportChangeState(func->module, func->base);
+            if (verbose && info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is an import that can change the state\n";
+            }
           }
           return;
         }
@@ -609,6 +622,10 @@ public:
           //       the bottom-most runtime also doing top-most runtime stuff
           //       like starting and unwinding.
         }
+        if (verbose && info.canChangeState) {
+          std::cout << "[asyncify] " << func->name
+                    << " can change the state due to initial scan\n";
+        }
       });
 
     // Functions in the remove-list are assumed to not change the state.
@@ -617,6 +634,10 @@ public:
       auto& info = pair.second;
       if (removeList.match(func->name)) {
         info.inRemoveList = true;
+        if (verbose && info.canChangeState) {
+          std::cout << "[asyncify] " << func->name
+                    << " is in the remove-list, ignore\n";
+        }
         info.canChangeState = false;
       }
     }
@@ -648,7 +669,14 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [](Info& info) { info.canChangeState = true; },
+                          [verbose](Info& info, Function* reason) {
+                            if (verbose && !info.canChangeState) {
+                              std::cout << "[asyncify] " << info.name
+                                        << " can change the state due to "
+                                        << reason->name << "\n";
+                            }
+                            info.canChangeState = true;
+                          },
                           scanner.IgnoreIndirectCalls);
 
     map.swap(scanner.map);
@@ -663,6 +691,11 @@ public:
           if (matched) {
             info.addedFromList = true;
           }
+          if (verbose) {
+            std::cout << "[asyncify] " << func->name
+                      << "'s state is set based on the only-list to " << matched
+                      << '\n';
+          }
         }
       }
     }
@@ -671,6 +704,10 @@ public:
       for (auto& func : module.functions) {
         if (!func->imported() && addList.match(func->name)) {
           auto& info = map[func.get()];
+          if (verbose && !info.canChangeState) {
+            std::cout << "[asyncify] " << func->name
+                      << " is in the add-list, add\n";
+          }
           info.canChangeState = true;
           info.addedFromList = true;
         }
@@ -741,6 +778,7 @@ public:
 
   FakeGlobalHelper fakeGlobals;
   bool asserts;
+  bool verbose;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -998,7 +1036,7 @@ private:
     //       avoid saving/restoring that local later)
     curr = builder->makeIf(
       builder->makeIf(builder->makeStateCheck(State::Normal),
-                      builder->makeConst(Literal(int32_t(1))),
+                      builder->makeConst(int32_t(1)),
                       makeCallIndexPeek(index)),
       builder->makeSequence(curr, makePossibleUnwind(index, set)));
     return curr;
@@ -1011,9 +1049,8 @@ private:
     // it when we add its contents, later.)
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
-      builder->makeCall(ASYNCIFY_UNWIND,
-                        {builder->makeConst(Literal(int32_t(index)))},
-                        Type::none),
+      builder->makeCall(
+        ASYNCIFY_UNWIND, {builder->makeConst(int32_t(index))}, Type::none),
       ifNotUnwinding);
   }
 
@@ -1021,7 +1058,7 @@ private:
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_CHECK_CALL_INDEX,
-                             {builder->makeConst(Literal(int32_t(index)))},
+                             {builder->makeConst(int32_t(index))},
                              Type::i32);
   }
 
@@ -1267,10 +1304,9 @@ private:
       if (!relevantLiveLocals.count(i)) {
         continue;
       }
-      const auto& types = func->getLocalType(i).expand();
+      auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
-      for (Index j = 0; j < types.size(); j++) {
-        auto type = types[j];
+      for (const auto& type : localType) {
         auto size = type.getByteSize();
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
@@ -1286,7 +1322,7 @@ private:
       Expression* load;
       if (loads.size() == 1) {
         load = loads[0];
-      } else if (types.size() > 1) {
+      } else if (localType.size() > 1) {
         load = builder->makeTupleMake(std::move(loads));
       } else {
         WASM_UNREACHABLE("Unexpected empty type");
@@ -1313,12 +1349,11 @@ private:
         continue;
       }
       auto localType = func->getLocalType(i);
-      const auto& types = localType.expand();
-      for (Index j = 0; j < types.size(); j++) {
-        auto type = types[j];
+      size_t j = 0;
+      for (const auto& type : localType) {
         auto size = type.getByteSize();
         Expression* localGet = builder->makeLocalGet(i, localType);
-        if (types.size() > 1) {
+        if (localType.size() > 1) {
           localGet = builder->makeTupleExtract(localGet, j);
         }
         assert(size % STACK_ALIGN == 0);
@@ -1331,6 +1366,7 @@ private:
                              localGet,
                              type));
         offset += size;
+        ++j;
       }
     }
     block->list.push_back(builder->makeIncStackPos(offset));
@@ -1398,6 +1434,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(onlyListInput)), ",");
     auto asserts =
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
+    auto verbose =
+      runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1428,7 +1466,8 @@ struct Asyncify : public Pass {
                             removeList,
                             addList,
                             onlyList,
-                            asserts);
+                            asserts,
+                            verbose);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
@@ -1489,11 +1528,11 @@ private:
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
     module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
   }
 
@@ -1506,7 +1545,7 @@ private:
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
-        ASYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
+        ASYNCIFY_STATE, builder.makeConst(int32_t(state))));
       if (setData) {
         body->list.push_back(builder.makeGlobalSet(
           ASYNCIFY_DATA, builder.makeLocalGet(0, Type::i32)));
@@ -1617,7 +1656,7 @@ struct ModAsyncify
       value = 1 - value;
     }
     Builder builder(*this->getModule());
-    this->replaceCurrent(builder.makeConst(Literal(int32_t(value))));
+    this->replaceCurrent(builder.makeConst(int32_t(value)));
   }
 
   void visitSelect(Select* curr) {
@@ -1630,7 +1669,7 @@ struct ModAsyncify
     // we know we'll never rewind, we can optimize this.
     if (neverRewind) {
       Builder builder(*this->getModule());
-      curr->condition = builder.makeConst(Literal(int32_t(0)));
+      curr->condition = builder.makeConst(int32_t(0));
     }
   }
 

@@ -84,8 +84,9 @@ public:
   BinaryInstWriter(WasmBinaryWriter& parent,
                    BufferWithRandomAccess& o,
                    Function* func,
-                   bool sourceMap)
-    : parent(parent), o(o), func(func), sourceMap(sourceMap) {}
+                   bool sourceMap,
+                   bool DWARF)
+    : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
 
   void visit(Expression* curr) {
     if (func && !sourceMap) {
@@ -163,6 +164,7 @@ private:
   BufferWithRandomAccess& o;
   Function* func = nullptr;
   bool sourceMap;
+  bool DWARF;
 
   std::vector<Name> breakStack;
 
@@ -824,9 +826,10 @@ public:
   BinaryenIRToBinaryWriter(WasmBinaryWriter& parent,
                            BufferWithRandomAccess& o,
                            Function* func = nullptr,
-                           bool sourceMap = false)
+                           bool sourceMap = false,
+                           bool DWARF = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap), sourceMap(sourceMap) {}
+      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
 
   void visit(Expression* curr) {
     BinaryenIRWriter<BinaryenIRToBinaryWriter>::visit(curr);
@@ -858,7 +861,7 @@ public:
 private:
   WasmBinaryWriter& parent;
   BinaryInstWriter writer;
-  bool sourceMap = false;
+  bool sourceMap;
 };
 
 // Binaryen IR to stack IR converter
@@ -901,7 +904,8 @@ public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
                         Function* func)
-    : writer(parent, o, func, false /* sourceMap */), func(func) {}
+    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
+      func(func) {}
 
   void write();
 

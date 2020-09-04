@@ -481,7 +481,9 @@ enum SIMDLoadOp {
   LoadExtSVec16x4ToVecI32x4,
   LoadExtUVec16x4ToVecI32x4,
   LoadExtSVec32x2ToVecI64x2,
-  LoadExtUVec32x2ToVecI64x2
+  LoadExtUVec32x2ToVecI64x2,
+  Load32Zero,
+  Load64Zero
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -862,6 +864,8 @@ public:
   // other orderings may be added in the future. This field is reserved for
   // that, and currently set to 0.
   uint8_t order = 0;
+
+  void finalize();
 };
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {

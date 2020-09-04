@@ -91,8 +91,7 @@ struct PostEmscripten : public Pass {
         auto oldValue = stackPointer->init->cast<Const>()->value;
         BYN_TRACE("updating __stack_pointer: " << oldValue.geti32() << " -> "
                                                << stackPtr << "\n");
-        stackPointer->init =
-          Builder(*module).makeConst(Literal(int32_t(stackPtr)));
+        stackPointer->init = Builder(*module).makeConst(int32_t(stackPtr));
       }
     }
 
@@ -105,7 +104,7 @@ struct PostEmscripten : public Pass {
       auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
       if (func) {
         Builder builder(*module);
-        func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
+        func->body = builder.makeConst(int32_t(sbrkPtr));
         func->module = func->base = Name();
       }
       // Apply the sbrk ptr value, if it was provided. This lets emscripten set
@@ -176,10 +175,11 @@ struct PostEmscripten : public Pass {
       });
 
     // Assume an indirect call might throw.
-    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
-                           [](const Info& info) { return true; },
-                           [](Info& info) { info.canThrow = true; },
-                           analyzer.IndirectCallsHaveProperty);
+    analyzer.propagateBack(
+      [](const Info& info) { return info.canThrow; },
+      [](const Info& info) { return true; },
+      [](Info& info, Function* reason) { info.canThrow = true; },
+      analyzer.IndirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {

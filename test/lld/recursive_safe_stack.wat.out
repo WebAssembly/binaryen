@@ -1,7 +1,7 @@
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
@@ -12,13 +12,14 @@
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
+ (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__set_stack_limit" (func $__set_stack_limit))
+ (export "__set_stack_limits" (func $__set_stack_limits))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
@@ -29,16 +30,22 @@
   (local $4 i32)
   (block
    (if
-    (i32.lt_u
-     (local.tee $3
-      (local.tee $2
-       (i32.sub
-        (global.get $global$0)
-        (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $3
+       (local.tee $2
+        (i32.sub
+         (global.get $global$0)
+         (i32.const 16)
+        )
        )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $3)
+      (global.get $__stack_limit)
+     )
     )
     (call $__handle_stack_overflow)
    )
@@ -62,14 +69,20 @@
   )
   (block
    (if
-    (i32.lt_u
-     (local.tee $4
-      (i32.add
-       (local.get $2)
-       (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $4
+       (i32.add
+        (local.get $2)
+        (i32.const 16)
+       )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $4)
+      (global.get $__stack_limit)
+     )
     )
     (call $__handle_stack_overflow)
    )
@@ -88,16 +101,22 @@
   (local $2 i32)
   (block
    (if
-    (i32.lt_u
-     (local.tee $1
-      (local.tee $0
-       (i32.sub
-        (global.get $global$0)
-        (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $1
+       (local.tee $0
+        (i32.sub
+         (global.get $global$0)
+         (i32.const 16)
+        )
        )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $1)
+      (global.get $__stack_limit)
+     )
     )
     (call $__handle_stack_overflow)
    )
@@ -120,14 +139,20 @@
   )
   (block
    (if
-    (i32.lt_u
-     (local.tee $2
-      (i32.add
-       (local.get $0)
-       (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $2
+       (i32.add
+        (local.get $0)
+        (i32.const 16)
+       )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $2)
+      (global.get $__stack_limit)
+     )
     )
     (call $__handle_stack_overflow)
    )
@@ -140,9 +165,12 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__set_stack_limit (param $0 i32)
-  (global.set $__stack_limit
+ (func $__set_stack_limits (param $0 i32) (param $1 i32)
+  (global.set $__stack_base
    (local.get $0)
+  )
+  (global.set $__stack_limit
+   (local.get $1)
   )
  )
  (func $__growWasmMemory (param $newSize i32) (result i32)
@@ -168,7 +196,7 @@
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "__set_stack_limit",
+    "__set_stack_limits",
     "__growWasmMemory"
   ],
   "namedGlobals": {

@@ -22,6 +22,7 @@
 #include <type_traits>
 
 #include <ir/abstract.h>
+#include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
@@ -44,152 +45,6 @@ Name I64_EXPR = "i64.expr";
 Name F32_EXPR = "f32.expr";
 Name F64_EXPR = "f64.expr";
 Name ANY_EXPR = "any.expr";
-
-// Utilities
-
-// returns the maximum amount of bits used in an integer expression
-// not extremely precise (doesn't look into add operands, etc.)
-// LocalInfoProvider is an optional class that can provide answers about
-// local.get.
-template<typename LocalInfoProvider>
-Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
-  if (auto* const_ = curr->dynCast<Const>()) {
-    switch (curr->type.getSingle()) {
-      case Type::i32:
-        return 32 - const_->value.countLeadingZeroes().geti32();
-      case Type::i64:
-        return 64 - const_->value.countLeadingZeroes().geti64();
-      default:
-        WASM_UNREACHABLE("invalid type");
-    }
-  } else if (auto* binary = curr->dynCast<Binary>()) {
-    switch (binary->op) {
-      // 32-bit
-      case AddInt32:
-      case SubInt32:
-      case MulInt32:
-      case DivSInt32:
-      case DivUInt32:
-      case RemSInt32:
-      case RemUInt32:
-      case RotLInt32:
-      case RotRInt32:
-        return 32;
-      case AndInt32:
-        return std::min(getMaxBits(binary->left, localInfoProvider),
-                        getMaxBits(binary->right, localInfoProvider));
-      case OrInt32:
-      case XorInt32:
-        return std::max(getMaxBits(binary->left, localInfoProvider),
-                        getMaxBits(binary->right, localInfoProvider));
-      case ShlInt32: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(Index(32),
-                          getMaxBits(binary->left, localInfoProvider) +
-                            Bits::getEffectiveShifts(shifts));
-        }
-        return 32;
-      }
-      case ShrUInt32: {
-        if (auto* shift = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          auto shifts =
-            std::min(Index(Bits::getEffectiveShifts(shift)),
-                     maxBits); // can ignore more shifts than zero us out
-          return std::max(Index(0), maxBits - shifts);
-        }
-        return 32;
-      }
-      case ShrSInt32: {
-        if (auto* shift = binary->right->dynCast<Const>()) {
-          auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          if (maxBits == 32) {
-            return 32;
-          }
-          auto shifts =
-            std::min(Index(Bits::getEffectiveShifts(shift)),
-                     maxBits); // can ignore more shifts than zero us out
-          return std::max(Index(0), maxBits - shifts);
-        }
-        return 32;
-      }
-      // 64-bit TODO
-      // comparisons
-      case EqInt32:
-      case NeInt32:
-      case LtSInt32:
-      case LtUInt32:
-      case LeSInt32:
-      case LeUInt32:
-      case GtSInt32:
-      case GtUInt32:
-      case GeSInt32:
-      case GeUInt32:
-      case EqInt64:
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case LeSInt64:
-      case LeUInt64:
-      case GtSInt64:
-      case GtUInt64:
-      case GeSInt64:
-      case GeUInt64:
-      case EqFloat32:
-      case NeFloat32:
-      case LtFloat32:
-      case LeFloat32:
-      case GtFloat32:
-      case GeFloat32:
-      case EqFloat64:
-      case NeFloat64:
-      case LtFloat64:
-      case LeFloat64:
-      case GtFloat64:
-      case GeFloat64:
-        return 1;
-      default: {}
-    }
-  } else if (auto* unary = curr->dynCast<Unary>()) {
-    switch (unary->op) {
-      case ClzInt32:
-      case CtzInt32:
-      case PopcntInt32:
-        return 6;
-      case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64:
-        return 7;
-      case EqZInt32:
-      case EqZInt64:
-        return 1;
-      case WrapInt64:
-        return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
-      default: {}
-    }
-  } else if (auto* set = curr->dynCast<LocalSet>()) {
-    // a tee passes through the value
-    return getMaxBits(set->value, localInfoProvider);
-  } else if (auto* get = curr->dynCast<LocalGet>()) {
-    return localInfoProvider->getMaxBitsForLocal(get);
-  } else if (auto* load = curr->dynCast<Load>()) {
-    // if signed, then the sign-extension might fill all the bits
-    // if unsigned, then we have a limit
-    if (LoadUtils::isSignRelevant(load) && !load->signed_) {
-      return 8 * load->bytes;
-    }
-  }
-  switch (curr->type.getSingle()) {
-    case Type::i32:
-      return 32;
-    case Type::i64:
-      return 64;
-    case Type::unreachable:
-      return 64; // not interesting, but don't crash
-    default:
-      WASM_UNREACHABLE("invalid type");
-  }
-}
 
 // Useful information about locals
 struct LocalInfo {
@@ -243,7 +98,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto* value = Properties::getFallthrough(
       curr->value, passOptions, getModule()->features);
     auto& info = localInfo[curr->index];
-    info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
+    info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
     if (Properties::getSignExtValue(value)) {
       signExtBits = Properties::getSignExtBits(value);
@@ -265,7 +120,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::i32:
         return 32;
       case Type::i64:
@@ -373,7 +229,7 @@ struct OptimizeInstructions
         // if the sign-extend input cannot have a sign bit, we don't need it
         // we also don't need it if it already has an identical-sized sign
         // extend
-        if (getMaxBits(ext, this) + extraShifts < bits ||
+        if (Bits::getMaxBits(ext, this) + extraShifts < bits ||
             isSignExted(ext, bits)) {
           return removeAlmostSignExt(binary);
         }
@@ -538,7 +394,7 @@ struct OptimizeInstructions
               return binary->left;
             }
           } else if (auto maskedBits = Bits::getMaskedBits(mask)) {
-            if (getMaxBits(binary->left, this) <= maskedBits) {
+            if (Bits::getMaxBits(binary->left, this) <= maskedBits) {
               // a mask of lower bits is not needed if we are already smaller
               return binary->left;
             }
@@ -666,87 +522,13 @@ struct OptimizeInstructions
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
-      // de-morgan's laws
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
-          switch (inner->op) {
-            case EqInt32:
-              inner->op = NeInt32;
-              return inner;
-            case NeInt32:
-              inner->op = EqInt32;
-              return inner;
-            case LtSInt32:
-              inner->op = GeSInt32;
-              return inner;
-            case LtUInt32:
-              inner->op = GeUInt32;
-              return inner;
-            case LeSInt32:
-              inner->op = GtSInt32;
-              return inner;
-            case LeUInt32:
-              inner->op = GtUInt32;
-              return inner;
-            case GtSInt32:
-              inner->op = LeSInt32;
-              return inner;
-            case GtUInt32:
-              inner->op = LeUInt32;
-              return inner;
-            case GeSInt32:
-              inner->op = LtSInt32;
-              return inner;
-            case GeUInt32:
-              inner->op = LtUInt32;
-              return inner;
-
-            case EqInt64:
-              inner->op = NeInt64;
-              return inner;
-            case NeInt64:
-              inner->op = EqInt64;
-              return inner;
-            case LtSInt64:
-              inner->op = GeSInt64;
-              return inner;
-            case LtUInt64:
-              inner->op = GeUInt64;
-              return inner;
-            case LeSInt64:
-              inner->op = GtSInt64;
-              return inner;
-            case LeUInt64:
-              inner->op = GtUInt64;
-              return inner;
-            case GtSInt64:
-              inner->op = LeSInt64;
-              return inner;
-            case GtUInt64:
-              inner->op = LeUInt64;
-              return inner;
-            case GeSInt64:
-              inner->op = LtSInt64;
-              return inner;
-            case GeUInt64:
-              inner->op = LtUInt64;
-              return inner;
-
-            case EqFloat32:
-              inner->op = NeFloat32;
-              return inner;
-            case NeFloat32:
-              inner->op = EqFloat32;
-              return inner;
-
-            case EqFloat64:
-              inner->op = NeFloat64;
-              return inner;
-            case NeFloat64:
-              inner->op = EqFloat64;
-              return inner;
-
-            default: {}
+          // Try to invert a relational operation using De Morgan's law
+          auto op = invertBinaryOp(inner->op);
+          if (op != InvalidBinary) {
+            inner->op = op;
+            return inner;
           }
         }
         // eqz of a sign extension can be of zero-extension
@@ -809,16 +591,6 @@ struct OptimizeInstructions
       }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
-      auto* condition = select->condition->dynCast<Unary>();
-      if (condition && condition->op == EqZInt32) {
-        // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-        EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-        if (!ifTrue.invalidates(ifFalse)) {
-          select->condition = condition->value;
-          std::swap(select->ifTrue, select->ifFalse);
-        }
-      }
       if (auto* c = select->condition->dynCast<Const>()) {
         // constant condition, we can just pick the right side (barring side
         // effects)
@@ -838,6 +610,42 @@ struct OptimizeInstructions
             Builder builder(*getModule());
             return builder.makeSequence(builder.makeDrop(select->ifTrue),
                                         select->ifFalse);
+          }
+        }
+      }
+      if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
+        if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
+          if (select->type == Type::i32 || select->type == Type::i64) {
+            auto trueValue = constTrue->value.getInteger();
+            auto falseValue = constFalse->value.getInteger();
+            if ((trueValue == 1LL && falseValue == 0LL) ||
+                (trueValue == 0LL && falseValue == 1LL)) {
+              Builder builder(*getModule());
+              Expression* condition = select->condition;
+              if (trueValue == 0LL) {
+                condition =
+                  optimizeBoolean(builder.makeUnary(EqZInt32, condition));
+              }
+              if (!Properties::emitsBoolean(condition)) {
+                // expr ? 1 : 0   ==>   !!expr
+                condition = builder.makeUnary(
+                  EqZInt32, builder.makeUnary(EqZInt32, condition));
+              }
+              return select->type == Type::i64
+                       ? builder.makeUnary(ExtendUInt32, condition)
+                       : condition;
+            }
+          }
+        }
+      }
+      if (auto* condition = select->condition->dynCast<Unary>()) {
+        if (condition->op == EqZInt32) {
+          // flip select to remove eqz, if we can reorder
+          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
+          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
           }
         }
       }
@@ -901,6 +709,11 @@ struct OptimizeInstructions
           store->valueType = Type::i64;
           store->value = unary->value;
         }
+      }
+    } else if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
+      assert(features.hasBulkMemory());
+      if (auto* ret = optimizeMemoryCopy(memCopy)) {
+        return ret;
       }
     }
     return nullptr;
@@ -974,11 +787,21 @@ private:
   Expression* optimizeBoolean(Expression* boolean) {
     // TODO use a general getFallthroughs
     if (auto* unary = boolean->dynCast<Unary>()) {
-      if (unary && unary->op == EqZInt32) {
-        auto* unary2 = unary->value->dynCast<Unary>();
-        if (unary2 && unary2->op == EqZInt32) {
-          // double eqz
-          return unary2->value;
+      if (unary) {
+        if (unary->op == EqZInt32) {
+          auto* unary2 = unary->value->dynCast<Unary>();
+          if (unary2 && unary2->op == EqZInt32) {
+            // double eqz
+            return unary2->value;
+          }
+          if (auto* binary = unary->value->dynCast<Binary>()) {
+            // !(x <=> y)   ==>   x <!=> y
+            auto op = invertBinaryOp(binary->op);
+            if (op != InvalidBinary) {
+              binary->op = op;
+              return binary;
+            }
+          }
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
@@ -989,12 +812,16 @@ private:
             return binary->right;
           }
         }
-      }
-      if (binary->op == OrInt32) {
+      } else if (binary->op == OrInt32) {
         // an or flowing into a boolean context can consider each input as
         // boolean
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
+      } else if (binary->op == NeInt32) {
+        if (auto* num = binary->right->dynCast<Const>()) {
+          // x != 0 is just x if it's used as a bool
+          if (num->value.geti32() == 0) {
+            return binary->left;
       }
       if (binary->op == EqInt32 || binary->op == NeInt32 ||
           binary->op == EqInt64 || binary->op == NeInt64) {
@@ -1006,6 +833,12 @@ private:
               return binary->left;
             }
           }
+          // TODO: Perhaps use it for separate final pass???
+          // x != -1   ==>    x ^ -1
+          // if (num->value.geti32() == -1) {
+          //   binary->op = XorInt32;
+          //   return binary;
+          // }
           // bool(x) == 1  ==>  bool(x)
           // bool(x) != 1  ==>  !bool(x)
           if (constValue == 1LL) {
@@ -1286,7 +1119,8 @@ private:
               }
               break;
             }
-            default: {}
+            default: {
+            }
           }
         }
       }
@@ -1594,6 +1428,76 @@ private:
     return binary;
   }
 
+  Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
+    PassOptions options = getPassOptions();
+
+    if (options.ignoreImplicitTraps) {
+      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+        // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
+        Builder builder(*getModule());
+        return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                  builder.makeDrop(memCopy->source),
+                                  builder.makeDrop(memCopy->size)});
+      }
+    }
+
+    // memory.copy(dst, src, C)  ==>  store(dst, load(src))
+    if (auto* csize = memCopy->size->dynCast<Const>()) {
+      auto bytes = csize->value.geti32();
+      Builder builder(*getModule());
+
+      switch (bytes) {
+        case 0: {
+          if (options.ignoreImplicitTraps) {
+            // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
+            return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                      builder.makeDrop(memCopy->source)});
+          }
+          break;
+        }
+        case 1:
+        case 2:
+        case 4: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i32),
+            Type::i32);
+        }
+        case 8: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i64),
+            Type::i64);
+        }
+        case 16: {
+          if (options.shrinkLevel == 0) {
+            // This adds an extra 2 bytes so apply it only for
+            // minimal shrink level
+            if (getModule()->features.hasSIMD()) {
+              return builder.makeStore(
+                bytes, // bytes
+                0,     // offset
+                1,     // align
+                memCopy->dest,
+                builder.makeLoad(
+                  bytes, false, 0, 1, memCopy->source, Type::v128),
+                Type::v128);
+            }
+          }
+        }
+        default: {
+        }
+      }
+    }
+    return nullptr;
+  }
+
   // given a binary expression with equal children and no side effects in
   // either, we can fold various things
   // TODO: trinaries, things like (x & (y & x)) ?
@@ -1634,6 +1538,66 @@ private:
         return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
+    }
+  }
+
+  BinaryOp invertBinaryOp(BinaryOp op) {
+    // use de-morgan's laws
+    switch (op) {
+      case EqInt32:
+        return NeInt32;
+      case NeInt32:
+        return EqInt32;
+      case LtSInt32:
+        return GeSInt32;
+      case LtUInt32:
+        return GeUInt32;
+      case LeSInt32:
+        return GtSInt32;
+      case LeUInt32:
+        return GtUInt32;
+      case GtSInt32:
+        return LeSInt32;
+      case GtUInt32:
+        return LeUInt32;
+      case GeSInt32:
+        return LtSInt32;
+      case GeUInt32:
+        return LtUInt32;
+
+      case EqInt64:
+        return NeInt64;
+      case NeInt64:
+        return EqInt64;
+      case LtSInt64:
+        return GeSInt64;
+      case LtUInt64:
+        return GeUInt64;
+      case LeSInt64:
+        return GtSInt64;
+      case LeUInt64:
+        return GtUInt64;
+      case GtSInt64:
+        return LeSInt64;
+      case GtUInt64:
+        return LeUInt64;
+      case GeSInt64:
+        return LtSInt64;
+      case GeUInt64:
+        return LtUInt64;
+
+      case EqFloat32:
+        return NeFloat32;
+      case NeFloat32:
+        return EqFloat32;
+
+      case EqFloat64:
+        return NeFloat64;
+      case NeFloat64:
+        return EqFloat64;
+
+      default:
+        return InvalidBinary;
     }
   }
 };

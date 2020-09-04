@@ -1238,6 +1238,7 @@ public:
   Flow visitSIMDLoad(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
@@ -1272,7 +1273,7 @@ public:
     for (auto item : arguments) {
       exn->values.push_back(item);
     }
-    throwException(Literal(std::move(exn)));
+    throwException(Literal::makeExnref(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1296,7 +1297,7 @@ public:
     if (flow.getType() == Type::nullref) {
       trap("br_on_exn: argument is null");
     }
-    const ExceptionPackage& ex = flow.getSingleValue().getExceptionPackage();
+    auto ex = flow.getSingleValue().getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
@@ -1601,7 +1602,7 @@ public:
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
     virtual Literal load(Load* load, Address addr) {
-      switch (load->type.getSingle()) {
+      switch (load->type.getBasic()) {
         case Type::i32: {
           switch (load->bytes) {
             case 1:
@@ -1652,7 +1653,7 @@ public:
       WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
-      switch (store->valueType.getSingle()) {
+      switch (store->valueType.getBasic()) {
         case Type::i32: {
           switch (store->bytes) {
             case 1:
@@ -1889,14 +1890,12 @@ private:
         WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
-      const std::vector<Type>& params = function->sig.params.expand();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          assert(i < params.size());
-          if (!Type::isSubType(arguments[i].type, params[i])) {
+          if (!Type::isSubType(arguments[i].type, function->sig.params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << params[i] << " for parameter " << i << ", got "
-                      << arguments[i].type << "." << std::endl;
+                      << function->sig.params[i] << " for parameter " << i
+                      << ", got " << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = {arguments[i]};
@@ -2174,6 +2173,9 @@ private:
         case LoadExtSVec32x2ToVecI64x2:
         case LoadExtUVec32x2ToVecI64x2:
           return visitSIMDLoadExtend(curr);
+        case Load32Zero:
+        case Load64Zero:
+          return visitSIMDLoadZero(curr);
       }
       WASM_UNREACHABLE("invalid op");
     }
@@ -2265,6 +2267,24 @@ private:
           WASM_UNREACHABLE("unexpected op");
       }
       WASM_UNREACHABLE("invalid op");
+    }
+    Flow visitSIMDLoadZero(SIMDLoad* curr) {
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address src = instance.getFinalAddress(
+        curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
+      auto zero =
+        Literal::makeSingleZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
+      if (curr->op == Load32Zero) {
+        auto val = Literal(instance.externalInterface->load32u(src));
+        return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
+      } else {
+        auto val = Literal(instance.externalInterface->load64u(src));
+        return Literal(std::array<Literal, 2>{{val, zero}});
+      }
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");

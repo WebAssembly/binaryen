@@ -85,11 +85,16 @@ int main(int argc, char** argv) {
   // wasm traps, and emitting a single one helps compilation speed into wasm as
   // compile times are O(size * num_setjmps).
   for (size_t curr = 0;; curr++) {
-    // Always call the hang limit initializer before each export.
+  )";
+  if (wasm.getExportOrNull("hangLimitInitializer")) {
+    ret += R"(
+    // If present, call the hang limit initializer before each export.
     (*Z_hangLimitInitializerZ_vv)();
-
+)";
+  }
+  ret += R"(
     // Prepare to call the export, so we can catch traps.
-    if (setjmp(g_jmp_buf) != 0) {
+    if (WASM_RT_SETJMP(g_jmp_buf) != 0) {
       puts("exception!");
     } else {
       // Call the proper export.
@@ -118,7 +123,8 @@ int main(int argc, char** argv) {
     if (result != Type::none) {
       ret += std::string("printf(\"[fuzz-exec] note result: ") + exp->name.str +
              " => ";
-      switch (result.getSingle()) {
+      TODO_SINGLE_COMPOUND(result);
+      switch (result.getBasic()) {
         case Type::i32:
           ret += "%d\\n\", ";
           break;
@@ -138,10 +144,10 @@ int main(int argc, char** argv) {
 
     // Emit the callee's name with wasm2c name mangling.
     ret += std::string("(*Z_") + exp->name.str + "Z_";
-    auto params = func->sig.params.expand();
 
     auto wasm2cSignature = [](Type type) {
-      switch (type.getSingle()) {
+      TODO_SINGLE_COMPOUND(type);
+      switch (type.getBasic()) {
         case Type::none:
           return 'v';
         case Type::i32:
@@ -158,18 +164,18 @@ int main(int argc, char** argv) {
     };
 
     ret += wasm2cSignature(result);
-    if (params.empty()) {
-      ret += wasm2cSignature(Type::none);
-    } else {
-      for (auto param : params) {
+    if (func->sig.params.isTuple()) {
+      for (const auto& param : func->sig.params) {
         ret += wasm2cSignature(param);
       }
+    } else {
+      ret += wasm2cSignature(func->sig.params);
     }
     ret += ")(";
 
     // Emit the parameters (all 0s, like the other wrappers).
     bool first = true;
-    for (auto param : params) {
+    for (const auto& param : func->sig.params) {
       WASM_UNUSED(param);
       if (!first) {
         ret += ", ";

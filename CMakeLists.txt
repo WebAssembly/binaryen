@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 94)
+project(binaryen LANGUAGES C CXX VERSION 96)
 include(GNUInstallDirs)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -321,7 +321,6 @@ endfunction()
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
 binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
 binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
-binaryen_add_executable(asm2wasm src/tools/asm2wasm.cpp)
 binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
 binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
 binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
@@ -352,6 +351,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
+  target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
   target_link_libraries(binaryen_wasm debug "--profiling")
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD 14)
@@ -366,7 +366,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
     # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
+    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
   endif()
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
@@ -375,6 +375,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
+  target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-s ASSERTIONS")
@@ -382,18 +383,3 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Testing
-#
-# Currently just some very simple smoke tests.
-
-enable_testing()
-
-add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
-add_test(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
-add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
-add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

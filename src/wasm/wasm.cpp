@@ -91,6 +91,7 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
+Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
 
@@ -522,6 +523,8 @@ void AtomicNotify::finalize() {
   }
 }
 
+void AtomicFence::finalize() { type = Type::none; }
+
 void SIMDExtract::finalize() {
   assert(vec);
   switch (op) {
@@ -626,6 +629,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadSplatVec16x8:
       return 2;
     case LoadSplatVec32x4:
+    case Load32Zero:
       return 4;
     case LoadSplatVec64x2:
     case LoadExtSVec8x8ToVecI16x8:
@@ -634,6 +638,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -943,7 +948,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = tuple->type.expand()[index];
+    type = tuple->type[index];
   }
 }
 
@@ -1001,7 +1006,7 @@ Index Function::getVarIndexBase() { return sig.params.size(); }
 Type Function::getLocalType(Index index) {
   auto numParams = sig.params.size();
   if (index < numParams) {
-    return sig.params.expand()[index];
+    return sig.params[index];
   } else if (isVar(index)) {
     return vars[index - numParams];
   } else {

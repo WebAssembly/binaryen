@@ -30,7 +30,7 @@ function asmFunc(global, env, buffer) {
  function main() {
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
-  FUNCTION_TABLE[HEAP32[(0 + 1030 | 0) >> 2] | 0]();
+  FUNCTION_TABLE[HEAP32[(0 + 1030 | 0) >> 2] | 0 | 0]();
   internal(1 | 0) | 0;
   tabled(1 | 0) | 0;
   exported(1 | 0) | 0;

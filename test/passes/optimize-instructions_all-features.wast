@@ -3714,7 +3714,7 @@
       )
     )
   )
-  (func $select-on-const (param $x i32) (param $y i32)
+  (func $select-on-const (param $x i32) (param $y i64)
     (drop
       (select
         (i32.const 2)
@@ -3763,6 +3763,200 @@
         )
         (i32.const 7)
         (i32.const 1)
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.ge_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.ge_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.lt_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.lt_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 0)
+        (i64.const 1)
+        (i64.ge_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (i64.const 1)
+        (i64.const 0)
+        (i64.ge_s
+          (local.get $y)
+          (i64.const 0)
+        )
+      )
+    )
+    ;; optimize boolean
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 0)
+        (i32.eqz
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 2)
+        (i32.eqz
+          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $x)
+        (i32.const 2)
+        (i32.eqz
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $y)
+        (i64.const 0)
+        (i64.eqz
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (select
+        (local.get $y)
+        (i64.const 2)
+        (i64.eqz
+          (i64.const 2)
+        )
       )
     )
   )
@@ -4071,6 +4265,105 @@
       (i32.const 0)
       (ref.null)
       (ref.null)
+    )
+  )
+  (func $optimize-boolean-context (param $x i32) (param $y i32)
+    ;; 0 - x   ==>   x
+    (if
+      (i32.sub
+        (i32.const 0)
+        (local.get $x)
+      )
+      (unreachable)
+    )
+    (drop (select
+      (local.get $x)
+      (local.get $y)
+      (i32.sub
+        (i32.const 0)
+        (local.get $x)
+      )
+    ))
+  )
+  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $dst)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 0)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 1)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 2)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 3)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 4)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 5)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 6)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 7)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 8)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (i32.const 0)
+      (i32.const 0)
+      (i32.load
+        (i32.const 3) ;; side effect
+      )
     )
   )
 )

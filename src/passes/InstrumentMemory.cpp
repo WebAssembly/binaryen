@@ -78,15 +78,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
     id++;
     Builder builder(*getModule());
-    curr->ptr =
-      builder.makeCall(load_ptr,
-                       {builder.makeConst(Literal(int32_t(id))),
-                        builder.makeConst(Literal(int32_t(curr->bytes))),
-                        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-                        curr->ptr},
-                       Type::i32);
+    curr->ptr = builder.makeCall(load_ptr,
+                                 {builder.makeConst(int32_t(id)),
+                                  builder.makeConst(int32_t(curr->bytes)),
+                                  builder.makeConst(int32_t(curr->offset.addr)),
+                                  curr->ptr},
+                                 Type::i32);
     Name target;
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32:
         target = load_val_i32;
         break;
@@ -103,21 +102,20 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
         return; // TODO: other types, unreachable, etc.
     }
     replaceCurrent(builder.makeCall(
-      target, {builder.makeConst(Literal(int32_t(id))), curr}, curr->type));
+      target, {builder.makeConst(int32_t(id)), curr}, curr->type));
   }
 
   void visitStore(Store* curr) {
     id++;
     Builder builder(*getModule());
-    curr->ptr =
-      builder.makeCall(store_ptr,
-                       {builder.makeConst(Literal(int32_t(id))),
-                        builder.makeConst(Literal(int32_t(curr->bytes))),
-                        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-                        curr->ptr},
-                       Type::i32);
+    curr->ptr = builder.makeCall(store_ptr,
+                                 {builder.makeConst(int32_t(id)),
+                                  builder.makeConst(int32_t(curr->bytes)),
+                                  builder.makeConst(int32_t(curr->offset.addr)),
+                                  curr->ptr},
+                                 Type::i32);
     Name target;
-    switch (curr->value->type.getSingle()) {
+    switch (curr->value->type.getBasic()) {
       case Type::i32:
         target = store_val_i32;
         break;
@@ -133,10 +131,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
       default:
         return; // TODO: other types, unreachable, etc.
     }
-    curr->value =
-      builder.makeCall(target,
-                       {builder.makeConst(Literal(int32_t(id))), curr->value},
-                       curr->value->type);
+    curr->value = builder.makeCall(
+      target, {builder.makeConst(int32_t(id)), curr->value}, curr->value->type);
   }
 
   void visitModule(Module* curr) {

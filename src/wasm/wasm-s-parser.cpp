@@ -640,9 +640,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   // If only (type) is specified, populate `namedParams`
   if (!paramsOrResultsExist) {
-    const std::vector<Type>& funcParams = functionSignature.params.expand();
-    for (size_t index = 0, e = funcParams.size(); index < e; index++) {
-      namedParams.emplace_back(Name::fromInt(index), funcParams[index]);
+    size_t index = 0;
+    for (const auto& param : functionSignature.params) {
+      namedParams.emplace_back(Name::fromInt(index++), param);
     }
   }
 
@@ -1528,6 +1528,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 2;
       break;
     case LoadSplatVec32x4:
+    case Load32Zero:
       defaultAlign = 4;
       break;
     case LoadSplatVec64x2:
@@ -1537,6 +1538,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
+    case Load64Zero:
       defaultAlign = 8;
       break;
   }

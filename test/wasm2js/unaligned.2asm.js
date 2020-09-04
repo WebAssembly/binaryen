@@ -1,7 +1,7 @@
 import { setTempRet0 } from 'env';
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -23,11 +23,11 @@ import { setTempRet0 } from 'env';
   }
       
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       
 function asmFunc(global, env, buffer) {
@@ -71,7 +71,7 @@ function asmFunc(global, env, buffer) {
  function $2() {
   var $0_1 = 0;
   $0_1 = 0;
-  return Math_fround((wasm2js_scratch_store_i32(0, HEAPU8[$0_1 >> 0] | 0 | ((HEAPU8[($0_1 + 1 | 0) >> 0] | 0) << 8 | 0) | 0 | ((HEAPU8[($0_1 + 2 | 0) >> 0] | 0) << 16 | 0 | ((HEAPU8[($0_1 + 3 | 0) >> 0] | 0) << 24 | 0) | 0) | 0), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(2, HEAPU8[$0_1 >> 0] | 0 | ((HEAPU8[($0_1 + 1 | 0) >> 0] | 0) << 8 | 0) | 0 | ((HEAPU8[($0_1 + 2 | 0) >> 0] | 0) << 16 | 0 | ((HEAPU8[($0_1 + 3 | 0) >> 0] | 0) << 24 | 0) | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function $3() {
@@ -111,7 +111,7 @@ function asmFunc(global, env, buffer) {
  function $6() {
   var $0_1 = 0, $1_1 = 0;
   $0_1 = 0;
-  $1_1 = (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0));
+  $1_1 = (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(2));
   HEAP8[$0_1 >> 0] = $1_1;
   HEAP8[($0_1 + 1 | 0) >> 0] = $1_1 >>> 8 | 0;
   HEAP8[($0_1 + 2 | 0) >> 0] = $1_1 >>> 16 | 0;

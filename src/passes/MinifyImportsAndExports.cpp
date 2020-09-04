@@ -148,10 +148,6 @@ private:
     std::map<Name, Name> oldToNew;
     std::map<Name, Name> newToOld;
     auto process = [&](Name& name) {
-      // do not minifiy special imports, they must always exist
-      if (name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
-        return;
-      }
       auto iter = oldToNew.find(name);
       if (iter == oldToNew.end()) {
         auto newName = names.getName(soFar++);
@@ -162,7 +158,7 @@ private:
         name = iter->second;
       }
     };
-    auto processImport = [&](Importable* curr) {
+    ModuleUtils::iterImports(*module, [&](Importable* curr) {
       // Minify all import base names if we are importing modules (which means
       // we will minify all modules names, so we are not being careful).
       // Otherwise, assume we just want to minify "normal" imports like env
@@ -171,10 +167,7 @@ private:
           curr->module.startsWith("wasi_")) {
         process(curr->base);
       }
-    };
-    ModuleUtils::iterImportedGlobals(*module, processImport);
-    ModuleUtils::iterImportedFunctions(*module, processImport);
-    ModuleUtils::iterImportedEvents(*module, processImport);
+    });
 
     if (minifyExports) {
       // Minify the exported names.
@@ -201,18 +194,13 @@ private:
 #ifndef NDEBUG
     std::set<Name> seenImports;
 #endif
-    auto processImport = [&](Importable* curr) {
+    ModuleUtils::iterImports(*module, [&](Importable* curr) {
       curr->module = SINGLETON_MODULE_NAME;
 #ifndef NDEBUG
       assert(seenImports.count(curr->base) == 0);
       seenImports.insert(curr->base);
 #endif
-    };
-    ModuleUtils::iterImportedGlobals(*module, processImport);
-    ModuleUtils::iterImportedFunctions(*module, processImport);
-    ModuleUtils::iterImportedEvents(*module, processImport);
-    ModuleUtils::iterImportedMemories(*module, processImport);
-    ModuleUtils::iterImportedTables(*module, processImport);
+    });
   }
 };
 

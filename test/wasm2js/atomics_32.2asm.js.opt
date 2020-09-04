@@ -1,6 +1,6 @@
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);

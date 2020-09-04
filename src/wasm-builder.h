@@ -478,6 +478,7 @@ public:
     ret->type = value.type;
     return ret;
   }
+  template<typename T> Const* makeConst(T x) { return makeConst(Literal(x)); }
   Unary* makeUnary(UnaryOp op, Expression* value) {
     auto* ret = allocator.alloc<Unary>();
     ret->op = op;
@@ -621,7 +622,8 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    switch (value.type.getSingle()) {
+    TODO_SINGLE_COMPOUND(value.type);
+    switch (value.type.getBasic()) {
       case Type::nullref:
         return makeRefNull();
       case Type::funcref:
@@ -655,7 +657,7 @@ public:
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    std::vector<Type> params = func->sig.params.expand();
+    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
     params.push_back(type);
     func->sig.params = Type(params);
     Index index = func->localNames.size();
@@ -793,12 +795,13 @@ public:
   // minimal contents. as a replacement, this may reuse the
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZero(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->type);
+    switch (curr->type.getBasic()) {
       case Type::i32:
         value = Literal(int32_t(0));
         break;

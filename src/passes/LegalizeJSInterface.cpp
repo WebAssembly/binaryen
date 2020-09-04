@@ -183,7 +183,7 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    for (auto param : t->sig.params.expand()) {
+    for (const auto& param : t->sig.params) {
       if (param == Type::i64) {
         return true;
       }
@@ -214,17 +214,23 @@ private:
   // JS calls the export, so it must call a legal stub that calls the actual
   // wasm function
   Name makeLegalStub(Function* func, Module* module) {
+    Name legalName(std::string("legalstub$") + func->name.str);
+
+    // a method may be exported multiple times
+    if (module->getFunctionOrNull(legalName)) {
+      return legalName;
+    }
+
     Builder builder(*module);
     auto* legal = new Function();
-    legal->name = Name(std::string("legalstub$") + func->name.str);
+    legal->name = legalName;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
     call->type = func->sig.results;
 
-    const std::vector<Type>& params = func->sig.params.expand();
     std::vector<Type> legalParams;
-    for (auto param : params) {
+    for (const auto& param : func->sig.params) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legalParams.size(), legalParams.size() + 1));
@@ -255,11 +261,7 @@ private:
       legal->body = call;
     }
 
-    // a method may be exported multiple times
-    if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
-    }
-    return legal->name;
+    return module->addFunction(legal)->name;
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal
@@ -277,18 +279,19 @@ private:
     auto* call = module->allocator.alloc<Call>();
     call->target = legalIm->name;
 
-    const std::vector<Type>& imParams = im->sig.params.expand();
     std::vector<Type> params;
-    for (size_t i = 0; i < imParams.size(); ++i) {
-      if (imParams[i] == Type::i64) {
+    Index i = 0;
+    for (const auto& param : im->sig.params) {
+      if (param == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
         params.push_back(Type::i32);
         params.push_back(Type::i32);
       } else {
-        call->operands.push_back(builder.makeLocalGet(i, imParams[i]));
-        params.push_back(imParams[i]);
+        call->operands.push_back(builder.makeLocalGet(i, param));
+        params.push_back(param);
       }
+      ++i;
     }
 
     if (im->sig.results == Type::i64) {

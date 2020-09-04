@@ -306,16 +306,17 @@ private:
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
   Type getSubType(Type type) {
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Type> types;
-      for (auto t : type.expand()) {
+      for (const auto& t : type) {
         types.push_back(getSubType(t));
       }
       return Type(types);
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::externref:
         if (wasm.features.hasExceptionHandling()) {
           options.push_back(Type::exnref);
@@ -348,14 +349,14 @@ private:
           segment.data[j] = upTo(512);
         }
         if (!segment.isPassive) {
-          segment.offset = builder.makeConst(Literal(int32_t(memCovered)));
+          segment.offset = builder.makeConst(int32_t(memCovered));
           memCovered += segSize;
         }
         wasm.memory.segments.push_back(segment);
       }
     } else {
       // init some data
-      wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+      wasm.memory.segments.emplace_back(builder.makeConst(int32_t(0)));
       auto num = upTo(USABLE_MEMORY * 2);
       for (size_t i = 0; i < num; i++) {
         auto value = upTo(512);
@@ -374,7 +375,7 @@ private:
     // }
     std::vector<Expression*> contents;
     contents.push_back(
-      builder.makeLocalSet(0, builder.makeConst(Literal(uint32_t(5381)))));
+      builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -384,14 +385,10 @@ private:
             AddInt32,
             builder.makeBinary(ShlInt32,
                                builder.makeLocalGet(0, Type::i32),
-                               builder.makeConst(Literal(uint32_t(5)))),
+                               builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
-          builder.makeLoad(1,
-                           false,
-                           i,
-                           1,
-                           builder.makeConst(Literal(uint32_t(0))),
-                           Type::i32))));
+          builder.makeLoad(
+            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -405,7 +402,7 @@ private:
 
   void setupTable() {
     wasm.table.exists = true;
-    wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+    wasm.table.segments.emplace_back(builder.makeConst(int32_t(0)));
   }
 
   std::map<Type, std::vector<Name>> globalsByType;
@@ -443,18 +440,17 @@ private:
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
 
   void addHangLimitSupport() {
-    auto* glob =
-      builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                         Type::i32,
-                         builder.makeConst(Literal(int32_t(HANG_LIMIT))),
-                         Builder::Mutable);
+    auto* glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
+                                    Type::i32,
+                                    builder.makeConst(int32_t(HANG_LIMIT)),
+                                    Builder::Mutable);
     wasm.addGlobal(glob);
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
     func->sig = Signature(Type::none, Type::none);
-    func->body = builder.makeGlobalSet(
-      glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
+    func->body =
+      builder.makeGlobalSet(glob->name, builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
 
     auto* export_ = new Export;
@@ -486,7 +482,7 @@ private:
         HANG_LIMIT_GLOBAL,
         builder.makeBinary(BinaryOp::SubInt32,
                            builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32),
-                           builder.makeConst(Literal(int32_t(1))))));
+                           builder.makeConst(int32_t(1)))));
   }
 
   // function generation state
@@ -774,7 +770,7 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto type : func->sig.params.expand()) {
+      for (const auto& type : func->sig.params) {
         args.push_back(makeConst(type));
       }
       Expression* invoke =
@@ -854,7 +850,7 @@ private:
 
   Expression* _makeConcrete(Type type) {
     bool canMakeControlFlow =
-      !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
+      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -890,7 +886,7 @@ private:
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
     return (this->*pick(options))(type);
@@ -1170,7 +1166,7 @@ private:
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto argType : target->sig.params.expand()) {
+      for (const auto& argType : target->sig.params) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1209,12 +1205,12 @@ private:
     // going to trap
     Expression* target;
     if (!allowOOB || !oneIn(10)) {
-      target = builder.makeConst(Literal(int32_t(i)));
+      target = builder.makeConst(int32_t(i));
     } else {
       target = make(Type::i32);
     }
     std::vector<Expression*> args;
-    for (auto type : targetFn->sig.params.expand()) {
+    for (const auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
@@ -1269,9 +1265,9 @@ private:
 
   Expression* makeTupleMake(Type type) {
     assert(wasm.features.hasMultivalue());
-    assert(type.isMulti());
+    assert(type.isTuple());
     std::vector<Expression*> elements;
-    for (auto t : type.expand()) {
+    for (const auto& t : type) {
       elements.push_back(make(t));
     }
     return builder.makeTupleMake(std::move(elements));
@@ -1281,20 +1277,21 @@ private:
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tupleType = getTupleType();
-    auto& elements = tupleType.expand();
 
     // Find indices from which we can extract `type`
     std::vector<size_t> extractIndices;
-    for (size_t i = 0; i < elements.size(); ++i) {
-      if (elements[i] == type) {
+    size_t i = 0;
+    for (const auto& t : tupleType) {
+      if (t == type) {
         extractIndices.push_back(i);
       }
+      ++i;
     }
 
     // If there are none, inject one
     if (extractIndices.size() == 0) {
-      auto newElements = elements;
-      size_t injected = upTo(elements.size());
+      std::vector<Type> newElements(tupleType.begin(), tupleType.end());
+      size_t injected = upTo(newElements.size());
       newElements[injected] = type;
       tupleType = Type(newElements);
       extractIndices.push_back(injected);
@@ -1312,7 +1309,7 @@ private:
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
       ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(Literal(int32_t(USABLE_MEMORY - 1))));
+        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
     }
     return ret;
   }
@@ -1320,7 +1317,7 @@ private:
   Expression* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         bool signed_ = get() & 1;
         switch (upTo(3)) {
@@ -1426,7 +1423,7 @@ private:
     auto offset = logify(get());
     auto ptr = makePointer();
     auto value = make(type);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -1551,10 +1548,42 @@ private:
       }
     }
 
+    // Optional tweaking of the value by a small adjustment.
+    auto tweak = [this, type](Literal value) {
+      // +- 1
+      switch (upTo(5)) {
+        case 0:
+          value = value.add(Literal::makeFromInt32(-1, type));
+          break;
+        case 1:
+          value = value.add(Literal::makeFromInt32(1, type));
+          break;
+        default: {
+        }
+      }
+      // For floats, optionally add a non-integer adjustment in +- [-1, 1]
+      if (type.isFloat() && oneIn(2)) {
+        const int RANGE = 1000;
+        auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
+        // adjustment -> [0, 2 * RANGE]
+        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
+        // adjustment -> [-RANGE, RANGE]
+        adjustment = adjustment.sub(RANGE_LITERAL);
+        // adjustment -> [-1, 1]
+        adjustment = adjustment.div(RANGE_LITERAL);
+        value = value.add(adjustment);
+      }
+      // Flip sign.
+      if (oneIn(2)) {
+        value = value.mul(Literal::makeFromInt32(-1, type));
+      }
+      return value;
+    };
+
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(get32());
           case Type::i64:
@@ -1599,7 +1628,7 @@ private:
           default:
             WASM_UNREACHABLE("invalid value");
         }
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             return Literal(int32_t(small));
           case Type::i64:
@@ -1622,7 +1651,7 @@ private:
       case 2: {
         // special values
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value =
               Literal(pick<int32_t>(0,
@@ -1685,19 +1714,12 @@ private:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
-        // tweak around special values
-        if (oneIn(3)) { // +- 1
-          value = value.add(Literal::makeFromInt32(upTo(3) - 1, type));
-        }
-        if (oneIn(2)) { // flip sign
-          value = value.mul(Literal::makeFromInt32(-1, type));
-        }
-        return value;
+        return tweak(value);
       }
       case 3: {
         // powers of 2
         Literal value;
-        switch (type.getSingle()) {
+        switch (type.getBasic()) {
           case Type::i32:
             value = Literal(int32_t(1) << upTo(32));
             break;
@@ -1719,14 +1741,10 @@ private:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
-        // maybe negative
-        if (oneIn(2)) {
-          value = value.mul(Literal::makeFromInt32(-1, type));
-        }
-        return value;
+        return tweak(value);
       }
     }
-    WASM_UNREACHABLE("invalide value");
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeConst(Type type) {
@@ -1747,9 +1765,9 @@ private:
       }
       return builder.makeRefNull();
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Expression*> operands;
-      for (auto t : type.expand()) {
+      for (const auto& t : type) {
         operands.push_back(makeConst(t));
       }
       return builder.makeTupleMake(std::move(operands));
@@ -1765,7 +1783,7 @@ private:
   }
 
   Expression* makeUnary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
         return builder.makeUnary(unary->op, make(Type::unreachable));
@@ -1778,9 +1796,11 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
-        switch (getSingleConcreteType().getSingle()) {
+        auto singleConcreteType = getSingleConcreteType();
+        TODO_SINGLE_COMPOUND(singleConcreteType);
+        switch (singleConcreteType.getBasic()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
@@ -1984,7 +2004,7 @@ private:
   }
 
   Expression* makeBinary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* binary =
             makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
@@ -1999,7 +2019,7 @@ private:
       return makeTrivial(type);
     }
 
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(4)) {
           case 0:
@@ -2303,7 +2323,7 @@ private:
       }
     }
     Index bytes;
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(3)) {
           case 0:
@@ -2394,7 +2414,7 @@ private:
 
   Expression* makeSIMDExtract(Type type) {
     auto op = static_cast<SIMDExtractOp>(0);
-    switch (type.getSingle()) {
+    switch (type.getBasic()) {
       case Type::i32:
         op = pick(ExtractLaneSVecI8x16,
                   ExtractLaneUVecI8x16,
@@ -2528,6 +2548,7 @@ private:
   }
 
   Expression* makeSIMDLoad() {
+    // TODO: add Load{32,64}Zero if merged to proposal
     SIMDLoadOp op = pick(LoadSplatVec8x16,
                          LoadSplatVec16x8,
                          LoadSplatVec32x4,
@@ -2559,6 +2580,9 @@ private:
       case LoadExtUVec32x2ToVecI64x2:
         align = pick(1, 2, 4, 8);
         break;
+      case Load32Zero:
+      case Load64Zero:
+        WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();
     return builder.makeSIMDLoad(op, offset, align, ptr);
@@ -2605,8 +2629,8 @@ private:
     size_t offsetVal = upTo(totalSize);
     size_t sizeVal = upTo(totalSize - offsetVal);
     Expression* dest = makePointer();
-    Expression* offset = builder.makeConst(Literal(int32_t(offsetVal)));
-    Expression* size = builder.makeConst(Literal(int32_t(sizeVal)));
+    Expression* offset = builder.makeConst(int32_t(offsetVal));
+    Expression* size = builder.makeConst(int32_t(sizeVal));
     return builder.makeMemoryInit(segment, dest, offset, size);
   }
 

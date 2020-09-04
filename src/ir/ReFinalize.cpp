@@ -186,7 +186,7 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
       condition = builder.makeDrop(condition);
     }
     replacement = builder.makeSequence(value, condition);
-    assert(replacement->type.getSingle());
+    assert(replacement->type.isBasic() && "Basic type expected");
   }
   replaceCurrent(replacement);
 }
