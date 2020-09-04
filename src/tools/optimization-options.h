@@ -165,6 +165,13 @@ struct OptimizationOptions : public ToolOptions {
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
+      .add("--inline-heavyweight-functions",
+           "-ihf",
+           "Allow inlining heavyweight functions",
+           Options::Arguments::Zero,
+           [this](Options* o, const std::string&) {
+             passOptions.inlining.allowHeavyweight = true;
+           })
       .add("--ignore-implicit-traps",
            "-iit",
            "Optimize under the helpful assumption that no surprising traps "

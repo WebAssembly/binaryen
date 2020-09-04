@@ -19,7 +19,6 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "ir/branch-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/module-utils.h"
@@ -389,7 +388,7 @@ void FunctionValidator::noteLabelName(Name name) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(!curr->type.isMulti(),
+    shouldBeTrue(!curr->type.isTuple(),
                  curr,
                  "Multivalue block type (multivalue is not enabled)");
   }
@@ -1773,11 +1772,11 @@ void FunctionValidator::visitSelect(Select* curr) {
                "select condition must be valid");
   if (curr->ifTrue->type != Type::unreachable) {
     shouldBeFalse(
-      curr->ifTrue->type.isMulti(), curr, "select value may not be a tuple");
+      curr->ifTrue->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->ifFalse->type != Type::unreachable) {
     shouldBeFalse(
-      curr->ifFalse->type.isMulti(), curr, "select value may not be a tuple");
+      curr->ifFalse->type.isTuple(), curr, "select value may not be a tuple");
   }
   if (curr->type != Type::unreachable) {
     shouldBeTrue(Type::isSubType(curr->ifTrue->type, curr->type),
@@ -1969,7 +1968,7 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->sig.results.isMulti()) {
+  if (curr->sig.results.isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
@@ -2137,7 +2136,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
-    if (curr->sig.results.isMulti()) {
+    if (curr->sig.results.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Imported multivalue function "
@@ -2164,7 +2163,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
         curr->mutable_, curr->name, "Imported global cannot be mutable");
     }
     info.shouldBeFalse(
-      curr->type.isMulti(), curr->name, "Imported global cannot be tuple");
+      curr->type.isTuple(), curr->name, "Imported global cannot be tuple");
   });
 }
 
@@ -2194,7 +2193,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
             g->mutable_, g->name, "Exported global cannot be mutable");
         }
         info.shouldBeFalse(
-          g->type.isMulti(), g->name, "Exported global cannot be tuple");
+          g->type.isTuple(), g->name, "Exported global cannot be tuple");
       }
     }
   }
@@ -2347,7 +2346,7 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                        Type(Type::none),
                        curr->name,
                        "Event type's result type should be none");
-    if (curr->sig.params.isMulti()) {
+    if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Multivalue event type (multivalue is not enabled)");

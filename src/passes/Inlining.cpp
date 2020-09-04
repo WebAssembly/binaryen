@@ -84,7 +84,7 @@ struct FunctionInfo {
     // about size, and if it's lightweight so a good candidate for
     // speeding us up.
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           lightweight;
+           (lightweight || options.inlining.allowHeavyweight);
   }
 };
 

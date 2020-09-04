@@ -33,10 +33,7 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(const Literal& other) { *this = other; }
-
-Literal& Literal::operator=(const Literal& other) {
-  type = other.type;
+Literal::Literal(const Literal& other) : type(other.type) {
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
@@ -54,6 +51,7 @@ Literal& Literal::operator=(const Literal& other) {
       func = other.func;
       break;
     case Type::exnref:
+      // Avoid calling the destructor on an uninitialized value
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
       break;
     case Type::none:
@@ -62,6 +60,13 @@ Literal& Literal::operator=(const Literal& other) {
     case Type::externref:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal& Literal::operator=(const Literal& other) {
+  if (this != &other) {
+    this->~Literal();
+    new (this) auto(other);
   }
   return *this;
 }
@@ -124,31 +129,36 @@ std::array<uint8_t, 16> Literal::getv128() const {
   return ret;
 }
 
+ExceptionPackage Literal::getExceptionPackage() const {
+  assert(type == Type::exnref);
+  return *exn.get();
+}
+
 Literal Literal::castToF32() {
   assert(type == Type::i32);
-  Literal ret(i32);
-  ret.type = Type::f32;
+  Literal ret(Type::f32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToF64() {
   assert(type == Type::i64);
-  Literal ret(i64);
-  ret.type = Type::f64;
+  Literal ret(Type::f64);
+  ret.i64 = i64;
   return ret;
 }
 
 Literal Literal::castToI32() {
   assert(type == Type::f32);
-  Literal ret(i32);
-  ret.type = Type::i32;
+  Literal ret(Type::i32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToI64() {
   assert(type == Type::f64);
-  Literal ret(i64);
-  ret.type = Type::i64;
+  Literal ret(Type::i64);
+  ret.i64 = i64;
   return ret;
 }
 
@@ -1435,8 +1445,7 @@ Literal Literal::shuffleV8x16(const Literal& other,
   return Literal(bytes);
 }
 
-template<Type::ValueType Ty, int Lanes>
-static Literal splat(const Literal& val) {
+template<Type::BasicID Ty, int Lanes> static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
   lanes.fill(val);
