@@ -81,10 +81,11 @@ struct FunctionInfo {
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
-    // more than one use, so we can't eliminate it after inlining,
+    // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size, and if it hasn't calls so a good candidate
-    // for speeding us up.
+    // about size. First, check if it has calls. In that case it is not
+    // likely to speed us up, and also if we want to inline such
+    // functions we would need to be careful to avoid infinite recursion.
     if (hasCalls) {
       return false;
     }

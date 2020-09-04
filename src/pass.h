@@ -77,8 +77,8 @@ struct InliningOptions {
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
-  // Allow inlining of functions that contain loops in the sense the
-  // inlining pass estimates.
+  // Loops usually mean the function does heavy work, so the call overhead
+  // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
 };
 
