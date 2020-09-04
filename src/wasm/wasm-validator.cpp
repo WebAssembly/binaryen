@@ -22,6 +22,7 @@
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/module-utils.h"
+#include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
 #include "wasm-printing.h"
@@ -246,6 +247,13 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 public:
   // visitors
 
+  void validatePoppyExpression(Expression* curr);
+
+  static void visitPoppyExpression(FunctionValidator* self,
+                                   Expression** currp) {
+    self->validatePoppyExpression(*currp);
+  }
+
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
@@ -254,6 +262,8 @@ public:
   }
 
   void visitBlock(Block* curr);
+  void validateNormalBlockElements(Block* curr);
+  void validatePoppyBlockElements(Block* curr);
 
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
@@ -275,6 +285,11 @@ public:
     }
     if (curr->is<Loop>()) {
       self->pushTask(visitPreLoop, currp);
+    }
+    if (auto* func = self->getFunction()) {
+      if (func->profile == IRProfile::Poppy) {
+        self->pushTask(visitPoppyExpression, currp);
+      }
     }
   }
 
@@ -386,6 +401,39 @@ void FunctionValidator::noteLabelName(Name name) {
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
+void FunctionValidator::validatePoppyExpression(Expression* curr) {
+  if (curr->type == Type::unreachable) {
+    shouldBeTrue(StackUtils::mayBeUnreachable(curr),
+                 curr,
+                 "Only control flow structures and unreachable polymorphic"
+                 " instructions may be unreachable in Poppy IR");
+  }
+  if (Properties::isControlFlowStructure(curr)) {
+    // Check that control flow children (except If conditions) are blocks
+    if (auto* if_ = curr->dynCast<If>()) {
+      shouldBeTrue(
+        if_->condition->is<Pop>(), curr, "Expected condition to be a Pop");
+      shouldBeTrue(if_->ifTrue->is<Block>(),
+                   curr,
+                   "Expected control flow child to be a block");
+      shouldBeTrue(!if_->ifFalse || if_->ifFalse->is<Block>(),
+                   curr,
+                   "Expected control flow child to be a block");
+    } else if (!curr->is<Block>()) {
+      for (auto* child : ChildIterator(curr)) {
+        shouldBeTrue(child->is<Block>(),
+                     curr,
+                     "Expected control flow child to be a block");
+      }
+    }
+  } else {
+    // Check that all children are Pops
+    for (auto* child : ChildIterator(curr)) {
+      shouldBeTrue(child->is<Pop>(), curr, "Unexpected non-Pop child");
+    }
+  }
+}
+
 void FunctionValidator::visitBlock(Block* curr) {
   if (!getModule()->features.hasMultivalue()) {
     shouldBeTrue(!curr->type.isTuple(),
@@ -439,6 +487,17 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakInfos.erase(iter);
   }
+  switch (getFunction()->profile) {
+    case IRProfile::Normal:
+      validateNormalBlockElements(curr);
+      break;
+    case IRProfile::Poppy:
+      validatePoppyBlockElements(curr);
+      break;
+  }
+}
+
+void FunctionValidator::validateNormalBlockElements(Block* curr) {
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(
@@ -479,6 +538,45 @@ void FunctionValidator::visitBlock(Block* curr) {
   if (curr->type.isConcrete()) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
+  }
+}
+
+void FunctionValidator::validatePoppyBlockElements(Block* curr) {
+  StackSignature blockSig;
+  for (size_t i = 0; i < curr->list.size(); ++i) {
+    Expression* expr = curr->list[i];
+    if (!shouldBeTrue(
+          !expr->is<Pop>(), expr, "Unexpected top-level pop in block")) {
+      return;
+    }
+    StackSignature sig(expr);
+    if (!shouldBeTrue(blockSig.composes(sig),
+                      curr,
+                      "block element has incompatible type") &&
+        !info.quiet) {
+      getStream() << "(on index " << i << ":\n"
+                  << expr << "\n), required: " << sig.params << ", available: ";
+      if (blockSig.unreachable) {
+        getStream() << "unreachable, ";
+      }
+      getStream() << blockSig.results << "\n";
+      return;
+    }
+    blockSig += sig;
+  }
+  if (curr->type == Type::unreachable) {
+    shouldBeTrue(blockSig.unreachable,
+                 curr,
+                 "unreachable block should have unreachable element");
+  } else {
+    if (!shouldBeTrue(blockSig.satisfies(Signature(Type::none, curr->type)),
+                      curr,
+                      "block contents should satisfy block type") &&
+        !info.quiet) {
+      getStream() << "contents: " << blockSig.results
+                  << (blockSig.unreachable ? " [unreachable]" : "") << "\n"
+                  << "expected: " << curr->type << "\n";
+    }
   }
 }
 
@@ -1989,6 +2087,10 @@ void FunctionValidator::visitFunction(Function* curr) {
   shouldBeTrue(features <= getModule()->features,
                curr,
                "all used types should be allowed");
+  if (curr->profile == IRProfile::Poppy) {
+    shouldBeTrue(
+      curr->body->is<Block>(), curr->body, "Function body must be a block");
+  }
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   shouldBeSubTypeOrFirstIsUnreachable(

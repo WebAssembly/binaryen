@@ -111,6 +111,7 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
+  IRProfile profile;
   std::vector<Signature> signatures;
   std::unordered_map<std::string, size_t> signatureIndices;
   std::vector<Name> functionNames;
@@ -127,6 +128,7 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm,
                          Element& module,
+                         IRProfile profile,
                          Name* moduleName = nullptr);
 
 private:

@@ -31,6 +31,7 @@ struct ToolOptions : public Options {
   PassOptions passOptions;
 
   bool quiet = false;
+  IRProfile profile = IRProfile::Normal;
 
   ToolOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
@@ -67,7 +68,13 @@ struct ToolOptions : public Options {
            "-q",
            "Emit less verbose output and hide trivial warnings.",
            Arguments::Zero,
-           [this](Options*, const std::string&) { quiet = true; });
+           [this](Options*, const std::string&) { quiet = true; })
+      .add(
+        "--experimental-poppy",
+        "",
+        "Parse wast files as Poppy IR for testing purposes.",
+        Arguments::Zero,
+        [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")

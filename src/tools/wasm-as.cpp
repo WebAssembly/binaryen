@@ -110,7 +110,7 @@ int main(int argc, const char* argv[]) {
     if (options.debug) {
       std::cerr << "w-parsing..." << std::endl;
     }
-    SExpressionWasmBuilder builder(wasm, *root[0]);
+    SExpressionWasmBuilder builder(wasm, *root[0], options.profile);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";

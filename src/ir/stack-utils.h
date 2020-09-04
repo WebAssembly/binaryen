@@ -33,7 +33,10 @@
 //     stack type of each instruction. Pops may not have `unreachable` type.
 //
 //  4. Only control flow structures and instructions that have polymorphic
-//     unreachable behavior in WebAssembly may have unreachable type.
+//     unreachable behavior in WebAssembly may have unreachable type. Blocks may
+//     be unreachable when they are not branch targets and when they have an
+//     unreachable child. Note that this means a block may be unreachable even
+//     if it would otherwise have a concrete type, unlike in Binaryen IR.
 //
 // For example, the following Binaryen IR Function:
 //
@@ -58,7 +61,10 @@
 //   )
 //
 // Notice that the sequence of instructions in the block is now identical to the
-// sequence of instructions in raw WebAssembly.
+// sequence of instructions in raw WebAssembly. Also note that Poppy IR's
+// validation rules are largely additional on top of the normal Binaryen IR
+// validation rules, with the only exceptions being block body validation and
+// block unreahchability rules.
 //
 
 #ifndef wasm_ir_stack_h
@@ -74,6 +80,10 @@ namespace StackUtils {
 
 // Iterate through `block` and remove nops.
 void removeNops(Block* block);
+
+// Whether `expr` may be unreachable in Poppy IR. True for control flow
+// structures and polymorphic unreachable instructions.
+bool mayBeUnreachable(Expression* expr);
 
 } // namespace StackUtils
 

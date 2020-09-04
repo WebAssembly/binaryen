@@ -146,7 +146,7 @@ static void run_asserts(Name moduleName,
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
         builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1]));
+          new SExpressionWasmBuilder(wasm, *curr[1], IRProfile::Normal));
       } catch (const ParseException&) {
         invalid = true;
       }
@@ -306,7 +306,7 @@ int main(int argc, const char* argv[]) {
         auto module = wasm::make_unique<Module>();
         Name moduleName;
         auto builder = wasm::make_unique<SExpressionWasmBuilder>(
-          *module, *root[i], &moduleName);
+          *module, *root[i], IRProfile::Normal, &moduleName);
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
