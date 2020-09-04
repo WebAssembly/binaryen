@@ -507,13 +507,12 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      // we could potentially elliminate masked rhs for shift operations
+      // we could potentially eliminate masked rhs for shift operations
       if (binary->op == ShlInt32 || binary->op == ShlInt64 ||
           binary->op == ShrSInt32 || binary->op == ShrSInt64 ||
           binary->op == ShrUInt32 || binary->op == ShrUInt64) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          // x <<>> (+32 | +64))   ==>   x
-          // x <<>> (-32 | -64))   ==>   x
+          // x <<>> (32 | 64 | -32 | -64))   ==>   x
           if (binary->type == Type::i32) {
             if ((c->value.geti32() & 31) == 0) {
               return binary->left;
