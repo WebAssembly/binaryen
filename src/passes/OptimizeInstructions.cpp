@@ -832,17 +832,17 @@ private:
           if (constValue == 1LL) {
             if (Bits::getMaxBits(binary->left, this) == 1) {
               if (binary->op == EqInt32) {
-                // bool(i32(x)) == 1  ==>  bool(i32(x))
+                // bool(x) == 1  ==>  bool(x)
                 return binary->left;
               } else if (binary->op == NeInt32) {
-                // bool(i32(x)) != 1  ==>  !bool(i32(x))
+                // bool(x) != 1  ==>  !bool(x)
                 return optimizeBoolean(
                   Builder(*getModule()).makeUnary(EqZInt32, binary->left));
               } else if (binary->op == EqInt64) {
-                // bool(i64(x)) == 1  ==>  bool(i32(x))
+                // i64(bool(x)) == 1  ==>  i32(bool(x))
                 return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
               } else if (binary->op == NeInt64) {
-                // bool(i64(x)) != 1  ==>  bool(i64(x)) != 0
+                // i64(bool(x)) != 1  ==>  !i64(bool(x))
                 return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
               }
             }
