@@ -48,47 +48,47 @@ function makeDroppedInt32(x) {
 
 function test_types() {
   console.log("  // BinaryenTypeNone: " + binaryen.none);
-  console.log("  //", binaryen.expandType(binaryen.none));
+  console.log("  //", binaryen.expandType(binaryen.none).join(","));
 
   console.log("  // BinaryenTypeUnreachable: " + binaryen.unreachable);
-  console.log("  //", binaryen.expandType(binaryen.unreachable));
+  console.log("  //", binaryen.expandType(binaryen.unreachable).join(","));
 
   console.log("  // BinaryenTypeInt32: " + binaryen.i32);
-  console.log("  //", binaryen.expandType(binaryen.i32));
+  console.log("  //", binaryen.expandType(binaryen.i32).join(","));
 
   console.log("  // BinaryenTypeInt64: " + binaryen.i64);
-  console.log("  //", binaryen.expandType(binaryen.i64));
+  console.log("  //", binaryen.expandType(binaryen.i64).join(","));
 
   console.log("  // BinaryenTypeFloat32: " + binaryen.f32);
-  console.log("  //", binaryen.expandType(binaryen.f32));
+  console.log("  //", binaryen.expandType(binaryen.f32).join(","));
 
   console.log("  // BinaryenTypeFloat64: " + binaryen.f64);
-  console.log("  //", binaryen.expandType(binaryen.f64));
+  console.log("  //", binaryen.expandType(binaryen.f64).join(","));
 
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
-  console.log("  //", binaryen.expandType(binaryen.v128));
+  console.log("  //", binaryen.expandType(binaryen.v128).join(","));
 
   console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
-  console.log("  //", binaryen.expandType(binaryen.funcref));
+  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
 
   console.log("  // BinaryenTypeExternref: " + binaryen.externref);
-  console.log("  //", binaryen.expandType(binaryen.externref));
+  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
 
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
-  console.log("  //", binaryen.expandType(binaryen.exnref));
+  console.log("  //", binaryen.expandType(binaryen.exnref).join(","));
 
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", binaryen.expandType(i32_pair));
+  console.log("  //", binaryen.expandType(i32_pair).join(","));
 
   var duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", binaryen.expandType(duplicate_pair));
+  console.log("  //", binaryen.expandType(duplicate_pair).join(","));
 
   assert(i32_pair == duplicate_pair);
 
   var f32_pair = binaryen.createType([binaryen.f32, binaryen.f32]);
-  console.log("  //", binaryen.expandType(f32_pair));
+  console.log("  //", binaryen.expandType(f32_pair).join(","));
 }
 
 function test_features() {

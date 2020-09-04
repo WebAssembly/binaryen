@@ -16,12 +16,6 @@
   // 7
   // BinaryenTypeExternref: 8
   // 8
-  // BinaryenTypeAnyref: 9
-  // 9
-  // BinaryenTypeEqref: 10
-  // 10
-  // BinaryenTypeI31ref: 11
-  // 11
   // BinaryenTypeExnref: 12
   // 12
   // BinaryenTypeAuto: -1
@@ -1820,6 +1814,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (ref.is_null
         (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
@@ -3655,6 +3654,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (ref.is_null
         (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
