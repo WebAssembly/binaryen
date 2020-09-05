@@ -56,7 +56,7 @@ def update_example_tests():
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libdir, '-pthread']
         print('build: ', ' '.join(extra))
         if src.endswith('.cpp'):
-            extra += ['-std=c++14']
+            extra += ['-std=c++' + shared.cxx_standard]
         print(os.getcwd())
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using rpath
@@ -65,7 +65,7 @@ def update_example_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [os.environ.get('CXX') or 'g++', '-std=c++14'] + cmd
+        cmd = [os.environ.get('CXX') or 'g++', '-std=c++' + shared.cxx_standard] + cmd
         try:
             print('link: ', ' '.join(cmd))
             subprocess.check_call(cmd)

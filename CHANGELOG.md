@@ -16,6 +16,7 @@ Current Trunk
 -------------
 - Remove asm2wasm, which supported Emscripten's fastcomp backend, after fastcomp
   was removed.
+- Binaryen now requires C++17 (was C++14) to build.
 
 v96
 ---
