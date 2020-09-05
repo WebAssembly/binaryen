@@ -27,6 +27,7 @@ import sys
 # Keep in sync with CMakeLists.txt CXX_STANDARD
 cxx_standard = 17
 
+
 def parse_args(args):
     usage_str = ("usage: 'python check.py [options]'\n\n"
                  "Runs the Binaryen test suite.")
