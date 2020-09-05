@@ -1224,21 +1224,38 @@ private:
           right->value = Literal::makeSingleZero(type);
           return right;
         }
+        // bool(x) | 1  ==>  1
+        // bool(x) & 1  ==>  bool(x)
         // bool(x) == 1  ==>  bool(x)
         // bool(x) != 1  ==>  !bool(x)
         if (Bits::getMaxBits(binary->left, this) == 1) {
-          if (binary->op == EqInt32) {
-            // bool(x) == 1  ==>  bool(x)
-            return binary->left;
-          } else if (binary->op == EqInt64) {
-            // i64(bool(x)) == 1  ==>  i32(bool(x))
-            return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
-          } else if (binary->op == NeInt32) {
-            // bool(x) != 1  ==>  !bool(x)
-            return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
-          } else if (binary->op == NeInt64) {
-            // i64(bool(x)) != 1  ==>  !i64(bool(x))
-            return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
+          switch (binary->op) {
+            case OrInt32:
+            case OrInt64: {
+              // bool(x) | 1  ==>  1
+              return binary->right;
+            }
+            case AndInt32:
+            case AndInt64:
+            case EqInt32: {
+              // bool(x) & 1  ==>  bool(x)
+              // bool(x) == 1  ==>  bool(x)
+              return binary->left;
+            }
+            case EqInt64: {
+              // i64(bool(x)) == 1  ==>  i32(bool(x))
+              return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
+            }
+            case NeInt32: {
+              // bool(x) != 1  ==>  !bool(x)
+              return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
+            }
+            case NeInt64: {
+              // i64(bool(x)) != 1  ==>  !i64(bool(x))
+              return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
+            }
+            default: {
+            }
           }
         }
       }

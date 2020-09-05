@@ -3971,58 +3971,34 @@
         )
       )
     )
-    (drop
-      (select
+    (drop (i32.eq
+      (i32.and         ;; i32(bool(expr)) == 1 -> bool(expr)
+        (local.get $x)
         (i32.const 1)
-        (i32.const 2)
-        (i32.eq
-          (i32.and         ;; bool(i32(expr)) == 1 -> bool(expr)
-            (local.get $x)
-            (i32.const 1)
-          )
-          (i32.const 1)
-        )
       )
-    )
-    (drop
-      (select
+      (i32.const 1)
+    ))
+    (drop (i32.ne
+      (i32.and         ;; i32(bool(expr)) != 1 -> !bool(expr)
+        (local.get $x)
         (i32.const 1)
-        (i32.const 2)
-        (i32.ne
-          (i32.and         ;; bool(i32(expr)) != 1 -> !bool(expr)
-            (local.get $x)
-            (i32.const 1)
-          )
-          (i32.const 1)
-        )
       )
-    )
-    (drop
-      (select
-        (i32.const 1)
-        (i32.const 2)
-        (i64.eq
-          (i64.and         ;; bool(i64(expr)) == 1 -> bool(expr)
-            (local.get $y)
-            (i64.const 1)
-          )
-          (i64.const 1)
-        )
+      (i32.const 1)
+    ))
+    (drop (i64.eq
+      (i64.and         ;; i64(bool(expr)) == 1 -> bool(expr)
+        (local.get $y)
+        (i64.const 1)
       )
-    )
-    (drop
-      (select
-        (i32.const 1)
-        (i32.const 2)
-        (i64.ne
-          (i64.and         ;; bool(i64(expr)) != 1 -> !bool(expr)
-            (local.get $y)
-            (i64.const 1)
-          )
-          (i64.const 1)
-        )
+      (i64.const 1)
+    ))
+    (drop (i64.ne
+      (i64.and         ;; i64(bool(expr)) != 1 -> !bool(expr)
+        (local.get $y)
+        (i64.const 1)
       )
-    )
+      (i64.const 1)
+    ))
   )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
