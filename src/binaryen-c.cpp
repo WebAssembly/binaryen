@@ -3528,12 +3528,12 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-int BinaryenGetAllowHeavyweight(void) {
-  return globalPassOptions.inlining.allowHeavyweight;
+int BinaryenGetAllowInliningFunctionsWithLoops(void) {
+  return globalPassOptions.inlining.allowFunctionsWithLoops;
 }
 
-void BinaryenSetAllowHeavyweight(int enabled) {
-  globalPassOptions.inlining.allowHeavyweight = enabled;
+void BinaryenSetAllowInliningFunctionsWithLoops(int enabled) {
+  globalPassOptions.inlining.allowFunctionsWithLoops = enabled;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
