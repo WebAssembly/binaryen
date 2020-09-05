@@ -815,16 +815,14 @@ private:
         binary->right = optimizeBoolean(binary->right);
       } else if (binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
+          // x != 0 is just x if it's used as a bool
           if (c->value.geti32() == 0) {
-            // x != 0 is just x if it's used as a bool
-            if (binary->op == NeInt32) {
-              return binary->left;
-            }
+            return binary->left;
           }
           // TODO: Perhaps use it for separate final pass???
           // x != -1   ==>    x ^ -1
-          // if (constValue == -1LL) {
-          //   binary->op = Abstract::getBinary(type, Abstract::Xor);
+          // if (num->value.geti32() == -1) {
+          //   binary->op = XorInt32;
           //   return binary;
           // }
         }
