@@ -802,8 +802,8 @@ private:
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
       if (binary->op == SubInt32) {
-        if (auto* num = binary->left->dynCast<Const>()) {
-          if (num->value.geti32() == 0) {
+        if (auto* c = binary->left->dynCast<Const>()) {
+          if (c->value.geti32() == 0) {
             // bool(0 - x)   ==>   bool(x)
             return binary->right;
           }
@@ -815,8 +815,7 @@ private:
         binary->right = optimizeBoolean(binary->right);
       } else if (binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          auto constValue = c->value.geti32();
-          if (constValue == 0) {
+          if (c->value.geti32() == 0) {
             // x != 0 is just x if it's used as a bool
             if (binary->op == NeInt32) {
               return binary->left;
