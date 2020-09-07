@@ -43,7 +43,10 @@ class Literal {
     Name func;
     // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
-    // TODO: Literals of type `externref` can only be/ `null` currently.
+    // TODO: Literals of type `externref` can only be `null` currently but we
+    // will need to represent extern values eventually, to
+    // 1) run the spec tests and fuzzer with reference types enabled and
+    // 2) avoid bailing out when seeing a reference typed value in precompute
   };
 
 public:
