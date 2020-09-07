@@ -45,7 +45,7 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
     // Avoid calling the destructor on an uninitialized value
-    if (other.exn) {
+    if (other.exn != nullptr) {
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
     } else {
       new (&exn) std::unique_ptr<ExceptionPackage>();
@@ -145,7 +145,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type.isException() && exn);
+  assert(type.isException() && exn != nullptr);
   return *exn;
 }
 
@@ -242,7 +242,7 @@ bool Literal::operator==(const Literal& other) const {
     return func == other.func;
   }
   if (type.isException()) {
-    assert(exn && other.exn);
+    assert(exn != nullptr && other.exn != nullptr);
     return *exn == *other.exn;
   }
   uint8_t bits[16], other_bits[16];
