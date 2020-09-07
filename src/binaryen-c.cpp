@@ -69,9 +69,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
     case Type::funcref:
-      if (!x.isNull()) {
-        ret.func = x.getFunc().c_str();
-      }
+      ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
     case Type::externref:
     case Type::exnref:
