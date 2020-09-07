@@ -16,8 +16,8 @@
   // 7
   // BinaryenTypeExternref: 8
   // 8
-  // BinaryenTypeExnref: 12
-  // 12
+  // BinaryenTypeExnref: 9
+  // 9
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2

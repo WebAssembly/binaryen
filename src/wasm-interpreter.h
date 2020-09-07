@@ -1646,9 +1646,6 @@ public:
           return Literal(load128(addr).data());
         case Type::funcref:
         case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
         case Type::exnref:
         case Type::none:
         case Type::unreachable:
@@ -1705,9 +1702,6 @@ public:
           break;
         case Type::funcref:
         case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
         case Type::exnref:
         case Type::none:
         case Type::unreachable:

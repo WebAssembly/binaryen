@@ -49,9 +49,6 @@ public:
     v128,
     funcref,
     externref,
-    anyref,
-    eqref,
-    i31ref,
     exnref,
     _last_basic_id = exnref
   };
@@ -91,10 +88,10 @@ public:
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  n_ullable
-  // │ eqref       ║ x │   │ x │ x │    n  │ │
-  // │ i31ref      ║ x │   │ x │ x │       │ │
+  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc, n_ullable
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
+  // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
+  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
   // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘

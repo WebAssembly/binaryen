@@ -597,9 +597,6 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
               case Type::exnref:
                 continue; // not implemented yet
               case Type::none:
@@ -625,9 +622,6 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
               case Type::exnref:
                 continue; // not implemented yet
               case Type::none:
@@ -653,9 +647,6 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
               case Type::exnref:
                 continue; // not implemented yet
               case Type::none:
@@ -681,9 +672,6 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
               case Type::exnref:
                 continue; // not implemented yet
               case Type::none:
@@ -695,9 +683,6 @@ struct Reducer
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
             continue; // not implemented yet
           case Type::none:

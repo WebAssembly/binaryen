@@ -69,11 +69,8 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::none:
         break;
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
         break; // null
       case Type::funcref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -220,14 +217,11 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::funcref:
       break;
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
     case Type::exnref:
       if (isNull()) {
         break;
       }
       // falls through
-    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -380,14 +374,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         o << "funcref(" << literal.getFunc() << ")";
       }
       break;
-    case Type::anyref:
-      assert(literal.isNull());
-      o << "anyref(null)";
-      break;
-    case Type::eqref:
-      assert(literal.isNull());
-      o << "eqref(null)";
-      break;
     case Type::exnref:
       if (literal.isNull()) {
         o << "exnref(null)";
@@ -399,7 +385,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isNull());
       o << "externref(null)";
       break;
-    case Type::i31ref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -623,9 +608,6 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -647,9 +629,6 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -671,9 +650,6 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -778,9 +754,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -802,9 +775,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -897,9 +867,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1153,9 +1120,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1177,9 +1141,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

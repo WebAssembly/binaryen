@@ -256,12 +256,10 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
   {TypeInfo({Type::externref}), Type::externref},
   {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
-  {TypeInfo({Type::anyref}), Type::anyref},
-  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
-  {TypeInfo({Type::eqref}), Type::eqref},
-  {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
-  {TypeInfo({Type::i31ref}), Type::i31ref},
-  {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
+  // TODO (GC): Add canonical ids
+  // * `(ref null any) == anyref`
+  // * `(ref null eq) == eqref`
+  // * `(ref i31) == i31ref`
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
 };
@@ -408,9 +406,6 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -454,10 +449,6 @@ FeatureSet Type::getFeatures() const {
       case Type::funcref:
       case Type::externref:
         return FeatureSet::ReferenceTypes;
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-        WASM_UNREACHABLE("TODO: GC types");
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       default:
@@ -485,12 +476,6 @@ HeapType Type::getHeapType() const {
         return HeapType::FuncKind;
       case externref:
         return HeapType::ExternKind;
-      case anyref:
-        return HeapType::AnyKind;
-      case eqref:
-        return HeapType::EqKind;
-      case i31ref:
-        return HeapType::I31Kind;
       case exnref:
         return HeapType::ExnKind;
       default:
@@ -742,15 +727,6 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
       case Type::externref:
         os << "externref";
-        break;
-      case Type::anyref:
-        os << "anyref";
-        break;
-      case Type::eqref:
-        os << "eqref";
-        break;
-      case Type::i31ref:
-        os << "i31ref";
         break;
       case Type::exnref:
         os << "exnref";

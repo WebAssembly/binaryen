@@ -630,8 +630,6 @@ public:
         }
         return makeRefNull(value.type);
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
       case Type::exnref: // TODO: ExceptionPackage?
         assert(value.isNull());
         return makeRefNull(value.type);
@@ -826,12 +824,8 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
       case Type::exnref:
         return ExpressionManipulator::refNull(curr);
-      case Type::i31ref:
-        WASM_UNREACHABLE("TODO: i31ref"); // (i31.new (i32.const 0))
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

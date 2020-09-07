@@ -322,14 +322,6 @@ private:
         case Type::funcref:
         case Type::exnref:
           break;
-        case Type::anyref:
-          // TODO (GC)
-          // includes externref, funcref, exnref, eqref (incl. subtypes)
-        case Type::eqref:
-          // TODO (GC)
-          // includes i31ref, concrete structs and arrays
-        case Type::i31ref:
-          WASM_UNREACHABLE("TODO: GC types");
         default:
           break;
       }
@@ -1366,9 +1358,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -1472,9 +1461,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -1603,9 +1589,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1650,9 +1633,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1720,9 +1700,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1749,9 +1726,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
           case Type::none:
           case Type::unreachable:
@@ -1861,9 +1835,6 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
           case Type::exnref:
             return makeTrivial(type);
           case Type::none:
@@ -2008,9 +1979,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -2247,9 +2215,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -2456,9 +2421,6 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:

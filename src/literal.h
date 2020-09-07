@@ -43,8 +43,7 @@ class Literal {
     Name func;
     // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
-    // TODO: Literals of type `externref`, `anyref` and `eqref can only be
-    // `null` currently. Literals of type `i31ref` are not yet supported.
+    // TODO: Literals of type `externref` can only be/ `null` currently.
   };
 
 public:
@@ -576,9 +575,6 @@ template<> struct less<wasm::Literal> {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
       case wasm::Type::externref:
-      case wasm::Type::anyref:
-      case wasm::Type::eqref:
-      case wasm::Type::i31ref:
       case wasm::Type::exnref:
       case wasm::Type::none:
       case wasm::Type::unreachable:

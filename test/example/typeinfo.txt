@@ -6,14 +6,14 @@ extern
 externref
 (ref extern)
 any
-anyref
+(ref null any)
 (ref any)
 eq
-eqref
+(ref null eq)
 (ref eq)
 i31
 (ref null i31)
-i31ref
+(ref i31)
 exn
 exnref
 (ref exn)

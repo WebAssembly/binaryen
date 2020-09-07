@@ -74,12 +74,9 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       }
       break;
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
     case Type::exnref:
       assert(x.isNull());
       break;
-    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -102,11 +99,8 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::funcref:
       return Literal::makeFunc(x.func);
     case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
     case Type::exnref:
       return Literal::makeNull(Type(x.type));
-    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

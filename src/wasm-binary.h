@@ -347,18 +347,6 @@ enum EncodedType {
   funcref = -0x10, // 0x70
   // opaque host reference type
   externref = -0x11, // 0x6f
-  // any reference type
-  anyref = -0x12, // 0x6e
-  // comparable reference type
-  eqref = -0x13, // 0x6d
-  // TODO: reference type with heap type, i.e. (ref ht)
-  ref_ht = -0x14, // 0x6c
-  // TODO: nullable reference type with heap type, i.e. (ref null ht)
-  ref_null_ht = -0x15, // 0x6b
-  // integer reference type
-  i31ref = -0x16, // 0x6a
-  // runtime type
-  rtt = -0x17, // 0x69
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -368,15 +356,9 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10,      // 0x70
-  extern_ = -0x11,   // 0x6f
-  any = -0x12,       // 0x6e
-  eq = -0x13,        // 0x6d
-  i31 = -0x17,       // 0x69
-  exn = -0x18,       // 0x68
-  signature = -0x20, // 0x60
-  struct_ = -0x21,   // 0x5f
-  array = -0x22      // 0x5e
+  func = -0x10,    // 0x70
+  extern_ = -0x11, // 0x6f
+  exn = -0x18,     // 0x68
 };
 
 namespace UserSections {
@@ -990,15 +972,6 @@ inline S32LEB binaryType(Type type) {
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
-      break;
-    case Type::eqref:
-      ret = BinaryConsts::EncodedType::eqref;
-      break;
-    case Type::i31ref:
-      ret = BinaryConsts::EncodedType::i31ref;
-      break;
     case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
       break;
@@ -1017,22 +990,16 @@ inline S32LEB binaryHeapType(HeapType type) {
     case HeapType::ExternKind:
       ret = BinaryConsts::EncodedHeapType::extern_;
       break;
-    case HeapType::AnyKind:
-      ret = BinaryConsts::EncodedHeapType::any;
-      break;
-    case HeapType::EqKind:
-      ret = BinaryConsts::EncodedHeapType::eq;
-      break;
-    case HeapType::I31Kind:
-      ret = BinaryConsts::EncodedHeapType::i31;
-      break;
     case HeapType::ExnKind:
       ret = BinaryConsts::EncodedHeapType::exn;
       break;
+    case HeapType::AnyKind:
+    case HeapType::EqKind:
+    case HeapType::I31Kind:
     case HeapType::SignatureKind:
     case HeapType::StructKind:
     case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: structured GC types");
+      WASM_UNREACHABLE("TODO: GC types");
   }
   return S32LEB(ret); // TODO: Actually encoded as s33
 }

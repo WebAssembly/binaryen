@@ -1136,12 +1136,6 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::anyref:
-      return Type::anyref;
-    case BinaryConsts::EncodedType::eqref:
-      return Type::eqref;
-    case BinaryConsts::EncodedType::i31ref:
-      return Type::i31ref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
     default:
@@ -1157,7 +1151,6 @@ HeapType WasmBinaryBuilder::getHeapType() {
     if (size_t(type) >= signatures.size()) {
       throwError("invalid signature index: " + std::to_string(type));
     }
-    // TODO: Struct, Array in type section
     return HeapType(signatures[type]);
   }
   switch (type) {
@@ -1165,18 +1158,8 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::FuncKind;
     case BinaryConsts::EncodedHeapType::extern_:
       return HeapType::ExternKind;
-    case BinaryConsts::EncodedHeapType::any:
-      return HeapType::AnyKind;
-    case BinaryConsts::EncodedHeapType::eq:
-      return HeapType::EqKind;
-    case BinaryConsts::EncodedHeapType::i31:
-      return HeapType::I31Kind;
     case BinaryConsts::EncodedHeapType::exn:
       return HeapType::ExnKind;
-    case BinaryConsts::EncodedHeapType::signature:
-    case BinaryConsts::EncodedHeapType::struct_:
-    case BinaryConsts::EncodedHeapType::array:
-      WASM_UNREACHABLE("TODO: structured GC types");
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
