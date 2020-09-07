@@ -502,6 +502,7 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
+  // TODO (GC): subtyping, currently checks for equality only
   if (left == right) {
     return true;
   }
