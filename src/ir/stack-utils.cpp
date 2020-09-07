@@ -165,7 +165,7 @@ StackFlow::StackFlow(Block* block) {
     size_t stackSize = 0;
     size_t produced = 0;
     Expression* lastUnreachable = nullptr;
-    processBlock([&](Expression* expr, StackSignature sig) {
+    processBlock([&](Expression* expr, const StackSignature sig) {
       // Consume params
       if (sig.params.size() > stackSize) {
         // We need more values than are available, so they must come from the
@@ -200,7 +200,7 @@ StackFlow::StackFlow(Block* block) {
   // Take another pass through the block, recording srcs and dests.
   std::vector<Location> values;
   Expression* lastUnreachable = nullptr;
-  processBlock([&](Expression* expr, StackSignature sig) {
+  processBlock([&](Expression* expr, const StackSignature sig) {
     assert((sig.params.size() <= values.size() || lastUnreachable) &&
            "Block inputs not yet supported");
 
@@ -216,38 +216,49 @@ StackFlow::StackFlow(Block* block) {
     srcs[expr] = std::vector<Location>(consumed);
     dests[expr] = std::vector<Location>(produced);
 
-    // Consume values
+    // Figure out what kind of unreachable values we have
     assert(sig.params.size() <= consumed);
-    size_t unreachableConsumed =
-      consumed > values.size() ? consumed - values.size() : 0;
+    size_t unreachableBeyondStack = 0;
+    size_t unreachableFromStack = 0;
+    if (consumed > values.size()) {
+      assert(consumed == sig.params.size());
+      unreachableBeyondStack = consumed - values.size();
+    } else if (consumed > sig.params.size()) {
+      assert(consumed == values.size());
+      unreachableFromStack = consumed - sig.params.size();
+    }
+
+    // Consume values
     for (Index i = 0; i < consumed; ++i) {
-      if (i < unreachableConsumed) {
+      if (i < unreachableBeyondStack) {
         // This value comes from the polymorphic stack of the last unreachable
         // because the stack did not have enough values to satisfy this
         // instruction.
-        assert(consumed == sig.params.size());
         assert(lastUnreachable);
-        assert(producedByUnreachable[lastUnreachable] >= unreachableConsumed);
+        assert(producedByUnreachable[lastUnreachable] >=
+               unreachableBeyondStack);
         Index destIndex =
-          producedByUnreachable[lastUnreachable] - unreachableConsumed + i;
+          producedByUnreachable[lastUnreachable] - unreachableBeyondStack + i;
         Type type = sig.params[i];
         srcs[expr][i] = {lastUnreachable, destIndex, type, true};
         dests[lastUnreachable][destIndex] = {expr, i, type, false};
       } else {
         // A normal value from the value stack
-        bool unreachable = sig.params.size() + i < consumed;
+        bool unreachable = i < unreachableFromStack;
         auto& src = values[values.size() + i - consumed];
-        srcs[expr][i] = {src.expr, src.index, src.type, false};
+        srcs[expr][i] = src;
         dests[src.expr][src.index] = {expr, i, src.type, unreachable};
       }
     }
+
     // Update available values
-    if (unreachableConsumed) {
-      producedByUnreachable[lastUnreachable] -= unreachableConsumed;
+    if (unreachableBeyondStack) {
+      producedByUnreachable[lastUnreachable] -= unreachableBeyondStack;
       values.resize(0);
     } else {
       values.resize(values.size() - consumed);
     }
+
     // Produce values
     for (Index i = 0; i < sig.results.size(); ++i) {
       values.push_back({expr, i, sig.results[i], false});
