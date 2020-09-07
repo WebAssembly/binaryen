@@ -214,6 +214,9 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
+    // TODO: investigate changing bits returned for reference types. currently,
+    // `null` values and even non-`null` functions return all zeroes, but only
+    // to avoid introducing a functional change.
     case Type::funcref:
       break;
     case Type::externref:
