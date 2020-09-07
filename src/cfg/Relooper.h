@@ -151,7 +151,7 @@ template<typename T> struct InsertOrderedSet {
     auto it = Map.find(val);
     if (it == Map.end()) {
       List.push_back(val);
-      Map.insert(std::make_pair(val, --List.end()));
+      Map.insert({val, --List.end()});
     }
   }
 
@@ -186,9 +186,9 @@ template<typename Key, typename T> struct InsertOrderedMap {
   T& operator[](const Key& k) {
     auto it = Map.find(k);
     if (it == Map.end()) {
-      List.push_back(std::make_pair(k, T()));
+      List.push_back({k, T()});
       auto e = --List.end();
-      Map.insert(std::make_pair(k, e));
+      Map.insert({k, e});
       return e->second;
     }
     return it->second->second;

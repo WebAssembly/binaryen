@@ -58,11 +58,11 @@ public:
 
   void addToModule() {
     if (!immediate) {
-      for (auto& pair : functions) {
-        wasm.addFunction(pair.second);
+      for (auto [_, func] : functions) {
+        wasm.addFunction(func);
       }
-      for (auto& pair : imports) {
-        wasm.addFunction(pair.second);
+      for (auto [_, func] : imports) {
+        wasm.addFunction(func);
       }
     }
     functions.clear();

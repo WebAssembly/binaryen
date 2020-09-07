@@ -131,10 +131,10 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
     // TODO: this is O(bad)
     std::vector<Usable> invalidated;
-    for (auto& sinkable : usables) {
+    for (auto [first, second] : usables) {
       // Check invalidations of the values we may want to use.
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
+      if (effects.invalidates(second.effects)) {
+        invalidated.push_back(first);
       }
     }
     if (curr) {
@@ -144,12 +144,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       // sets do not interfere. (Note that due to flattening we
       // have no risk of tees etc.)
       if (auto* set = curr->dynCast<LocalSet>()) {
-        for (auto& sinkable : usables) {
+        for (auto [first, second] : usables) {
           // Check if the index is the same. Make sure to ignore
           // our own value, which we may have just added!
-          if (sinkable.second.index == set->index &&
-              sinkable.second.value != set->value) {
-            invalidated.push_back(sinkable.first);
+          if (second.index == set->index && second.value != set->value) {
+            invalidated.push_back(first);
           }
         }
       }
@@ -222,10 +221,10 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later
-          usables.emplace(std::make_pair(
+          usables.emplace(std::pair{
             usable,
             UsableInfo(
-              value, set->index, getPassOptions(), getModule()->features)));
+              value, set->index, getPassOptions(), getModule()->features)});
         }
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {

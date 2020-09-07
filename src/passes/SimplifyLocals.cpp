@@ -411,8 +411,8 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(
-        index, SinkableInfo(currp, self->getPassOptions(), features)));
+      self->sinkables.emplace(std::pair{
+        index, SinkableInfo(currp, self->getPassOptions(), features)});
     }
 
     if (!allowNesting) {

@@ -123,9 +123,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     MemoryUtils::ensureExists(module->memory);
 
     // Add missing globals
-    for (auto& pair : neededImportedGlobals) {
-      auto name = pair.first;
-      auto type = pair.second;
+    for (auto& [name, type] : neededImportedGlobals) {
       if (!getModule()->getGlobalOrNull(name)) {
         auto global = make_unique<Global>();
         global->name = name;
@@ -327,7 +325,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
+    neededImportedGlobals.insert({curr->name, curr->type});
   }
 };
 

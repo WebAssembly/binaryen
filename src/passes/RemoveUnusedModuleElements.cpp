@@ -62,15 +62,16 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.pop_back();
       if (reachable.count(curr) == 0) {
         reachable.insert(curr);
-        if (curr.first == ModuleElementKind::Function) {
+        auto [kind, value] = curr;
+        if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
-          auto* func = module->getFunction(curr.second);
+          auto* func = module->getFunction(value);
           if (!func->imported()) {
             walk(func->body);
           }
-        } else if (curr.first == ModuleElementKind::Global) {
+        } else if (kind == ModuleElementKind::Global) {
           // if not imported, it has an init expression we need to walk
-          auto* global = module->getGlobal(curr.second);
+          auto* global = module->getGlobal(value);
           if (!global->imported()) {
             walk(global->init);
           }

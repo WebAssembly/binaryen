@@ -111,10 +111,10 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& pair : map) {
-    if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
-      F->name = pair.second;
+  for (auto& [first, second] : map) {
+    if (Function* F = wasm.getFunctionOrNull(first)) {
+      assert(!wasm.getFunctionOrNull(second) || F->name == second);
+      F->name = second;
     }
   }
   wasm.updateMaps();
@@ -345,9 +345,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     map.swap(analysis.map);
 
     // Find what is called by what.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      auto& info = pair.second;
+    for (auto [func, info] : map) {
       for (auto* target : info.callsTo) {
         map[target].calledBy.insert(func);
       }
@@ -436,10 +434,9 @@ collectSignatures(Module& wasm,
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
   }
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
-      counts[innerPair.first] += innerPair.second;
+  for (auto& [_, functionCounts] : analysis.map) {
+    for (auto [first, second] : functionCounts) {
+      counts[first] += second;
     }
   }
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),

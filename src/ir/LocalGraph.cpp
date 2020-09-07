@@ -136,7 +136,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // Convert unordered_map to vector.
       flowBlock.lastSets.reserve(block->contents.lastSets.size());
       for (auto set : block->contents.lastSets) {
-        flowBlock.lastSets.emplace_back(std::make_pair(set.first, set.second));
+        flowBlock.lastSets.emplace_back(set);
       }
     }
     assert(entryFlowBlock != nullptr);

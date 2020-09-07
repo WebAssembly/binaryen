@@ -189,9 +189,7 @@ struct MergeLocals
       // logic as before).
       LocalGraph postGraph(func);
       postGraph.computeInfluences();
-      for (auto& pair : optimizedToCopy) {
-        auto* copy = pair.first;
-        auto* trivial = pair.second;
+      for (auto [copy, trivial] : optimizedToCopy) {
         auto& trivialInfluences = preGraph.setInfluences[trivial];
         for (auto* influencedGet : trivialInfluences) {
           // verify the set
@@ -205,9 +203,7 @@ struct MergeLocals
           }
         }
       }
-      for (auto& pair : optimizedToTrivial) {
-        auto* copy = pair.first;
-        auto* trivial = pair.second;
+      for (auto [copy, trivial] : optimizedToTrivial) {
         auto& copyInfluences = preGraph.setInfluences[copy];
         for (auto* influencedGet : copyInfluences) {
           // verify the set

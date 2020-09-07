@@ -176,10 +176,8 @@ struct DAEScanner
     std::vector<Item> work;
     work.emplace_back(entry, initial);
     while (!work.empty()) {
-      auto item = std::move(work.back());
+      auto [block, indexes] = std::move(work.back());
       work.pop_back();
-      auto* block = item.first;
-      auto& indexes = item.second;
       // Ignore things we've already seen, or we've already seen to be used.
       auto& seenIndexes = seenBlockIndexes[block];
       indexes.filter([&](const Index i) {

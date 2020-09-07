@@ -27,8 +27,8 @@ namespace Names {
 // modify existing names
 inline void ensureNames(Function* func) {
   std::unordered_set<Name> seen;
-  for (auto& pair : func->localNames) {
-    seen.insert(pair.second);
+  for (auto [_, name] : func->localNames) {
+    seen.insert(name);
   }
   Index nameIndex = seen.size();
   for (Index i = 0; i < func->getNumLocals(); i++) {
