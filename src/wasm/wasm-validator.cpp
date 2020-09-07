@@ -22,6 +22,7 @@
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/module-utils.h"
+#include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
 #include "wasm-printing.h"
@@ -387,6 +388,7 @@ void FunctionValidator::noteLabelName(Name name) {
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
+  // TODO: factor out and implement stacky validation
   if (!getModule()->features.hasMultivalue()) {
     shouldBeTrue(!curr->type.isTuple(),
                  curr,
@@ -427,7 +429,8 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
       shouldBeTrue(
         info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
-      if (curr->list.size() > 0) {
+      if (curr->list.size() > 0 &&
+          getFunction()->profile != IRProfile::Stacky) {
         auto last = curr->list.back()->type;
         if (last == Type::none) {
           shouldBeTrue(info.arity == Index(0),
@@ -439,7 +442,7 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakInfos.erase(iter);
   }
-  if (curr->list.size() > 1) {
+  if (curr->list.size() > 1 && getFunction()->profile != IRProfile::Stacky) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),
@@ -453,7 +456,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
     }
   }
-  if (curr->list.size() > 0) {
+  if (curr->list.size() > 0 && getFunction()->profile != IRProfile::Stacky) {
     auto backType = curr->list.back()->type;
     if (!curr->type.isConcrete()) {
       shouldBeFalse(backType.isConcrete(),
@@ -2095,27 +2098,46 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto scope = getFunction() ? getFunction()->name : Name("(global scope)");
       // check if a node type is 'stale', i.e., we forgot to finalize() the
       // node.
-      auto oldType = curr->type;
-      ReFinalizeNode().visit(curr);
-      auto newType = curr->type;
-      if (newType != oldType) {
-        // We accept concrete => undefined,
-        // e.g.
-        //
-        //  (drop (block (result i32) (unreachable)))
-        //
-        // The block has an added type, not derived from the ast itself, so it
-        // is ok for it to be either i32 or unreachable.
-        if (!Type::isSubType(newType, oldType) &&
-            !(oldType.isConcrete() && newType == Type::unreachable)) {
+      auto profile = getFunction() ? getFunction()->profile : IRProfile::Normal;
+      if (profile == IRProfile::Normal || !curr->is<Block>() ||
+          curr->type == Type::unreachable) {
+        auto oldType = curr->type;
+        ReFinalizeNode(profile).visit(curr);
+        auto newType = curr->type;
+        if (newType != oldType) {
+          // We accept concrete => undefined,
+          // e.g.
+          //
+          //  (drop (block (result i32) (unreachable)))
+          //
+          // The block has an added type, not derived from the ast itself, so it
+          // is ok for it to be either i32 or unreachable.
+          if (!Type::isSubType(newType, oldType) &&
+              !(oldType.isConcrete() && newType == Type::unreachable)) {
+            std::ostringstream ss;
+            ss << "stale type found in " << scope << " on " << curr
+               << "\n(marked as " << oldType << ", should be " << newType
+               << ")\n";
+            info.fail(ss.str(), curr, getFunction());
+          }
+          curr->type = oldType;
+        }
+      } else {
+        // Stacky blocks cannot be typed in general without looking at their
+        // context, but we can at least ensure that their types agree with their
+        // contents.
+        assert(profile == IRProfile::Stacky);
+        auto* block = curr->cast<Block>();
+        StackSignature sig(block->list.begin(), block->list.end());
+        if (!sig.satisfies(Signature(Type::none, block->type))) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
-             << "\n(marked as " << oldType << ", should be " << newType
+             << "\n(marked as " << block->type << ", should be " << sig.results
              << ")\n";
           info.fail(ss.str(), curr, getFunction());
         }
-        curr->type = oldType;
       }
+
       // check if a node is a duplicate - expressions must not be seen more than
       // once
       bool inserted;

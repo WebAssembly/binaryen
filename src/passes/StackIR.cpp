@@ -36,6 +36,14 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
+    // Skip stacky functions due to a mismatch in the interpretation of
+    // pops. Specifically, normal IR treats pops as an instruction that
+    // generates a value, but stacky IR treats pops as markers that do not do
+    // anything. Skipping this situation isn't a problem because these two
+    // systems are not meant to work together.
+    if (func->profile == IRProfile::Stacky) {
+      return;
+    }
     StackIRGenerator stackIRGen(getModule()->allocator, func);
     stackIRGen.write();
     func->stackIR = make_unique<StackIR>();
@@ -80,7 +88,9 @@ private:
       if (!inst) {
         continue;
       }
-      if (inUnreachableCode) {
+      if (insts[i]->origin->is<Nop>()) {
+        removeAt(i);
+      } else if (inUnreachableCode) {
         // Does the unreachable code end here?
         if (isControlFlowBarrier(inst)) {
           inUnreachableCode = false;
@@ -238,6 +248,8 @@ private:
         continue;
       }
       if (auto* block = inst->origin->dynCast<Block>()) {
+        // This can be suboptimal because the branch might have been DCEd out of
+        // the Stack IR but not the original IR.
         if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
           inst = nullptr;

@@ -481,7 +481,15 @@ public:
   Literals(std::initializer_list<Literal> init)
     : SmallVector<Literal, 1>(init) {
 #ifndef NDEBUG
-    for (auto& lit : init) {
+    for (auto& lit : *this) {
+      assert(lit.isConcrete());
+    }
+#endif
+  };
+  template<typename InputIt>
+  Literals(InputIt begin, InputIt end) : SmallVector<Literal, 1>(begin, end) {
+#ifndef NDEBUG
+    for (auto& lit : *this) {
       assert(lit.isConcrete());
     }
 #endif

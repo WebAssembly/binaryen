@@ -35,10 +35,13 @@ struct NameType {
 
 class Builder {
   MixedArena& allocator;
+  IRProfile profile;
 
 public:
-  Builder(MixedArena& allocator) : allocator(allocator) {}
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(MixedArena& allocator, IRProfile profile = IRProfile::Normal)
+    : allocator(allocator), profile(profile) {}
+  Builder(Module& wasm, IRProfile profile = IRProfile::Normal)
+    : allocator(wasm.allocator), profile(profile) {}
 
   // make* functions, other globals
 
@@ -94,52 +97,52 @@ public:
     auto* ret = allocator.alloc<Block>();
     if (first) {
       ret->list.push_back(first);
-      ret->finalize();
+      ret->finalize(profile);
     }
     return ret;
   }
   Block* makeBlock(Name name, Expression* first = nullptr) {
     auto* ret = makeBlock(first);
     ret->name = name;
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const std::vector<Expression*>& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const std::vector<Expression*>& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   Block* makeBlock(const ExpressionList& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(const ExpressionList& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   Block* makeBlock(Name name, const ExpressionList& items) {
     auto* ret = allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(profile);
     return ret;
   }
   Block* makeBlock(Name name, const ExpressionList& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
-    ret->finalize(type);
+    ret->finalize(type, profile);
     return ret;
   }
   If* makeIf(Expression* condition,
@@ -705,7 +708,7 @@ public:
     }
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(profile);
     }
     return block;
   }
@@ -730,7 +733,7 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(profile);
     }
     return block;
   }
@@ -740,14 +743,14 @@ public:
   Block* makeSequence(Expression* left, Expression* right) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
-    block->finalize();
+    block->finalize(profile);
     return block;
   }
 
   Block* makeSequence(Expression* left, Expression* right, Type type) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
-    block->finalize(type);
+    block->finalize(type, profile);
     return block;
   }
 
@@ -764,7 +767,7 @@ public:
       for (Index i = from; i < to; i++) {
         block->list.push_back(input->list[i]);
       }
-      block->finalize();
+      block->finalize(profile);
       ret = block;
     }
     if (to == input->list.size()) {

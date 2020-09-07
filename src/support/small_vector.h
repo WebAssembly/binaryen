@@ -47,6 +47,12 @@ public:
     }
   }
 
+  template<typename InputIt> SmallVector(InputIt begin, InputIt end) {
+    while (begin != end) {
+      push_back(*begin++);
+    }
+  }
+
   T& operator[](size_t i) {
     if (i < N) {
       return fixed[i];
@@ -133,6 +139,9 @@ public:
     typedef T value_type;
     typedef long difference_type;
     typedef T& reference;
+    typedef T* pointer;
+    // TODO: Make bidirectional
+    typedef std::forward_iterator_tag iterator_category;
 
     Parent* parent;
     size_t index;

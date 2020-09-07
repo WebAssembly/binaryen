@@ -62,6 +62,8 @@ struct Address {
   }
 };
 
+enum class IRProfile { Normal, Stacky };
+
 // Operators
 
 enum UnaryOp {
@@ -626,19 +628,20 @@ public:
 
   // set the type purely based on its contents. this scans the block, so it is
   // not fast.
-  void finalize();
+  void finalize(IRProfile profile = IRProfile::Normal);
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional
   // work this does is to set the type to unreachable in the cases that is
   // needed (which may require scanning the block)
-  void finalize(Type type_);
+  void finalize(Type type_, IRProfile profile = IRProfile::Normal);
 
   // set the type given you know its type, and you know if there is a break to
   // this block. this avoids the need to scan the contents of the block in the
   // case that it might be unreachable, so it is recommended if you already know
   // the type and breakability anyhow.
-  void finalize(Type type_, bool hasBreak);
+  void
+  finalize(Type type_, bool hasBreak, IRProfile profile = IRProfile::Normal);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -1274,6 +1277,7 @@ public:
   // stack IR. The Pass system will throw away Stack IR if a pass is run
   // that declares it may modify Binaryen IR.
   std::unique_ptr<StackIR> stackIR;
+  IRProfile profile = IRProfile::Normal;
 
   // local names. these are optional.
   std::map<Index, Name> localNames;

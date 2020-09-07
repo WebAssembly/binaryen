@@ -3455,6 +3455,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
+  passRunner.addDefaultPreWritingPasses();
   passRunner.run();
 }
 
@@ -3715,6 +3716,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func,
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
+  passRunner.addDefaultPreWritingPasses();
   passRunner.runOnFunction((Function*)func);
 }
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
@@ -4004,6 +4006,11 @@ public:
                     Index maxLoopIterations)
     : ConstantExpressionRunner<CExpressionRunner>(
         module, flags, maxDepth, maxLoopIterations) {}
+
+  bool isStacky() {
+    WASM_UNREACHABLE("TODO: support stackiness by tracking current function in "
+                     "traversing expression runner");
+  }
 };
 
 } // namespace wasm

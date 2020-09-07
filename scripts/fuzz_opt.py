@@ -68,9 +68,11 @@ def random_size():
     return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
-def run(cmd):
+def run(cmd, env_extension={}):
+    env = dict(os.environ)
+    env.update(env_extension)
     print(' '.join(cmd))
-    return subprocess.check_output(cmd, text=True)
+    return subprocess.check_output(cmd, text=True, env=env)
 
 
 def run_unchecked(cmd):
@@ -690,13 +692,40 @@ class Asyncify(TestCaseHandler):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue']])
 
 
+class StackifyCodeSizeChecker(TestCaseHandler):
+    frequency = 1.0
+
+    def handle(self, wasm):
+        stack_ir = 'stackir.wasm'
+        stackify = 'stackify.wasm'
+        stackify_future = 'stackify-future.wasm'
+
+        command_base = [in_bin('wasm-opt'), wasm] + FEATURE_OPTS
+        stack_ir_command = command_base + ['--generate-stack-ir', '--optimize-stack-ir', '--optimize-level=3', '-o', stack_ir]
+        stackify_command = command_base + ['--stackify', '--stack-dce', '--stackify-locals', '--stack-remove-blocks', '--stack-dce', '--coalesce-locals', '--optimize-level=3', '-o', stackify]
+        stackify_future_command = command_base + ['--stackify', '--stack-dce', '--stackify-locals', '--stack-remove-blocks', '--stack-dce', '--coalesce-locals', '--optimize-level=3', '-o', stackify_future]
+
+        run(stack_ir_command, {'BINARYEN_USE_STACKIFY': '0'})
+        run(stackify_command, {'BINARYEN_USE_STACKIFY': '1'})
+        run(stackify_future_command, {'BINARYEN_USE_STACKIFY': '2'})
+
+        stack_ir_size = os.stat(stack_ir).st_size
+        stackify_size = os.stat(stackify).st_size
+        stackify_future_size = os.stat(stackify_future).st_size
+
+        print("sizes:", stack_ir_size, stackify_size, stackify_future_size)
+        assert stackify_size <= stack_ir_size, "Stackify not as good as Stack IR"
+        assert stackify_future_size <= stackify_size, "New pipeline is not as good"
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
     CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    Asyncify(),
+    # CheckDeterminism(),
+    # Wasm2JS(),
+    # Asyncify(),
+    StackifyCodeSizeChecker(),
 ]
 
 
@@ -728,7 +757,7 @@ def test_one(random_input, opts, given_wasm):
     print('pre wasm size:', wasm_size)
 
     # create a second wasm for handlers that want to look at pairs.
-    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + FUZZ_OPTS + opts + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
@@ -828,7 +857,17 @@ opt_choices = [
     ["--simplify-locals-notee"],
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
+    # ["--stackify", "--unstackify"],
     ["--vacuum"],
+]
+
+
+stack_opt_choices = [
+    ["--stack-dce"],
+    ["--stack-remove-blocks"],
+    ["--stackify-locals"],
+    ["--stackify-drops"],
+    ["--coalesce-locals"],
 ]
 
 
@@ -847,10 +886,22 @@ def randomize_opt_flags():
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break
+
+    # stacky opts
+    if random.random() < 0.5:
+        stack_opt_group = ['--stackify']
+        while len(flag_groups) <= 20 and random.random() < 0.3:
+            stack_opt_group.extend(random.choice(stack_opt_choices))
+        flag_groups.append(stack_opt_group)
+
     # maybe add an extra round trip
     if random.random() < 0.5:
         pos = random.randint(0, len(flag_groups))
         flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+    # maybe add an extra stackification round trip
+    # if True:
+    #     pos = random.randint(0, len(flag_groups))
+    #     flag_groups = flag_groups[:pos] + [['--stackify', '--unstackify']] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):

@@ -18,6 +18,7 @@
 #include <fstream>
 
 #include "ir/module-utils.h"
+#include "ir/stack-utils.h"
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
@@ -29,6 +30,11 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
+  // Perform type inference to remove `unreachable` types from stacky IR
+  PassRunner runner(wasm);
+  runner.add("lower-unreachables");
+  runner.run();
+
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
   ModuleUtils::collectSignatures(*wasm, types, typeIndices);

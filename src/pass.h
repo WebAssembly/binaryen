@@ -156,6 +156,12 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  // But we can make it easy to create a nested runner
+  // TODO: Go through and use this in more places
+  explicit PassRunner(const PassRunner* runner)
+    : wasm(runner->wasm), allocator(runner->allocator),
+      options(runner->options), isNested(true) {}
+
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging
@@ -200,6 +206,11 @@ struct PassRunner {
   // process - you can assume no other opts will be run
   // afterwards.
   void addDefaultGlobalOptimizationPostPasses();
+
+  // Adds optimizations that should only be run immediately prior to module
+  // writing. After these passes the module may be in Poppy IR. This is not
+  // called as part of `addDefaultOptimizationPasses`.
+  void addDefaultPreWritingPasses();
 
   // Run the passes on the module
   void run();

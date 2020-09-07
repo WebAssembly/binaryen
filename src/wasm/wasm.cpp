@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "ir/stack-utils.h"
 #include "wasm-printing.h"
 #include "wasm-traversal.h"
 
@@ -232,13 +233,48 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
 
 // core AST type checking
 
+static void finalizeNormalBlock(Block* block) {
+  if (block->list.size() == 0) {
+    block->type = Type::none;
+    return;
+  }
+  // normally the type is the type of the final child and even if we have an
+  // unreachable child somewhere, we still mark ourselves as having that type.
+  // (block (result i32)
+  //  (return)
+  //  (i32.const 10)
+  // )
+  block->type = block->list.back()->type;
+  // The exception is for blocks that produce no values, which are
+  // unreachable if any child is unreachable.
+  if (block->type == Type::none) {
+    for (auto* child : block->list) {
+      if (child->type == Type::unreachable) {
+        block->type = Type::unreachable;
+        break;
+      }
+    }
+  }
+}
+
+static void finalizeStackyBlock(Block* block) {
+  // Similar rules apply to stacky blocks, although the type they produce is not
+  // just the type of their last instruction. Stacky blocks can also be
+  // unreachable even they produce a concrete value after the unreachable
+  // instruction because unreachable stacky blocks will have their types
+  // inferred before binary writing.
+  StackSignature sig(block->list.begin(), block->list.end());
+  block->type = sig.unreachable ? Type::unreachable : sig.results;
+}
+
 struct TypeSeeker : public PostWalker<TypeSeeker> {
   Expression* target; // look for this one
   Name targetName;
+  IRProfile profile;
   std::vector<Type> types;
 
-  TypeSeeker(Expression* target, Name targetName)
-    : target(target), targetName(targetName) {
+  TypeSeeker(Expression* target, Name targetName, IRProfile profile)
+    : target(target), targetName(targetName), profile(profile) {
     Expression* temp = target;
     walk(temp);
   }
@@ -268,10 +304,15 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBlock(Block* curr) {
     if (curr == target) {
-      if (curr->list.size() > 0) {
-        types.push_back(curr->list.back()->type);
+      if (profile == IRProfile::Normal) {
+        if (curr->list.size() > 0) {
+          types.push_back(curr->list.back()->type);
+        } else {
+          types.push_back(Type::none);
+        }
       } else {
-        types.push_back(Type::none);
+        StackSignature sig(curr->list.begin(), curr->list.end());
+        types.push_back(sig.results);
       }
     } else if (curr->name == targetName) {
       // ignore all breaks til now, they were captured by someone with the same
@@ -294,6 +335,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
 static void handleUnreachable(Block* block,
+                              IRProfile profile,
                               bool breakabilityKnown = false,
                               bool hasBreak = false) {
   if (block->type == Type::unreachable) {
@@ -304,8 +346,8 @@ static void handleUnreachable(Block* block,
   }
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
-  // or the final child flows out a value)
-  if (block->type.isConcrete()) {
+  // or the final child flows out a value).
+  if (block->type.isConcrete() && profile == IRProfile::Normal) {
     return;
   }
   // look for an unreachable child
@@ -324,56 +366,34 @@ static void handleUnreachable(Block* block,
   }
 }
 
-void Block::finalize() {
-  if (!name.is()) {
-    if (list.size() > 0) {
-      // nothing branches here, so this is easy
-      // normally the type is the type of the final child
-      type = list.back()->type;
-      // and even if we have an unreachable child somewhere,
-      // we still mark ourselves as having that type,
-      // (block (result i32)
-      //  (return)
-      //  (i32.const 10)
-      // )
-      if (type.isConcrete()) {
-        return;
-      }
-      // if we are unreachable, we are done
-      if (type == Type::unreachable) {
-        return;
-      }
-      // we may still be unreachable if we have an unreachable
-      // child
-      for (auto* child : list) {
-        if (child->type == Type::unreachable) {
-          type = Type::unreachable;
-          return;
-        }
-      }
-    } else {
-      type = Type::none;
+void Block::finalize(IRProfile profile) {
+  if (name.is()) {
+    TypeSeeker seeker(this, this->name, profile);
+    type = Type::mergeTypes(seeker.types);
+    handleUnreachable(this, profile);
+  } else {
+    // nothing branches here, so this is easy
+    switch (profile) {
+      case IRProfile::Normal:
+        finalizeNormalBlock(this);
+        break;
+      case IRProfile::Stacky:
+        finalizeStackyBlock(this);
+        break;
+      default:
+        WASM_UNREACHABLE("Unknown profile");
     }
-    return;
-  }
-
-  TypeSeeker seeker(this, this->name);
-  type = Type::mergeTypes(seeker.types);
-  handleUnreachable(this);
-}
-
-void Block::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this);
   }
 }
 
-void Block::finalize(Type type_, bool hasBreak) {
+void Block::finalize(Type type_, IRProfile profile) {
   type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, true, hasBreak);
-  }
+  handleUnreachable(this, profile);
+}
+
+void Block::finalize(Type type_, bool hasBreak, IRProfile profile) {
+  type = type_;
+  handleUnreachable(this, profile, true, hasBreak);
 }
 
 void If::finalize(Type type_) {

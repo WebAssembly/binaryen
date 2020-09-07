@@ -410,8 +410,10 @@ collectSignatures(Module& wasm,
     struct TypeCounter
       : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
       Counts& counts;
+      Function* func;
 
-      TypeCounter(Counts& counts) : counts(counts) {}
+      TypeCounter(Counts& counts, Function* func)
+        : counts(counts), func(func) {}
       void visitExpression(Expression* curr) {
         if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
@@ -423,7 +425,7 @@ collectSignatures(Module& wasm,
         }
       }
     };
-    TypeCounter(counts).walk(func->body);
+    TypeCounter(counts, func).walk(func->body);
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);

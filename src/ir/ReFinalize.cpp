@@ -16,6 +16,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/stack-utils.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -44,9 +45,23 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = Type::none;
     return;
   }
+
+  // Stacky blocks can be unreachable even if they yield concrete values as long
+  // as they are not branch targets as well.
+  bool unreachableIfNotBranchTarget = false;
+
   // Get the least upper bound type of the last element and all branch return
   // values
-  curr->type = curr->list.back()->type;
+  if (getProfile() == IRProfile::Normal) {
+    curr->type = curr->list.back()->type;
+  } else {
+    assert(getProfile() == IRProfile::Stacky);
+    StackSignature sig(curr->list.begin(), curr->list.end());
+    curr->type = (sig.results == Type::none && sig.unreachable)
+                   ? Type::unreachable
+                   : sig.results;
+    unreachableIfNotBranchTarget = sig.unreachable;
+  }
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
     if (iter != breakValues.end()) {
@@ -54,11 +69,14 @@ void ReFinalize::visitBlock(Block* curr) {
       return;
     }
   }
+  if (unreachableIfNotBranchTarget) {
+    curr->type = Type::unreachable;
+  }
   if (curr->type == Type::unreachable) {
     return;
   }
   // type is none, but we might be unreachable
-  if (curr->type == Type::none) {
+  if (curr->type == Type::none && getProfile() == IRProfile::Normal) {
     for (auto* child : curr->list) {
       if (child->type == Type::unreachable) {
         curr->type = Type::unreachable;

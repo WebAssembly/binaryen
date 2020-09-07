@@ -802,6 +802,9 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitTupleMake(TupleMake* curr) {
   for (auto* operand : curr->operands) {
     visit(operand);
+    if (operand->type == Type::unreachable) {
+      break;
+    }
   }
   emit(curr);
   if (curr->type == Type::unreachable) {
@@ -851,7 +854,13 @@ public:
     }
     writer.emitFunctionEnd();
   }
-  void emitUnreachable() { writer.emitUnreachable(); }
+  void emitUnreachable() {
+    // // Stacky code already explicitly contains these guard unreachables
+    // if (func->profile == IRProfile::Normal) {
+    //   writer.emitUnreachable();
+    // }
+    writer.emitUnreachable();
+  }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {
       parent.writeDebugLocation(curr, func);

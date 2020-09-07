@@ -28,6 +28,7 @@
 #include <sstream>
 
 #include "ir/module-utils.h"
+#include "ir/stack-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "wasm-builder.h"
@@ -37,6 +38,8 @@
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
 #endif
+
+// #define STACKY_DEBUG
 
 namespace wasm {
 
@@ -162,6 +165,9 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
+  // Multivalue support.
+  std::vector<Literal> valueStack;
+
   Flow generateArguments(const ExpressionList& operands,
                          LiteralList& arguments) {
     NOTE_ENTER_("generateArguments");
@@ -177,6 +183,8 @@ protected:
     return Flow();
   }
 
+  bool isStacky() { return static_cast<SubType*>(this)->isStacky(); }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -190,7 +198,31 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       trap("interpreter recursion limit");
     }
+    // The stack size to restore after a control flow structure
+    size_t restoreSize;
+    if (isStacky() && Properties::isControlFlowStructure(curr)) {
+      StackSignature sig(curr);
+      assert(valueStack.size() >= sig.params.size());
+      restoreSize = valueStack.size() - sig.params.size();
+    }
+    if (isStacky() && !curr->is<Pop>()) {
+#ifdef STACKY_DEBUG
+      std::cerr << "Visiting:\n";
+      curr->dump();
+      std::cerr << "\nValue stack before: ";
+      for (auto v : valueStack) {
+        std::cerr << " " << v.type.toString();
+      }
+      std::cerr << "\n";
+#endif // STACKY_DEBUG
+      // Reverse the popped values so they come out in the right order
+      size_t numChildren = StackSignature(curr).params.size();
+      std::reverse(valueStack.end() - numChildren, valueStack.end());
+    }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    if (isStacky() && Properties::isControlFlowStructure(curr)) {
+      valueStack.resize(restoreSize);
+    }
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
@@ -202,8 +234,21 @@ public:
         }
 #endif
         assert(Type::isSubType(type, curr->type));
+        if (isStacky() && !curr->is<Pop>()) {
+          valueStack.insert(
+            valueStack.end(), ret.values.begin(), ret.values.end());
+        }
       }
     }
+#ifdef STACKY_DEBUG
+    if (isStacky() && !curr->is<Pop>()) {
+      std::cerr << "Value stack after:";
+      for (auto v : valueStack) {
+        std::cerr << " " << v.type.toString();
+      }
+      std::cerr << "\n\n";
+    }
+#endif // STACKY_DEBUG
     depth--;
     return ret;
   }
@@ -225,7 +270,15 @@ public:
       stack.pop_back();
       if (flow.breaking()) {
         flow.clearIf(curr->name);
+        if (!flow.breaking()) {
+          valueStack.insert(
+            valueStack.end(), flow.values.begin(), flow.values.end());
+        }
         continue;
+      }
+      if (isStacky()) {
+        valueStack.insert(
+          valueStack.end(), flow.values.begin(), flow.values.end());
       }
       auto& list = curr->list;
       for (size_t i = 0; i < list.size(); i++) {
@@ -236,8 +289,33 @@ public:
         flow = visit(list[i]);
         if (flow.breaking()) {
           flow.clearIf(curr->name);
+          if (!flow.breaking()) {
+            valueStack.insert(
+              valueStack.end(), flow.values.begin(), flow.values.end());
+          }
           break;
         }
+      }
+      if (isStacky() && !flow.breaking()) {
+        Literals vals;
+        assert(curr->type != Type::unreachable);
+        size_t newStackSize = valueStack.size() - curr->type.size();
+        for (auto it = valueStack.begin() + newStackSize;
+             it != valueStack.end();
+             ++it) {
+          vals.push_back(*it);
+        }
+        valueStack.resize(newStackSize);
+#ifdef STACKY_DEBUG
+        std::cerr << "Exiting block " << curr->name << " "
+                  << curr->type.toString() << "\n";
+        std::cerr << "Value stack:";
+        for (auto v : valueStack) {
+          std::cerr << " " << v.type.toString();
+        }
+        std::cerr << "\n";
+#endif // STACKY_DEBUG
+        flow = Flow(std::move(vals));
       }
     }
     return flow;
@@ -1239,7 +1317,14 @@ public:
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPop(Pop* curr) {
+    NOTE_ENTER("Pop");
+    size_t numPopped = curr->type.size();
+    assert(valueStack.size() >= numPopped);
+    Literals ret(valueStack.rbegin(), valueStack.rbegin() + numPopped);
+    valueStack.resize(valueStack.size() - numPopped);
+    return ret;
+  }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
     return Literal::makeNullref();
@@ -1537,9 +1622,24 @@ public:
     NOTE_ENTER("SIMDLoadExtend");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitPop(Pop* curr) {
-    NOTE_ENTER("Pop");
-    return Flow(NONCONSTANT_FLOW);
+  Flow visitRefNull(RefNull* curr) {
+    NOTE_ENTER("RefNull");
+    return Literal::makeNullref();
+  }
+  Flow visitRefIsNull(RefIsNull* curr) {
+    NOTE_ENTER("RefIsNull");
+    Flow flow = this->visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Literal value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal(value.type == Type::nullref);
+  }
+  Flow visitRefFunc(RefFunc* curr) {
+    NOTE_ENTER("RefFunc");
+    NOTE_NAME(curr->func);
+    return Literal::makeFuncref(curr->func);
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
@@ -1565,6 +1665,7 @@ public:
     : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(maxDepth),
       globals(globals) {}
 
+  bool isStacky() { return false; }
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
 
@@ -1749,9 +1850,6 @@ public:
   // Values of globals
   GlobalManager globals;
 
-  // Multivalue ABI support (see push/pop).
-  std::vector<Literal> multiValues;
-
   ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface)
     : wasm(wasm), externalInterface(externalInterface) {
     // import globals from the outside
@@ -1920,6 +2018,8 @@ private:
                             Index maxDepth)
       : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
         scope(scope) {}
+
+    bool isStacky() { return scope.function->profile == IRProfile::Stacky; }
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
@@ -2207,7 +2307,7 @@ private:
           WASM_UNREACHABLE("invalid op");
       }
       load.finalize();
-      Flow flow = this->visit(&load);
+      Flow flow = this->visitLoad(&load);
       if (flow.breaking()) {
         return flow;
       }
@@ -2452,16 +2552,9 @@ private:
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
-        instance.multiValues.push_back(e.exn);
+        this->valueStack.push_back({e.exn});
         return this->visit(curr->catchBody);
       }
-    }
-    Flow visitPop(Pop* curr) {
-      NOTE_ENTER("Pop");
-      assert(!instance.multiValues.empty());
-      auto ret = instance.multiValues.back();
-      instance.multiValues.pop_back();
-      return ret;
     }
 
     void trap(const char* why) override {

@@ -39,6 +39,7 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  LowerUnreachables.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
@@ -57,7 +58,12 @@ set(passes_SOURCES
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RoundTrip.cpp
+  Stackify.cpp
+  StackifyDrops.cpp
+  StackifyLocals.cpp
+  StackDCE.cpp
   StackIR.cpp
+  StackRemoveBlocks.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
@@ -80,6 +86,7 @@ set(passes_SOURCES
   SpillPointers.cpp
   StackCheck.cpp
   SSAify.cpp
+  Unstackify.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp

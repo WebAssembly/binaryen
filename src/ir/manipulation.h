@@ -40,6 +40,14 @@ template<typename InputType> inline Nop* nop(InputType* target) {
   return ret;
 }
 
+template<typename InputType>
+inline Drop* drop(InputType* target, Expression* value) {
+  auto* ret = convert<InputType, Drop>(target);
+  ret->value = value;
+  ret->finalize();
+  return ret;
+}
+
 template<typename InputType> inline RefNull* refNull(InputType* target) {
   auto* ret = convert<InputType, RefNull>(target);
   ret->finalize();

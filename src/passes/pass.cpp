@@ -174,6 +174,10 @@ void PassRegistry::registerPasses() {
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
+  registerPass("lower-unreachables",
+               "perform type inference to remove unreachable types from a "
+               "stackified module",
+               createLowerUnreachablesPass);
   registerPass("i64-to-i32-lowering",
                "lower all uses of i64s to use i32s instead",
                createI64ToI32LoweringPass);
@@ -355,6 +359,21 @@ void PassRegistry::registerPasses() {
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
+  registerPass("stackify",
+               "Unfold all expressions into a flat stack machine format",
+               createStackifyPass);
+  registerPass("stackify-locals",
+               "Remove unnecessary local accesses in a stackified module",
+               createStackifyLocalsPass);
+  registerPass("stackify-drops",
+               "Remove dropped values from a stackified module",
+               createStackifyDropsPass);
+  registerPass("stack-dce",
+               "Remove unreachable code in a stackified module",
+               createStackDCEPass);
+  registerPass("stack-remove-blocks",
+               "Remove unneeded blocks in a stackified module",
+               createStackRemoveBlocksPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -376,6 +395,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("unstackify",
+               "Fold stackified code into the default AST format",
+               createUnstackifyPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -516,11 +538,40 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
   add("directize");
+}
+
+void PassRunner::addDefaultPreWritingPasses() {
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("generate-stack-ir");
-    add("optimize-stack-ir");
+    char* useStackifyVar = getenv("BINARYEN_USE_STACKIFY");
+    int useStackify = useStackifyVar ? atoi(useStackifyVar) : 0;
+    if (useStackify == 1) {
+      std::cerr << "Using new stackify pipeline to match Stack IR\n";
+      add("stackify");
+      add("stack-dce");
+      if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+        add("stackify-locals");
+      }
+      add("stack-remove-blocks");
+      add("stack-dce");
+      // Generate stack IR so print-stack-ir tests can't tell the difference
+      // add("generate-stack-ir");
+    } else if (useStackify >= 2) {
+      std::cerr << "Using new stackify pipeline\n";
+      add("stackify");
+      add("stack-dce");
+      add("stack-remove-blocks");
+      add("stack-dce");
+      add("stackify-drops");
+      add("stackify-locals");
+      // TODO: Coalesce-locals doesn't remove unused locals from the function
+      add("coalesce-locals");
+    } else {
+      std::cerr << "Using old StackIR pipeline\n";
+      add("generate-stack-ir");
+      add("optimize-stack-ir");
+    }
   }
 }
 
