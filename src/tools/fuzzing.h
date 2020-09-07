@@ -315,17 +315,7 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    if (wasm.features.hasReferenceTypes()) {
-      TODO_SINGLE_COMPOUND(type);
-      switch (type.getBasic()) {
-        case Type::externref:
-        case Type::funcref:
-        case Type::exnref:
-          break;
-        default:
-          break;
-      }
-    }
+    // TODO (GC): subtyping
     return pick(options);
   }
 
