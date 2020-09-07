@@ -33,19 +33,18 @@ class Literals;
 struct ExceptionPackage;
 
 class Literal {
-
-private:
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
   union {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    // funcref function name. not set indicates `null`.
+    // funcref function name. `isNull()` indicates a `null` value.
     Name func;
-    // exnref package. not set indicates `null`.
+    // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
-    // literals of other reference types can only be `null`
+    // TODO: Literals of type `externref`, `anyref` and `eqref can only be
+    // `null` currently. Literals of type `i31ref` are not yet supported.
   };
 
 public:
