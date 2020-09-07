@@ -111,7 +111,7 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& [first, second] : map) {
+  for (auto [first, second] : map) {
     if (Function* F = wasm.getFunctionOrNull(first)) {
       assert(!wasm.getFunctionOrNull(second) || F->name == second);
       F->name = second;
@@ -434,7 +434,7 @@ collectSignatures(Module& wasm,
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
   }
-  for (auto& [_, functionCounts] : analysis.map) {
+  for (auto [_, functionCounts] : analysis.map) {
     for (auto [first, second] : functionCounts) {
       counts[first] += second;
     }
