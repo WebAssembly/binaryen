@@ -382,7 +382,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
       break;
     case Type::externref:
-      assert(literal.isNull());
+      assert(literal.isNull() && "TODO: non-null externref values");
       o << "externref(null)";
       break;
     case Type::unreachable:
