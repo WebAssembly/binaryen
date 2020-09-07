@@ -153,21 +153,14 @@ private:
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  Type stringToType(cashew::IString str,
-                    bool allowError = false,
-                    bool prefix = false) {
-    return stringToType(str.str, allowError, prefix);
+  Type stringToType(cashew::IString str, bool prefix = false) {
+    return stringToType(str.str, prefix);
   }
-  Type
-  stringToType(const char* str, bool allowError = false, bool prefix = false);
-  HeapType stringToHeapType(cashew::IString str,
-                            bool allowError = false,
-                            bool prefix = false) {
-    return stringToHeapType(str.str, allowError, prefix);
+  Type stringToType(const char* str, bool prefix = false);
+  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+    return stringToHeapType(str.str, prefix);
   }
-  HeapType stringToHeapType(const char* str,
-                            bool allowError = false,
-                            bool prefix = false);
+  HeapType stringToHeapType(const char* str, bool prefix = false);
   Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {

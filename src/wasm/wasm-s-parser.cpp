@@ -838,9 +838,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   nameMapper.clear();
 }
 
-Type SExpressionWasmBuilder::stringToType(const char* str,
-                                          bool allowError,
-                                          bool prefix) {
+Type SExpressionWasmBuilder::stringToType(const char* str, bool prefix) {
   if (str[0] == 'i') {
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
       return Type::i32;
@@ -872,14 +870,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
   }
-  if (allowError) {
-    return Type::none;
-  }
   throw ParseException(std::string("invalid wasm type: ") + str);
 }
 
 HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
-                                                  bool allowError,
                                                   bool prefix) {
   if (str[0] == 'a') {
     if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
@@ -916,7 +910,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
   if (s.isStr()) {
-    return stringToType(s.str(), false, false);
+    return stringToType(s.str(), false);
   }
   auto& tuple = s.list();
   std::vector<Type> types;
