@@ -55,7 +55,7 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
   void visitFunction(Function* curr) {
     std::vector<Expression*> prelude;
-    for (auto [value, vec] : uses) {
+    for (auto& [value, vec] : uses) {
       auto num = vec.size();
       if (worthHoisting(value, num)) {
         prelude.push_back(hoist(vec));

@@ -359,10 +359,10 @@ public:
       std::cout << "root: " << root.str << '\n';
     }
     std::map<Name, ImportId> importMap;
-    for (auto [id, dceName] : importIdToDCENode) {
+    for (auto& [id, dceName] : importIdToDCENode) {
       importMap[dceName] = id;
     }
-    for (auto [name, node] : nodes) {
+    for (auto& [name, node] : nodes) {
       std::cout << "node: " << name.str << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';

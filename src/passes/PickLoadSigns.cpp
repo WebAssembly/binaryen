@@ -93,7 +93,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
 
   void optimize() {
     // optimize based on the info we saw
-    for (auto [load, index] : loads) {
+    for (auto& [load, index] : loads) {
       auto& usage = usages[index];
       // if we can't optimize, give up
       if (usage.totalUsages == 0 || // no usages, so no idea

@@ -160,7 +160,7 @@ struct Metrics
     vector<const char*> keys;
     // add total
     int total = 0;
-    for (auto [key, value] : counts) {
+    for (auto& [key, value] : counts) {
       keys.push_back(key);
       // total is of all the normal stuff, not the special [things]
       if (key[0] != '[') {

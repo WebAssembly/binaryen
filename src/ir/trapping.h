@@ -58,10 +58,10 @@ public:
 
   void addToModule() {
     if (!immediate) {
-      for (auto [_, func] : functions) {
+      for ([[maybe_unused]] auto& [_, func] : functions) {
         wasm.addFunction(func);
       }
-      for (auto [_, func] : imports) {
+      for ([[maybe_unused]] auto& [_, func] : imports) {
         wasm.addFunction(func);
       }
     }

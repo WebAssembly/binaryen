@@ -378,7 +378,7 @@ void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  auto [_, inserted] = labelNames.insert(name);
+  [[maybe_unused]] auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,

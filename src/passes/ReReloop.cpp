@@ -233,7 +233,7 @@ struct ReReloop final : public Pass {
       for (Index i = 0; i < num; i++) {
         targetValues[targets[i]].insert(i);
       }
-      for (auto [name, indices] : targetValues) {
+      for (auto& [name, indices] : targetValues) {
         parent.addSwitchBranch(before, parent.getBreakTarget(name), indices);
       }
       // the default may be among the targets, in which case, we can't add it
@@ -333,7 +333,7 @@ struct ReReloop final : public Pass {
     std::cout << "rerelooping " << function->name << '\n';
     for (auto* block : relooper->Blocks) {
       std::cout << block << " block:\n" << block->Code << '\n';
-      for (auto [target, branch] : block->BranchesOut) {
+      for (auto& [target, branch] : block->BranchesOut) {
         std::cout << "branch to " << target << "\n";
         if (branch->Condition) {
           std::cout << "  with condition\n" << branch->Condition << '\n';

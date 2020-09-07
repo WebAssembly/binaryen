@@ -117,7 +117,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void optimize(Function* func) {
     std::set<Load*> unoptimizables;
-    for (auto [load, info] : infos) {
+    for (auto& [load, info] : infos) {
       if (info.reinterpreted && canReplaceWithReinterpret(load)) {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, Type::i32);
