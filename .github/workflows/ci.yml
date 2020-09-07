@@ -18,12 +18,12 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: install tools
       run: |
         sudo pip3 install flake8==3.7.8
         sudo apt-get install clang-format-9 clang-tidy-9
-        echo "::add-path::/usr/lib/llvm-8/bin"
+        echo "::add-path::/usr/lib/llvm-9/bin"
     - run: flake8
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
@@ -44,7 +44,7 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
