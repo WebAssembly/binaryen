@@ -825,7 +825,7 @@ public:
       case Type::funcref:
       case Type::externref:
       case Type::exnref:
-        return ExpressionManipulator::refNull(curr);
+        return ExpressionManipulator::refNull(curr, curr->type);
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:
