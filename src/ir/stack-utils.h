@@ -159,7 +159,9 @@ struct StackFlow {
   // is true iff the corresponding value is consumed by the polymorphic behavior
   // of an unreachable instruction rather than being used directly. For source
   // locations, `unreachable` is true iff the corresponding value is produced by
-  // an unreachable instruction.
+  // an unreachable instruction. For produced values that are not consumed
+  // within the block (TODO: also for consumed values that are not produced
+  // within the block), `expr` will be the enclosing block.
   struct Location {
     Expression* expr;
     Index index;

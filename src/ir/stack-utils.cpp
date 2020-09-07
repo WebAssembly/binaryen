@@ -150,6 +150,8 @@ StackFlow::StackFlow(Block* block) {
   // the block's result type is used as the params of its processed stack
   // signature.
   auto processBlock = [&block](auto process) {
+    // TODO: Once we support block parameters, set up the stack by calling
+    // `process` before iterating through the block.
     for (auto* expr : block->list) {
       process(expr, StackSignature(expr));
     }
@@ -263,6 +265,7 @@ StackFlow::StackFlow(Block* block) {
     for (Index i = 0; i < sig.results.size(); ++i) {
       values.push_back({expr, i, sig.results[i], false});
     }
+
     // Update the last unreachable instruction
     if (sig.unreachable) {
       assert(producedByUnreachable[lastUnreachable] == 0);
