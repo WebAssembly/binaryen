@@ -186,15 +186,39 @@ public:
       return index == other.index && parent == other.parent;
     }
     bool operator!=(const Iterator& other) const { return !(*this == other); }
-    void operator++() { index++; }
+    Iterator& operator++() {
+      ++index;
+      return *this;
+    }
+    Iterator& operator--() {
+      --index;
+      return *this;
+    }
+    Iterator operator++(int) {
+      auto it = *this;
+      index++;
+      return it;
+    }
+    Iterator operator--(int) {
+      auto it = *this;
+      index--;
+      return it;
+    }
     Iterator& operator+=(difference_type off) {
       index += off;
       return *this;
     }
-    const Iterator operator+(difference_type off) const {
+    Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
     }
-    difference_type operator-(const Iterator& other) {
+    Iterator& operator-=(difference_type off) {
+      index -= off;
+      return *this;
+    }
+    Iterator operator-(difference_type off) const {
+      return Iterator(*this) -= off;
+    }
+    difference_type operator-(const Iterator& other) const {
       assert(parent == other.parent);
       return index - other.index;
     }
