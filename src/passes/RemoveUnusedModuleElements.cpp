@@ -62,7 +62,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.pop_back();
       if (reachable.count(curr) == 0) {
         reachable.insert(curr);
-        auto [kind, value] = curr;
+        auto& [kind, value] = curr;
         if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
           auto* func = module->getFunction(value);
