@@ -434,7 +434,7 @@ collectSignatures(Module& wasm,
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
   }
-  for ([[maybe_unused]] auto& [_, functionCounts] : analysis.map) {
+  for (auto& [_, functionCounts] : analysis.map) {
     for (auto& [sig, count] : functionCounts) {
       counts[sig] += count;
     }
