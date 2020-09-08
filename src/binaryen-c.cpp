@@ -3941,9 +3941,8 @@ RelooperRef RelooperCreate(BinaryenModuleRef module) {
 
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
                                   BinaryenExpressionRef code) {
-  auto* ret = new CFG::Block((Expression*)code);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)->AddBlock((Expression*)code));
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -3957,9 +3956,9 @@ void RelooperAddBranch(RelooperBlockRef from,
 RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
                                             BinaryenExpressionRef code,
                                             BinaryenExpressionRef condition) {
-  auto* ret = new CFG::Block((Expression*)code, (Expression*)condition);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)
+      ->AddBlock((Expression*)code, (Expression*)condition));
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,
