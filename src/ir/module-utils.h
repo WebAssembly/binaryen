@@ -111,7 +111,7 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& [name1, name2] : map) {
+  for (const auto& [name1, name2] : map) {
     if (Function* F = wasm.getFunctionOrNull(name1)) {
       assert(!wasm.getFunctionOrNull(name2) || F->name == name2);
       F->name = name2;
@@ -345,7 +345,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     map.swap(analysis.map);
 
     // Find what is called by what.
-    for (auto& [func, info] : map) {
+    for (const auto& [func, info] : map) {
       for (auto* target : info.callsTo) {
         map[target].calledBy.insert(func);
       }
@@ -434,8 +434,8 @@ collectSignatures(Module& wasm,
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
   }
-  for ([[maybe_unused]] auto& [_, functionCounts] : analysis.map) {
-    for (auto& [first, second] : functionCounts) {
+  for ([[maybe_unused]] const auto& [_, functionCounts] : analysis.map) {
+    for (const auto& [first, second] : functionCounts) {
       counts[first] += second;
     }
   }
