@@ -131,10 +131,10 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
     // TODO: this is O(bad)
     std::vector<Usable> invalidated;
-    for (auto& [first, second] : usables) {
+    for (auto& [usable, info] : usables) {
       // Check invalidations of the values we may want to use.
-      if (effects.invalidates(second.effects)) {
-        invalidated.push_back(first);
+      if (effects.invalidates(info.effects)) {
+        invalidated.push_back(usable);
       }
     }
     if (curr) {
@@ -144,11 +144,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       // sets do not interfere. (Note that due to flattening we
       // have no risk of tees etc.)
       if (auto* set = curr->dynCast<LocalSet>()) {
-        for (auto& [first, second] : usables) {
+        for (auto& [usable, info] : usables) {
           // Check if the index is the same. Make sure to ignore
           // our own value, which we may have just added!
-          if (second.index == set->index && second.value != set->value) {
-            invalidated.push_back(first);
+          if (info.index == set->index && info.value != set->value) {
+            invalidated.push_back(usable);
           }
         }
       }

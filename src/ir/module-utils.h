@@ -111,10 +111,10 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& [first, second] : map) {
-    if (Function* F = wasm.getFunctionOrNull(first)) {
-      assert(!wasm.getFunctionOrNull(second) || F->name == second);
-      F->name = second;
+  for (auto& [name1, name2] : map) {
+    if (Function* F = wasm.getFunctionOrNull(name1)) {
+      assert(!wasm.getFunctionOrNull(name2) || F->name == name2);
+      F->name = name2;
     }
   }
   wasm.updateMaps();
