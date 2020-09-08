@@ -374,11 +374,13 @@ private:
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
 };
 
+#define _ $$
+
 void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  [[maybe_unused]] auto [_, inserted] = labelNames.insert(name);
+  auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,

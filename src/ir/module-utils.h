@@ -435,8 +435,8 @@ collectSignatures(Module& wasm,
     counts[curr->sig]++;
   }
   for ([[maybe_unused]] auto& [_, functionCounts] : analysis.map) {
-    for (auto& [first, second] : functionCounts) {
-      counts[first] += second;
+    for (auto& [sig, count] : functionCounts) {
+      counts[sig] += count;
     }
   }
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
