@@ -1,7 +1,6 @@
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
@@ -19,7 +18,6 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__set_stack_limit" (func $__set_stack_limit))
  (export "__set_stack_limits" (func $__set_stack_limits))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
@@ -166,11 +164,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__set_stack_limit (param $0 i32)
-  (global.set $__stack_limit
-   (local.get $0)
-  )
- )
  (func $__set_stack_limits (param $0 i32) (param $1 i32)
   (global.set $__stack_base
    (local.get $0)
@@ -201,7 +194,6 @@
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "__set_stack_limit",
     "__set_stack_limits",
     "__growWasmMemory"
   ],

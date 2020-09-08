@@ -3529,12 +3529,12 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-int BinaryenGetAllowHeavyweight(void) {
-  return globalPassOptions.inlining.allowHeavyweight;
+int BinaryenGetAllowInliningFunctionsWithLoops(void) {
+  return globalPassOptions.inlining.allowFunctionsWithLoops;
 }
 
-void BinaryenSetAllowHeavyweight(int enabled) {
-  globalPassOptions.inlining.allowHeavyweight = enabled;
+void BinaryenSetAllowInliningFunctionsWithLoops(int enabled) {
+  globalPassOptions.inlining.allowFunctionsWithLoops = enabled;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
@@ -3942,9 +3942,8 @@ RelooperRef RelooperCreate(BinaryenModuleRef module) {
 
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
                                   BinaryenExpressionRef code) {
-  auto* ret = new CFG::Block((Expression*)code);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)->AddBlock((Expression*)code));
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -3958,9 +3957,9 @@ void RelooperAddBranch(RelooperBlockRef from,
 RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
                                             BinaryenExpressionRef code,
                                             BinaryenExpressionRef condition) {
-  auto* ret = new CFG::Block((Expression*)code, (Expression*)condition);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)
+      ->AddBlock((Expression*)code, (Expression*)condition));
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,

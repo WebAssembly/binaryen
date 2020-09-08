@@ -145,8 +145,11 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
   PassOptions& passOptions;
+  BranchUtils::BranchSeekerCache& branchInfo;
 
-  BreakValueDropper(PassOptions& passOptions) : passOptions(passOptions) {}
+  BreakValueDropper(PassOptions& passOptions,
+                    BranchUtils::BranchSeekerCache& branchInfo)
+    : passOptions(passOptions), branchInfo(branchInfo) {}
 
   void visitBlock(Block* curr);
 
@@ -198,8 +201,10 @@ static bool hasDeadCode(Block* block) {
 }
 
 // core block optimizer routine
-static void
-optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
+static void optimizeBlock(Block* curr,
+                          Module* module,
+                          PassOptions& passOptions,
+                          BranchUtils::BranchSeekerCache& branchInfo) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -237,7 +242,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
                 childBlock = nullptr;
               } else {
                 // fix up breaks
-                BreakValueDropper fixer(passOptions);
+                BreakValueDropper fixer(passOptions, branchInfo);
                 fixer.origin = childBlock->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
@@ -294,7 +299,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::has(item, childName)) {
+          if (branchInfo.hasBranch(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -360,6 +365,13 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         if (loop) {
           loop->finalize();
         }
+        // Note that we modify the child block here, which invalidates info
+        // in branchInfo. However, as we have scanned the parent, we have
+        // already forgotten the child's info, so there is nothing to do here
+        // for the child.
+        // (We also don't need to do anything for the parent - we move code
+        // from a child into the parent, but that doesn't change the total
+        // branches in the parent.)
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
@@ -387,7 +399,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
-  optimizeBlock(curr, getModule(), passOptions);
+  optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
@@ -395,8 +407,10 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   Pass* create() override { return new MergeBlocks; }
 
+  BranchUtils::BranchSeekerCache branchInfo;
+
   void visitBlock(Block* curr) {
-    optimizeBlock(curr, getModule(), getPassOptions());
+    optimizeBlock(curr, getModule(), getPassOptions(), branchInfo);
   }
 
   // given

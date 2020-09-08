@@ -1,12 +1,10 @@
 (module
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
  (export "use_stack" (func $0))
- (export "__set_stack_limit" (func $__set_stack_limit))
  (export "__set_stack_limits" (func $__set_stack_limits))
  (func $0 (result i32)
   (local $0 i32)
@@ -31,11 +29,6 @@
    )
   )
   (global.get $sp)
- )
- (func $__set_stack_limit (param $0 i32)
-  (global.set $__stack_limit
-   (local.get $0)
-  )
  )
  (func $__set_stack_limits (param $0 i32) (param $1 i32)
   (global.set $__stack_base
