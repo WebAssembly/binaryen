@@ -208,6 +208,7 @@ else()
   endif()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
+  add_compile_flag("-Wno-unused-variable")
   add_compile_flag("-fno-omit-frame-pointer")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
   # flags once we resolve the issue.

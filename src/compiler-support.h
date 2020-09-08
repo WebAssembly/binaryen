@@ -49,7 +49,4 @@
     }                                                                          \
   } while (0)
 
-// unused variable inside destructed bindings like "auto [_, val]"
-#define _ $$
-
 #endif // wasm_compiler_support_h
