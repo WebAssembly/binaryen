@@ -292,9 +292,6 @@ def run_gcc_tests():
     for t in sorted(os.listdir(shared.get_test_dir('example'))):
         output_file = 'example'
         cmd = ['-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
-        # build with ASan if enabled on CI
-        if ('COMPILER_FLAGS' in os.environ and 'fsanitize=address' in str(os.environ['COMPILER_FLAGS'])):
-            cmd.insert(0, '-fsanitize=address')
         if t.endswith('.txt'):
             # check if there is a trace in the file, if so, we should build it
             out = subprocess.check_output([os.path.join(shared.options.binaryen_root, 'scripts', 'clean_c_api_trace.py'), os.path.join(shared.get_test_dir('example'), t)])
