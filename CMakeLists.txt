@@ -139,6 +139,7 @@ if(MSVC)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
     add_compile_flag("/arch:sse2")
   endif()
+  add_compile_flag("/std:c++${CXX_STANDARD}")
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   add_compile_flag("/wd4267")
