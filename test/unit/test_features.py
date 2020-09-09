@@ -237,8 +237,8 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (event $foo (attr 0) (param i32 i64))
         )
         '''
-        self.check_multivalue_exception_handling(module,
-            'Multivalue event type (multivalue is not enabled)')
+        self.check_multivalue_exception_handling(module, 'Multivalue event type ' +
+                                                 '(multivalue is not enabled)')
 
     def test_multivalue_block(self):
         module = '''
@@ -258,7 +258,6 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_multivalue(module, 'Multivalue block type ' +
                               '(multivalue is not enabled)')
 
-
     def test_anyref_global(self):
         module = '''
         (module
@@ -266,7 +265,6 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_anyref(module, 'all used types should be allowed')
-
 
     def test_anyref_local(self):
         module = '''
