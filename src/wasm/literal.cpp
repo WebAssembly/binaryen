@@ -863,10 +863,35 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(uint32_t(i32) * uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
-    case Type::f32:
-      return Literal(getf32() * other.getf32());
-    case Type::f64:
-      return Literal(getf64() * other.getf64());
+    case Type::f32: {
+      // Special-case multiplication by 1. nan * 1 can change nan bits per the
+      // wasm spec, but it is ok to just return that original nan, and we
+      // do that here so that we are consistent with the optimization of
+      // removing the * 1 and leaving just the nan. That is, if we just
+      // do a normal multiply and the CPU decides to change the bits, we'd
+      // give a different result on optimized code, which would look like
+      // it was a bad optimization. So out of all the valid results to
+      // return here, return the simplest one that is consistent with
+      // our optimization for the case of 1.
+      float lhs = getf32(), rhs = other.getf32();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
+    case Type::f64: {
+      double lhs = getf64(), rhs = other.getf64();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -903,15 +928,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // Special-case division by 1. nan / 1 can change nan bits per the
-          // wasm spec, but it is ok to just return that original nan, and we
-          // do that here so that we are consistent with the optimization of
-          // removing the / 1 and leaving just the nan. That is, if we just
-          // do a normal divide and the CPU decides to change the bits, we'd
-          // give a different result on optimized code, which would look like
-          // it was a bad optimization. So out of all the valid results to
-          // return here, return the simplest one that is consistent with
-          // optimization.
+          // Special-case division by 1, similar to multiply from earlier.
           if (rhs == 1) {
             return Literal(lhs);
           }
