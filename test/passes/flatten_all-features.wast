@@ -1020,7 +1020,6 @@
     (return (i32.sub (i32.const 1) (i32.const 2)))
   )
 
-  ;; TODO (GC)
   ;; subtypes
 
   ;; br_if leaves a value on the stack if not taken, which later can be the last
