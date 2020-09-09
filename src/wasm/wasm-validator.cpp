@@ -2375,6 +2375,20 @@ static void validateModule(Module& module, ValidationInfo& info) {
   }
 }
 
+static void validateFeatures(Module& module, ValidationInfo& info) {
+  if (module.features.hasAnyref()) {
+    info.shouldBeTrue(module.features.hasReferenceTypes(),
+                      module.features,
+                      "--enable-anyref requires --enable-reference-types");
+  }
+  if (module.features.hasExceptionHandling()) { // implies exnref
+    info.shouldBeTrue(
+      module.features.hasReferenceTypes(),
+      module.features,
+      "--enable-exception-handling requires --enable-reference-types");
+  }
+}
+
 // TODO: If we want the validator to be part of libwasm rather than libpasses,
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
@@ -2395,6 +2409,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateTable(module, info);
     validateEvents(module, info);
     validateModule(module, info);
+    validateFeatures(module, info);
   }
   // validate additional internal IR details when in pass-debug mode
   if (PassRunner::getPassDebug()) {
