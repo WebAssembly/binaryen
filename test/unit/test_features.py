@@ -306,6 +306,12 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.check_features(filename, ['exception-handling'])
         self.assertIn('throw', self.disassemble(filename))
 
+    def test_anyref(self):
+        filename = 'anyref_target_feature.wasm'
+        self.roundtrip(filename)
+        self.check_features(filename, ['reference-types', 'anyref'])
+        self.assertIn('anyref', self.disassemble(filename))
+
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
@@ -353,5 +359,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-exception-handling',
             '--enable-tail-call',
             '--enable-reference-types',
-            '--enable-multivalue'
+            '--enable-multivalue',
+            '--enable-anyref'
         ], p2.stdout.splitlines())

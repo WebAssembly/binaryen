@@ -73,6 +73,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
       assert(x.isNull());
       break;
     case Type::none:
@@ -98,6 +99,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeFunc(x.func);
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
       return Literal::makeNull(Type(x.type));
     case Type::none:
     case Type::unreachable:
@@ -133,6 +135,7 @@ BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
+BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
@@ -323,6 +326,9 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 }
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
+}
+BinaryenFeatures BinaryenFeatureAnyref(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Anyref);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);

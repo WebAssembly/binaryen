@@ -8,13 +8,21 @@ char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
   case 'a': {
-    switch (op[7]) {
-      case 'f':
-        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-        goto parse_error;
+    switch (op[1]) {
       case 'n':
-        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+        if (strcmp(op, "anyref.pop") == 0) { return makePop(Type::anyref); }
         goto parse_error;
+      case 't': {
+        switch (op[7]) {
+          case 'f':
+            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
+            goto parse_error;
+          case 'n':
+            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }

@@ -4207,15 +4207,14 @@
       (unreachable)
     )
   )
-  ;; TODO (GC)
   ;; Tests when if arms are subtype of if's type
-  ;; (func $if-arms-subtype (result anyref)
-  ;;   (if (result anyref)
-  ;;     (i32.const 0)
-  ;;     (ref.null extern)
-  ;;     (ref.null func)
-  ;;   )
-  ;; )
+  (func $if-arms-subtype (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null func)
+    )
+  )
   (func $optimize-boolean-context (param $x i32) (param $y i32)
     ;; 0 - x   ==>   x
     (if

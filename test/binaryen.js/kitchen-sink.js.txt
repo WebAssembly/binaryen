@@ -18,6 +18,8 @@
   // 8
   // BinaryenTypeExnref: 9
   // 9
+  // BinaryenTypeAnyref: 10
+  // 10
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -33,7 +35,8 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.All: 1023
+Features.Anyref: 1024
+Features.All: 2047
 InvalidId: 0
 BlockId: 1
 IfId: 2

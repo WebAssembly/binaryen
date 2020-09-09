@@ -1882,6 +1882,19 @@
  )
 )
 (module
+ (type $none_=>_anyref (func (result anyref)))
+ (func $subtype-test (result anyref)
+  (local $0 externref)
+  (local $1 anyref)
+  (local $2 anyref)
+  (block $block
+   (nop)
+  )
+  (nop)
+  (local.get $0)
+ )
+)
+(module
  (type $none_=>_none (func))
  (type $i32_exnref_=>_none (func (param i32 exnref)))
  (type $exnref_=>_none (func (param exnref)))

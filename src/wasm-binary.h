@@ -347,6 +347,8 @@ enum EncodedType {
   funcref = -0x10, // 0x70
   // opaque host reference type
   externref = -0x11, // 0x6f
+  // any reference type
+  anyref = -0x12, // 0x6e
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -358,6 +360,7 @@ enum EncodedType {
 enum EncodedHeapType {
   func = -0x10,    // 0x70
   extern_ = -0x11, // 0x6f
+  any = -0x12,     // 0x6e
   exn = -0x18,     // 0x68
 };
 
@@ -380,6 +383,7 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
+extern const char* AnyrefFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -975,6 +979,9 @@ inline S32LEB binaryType(Type type) {
     case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
       break;
+    case Type::anyref:
+      ret = BinaryConsts::EncodedType::anyref;
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -994,6 +1001,8 @@ inline S32LEB binaryHeapType(HeapType type) {
       ret = BinaryConsts::EncodedHeapType::exn;
       break;
     case HeapType::AnyKind:
+      ret = BinaryConsts::EncodedHeapType::any;
+      break;
     case HeapType::EqKind:
     case HeapType::I31Kind:
     case HeapType::SignatureKind:

@@ -1655,20 +1655,19 @@
   )
  )
 )
-;; TODO (GC)
-;; (module
-;;  (func $subtype-test (result anyref)
-;;   (local $0 funcref)
-;;   (local $1 anyref)
-;;   (local $2 anyref)
-;;   (block
-;;    (local.set $1
-;;     (local.get $0)
-;;    )
-;;   )
-;;   (local.set $2
-;;    (local.get $1)
-;;   )
-;;   (local.get $1)
-;;  )
-;; )
+(module
+ (func $subtype-test (result anyref)
+  (local $0 funcref)
+  (local $1 anyref)
+  (local $2 anyref)
+  (block
+   (local.set $1
+    (local.get $0)
+   )
+  )
+  (local.set $2
+   (local.get $1)
+  )
+  (local.get $1)
+ )
+)

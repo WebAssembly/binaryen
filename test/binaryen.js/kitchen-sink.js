@@ -77,6 +77,9 @@ function test_types() {
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
   console.log("  //", binaryen.expandType(binaryen.exnref).join(","));
 
+  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
+  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
+
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
@@ -103,6 +106,7 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
+  console.log("Features.Anyref: " + binaryen.Features.Anyref);
   console.log("Features.All: " + binaryen.Features.All);
 }
 

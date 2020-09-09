@@ -288,30 +288,29 @@
  )
 )
 
-;; TODO (GC)
-;; (module
-;;  ;; After --flatten, there will be a series of chain copies between multiple
-;;  ;; locals, but some of the locals will be funcref type and others anyref
-;;  ;; type. We cannot make locals of different types a common subexpression.
-;;  (func $subtype-test (result anyref)
-;;   (nop)
-;;   (loop $label$1 (result funcref)
-;;    (ref.null func)
-;;   )
-;;  )
+(module
+ ;; After --flatten, there will be a series of chain copies between multiple
+ ;; locals, but some of the locals will be funcref type and others anyref
+ ;; type. We cannot make locals of different types a common subexpression.
+ (func $subtype-test (result anyref)
+  (nop)
+  (loop $label$1 (result funcref)
+   (ref.null func)
+  )
+ )
 
-;;  (func $test
-;;   (local $0 anyref)
-;;   (drop
-;;    (block $label$1 (result funcref)
-;;     (local.set $0
-;;      (ref.null func)
-;;     )
-;;     ;; After --flatten, this will be assigned to a local of funcref type. After
-;;     ;; --local-cse, even if we set (ref.null) to local $0 above, this should not
-;;     ;; be replaced with $0, because it is of type anyref.
-;;     (ref.null func)
-;;    )
-;;   )
-;;  )
-;; )
+ (func $test
+  (local $0 anyref)
+  (drop
+   (block $label$1 (result funcref)
+    (local.set $0
+     (ref.null func)
+    )
+    ;; After --flatten, this will be assigned to a local of funcref type. After
+    ;; --local-cse, even if we set (ref.null) to local $0 above, this should not
+    ;; be replaced with $0, because it is of type anyref.
+    (ref.null func)
+   )
+  )
+ )
+)

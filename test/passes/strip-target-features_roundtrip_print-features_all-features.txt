@@ -8,6 +8,7 @@
 --enable-tail-call
 --enable-reference-types
 --enable-multivalue
+--enable-anyref
 (module
  (type $none_=>_v128_externref (func (result v128 externref)))
  (func $foo (result v128 externref)
