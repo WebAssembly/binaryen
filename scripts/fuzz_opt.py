@@ -111,6 +111,9 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
+                if possible in IMPLIED_FEATURE_OPTS.keys():
+                    for implied in IMPLIED_FEATURE_OPTS[possible]:
+                        FEATURE_OPTS.append(implied)
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
@@ -869,6 +872,12 @@ def randomize_opt_flags():
 # we enable all before that in the constant options)
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
+
+# some features depend on other features, so if a required feature is
+# disabled, its dependent features need to be disabled as well.
+IMPLIED_FEATURE_OPTS = {
+    '--disable-reference-types': ['--disable-exception-handling', '--disable-anyref']
+}
 
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
