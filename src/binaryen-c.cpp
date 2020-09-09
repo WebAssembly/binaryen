@@ -3422,7 +3422,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
   try {
     SExpressionParser parser(const_cast<char*>(text));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0]);
+    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm text";

@@ -314,8 +314,9 @@ Element* SExpressionParser::parseString() {
 
 SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
                                                Element& module,
+                                               IRProfile profile,
                                                Name* moduleName)
-  : wasm(wasm), allocator(wasm.allocator) {
+  : wasm(wasm), allocator(wasm.allocator), profile(profile) {
   if (module.size() == 0) {
     throw ParseException("empty toplevel, expected module");
   }
@@ -795,6 +796,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   // make a new function
   currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
     name, std::move(params), sig.results, std::move(vars)));
+  currFunction->profile = profile;
 
   // parse body
   Block* autoBlock = nullptr; // may need to add a block for the very top level

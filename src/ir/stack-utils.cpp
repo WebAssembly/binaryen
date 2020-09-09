@@ -15,6 +15,7 @@
  */
 
 #include "stack-utils.h"
+#include "ir/properties.h"
 
 namespace wasm {
 
@@ -28,6 +29,28 @@ void removeNops(Block* block) {
     }
   }
   block->list.resize(newIndex);
+}
+
+bool mayBeUnreachable(Expression* expr) {
+  if (Properties::isControlFlowStructure(expr)) {
+    return true;
+  }
+  switch (expr->_id) {
+    case Expression::Id::BreakId:
+      return expr->cast<Break>()->condition == nullptr;
+    case Expression::Id::CallId:
+      return expr->cast<Call>()->isReturn;
+    case Expression::Id::CallIndirectId:
+      return expr->cast<CallIndirect>()->isReturn;
+    case Expression::Id::ReturnId:
+    case Expression::Id::SwitchId:
+    case Expression::Id::UnreachableId:
+    case Expression::Id::ThrowId:
+    case Expression::Id::RethrowId:
+      return true;
+    default:
+      return false;
+  }
 }
 
 } // namespace StackUtils

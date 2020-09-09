@@ -62,6 +62,8 @@ struct Address {
   }
 };
 
+enum class IRProfile { Normal, Poppy };
+
 // Operators
 
 enum UnaryOp {
@@ -1262,6 +1264,7 @@ class Function : public Importable {
 public:
   Name name;
   Signature sig;          // parameters and return value
+  IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
   // The body of the function
