@@ -93,10 +93,10 @@ inline bool isConstantExpression(const Expression* curr) {
 inline Literal getSingleLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal(Type::nullref);
-  } else if (auto* c = curr->dynCast<RefFunc>()) {
-    return Literal(c->func);
+  } else if (auto* n = curr->dynCast<RefNull>()) {
+    return Literal(n->type);
+  } else if (auto* r = curr->dynCast<RefFunc>()) {
+    return Literal(r->func);
   } else {
     WASM_UNREACHABLE("non-constant expression");
   }

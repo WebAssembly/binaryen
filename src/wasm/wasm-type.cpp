@@ -260,7 +260,6 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   // * `(ref null any) == anyref`
   // * `(ref null eq) == eqref`
   // * `(ref i31) == i31ref`
-  {TypeInfo({Type::nullref}), Type::nullref}, // TODO (removed)
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
 };
@@ -347,6 +346,24 @@ bool Type::isRef() const {
   }
 }
 
+bool Type::isFunction() const {
+  if (isBasic()) {
+    return id == funcref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isSignature();
+  }
+}
+
+bool Type::isException() const {
+  if (isBasic()) {
+    return id == exnref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isException();
+  }
+}
+
 bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= exnref;
@@ -389,7 +406,6 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
       case Type::none:
       case Type::unreachable:
@@ -432,7 +448,6 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::SIMD;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
@@ -449,6 +464,25 @@ FeatureSet Type::getFeatures() const {
     return feats;
   }
   return getSingleFeatures(*this);
+}
+
+HeapType Type::getHeapType() const {
+  if (isRef()) {
+    if (isCompound()) {
+      return getTypeInfo(*this)->ref.heapType;
+    }
+    switch (getBasic()) {
+      case funcref:
+        return HeapType::FuncKind;
+      case externref:
+        return HeapType::ExternKind;
+      case exnref:
+        return HeapType::ExnKind;
+      default:
+        break;
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -468,11 +502,8 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
+  // TODO (GC): subtyping, currently checks for equality only
   if (left == right) {
-    return true;
-  }
-  if (left.isRef() && right.isRef() &&
-      (right == Type::externref || left == Type::nullref)) {
     return true;
   }
   if (left.isTuple() && right.isTuple()) {
@@ -513,16 +544,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
-  if (!a.isRef() || !b.isRef()) {
-    return Type::none;
-  }
-  if (a == Type::nullref) {
-    return b;
-  }
-  if (b == Type::nullref) {
-    return a;
-  }
-  return Type::externref;
+  return Type::none;
 }
 
 Type::Iterator Type::end() const {
@@ -554,8 +576,7 @@ const Type& Type::operator[](size_t index) const {
   }
 }
 
-HeapType::HeapType(const HeapType& other) {
-  kind = other.kind;
+HeapType::HeapType(const HeapType& other) : kind(other.kind) {
   switch (kind) {
     case FuncKind:
     case ExternKind:
@@ -707,9 +728,6 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
       case Type::externref:
         os << "externref";
-        break;
-      case Type::nullref:
-        os << "nullref";
         break;
       case Type::exnref:
         os << "exnref";

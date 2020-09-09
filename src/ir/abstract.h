@@ -103,7 +103,6 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable: {
@@ -268,7 +267,6 @@ inline BinaryOp getBinary(Type type, Op op) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable: {

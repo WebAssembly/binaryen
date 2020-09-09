@@ -1,25 +1,27 @@
   // BinaryenTypeNone: 0
-  // []
+  // 
   // BinaryenTypeUnreachable: 1
-  // [ 1 ]
+  // 1
   // BinaryenTypeInt32: 2
-  // [ 2 ]
+  // 2
   // BinaryenTypeInt64: 3
-  // [ 3 ]
+  // 3
   // BinaryenTypeFloat32: 4
-  // [ 4 ]
+  // 4
   // BinaryenTypeFloat64: 5
-  // [ 5 ]
+  // 5
   // BinaryenTypeVec128: 6
-  // [ 6 ]
+  // 6
+  // BinaryenTypeFuncref: 7
+  // 7
   // BinaryenTypeExternref: 8
-  // [ 8 ]
-  // BinaryenTypeExnref: 10
-  // [ 10 ]
+  // 8
+  // BinaryenTypeExnref: 9
+  // 9
   // BinaryenTypeAuto: -1
-  // [ 2, 2 ]
-  // [ 2, 2 ]
-  // [ 4, 4 ]
+  // 2,2
+  // 2,2
+  // 4,4
 Features.MVP: 0
 Features.Atomics: 1
 Features.BulkMemory: 16
@@ -1811,7 +1813,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
@@ -1821,7 +1828,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -1905,9 +1912,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (funcref.pop)
-      )
-      (drop
-       (nullref.pop)
       )
       (drop
        (exnref.pop)
@@ -3649,7 +3653,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
@@ -3659,7 +3668,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -3743,9 +3752,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (funcref.pop)
-      )
-      (drop
-       (nullref.pop)
       )
       (drop
        (exnref.pop)

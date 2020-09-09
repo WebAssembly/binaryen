@@ -1136,12 +1136,32 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::nullref:
-      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
+  }
+  WASM_UNREACHABLE("unexpeced type");
+}
+
+HeapType WasmBinaryBuilder::getHeapType() {
+  int type = getS32LEB(); // TODO: Actually encoded as s33
+  // Single heap types are negative; heap type indices are non-negative
+  if (type >= 0) {
+    if (size_t(type) >= signatures.size()) {
+      throwError("invalid signature index: " + std::to_string(type));
+    }
+    return HeapType(signatures[type]);
+  }
+  switch (type) {
+    case BinaryConsts::EncodedHeapType::func:
+      return HeapType::FuncKind;
+    case BinaryConsts::EncodedHeapType::extern_:
+      return HeapType::ExternKind;
+    case BinaryConsts::EncodedHeapType::exn:
+      return HeapType::ExnKind;
+    default:
+      throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpeced type");
 }
@@ -4689,7 +4709,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
-  curr->finalize();
+  curr->finalize(getHeapType());
 }
 
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {

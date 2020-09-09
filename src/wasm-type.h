@@ -49,7 +49,6 @@ public:
     v128,
     funcref,
     externref,
-    nullref,
     exnref,
     _last_basic_id = exnref
   };
@@ -93,7 +92,6 @@ public:
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
   // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
-  // │ nullref     ║ x │   │ x │ x │ f? n  │ │ ◄ TODO (removed)
   // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
@@ -110,6 +108,8 @@ public:
   bool isTuple() const;
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
+  bool isFunction() const;
+  bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
 
@@ -153,6 +153,9 @@ public:
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
+
+  // Gets the heap type corresponding to this type
+  HeapType getHeapType() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -368,6 +371,7 @@ struct HeapType {
     assert(isArray() && "Not an array");
     return array;
   }
+  bool isException() const { return kind == ExnKind; }
 
   bool operator==(const HeapType& other) const;
   bool operator!=(const HeapType& other) const { return !(*this == other); }

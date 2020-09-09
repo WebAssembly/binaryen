@@ -74,7 +74,7 @@ struct ExecutionResults {
           // while the function contents are still the same
           for (Literal& val : ret) {
             if (val.type == Type::funcref) {
-              val = Literal::makeFuncref(Name("funcref"));
+              val = Literal::makeFunc(Name("funcref"));
             }
           }
           results[exp->name] = ret;

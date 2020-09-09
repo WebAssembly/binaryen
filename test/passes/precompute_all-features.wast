@@ -385,13 +385,13 @@
   )
 
   ;; Check if Precompute pass does not crash on reference types
-  (func $reftype-test (result nullref)
-    (ref.null)
+  (func $reftype-test (result externref)
+    (ref.null extern)
   )
 
   ;; Check if constant nodes (const, ref.null, and ref.func) are correctly
   ;; reused. (We shouldn't reuse a const node for something like ref.null, which
-  ;; will incorrectly cause an expression like 'nullref.const'.)
+  ;; will incorrectly cause an expression like 'someref.const'.)
   (func $dummy)
   (func $br_reuse_node
    (drop
@@ -418,7 +418,7 @@
    )
 
    (drop
-    (block $l2 (result nullref)
+    (block $l2 (result externref)
      (drop
       (block $l3 (result i32)
        (global.set $global-mut
@@ -428,14 +428,14 @@
         (i32.const 1)
         (ref.is_null
          (br_if $l2
-          (ref.null)
+          (ref.null extern)
           (i32.const 3)
          )
         )
        )
       )
      )
-     (ref.null)
+     (ref.null extern)
     )
    )
 
@@ -457,7 +457,7 @@
        )
       )
      )
-     (ref.null)
+     (ref.null func)
     )
    )
   )
@@ -469,7 +469,7 @@
     (block $label$1
       (drop
         (br_on_exn $label$1 $event$0
-          (loop $label$2 (result nullref)
+          (loop $label$2 (result exnref)
             (br $label$2)
           )
         )

@@ -23,7 +23,7 @@
     (block
      (block $__inlined_func$func_inner
       (local.set $1
-       (ref.null)
+       (ref.null exn)
       )
       (drop
        (block $l0 (result i32)

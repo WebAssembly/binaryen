@@ -59,23 +59,4 @@
       )
     )
   )
-
-  ;; Test subtype relationship
-  (func $subtype_test
-    (try
-      (do)
-      (catch
-        (drop (exnref.pop))
-        (drop
-          (block $l0 (result i32)
-            (rethrow
-              (br_on_exn $l0 $e0 (ref.null))
-            )
-          )
-        )
-      )
-    )
-
-    (throw $e1 (ref.null))
-  )
 )

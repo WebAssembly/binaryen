@@ -1875,16 +1875,3 @@
   )
  )
 )
-(module
- (type $none_=>_funcref (func (result funcref)))
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
-  (block $block
-   (nop)
-  )
-  (nop)
-  (local.get $0)
- )
-)

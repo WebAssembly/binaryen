@@ -1095,6 +1095,8 @@ public:
   RefNull(MixedArena& allocator) {}
 
   void finalize();
+  void finalize(HeapType heapType);
+  void finalize(Type type);
 };
 
 class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {

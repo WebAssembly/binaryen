@@ -779,7 +779,7 @@
 
   (func $throw
     (drop
-      (block $label$0 (result nullref)
+      (block $label$0 (result externref)
         (if
           (i32.clz
             (block $label$1 (result i32)
@@ -788,25 +788,25 @@
           )
           (nop)
         )
-        (ref.null)
+        (ref.null extern)
       )
     )
   )
 
   (func $rethrow
     (drop
-      (block $label$0 (result nullref)
+      (block $label$0 (result externref)
         (if
           (i32.clz
             (block $label$1 (result i32)
               (rethrow
-                (ref.null)
+                (ref.null exn)
               )
             )
           )
           (nop)
         )
-        (ref.null)
+        (ref.null extern)
       )
     )
   )

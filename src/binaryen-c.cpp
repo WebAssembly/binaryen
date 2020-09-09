@@ -69,12 +69,12 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
     case Type::funcref:
-      ret.func = x.getFunc().c_str();
-      break;
-    case Type::nullref:
+      ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
     case Type::externref:
     case Type::exnref:
+      assert(x.isNull());
+      break;
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -95,11 +95,10 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::v128:
       return Literal(x.v128);
     case Type::funcref:
-      return Literal::makeFuncref(x.func);
-    case Type::nullref:
-      return Literal::makeNullref();
+      return Literal::makeFunc(x.func);
     case Type::externref:
     case Type::exnref:
+      return Literal::makeNull(Type(x.type));
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -133,7 +132,6 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
@@ -1264,8 +1262,11 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
     Builder(*(Module*)module).makePop(Type(type)));
 }
 
-BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull());
+BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                      BinaryenType type) {
+  Type type_(type);
+  assert(type_.isNullable());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,

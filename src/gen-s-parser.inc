@@ -2560,17 +2560,9 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'n': {
-    switch (op[1]) {
-      case 'o':
-        if (strcmp(op, "nop") == 0) { return makeNop(); }
-        goto parse_error;
-      case 'u':
-        if (strcmp(op, "nullref.pop") == 0) { return makePop(Type::nullref); }
-        goto parse_error;
-      default: goto parse_error;
-    }
-  }
+  case 'n':
+    if (strcmp(op, "nop") == 0) { return makeNop(); }
+    goto parse_error;
   case 'r': {
     switch (op[2]) {
       case 'f': {

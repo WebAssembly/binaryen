@@ -100,7 +100,6 @@ BINARYEN_API BinaryenType BinaryenTypeFloat64(void);
 BINARYEN_API BinaryenType BinaryenTypeVec128(void);
 BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
 BINARYEN_API BinaryenType BinaryenTypeExternref(void);
-BINARYEN_API BinaryenType BinaryenTypeNullref(void);
 BINARYEN_API BinaryenType BinaryenTypeExnref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
@@ -826,7 +825,8 @@ BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef value,
                    BinaryenExpressionRef size);
-BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                                   BinaryenType type);
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,

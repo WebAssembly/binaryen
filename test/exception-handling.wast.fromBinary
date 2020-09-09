@@ -74,29 +74,5 @@
    )
   )
  )
- (func $subtype_test
-  (try
-   (do
-    (nop)
-   )
-   (catch
-    (drop
-     (exnref.pop)
-    )
-    (drop
-     (block $label$3 (result i32)
-      (rethrow
-       (br_on_exn $label$3 $event$0
-        (ref.null)
-       )
-      )
-     )
-    )
-   )
-  )
-  (throw $event$1
-   (ref.null)
-  )
- )
 )
 

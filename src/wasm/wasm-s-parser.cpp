@@ -869,9 +869,6 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type::externref;
   }
-  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::nullref;
-  }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
   }
@@ -879,6 +876,41 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::none;
   }
   throw ParseException(std::string("invalid wasm type: ") + str);
+}
+
+HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
+                                                  bool prefix) {
+  if (str[0] == 'a') {
+    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
+      return HeapType::AnyKind;
+    }
+  }
+  if (str[0] == 'e') {
+    if (str[1] == 'q' && (prefix || str[2] == 0)) {
+      return HeapType::EqKind;
+    }
+    if (str[1] == 'x') {
+      if (str[2] == 'n' && (prefix || str[3] == 0)) {
+        return HeapType::ExnKind;
+      }
+      if (str[2] == 't' && str[3] == 'e' && str[4] == 'r' && str[5] == 'n' &&
+          (prefix || str[6] == 0)) {
+        return HeapType::ExternKind;
+      }
+    }
+  }
+  if (str[0] == 'i') {
+    if (str[1] == '3' && str[2] == '1' && (prefix || str[3] == 0)) {
+      return HeapType::I31Kind;
+    }
+  }
+  if (str[0] == 'f') {
+    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
+        (prefix || str[4] == 0)) {
+      return HeapType::FuncKind;
+    }
+  }
+  throw ParseException(std::string("invalid wasm heap type: ") + str);
 }
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
@@ -1779,8 +1811,12 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  if (s.size() != 2) {
+    throw ParseException("invalid heap type reference", s.line, s.col);
+  }
+  auto heapType = stringToHeapType(s[1]->str());
   auto ret = allocator.alloc<RefNull>();
-  ret->finalize();
+  ret->finalize(heapType);
   return ret;
 }
 

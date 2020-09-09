@@ -1264,7 +1264,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
@@ -2074,7 +2073,6 @@ void FunctionValidator::validateAlignment(
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");

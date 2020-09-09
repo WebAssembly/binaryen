@@ -29,37 +29,52 @@ namespace wasm {
 
 template<int N> using LaneArray = std::array<Literal, N>;
 
+Literal::Literal(Type type) : type(type) {
+  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+  if (type.isException()) {
+    new (&exn) std::unique_ptr<ExceptionPackage>();
+  } else {
+    memset(&v128, 0, 16);
+  }
+}
+
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::funcref:
-      func = other.func;
-      break;
-    case Type::exnref:
-      // Avoid calling the destructor on an uninitialized value
+  if (type.isException()) {
+    // Avoid calling the destructor on an uninitialized value
+    if (other.exn != nullptr) {
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-      break;
-    case Type::none:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+    } else {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    }
+  } else if (type.isFunction()) {
+    func = other.func;
+  } else {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        break;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        break;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        break;
+      case Type::none:
+        break;
+      case Type::externref:
+        break; // null
+      case Type::funcref:
+      case Type::exnref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
   }
 }
 
@@ -116,7 +131,7 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    return makeNull(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -130,8 +145,8 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type == Type::exnref);
-  return *exn.get();
+  assert(type.isException() && exn != nullptr);
+  return *exn;
 }
 
 Literal Literal::castToF32() {
@@ -199,11 +214,17 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
+    // TODO: investigate changing bits returned for reference types. currently,
+    // `null` values and even non-`null` functions return all zeroes, but only
+    // to avoid introducing a functional change.
     case Type::funcref:
-    case Type::nullref:
       break;
     case Type::externref:
     case Type::exnref:
+      if (isNull()) {
+        break;
+      }
+      // falls through
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -211,21 +232,21 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
-  }
   if (type != other.type) {
     return false;
   }
   if (type == Type::none) {
     return true;
+  }
+  if (isNull() || other.isNull()) {
+    return isNull() == other.isNull();
+  }
+  if (type.isFunction()) {
+    return func == other.func;
+  }
+  if (type.isException()) {
+    assert(exn != nullptr && other.exn != nullptr);
+    return *exn == *other.exn;
   }
   uint8_t bits[16], other_bits[16];
   getBits(bits);
@@ -350,15 +371,23 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       literal.printVec128(o, literal.getv128());
       break;
     case Type::funcref:
-      o << "funcref(" << literal.getFunc() << ")";
-      break;
-    case Type::nullref:
-      o << "nullref";
+      if (literal.isNull()) {
+        o << "funcref(null)";
+      } else {
+        o << "funcref(" << literal.getFunc() << ")";
+      }
       break;
     case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      if (literal.isNull()) {
+        o << "exnref(null)";
+      } else {
+        o << "exnref(" << literal.getExceptionPackage() << ")";
+      }
       break;
     case Type::externref:
+      assert(literal.isNull() && "TODO: non-null externref values");
+      o << "externref(null)";
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -582,7 +611,6 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -604,7 +632,6 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -626,7 +653,6 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -731,7 +757,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -753,7 +778,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -846,7 +870,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1100,7 +1123,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -1122,7 +1144,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

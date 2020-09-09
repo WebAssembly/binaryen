@@ -1440,7 +1440,10 @@ struct PrintExpressionContents
         break;
     }
   }
-  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
+  void visitRefNull(RefNull* curr) {
+    printMedium(o, "ref.null ");
+    o << curr->type.getHeapType();
+  }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");

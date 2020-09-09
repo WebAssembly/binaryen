@@ -205,12 +205,6 @@ void test_types() {
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
-  BinaryenType nullref = BinaryenTypeNullref();
-  printf("  // BinaryenTypeNullref: %d\n", nullref);
-  assert(BinaryenTypeArity(nullref) == 1);
-  BinaryenTypeExpand(nullref, &valueType);
-  assert(valueType == nullref);
-
   BinaryenType exnref = BinaryenTypeExnref();
   printf("  // BinaryenTypeExnref: %d\n", exnref);
   assert(BinaryenTypeArity(exnref) == 1);
@@ -294,9 +288,10 @@ void test_core() {
                         temp10 = makeInt32(module, 1), temp11 = makeInt32(module, 3), temp12 = makeInt32(module, 5),
                         temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
-  BinaryenExpressionRef nullrefExpr = BinaryenRefNull(module);
-  BinaryenExpressionRef funcrefExpr =
-    BinaryenRefFunc(module, "kitchen()sinker");
+  BinaryenExpressionRef externrefExpr = BinaryenRefNull(module, BinaryenTypeExternref());
+  BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
+  funcrefExpr = BinaryenRefFunc(module, "kitchen()sinker");
+  BinaryenExpressionRef exnrefExpr = BinaryenRefNull(module, BinaryenTypeExnref());
 
   // Events
   BinaryenAddEvent(
@@ -718,10 +713,11 @@ void test_core() {
                                iIfF,
                                BinaryenTypeInt32()),
     // Reference types
-    BinaryenRefIsNull(module, nullrefExpr),
+    BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
+    BinaryenRefIsNull(module, exnrefExpr),
     BinaryenSelect(
-      module, temp10, nullrefExpr, funcrefExpr, BinaryenTypeFuncref()),
+      module, temp10, BinaryenRefNull(module, BinaryenTypeFuncref()), BinaryenRefFunc(module, "kitchen()sinker"), BinaryenTypeFuncref()),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
@@ -748,10 +744,6 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeFloat64()),
     BinaryenPop(module, BinaryenTypeFuncref()),
     BinaryenPop(module, BinaryenTypeExternref()),
-    BinaryenPop(module, BinaryenTypeNullref()),
-    BinaryenPop(module, BinaryenTypeExnref()),
-    BinaryenPop(module, BinaryenTypeFuncref()),
-    BinaryenPop(module, BinaryenTypeNullref()),
     BinaryenPop(module, BinaryenTypeExnref()),
 
     // TODO: Host
