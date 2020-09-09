@@ -307,8 +307,8 @@
      (ref.null func)
     )
     ;; After --flatten, this will be assigned to a local of funcref type. After
-    ;; --local-cse, even if we set (ref.null) to local $0 above, this should not
-    ;; be replaced with $0, because it is of type anyref.
+    ;; --local-cse, even if we set (ref.null func) to local $0 above, this
+    ;; should not be replaced with $0, because it is of type anyref.
     (ref.null func)
    )
   )
