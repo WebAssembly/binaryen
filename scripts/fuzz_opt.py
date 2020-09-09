@@ -111,9 +111,8 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
-                if possible in IMPLIED_FEATURE_OPTS.keys():
-                    for implied in IMPLIED_FEATURE_OPTS[possible]:
-                        FEATURE_OPTS.append(implied)
+                if possible in IMPLIED_FEATURE_OPTS:
+                    FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
