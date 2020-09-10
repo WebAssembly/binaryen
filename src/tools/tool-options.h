@@ -141,7 +141,7 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
-        FeatureSet optionsFeatures = FeatureSet::MVP;
+        FeatureSet optionsFeatures;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);
         if (module.features != optionsFeatures) {
@@ -157,7 +157,7 @@ struct ToolOptions : public Options {
 private:
   bool hasFeatureOptions = false;
   bool detectFeatures = false;
-  FeatureSet enabledFeatures = FeatureSet::MVP;
+  FeatureSet enabledFeatures;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };
 

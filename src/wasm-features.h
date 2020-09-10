@@ -36,6 +36,7 @@ struct FeatureSet {
     TailCall = 1 << 7,
     ReferenceTypes = 1 << 8,
     Multivalue = 1 << 9,
+    Default = MVP | MutableGlobals,
     All = (1 << 10) - 1
   };
 
@@ -66,7 +67,7 @@ struct FeatureSet {
     }
   }
 
-  FeatureSet() : features(MVP) {}
+  FeatureSet() : features(Default) {}
   FeatureSet(uint32_t features) : features(features) {}
   operator uint32_t() const { return features; }
 
