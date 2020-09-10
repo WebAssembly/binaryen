@@ -542,9 +542,16 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     return Type::none; // a poison value that must not be consumed
   }
   if (a.isRef()) {
-    // FIXME: `anyref` is only valid here if the `anyref` feature is enabled,
-    // but this information is not available within `Type` alone.
-    return b.isRef() ? Type::anyref : Type::none;
+    if (b.isRef()) {
+      // Just returning `anyref` assumes that this method is never called with
+      // let's say `externref` and `funcref` where the anyref feature is not
+      // enabled, and that it would be a bug either in a pass or on the user's
+      // end during code generation if it did happen. If it turns out that it
+      // can happen otherwise, this method would need to take the enabled
+      // feature set as an additional argument at all call sites.
+      return Type::anyref;
+    }
+    return Type::none;
   }
   if (a.isTuple()) {
     TypeList types;
