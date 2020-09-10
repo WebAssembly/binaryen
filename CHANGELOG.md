@@ -16,9 +16,10 @@ Current Trunk
 -------------
 - Remove asm2wasm, which supported Emscripten's fastcomp backend, after fastcomp
   was removed.
-- Enabling the exception handling feature now requires enabling the reference
-  types feature as well since `exnref` depends on it. The same applies to the
-  new anyref feature where `anyref` depends on reference types.
+- The new feature flag `--enable-anyref` enables just the `anyref` type incl.
+  basic subtyping of `externref`, `funcref` and `exnref` (if enabled).
+- Enabling the exception handling or anyref features without also enabling
+  reference types is a validation error now.
 
 v96
 ---
