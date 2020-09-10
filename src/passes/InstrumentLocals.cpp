@@ -192,18 +192,18 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_externref,
                 {Type::i32, Type::i32, Type::externref},
                 Type::externref);
-    }
-    if (curr->features.hasExceptionHandling()) {
-      addImport(
-        curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-      addImport(
-        curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-    }
-    if (curr->features.hasAnyref()) {
-      addImport(
-        curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
-      addImport(
-        curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      if (curr->features.hasExceptionHandling()) {
+        addImport(
+          curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+        addImport(
+          curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+      }
+      if (curr->features.hasAnyref()) {
+        addImport(
+          curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+        addImport(
+          curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      }
     }
     if (curr->features.hasSIMD()) {
       addImport(curr, get_v128, {Type::i32, Type::i32, Type::v128}, Type::v128);

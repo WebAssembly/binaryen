@@ -318,11 +318,8 @@ private:
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
       case Type::anyref:
-        assert(wasm.features.hasAnyref());
-        if (wasm.features.hasReferenceTypes()) {
-          options.push_back(Type::funcref);
-          options.push_back(Type::externref);
-        }
+        options.push_back(Type::funcref);
+        options.push_back(Type::externref);
         if (wasm.features.hasExceptionHandling()) {
           options.push_back(Type::exnref);
         }
