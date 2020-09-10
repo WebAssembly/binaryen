@@ -15,6 +15,7 @@
  */
 
 #include "stack-utils.h"
+#include "ir/iteration.h"
 #include "ir/properties.h"
 
 namespace wasm {
@@ -56,20 +57,13 @@ bool mayBeUnreachable(Expression* expr) {
 } // namespace StackUtils
 
 StackSignature::StackSignature(Expression* expr) {
-  params = Type::none;
-  if (Properties::isControlFlowStructure(expr)) {
-    if (expr->is<If>()) {
-      params = Type::i32;
-    }
-  } else {
-    std::vector<Type> inputs;
-    for (auto* child : ChildIterator(expr)) {
-      assert(child->type.isConcrete());
-      // Children might be tuple pops, so expand their types
-      inputs.insert(inputs.end(), child->type.begin(), child->type.end());
-    }
-    params = Type(inputs);
+  std::vector<Type> inputs;
+  for (auto* child : StackChildIterator(expr)) {
+    assert(child->type.isConcrete());
+    // Children might be tuple pops, so expand their types
+    inputs.insert(inputs.end(), child->type.begin(), child->type.end());
   }
+  params = Type(inputs);
   if (expr->type == Type::unreachable) {
     unreachable = true;
     results = Type::none;

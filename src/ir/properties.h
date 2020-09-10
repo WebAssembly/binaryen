@@ -19,7 +19,6 @@
 
 #include "ir/bits.h"
 #include "ir/effects.h"
-#include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
