@@ -543,12 +543,11 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   }
   if (a.isRef()) {
     if (b.isRef()) {
-      // Just returning `anyref` assumes that this method is never called with
-      // let's say `externref` and `funcref` where the anyref feature is not
-      // enabled, and that it would be a bug either in a pass or on the user's
-      // end during code generation if it did happen. If it turns out that it
-      // can happen otherwise, this method would need to take the enabled
-      // feature set as an additional argument at all call sites.
+      // The LUB of two different reference types is anyref, which may or may
+      // not be a valid type depending on whether the anyref feature is enabled.
+      // When anyref is disabled, it is possible for the finalization of invalid
+      // code to introduce a use of anyref via this function, but that is not a
+      // problem because it will be caught and rejected by validation.
       return Type::anyref;
     }
     return Type::none;
