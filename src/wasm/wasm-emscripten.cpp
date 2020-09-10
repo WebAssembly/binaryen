@@ -634,9 +634,6 @@ struct FixInvokeFunctionNamesWalker
   }
 
   Name fixEmEHSjLjNames(const Name& name, Signature sig) {
-    if (name == "emscripten_longjmp_jmpbuf") {
-      return "emscripten_longjmp";
-    }
     return fixEmExceptionInvoke(name, sig);
   }
 
