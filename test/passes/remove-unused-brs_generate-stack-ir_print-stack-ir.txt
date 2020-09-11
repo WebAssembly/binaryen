@@ -6,18 +6,11 @@
     loop $label$3
      block $label$4
       unreachable
-      unreachable
      end
-     unreachable
-     unreachable
      unreachable
     end
     unreachable
-    unreachable
-    unreachable
    end
-   unreachable
-   br_if $label$1
    unreachable
   end
  )
