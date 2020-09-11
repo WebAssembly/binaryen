@@ -12,7 +12,7 @@
    )
    (catch
     (local.set $0
-     (exnref.pop)
+     (pop exnref)
     )
     (drop
      (block $l (result i32)

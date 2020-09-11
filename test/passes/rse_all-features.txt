@@ -483,7 +483,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (local.set $x
      (i32.const 1)
@@ -507,7 +507,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -525,7 +525,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (local.set $x
      (i32.const 1)
@@ -550,7 +550,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -569,7 +569,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -589,14 +589,14 @@
      )
      (catch
       (rethrow
-       (exnref.pop)
+       (pop exnref)
       )
      )
     )
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (local.set $x
      (i32.const 1)

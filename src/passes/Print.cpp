@@ -1469,8 +1469,11 @@ struct PrintExpressionContents
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
-    prepareColor(o) << curr->type;
-    o << ".pop";
+    prepareColor(o) << "pop";
+    for (auto type : curr->type) {
+      assert(type.isBasic() && "TODO: print and parse compound types");
+      o << " " << type;
+    }
     restoreNormalColor(o);
   }
   void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }

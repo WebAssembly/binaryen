@@ -225,7 +225,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 456)
     )

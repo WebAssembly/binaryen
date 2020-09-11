@@ -1952,7 +1952,7 @@
    )
    (catch
     (local.set $0
-     (exnref.pop)
+     (pop exnref)
     )
     (call $foo
      (i32.const 3)
@@ -1976,7 +1976,7 @@
        (ref.null exn)
       )
       (catch
-       (exnref.pop)
+       (pop exnref)
       )
      )
     )
@@ -1999,7 +1999,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -2015,7 +2015,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
