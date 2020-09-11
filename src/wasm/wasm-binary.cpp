@@ -583,24 +583,49 @@ void WasmBinaryWriter::writeNames() {
 
   // local names
   {
-    auto substart =
-      startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
-    o << U32LEB(indexes.functionIndexes.size());
-    Index emitted = 0;
-    auto add = [&](Function* curr) {
-      o << U32LEB(emitted);
+    // Find all functions with at least one local name and only emit the
+    // subsection if there is at least one.
+    std::vector<std::pair<Index, Function*>> functionsWithLocalNames;
+    Index checked = 0;
+    auto check = [&](Function* curr) {
       auto numLocals = curr->getNumLocals();
-      o << U32LEB(numLocals);
-      for (size_t i = 0; i < numLocals; ++i) {
-        o << U32LEB(i);
-        writeEscapedName(curr->getLocalNameOrGeneric(i).str);
+      for (Index i = 0; i < numLocals; ++i) {
+        if (curr->hasLocalName(i)) {
+          functionsWithLocalNames.push_back({checked, curr});
+          break;
+        }
       }
-      ++emitted;
+      checked++;
     };
-    ModuleUtils::iterImportedFunctions(*wasm, add);
-    ModuleUtils::iterDefinedFunctions(*wasm, add);
-    assert(emitted == indexes.functionIndexes.size());
-    finishSubsection(substart);
+    ModuleUtils::iterImportedFunctions(*wasm, check);
+    ModuleUtils::iterDefinedFunctions(*wasm, check);
+    assert(checked == indexes.functionIndexes.size());
+    if (functionsWithLocalNames.size() > 0) {
+      // Otherwise emit those functions but only include locals with a name.
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
+      o << U32LEB(functionsWithLocalNames.size());
+      Index emitted = 0;
+      for (auto& indexedFunc : functionsWithLocalNames) {
+        std::vector<std::pair<Index, Name>> localsWithNames;
+        auto numLocals = indexedFunc.second->getNumLocals();
+        for (Index i = 0; i < numLocals; ++i) {
+          if (indexedFunc.second->hasLocalName(i)) {
+            localsWithNames.push_back({i, indexedFunc.second->getLocalName(i)});
+          }
+        }
+        assert(localsWithNames.size());
+        o << U32LEB(indexedFunc.first);
+        o << U32LEB(localsWithNames.size());
+        for (auto& indexedLocal : localsWithNames) {
+          o << U32LEB(indexedLocal.first);
+          writeEscapedName(indexedLocal.second.str);
+        }
+        emitted++;
+      }
+      assert(emitted == functionsWithLocalNames.size());
+      finishSubsection(substart);
+    }
   }
 
   finishSection(start);

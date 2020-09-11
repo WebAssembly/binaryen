@@ -124,10 +124,10 @@ func: func_c
  block          : 1       
  call           : 15      
 export: a (func_a)
- [removable-bytes-without-it]: 76      
+ [removable-bytes-without-it]: 72      
  [total]        : 0       
 export: b (func_b)
- [removable-bytes-without-it]: 20      
+ [removable-bytes-without-it]: 18      
  [total]        : 0       
 (module
  (type $none_=>_none (func))
@@ -219,7 +219,7 @@ func: func_a
  block          : 1       
  call           : 5       
 start: func_a
- [removable-bytes-without-it]: 74      
+ [removable-bytes-without-it]: 70      
  [total]        : 0       
 (module
  (type $none_=>_none (func))
@@ -247,7 +247,7 @@ func: 0
  [vars]         : 0       
  global.get     : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 71      
+ [removable-bytes-without-it]: 69      
  [total]        : 0       
 (module
  (type $none_=>_i32 (func (result i32)))
