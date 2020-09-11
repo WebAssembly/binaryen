@@ -269,8 +269,8 @@ struct OptimizeInstructions
               // definitely impossible even after zext
               assert(bits < 32);
               c->value = Literal(int32_t(0x80000000));
-              // TODO: if no side effects, we can just replace it all
-              // with 1 or 0
+              // TODO: if no side effects, we can just replace it all with 1 or
+              // 0
             } else {
               // otherwise, they are all ones, so we can mask them off as
               // mentioned before
@@ -1246,13 +1246,13 @@ private:
               // i64(bool(x)) == 1  ==>  i32(bool(x))
               return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
             }
-            case NeInt32: {
-              // bool(x) != 1  ==>  !bool(x)
-              return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
-            }
+            case NeInt32:
             case NeInt64: {
+              // bool(x) != 1  ==>  !bool(x)
               // i64(bool(x)) != 1  ==>  !i64(bool(x))
-              return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
+              return Builder(*getModule())
+                .makeUnary(Abstract::getUnary(binary->type, Abstract::EqZ),
+                           binary->left);
             }
             default: {
             }
