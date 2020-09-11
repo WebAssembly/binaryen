@@ -36,7 +36,7 @@
   (call $main)
  )
 )
-148
+145
 (module
  (type $none_=>_none (func))
  (memory $0 1024 1024)
