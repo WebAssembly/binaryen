@@ -304,9 +304,9 @@ int main(int argc, const char* argv[]) {
         std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
         auto module = wasm::make_unique<Module>();
-        Name moduleName;
+        auto& moduleName = module->name;
         auto builder = wasm::make_unique<SExpressionWasmBuilder>(
-          *module, *root[i], IRProfile::Normal, &moduleName);
+          *module, *root[i], IRProfile::Normal);
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;

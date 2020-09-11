@@ -2395,6 +2395,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     currModule = curr;
     o << '(';
     printMajor(o, "module");
+    if (curr->name.is()) {
+      o << ' ';
+      printName(curr->name, o);
+    }
     incIndent();
     std::vector<Signature> signatures;
     std::unordered_map<Signature, Index> indices;

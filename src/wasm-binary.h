@@ -382,6 +382,7 @@ extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
 };

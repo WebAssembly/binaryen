@@ -15,7 +15,7 @@
   (nop)
  )
  (func $eh_test
-  (local $0 exnref)
+  (local $exn exnref)
   (try
    (do
     (throw $event$0
@@ -23,14 +23,14 @@
     )
    )
    (catch
-    (local.set $0
+    (local.set $exn
      (exnref.pop)
     )
     (drop
      (block $label$3 (result i32)
       (rethrow
        (br_on_exn $label$3 $event$0
-        (local.get $0)
+        (local.get $exn)
        )
       )
      )
