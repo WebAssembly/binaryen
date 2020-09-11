@@ -683,12 +683,13 @@ struct OptimizeInstructions
       optimizeMemoryAccess(load->ptr, load->offset);
     } else if (auto* store = curr->dynCast<Store>()) {
       optimizeMemoryAccess(store->ptr, store->offset);
-      if (store->bytes != 8 && store->valueType.isInteger()) {
+      if (store->valueType.isInteger()) {
         // truncates constant values during stores
         // (i32|i64).store(8|16|32)(p, C)   ==>
         //    (i32|i64).store(8|16|32)(p, C & mask)
         if (auto* c = store->value->dynCast<Const>()) {
-          c->value = c->value.and_(Literal(Bits::lowBitMask(store->bytes * 8)));
+          c->value = c->value.and_(Literal::makeFromInt32(
+            Bits::lowBitMask(store->bytes * 8), store->valueType));
         }
       }
       // stores of fewer bits truncates anyhow
