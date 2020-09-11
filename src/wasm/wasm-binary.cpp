@@ -2208,8 +2208,10 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         } else if (index - numFunctionImports < functions.size()) {
           functions[index - numFunctionImports]->name = name;
         } else {
-          throwError("function index out of bounds: " + std::string(name.str) +
-                     "@" + std::to_string(index));
+          std::cerr << "warning: function index out of bounds in name section, "
+                       "function subsection: "
+                    << std::string(name.str) << " at index "
+                    << std::to_string(index) << std::endl;
         }
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameLocal) {
@@ -2217,26 +2219,32 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       auto numFunctionImports = functionImports.size();
       for (size_t i = 0; i < numFuncs; i++) {
         auto funcIndex = getU32LEB();
-        Function* func;
+        Function* func = nullptr;
         if (funcIndex < numFunctionImports) {
           func = functionImports[funcIndex];
         } else if (funcIndex - numFunctionImports < functions.size()) {
           func = functions[funcIndex - numFunctionImports];
         } else {
-          throwError("function index out of bounds: " +
-                     std::to_string(funcIndex));
+          std::cerr
+            << "warning: function index out of bounds in name section, local "
+               "subsection: "
+            << std::to_string(funcIndex) << std::endl;
         }
         auto numLocals = getU32LEB();
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
           auto localName = getInlineString();
+          if (!func) {
+            continue; // read and discard in case of prior error
+          }
           if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
-            throwError(
-              "local index out of bounds: " + std::string(localName.str) + "@" +
-              std::to_string(localIndex) + " in " +
-              std::string(func->name.str));
+            std::cerr << "warning: local index out of bounds in name "
+                         "section, local subsection: "
+                      << std::string(localName.str) << " at index "
+                      << std::to_string(localIndex) << " in function "
+                      << std::string(func->name.str) << std::endl;
           }
         }
       }
