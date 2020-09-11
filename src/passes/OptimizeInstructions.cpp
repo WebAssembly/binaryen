@@ -689,7 +689,7 @@ struct OptimizeInstructions
         //    (i32|i64).store(8|16|32)(p, C & mask)
         if (auto* c = store->value->dynCast<Const>()) {
           if (store->valueType == Type::i64 && store->bytes == 4) {
-            c->value = c->value.and_(Literal(uint64_t(0x00000000ffffffff)));
+            c->value = c->value.and_(Literal(uint64_t(0xffffffff)));
           } else {
             c->value = c->value.and_(Literal::makeFromInt32(
               Bits::lowBitMask(store->bytes * 8), store->valueType));
