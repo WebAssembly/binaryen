@@ -17,7 +17,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 3)
     )
@@ -34,7 +34,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 3)
     )
@@ -57,7 +57,7 @@
       )
       (catch
        (drop
-        (exnref.pop)
+        (pop exnref)
        )
       )
      )
@@ -65,7 +65,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 3)
     )
@@ -83,7 +83,7 @@
       )
       (catch
        (drop
-        (exnref.pop)
+        (pop exnref)
        )
        (throw $e
         (i32.const 0)
@@ -94,7 +94,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 3)
     )

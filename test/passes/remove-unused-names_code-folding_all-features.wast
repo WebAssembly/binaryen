@@ -1198,9 +1198,9 @@
         (try
           (do)
           (catch
-            ;; Expressions containing exnref.pop should NOT be taken out and
+            ;; Expressions containing (pop exnref) should NOT be taken out and
             ;; folded.
-            (local.set $exn (exnref.pop))
+            (local.set $exn (pop exnref))
             (drop (i32.const 111))
             (drop (i32.const 222))
             (drop (i32.const 333))
@@ -1209,7 +1209,7 @@
         )
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (drop (i32.const 111))
         (drop (i32.const 222))
         (drop (i32.const 333))
@@ -1257,7 +1257,7 @@
         (return (ref.null exn))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (call $foo)
         (call $foo)
         (call $foo)
@@ -1273,14 +1273,14 @@
       (try
         (do
           ;; Expressions that can throw should NOT be taken out of 'try' scope.
-          (local.set $exn (exnref.pop))
+          (local.set $exn (pop exnref))
           (call $foo)
           (call $foo)
           (call $foo)
           (br $x)
         )
         (catch
-          (local.set $exn (exnref.pop))
+          (local.set $exn (pop exnref))
           (call $foo)
           (call $foo)
           (call $foo)

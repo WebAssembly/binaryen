@@ -249,7 +249,7 @@
         )
         (catch
           (drop
-            (exnref.pop)
+            (pop exnref)
           )
           (i32.eqz
             (i32.eqz

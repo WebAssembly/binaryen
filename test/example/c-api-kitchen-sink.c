@@ -723,8 +723,11 @@ void test_core() {
     BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
     BinaryenRefIsNull(module, exnrefExpr),
-    BinaryenSelect(
-      module, temp10, BinaryenRefNull(module, BinaryenTypeFuncref()), BinaryenRefFunc(module, "kitchen()sinker"), BinaryenTypeFuncref()),
+    BinaryenSelect(module,
+                   temp10,
+                   BinaryenRefNull(module, BinaryenTypeFuncref()),
+                   BinaryenRefFunc(module, "kitchen()sinker"),
+                   BinaryenTypeFuncref()),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
@@ -752,6 +755,7 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeFuncref()),
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, BinaryenTypeExnref()),
+    BinaryenPop(module, iIfF),
 
     // TODO: Host
     BinaryenNop(module),

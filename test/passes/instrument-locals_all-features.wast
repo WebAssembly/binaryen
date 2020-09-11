@@ -42,9 +42,9 @@
     (local.set $E (local.get $E))
 
     ;; Pop instructions should not be instrumented
-    (local.set $F (funcref.pop))
-    (local.set $X (externref.pop))
-    (local.set $E (exnref.pop))
+    (local.set $F (pop funcref))
+    (local.set $X (pop externref))
+    (local.set $E (pop exnref))
 
     ;; Add new instructions here so expected output doesn't change too much, it
     ;; depends on order of instructions in this file.
@@ -52,4 +52,3 @@
     (local.set $S (v128.const i32x4 0x00000000 0x00000001 0x00000002 0x00000003))
   )
 )
-

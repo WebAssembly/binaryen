@@ -1782,7 +1782,7 @@ BinaryenFeatureAll: 2047
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -1834,25 +1834,28 @@ BinaryenFeatureAll: 2047
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (exnref.pop)
+       (pop exnref)
+      )
+      (drop
+       (pop i32 i64 f32 f64)
       )
       (nop)
       (unreachable)

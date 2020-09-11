@@ -805,7 +805,7 @@
         (drop (i32.const 0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )
@@ -820,13 +820,13 @@
             (throw $e (i32.const 0))
           )
           (catch
-            (drop (exnref.pop))
+            (drop (pop exnref))
             (local.set $0 (i32.const 1))
           )
         )
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )
@@ -841,7 +841,7 @@
           (unreachable)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (br $label$1)
         )
       )

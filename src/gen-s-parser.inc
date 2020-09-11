@@ -8,21 +8,13 @@ char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
   case 'a': {
-    switch (op[1]) {
-      case 'n':
-        if (strcmp(op, "anyref.pop") == 0) { return makePop(Type::anyref); }
+    switch (op[7]) {
+      case 'f':
+        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
         goto parse_error;
-      case 't': {
-        switch (op[7]) {
-          case 'f':
-            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-            goto parse_error;
-          case 'n':
-            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
+      case 'n':
+        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -78,25 +70,9 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'e': {
-    switch (op[1]) {
-      case 'l':
-        if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
-        goto parse_error;
-      case 'x': {
-        switch (op[2]) {
-          case 'n':
-            if (strcmp(op, "exnref.pop") == 0) { return makePop(Type::exnref); }
-            goto parse_error;
-          case 't':
-            if (strcmp(op, "externref.pop") == 0) { return makePop(Type::externref); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
-      default: goto parse_error;
-    }
-  }
+  case 'e':
+    if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
+    goto parse_error;
   case 'f': {
     switch (op[1]) {
       case '3': {
@@ -235,9 +211,6 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'p':
-                if (strcmp(op, "f32.pop") == 0) { return makePop(Type::f32); }
-                goto parse_error;
               case 'r':
                 if (strcmp(op, "f32.reinterpret_i32") == 0) { return makeUnary(s, UnaryOp::ReinterpretInt32); }
                 goto parse_error;
@@ -536,17 +509,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'p': {
-                switch (op[5]) {
-                  case 'o':
-                    if (strcmp(op, "f64.pop") == 0) { return makePop(Type::f64); }
-                    goto parse_error;
-                  case 'r':
-                    if (strcmp(op, "f64.promote_f32") == 0) { return makeUnary(s, UnaryOp::PromoteFloat32); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'p':
+                if (strcmp(op, "f64.promote_f32") == 0) { return makeUnary(s, UnaryOp::PromoteFloat32); }
+                goto parse_error;
               case 'r':
                 if (strcmp(op, "f64.reinterpret_i64") == 0) { return makeUnary(s, UnaryOp::ReinterpretInt64); }
                 goto parse_error;
@@ -717,9 +682,6 @@ switch (op[0]) {
           default: goto parse_error;
         }
       }
-      case 'u':
-        if (strcmp(op, "funcref.pop") == 0) { return makePop(Type::funcref); }
-        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -1306,17 +1268,9 @@ switch (op[0]) {
               case 'o':
                 if (strcmp(op, "i32.or") == 0) { return makeBinary(s, BinaryOp::OrInt32); }
                 goto parse_error;
-              case 'p': {
-                switch (op[7]) {
-                  case '\0':
-                    if (strcmp(op, "i32.pop") == 0) { return makePop(Type::i32); }
-                    goto parse_error;
-                  case 'c':
-                    if (strcmp(op, "i32.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntInt32); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'p':
+                if (strcmp(op, "i32.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntInt32); }
+                goto parse_error;
               case 'r': {
                 switch (op[5]) {
                   case 'e': {
@@ -2056,17 +2010,9 @@ switch (op[0]) {
               case 'o':
                 if (strcmp(op, "i64.or") == 0) { return makeBinary(s, BinaryOp::OrInt64); }
                 goto parse_error;
-              case 'p': {
-                switch (op[7]) {
-                  case '\0':
-                    if (strcmp(op, "i64.pop") == 0) { return makePop(Type::i64); }
-                    goto parse_error;
-                  case 'c':
-                    if (strcmp(op, "i64.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntInt64); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'p':
+                if (strcmp(op, "i64.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntInt64); }
+                goto parse_error;
               case 'r': {
                 switch (op[5]) {
                   case 'e': {
@@ -2571,6 +2517,9 @@ switch (op[0]) {
   case 'n':
     if (strcmp(op, "nop") == 0) { return makeNop(); }
     goto parse_error;
+  case 'p':
+    if (strcmp(op, "pop") == 0) { return makePop(s); }
+    goto parse_error;
   case 'r': {
     switch (op[2]) {
       case 'f': {
@@ -2695,9 +2644,6 @@ switch (op[0]) {
                 goto parse_error;
               case 'o':
                 if (strcmp(op, "v128.or") == 0) { return makeBinary(s, BinaryOp::OrVec128); }
-                goto parse_error;
-              case 'p':
-                if (strcmp(op, "v128.pop") == 0) { return makePop(Type::v128); }
                 goto parse_error;
               case 's':
                 if (strcmp(op, "v128.store") == 0) { return makeStore(s, Type::v128, /*isAtomic=*/false); }

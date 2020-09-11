@@ -748,7 +748,7 @@
       )
       (catch
         (drop
-          (exnref.pop)
+          (pop exnref)
         )
       )
     )

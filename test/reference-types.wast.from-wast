@@ -702,7 +702,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (ref.null extern)
     )
@@ -715,7 +715,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (ref.null func)
     )
@@ -727,7 +727,7 @@
      (ref.null exn)
     )
     (catch
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -738,7 +738,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (ref.func $foo)
     )
@@ -750,7 +750,7 @@
      (local.get $local_externref)
     )
     (catch
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -761,7 +761,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (local.get $local_externref)
     )
@@ -773,7 +773,7 @@
      (ref.func $foo)
     )
     (catch
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -784,7 +784,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (local.get $local_externref)
     )
@@ -797,7 +797,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (ref.func $foo)
     )

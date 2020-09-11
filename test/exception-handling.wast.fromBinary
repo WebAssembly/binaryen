@@ -24,7 +24,7 @@
    )
    (catch
     (local.set $0
-     (exnref.pop)
+     (pop exnref)
     )
     (drop
      (block $label$3 (result i32)
@@ -44,7 +44,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (br $label$4)
     )
@@ -56,7 +56,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -67,7 +67,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (call $foo)
     (call $bar)

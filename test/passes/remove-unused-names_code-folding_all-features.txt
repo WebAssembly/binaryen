@@ -1721,7 +1721,7 @@
       )
       (catch
        (local.set $exn
-        (exnref.pop)
+        (pop exnref)
        )
        (br $folding-inner0)
       )
@@ -1729,7 +1729,7 @@
     )
     (catch
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (br $folding-inner0)
     )
@@ -1804,7 +1804,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (call $foo)
     (call $foo)
@@ -1823,7 +1823,7 @@
    (try
     (do
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (call $foo)
      (call $foo)
@@ -1832,7 +1832,7 @@
     )
     (catch
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (call $foo)
      (call $foo)
