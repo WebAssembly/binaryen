@@ -58,7 +58,7 @@ bool mayBeUnreachable(Expression* expr) {
 
 StackSignature::StackSignature(Expression* expr) {
   std::vector<Type> inputs;
-  for (auto* child : StackChildIterator(expr)) {
+  for (auto* child : ValueChildIterator(expr)) {
     assert(child->type.isConcrete());
     // Children might be tuple pops, so expand their types
     inputs.insert(inputs.end(), child->type.begin(), child->type.end());

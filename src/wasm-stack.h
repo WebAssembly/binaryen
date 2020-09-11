@@ -233,6 +233,9 @@ void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   }
   for (auto* child : block->list) {
     visit(child);
+    // Since this child was unreachable, either this child or one of its
+    // descendants was a source of unreachability that was actually
+    // emitted. Subsequent children won't be reachable, so skip them.
     if (child->type == Type::unreachable) {
       break;
     }
@@ -242,8 +245,11 @@ void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   emitDebugLocation(curr);
+  // We emit unreachable instructions that create unreachability, but not
+  // unreachable instructions that just inherit unreachability from their
+  // children, since the latter won't be reached.
   bool hasUnreachableChild = false;
-  for (auto* child : StackChildIterator(curr)) {
+  for (auto* child : ValueChildIterator(curr)) {
     visit(child);
     if (child->type == Type::unreachable) {
       hasUnreachableChild = true;

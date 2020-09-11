@@ -36,7 +36,7 @@ namespace wasm {
 //
 //   ChildIterator - Iterates over all children
 //
-//   StackChildIterator - Iterates over all children that produce values used by
+//   ValueChildIterator - Iterates over all children that produce values used by
 //                        this instruction. For example, includes If::condition
 //                        but not If::ifTrue.
 //
@@ -58,12 +58,12 @@ template<template<class, class> class Scanner> class AbstractChildIterator {
   };
 
 public:
-  std::vector<Expression*> children;
+  SmallVector<Expression*, 4> children;
 
   AbstractChildIterator(Expression* parent) {
     struct Traverser : public PostWalker<Traverser> {
       Expression* parent;
-      std::vector<Expression*>* children;
+      SmallVector<Expression*, 4>* children;
 
       // We need to scan subchildren exactly once - just the parent.
       bool scanned = false;
@@ -89,14 +89,13 @@ public:
 };
 
 template<class SubType, class Visitor>
-struct StackChildScanner : PostWalker<SubType, Visitor> {
-  using Self = StackChildScanner<SubType, Visitor>;
+struct ValueChildScanner : PostWalker<SubType, Visitor> {
   static void scan(SubType* self, Expression** currp) {
     auto* curr = *currp;
     if (Properties::isControlFlowStructure(curr)) {
       // If conditions are the only stack children of control flow structures
-      if (auto* if_ = curr->dynCast<If>()) {
-        self->pushTask(SubType::scan, &if_->condition);
+      if (auto* iff = curr->dynCast<If>()) {
+        self->pushTask(SubType::scan, &iff->condition);
       }
     } else {
       // All children on non-control flow expressions are stack children
@@ -106,7 +105,7 @@ struct StackChildScanner : PostWalker<SubType, Visitor> {
 };
 
 using ChildIterator = AbstractChildIterator<PostWalker>;
-using StackChildIterator = AbstractChildIterator<StackChildScanner>;
+using ValueChildIterator = AbstractChildIterator<ValueChildScanner>;
 
 // Returns true if the current expression contains a certain kind of expression,
 // within the given depth of BFS. If depth is -1, this searches all children.
