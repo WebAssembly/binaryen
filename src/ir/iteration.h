@@ -93,12 +93,12 @@ struct ValueChildScanner : PostWalker<SubType, Visitor> {
   static void scan(SubType* self, Expression** currp) {
     auto* curr = *currp;
     if (Properties::isControlFlowStructure(curr)) {
-      // If conditions are the only stack children of control flow structures
+      // If conditions are the only value children of control flow structures
       if (auto* iff = curr->dynCast<If>()) {
         self->pushTask(SubType::scan, &iff->condition);
       }
     } else {
-      // All children on non-control flow expressions are stack children
+      // All children on non-control flow expressions are value children
       PostWalker<SubType, Visitor>::scan(self, currp);
     }
   }

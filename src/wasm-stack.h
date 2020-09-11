@@ -247,7 +247,11 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   emitDebugLocation(curr);
   // We emit unreachable instructions that create unreachability, but not
   // unreachable instructions that just inherit unreachability from their
-  // children, since the latter won't be reached.
+  // children, since the latter won't be reached. This (together with logic in
+  // the control flow visitors) also ensures that the final instruction in each
+  // unreachable block is a source of unreachability, which means we don't need
+  // to emit an extra `unreachable` before the end of the block to prevent type
+  // errors.
   bool hasUnreachableChild = false;
   for (auto* child : ValueChildIterator(curr)) {
     visit(child);
