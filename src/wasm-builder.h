@@ -631,6 +631,7 @@ public:
         return makeRefNull(value.type);
       case Type::externref:
       case Type::exnref: // TODO: ExceptionPackage?
+      case Type::anyref:
         assert(value.isNull());
         return makeRefNull(value.type);
       default:
@@ -825,6 +826,7 @@ public:
       case Type::funcref:
       case Type::externref:
       case Type::exnref:
+      case Type::anyref:
         return ExpressionManipulator::refNull(curr, curr->type);
       case Type::none:
         return ExpressionManipulator::nop(curr);

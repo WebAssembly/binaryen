@@ -579,6 +579,7 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::funcref:
       case wasm::Type::externref:
       case wasm::Type::exnref:
+      case wasm::Type::anyref:
       case wasm::Type::none:
       case wasm::Type::unreachable:
         return false;

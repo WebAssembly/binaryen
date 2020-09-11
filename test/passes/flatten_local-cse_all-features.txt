@@ -764,3 +764,52 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_anyref (func (result anyref)))
+ (func $subtype-test (result anyref)
+  (local $0 funcref)
+  (local $1 funcref)
+  (local $2 anyref)
+  (local $3 anyref)
+  (block
+   (nop)
+   (loop $label$1
+    (local.set $0
+     (ref.null func)
+    )
+   )
+   (local.set $1
+    (local.get $0)
+   )
+   (local.set $2
+    (local.get $0)
+   )
+  )
+  (local.set $3
+   (local.get $2)
+  )
+  (return
+   (local.get $2)
+  )
+ )
+ (func $test
+  (local $0 anyref)
+  (local $1 funcref)
+  (local $2 funcref)
+  (block $label$1
+   (local.set $0
+    (ref.null func)
+   )
+   (local.set $1
+    (ref.null func)
+   )
+  )
+  (local.set $2
+   (local.get $1)
+  )
+  (drop
+   (local.get $1)
+  )
+ )
+)

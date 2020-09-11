@@ -375,18 +375,16 @@
    )
   )
  )
- ;; TODO (GC)
- ;; (func $subtype-test
- ;;  (local $0 anyref)
- ;;  (local $1 funcref)
- ;;  (local $2 funcref)
- ;;  (local.set $0
- ;;   (local.get $1)
- ;;  )
- ;;  (local.set $2
- ;;    ;; This should NOT become $0, because types of $0 and $1 are different
- ;;   (local.get $1)
- ;;  )
- ;; )
+ (func $subtype-test
+  (local $0 anyref)
+  (local $1 funcref)
+  (local $2 funcref)
+  (local.set $0
+   (local.get $1)
+  )
+  (local.set $2
+    ;; This should NOT become $0, because types of $0 and $1 are different
+   (local.get $1)
+  )
+ )
 )
-

@@ -51,6 +51,7 @@ instructions = [
     ("funcref.pop",    "makePop(Type::funcref)"),
     ("externref.pop",  "makePop(Type::externref)"),
     ("exnref.pop",     "makePop(Type::exnref)"),
+    ("anyref.pop",     "makePop(Type::anyref)"),
     ("i32.load",       "makeLoad(s, Type::i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, Type::i64, /*isAtomic=*/false)"),
     ("f32.load",       "makeLoad(s, Type::f32, /*isAtomic=*/false)"),

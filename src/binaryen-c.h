@@ -101,6 +101,7 @@ BINARYEN_API BinaryenType BinaryenTypeVec128(void);
 BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
 BINARYEN_API BinaryenType BinaryenTypeExternref(void);
 BINARYEN_API BinaryenType BinaryenTypeExnref(void);
+BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
@@ -196,6 +197,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureAnyref(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules

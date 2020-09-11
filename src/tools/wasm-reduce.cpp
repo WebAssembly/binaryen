@@ -598,6 +598,7 @@ struct Reducer
               case Type::funcref:
               case Type::externref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -623,6 +624,7 @@ struct Reducer
               case Type::funcref:
               case Type::externref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -648,6 +650,7 @@ struct Reducer
               case Type::funcref:
               case Type::externref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -673,6 +676,7 @@ struct Reducer
               case Type::funcref:
               case Type::externref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -684,6 +688,7 @@ struct Reducer
           case Type::funcref:
           case Type::externref:
           case Type::exnref:
+          case Type::anyref:
             continue; // not implemented yet
           case Type::none:
           case Type::unreachable:

@@ -69,6 +69,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::none:
         break;
       case Type::externref:
+      case Type::anyref:
         break; // null
       case Type::funcref:
       case Type::exnref:
@@ -221,6 +222,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
       break;
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
       if (isNull()) {
         break;
       }
@@ -383,6 +385,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       } else {
         o << "exnref(" << literal.getExceptionPackage() << ")";
       }
+      break;
+    case Type::anyref:
+      assert(literal.isNull() && "TODO: non-null anyref values");
+      o << "anyref(null)";
       break;
     case Type::externref:
       assert(literal.isNull() && "TODO: non-null externref values");
@@ -612,6 +618,7 @@ Literal Literal::eqz() const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -633,6 +640,7 @@ Literal Literal::neg() const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -654,6 +662,7 @@ Literal Literal::abs() const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -758,6 +767,7 @@ Literal Literal::add(const Literal& other) const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -779,6 +789,7 @@ Literal Literal::sub(const Literal& other) const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -896,6 +907,7 @@ Literal Literal::mul(const Literal& other) const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1141,6 +1153,7 @@ Literal Literal::eq(const Literal& other) const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1162,6 +1175,7 @@ Literal Literal::ne(const Literal& other) const {
     case Type::funcref:
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

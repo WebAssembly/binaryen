@@ -256,12 +256,13 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
   {TypeInfo({Type::externref}), Type::externref},
   {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
-  // TODO (GC): Add canonical ids
-  // * `(ref null any) == anyref`
-  // * `(ref null eq) == eqref`
-  // * `(ref i31) == i31ref`
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
+  {TypeInfo({Type::anyref}), Type::anyref},
+  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
+  // TODO (GC): Add canonical ids
+  // * `(ref null eq) == eqref`
+  // * `(ref i31) == i31ref`
 };
 
 } // anonymous namespace
@@ -340,7 +341,7 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= anyref;
   } else {
     return getTypeInfo(*this)->isRef();
   }
@@ -366,7 +367,7 @@ bool Type::isException() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= anyref;
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -407,6 +408,7 @@ unsigned Type::getByteSize() const {
       case Type::funcref:
       case Type::externref:
       case Type::exnref:
+      case Type::anyref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -451,6 +453,8 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
+      case Type::anyref:
+        return FeatureSet::ReferenceTypes | FeatureSet::Anyref;
       default:
         return FeatureSet::MVP;
     }
@@ -478,6 +482,8 @@ HeapType Type::getHeapType() const {
         return HeapType::ExternKind;
       case exnref:
         return HeapType::ExnKind;
+      case anyref:
+        return HeapType::AnyKind;
       default:
         break;
     }
@@ -502,9 +508,11 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
-  // TODO (GC): subtyping, currently checks for equality only
   if (left == right) {
     return true;
+  }
+  if (left.isRef() && right.isRef()) {
+    return right == Type::anyref;
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
@@ -532,6 +540,17 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   }
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
+  }
+  if (a.isRef()) {
+    if (b.isRef()) {
+      // The LUB of two different reference types is anyref, which may or may
+      // not be a valid type depending on whether the anyref feature is enabled.
+      // When anyref is disabled, it is possible for the finalization of invalid
+      // code to introduce a use of anyref via this function, but that is not a
+      // problem because it will be caught and rejected by validation.
+      return Type::anyref;
+    }
+    return Type::none;
   }
   if (a.isTuple()) {
     TypeList types;
@@ -731,6 +750,9 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
       case Type::exnref:
         os << "exnref";
+        break;
+      case Type::anyref:
+        os << "anyref";
         break;
     }
   } else {

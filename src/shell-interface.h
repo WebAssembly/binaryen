@@ -118,6 +118,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case Type::funcref:
           case Type::externref:
           case Type::exnref:
+          case Type::anyref:
             globals[import->name] = {Literal::makeNull(import->type)};
             break;
           case Type::none:

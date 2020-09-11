@@ -1020,7 +1020,6 @@
     (return (i32.sub (i32.const 1) (i32.const 2)))
   )
 
-  ;; TODO (GC)
   ;; subtypes
 
   ;; br_if leaves a value on the stack if not taken, which later can be the last
@@ -1028,19 +1027,19 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  ;; (func $subtype (result externref)
-  ;;   (local $0 anyref)
-  ;;   (block $label0 (result externref)
-  ;;     (block (result anyref)
-  ;;       (local.tee $0
-  ;;         (br_if $label0
-  ;;           (ref.null extern)
-  ;;           (i32.const 0)
-  ;;         )
-  ;;       )
-  ;;     )
-  ;;   )
-  ;; )
+  (func $subtype (result anyref)
+    (local $0 externref)
+    (block $label0 (result anyref)
+      (block (result externref)
+        (local.tee $0
+          (br_if $label0
+            (ref.null extern)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
 )
 (module
  (func $0 (param $0 i64) (param $1 f32)
