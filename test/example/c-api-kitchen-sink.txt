@@ -8,6 +8,7 @@
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
   // BinaryenTypeExnref: 9
+  // BinaryenTypeAnyref: 10
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -20,7 +21,8 @@ BinaryenFeatureExceptionHandling: 64
 BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
-BinaryenFeatureAll: 1023
+BinaryenFeatureAnyref: 1024
+BinaryenFeatureAll: 2047
 (f32.neg
  (f32.const -33.61199951171875)
 )

@@ -50,7 +50,8 @@ public:
     funcref,
     externref,
     exnref,
-    _last_basic_id = exnref
+    anyref,
+    _last_basic_id = anyref
   };
 
   Type() = default;
@@ -88,11 +89,11 @@ public:
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc, n_ullable
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
-  // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
+  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │
+  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
-  // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -330,11 +331,11 @@ struct HeapType {
   enum Kind {
     FuncKind,
     ExternKind,
+    ExnKind,
     AnyKind,
     EqKind,
     I31Kind,
-    ExnKind,
-    _last_basic_kind = ExnKind,
+    _last_basic_kind = I31Kind,
     SignatureKind,
     StructKind,
     ArrayKind,

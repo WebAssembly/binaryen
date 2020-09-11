@@ -5,6 +5,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_f32 (func (result f32)))
  (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+ (type $none_=>_anyref (func (result anyref)))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
@@ -2374,6 +2375,53 @@
    (local.get $1)
   )
   (unreachable)
+ )
+ (func $subtype (result anyref)
+  (local $0 externref)
+  (local $1 anyref)
+  (local $2 externref)
+  (local $3 externref)
+  (local $4 externref)
+  (local $5 externref)
+  (local $6 externref)
+  (local $7 anyref)
+  (block $label0
+   (block $block
+    (local.set $1
+     (ref.null extern)
+    )
+    (local.set $2
+     (ref.null extern)
+    )
+    (br_if $label0
+     (i32.const 0)
+    )
+    (local.set $3
+     (local.get $2)
+    )
+    (local.set $0
+     (local.get $3)
+    )
+    (local.set $4
+     (local.get $0)
+    )
+    (local.set $5
+     (local.get $4)
+    )
+   )
+   (local.set $6
+    (local.get $5)
+   )
+   (local.set $1
+    (local.get $6)
+   )
+  )
+  (local.set $7
+   (local.get $1)
+  )
+  (return
+   (local.get $7)
+  )
  )
 )
 (module

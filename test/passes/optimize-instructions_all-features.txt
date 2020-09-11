@@ -14,6 +14,7 @@
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_anyref (func (result anyref)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
@@ -3710,6 +3711,9 @@
    )
    (unreachable)
   )
+ )
+ (func $if-arms-subtype (result anyref)
+  (ref.null extern)
  )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if

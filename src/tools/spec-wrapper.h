@@ -58,6 +58,9 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::exnref:
           ret += "(ref.null exn)";
           break;
+        case Type::anyref:
+          ret += "(ref.null any)";
+          break;
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

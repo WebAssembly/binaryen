@@ -36,7 +36,8 @@ struct FeatureSet {
     TailCall = 1 << 7,
     ReferenceTypes = 1 << 8,
     Multivalue = 1 << 9,
-    All = (1 << 10) - 1
+    Anyref = 1 << 10,
+    All = (1 << 11) - 1
   };
 
   static std::string toString(Feature f) {
@@ -61,6 +62,8 @@ struct FeatureSet {
         return "reference-types";
       case Multivalue:
         return "multivalue";
+      case Anyref:
+        return "anyref";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -84,6 +87,7 @@ struct FeatureSet {
   bool hasTailCall() const { return (features & TailCall) != 0; }
   bool hasReferenceTypes() const { return (features & ReferenceTypes) != 0; }
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
+  bool hasAnyref() const { return (features & Anyref) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
@@ -100,6 +104,7 @@ struct FeatureSet {
   void setTailCall(bool v = true) { set(TailCall, v); }
   void setReferenceTypes(bool v = true) { set(ReferenceTypes, v); }
   void setMultivalue(bool v = true) { set(Multivalue, v); }
+  void setAnyref(bool v = true) { set(Anyref, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }

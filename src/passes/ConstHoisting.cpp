@@ -96,7 +96,8 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::exnref: {
+      case Type::exnref:
+      case Type::anyref: {
         return false;
       }
       case Type::none:

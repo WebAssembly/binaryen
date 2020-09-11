@@ -211,6 +211,12 @@ void test_types() {
   BinaryenTypeExpand(exnref, &valueType);
   assert(valueType == exnref);
 
+  BinaryenType anyref = BinaryenTypeAnyref();
+  printf("  // BinaryenTypeAnyref: %d\n", anyref);
+  assert(BinaryenTypeArity(anyref) == 1);
+  BinaryenTypeExpand(anyref, &valueType);
+  assert(valueType == anyref);
+
   printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
@@ -241,6 +247,7 @@ void test_features() {
   printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
+  printf("BinaryenFeatureAnyref: %d\n", BinaryenFeatureAnyref());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

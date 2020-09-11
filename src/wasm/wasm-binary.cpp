@@ -725,6 +725,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
+      case FeatureSet::Anyref:
+        return BinaryConsts::UserSections::AnyrefFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1172,6 +1174,8 @@ Type WasmBinaryBuilder::getType() {
       return Type::externref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
+    case BinaryConsts::EncodedType::anyref:
+      return Type::anyref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
@@ -1194,6 +1198,8 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::ExternKind;
     case BinaryConsts::EncodedHeapType::exn:
       return HeapType::ExnKind;
+    case BinaryConsts::EncodedHeapType::any:
+      return HeapType::AnyKind;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
@@ -2268,6 +2274,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
+      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
+        wasm.features.setAnyref();
       }
     }
   }

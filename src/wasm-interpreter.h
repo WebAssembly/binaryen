@@ -1647,6 +1647,7 @@ public:
         case Type::funcref:
         case Type::externref:
         case Type::exnref:
+        case Type::anyref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1703,6 +1704,7 @@ public:
         case Type::funcref:
         case Type::externref:
         case Type::exnref:
+        case Type::anyref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

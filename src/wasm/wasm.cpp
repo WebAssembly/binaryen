@@ -45,6 +45,7 @@ const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
+const char* AnyrefFeature = "anyref";
 } // namespace UserSections
 } // namespace BinaryConsts
 
