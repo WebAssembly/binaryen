@@ -1328,6 +1328,7 @@ public:
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
+  void setLocalName(Index index, Name name);
 
   void clearNames();
   void clearDebugInfo();

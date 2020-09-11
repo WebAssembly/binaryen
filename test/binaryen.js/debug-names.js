@@ -1,8 +1,7 @@
 var wast = `
 (module $hello
  (global $world i32 (i32.const 0))
- (func $of
-  (local $wasm i32)
+ (func $of (param $wasm i32)
   (local $!#$%&'*+-./:<=>?@\\^_\`|~ f64)
  )
 )
@@ -15,6 +14,16 @@ console.log("=== input wast ===" + wast);
 var module = binaryen.parseText(wast);
 
 console.log("=== parsed wast ===\n" + module.emitText());
+
+var func = binaryen.Function(module.getFunction("of"));
+assert(func.numLocals === 2);
+assert(func.hasLocalName(0) === true);
+assert(func.getLocalName(0) === "wasm");
+assert(func.hasLocalName(1) === true);
+assert(func.getLocalName(1) === "!#$%&'*+-./:<=>?@\\^_\`|~");
+assert(func.hasLocalName(2) === false);
+func.setLocalName(0, "js");
+assert(func.getLocalName(0) === "js");
 
 binaryen.setDebugInfo(true);
 
