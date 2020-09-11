@@ -688,8 +688,12 @@ struct OptimizeInstructions
         // (i32|i64).store(8|16|32)(p, C)   ==>
         //    (i32|i64).store(8|16|32)(p, C & mask)
         if (auto* c = store->value->dynCast<Const>()) {
-          c->value = c->value.and_(Literal::makeFromInt32(
-            Bits::lowBitMask(store->bytes * 8), store->valueType));
+          if (store->valueType == Type::i64 && store->bytes == 4) {
+            c->value = c->value.and_(Literal(uint64_t(0x00000000ffffffff)));
+          } else {
+            c->value = c->value.and_(Literal::makeFromInt32(
+              Bits::lowBitMask(store->bytes * 8), store->valueType));
+          }
         }
       }
       // stores of fewer bits truncates anyhow
