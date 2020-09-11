@@ -689,7 +689,8 @@ struct OptimizeInstructions
         //    (i32|i64).store(8|16|32)(p, C & mask)
         if (store->bytes != 8) {
           if (auto* c = store->value->dynCast<Const>()) {
-            c->value = c->value.and_(Literal(Bits::lowBitMask(store->bytes * 8)));
+            c->value =
+              c->value.and_(Literal(Bits::lowBitMask(store->bytes * 8)));
           }
         }
       }
