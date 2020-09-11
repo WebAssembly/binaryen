@@ -1232,8 +1232,11 @@ private:
           switch (binary->op) {
             case OrInt32:
             case OrInt64: {
-              // bool(x) | 1  ==>  1
-              return binary->right;
+              if (!EffectAnalyzer(getPassOptions(), features, binary->left)
+                     .hasSideEffects()) {
+                // bool(x) | 1  ==>  1
+                return binary->right;
+              }
             }
             case AndInt32:
             case AndInt64:
