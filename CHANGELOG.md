@@ -20,7 +20,6 @@ Current Trunk
   basic subtyping of `externref`, `funcref` and `exnref` (if enabled).
 - Enabling the exception handling or anyref features without also enabling
   reference types is a validation error now.
-- Binaryen now requires C++17 (was C++14) to build.
 
 v96
 ---
