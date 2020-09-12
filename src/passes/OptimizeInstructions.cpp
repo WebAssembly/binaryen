@@ -361,11 +361,14 @@ struct OptimizeInstructions
         //   )
         {
           using namespace Match;
+          Expression* y;
           Binary* sub;
-          if (matches(binary->right,
-                      Match::binary(&sub, SubInt32, i32(0), any()))) {
-            sub->left = binary->left;
-            return sub;
+          if (matches(
+                curr,
+                Match::binary(AddInt32,
+                              any(&y),
+                              Match::binary(&sub, SubInt32, i32(0), any())))) {
+            return build(Match::binary(&sub, SubInt32, any(&y), any()));
           }
         }
         auto* ret = optimizeAddedConstants(binary);
@@ -471,7 +474,7 @@ struct OptimizeInstructions
         }
       }
       // bitwise operations
-      if (binary->op == AndInt32) {
+      {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
@@ -482,13 +485,14 @@ struct OptimizeInstructions
         using namespace Match;
         Unary* left;
         Expression *leftVal, *rightVal;
-        if (matches(binary->left, unary(&left, EqZInt32, any(&leftVal))) &&
-            matches(binary->right, unary(EqZInt32, any(&rightVal)))) {
-          left->value = binary;
-          binary->left = leftVal;
-          binary->right = rightVal;
-          binary->op = OrInt32;
-          return left;
+        if (matches(curr,
+                    Match::binary(AndInt32,
+                                  unary(&left, EqZInt32, any(&leftVal)),
+                                  unary(EqZInt32, any(&rightVal))))) {
+          return build(unary(
+            &left,
+            EqZInt32,
+            Match::binary(&binary, OrInt32, any(&leftVal), any(&rightVal))));
         }
       }
       // for and and or, we can potentially conditionalize

@@ -15,7 +15,11 @@
  */
 
 //
-// match.h: Convenience structs for matching Binaryen IR patterns
+// match.h: Convenience structs for matching and transforming Binaryen IR
+// patterns. Most matchers take an optional pointer to an Expression* variable
+// that will be set equal to the expression they match. When building a pattern,
+// the matchers will instead insert the optional Expression* at their location
+// in the pattern.
 //
 
 #ifndef wasm_ir_match_h
@@ -27,16 +31,38 @@ namespace wasm {
 
 namespace Match {
 
-struct any {
-  Expression** e;
+// The main entrypoint for matching.
+template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
+  return matcher.matches(expr);
+}
 
-  any(Expression** e = nullptr) : e(e) {}
+// The main entrypoint for building. The top-level matcher must point to an
+// expression. Matchers in the pattern that do not point to expressions are
+// assumed to match.
+template<class Matcher> Expression* build(Matcher matcher) {
+  Expression* expr = nullptr;
+  matcher.build(&expr);
+  return expr;
+}
+
+// Matchers
+
+struct any {
+  Expression** curr;
+
+  any(Expression** curr = nullptr) : curr(curr) {}
 
   bool matches(Expression* expr) const {
-    if (e) {
-      *e = expr;
+    if (curr) {
+      *curr = expr;
     }
     return true;
+  }
+
+  void build(Expression** outp) const {
+    if (curr) {
+      *outp = *curr;
+    }
   }
 };
 
@@ -49,6 +75,8 @@ struct i32 {
     auto* c = expr->dynCast<Const>();
     return c && c->value.geti32() == val;
   }
+
+  // Does not support building
 };
 
 template<class ValueMatcher> struct UnaryMatcher {
@@ -68,6 +96,15 @@ template<class ValueMatcher> struct UnaryMatcher {
       return value.matches(unary->value);
     }
     return false;
+  }
+
+  void build(Expression** outp) const {
+    if (curr) {
+      *outp = *curr;
+    }
+    auto* out = (*outp)->cast<Unary>();
+    out->op = op;
+    value.build(&out->value);
   }
 };
 
@@ -106,11 +143,21 @@ template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
     }
     return false;
   }
+
+  void build(Expression** outp) const {
+    if (curr) {
+      *outp = *curr;
+    }
+    auto* out = (*outp)->cast<Binary>();
+    out->op = op;
+    left.build(&out->left);
+    right.build(&out->right);
+  }
 };
 
 template<class LeftMatcher, class RightMatcher>
 BinaryMatcher<LeftMatcher, RightMatcher>
-binary(UnaryOp op, LeftMatcher&& left, RightMatcher&& right) {
+binary(BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
   return BinaryMatcher<LeftMatcher, RightMatcher>(
     nullptr, op, std::move(left), std::move(right));
 }
@@ -120,10 +167,6 @@ BinaryMatcher<LeftMatcher, RightMatcher>
 binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
   return BinaryMatcher<LeftMatcher, RightMatcher>(
     curr, op, std::move(left), std::move(right));
-}
-
-template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
-  return matcher.matches(expr);
 }
 
 } // namespace Match
