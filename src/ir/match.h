@@ -71,6 +71,8 @@ template<class ValueMatcher> struct UnaryMatcher {
   }
 };
 
+// TODO: Once we move to C++17, remove these wrapper functions and use the
+// matcher constructors directly like we do with the leaf matchers already.
 template<class ValueMatcher>
 UnaryMatcher<ValueMatcher> unary(UnaryOp op, ValueMatcher&& value) {
   return UnaryMatcher<ValueMatcher>(nullptr, op, std::move(value));
