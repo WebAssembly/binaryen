@@ -1237,6 +1237,7 @@ private:
                 // bool(x) | 1  ==>  1
                 return binary->right;
               }
+              break;
             }
             case AndInt32:
             case AndInt64:
