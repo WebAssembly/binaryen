@@ -1253,7 +1253,6 @@ private:
             case NeInt32:
             case NeInt64: {
               // bool(x) != 1  ==>  !bool(x)
-              // i64(bool(x)) != 1  ==>  !i64(bool(x))
               return Builder(*getModule())
                 .makeUnary(Abstract::getUnary(binary->type, Abstract::EqZ),
                            binary->left);
