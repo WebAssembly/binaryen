@@ -15,7 +15,7 @@
  */
 
 //
-// match.h: Convenience structes for matching Binaryen IR patterns
+// match.h: Convenience structs for matching Binaryen IR patterns
 //
 
 #ifndef wasm_ir_match_h
