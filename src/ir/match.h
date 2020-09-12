@@ -66,6 +66,7 @@ LITERAL_MATCHER(ival, int64_t, c->type.isInteger(), getInteger);
 LITERAL_MATCHER(f32, float, c->type == Type::f32, getf32);
 LITERAL_MATCHER(f64, double, c->type == Type::f64, getf64);
 LITERAL_MATCHER(fval, double, c->type.isFloat(), getFloat);
+#undef LITERAL_MATCHER
 
 struct any {
   Expression** curr;
