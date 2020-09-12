@@ -51,14 +51,12 @@ struct i32 {
   }
 };
 
-template<class ValueMatcher> struct unary {
+template<class ValueMatcher> struct UnaryMatcher {
   Unary** curr;
   UnaryOp op;
   ValueMatcher value;
 
-  unary(UnaryOp op, ValueMatcher&& value)
-    : curr(nullptr), op(op), value(value) {}
-  unary(Unary** curr, UnaryOp op, ValueMatcher&& value)
+  UnaryMatcher(Unary** curr, UnaryOp op, ValueMatcher&& value)
     : curr(curr), op(op), value(value) {}
 
   bool matches(Expression* expr) const {
@@ -73,15 +71,27 @@ template<class ValueMatcher> struct unary {
   }
 };
 
-template<class LeftMatcher, class RightMatcher> struct binary {
+template<class ValueMatcher>
+UnaryMatcher<ValueMatcher> unary(UnaryOp op, ValueMatcher&& value) {
+  return UnaryMatcher<ValueMatcher>(nullptr, op, std::move(value));
+}
+
+template<class ValueMatcher>
+UnaryMatcher<ValueMatcher>
+unary(Unary** curr, UnaryOp op, ValueMatcher&& value) {
+  return UnaryMatcher<ValueMatcher>(curr, op, std::move(value));
+}
+
+template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
   Binary** curr;
   BinaryOp op;
   LeftMatcher left;
   RightMatcher right;
 
-  binary(BinaryOp op, LeftMatcher&& left, RightMatcher&& right)
-    : curr(nullptr), op(op), left(left), right(right) {}
-  binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right)
+  BinaryMatcher(Binary** curr,
+                BinaryOp op,
+                LeftMatcher&& left,
+                RightMatcher&& right)
     : curr(curr), op(op), left(left), right(right) {}
 
   bool matches(Expression* expr) const {
@@ -95,6 +105,20 @@ template<class LeftMatcher, class RightMatcher> struct binary {
     return false;
   }
 };
+
+template<class LeftMatcher, class RightMatcher>
+BinaryMatcher<LeftMatcher, RightMatcher>
+binary(UnaryOp op, LeftMatcher&& left, RightMatcher&& right) {
+  return BinaryMatcher<LeftMatcher, RightMatcher>(
+    nullptr, op, std::move(left), std::move(right));
+}
+
+template<class LeftMatcher, class RightMatcher>
+BinaryMatcher<LeftMatcher, RightMatcher>
+binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
+  return BinaryMatcher<LeftMatcher, RightMatcher>(
+    curr, op, std::move(left), std::move(right));
+}
 
 template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
   return matcher.matches(expr);
