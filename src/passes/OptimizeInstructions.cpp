@@ -28,6 +28,7 @@
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
+#include <ir/match.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -479,20 +480,16 @@ struct OptimizeInstructions
         // would already optimize with the eqz anyhow, unless propagating).
         // But for AND, the left is true iff X and Y are each all zero bits,
         // and the right is true if the union of their bits is zero; same.
-        if (auto* left = binary->left->dynCast<Unary>()) {
-          if (left->op == EqZInt32) {
-            if (auto* right = binary->right->dynCast<Unary>()) {
-              if (right->op == EqZInt32) {
-                // reuse one unary, drop the other
-                auto* leftValue = left->value;
-                left->value = binary;
-                binary->left = leftValue;
-                binary->right = right->value;
-                binary->op = OrInt32;
-                return left;
-              }
-            }
-          }
+        using namespace Match;
+        Unary* left;
+        Expression *leftVal, *rightVal;
+        if (matches(binary->left, unary(EqZInt32, any(&leftVal), &left)) &&
+            matches(binary->right, unary(EqZInt32, any(&rightVal)))) {
+          left->value = binary;
+          binary->left = leftVal;
+          binary->right = rightVal;
+          binary->op = OrInt32;
+          return left;
         }
       }
       // for and and or, we can potentially conditionalize
