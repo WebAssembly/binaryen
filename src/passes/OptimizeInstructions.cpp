@@ -359,14 +359,13 @@ struct OptimizeInstructions
         //     Y
         //     X
         //   )
-        if (auto* sub = binary->right->dynCast<Binary>()) {
-          if (sub->op == SubInt32) {
-            if (auto* subZero = sub->left->dynCast<Const>()) {
-              if (subZero->value.geti32() == 0) {
-                sub->left = binary->left;
-                return sub;
-              }
-            }
+        {
+          using namespace Match;
+          Binary* sub;
+          if (matches(binary->right,
+                      Match::binary(&sub, SubInt32, i32(0), any()))) {
+            sub->left = binary->left;
+            return sub;
           }
         }
         auto* ret = optimizeAddedConstants(binary);
@@ -483,7 +482,7 @@ struct OptimizeInstructions
         using namespace Match;
         Unary* left;
         Expression *leftVal, *rightVal;
-        if (matches(binary->left, unary(EqZInt32, any(&leftVal), &left)) &&
+        if (matches(binary->left, unary(&left, EqZInt32, any(&leftVal))) &&
             matches(binary->right, unary(EqZInt32, any(&rightVal)))) {
           left->value = binary;
           binary->left = leftVal;

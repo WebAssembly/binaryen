@@ -29,7 +29,9 @@ namespace Match {
 
 struct any {
   Expression** e;
+
   any(Expression** e = nullptr) : e(e) {}
+
   bool matches(Expression* expr) const {
     if (e) {
       *e = expr;
@@ -38,12 +40,27 @@ struct any {
   }
 };
 
+struct i32 {
+  int32_t val;
+
+  i32(int32_t val) : val(val) {}
+
+  bool matches(Expression* expr) const {
+    auto* c = expr->dynCast<Const>();
+    return c && c->value.geti32() == val;
+  }
+};
+
 template<class ValueMatcher> struct unary {
+  Unary** curr;
   UnaryOp op;
   ValueMatcher value;
-  Unary** curr;
-  unary(UnaryOp op, ValueMatcher&& value, Unary** curr = nullptr)
-    : op(op), value(value), curr(curr) {}
+
+  unary(UnaryOp op, ValueMatcher&& value)
+    : curr(nullptr), op(op), value(value) {}
+  unary(Unary** curr, UnaryOp op, ValueMatcher&& value)
+    : curr(curr), op(op), value(value) {}
+
   bool matches(Expression* expr) const {
     auto* unary = expr->dynCast<Unary>();
     if (unary && unary->op == op) {
@@ -51,6 +68,29 @@ template<class ValueMatcher> struct unary {
         *curr = unary;
       }
       return value.matches(unary->value);
+    }
+    return false;
+  }
+};
+
+template<class LeftMatcher, class RightMatcher> struct binary {
+  Binary** curr;
+  BinaryOp op;
+  LeftMatcher left;
+  RightMatcher right;
+
+  binary(BinaryOp op, LeftMatcher&& left, RightMatcher&& right)
+    : curr(nullptr), op(op), left(left), right(right) {}
+  binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right)
+    : curr(curr), op(op), left(left), right(right) {}
+
+  bool matches(Expression* expr) const {
+    auto* binary = expr->dynCast<Binary>();
+    if (binary && binary->op == op) {
+      if (curr) {
+        *curr = binary;
+      }
+      return left.matches(binary->left) && right.matches(binary->right);
     }
     return false;
   }
