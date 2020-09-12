@@ -483,8 +483,8 @@ struct OptimizeInstructions
         using namespace Match;
         Unary* left;
         Expression *leftVal, *rightVal;
-        if (matches(binary->left, unary(EqZInt32, any(&leftVal), &left)) &&
-            matches(binary->right, unary(EqZInt32, any(&rightVal)))) {
+        if (matches(binary->left, unary<any>(EqZInt32, any(&leftVal), &left)) &&
+            matches(binary->right, unary<any>(EqZInt32, any(&rightVal)))) {
           left->value = binary;
           binary->left = leftVal;
           binary->right = rightVal;

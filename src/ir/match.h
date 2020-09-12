@@ -27,16 +27,10 @@ namespace wasm {
 
 namespace Match {
 
-struct Matcher {
-  virtual bool matches(Expression*) const = 0;
-};
-
-using matcher_ptr = std::unique_ptr<Matcher>;
-
-struct AnyMatcher : Matcher {
+struct any {
   Expression** e;
-  AnyMatcher(Expression** e) : e(e) {}
-  bool matches(Expression* expr) const override {
+  any(Expression** e = nullptr) : e(e) {}
+  bool matches(Expression* expr) const {
     if (e) {
       *e = expr;
     }
@@ -44,34 +38,26 @@ struct AnyMatcher : Matcher {
   }
 };
 
-matcher_ptr any(Expression** e = nullptr) {
-  return std::make_unique<AnyMatcher>(e);
-}
-
-struct UnaryMatcher : Matcher {
+template<class ValueMatcher> struct unary {
   UnaryOp op;
-  matcher_ptr value;
+  ValueMatcher value;
   Unary** curr;
-  UnaryMatcher(UnaryOp op, matcher_ptr value, Unary** curr)
-    : op(op), value(std::move(value)), curr(curr) {}
-  bool matches(Expression* expr) const override {
+  unary(UnaryOp op, ValueMatcher&& value, Unary** curr = nullptr)
+    : op(op), value(value), curr(curr) {}
+  bool matches(Expression* expr) const {
     auto* unary = expr->dynCast<Unary>();
     if (unary && unary->op == op) {
       if (curr) {
         *curr = unary;
       }
-      return value->matches(unary->value);
+      return value.matches(unary->value);
     }
     return false;
   }
 };
 
-matcher_ptr unary(UnaryOp op, matcher_ptr value, Unary** curr = nullptr) {
-  return std::make_unique<UnaryMatcher>(op, std::move(value), curr);
-}
-
-bool matches(Expression* expr, matcher_ptr&& matcher) {
-  return matcher->matches(expr);
+template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
+  return matcher.matches(expr);
 }
 
 } // namespace Match
