@@ -335,10 +335,8 @@ struct OptimizeInstructions
       {
         // Simplify selects between 0 and 1
         Expression* c;
-        bool matchReversed = matches(curr, select(i32(0), i32(1), any(&c))) ||
-                             matches(curr, select(i64(0), i64(1), any(&c)));
-        if (matchReversed || matches(curr, select(i32(1), i32(0), any(&c))) ||
-            matches(curr, select(i64(1), i64(0), any(&c)))) {
+        bool matchReversed = matches(curr, select(ival(0), ival(1), any(&c)));
+        if (matchReversed || matches(curr, select(ival(1), ival(0), any(&c)))) {
           if (matchReversed) {
             c = optimizeBoolean(builder.makeUnary(EqZInt32, c));
           }

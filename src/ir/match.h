@@ -47,31 +47,25 @@ template<class Matcher> Expression* build(Matcher matcher) {
 
 // Matchers
 
-struct i32 {
-  int32_t val;
-
-  i32(int32_t val) : val(val) {}
-
-  bool matches(Expression* expr) const {
-    auto* c = expr->dynCast<Const>();
-    return c && c->type == Type::i32 && c->value.geti32() == val;
+// TODO: Make this a template once we have C++20 (needs non-type class template
+// arguments)
+#define LITERAL_MATCHER(matcher, T, typePred, getValue)                        \
+  struct matcher {                                                             \
+    T val;                                                                     \
+    matcher(T val) : val(val) {}                                               \
+                                                                               \
+    bool matches(Expression* expr) const {                                     \
+      auto* c = expr->dynCast<Const>();                                        \
+      return c && typePred && c->value.getValue() == val;                      \
+    }                                                                          \
   }
 
-  // Does not support building
-};
-
-struct i64 {
-  int64_t val;
-
-  i64(int64_t val) : val(val) {}
-
-  bool matches(Expression* expr) const {
-    auto* c = expr->dynCast<Const>();
-    return c && c->type == Type::i64 && c->value.geti64() == val;
-  }
-
-  // Does not support building
-};
+LITERAL_MATCHER(i32, int32_t, c->type == Type::i32, geti32);
+LITERAL_MATCHER(i64, int64_t, c->type == Type::i64, geti64);
+LITERAL_MATCHER(ival, int64_t, c->type.isInteger(), getInteger);
+LITERAL_MATCHER(f32, float, c->type == Type::f32, getf32);
+LITERAL_MATCHER(f64, double, c->type == Type::f64, getf64);
+LITERAL_MATCHER(fval, double, c->type.isFloat(), getFloat);
 
 struct any {
   Expression** curr;
