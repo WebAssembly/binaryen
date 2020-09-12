@@ -3961,67 +3961,76 @@
     )
   )
   (func $optimize-boolean (param $x i32) (param $y i64)
+    ;; bool(-x) -> bool(x)
     (drop
       (select
         (i32.const 1)
         (i32.const 2)
-        (i32.sub        ;; bool(-x) -> bool(x)
+        (i32.sub
           (i32.const 0)
           (local.get $x)
         )
       )
     )
+    ;; i32(bool(expr)) == 1 -> bool(expr)
     (drop (i32.eq
-      (i32.and         ;; i32(bool(expr)) == 1 -> bool(expr)
+      (i32.and
         (local.get $x)
         (i32.const 1)
       )
       (i32.const 1)
     ))
+    ;; i32(bool(expr)) != 1 -> !bool(expr)
     (drop (i32.ne
-      (i32.and         ;; i32(bool(expr)) != 1 -> !bool(expr)
+      (i32.and
         (local.get $x)
         (i32.const 1)
       )
       (i32.const 1)
     ))
+    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
     (drop (i64.eq
-      (i64.and         ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+      (i64.and
         (local.get $y)
         (i64.const 1)
       )
       (i64.const 1)
     ))
+    ;; i64(bool(expr)) != 1 -> !i64(bool(expr))
     (drop (i64.ne
-      (i64.and         ;; i64(bool(expr)) != 1 -> !i64(bool(expr))
+      (i64.and
         (local.get $y)
         (i64.const 1)
       )
       (i64.const 1)
     ))
+    ;; i32(bool(expr)) & 1 -> bool(expr)
     (drop (i32.and
-      (i32.and         ;; i32(bool(expr)) & 1 -> bool(expr)
+      (i32.and
         (local.get $x)
         (i32.const 1)
       )
       (i32.const 1)
     ))
+    ;; i32(bool(expr)) | 1 -> 1
     (drop (i32.or
-      (i32.and         ;; i32(bool(expr)) & 1 -> 1
+      (i32.and
         (local.get $x)
         (i32.const 1)
       )
       (i32.const 1)
     ))
+    ;; i64(bool(expr)) & 1 -> i64(bool(expr))
     (drop (i64.and
-      (i64.and         ;; i64(bool(expr)) & 1 -> i64(bool(expr))
+      (i64.and
         (local.get $y)
         (i64.const 1)
       )
       (i64.const 1)
     ))
+    ;; i64(bool(expr)) | 1 -> 1
     (drop (i64.or
-      (i64.and         ;; i64(bool(expr)) | 1 -> 1
+      (i64.and
         (local.get $y)
         (i64.const 1)
       )
