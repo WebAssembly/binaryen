@@ -155,7 +155,6 @@ if(MSVC)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
-  add_compile_flag("/std:c++17")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
