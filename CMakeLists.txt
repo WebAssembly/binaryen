@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.1.3)
 project(binaryen LANGUAGES C CXX VERSION 96)
 include(GNUInstallDirs)
 
