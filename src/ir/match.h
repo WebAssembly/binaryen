@@ -29,6 +29,7 @@ namespace Match {
 
 struct Matcher {
   virtual bool matches(Expression*) const = 0;
+  virtual ~Matcher(){};
 };
 
 using matcher_ptr = std::unique_ptr<Matcher>;
@@ -36,6 +37,7 @@ using matcher_ptr = std::unique_ptr<Matcher>;
 struct AnyMatcher : Matcher {
   Expression** e;
   AnyMatcher(Expression** e) : e(e) {}
+  ~AnyMatcher() = default;
   bool matches(Expression* expr) const override {
     if (e) {
       *e = expr;
@@ -54,6 +56,7 @@ struct UnaryMatcher : Matcher {
   Unary** curr;
   UnaryMatcher(UnaryOp op, matcher_ptr value, Unary** curr)
     : op(op), value(std::move(value)), curr(curr) {}
+  ~UnaryMatcher() = default;
   bool matches(Expression* expr) const override {
     auto* unary = expr->dynCast<Unary>();
     if (unary && unary->op == op) {
