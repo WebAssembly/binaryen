@@ -194,6 +194,11 @@ struct OptimizeInstructions
     return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
   }
 
+  bool commutable(Expression* a, Expression* b) {
+    return EffectAnalyzer::canReorder(
+      getPassOptions(), getModule()->features, a, b);
+  }
+
   // Optimizations that don't yet fit in the pattern DSL, but could be
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
@@ -248,7 +253,7 @@ struct OptimizeInstructions
                     binary(AddInt32,
                            binary(&sub, SubInt32, i32(0), any(&x)),
                            any(&y))) &&
-            EffectAnalyzer::canReorder(getPassOptions(), features, x, y)) {
+            commutable(x, y)) {
           return build(binary(&sub, SubInt32, any(&y), any(&x)));
         }
       }
@@ -328,7 +333,7 @@ struct OptimizeInstructions
               curr,
               select(
                 &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-            !effects(ifTrue).invalidates(effects(ifFalse))) {
+            commutable(ifTrue, ifFalse)) {
           curr = build(select(&s, any(&ifFalse), any(&ifTrue), any(&c)));
         }
       }
@@ -737,15 +742,12 @@ private:
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
     assert(Properties::isSymmetric(binary));
-    FeatureSet features = getModule()->features;
     auto swap = [&]() {
-      assert(EffectAnalyzer::canReorder(
-        getPassOptions(), features, binary->left, binary->right));
+      assert(commutable(binary->left, binary->right));
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (EffectAnalyzer::canReorder(
-            getPassOptions(), features, binary->left, binary->right)) {
+      if (commutable(binary->left, binary->right)) {
         swap();
       }
     };
