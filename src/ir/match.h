@@ -47,6 +47,32 @@ template<class Matcher> Expression* build(Matcher matcher) {
 
 // Matchers
 
+struct i32 {
+  int32_t val;
+
+  i32(int32_t val) : val(val) {}
+
+  bool matches(Expression* expr) const {
+    auto* c = expr->dynCast<Const>();
+    return c && c->type == Type::i32 && c->value.geti32() == val;
+  }
+
+  // Does not support building
+};
+
+struct i64 {
+  int64_t val;
+
+  i64(int64_t val) : val(val) {}
+
+  bool matches(Expression* expr) const {
+    auto* c = expr->dynCast<Const>();
+    return c && c->type == Type::i64 && c->value.geti64() == val;
+  }
+
+  // Does not support building
+};
+
 struct any {
   Expression** curr;
 
@@ -66,17 +92,26 @@ struct any {
   }
 };
 
-struct i32 {
-  int32_t val;
+struct constant {
+  Const** curr;
 
-  i32(int32_t val) : val(val) {}
+  constant(Const** curr = nullptr) : curr(curr) {}
 
   bool matches(Expression* expr) const {
-    auto* c = expr->dynCast<Const>();
-    return c && c->value.geti32() == val;
+    if (auto* c = expr->dynCast<Const>()) {
+      if (curr) {
+        *curr = c;
+      }
+      return true;
+    }
+    return false;
   }
 
-  // Does not support building
+  void build(Expression** outp) const {
+    if (curr) {
+      *outp = *curr;
+    }
+  }
 };
 
 template<class ValueMatcher> struct UnaryMatcher {
@@ -85,7 +120,7 @@ template<class ValueMatcher> struct UnaryMatcher {
   ValueMatcher value;
 
   UnaryMatcher(Unary** curr, UnaryOp op, ValueMatcher&& value)
-    : curr(curr), op(op), value(value) {}
+    : curr(curr), op(op), value(std::move(value)) {}
 
   bool matches(Expression* expr) const {
     auto* unary = expr->dynCast<Unary>();
@@ -131,7 +166,7 @@ template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
                 BinaryOp op,
                 LeftMatcher&& left,
                 RightMatcher&& right)
-    : curr(curr), op(op), left(left), right(right) {}
+    : curr(curr), op(op), left(std::move(left)), right(std::move(right)) {}
 
   bool matches(Expression* expr) const {
     auto* binary = expr->dynCast<Binary>();
@@ -167,6 +202,61 @@ BinaryMatcher<LeftMatcher, RightMatcher>
 binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
   return BinaryMatcher<LeftMatcher, RightMatcher>(
     curr, op, std::move(left), std::move(right));
+}
+
+template<class IfTrueMatcher, class IfFalseMatcher, class CondMatcher>
+struct SelectMatcher {
+  Select** curr;
+  IfTrueMatcher ifTrue;
+  IfFalseMatcher ifFalse;
+  CondMatcher condition;
+
+  SelectMatcher(Select** curr,
+                IfTrueMatcher&& ifTrue,
+                IfFalseMatcher&& ifFalse,
+                CondMatcher&& condition)
+    : curr(curr), ifTrue(ifTrue), ifFalse(ifFalse), condition(condition) {}
+
+  bool matches(Expression* expr) const {
+    if (auto* select = expr->dynCast<Select>()) {
+      if (curr) {
+        *curr = select;
+      }
+      return ifTrue.matches(select->ifTrue) &&
+             ifFalse.matches(select->ifFalse) &&
+             condition.matches(select->condition);
+    }
+    return false;
+  }
+
+  void build(Expression** outp) const {
+    if (curr) {
+      *outp = *curr;
+    }
+    auto* out = (*outp)->cast<Select>();
+    ifTrue.build(&out->ifTrue);
+    ifFalse.build(&out->ifFalse);
+    condition.build(&out->condition);
+  }
+};
+
+template<class IfTrueMatcher, class IfFalseMatcher, class ConditionMatcher>
+SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>
+select(IfTrueMatcher&& ifTrue,
+       IfFalseMatcher&& ifFalse,
+       ConditionMatcher&& condition) {
+  return SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>(
+    nullptr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
+}
+
+template<class IfTrueMatcher, class IfFalseMatcher, class ConditionMatcher>
+SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>
+select(Select** curr,
+       IfTrueMatcher&& ifTrue,
+       IfFalseMatcher&& ifFalse,
+       ConditionMatcher&& condition) {
+  return SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>(
+    curr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
 }
 
 } // namespace Match

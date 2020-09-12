@@ -190,6 +190,10 @@ struct OptimizeInstructions
     }
   }
 
+  EffectAnalyzer effects(Expression* expr) {
+    return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
+  }
+
   // Optimizations that don't yet fit in the pattern DSL, but could be
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
@@ -206,6 +210,176 @@ struct OptimizeInstructions
       if (Properties::isSymmetric(binary)) {
         canonicalize(binary);
       }
+    }
+
+    {
+      // TODO: It is an ongoing project to port more transformations to the
+      // match API. Once most of the transformations have been ported, the
+      // `using namespace Match` can be hoisted to function scope and this extra
+      // block scope can be removed.
+      using namespace Match;
+      Builder builder(*getModule());
+      {
+        // X == 0 => eqz X
+        Expression* x;
+        if (matches(curr, binary(EqInt32, any(&x), i32(0)))) {
+          return Builder(*getModule()).makeUnary(EqZInt32, x);
+        }
+      }
+      {
+        // try to get rid of (0 - ..), that is, a zero only used to negate an
+        // int. an add of a subtract can be flipped in order to remove it:
+        //   (i32.add
+        //     (i32.sub
+        //       (i32.const 0)
+        //       X
+        //     )
+        //     Y
+        //   )
+        // =>
+        //   (i32.sub
+        //     Y
+        //     X
+        //   )
+        // Note that this reorders X and Y, so we need to be careful about that.
+        Expression *x, *y;
+        Binary* sub;
+        if (matches(curr,
+                    binary(AddInt32,
+                           binary(&sub, SubInt32, i32(0), any(&x)),
+                           any(&y))) &&
+            EffectAnalyzer::canReorder(getPassOptions(), features, x, y)) {
+          return build(binary(&sub, SubInt32, any(&y), any(&x)));
+        }
+      }
+      {
+        // The flip case is even easier, as no reordering occurs:
+        //   (i32.add
+        //     Y
+        //     (i32.sub
+        //       (i32.const 0)
+        //       X
+        //     )
+        //   )
+        // =>
+        //   (i32.sub
+        //     Y
+        //     X
+        //   )
+        Expression* y;
+        Binary* sub;
+        if (matches(curr,
+                    binary(AddInt32,
+                           any(&y),
+                           binary(&sub, SubInt32, i32(0), any())))) {
+          return build(binary(&sub, SubInt32, any(&y), any()));
+        }
+      }
+      {
+        // try de-morgan's AND law,
+        //  (eqz X) and (eqz Y) === eqz (X or Y)
+        // Note that the OR and XOR laws do not work here, as these
+        // are not booleans (we could check if they are, but a boolean
+        // would already optimize with the eqz anyhow, unless propagating).
+        // But for AND, the left is true iff X and Y are each all zero bits,
+        // and the right is true if the union of their bits is zero; same.
+        Unary* un;
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(&bin,
+                           AndInt32,
+                           unary(&un, EqZInt32, any(&x)),
+                           unary(EqZInt32, any(&y))))) {
+          return build(
+            unary(&un, EqZInt32, binary(&bin, OrInt32, any(&x), any(&y))));
+        }
+      }
+      // Selects
+      if (auto* select = curr->dynCast<Select>()) {
+        select->condition = optimizeBoolean(select->condition);
+      }
+      {
+        // Constant condition, we can just pick the right side (barring side
+        // effects)
+        Expression *ifTrue, *ifFalse;
+        if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
+          if (!effects(ifTrue).hasSideEffects()) {
+            return ifFalse;
+          } else {
+            return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
+          }
+        }
+        if (matches(curr, select(any(&ifTrue), any(&ifFalse), constant()))) {
+          // The condition must be non-zero
+          if (!effects(ifFalse).hasSideEffects()) {
+            return ifTrue;
+          } else {
+            // Don't bother - we would need to reverse the order using a temp
+            // local, which would be bad
+          }
+        }
+      }
+      {
+        // Flip select to remove eqz if we can reorder
+        Select* s;
+        Expression *ifTrue, *ifFalse, *c;
+        if (matches(
+              curr,
+              select(
+                &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
+            !effects(ifTrue).invalidates(effects(ifFalse))) {
+          curr = build(select(&s, any(&ifFalse), any(&ifTrue), any(&c)));
+        }
+      }
+      {
+        // Simplify selects between 0 and 1
+        Expression* c;
+        bool matchReversed = matches(curr, select(i32(0), i32(1), any(&c))) ||
+                             matches(curr, select(i64(0), i64(1), any(&c)));
+        if (matchReversed || matches(curr, select(i32(1), i32(0), any(&c))) ||
+            matches(curr, select(i64(1), i64(0), any(&c)))) {
+          if (matchReversed) {
+            c = optimizeBoolean(builder.makeUnary(EqZInt32, c));
+          }
+          if (!Properties::emitsBoolean(c)) {
+            // cond ? 1 : 0 ==> !!cond
+            c = builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt32, c));
+          }
+          return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c)
+                                         : c;
+        }
+      }
+      {
+        // Sides are identical, fold
+        Expression *ifTrue, *ifFalse, *c;
+        if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
+            ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
+          auto value = effects(ifTrue);
+          if (value.hasSideEffects()) {
+            // At best we don't need the condition, but need to execute the
+            // value twice. a block is larger than a select by 2 bytes, and we
+            // must drop one value, so 3, while we save the condition, so it's
+            // not clear this is worth it, TODO
+          } else {
+            // value has no side effects
+            auto condition = effects(c);
+            if (!condition.hasSideEffects()) {
+              return ifTrue;
+            } else {
+              // The condition is last, so we need a new local, and it may be a
+              // bad idea to use a block like we do for an if. Do it only if we
+              // can reorder
+              if (!condition.invalidates(value)) {
+                return builder.makeSequence(builder.makeDrop(c), ifTrue);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (auto* binary = curr->dynCast<Binary>()) {
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
@@ -236,10 +410,6 @@ struct OptimizeInstructions
         }
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (binary->op == EqInt32 && c->value.geti32() == 0) {
-            // equal 0 => eqz
-            return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
-          }
           if (auto* ext = Properties::getSignExtValue(binary->left)) {
             // we are comparing a sign extend to a constant, which means we can
             // use a cheaper zext
@@ -318,59 +488,6 @@ struct OptimizeInstructions
         // note that both left and right may be consts, but then we let
         // precompute compute the constant result
       } else if (binary->op == AddInt32) {
-        // try to get rid of (0 - ..), that is, a zero only used to negate an
-        // int. an add of a subtract can be flipped in order to remove it:
-        //   (i32.add
-        //     (i32.sub
-        //       (i32.const 0)
-        //       X
-        //     )
-        //     Y
-        //   )
-        // =>
-        //   (i32.sub
-        //     Y
-        //     X
-        //   )
-        // Note that this reorders X and Y, so we need to be careful about that.
-        if (auto* sub = binary->left->dynCast<Binary>()) {
-          if (sub->op == SubInt32) {
-            if (auto* subZero = sub->left->dynCast<Const>()) {
-              if (subZero->value.geti32() == 0) {
-                if (EffectAnalyzer::canReorder(
-                      getPassOptions(), features, sub->right, binary->right)) {
-                  sub->left = binary->right;
-                  return sub;
-                }
-              }
-            }
-          }
-        }
-        // The flip case is even easier, as no reordering occurs:
-        //   (i32.add
-        //     Y
-        //     (i32.sub
-        //       (i32.const 0)
-        //       X
-        //     )
-        //   )
-        // =>
-        //   (i32.sub
-        //     Y
-        //     X
-        //   )
-        {
-          using namespace Match;
-          Expression* y;
-          Binary* sub;
-          if (matches(
-                curr,
-                Match::binary(AddInt32,
-                              any(&y),
-                              Match::binary(&sub, SubInt32, i32(0), any())))) {
-            return build(Match::binary(&sub, SubInt32, any(&y), any()));
-          }
-        }
         auto* ret = optimizeAddedConstants(binary);
         if (ret) {
           return ret;
@@ -474,27 +591,6 @@ struct OptimizeInstructions
         }
       }
       // bitwise operations
-      {
-        // try de-morgan's AND law,
-        //  (eqz X) and (eqz Y) === eqz (X or Y)
-        // Note that the OR and XOR laws do not work here, as these
-        // are not booleans (we could check if they are, but a boolean
-        // would already optimize with the eqz anyhow, unless propagating).
-        // But for AND, the left is true iff X and Y are each all zero bits,
-        // and the right is true if the union of their bits is zero; same.
-        using namespace Match;
-        Unary* left;
-        Expression *leftVal, *rightVal;
-        if (matches(curr,
-                    Match::binary(AndInt32,
-                                  unary(&left, EqZInt32, any(&leftVal)),
-                                  unary(EqZInt32, any(&rightVal))))) {
-          return build(unary(
-            &left,
-            EqZInt32,
-            Match::binary(&binary, OrInt32, any(&leftVal), any(&rightVal))));
-        }
-      }
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
         if (auto* ret = conditionalizeExpensiveOnBitwise(binary)) {
@@ -515,8 +611,7 @@ struct OptimizeInstructions
       }
       // finally, try more expensive operations on the binary in
       // the case that they have no side effects
-      if (!EffectAnalyzer(getPassOptions(), features, binary->left)
-             .hasSideEffects()) {
+      if (!effects(binary->left).hasSideEffects()) {
         if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
           return optimizeBinaryWithEqualEffectlessChildren(binary);
         }
@@ -561,9 +656,7 @@ struct OptimizeInstructions
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the
           // condition, do that
-          auto needCondition =
-            EffectAnalyzer(getPassOptions(), features, iff->condition)
-              .hasSideEffects();
+          auto needCondition = effects(iff->condition).hasSideEffects();
           auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
           if (isSubType && !needCondition) {
             return iff->ifTrue;
@@ -585,92 +678,6 @@ struct OptimizeInstructions
               ret->list.push_back(iff->ifTrue);
               ret->finalize(iff->type);
               return ret;
-            }
-          }
-        }
-      }
-    } else if (auto* select = curr->dynCast<Select>()) {
-      select->condition = optimizeBoolean(select->condition);
-      if (auto* c = select->condition->dynCast<Const>()) {
-        // constant condition, we can just pick the right side (barring side
-        // effects)
-        if (c->value.getInteger()) {
-          if (!EffectAnalyzer(getPassOptions(), features, select->ifFalse)
-                 .hasSideEffects()) {
-            return select->ifTrue;
-          } else {
-            // don't bother - we would need to reverse the order using a temp
-            // local, which is bad
-          }
-        } else {
-          if (!EffectAnalyzer(getPassOptions(), features, select->ifTrue)
-                 .hasSideEffects()) {
-            return select->ifFalse;
-          } else {
-            Builder builder(*getModule());
-            return builder.makeSequence(builder.makeDrop(select->ifTrue),
-                                        select->ifFalse);
-          }
-        }
-      }
-      if (auto* constTrue = select->ifTrue->dynCast<Const>()) {
-        if (auto* constFalse = select->ifFalse->dynCast<Const>()) {
-          if (select->type == Type::i32 || select->type == Type::i64) {
-            auto trueValue = constTrue->value.getInteger();
-            auto falseValue = constFalse->value.getInteger();
-            if ((trueValue == 1LL && falseValue == 0LL) ||
-                (trueValue == 0LL && falseValue == 1LL)) {
-              Builder builder(*getModule());
-              Expression* condition = select->condition;
-              if (trueValue == 0LL) {
-                condition =
-                  optimizeBoolean(builder.makeUnary(EqZInt32, condition));
-              }
-              if (!Properties::emitsBoolean(condition)) {
-                // expr ? 1 : 0   ==>   !!expr
-                condition = builder.makeUnary(
-                  EqZInt32, builder.makeUnary(EqZInt32, condition));
-              }
-              return select->type == Type::i64
-                       ? builder.makeUnary(ExtendUInt32, condition)
-                       : condition;
-            }
-          }
-        }
-      }
-      if (auto* condition = select->condition->dynCast<Unary>()) {
-        if (condition->op == EqZInt32) {
-          // flip select to remove eqz, if we can reorder
-          EffectAnalyzer ifTrue(getPassOptions(), features, select->ifTrue);
-          EffectAnalyzer ifFalse(getPassOptions(), features, select->ifFalse);
-          if (!ifTrue.invalidates(ifFalse)) {
-            select->condition = condition->value;
-            std::swap(select->ifTrue, select->ifFalse);
-          }
-        }
-      }
-      if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
-        // sides are identical, fold
-        EffectAnalyzer value(getPassOptions(), features, select->ifTrue);
-        if (value.hasSideEffects()) {
-          // at best we don't need the condition, but need to execute the value
-          // twice. a block is larger than a select by 2 bytes, and
-          // we must drop one value, so 3, while we save the condition,
-          // so it's not clear this is worth it, TODO
-        } else {
-          // value has no side effects
-          EffectAnalyzer condition(
-            getPassOptions(), features, select->condition);
-          if (!condition.hasSideEffects()) {
-            return select->ifTrue;
-          } else {
-            // the condition is last, so we need a new local, and it may be
-            // a bad idea to use a block like we do for an if. Do it only if we
-            // can reorder
-            if (!condition.invalidates(value)) {
-              Builder builder(*getModule());
-              return builder.makeSequence(builder.makeDrop(select->condition),
-                                          select->ifTrue);
             }
           }
         }
@@ -1022,9 +1029,8 @@ private:
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) {
       return nullptr;
     }
-    FeatureSet features = getModule()->features;
-    auto leftEffects = EffectAnalyzer(getPassOptions(), features, left);
-    auto rightEffects = EffectAnalyzer(getPassOptions(), features, right);
+    auto leftEffects = effects(left);
+    auto rightEffects = effects(right);
     auto leftHasSideEffects = leftEffects.hasSideEffects();
     auto rightHasSideEffects = rightEffects.hasSideEffects();
     if (leftHasSideEffects && rightHasSideEffects) {
@@ -1070,16 +1076,13 @@ private:
   //   (x > y) | (x == y)    ==>    x >= y
   Expression* combineOr(Binary* binary) {
     assert(binary->op == OrInt32);
-    FeatureSet features = getModule()->features;
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
-            !EffectAnalyzer(getPassOptions(), features, left->left)
-               .hasSideEffects() &&
-            !EffectAnalyzer(getPassOptions(), features, left->right)
-               .hasSideEffects()) {
+            !effects(left->left).hasSideEffects() &&
+            !effects(left->right).hasSideEffects()) {
           switch (left->op) {
             //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
@@ -1196,7 +1199,6 @@ private:
   // is a constant
   // TODO: templatize on type?
   Expression* optimizeWithConstantOnRight(Binary* binary) {
-    FeatureSet features = getModule()->features;
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
     if (type.isInteger()) {
@@ -1211,8 +1213,7 @@ private:
           return binary->left;
         } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
                     binary->op == Abstract::getBinary(type, Abstract::And)) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                   !effects(binary->left).hasSideEffects()) {
           return binary->right;
         } else if (binary->op == EqInt64) {
           return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
@@ -1222,8 +1223,7 @@ private:
       if (constRight == 1LL) {
         // (signed)x % 1   ==>   0
         if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
-            !EffectAnalyzer(getPassOptions(), features, binary->left)
-               .hasSideEffects()) {
+            !effects(binary->left).hasSideEffects()) {
           right->value = Literal::makeSingleZero(type);
           return right;
         }
@@ -1234,19 +1234,16 @@ private:
           // x & -1   ==>   x
           return binary->left;
         } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                   !effects(binary->left).hasSideEffects()) {
           // x | -1   ==>   -1
           return binary->right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                   !effects(binary->left).hasSideEffects()) {
           // (signed)x % -1     ==>   0
           right->value = Literal::makeSingleZero(type);
           return right;
         } else if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                   !effects(binary->left).hasSideEffects()) {
           // (unsigned)x > -1   ==>   0
           right->value = Literal::makeSingleZero(Type::i32);
           right->type = Type::i32;
@@ -1268,8 +1265,7 @@ private:
           std::swap(binary->left, binary->right);
           return binary;
         } else if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
-                   !EffectAnalyzer(getPassOptions(), features, binary->left)
-                      .hasSideEffects()) {
+                   !effects(binary->left).hasSideEffects()) {
           // (unsigned)x <= -1   ==>   1
           right->value = Literal::makeFromInt32(1, Type::i32);
           right->type = Type::i32;
@@ -1329,9 +1325,7 @@ private:
         if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
-            !EffectAnalyzer(
-               getPassOptions(), getModule()->features, binary->right)
-               .hasSideEffects()) {
+            !effects(binary->right).hasSideEffects()) {
           return binary->left;
         }
       }
