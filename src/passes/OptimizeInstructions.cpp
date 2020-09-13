@@ -1300,9 +1300,9 @@ private:
       }
     }
     if (type.isFloat()) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-        auto value = right->value.getFloat();
-        if (value == 0.0) {
+      auto value = right->value.getFloat();
+      if (value == 0.0) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
           if (std::signbit(value)) {
             // x - (-0.0)   ==>   x + 0.0
             binary->op = Abstract::getBinary(type, Abstract::Add);
@@ -1310,6 +1310,11 @@ private:
             return binary;
           } else {
             // x - 0.0   ==>   x
+            return binary->left;
+          }
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (std::signbit(value)) {
+            // x + (-0.0)   ==>   x
             return binary->left;
           }
         }

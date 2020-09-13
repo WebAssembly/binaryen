@@ -3550,6 +3550,12 @@
    (local.get $fy)
   )
   (drop
+   (local.get $fx)
+  )
+  (drop
+   (local.get $fy)
+  )
+  (drop
    (f32.add
     (local.get $fx)
     (f32.const 0)

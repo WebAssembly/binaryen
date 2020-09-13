@@ -4057,6 +4057,15 @@
       (local.get $fy)
       (f64.const 0)
     ))
+    ;; x + (-0.0)   ==>   x
+    (drop (f32.add
+      (local.get $fx)
+      (f32.const -0)
+    ))
+    (drop (f64.add
+      (local.get $fy)
+      (f64.const -0)
+    ))
     ;; x - (-0.0)   ==>   x + 0.0
     (drop (f32.sub
       (local.get $fx)
