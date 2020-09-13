@@ -61,6 +61,12 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::anyref:
           ret += "(ref.null any)";
           break;
+        case Type::eqref:
+          ret += "(ref.null eq)";
+          break;
+        case Type::i31ref:
+          ret += "(i31.new (i32.const 0))";
+          break;
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

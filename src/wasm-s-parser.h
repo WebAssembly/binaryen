@@ -237,6 +237,7 @@ private:
   Expression* makeRefNull(Element& s);
   Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
+  Expression* makeRefEq(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);

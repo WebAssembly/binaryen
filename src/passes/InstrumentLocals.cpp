@@ -60,6 +60,8 @@ Name get_funcref("get_funcref");
 Name get_externref("get_externref");
 Name get_exnref("get_exnref");
 Name get_anyref("get_anyref");
+Name get_eqref("get_eqref");
+Name get_i31ref("get_i31ref");
 Name get_v128("get_v128");
 
 Name set_i32("set_i32");
@@ -70,6 +72,8 @@ Name set_funcref("set_funcref");
 Name set_externref("set_externref");
 Name set_exnref("set_exnref");
 Name set_anyref("set_anyref");
+Name set_eqref("set_eqref");
+Name set_i31ref("set_i31ref");
 Name set_v128("set_v128");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
@@ -103,6 +107,12 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case Type::anyref:
         import = get_anyref;
+        break;
+      case Type::eqref:
+        import = get_eqref;
+        break;
+      case Type::i31ref:
+        import = get_i31ref;
         break;
       case Type::none:
       case Type::unreachable:
@@ -153,6 +163,12 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::anyref:
         import = set_anyref;
         break;
+      case Type::eqref:
+        import = set_eqref;
+        break;
+      case Type::i31ref:
+        import = set_i31ref;
+        break;
       case Type::unreachable:
         return; // nothing to do here
       case Type::none:
@@ -198,11 +214,21 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         addImport(
           curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
       }
-      if (curr->features.hasAnyref()) {
+      if (curr->features.hasAnyref() || curr->features.hasGC()) {
         addImport(
           curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
         addImport(
           curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      }
+      if (curr->features.hasGC()) {
+        addImport(
+          curr, get_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+        addImport(
+          curr, set_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+        addImport(
+          curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
+        addImport(
+          curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
       }
     }
     if (curr->features.hasSIMD()) {

@@ -487,6 +487,7 @@ instructions = [
     ("ref.null",             "makeRefNull(s)"),
     ("ref.is_null",          "makeRefIsNull(s)"),
     ("ref.func",             "makeRefFunc(s)"),
+    ("ref.eq",               "makeRefEq(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

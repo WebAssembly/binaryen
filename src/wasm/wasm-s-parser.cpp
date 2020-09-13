@@ -877,6 +877,12 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::anyref;
   }
+  if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
+    return Type::eqref;
+  }
+  if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
+    return Type::i31ref;
+  }
   if (allowError) {
     return Type::none;
   }
@@ -1840,6 +1846,14 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   auto func = getFunctionName(*s[1]);
   auto ret = allocator.alloc<RefFunc>();
   ret->func = func;
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
+  auto ret = allocator.alloc<RefEq>();
+  ret->left = parseExpression(s[1]);
+  ret->right = parseExpression(s[2]);
   ret->finalize();
   return ret;
 }

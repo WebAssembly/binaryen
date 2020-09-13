@@ -349,6 +349,10 @@ enum EncodedType {
   externref = -0x11, // 0x6f
   // any reference type
   anyref = -0x12, // 0x6e
+  // comparable reference type
+  eqref = -0x13, // 0x6d
+  // integer reference type
+  i31ref = -0x16, // 0x6a
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -361,6 +365,8 @@ enum EncodedHeapType {
   func = -0x10,    // 0x70
   extern_ = -0x11, // 0x6f
   any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  i31 = -0x17,     // 0x69, != i31ref
   exn = -0x18,     // 0x68
 };
 
@@ -384,6 +390,7 @@ extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* AnyrefFeature;
+extern const char* GCFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -921,6 +928,7 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
+  RefEq = 0xd5,
 
   // exception handling opcodes
 
@@ -982,6 +990,12 @@ inline S32LEB binaryType(Type type) {
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
+    case Type::eqref:
+      ret = BinaryConsts::EncodedType::eqref;
+      break;
+    case Type::i31ref:
+      ret = BinaryConsts::EncodedType::i31ref;
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1004,7 +1018,11 @@ inline S32LEB binaryHeapType(HeapType type) {
       ret = BinaryConsts::EncodedHeapType::any;
       break;
     case HeapType::EqKind:
+      ret = BinaryConsts::EncodedHeapType::eq;
+      break;
     case HeapType::I31Kind:
+      ret = BinaryConsts::EncodedHeapType::i31;
+      break;
     case HeapType::SignatureKind:
     case HeapType::StructKind:
     case HeapType::ArrayKind:
@@ -1443,6 +1461,7 @@ public:
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

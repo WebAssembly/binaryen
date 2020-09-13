@@ -324,8 +324,17 @@ private:
           if (wasm.features.hasExceptionHandling()) {
             options.push_back(Type::exnref);
           }
+          if (wasm.features.hasGC()) {
+            options.push_back(Type::eqref);
+          }
+        }
+        // falls through
+      case Type::eqref: {
+        if (wasm.features.hasReferenceTypes() && wasm.features.hasGC()) {
+          // options.push_back(Type::i31ref); // TODO: i31.new
         }
         break;
+      }
       default:
         break;
     }
@@ -884,6 +893,7 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      // options.add(FeatureSet::GC, &Self::makeRefEq); // TODO
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -1363,6 +1373,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1467,6 +1479,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1596,6 +1610,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1641,6 +1657,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1709,6 +1727,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1736,6 +1756,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1761,6 +1783,9 @@ private:
           target = pick(wasm.functions).get();
         }
         return builder.makeRefFunc(target->name);
+      }
+      if (type == Type::i31ref) {
+        WASM_UNREACHABLE("TODO: i31.new");
       }
       return builder.makeRefNull(type);
     }
@@ -1846,6 +1871,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -1991,6 +2018,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2228,6 +2257,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2435,6 +2466,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2615,8 +2648,12 @@ private:
     if (wasm.features.hasExceptionHandling()) {
       options.push_back(Type::exnref);
     }
-    if (wasm.features.hasAnyref()) {
+    if (wasm.features.hasAnyref() || wasm.features.hasGC()) {
       options.push_back(Type::anyref);
+    }
+    if (wasm.features.hasGC()) {
+      options.push_back(Type::eqref);
+      // options.push_back(Type::i31ref); // TODO: i31.new
     }
     return builder.makeRefIsNull(make(pick(options)));
   }
@@ -2684,7 +2721,11 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::Anyref, Type::anyref));
+        .add(FeatureSet::ReferenceTypes | FeatureSet::Anyref, Type::anyref)
+        .add(
+          FeatureSet::ReferenceTypes | FeatureSet::GC, Type::anyref, Type::eqref
+          // Type::i31ref TODO: i31.new
+          ));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }

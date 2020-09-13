@@ -693,6 +693,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::MultivalueFeature;
       case FeatureSet::Anyref:
         return BinaryConsts::UserSections::AnyrefFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1142,6 +1144,10 @@ Type WasmBinaryBuilder::getType() {
       return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
+    case BinaryConsts::EncodedType::eqref:
+      return Type::eqref;
+    case BinaryConsts::EncodedType::i31ref:
+      return Type::i31ref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
@@ -1166,6 +1172,10 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::ExnKind;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::AnyKind;
+    case BinaryConsts::EncodedHeapType::eq:
+      return HeapType::EqKind;
+    case BinaryConsts::EncodedHeapType::i31:
+      return HeapType::I31Kind;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
@@ -2211,6 +2221,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setMultivalue();
       } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
         wasm.features.setAnyref();
+      } else if (name == BinaryConsts::UserSections::GCFeature) {
+        wasm.features.setGC();
       }
     }
   }
@@ -2341,6 +2353,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::RefFunc:
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
+      break;
+    case BinaryConsts::RefEq:
+      visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
       break;
     case BinaryConsts::Try:
       visitTry((curr = allocator.alloc<Try>())->cast<Try>());
@@ -4733,6 +4748,13 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
     throwError("ref.func: invalid call index");
   }
   functionRefs[index].push_back(curr); // we don't know function names yet
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
+  BYN_TRACE("zz node: RefEq\n");
+  curr->left = popNonVoidExpression();
+  curr->right = popNonVoidExpression();
   curr->finalize();
 }
 

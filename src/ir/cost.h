@@ -756,11 +756,14 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitReturn(Return* curr) { return maybeVisit(curr->value); }
   Index visitHost(Host* curr) { return 100; }
   Index visitRefNull(RefNull* curr) { return 1; }
-  Index visitRefIsNull(RefIsNull* curr) { return 1; }
+  Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
   Index visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
+  }
+  Index visitRefEq(RefEq* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
   }
   Index visitThrow(Throw* curr) { return 100; }
   Index visitRethrow(Rethrow* curr) { return 100; }

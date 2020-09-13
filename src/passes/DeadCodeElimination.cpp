@@ -359,6 +359,8 @@ struct DeadCodeElimination
           DELEGATE(RefIsNull);
         case Expression::Id::RefFuncId:
           DELEGATE(RefFunc);
+        case Expression::Id::RefEqId:
+          DELEGATE(RefEq);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:

@@ -119,8 +119,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
             globals[import->name] = {Literal::makeNull(import->type)};
             break;
+          case Type::i31ref:
+            WASM_UNREACHABLE("TODO: i31.new");
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");

@@ -222,6 +222,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
+    void visitRefEq(RefEq* curr) {}
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
     void visitRethrow(Rethrow* curr) {}

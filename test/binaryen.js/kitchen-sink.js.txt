@@ -20,6 +20,10 @@
   // 9
   // BinaryenTypeAnyref: 10
   // 10
+  // BinaryenTypeEqref: 11
+  // 11
+  // BinaryenTypeI31ref: 12
+  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -36,7 +40,8 @@ Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.Anyref: 1024
-Features.All: 2047
+Features.GC: 2048
+Features.All: 4095
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -74,11 +79,15 @@ MemoryInitId: 34
 DataDropId: 35
 MemoryCopyId: 36
 MemoryFillId: 37
-TryId: 42
-ThrowId: 43
-RethrowId: 44
-BrOnExnId: 45
 PopId: 38
+RefNullId: 39
+RefIsNullId: 40
+RefFuncId: 41
+RefEqId: 42
+TryId: 43
+ThrowId: 44
+RethrowId: 45
+BrOnExnId: 46
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

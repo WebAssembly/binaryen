@@ -556,6 +556,7 @@ public:
     RefNullId,
     RefIsNullId,
     RefFuncId,
+    RefEqId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1119,6 +1120,16 @@ public:
   void finalize();
 };
 
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) {}
@@ -1263,7 +1274,7 @@ using StackIR = std::vector<StackInst*>;
 class Function : public Importable {
 public:
   Name name;
-  Signature sig;          // parameters and return value
+  Signature sig; // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 

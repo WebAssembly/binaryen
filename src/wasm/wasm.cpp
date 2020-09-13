@@ -46,6 +46,7 @@ const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* AnyrefFeature = "anyref";
+const char* GCFeature = "gc";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -189,6 +190,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -917,6 +920,14 @@ void RefIsNull::finalize() {
 }
 
 void RefFunc::finalize() { type = Type::funcref; }
+
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  type = Type::i32;
+}
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);

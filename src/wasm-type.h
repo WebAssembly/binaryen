@@ -51,7 +51,9 @@ public:
     externref,
     exnref,
     anyref,
-    _last_basic_id = anyref
+    eqref,
+    i31ref,
+    _last_basic_id = i31ref
   };
 
   Type() = default;
@@ -92,8 +94,8 @@ public:
   // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
   // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │
-  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
+  // │ eqref       ║ x │   │ x │ x │    n  │ │
+  // │ i31ref      ║ x │   │ x │ x │       │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │

@@ -123,6 +123,7 @@ void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefFunc(RefFunc* curr) { curr->finalize(); }
+void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }

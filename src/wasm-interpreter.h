@@ -1259,6 +1259,22 @@ public:
     NOTE_NAME(curr->func);
     return Literal::makeFunc(curr->func);
   }
+  Flow visitRefEq(RefEq* curr) {
+    NOTE_ENTER("RefEq");
+    Flow left = visit(curr->left);
+    if (left.breaking()) {
+      return left;
+    }
+    Flow right = visit(curr->right);
+    if (right.breaking()) {
+      return right;
+    }
+    const auto& leftValue = left.getSingleValue();
+    NOTE_EVAL1(leftValue);
+    const auto& rightValue = right.getSingleValue();
+    NOTE_EVAL1(rightValue);
+    return Literal(leftValue == rightValue);
+  }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -1648,6 +1664,8 @@ public:
         case Type::externref:
         case Type::exnref:
         case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1705,6 +1723,8 @@ public:
         case Type::externref:
         case Type::exnref:
         case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
