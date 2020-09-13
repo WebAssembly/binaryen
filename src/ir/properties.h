@@ -62,6 +62,9 @@ inline bool isSymmetric(Binary* binary) {
     case MulFloat32:
     case AddFloat64:
     case MulFloat64: {
+      // We should be more careful with different forrm of NaNs so
+      // check if lhs is non-NaN constant. We don't interesting rhs
+      // in term of canonization which prefer constant on right side.
       if (auto* c = binary->left->dynCast<Const>()) {
         return !c->value.isNaN();
       }
