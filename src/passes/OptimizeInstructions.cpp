@@ -1299,6 +1299,14 @@ private:
         }
       }
     }
+    if (type.isFloat()) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+        // x - 0.0   ==>   x
+        if (right->value.getFloat() == 0.0) {
+          return binary->left;
+        }
+      }
+    }
     if (type.isInteger() || type.isFloat()) {
       // note that this is correct even on floats with a NaN on the left,
       // as a NaN would skip the computation and just return the NaN,
