@@ -52,16 +52,24 @@ inline bool isSymmetric(Binary* binary) {
     case EqInt64:
     case NeInt64:
 
-    case AddFloat32:
-    case MulFloat32:
     case EqFloat32:
     case NeFloat32:
-
-    case AddFloat64:
-    case MulFloat64:
     case EqFloat64:
     case NeFloat64:
       return true;
+
+    case AddFloat32:
+    case MulFloat32:
+    case AddFloat64:
+    case MulFloat64: {
+      if (auto* c = binary->left->dynCast<Const>()) {
+        return !c->value.isNaN();
+      }
+      if (auto* c = binary->right->dynCast<Const>()) {
+        return !c->value.isNaN();
+      }
+      return false;
+    }
 
     default:
       return false;
