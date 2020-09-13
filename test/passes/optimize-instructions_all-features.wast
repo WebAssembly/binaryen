@@ -4384,20 +4384,6 @@
       )
     ))
 
-    ;; abs(x - 0)   ==>   abs(x)
-    (drop (f64.abs
-      (f64.sub
-        (local.get $x0)
-        (f64.const 0)
-      )
-    ))
-    (drop (f32.abs
-      (f32.sub
-        (local.get $y0)
-        (f32.const 0)
-      )
-    ))
-
     ;; abs(x) / abs(x)   ==>   x / x
     (drop (f64.div
       (f64.abs (local.get $x0))

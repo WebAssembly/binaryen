@@ -579,16 +579,9 @@ struct OptimizeInstructions
           }
           if (binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
             // abs(0 - x)   ==>   abs(x)
-            // abs(x - 0)   ==>   abs(x)
             if (auto* c = binary->left->dynCast<Const>()) {
               if (c->value.getFloat() == 0.0) {
                 unary->value = binary->right;
-                return unary;
-              }
-            }
-            if (auto* c = binary->right->dynCast<Const>()) {
-              if (c->value.getFloat() == 0.0) {
-                unary->value = binary->left;
                 return unary;
               }
             }

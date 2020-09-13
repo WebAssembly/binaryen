@@ -3902,16 +3902,6 @@
    )
   )
   (drop
-   (f64.abs
-    (local.get $x0)
-   )
-  )
-  (drop
-   (f32.abs
-    (local.get $y0)
-   )
-  )
-  (drop
    (f64.div
     (local.get $x0)
     (local.get $x0)
