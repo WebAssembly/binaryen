@@ -4017,8 +4017,8 @@
                                   )
                                   (f64.sub
                                    (f64.add
-                                    (local.get $24)
                                     (local.get $14)
+                                    (local.get $24)
                                    )
                                    (local.get $14)
                                   )
@@ -5139,8 +5139,8 @@
                                  (br_if $do-once81
                                   (f64.eq
                                    (f64.add
-                                    (local.get $24)
                                     (local.get $14)
+                                    (local.get $24)
                                    )
                                    (local.get $24)
                                   )
