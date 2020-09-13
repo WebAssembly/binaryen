@@ -1306,7 +1306,7 @@ private:
           if (signbit(value)) {
             // x - (-0.0)   ==>   x + 0.0
             binary->op = Abstract::getBinary(type, Abstract::Add);
-            right->value = Literal::makeFromInt32(0, type);
+            right->value = right->value.neg();
             return binary;
           } else {
             // x - 0.0   ==>   x
