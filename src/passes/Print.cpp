@@ -1578,7 +1578,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   void printFullLine(Expression* expression) {
-    !minify&& doIndent(o, indent);
+    if (!minify) {
+      doIndent(o, indent);
+    }
     if (full) {
       o << "[" << expression->type << "] ";
     }
