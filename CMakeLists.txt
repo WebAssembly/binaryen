@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.1.3)
 project(binaryen LANGUAGES C CXX VERSION 96)
 include(GNUInstallDirs)
 
+# The C++ standard whose features are required to build Binaryen.
+# Keep in sync with scripts/test/shared.py cxx_standard
+set(CXX_STANDARD 14)
+
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
   set(CMAKE_BUILD_TYPE "Release")
@@ -188,7 +192,7 @@ else()
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   set(CMAKE_THREAD_PREFER_PTHREAD ON)
   find_package(Threads REQUIRED)
-  add_cxx_flag("-std=c++14")
+  add_cxx_flag("-std=c++${CXX_STANDARD}")
   if(NOT EMSCRIPTEN)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
       # wasm doesn't allow for x87 floating point math
@@ -312,7 +316,7 @@ function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
   target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
   target_link_libraries(${name} binaryen)
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -354,7 +358,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
   target_link_libraries(binaryen_wasm debug "--profiling")
-  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -379,22 +383,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-s ASSERTIONS")
-  set_property(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_js PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Testing
-#
-# Currently just some very simple smoke tests.
-
-enable_testing()
-
-add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
-add_test(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
-add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
-add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

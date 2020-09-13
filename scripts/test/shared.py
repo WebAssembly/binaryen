@@ -16,11 +16,16 @@ from __future__ import print_function
 
 import argparse
 import difflib
+import fnmatch
 import glob
 import os
 import shutil
 import subprocess
 import sys
+
+# The C++ standard whose features are required to build Binaryen.
+# Keep in sync with CMakeLists.txt CXX_STANDARD
+cxx_standard = 14
 
 
 def parse_args(args):
@@ -81,6 +86,10 @@ def parse_args(args):
     parser.add_argument(
         '--list-suites', action='store_true',
         help='List the test suites that can be run.')
+    parser.add_argument(
+        '--filter', dest='test_name_filter', default='',
+        help=('Specifies a filter. Only tests whose paths contains this '
+              'substring will be run'))
 
     return parser.parse_args(args)
 
@@ -362,6 +371,8 @@ def get_tests(test_dir, extensions=[]):
         tests += glob.glob(os.path.join(test_dir, '*'))
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
+    if options.test_name_filter:
+        tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
 
 

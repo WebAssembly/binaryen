@@ -299,12 +299,12 @@ struct DAE : public Pass {
               value = c->value;
             } else if (value != c->value) {
               // Not identical, give up
-              value.type = Type::none;
+              value = Literal(Type::none);
               break;
             }
           } else {
             // Not a constant, give up
-            value.type = Type::none;
+            value = Literal(Type::none);
             break;
           }
         }
@@ -409,7 +409,7 @@ private:
     // Remove the parameter from the function. We must add a new local
     // for uses of the parameter, but cannot make it use the same index
     // (in general).
-    std::vector<Type> params = func->sig.params.expand();
+    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
     auto type = params[i];
     params.erase(params.begin() + i);
     func->sig.params = Type(params);

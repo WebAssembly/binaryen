@@ -35,8 +35,8 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
+    ['anyref', 'Anyref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -121,6 +121,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
+    'Anyref',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2058,21 +2059,21 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
-    }
-  };
-
   self['exnref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
     }
   };
 
+  self['anyref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
@@ -3028,6 +3029,16 @@ Module['getOneCallerInlineMaxSize'] = function() {
 // Sets the function size which we inline when there is only one caller.
 Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
+};
+
+// Gets the value which allow inline functions that are not "lightweight".
+Module['getAllowInliningFunctionsWithLoops'] = function() {
+  return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
+};
+
+// Sets the value which allow inline functions that are not "lightweight".
+Module['setAllowInliningFunctionsWithLoops'] = function(value) {
+  Module['_BinaryenSetAllowInliningFunctionsWithLoops'](value);
 };
 
 // Expression wrappers

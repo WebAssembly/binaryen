@@ -111,6 +111,7 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
+  IRProfile profile;
   std::vector<Signature> signatures;
   std::unordered_map<std::string, size_t> signatureIndices;
   std::vector<Name> functionNames;
@@ -127,6 +128,7 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm,
                          Element& module,
+                         IRProfile profile,
                          Name* moduleName = nullptr);
 
 private:
@@ -160,6 +162,10 @@ private:
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
+  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+    return stringToHeapType(str.str, prefix);
+  }
+  HeapType stringToHeapType(const char* str, bool prefix = false);
   Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
@@ -211,7 +217,7 @@ private:
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
   Expression* makePush(Element& s);
-  Expression* makePop(Type type);
+  Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

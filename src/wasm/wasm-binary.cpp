@@ -220,7 +220,7 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
-      for (auto type : sigType.expand()) {
+      for (const auto& type : sigType) {
         o << binaryType(type);
       }
     }
@@ -385,16 +385,17 @@ void WasmBinaryWriter::writeGlobals() {
   o << U32LEB(num);
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one\n");
-    const auto& types = global->type.expand();
-    for (size_t i = 0; i < types.size(); ++i) {
-      o << binaryType(types[i]);
+    size_t i = 0;
+    for (const auto& t : global->type) {
+      o << binaryType(t);
       o << U32LEB(global->mutable_);
-      if (types.size() == 1) {
+      if (global->type.size() == 1) {
         writeExpression(global->init);
       } else {
         writeExpression(global->init->cast<TupleMake>()->operands[i]);
       }
       o << int8_t(BinaryConsts::End);
+      ++i;
     }
   });
   finishSection(start);
@@ -690,6 +691,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
+      case FeatureSet::Anyref:
+        return BinaryConsts::UserSections::AnyrefFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1135,12 +1138,36 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::nullref:
-      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
+    case BinaryConsts::EncodedType::anyref:
+      return Type::anyref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
+  }
+  WASM_UNREACHABLE("unexpeced type");
+}
+
+HeapType WasmBinaryBuilder::getHeapType() {
+  int type = getS32LEB(); // TODO: Actually encoded as s33
+  // Single heap types are negative; heap type indices are non-negative
+  if (type >= 0) {
+    if (size_t(type) >= signatures.size()) {
+      throwError("invalid signature index: " + std::to_string(type));
+    }
+    return HeapType(signatures[type]);
+  }
+  switch (type) {
+    case BinaryConsts::EncodedHeapType::func:
+      return HeapType::FuncKind;
+    case BinaryConsts::EncodedHeapType::extern_:
+      return HeapType::ExternKind;
+    case BinaryConsts::EncodedHeapType::exn:
+      return HeapType::ExnKind;
+    case BinaryConsts::EncodedHeapType::any:
+      return HeapType::AnyKind;
+    default:
+      throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpeced type");
 }
@@ -1385,7 +1412,9 @@ void WasmBinaryBuilder::readImports() {
         wasm.addEvent(curr);
         break;
       }
-      default: { throwError("bad import kind"); }
+      default: {
+        throwError("bad import kind");
+      }
     }
   }
 }
@@ -1790,13 +1819,12 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 }
 
 void WasmBinaryBuilder::pushExpression(Expression* curr) {
-  if (curr->type.isMulti()) {
+  if (curr->type.isTuple()) {
     // Store tuple to local and push individual extracted values
     Builder builder(wasm);
     Index tuple = builder.addVar(currFunction, curr->type);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    const std::vector<Type> types = curr->type.expand();
-    for (Index i = 0; i < types.size(); ++i) {
+    for (Index i = 0; i < curr->type.size(); ++i) {
       expressionStack.push_back(
         builder.makeTupleExtract(builder.makeLocalGet(tuple, curr->type), i));
     }
@@ -1820,7 +1848,7 @@ Expression* WasmBinaryBuilder::popExpression() {
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
-  assert(!ret->type.isMulti());
+  assert(!ret->type.isTuple());
   expressionStack.pop_back();
   return ret;
 }
@@ -1883,7 +1911,7 @@ Expression* WasmBinaryBuilder::popTuple(size_t numElems) {
 Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
   if (type.isSingle()) {
     return popNonVoidExpression();
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     return popTuple(type.size());
   } else {
     WASM_UNREACHABLE("Invalid popped type");
@@ -2181,6 +2209,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
+      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
+        wasm.features.setAnyref();
       }
     }
   }
@@ -4687,7 +4717,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
-  curr->finalize();
+  curr->finalize(getHeapType());
 }
 
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {

@@ -23,7 +23,7 @@ namespace wasm {
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
     o << binaryType(type);
@@ -190,8 +190,8 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         return;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -292,8 +292,8 @@ void BinaryInstWriter::visitStore(Store* curr) {
         break;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -695,8 +695,8 @@ void BinaryInstWriter::visitConst(Const* curr) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1686,7 +1686,8 @@ void BinaryInstWriter::visitHost(Host* curr) {
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
-  o << int8_t(BinaryConsts::RefNull);
+  o << int8_t(BinaryConsts::RefNull)
+    << binaryHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -1808,17 +1809,16 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     return;
   }
   for (auto type : func->vars) {
-    for (auto t : type.expand()) {
+    for (const auto& t : type) {
       numLocalsByType[t]++;
     }
   }
   countScratchLocals();
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    const std::vector<Type> types = func->getLocalType(i).expand();
-    for (Index j = 0; j < types.size(); j++) {
-      Type type = types[j];
-      auto fullIndex = std::make_pair(i, j);
+    Index j = 0;
+    for (const auto& type : func->getLocalType(i)) {
+      auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {

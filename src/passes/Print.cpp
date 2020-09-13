@@ -66,16 +66,17 @@ struct SExprType {
 
 static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
-  if (type.isMulti()) {
-    const std::vector<Type>& types = type.expand();
-    o << '(' << types[0];
-    for (size_t i = 1; i < types.size(); ++i) {
-      o << ' ' << types[i];
+  if (type.isTuple()) {
+    o << '(';
+    auto sep = "";
+    for (const auto& t : type) {
+      o << sep << t;
+      sep = " ";
     }
     o << ')';
-    return o;
+  } else {
+    o << type;
   }
-  o << type;
   return o;
 }
 
@@ -90,12 +91,10 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
     if (type == Type::none) {
       os << "none";
     } else {
-      const std::vector<Type>& types = type.expand();
-      for (size_t i = 0; i < types.size(); ++i) {
-        if (i != 0) {
-          os << '_';
-        }
-        os << types[i];
+      auto sep = "";
+      for (const auto& t : type) {
+        os << sep << t;
+        sep = "_";
       }
     }
   };
@@ -1441,7 +1440,10 @@ struct PrintExpressionContents
         break;
     }
   }
-  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
+  void visitRefNull(RefNull* curr) {
+    printMedium(o, "ref.null ");
+    o << curr->type.getHeapType();
+  }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
@@ -1467,8 +1469,11 @@ struct PrintExpressionContents
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
-    prepareColor(o) << curr->type;
-    o << ".pop";
+    prepareColor(o) << "pop";
+    for (auto type : curr->type) {
+      assert(type.isBasic() && "TODO: print and parse compound types");
+      o << " " << type;
+    }
     restoreNormalColor(o);
   }
   void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
@@ -2169,14 +2174,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    const std::vector<Type>& params = curr->sig.params.expand();
-    if (params.size() > 0) {
-      for (size_t i = 0; i < params.size(); i++) {
+    if (curr->sig.params.size() > 0) {
+      Index i = 0;
+      for (const auto& param : curr->sig.params) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << params[i] << ')';
+        o << ' ' << param << ')';
+        ++i;
       }
     }
     if (curr->sig.results != Type::none) {

@@ -1,5 +1,6 @@
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $none_=>_f64 (func (result f64)))
  (memory $0 0)
  (func $conditionals (param $0 i32) (param $1 i32) (result i32)
@@ -358,5 +359,26 @@
    )
   )
   (f64.const -nan:0xfffffffffffff)
+ )
+ (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+  (block
+   (drop
+    (local.get $dst)
+   )
+   (drop
+    (local.get $dst)
+   )
+   (drop
+    (local.get $sz)
+   )
+  )
+  (block
+   (drop
+    (local.get $dst)
+   )
+   (drop
+    (local.get $src)
+   )
+  )
  )
 )

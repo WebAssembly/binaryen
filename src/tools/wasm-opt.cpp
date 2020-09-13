@@ -230,6 +230,7 @@ int main(int argc, const char* argv[]) {
     // asked to remove it.
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
+    reader.setProfile(options.profile);
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

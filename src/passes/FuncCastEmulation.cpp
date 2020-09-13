@@ -67,8 +67,8 @@ static Expression* toABI(Expression* value, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
-    case Type::exnref: {
+    case Type::exnref:
+    case Type::anyref: {
       WASM_UNREACHABLE("reference types cannot be converted to i64");
     }
     case Type::none: {
@@ -111,8 +111,8 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
-    case Type::exnref: {
+    case Type::exnref:
+    case Type::anyref: {
       WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
     case Type::none: {
@@ -193,13 +193,13 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    const std::vector<Type>& params = func->sig.params.expand();
     Type type = func->sig.results;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
-    for (Index i = 0; i < params.size(); i++) {
+    Index i = 0;
+    for (const auto& param : func->sig.params) {
       callOperands.push_back(
-        fromABI(builder.makeLocalGet(i, Type::i64), params[i], module));
+        fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;

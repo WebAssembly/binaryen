@@ -45,6 +45,7 @@ const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
+const char* AnyrefFeature = "anyref";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -209,10 +210,10 @@ const char* getExpressionName(Expression* curr) {
 Literal getSingleLiteralFromConstExpression(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal::makeNullref();
+  } else if (auto* n = curr->dynCast<RefNull>()) {
+    return Literal::makeNull(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal::makeFuncref(r->func);
+    return Literal::makeFunc(r->func);
   } else {
     WASM_UNREACHABLE("Not a constant expression");
   }
@@ -896,7 +897,16 @@ void Host::finalize() {
   }
 }
 
-void RefNull::finalize() { type = Type::nullref; }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+
+void RefNull::finalize(Type type_) {
+  assert(type_ == Type::unreachable || type_.isNullable());
+  type = type_;
+}
+
+void RefNull::finalize() {
+  assert(type == Type::unreachable || type.isNullable());
+}
 
 void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {
@@ -948,7 +958,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = tuple->type.expand()[index];
+    type = tuple->type[index];
   }
 }
 
@@ -1006,7 +1016,7 @@ Index Function::getVarIndexBase() { return sig.params.size(); }
 Type Function::getLocalType(Index index) {
   auto numParams = sig.params.size();
   if (index < numParams) {
-    return sig.params.expand()[index];
+    return sig.params[index];
   } else if (isVar(index)) {
     return vars[index - numParams];
   } else {

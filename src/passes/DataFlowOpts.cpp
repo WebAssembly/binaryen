@@ -137,14 +137,14 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     Module temp;
     // XXX we should copy expr here, in principle, and definitely will need to
     //     when we do arbitrarily regenerated expressions
-    auto* func = Builder(temp).makeFunction(
-      "temp", Signature(Type::none, Type::none), {}, expr);
+    std::unique_ptr<Function> tempFunc(Builder(temp).makeFunction(
+      "temp", Signature(Type::none, Type::none), {}, expr));
     PassRunner runner(&temp);
     runner.setIsNested(true);
     runner.add("precompute");
-    runner.runOnFunction(func);
+    runner.runOnFunction(tempFunc.get());
     // Get the optimized thing
-    auto* result = func->body;
+    auto* result = tempFunc->body;
     // It may not be a constant, e.g. 0 / 0 does not optimize to 0
     if (!result->is<Const>()) {
       return;

@@ -27,33 +27,6 @@ from scripts.test import wasm2js
 from scripts.test import wasm_opt
 
 
-def update_bin_fmt_tests():
-    print('\n[ checking binary format testcases... ]\n')
-    for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        for debug_info in [0, 1]:
-            cmd = shared.WASM_AS + [wast, '-o', 'a.wasm', '-all']
-            if debug_info:
-                cmd += ['-g']
-            print(' '.join(cmd))
-            if os.path.exists('a.wasm'):
-                os.unlink('a.wasm')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wasm')
-
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
-            print(' '.join(cmd))
-            if os.path.exists('a.wast'):
-                os.unlink('a.wast')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wast')
-            actual = open('a.wast').read()
-            binary_file = wast + '.fromBinary'
-            if not debug_info:
-                binary_file += '.noDebugInfo'
-            with open(binary_file, 'w') as o:
-                o.write(actual)
-
-
 def update_example_tests():
     print('\n[ checking example testcases... ]\n')
     for t in shared.get_tests(shared.get_test_dir('example')):
@@ -83,7 +56,7 @@ def update_example_tests():
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libdir, '-pthread']
         print('build: ', ' '.join(extra))
         if src.endswith('.cpp'):
-            extra += ['-std=c++14']
+            extra += ['-std=c++' + str(shared.cxx_standard)]
         print(os.getcwd())
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using rpath
@@ -92,7 +65,7 @@ def update_example_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [os.environ.get('CXX') or 'g++', '-std=c++14'] + cmd
+        cmd = [os.environ.get('CXX') or 'g++', '-std=c++' + str(shared.cxx_standard)] + cmd
         try:
             print('link: ', ' '.join(cmd))
             subprocess.check_call(cmd)
@@ -187,7 +160,6 @@ TEST_SUITES = OrderedDict([
     ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
-    ('binfmt', update_bin_fmt_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),
 ])
 

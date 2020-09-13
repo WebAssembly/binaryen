@@ -249,7 +249,7 @@
         )
         (catch
           (drop
-            (exnref.pop)
+            (pop exnref)
           )
           (i32.eqz
             (i32.eqz
@@ -4207,12 +4207,21 @@
       (unreachable)
     )
   )
-  ;; Tests when if arms are subtype of if's type
-  (func $if-arms-subtype (result externref)
-    (if (result externref)
+  ;; These functions test if an `if` with subtyped arms is correctly folded
+  ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
+  (func $if-arms-subtype-fold (result anyref)
+    (if (result anyref)
       (i32.const 0)
-      (ref.null)
-      (ref.null)
+      (ref.null extern)
+      (ref.null extern)
+    )
+  )
+  ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
+  (func $if-arms-subtype-nofold (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null func)
     )
   )
   (func $optimize-boolean-context (param $x i32) (param $y i32)
@@ -4232,6 +4241,87 @@
         (local.get $x)
       )
     ))
+  )
+  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $dst)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 0)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 1)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 2)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 3)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 4)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 5)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 6)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 7)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 8)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (i32.const 0)
+      (i32.const 0)
+      (i32.load
+        (i32.const 3) ;; side effect
+      )
+    )
   )
   (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
     ;; abs(x) * abs(x)   ==>   x * x
