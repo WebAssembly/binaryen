@@ -4048,7 +4048,7 @@
    )
   )
   (func $const-float-zero (param $fx f32) (param $fy f64)
-    ;; x - 0   ==>   x
+    ;; x - 0.0   ==>   x
     (drop (f32.sub
       (local.get $fx)
       (f32.const 0)
@@ -4057,7 +4057,16 @@
       (local.get $fy)
       (f64.const 0)
     ))
-    ;; 0 - x   ==>   0 - x
+    ;; x - (-0.0)   ==>   x + 0.0
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const -0)
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const -0)
+    ))
+    ;; 0.0 - x   ==>   0.0 - x
     (drop (f32.sub
       (f32.const 0)
       (local.get $fx) ;; skip
@@ -4066,7 +4075,7 @@
       (f64.const 0)
       (local.get $fy) ;; skip
     ))
-    ;; x + 0   ==>   x + 0
+    ;; x + 0.0   ==>   x + 0.0
     (drop (f32.add
       (f32.const 0)
       (local.get $fx) ;; skip

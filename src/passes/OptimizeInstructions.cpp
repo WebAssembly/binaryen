@@ -1301,9 +1301,17 @@ private:
     }
     if (type.isFloat()) {
       if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-        // x - 0.0   ==>   x
-        if (right->value.getFloat() == 0.0) {
-          return binary->left;
+        auto value = right->value.getFloat();
+        if (value == 0.0) {
+          if (signbit(value)) {
+            // x - (-0.0)   ==>   x + 0.0
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+            right->value = Literal::makeFromInt32(0, type);
+            return binary;
+          } else {
+            // x - 0.0   ==>   x
+            return binary->left;
+          }
         }
       }
     }
