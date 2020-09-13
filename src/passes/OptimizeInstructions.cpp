@@ -1303,7 +1303,7 @@ private:
       if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
         auto value = right->value.getFloat();
         if (value == 0.0) {
-          if (signbit(value)) {
+          if (std::signbit(value)) {
             // x - (-0.0)   ==>   x + 0.0
             binary->op = Abstract::getBinary(type, Abstract::Add);
             right->value = right->value.neg();
