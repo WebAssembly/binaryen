@@ -31,14 +31,51 @@ namespace wasm {
 
 namespace Match {
 
+// The available matchers are:
+//
+//  i32(x), i64(x), f32(x), f64(x)
+//
+//    Match constants of the exact corresponding type. Do not support building.
+//
+//  ival(x), fval(x)
+//
+//    Match any integer constant or any floating point constant. Do not support
+//    building.
+//
+//  constant([e])
+//
+//    Matches any Const expression and binds it to `e`, if provided.
+//
+//  any([e])
+//
+//    Matches any expression and binds it to `e`, if provided.
+//
+//  unary([e], op, val)
+//
+//    Matches Unary expressions implementing UnaryOp `op` whose operand matches
+//    `val`. Binds the matched expression to `e`, if provided.
+//
+//  binary([e], op, left, right)
+//
+//    Matches Binary expressions implementing BinaryOp `op` whose operands match
+//    `left` and `right`. Binds the matched expression to `e`, if provided.
+//
+//  select([e], ifTrue, ifFalse, cond)
+//
+//    Matches Select expressions whose operands match `ifTrue`, `ifFalse`, and
+//    `cond`. Binds the matched expression to `e`, if provided.
+//
+
 // The main entrypoint for matching.
 template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
   return matcher.matches(expr);
 }
 
 // The main entrypoint for building. The top-level matcher must point to an
-// expression. Matchers in the pattern that do not point to expressions are
-// assumed to match.
+// expression, which will be modified in place by inserting bound expressions at
+// the locations corresponding to their position in the pattern. Matchers in the
+// pattern that do not have bound expressions are assumed to match the output.
+// Returns the top-level modified expression.
 template<class Matcher> Expression* build(Matcher matcher) {
   Expression* expr = nullptr;
   matcher.build(&expr);
@@ -140,15 +177,12 @@ template<class ValueMatcher> struct UnaryMatcher {
 
 // TODO: Once we move to C++17, remove these wrapper functions and use the
 // matcher constructors directly like we do with the leaf matchers already.
-template<class ValueMatcher>
-UnaryMatcher<ValueMatcher> unary(UnaryOp op, ValueMatcher&& value) {
-  return UnaryMatcher<ValueMatcher>(nullptr, op, std::move(value));
+template<class V> UnaryMatcher<V> unary(UnaryOp op, V&& value) {
+  return UnaryMatcher<V>(nullptr, op, std::move(value));
 }
 
-template<class ValueMatcher>
-UnaryMatcher<ValueMatcher>
-unary(Unary** curr, UnaryOp op, ValueMatcher&& value) {
-  return UnaryMatcher<ValueMatcher>(curr, op, std::move(value));
+template<class V> UnaryMatcher<V> unary(Unary** curr, UnaryOp op, V&& value) {
+  return UnaryMatcher<V>(curr, op, std::move(value));
 }
 
 template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
@@ -185,18 +219,14 @@ template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
   }
 };
 
-template<class LeftMatcher, class RightMatcher>
-BinaryMatcher<LeftMatcher, RightMatcher>
-binary(BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
-  return BinaryMatcher<LeftMatcher, RightMatcher>(
-    nullptr, op, std::move(left), std::move(right));
+template<class L, class R>
+BinaryMatcher<L, R> binary(BinaryOp op, L&& left, R&& right) {
+  return BinaryMatcher<L, R>(nullptr, op, std::move(left), std::move(right));
 }
 
-template<class LeftMatcher, class RightMatcher>
-BinaryMatcher<LeftMatcher, RightMatcher>
-binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
-  return BinaryMatcher<LeftMatcher, RightMatcher>(
-    curr, op, std::move(left), std::move(right));
+template<class L, class R>
+BinaryMatcher<L, R> binary(Binary** curr, BinaryOp op, L&& left, R&& right) {
+  return BinaryMatcher<L, R>(curr, op, std::move(left), std::move(right));
 }
 
 template<class IfTrueMatcher, class IfFalseMatcher, class CondMatcher>
