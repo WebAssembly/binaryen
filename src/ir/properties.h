@@ -65,9 +65,6 @@ inline bool isSymmetric(Binary* binary) {
       if (auto* c = binary->left->dynCast<Const>()) {
         return !c->value.isNaN();
       }
-      if (auto* c = binary->right->dynCast<Const>()) {
-        return !c->value.isNaN();
-      }
       return false;
     }
 

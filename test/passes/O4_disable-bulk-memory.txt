@@ -134,52 +134,53 @@
     )
     (block
      (local.set $3
-      (f64.add
-       (f64.mul
-        (local.tee $4
-         (f64.load offset=48
-          (local.tee $2
-           (i32.load offset=8
-            (i32.add
-             (i32.load
-              (local.get $0)
-             )
-             (i32.shl
-              (local.get $1)
-              (i32.const 2)
-             )
-            )
-           )
+      (f64.load offset=48
+       (local.tee $2
+        (i32.load offset=8
+         (i32.add
+          (i32.load
+           (local.get $0)
+          )
+          (i32.shl
+           (local.get $1)
+           (i32.const 2)
           )
          )
         )
+       )
+      )
+     )
+     (local.set $4
+      (f64.add
+       (local.get $4)
+       (f64.mul
         (f64.load offset=24
          (local.get $2)
         )
+        (local.get $3)
        )
-       (local.get $3)
       )
      )
      (local.set $5
       (f64.add
+       (local.get $5)
        (f64.mul
         (f64.load offset=32
          (local.get $2)
         )
-        (local.get $4)
+        (local.get $3)
        )
-       (local.get $5)
       )
      )
      (local.set $6
       (f64.add
+       (local.get $6)
        (f64.mul
         (f64.load offset=40
          (local.get $2)
         )
-        (local.get $4)
+        (local.get $3)
        )
-       (local.get $6)
       )
      )
      (local.set $1
@@ -216,7 +217,7 @@
    )
    (f64.div
     (f64.neg
-     (local.get $3)
+     (local.get $4)
     )
     (f64.const 39.47841760435743)
    )
@@ -859,8 +860,12 @@
          (f64.sub
           (local.get $4)
           (f64.mul
+           (local.get $2)
            (local.tee $8
             (f64.mul
+             (f64.load offset=48
+              (local.get $1)
+             )
              (local.tee $11
               (f64.div
                (f64.const 0.01)
@@ -870,12 +875,8 @@
                )
               )
              )
-             (f64.load offset=48
-              (local.get $1)
-             )
             )
            )
-           (local.get $2)
           )
          )
         )
@@ -883,8 +884,8 @@
          (f64.sub
           (local.get $5)
           (f64.mul
-           (local.get $8)
            (local.get $9)
+           (local.get $8)
           )
          )
         )
@@ -892,8 +893,8 @@
          (f64.sub
           (local.get $6)
           (f64.mul
-           (local.get $8)
            (local.get $10)
+           (local.get $8)
           )
          )
         )
@@ -907,8 +908,8 @@
            (local.get $2)
            (local.tee $2
             (f64.mul
-             (local.get $11)
              (local.get $17)
+             (local.get $11)
             )
            )
           )
@@ -921,8 +922,8 @@
            (local.get $1)
           )
           (f64.mul
-           (local.get $2)
            (local.get $9)
+           (local.get $2)
           )
          )
         )
@@ -933,8 +934,8 @@
            (local.get $1)
           )
           (f64.mul
-           (local.get $2)
            (local.get $10)
+           (local.get $2)
           )
          )
         )
@@ -1065,6 +1066,14 @@
       (f64.add
        (local.get $1)
        (f64.mul
+        (f64.mul
+         (local.tee $10
+          (f64.load offset=48
+           (local.get $0)
+          )
+         )
+         (f64.const 0.5)
+        )
         (f64.add
          (f64.add
           (f64.mul
@@ -1092,14 +1101,6 @@
           )
           (local.get $1)
          )
-        )
-        (f64.mul
-         (local.tee $10
-          (f64.load offset=48
-           (local.get $0)
-          )
-         )
-         (f64.const 0.5)
         )
        )
       )
@@ -1142,10 +1143,10 @@
           (local.get $1)
           (f64.div
            (f64.mul
+            (local.get $10)
             (f64.load offset=48
              (local.get $3)
             )
-            (local.get $10)
            )
            (f64.sqrt
             (f64.add
