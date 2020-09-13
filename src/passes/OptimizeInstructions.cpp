@@ -236,14 +236,14 @@ struct OptimizeInstructions
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
           if (auto* ext = Properties::getSignExtValue(binary->left)) {
-            // we are comparing a sign extend to a constant, which means we
-            // can use a cheaper zext
+            // we are comparing a sign extend to a constant, which means we can
+            // use a cheaper zext
             auto bits = Properties::getSignExtBits(binary->left);
             binary->left = makeZeroExt(ext, bits);
-            // when we replace the sign-ext of the non-constant with a
-            // zero-ext, we are forcing the high bits to be all zero, instead
-            // of all zero or all one depending on the sign bit. so we may be
-            // changing the high bits from all one to all zero:
+            // when we replace the sign-ext of the non-constant with a zero-ext,
+            // we are forcing the high bits to be all zero, instead of all zero
+            // or all one depending on the sign bit. so we may be changing the
+            // high bits from all one to all zero:
             //  * if the constant value's higher bits are mixed, then it can't
             //    be equal anyhow
             //  * if they are all zero, we may get a false true if the
@@ -254,9 +254,9 @@ struct OptimizeInstructions
             //    zero is impossible to be equal to a sign-extended value
             //    anyhow, so the entire thing is false.
             //  * if they were all one, we may get a false false, if the only
-            //    difference is in those upper bits. that means we are equal
-            //    on the other bits, including the sign bit. so we can just
-            //    mask off the upper bits in the constant value, in this case,
+            //    difference is in those upper bits. that means we are equal on
+            //    the other bits, including the sign bit. so we can just mask
+            //    off the upper bits in the constant value, in this case,
             //    forcing them to zero like we do in the zero-extend.
             int32_t constValue = c->value.geti32();
             auto upperConstValue = constValue & ~Bits::lowBitMask(bits);
