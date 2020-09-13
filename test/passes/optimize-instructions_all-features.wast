@@ -4060,11 +4060,11 @@
     ;; x - (-0.0)   ==>   x + 0.0
     (drop (f32.sub
       (local.get $fx)
-      (f32.const -0)
+      (f32.const -0) ;; skip
     ))
     (drop (f64.sub
       (local.get $fy)
-      (f64.const -0)
+      (f64.const -0) ;; skip
     ))
     ;; 0.0 - x   ==>   0.0 - x
     (drop (f32.sub
@@ -4077,12 +4077,12 @@
     ))
     ;; x + 0.0   ==>   x + 0.0
     (drop (f32.add
-      (f32.const 0)
       (local.get $fx) ;; skip
+      (f32.const 0)
     ))
     (drop (f64.add
-      (f64.const 0)
       (local.get $fy) ;; skip
+      (f64.const 0)
     ))
   )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)

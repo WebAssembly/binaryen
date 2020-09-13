@@ -3575,14 +3575,14 @@
   )
   (drop
    (f32.add
-    (f32.const 0)
     (local.get $fx)
+    (f32.const 0)
    )
   )
   (drop
    (f64.add
-    (f64.const 0)
     (local.get $fy)
+    (f64.const 0)
    )
   )
  )
