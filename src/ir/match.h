@@ -25,11 +25,54 @@
 #ifndef wasm_ir_match_h
 #define wasm_ir_match_h
 
+#include "ir/abstract.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace Match {
+
+// The available matchers are:
+//
+//  i32(x), i64(x), f32(x), f64(x)
+//
+//    Match constants of the exact corresponding type. Do not support building.
+//
+//  ival(x), fval(x)
+//
+//    Match any integer constant or any floating point constant. Do not support
+//    building.
+//
+//  number(x)
+//
+//    Matches any integer or floating point constant equal to `x`. Does not
+//    support building.
+//
+//  constant([e])
+//
+//    Matches any Const expression and binds it to `e`, if provided.
+//
+//  any([e])
+//
+//    Matches any expression and binds it to `e`, if provided.
+//
+//  unary([e], op, val)
+//
+//    Matches Unary expressions implementing `op`, which is either a UnaryOp or
+//    an Abstract::Op, whose operand matches `val`. Binds the matched expression
+//    to `e`, if provided.
+//
+//  binary([e], op, left, right)
+//
+//    Matches Binary expressions implementing `op`, which is either a BinaryOp
+//    or an Abstract::Op, whose operands match `left` and `right`. Binds the
+//    matched expression to `e`, if provided.
+//
+//  select([e], ifTrue, ifFalse, cond)
+//
+//    Matches Select expressions whose operands match `ifTrue`, `ifFalse`, and
+//    `cond`. Binds the matched expression to `e`, if provided.
+//
 
 // The main entrypoint for matching.
 template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
@@ -37,8 +80,10 @@ template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
 }
 
 // The main entrypoint for building. The top-level matcher must point to an
-// expression. Matchers in the pattern that do not point to expressions are
-// assumed to match.
+// expression, which will be modified in place by inserting bound expressions at
+// the locations corresponding to their position in the pattern. Matchers in the
+// pattern that do not have bound expressions are assumed to match the output.
+// Returns the top-level modified expression.
 template<class Matcher> Expression* build(Matcher matcher) {
   Expression* expr = nullptr;
   matcher.build(&expr);
@@ -67,6 +112,17 @@ LITERAL_MATCHER(f32, float, c->type == Type::f32, getf32);
 LITERAL_MATCHER(f64, double, c->type == Type::f64, getf64);
 LITERAL_MATCHER(fval, double, c->type.isFloat(), getFloat);
 #undef LITERAL_MATCHER
+
+struct number {
+  int32_t val;
+  number(int32_t val) : val(val) {}
+
+  bool matches(Expression* expr) const {
+    auto* c = expr->dynCast<Const>();
+    return c && (c->type.isInteger() || c->type.isFloat()) &&
+           c->value == Literal::makeFromInt32(val, c->type);
+  }
+};
 
 struct any {
   Expression** curr;
@@ -109,17 +165,23 @@ struct constant {
   }
 };
 
-template<class ValueMatcher> struct UnaryMatcher {
+// UnOp can be either UnaryOp or Abstract::Op. We use CRTP to abstract over
+// the differences in functionality they require.
+template<class SubClass, class UnOp, class ValueMatcher> struct UnaryMatcher {
   Unary** curr;
-  UnaryOp op;
+  UnOp op;
   ValueMatcher value;
 
-  UnaryMatcher(Unary** curr, UnaryOp op, ValueMatcher&& value)
+  UnaryMatcher(Unary** curr, UnOp op, ValueMatcher&& value)
     : curr(curr), op(op), value(std::move(value)) {}
+
+  UnaryOp getOp(Type type) const {
+    return static_cast<const SubClass*>(this)->getOp(type, op);
+  }
 
   bool matches(Expression* expr) const {
     auto* unary = expr->dynCast<Unary>();
-    if (unary && unary->op == op) {
+    if (unary && unary->op == getOp(unary->value->type)) {
       if (curr) {
         *curr = unary;
       }
@@ -133,39 +195,76 @@ template<class ValueMatcher> struct UnaryMatcher {
       *outp = *curr;
     }
     auto* out = (*outp)->cast<Unary>();
-    out->op = op;
     value.build(&out->value);
+    out->op = getOp(out->value->type);
   }
+};
+
+template<class V>
+struct PlainUnaryMatcher : UnaryMatcher<PlainUnaryMatcher<V>, UnaryOp, V> {
+  UnaryOp getOp(Type, UnaryOp op) const { return op; }
+};
+
+template<class V>
+struct AbstractUnaryMatcher
+  : UnaryMatcher<AbstractUnaryMatcher<V>, Abstract::Op, V> {
+  UnaryOp getOp(Type type, Abstract::Op op) const {
+    if (type.isInteger() || type.isFloat()) {
+      return Abstract::getUnary(type, op);
+    } else {
+      return InvalidUnary;
+    }
+  }
+};
+
+// Type-level mapping of UnOp (UnaryOp or Abstract::Op) to the corresponding
+// CRTP UnaryMatcher subtype.
+template<class UnOp, class V> struct UnaryMatcherOf {};
+
+template<class V> struct UnaryMatcherOf<UnaryOp, V> {
+  using type = PlainUnaryMatcher<V>;
+};
+
+template<class V> struct UnaryMatcherOf<Abstract::Op, V> {
+  using type = AbstractUnaryMatcher<V>;
+  ;
 };
 
 // TODO: Once we move to C++17, remove these wrapper functions and use the
 // matcher constructors directly like we do with the leaf matchers already.
-template<class ValueMatcher>
-UnaryMatcher<ValueMatcher> unary(UnaryOp op, ValueMatcher&& value) {
-  return UnaryMatcher<ValueMatcher>(nullptr, op, std::move(value));
+template<class UnOp, class V> decltype(auto) unary(UnOp op, V&& value) {
+  return UnaryMatcher<typename UnaryMatcherOf<UnOp, V>::type, UnOp, V>(
+    nullptr, op, std::move(value));
 }
 
-template<class ValueMatcher>
-UnaryMatcher<ValueMatcher>
-unary(Unary** curr, UnaryOp op, ValueMatcher&& value) {
-  return UnaryMatcher<ValueMatcher>(curr, op, std::move(value));
+template<class UnOp, class V>
+decltype(auto) unary(Unary** curr, UnOp op, V&& value) {
+  return UnaryMatcher<typename UnaryMatcherOf<UnOp, V>::type, UnOp, V>(
+    curr, op, std::move(value));
 }
 
-template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
+// BinOp can be either BinaryOp or Abstract::Op. We use CRTP to abstract over
+// the differences in functionality they require.
+template<class SubClass, class BinOp, class LeftMatcher, class RightMatcher>
+struct BinaryMatcher {
   Binary** curr;
-  BinaryOp op;
+  BinOp op;
   LeftMatcher left;
   RightMatcher right;
 
   BinaryMatcher(Binary** curr,
-                BinaryOp op,
+                BinOp op,
                 LeftMatcher&& left,
                 RightMatcher&& right)
     : curr(curr), op(op), left(std::move(left)), right(std::move(right)) {}
 
+  BinaryOp getOp(Type type) const {
+    return static_cast<const SubClass*>(this)->getOp(type, op);
+  }
+
   bool matches(Expression* expr) const {
     auto* binary = expr->dynCast<Binary>();
-    if (binary && binary->op == op) {
+    if (binary && binary->op == getOp(binary->left->type)) {
       if (curr) {
         *curr = binary;
       }
@@ -179,24 +278,56 @@ template<class LeftMatcher, class RightMatcher> struct BinaryMatcher {
       *outp = *curr;
     }
     auto* out = (*outp)->cast<Binary>();
-    out->op = op;
     left.build(&out->left);
     right.build(&out->right);
+    out->op = getOp(out->left->type);
   }
 };
 
-template<class LeftMatcher, class RightMatcher>
-BinaryMatcher<LeftMatcher, RightMatcher>
-binary(BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
-  return BinaryMatcher<LeftMatcher, RightMatcher>(
-    nullptr, op, std::move(left), std::move(right));
+template<class L, class R>
+struct PlainBinaryMatcher
+  : BinaryMatcher<PlainBinaryMatcher<L, R>, BinaryOp, L, R> {
+  BinaryOp getOp(Type, BinaryOp op) const { return op; }
+};
+
+template<class L, class R>
+struct AbstractBinaryMatcher
+  : BinaryMatcher<AbstractBinaryMatcher<L, R>, Abstract::Op, L, R> {
+  BinaryOp getOp(Type type, Abstract::Op op) const {
+    if (type.isInteger() || type.isFloat()) {
+      return Abstract::getBinary(type, op);
+    } else {
+      return InvalidBinary;
+    }
+  }
+};
+
+// Type-level mapping of BinOp (BinaryOp or Abstract::Op) to the corresponding
+// CRTP BinaryMatcher subtype.
+template<class BinOp, class L, class R> struct BinaryMatcherOf {};
+
+template<class L, class R> struct BinaryMatcherOf<BinaryOp, L, R> {
+  using type = PlainBinaryMatcher<L, R>;
+};
+
+template<class L, class R> struct BinaryMatcherOf<Abstract::Op, L, R> {
+  using type = AbstractBinaryMatcher<L, R>;
+};
+
+template<class BinOp, class L, class R>
+decltype(auto) binary(BinOp op, L&& left, R&& right) {
+  return BinaryMatcher<typename BinaryMatcherOf<BinOp, L, R>::type,
+                       BinOp,
+                       L,
+                       R>(nullptr, op, std::move(left), std::move(right));
 }
 
-template<class LeftMatcher, class RightMatcher>
-BinaryMatcher<LeftMatcher, RightMatcher>
-binary(Binary** curr, BinaryOp op, LeftMatcher&& left, RightMatcher&& right) {
-  return BinaryMatcher<LeftMatcher, RightMatcher>(
-    curr, op, std::move(left), std::move(right));
+template<class BinOp, class L, class R>
+decltype(auto) binary(Binary** curr, BinOp op, L&& left, R&& right) {
+  return BinaryMatcher<typename BinaryMatcherOf<BinOp, L, R>::type,
+                       BinOp,
+                       L,
+                       R>(curr, op, std::move(left), std::move(right));
 }
 
 template<class IfTrueMatcher, class IfFalseMatcher, class CondMatcher>
@@ -235,22 +366,16 @@ struct SelectMatcher {
   }
 };
 
-template<class IfTrueMatcher, class IfFalseMatcher, class ConditionMatcher>
-SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>
-select(IfTrueMatcher&& ifTrue,
-       IfFalseMatcher&& ifFalse,
-       ConditionMatcher&& condition) {
-  return SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>(
+template<class T, class F, class C>
+SelectMatcher<T, F, C> select(T&& ifTrue, F&& ifFalse, C&& condition) {
+  return SelectMatcher<T, F, C>(
     nullptr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
 }
 
-template<class IfTrueMatcher, class IfFalseMatcher, class ConditionMatcher>
-SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>
-select(Select** curr,
-       IfTrueMatcher&& ifTrue,
-       IfFalseMatcher&& ifFalse,
-       ConditionMatcher&& condition) {
-  return SelectMatcher<IfTrueMatcher, IfFalseMatcher, ConditionMatcher>(
+template<class T, class F, class C>
+SelectMatcher<T, F, C>
+select(Select** curr, T&& ifTrue, F&& ifFalse, C&& condition) {
+  return SelectMatcher<T, F, C>(
     curr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
 }
 

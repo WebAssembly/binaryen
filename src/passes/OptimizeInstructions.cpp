@@ -1198,117 +1198,118 @@ private:
   // optimize trivial math operations, given that the right side of a binary
   // is a constant
   // TODO: templatize on type?
-  Expression* optimizeWithConstantOnRight(Binary* binary) {
-    auto type = binary->right->type;
-    auto* right = binary->right->cast<Const>();
-    if (type.isInteger()) {
-      auto constRight = right->value.getInteger();
-      // operations on zero
-      if (constRight == 0LL) {
-        if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
-            binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
-            binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
-            binary->op == Abstract::getBinary(type, Abstract::Or) ||
-            binary->op == Abstract::getBinary(type, Abstract::Xor)) {
-          return binary->left;
-        } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
-                    binary->op == Abstract::getBinary(type, Abstract::And)) &&
-                   !effects(binary->left).hasSideEffects()) {
-          return binary->right;
-        } else if (binary->op == EqInt64) {
-          return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
-        }
-      }
-      // operations on one
-      if (constRight == 1LL) {
-        // (signed)x % 1   ==>   0
-        if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
-            !effects(binary->left).hasSideEffects()) {
-          right->value = Literal::makeSingleZero(type);
-          return right;
-        }
-      }
-      // operations on all 1s
-      if (constRight == -1LL) {
-        if (binary->op == Abstract::getBinary(type, Abstract::And)) {
-          // x & -1   ==>   x
-          return binary->left;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
-                   !effects(binary->left).hasSideEffects()) {
-          // x | -1   ==>   -1
-          return binary->right;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::RemS) &&
-                   !effects(binary->left).hasSideEffects()) {
-          // (signed)x % -1     ==>   0
-          right->value = Literal::makeSingleZero(type);
-          return right;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
-                   !effects(binary->left).hasSideEffects()) {
-          // (unsigned)x > -1   ==>   0
-          right->value = Literal::makeSingleZero(Type::i32);
-          right->type = Type::i32;
-          return right;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
-          // (unsigned)x < -1   ==>   x != -1
-          // friendlier to JS emitting as we don't need to write an unsigned
-          // -1 value which is large.
-          binary->op = Abstract::getBinary(type, Abstract::Ne);
-          return binary;
-        } else if (binary->op == DivUInt32) {
-          // (unsigned)x / -1   ==>   x == -1
-          binary->op = Abstract::getBinary(type, Abstract::Eq);
-          return binary;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
-          // x * -1   ==>   0 - x
-          binary->op = Abstract::getBinary(type, Abstract::Sub);
-          right->value = Literal::makeSingleZero(type);
-          std::swap(binary->left, binary->right);
-          return binary;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
-                   !effects(binary->left).hasSideEffects()) {
-          // (unsigned)x <= -1   ==>   1
-          right->value = Literal::makeFromInt32(1, Type::i32);
-          right->type = Type::i32;
-          return right;
-        }
-      }
-      // wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc., as well as other powers
-      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64.
-      // in theory we could just prefer negative numbers over positive, but
-      // that can have bad effects on gzip compression (as it would mean more
-      // subtractions than the more common additions).
-      if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
-          binary->op == Abstract::getBinary(type, Abstract::Sub)) {
-        auto value = constRight;
-        if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-            value == 0x8000000 || value == 0x400000000LL ||
-            value == 0x20000000000LL || value == 0x1000000000000LL ||
-            value == 0x80000000000000LL || value == 0x4000000000000000LL) {
-          right->value = right->value.neg();
-          if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
-            binary->op = Abstract::getBinary(type, Abstract::Sub);
-          } else {
-            binary->op = Abstract::getBinary(type, Abstract::Add);
-          }
-          return binary;
+  Expression* optimizeWithConstantOnRight(Binary* curr) {
+    using namespace Match;
+    Builder builder(*getModule());
+    Expression* left;
+    auto* right = curr->right->cast<Const>();
+    auto type = curr->right->type;
+
+    // Operations on zero
+    if (matches(curr, binary(Abstract::Shl, any(&left), ival(0))) ||
+        matches(curr, binary(Abstract::ShrU, any(&left), ival(0))) ||
+        matches(curr, binary(Abstract::ShrS, any(&left), ival(0))) ||
+        matches(curr, binary(Abstract::Or, any(&left), ival(0))) ||
+        matches(curr, binary(Abstract::Xor, any(&left), ival(0)))) {
+      return left;
+    }
+    if ((matches(curr, binary(Abstract::Mul, any(&left), ival(0))) ||
+         matches(curr, binary(Abstract::And, any(&left), ival(0)))) &&
+        !effects(left).hasSideEffects()) {
+      return right;
+    }
+    // x == 0   ==>   eqz x
+    // TODO: Should this be abstract??
+    if ((matches(curr, binary(EqInt64, any(&left), ival(0))))) {
+      return builder.makeUnary(EqZInt64, left);
+    }
+
+    // Operations on one
+    // (signed)x % 1   ==>   0
+    if (matches(curr, binary(Abstract::RemS, any(&left), ival(1))) &&
+        !effects(left).hasSideEffects()) {
+      right->value = Literal::makeSingleZero(type);
+      return right;
+    }
+
+    // Operations on all 1s
+    // x & -1   ==>   x
+    if (matches(curr, binary(Abstract::And, any(&left), ival(-1LL)))) {
+      return left;
+    }
+    // x | -1   ==>   -1
+    if (matches(curr, binary(Abstract::Or, any(&left), ival(-1LL))) &&
+        !effects(left).hasSideEffects()) {
+      return right;
+    }
+    // (signed)x % -1   ==>   0
+    if (matches(curr, binary(Abstract::RemS, any(&left), ival(-1LL))) &&
+        !effects(left).hasSideEffects()) {
+      right->value = Literal::makeSingleZero(type);
+      return right;
+    }
+    // (unsigned)x > -1   ==>   0
+    if (matches(curr, binary(Abstract::GtU, any(&left), ival(-1LL))) &&
+        !effects(left).hasSideEffects()) {
+      right->value = Literal::makeSingleZero(Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    // (unsigned)x < -1   ==>   x != -1
+    // Friendlier to JS emitting as we don't need to write an unsigned -1 value
+    // which is large.
+    if (matches(curr, binary(Abstract::LtU, any(), ival(-1LL)))) {
+      return build(binary(&curr, Abstract::Ne, any(), any()));
+    }
+    // (unsigned)x / -1   ==>   x == -1
+    // TODO: i64 as well if sign-extension is enabled
+    if (matches(curr, binary(DivUInt32, any(), ival(-1LL)))) {
+      return build(binary(&curr, Abstract::Eq, any(), any()));
+    }
+    // x * -1   ==>   0 - x
+    if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1LL)))) {
+      right->value = Literal::makeSingleZero(type);
+      return build(binary(&curr, Abstract::Sub, constant(&right), any(&left)));
+    }
+    // (unsigned)x <= -1   ==>   1
+    if (matches(curr, binary(Abstract::LeU, any(&left), ival(-1LL))) &&
+        !effects(left).hasSideEffects()) {
+      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    // Wasm binary encoding uses signed LEBs, which slightly favor negative
+    // numbers: -64 is more efficient than +64 etc., as well as other powers of
+    // two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
+    // theory we could just prefer negative numbers over positive, but that can
+    // have bad effects on gzip compression (as it would mean more subtractions
+    // than the more common additions).
+    // TODO: Simplify this by adding an ival matcher than can bind int64_t vars.
+    if ((matches(curr, binary(Abstract::Add, any(), constant())) ||
+         matches(curr, binary(Abstract::Sub, any(), constant()))) &&
+        type.isInteger()) {
+      auto value = right->value.getInteger();
+      if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+          value == 0x8000000 || value == 0x400000000LL ||
+          value == 0x20000000000LL || value == 0x1000000000000LL ||
+          value == 0x80000000000000LL || value == 0x4000000000000000LL) {
+        right->value = right->value.neg();
+        if (matches(curr, binary(Abstract::Add, any(), constant()))) {
+          return build(binary(&curr, Abstract::Sub, any(), any()));
+        } else {
+          return build(binary(&curr, Abstract::Add, any(), any()));
         }
       }
     }
-    if (type.isInteger() || type.isFloat()) {
-      // note that this is correct even on floats with a NaN on the left,
-      // as a NaN would skip the computation and just return the NaN,
-      // and that is precisely what we do here. but, the same with -1
-      // (change to a negation) would be incorrect for that reason.
-      if (right->value == Literal::makeFromInt32(1, type)) {
-        if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
-            binary->op == Abstract::getBinary(type, Abstract::DivS) ||
-            binary->op == Abstract::getBinary(type, Abstract::DivU)) {
-          return binary->left;
-        }
-      }
+    // Note that this is correct even on floats with a NaN on the left,
+    // as a NaN would skip the computation and just return the NaN,
+    // and that is precisely what we do here. but, the same with -1
+    // (change to a negation) would be incorrect for that reason.
+    if (matches(curr, binary(Abstract::Mul, any(&left), number(1))) ||
+        matches(curr, binary(Abstract::DivS, any(&left), number(1))) ||
+        matches(curr, binary(Abstract::DivU, any(&left), number(1)))) {
+      return left;
     }
-    // TODO: v128 not implemented yet
     return nullptr;
   }
 
