@@ -73,7 +73,7 @@ struct ExecutionResults {
           // change (after duplicate function elimination or roundtripping)
           // while the function contents are still the same
           for (Literal& val : ret) {
-            if (val.type == Type::funcref) {
+            if (val.type == Type::funcref && !val.isNull()) {
               val = Literal::makeFunc(Name("funcref"));
             }
           }
@@ -112,7 +112,8 @@ struct ExecutionResults {
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name] != other.results[name]) {
-        std::cout << "not identical!\n";
+        std::cout << "not identical! " << results[name]
+                  << " != " << other.results[name] << "\n";
         return false;
       }
     }

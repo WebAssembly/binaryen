@@ -21,7 +21,7 @@
         (i32.const 3)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 0)
       )
     )
@@ -33,7 +33,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 3)
       )
     )
@@ -46,7 +46,7 @@
         (unreachable)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 3)
       )
     )
@@ -58,7 +58,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (rethrow (exnref.pop))
+        (rethrow (pop exnref))
       )
     )
   )
@@ -69,7 +69,7 @@
         (call $throw_single_value)
       )
       (catch
-        (rethrow (exnref.pop))
+        (rethrow (pop exnref))
       )
     )
   )
@@ -89,7 +89,7 @@
         (throw $e-v)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0
           (rethrow
             (br_on_exn $l0 $e-v (local.get $exn))
@@ -105,7 +105,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))
@@ -122,7 +122,7 @@
         (throw $e-i32-f32 (i32.const 3) (f32.const 3.5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32 f32)
           (rethrow
             (br_on_exn $l0 $e-i32-f32 (local.get $exn))
@@ -138,7 +138,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0
           (rethrow
             (br_on_exn $l0 $e-v (local.get $exn))
@@ -155,7 +155,7 @@
         (unreachable)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))
@@ -172,7 +172,7 @@
         (unreachable)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))

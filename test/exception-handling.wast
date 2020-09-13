@@ -17,7 +17,7 @@
       (catch
         ;; Multi-value is not available yet, so block can't take a value from
         ;; stack. So this uses locals for now.
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (drop
           (block $l0 (result i32)
             (rethrow
@@ -42,7 +42,7 @@
     (try
       (do)
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
 
@@ -53,7 +53,7 @@
         (call $bar)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (call $foo)
         (call $bar)
       )

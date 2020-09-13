@@ -237,13 +237,13 @@
    )
   )
   (local.set $F
-   (funcref.pop)
+   (pop funcref)
   )
   (local.set $X
-   (externref.pop)
+   (pop externref)
   )
   (local.set $E
-   (exnref.pop)
+   (pop exnref)
   )
   (drop
    (call $get_v128

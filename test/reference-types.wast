@@ -463,7 +463,7 @@
           (local.get $local_externref)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (ref.null extern)
         )
       )
@@ -474,7 +474,7 @@
           (ref.func $foo)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (ref.null func)
         )
       )
@@ -485,7 +485,7 @@
           (ref.null exn)
         )
         (catch
-          (exnref.pop)
+          (pop exnref)
         )
       )
     )
@@ -497,7 +497,7 @@
           (local.get $local_externref)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (ref.func $foo)
         )
       )
@@ -508,7 +508,7 @@
           (local.get $local_externref)
         )
         (catch
-          (exnref.pop)
+          (pop exnref)
         )
       )
     )
@@ -518,7 +518,7 @@
           (ref.func $foo)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (local.get $local_externref)
         )
       )
@@ -529,7 +529,7 @@
           (ref.func $foo)
         )
         (catch
-          (exnref.pop)
+          (pop exnref)
         )
       )
     )
@@ -539,18 +539,18 @@
           (ref.null exn)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (local.get $local_externref)
         )
       )
     )
     (drop
-      (try (result anyref) 
+      (try (result anyref)
         (do
           (ref.null exn)
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
           (ref.func $foo)
         )
       )
@@ -588,7 +588,7 @@
 
     ;; Test subtype relationship for typed select
     (drop
-      (select (result anyref) 
+      (select (result anyref)
         (local.get $local_externref)
         (local.get $local_funcref)
         (i32.const 1)

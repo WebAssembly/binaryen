@@ -26,7 +26,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
           (func $foo (result i32)
             (block (result i32)
               (i32.const 0)
-              (i32.pop)
+              (pop i32)
             )
           )
         )
@@ -52,8 +52,8 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (f32.const 42)
             (i32.const 42)
             (i32.add
-              (i32.pop)
-              (i32.pop)
+              (pop i32)
+              (pop i32)
             )
           )
         )
@@ -68,8 +68,8 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 42)
             (i32.const 42)
             (i32.add
-              (i32.pop)
-              (f32.pop)
+              (pop i32)
+              (pop f32)
             )
           )
         )
@@ -83,8 +83,8 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 42)
             (i32.const 42)
             (i32.add
-              (i32.pop)
-              (i32.pop)
+              (pop i32)
+              (pop i32)
             )
           )
         )
@@ -134,7 +134,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (nop)
             (i32.const 1)
             (if
-              (i32.pop)
+              (pop i32)
               (nop)
             )
           )
@@ -149,7 +149,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (nop)
             (i32.const 1)
             (if
-              (i32.pop)
+              (pop i32)
               (block)
               (nop)
             )
@@ -165,7 +165,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (nop)
             (i32.const 1)
             (if
-              (i32.pop)
+              (pop i32)
               (block)
               (block)
             )
@@ -194,7 +194,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 42)
             (i32.const 5)
             (i32.add
-              (i32.pop)
+              (pop i32)
               (i32.const -1)
             )
           )
