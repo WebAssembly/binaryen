@@ -1,3 +1,26 @@
+;; Heap types
+func
+funcref
+(ref func)
+extern
+externref
+(ref extern)
+any
+anyref
+(ref any)
+eq
+(ref null eq)
+(ref eq)
+i31
+(ref null i31)
+(ref i31)
+exn
+exnref
+(ref exn)
+(func)
+(struct)
+(array i32)
+
 ;; Signature
 (func)
 (ref (func))
@@ -27,6 +50,26 @@
 none
 (i32 f64 externref)
 (i32 f64 externref)
+
+;; Rtt
+(rtt 0 func)
+(rtt 0 func)
+(rtt 1 extern)
+(rtt 1 extern)
+(rtt 2 any)
+(rtt 2 any)
+(rtt 3 eq)
+(rtt 3 eq)
+(rtt 4 i31)
+(rtt 4 i31)
+(rtt 5 exn)
+(rtt 5 exn)
+(rtt 6 (func))
+(rtt 6 (func))
+(rtt 7 (struct))
+(rtt 7 (struct))
+(rtt 8 (array i32))
+(rtt 8 (array i32))
 
 ;; Signature of references (param/result)
 (func (param (ref null (struct))) (result (ref (array (mut i32)))))
@@ -63,7 +106,7 @@ none
 ((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
 ((ref (func)) (ref null (func)) (ref (struct)) (ref null (struct)) (ref (array i32)) (ref null (array i32)))
 
-;; Recursive
+;; Recursive (not really)
 (func (param (ref (func))))
 (ref (func (param (ref (func)))))
 (func (param (ref (array (ref (func))))))

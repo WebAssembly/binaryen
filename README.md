@@ -342,6 +342,24 @@ The `check.py` script supports some options:
  * We have tests from upstream in `tests/spec`, in git submodules. Running
    `./check.py` should update those.
 
+### Setting up dependencies
+
+```
+./third_party/setup.py [mozjs|v8|wabt|all]
+```
+
+(or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
+and WABT in `third_party/`. Other scripts automatically pick these up when installed.
+
+### Fuzzing
+
+```
+./scripts/fuzz_opt.py [--binaryen-bin=build/bin]
+```
+
+(or `python scripts/fuzz_opt.py`) will run various fuzzing modes on random inputs with random passes until it finds
+a possible bug. See [the wiki page](https://github.com/WebAssembly/binaryen/wiki/Fuzzing) for all the details.
+
 ## Design Principles
 
  * **Interned strings for names**: It's very convenient to have names on nodes,

@@ -28,48 +28,40 @@
 namespace wasm {
 
 struct TypeInfo {
-  enum Kind { TupleKind, SignatureRefKind, StructRefKind, ArrayRefKind } kind;
-  struct SignatureRef {
-    Signature signature;
-    bool nullable;
-  };
-  struct StructRef {
-    Struct struct_;
-    bool nullable;
-  };
-  struct ArrayRef {
-    Array array;
+  enum Kind {
+    TupleKind,
+    RefKind,
+    RttKind,
+  } kind;
+  struct Ref {
+    HeapType heapType;
     bool nullable;
   };
   union {
     Tuple tuple;
-    SignatureRef signatureRef;
-    StructRef structRef;
-    ArrayRef arrayRef;
+    Ref ref;
+    Rtt rtt;
   };
 
   TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
   TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
-  TypeInfo(const Signature& signature, bool nullable)
-    : kind(SignatureRefKind), signatureRef{signature, nullable} {}
-  TypeInfo(const Struct& struct_, bool nullable)
-    : kind(StructRefKind), structRef{struct_, nullable} {}
-  TypeInfo(const Array& array, bool nullable)
-    : kind(ArrayRefKind), arrayRef{array, nullable} {}
+  TypeInfo(const HeapType& heapType, bool nullable)
+    : kind(RefKind), ref{heapType, nullable} {}
+  TypeInfo(HeapType&& heapType, bool nullable)
+    : kind(RefKind), ref{std::move(heapType), nullable} {}
+  TypeInfo(const Rtt& rtt) : kind(RttKind), rtt(rtt) {}
+  TypeInfo(Rtt&& rtt) : kind(RttKind), rtt(std::move(rtt)) {}
   TypeInfo(const TypeInfo& other) {
     kind = other.kind;
     switch (kind) {
       case TupleKind:
         new (&tuple) auto(other.tuple);
         return;
-      case SignatureRefKind:
-        new (&signatureRef) auto(other.signatureRef);
+      case RefKind:
+        new (&ref) auto(other.ref);
         return;
-      case StructRefKind:
-        new (&structRef) auto(other.structRef);
-        return;
-      case ArrayRefKind:
-        new (&arrayRef) auto(other.arrayRef);
+      case RttKind:
+        new (&rtt) auto(other.rtt);
         return;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -80,16 +72,12 @@ struct TypeInfo {
         tuple.~Tuple();
         return;
       }
-      case SignatureRefKind: {
-        signatureRef.~SignatureRef();
+      case RefKind: {
+        ref.~Ref();
         return;
       }
-      case StructRefKind: {
-        structRef.~StructRef();
-        return;
-      }
-      case ArrayRefKind: {
-        arrayRef.~ArrayRef();
+      case RttKind: {
+        rtt.~Rtt();
         return;
       }
     }
@@ -97,23 +85,10 @@ struct TypeInfo {
   }
 
   constexpr bool isTuple() const { return kind == TupleKind; }
-  constexpr bool isSignatureRef() const { return kind == SignatureRefKind; }
-  constexpr bool isStructRef() const { return kind == StructRefKind; }
-  constexpr bool isArrayRef() const { return kind == ArrayRefKind; }
+  constexpr bool isRef() const { return kind == RefKind; }
+  constexpr bool isRtt() const { return kind == RttKind; }
 
-  bool isNullable() const {
-    switch (kind) {
-      case TupleKind:
-        return false;
-      case SignatureRefKind:
-        return signatureRef.nullable;
-      case StructRefKind:
-        return structRef.nullable;
-      case ArrayRefKind:
-        return arrayRef.nullable;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  }
+  bool isNullable() const { return kind == RefKind && ref.nullable; }
 
   bool operator==(const TypeInfo& other) const {
     if (kind != other.kind) {
@@ -122,15 +97,11 @@ struct TypeInfo {
     switch (kind) {
       case TupleKind:
         return tuple == other.tuple;
-      case SignatureRefKind:
-        return signatureRef.nullable == other.signatureRef.nullable &&
-               signatureRef.signature == other.signatureRef.signature;
-      case StructRefKind:
-        return structRef.nullable == other.structRef.nullable &&
-               structRef.struct_ == other.structRef.struct_;
-      case ArrayRefKind:
-        return arrayRef.nullable == other.arrayRef.nullable &&
-               arrayRef.array == other.arrayRef.array;
+      case RefKind:
+        return ref.heapType == other.ref.heapType &&
+               ref.nullable == other.ref.nullable;
+      case RttKind:
+        return rtt == other.rtt;
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -180,22 +151,16 @@ public:
     auto digest = wasm::hash(info.kind);
     switch (info.kind) {
       case wasm::TypeInfo::TupleKind: {
-        wasm::rehash(digest, info.tuple.types);
+        wasm::rehash(digest, info.tuple);
         return digest;
       }
-      case wasm::TypeInfo::SignatureRefKind: {
-        wasm::rehash(digest, info.signatureRef.signature);
-        wasm::rehash(digest, info.signatureRef.nullable);
+      case wasm::TypeInfo::RefKind: {
+        wasm::rehash(digest, info.ref.heapType);
+        wasm::rehash(digest, info.ref.nullable);
         return digest;
       }
-      case wasm::TypeInfo::StructRefKind: {
-        wasm::rehash(digest, info.structRef.struct_);
-        wasm::rehash(digest, info.structRef.nullable);
-        return digest;
-      }
-      case wasm::TypeInfo::ArrayRefKind: {
-        wasm::rehash(digest, info.arrayRef.array);
-        wasm::rehash(digest, info.arrayRef.nullable);
+      case wasm::TypeInfo::RttKind: {
+        wasm::rehash(digest, info.rtt);
         return digest;
       }
     }
@@ -225,13 +190,40 @@ size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
 }
 
 size_t hash<wasm::Struct>::operator()(const wasm::Struct& struct_) const {
-  auto digest = wasm::hash(0);
-  wasm::rehash(digest, struct_.fields);
-  return digest;
+  return wasm::hash(struct_.fields);
 }
 
 size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
   return wasm::hash(array.element);
+}
+
+size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
+  auto digest = wasm::hash(heapType.kind);
+  switch (heapType.kind) {
+    case wasm::HeapType::FuncKind:
+    case wasm::HeapType::ExternKind:
+    case wasm::HeapType::AnyKind:
+    case wasm::HeapType::EqKind:
+    case wasm::HeapType::I31Kind:
+    case wasm::HeapType::ExnKind:
+      return digest;
+    case wasm::HeapType::SignatureKind:
+      wasm::rehash(digest, heapType.signature);
+      return digest;
+    case wasm::HeapType::StructKind:
+      wasm::rehash(digest, heapType.struct_);
+      return digest;
+    case wasm::HeapType::ArrayKind:
+      wasm::rehash(digest, heapType.array);
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t hash<wasm::Rtt>::operator()(const wasm::Rtt& rtt) const {
+  auto digest = wasm::hash(rtt.depth);
+  wasm::rehash(digest, rtt.heapType);
+  return digest;
 }
 
 } // namespace std
@@ -261,9 +253,16 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo({Type::f64}), Type::f64},
   {TypeInfo({Type::v128}), Type::v128},
   {TypeInfo({Type::funcref}), Type::funcref},
+  {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
   {TypeInfo({Type::externref}), Type::externref},
-  {TypeInfo({Type::nullref}), Type::nullref},
+  {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
   {TypeInfo({Type::exnref}), Type::exnref},
+  {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
+  {TypeInfo({Type::anyref}), Type::anyref},
+  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
+  // TODO (GC): Add canonical ids
+  // * `(ref null eq) == eqref`
+  // * `(ref i31) == i31ref`
 };
 
 } // anonymous namespace
@@ -306,23 +305,31 @@ Type::Type(const Tuple& tuple) {
   id = canonicalize(TypeInfo(tuple));
 }
 
-Type::Type(const Signature signature, bool nullable) {
-  id = canonicalize(TypeInfo(signature, nullable));
-}
-
-Type::Type(const Struct& struct_, bool nullable) {
+Type::Type(const HeapType& heapType, bool nullable) {
 #ifndef NDEBUG
-  for (Field f : struct_.fields) {
-    assert(f.type.isSingle());
+  switch (heapType.kind) {
+    case HeapType::FuncKind:
+    case HeapType::ExternKind:
+    case HeapType::AnyKind:
+    case HeapType::EqKind:
+    case HeapType::I31Kind:
+    case HeapType::ExnKind:
+    case HeapType::SignatureKind:
+      break;
+    case HeapType::StructKind:
+      for (Field f : heapType.struct_.fields) {
+        assert(f.type.isSingle());
+      }
+      break;
+    case HeapType::ArrayKind:
+      assert(heapType.array.element.type.isSingle());
+      break;
   }
 #endif
-  id = canonicalize(TypeInfo(struct_, nullable));
+  id = canonicalize(TypeInfo(heapType, nullable));
 }
 
-Type::Type(const Array& array, bool nullable) {
-  assert(array.element.type.isSingle());
-  id = canonicalize(TypeInfo(array, nullable));
-}
+Type::Type(const Rtt& rtt) { id = canonicalize(TypeInfo(rtt)); }
 
 bool Type::isTuple() const {
   if (isBasic()) {
@@ -334,25 +341,43 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= anyref;
   } else {
-    switch (getTypeInfo(*this)->kind) {
-      case TypeInfo::TupleKind:
-        return false;
-      case TypeInfo::SignatureRefKind:
-      case TypeInfo::StructRefKind:
-      case TypeInfo::ArrayRefKind:
-        return true;
-    }
-    WASM_UNREACHABLE("unexpected kind");
+    return getTypeInfo(*this)->isRef();
+  }
+}
+
+bool Type::isFunction() const {
+  if (isBasic()) {
+    return id == funcref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isSignature();
+  }
+}
+
+bool Type::isException() const {
+  if (isBasic()) {
+    return id == exnref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isException();
   }
 }
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= anyref;
   } else {
     return getTypeInfo(*this)->isNullable();
+  }
+}
+
+bool Type::isRtt() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getTypeInfo(*this)->isRtt();
   }
 }
 
@@ -382,8 +407,8 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -425,10 +450,11 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::SIMD;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
+      case Type::anyref:
+        return FeatureSet::ReferenceTypes | FeatureSet::Anyref;
       default:
         return FeatureSet::MVP;
     }
@@ -442,6 +468,27 @@ FeatureSet Type::getFeatures() const {
     return feats;
   }
   return getSingleFeatures(*this);
+}
+
+HeapType Type::getHeapType() const {
+  if (isRef()) {
+    if (isCompound()) {
+      return getTypeInfo(*this)->ref.heapType;
+    }
+    switch (getBasic()) {
+      case funcref:
+        return HeapType::FuncKind;
+      case externref:
+        return HeapType::ExternKind;
+      case exnref:
+        return HeapType::ExnKind;
+      case anyref:
+        return HeapType::AnyKind;
+      default:
+        break;
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -464,9 +511,8 @@ bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
-  if (left.isRef() && right.isRef() &&
-      (right == Type::externref || left == Type::nullref)) {
-    return true;
+  if (left.isRef() && right.isRef()) {
+    return right == Type::anyref;
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
@@ -495,6 +541,17 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
   }
+  if (a.isRef()) {
+    if (b.isRef()) {
+      // The LUB of two different reference types is anyref, which may or may
+      // not be a valid type depending on whether the anyref feature is enabled.
+      // When anyref is disabled, it is possible for the finalization of invalid
+      // code to introduce a use of anyref via this function, but that is not a
+      // problem because it will be caught and rejected by validation.
+      return Type::anyref;
+    }
+    return Type::none;
+  }
   if (a.isTuple()) {
     TypeList types;
     types.resize(a.size());
@@ -506,16 +563,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
-  if (!a.isRef() || !b.isRef()) {
-    return Type::none;
-  }
-  if (a == Type::nullref) {
-    return b;
-  }
-  if (b == Type::nullref) {
-    return a;
-  }
-  return Type::externref;
+  return Type::none;
 }
 
 Type::Iterator Type::end() const {
@@ -545,6 +593,79 @@ const Type& Type::operator[](size_t index) const {
     assert(index == 0 && "Index out of bounds");
     return *begin();
   }
+}
+
+HeapType::HeapType(const HeapType& other) : kind(other.kind) {
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return;
+    case SignatureKind:
+      new (&signature) auto(other.signature);
+      return;
+    case StructKind:
+      new (&struct_) auto(other.struct_);
+      return;
+    case ArrayKind:
+      new (&array) auto(other.array);
+      return;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+HeapType::~HeapType() {
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return;
+    case SignatureKind:
+      signature.~Signature();
+      return;
+    case StructKind:
+      struct_.~Struct();
+      return;
+    case ArrayKind:
+      array.~Array();
+      return;
+  }
+}
+
+bool HeapType::operator==(const HeapType& other) const {
+  if (kind != other.kind) {
+    return false;
+  }
+  switch (kind) {
+    case FuncKind:
+    case ExternKind:
+    case AnyKind:
+    case EqKind:
+    case I31Kind:
+    case ExnKind:
+      return true;
+    case SignatureKind:
+      return signature == other.signature;
+    case StructKind:
+      return struct_ == other.struct_;
+    case ArrayKind:
+      return array == other.array;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+HeapType& HeapType::operator=(const HeapType& other) {
+  if (&other != this) {
+    this->~HeapType();
+    new (this) auto(other);
+  }
+  return *this;
 }
 
 namespace {
@@ -580,6 +701,10 @@ std::string Signature::toString() const { return genericToString(*this); }
 std::string Struct::toString() const { return genericToString(*this); }
 
 std::string Array::toString() const { return genericToString(*this); }
+
+std::string HeapType::toString() const { return genericToString(*this); }
+
+std::string Rtt::toString() const { return genericToString(*this); }
 
 std::string TypeInfo::toString() const { return genericToString(*this); }
 
@@ -623,11 +748,11 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       case Type::externref:
         os << "externref";
         break;
-      case Type::nullref:
-        os << "nullref";
-        break;
       case Type::exnref:
         os << "exnref";
+        break;
+      case Type::anyref:
+        os << "anyref";
         break;
     }
   } else {
@@ -708,31 +833,48 @@ std::ostream& operator<<(std::ostream& os, Array array) {
   return os << "(array " << array.element << ")";
 }
 
+std::ostream& operator<<(std::ostream& os, HeapType heapType) {
+  switch (heapType.kind) {
+    case wasm::HeapType::FuncKind:
+      return os << "func";
+    case wasm::HeapType::ExternKind:
+      return os << "extern";
+    case wasm::HeapType::AnyKind:
+      return os << "any";
+    case wasm::HeapType::EqKind:
+      return os << "eq";
+    case wasm::HeapType::I31Kind:
+      return os << "i31";
+    case wasm::HeapType::ExnKind:
+      return os << "exn";
+    case wasm::HeapType::SignatureKind:
+      return os << heapType.signature;
+    case wasm::HeapType::StructKind:
+      return os << heapType.struct_;
+    case wasm::HeapType::ArrayKind:
+      return os << heapType.array;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+std::ostream& operator<<(std::ostream& os, Rtt rtt) {
+  return os << "(rtt " << rtt.depth << " " << rtt.heapType << ")";
+}
+
 std::ostream& operator<<(std::ostream& os, TypeInfo info) {
   switch (info.kind) {
     case TypeInfo::TupleKind: {
       return os << info.tuple;
     }
-    case TypeInfo::SignatureRefKind: {
+    case TypeInfo::RefKind: {
       os << "(ref ";
-      if (info.signatureRef.nullable) {
+      if (info.ref.nullable) {
         os << "null ";
       }
-      return os << info.signatureRef.signature << ")";
+      return os << info.ref.heapType << ")";
     }
-    case TypeInfo::StructRefKind: {
-      os << "(ref ";
-      if (info.structRef.nullable) {
-        os << "null ";
-      }
-      return os << info.structRef.struct_ << ")";
-    }
-    case TypeInfo::ArrayRefKind: {
-      os << "(ref ";
-      if (info.arrayRef.nullable) {
-        os << "null ";
-      }
-      return os << info.arrayRef.array << ")";
+    case TypeInfo::RttKind: {
+      return os << info.rtt;
     }
   }
   WASM_UNREACHABLE("unexpected kind");

@@ -31,13 +31,6 @@
 
 namespace wasm {
 
-struct Tuple;
-struct Signature;
-struct Struct;
-struct Array;
-
-typedef std::vector<class Type> TypeList;
-
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `BasicID`
@@ -56,9 +49,9 @@ public:
     v128,
     funcref,
     externref,
-    nullref,
     exnref,
-    _last_basic_id = exnref
+    anyref,
+    _last_basic_id = anyref
   };
 
   Type() = default;
@@ -73,16 +66,14 @@ public:
   Type(std::initializer_list<Type>);
 
   // Construct from tuple description
-  explicit Type(const Tuple&);
+  explicit Type(const struct Tuple&);
 
-  // Construct from signature description
-  explicit Type(const Signature, bool nullable);
+  // Construct from a heap type description. Also covers construction from
+  // Signature, Struct or Array via implicit conversion to HeapType.
+  explicit Type(const struct HeapType&, bool nullable);
 
-  // Construct from struct description
-  explicit Type(const Struct&, bool nullable);
-
-  // Construct from array description
-  explicit Type(const Array&, bool nullable);
+  // Construct from rtt description
+  explicit Type(const struct Rtt&);
 
   // Predicates
   //                 Compound Concrete
@@ -96,16 +87,17 @@ public:
   // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
   // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
   // │ v128        ║ x │   │ x │ x │     V │ ┘
-  // ├─────────────╫───┼───┼───┼───┤───────┤
-  // │ funcref     ║ x │   │ x │ x │ f     │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │       │ │  f_unc
-  // │ nullref     ║ x │   │ x │ x │       │ │
-  // │ exnref      ║ x │   │ x │ x │       │ │
-  // ├─────────────╫───┼───┼───┼───┤───────┤ │
-  // │ Signature   ║   │ x │ x │ x │ f     │ │
-  // │ Struct      ║   │ x │ x │ x │       │ │
-  // │ Array       ║   │ x │ x │ x │       │ ┘
+  // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
+  // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
+  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │
+  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
+  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
+  // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
+  // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
+  // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_id; }
   constexpr bool isCompound() const { return id > _last_basic_id; }
@@ -117,7 +109,10 @@ public:
   bool isTuple() const;
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
+  bool isFunction() const;
+  bool isException() const;
   bool isNullable() const;
+  bool isRtt() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -160,6 +155,9 @@ public:
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
+  // Gets the heap type corresponding to this type
+  HeapType getHeapType() const;
+
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
   static Type get(unsigned byteSize, bool float_);
@@ -192,15 +190,39 @@ public:
       return index == other.index && parent == other.parent;
     }
     bool operator!=(const Iterator& other) const { return !(*this == other); }
-    void operator++() { index++; }
+    Iterator& operator++() {
+      ++index;
+      return *this;
+    }
+    Iterator& operator--() {
+      --index;
+      return *this;
+    }
+    Iterator operator++(int) {
+      auto it = *this;
+      index++;
+      return it;
+    }
+    Iterator operator--(int) {
+      auto it = *this;
+      index--;
+      return it;
+    }
     Iterator& operator+=(difference_type off) {
       index += off;
       return *this;
     }
-    const Iterator operator+(difference_type off) const {
+    Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
     }
-    difference_type operator-(const Iterator& other) {
+    Iterator& operator-=(difference_type off) {
+      index -= off;
+      return *this;
+    }
+    Iterator operator-(difference_type off) const {
+      return Iterator(*this) -= off;
+    }
+    difference_type operator-(const Iterator& other) const {
       assert(parent == other.parent);
       return index - other.index;
     }
@@ -226,6 +248,8 @@ struct ResultType {
   ResultType(Type type) : type(type) {}
   std::string toString() const;
 };
+
+typedef std::vector<Type> TypeList;
 
 struct Tuple {
   TypeList types;
@@ -303,6 +327,73 @@ struct Array {
   std::string toString() const;
 };
 
+struct HeapType {
+  enum Kind {
+    FuncKind,
+    ExternKind,
+    ExnKind,
+    AnyKind,
+    EqKind,
+    I31Kind,
+    _last_basic_kind = I31Kind,
+    SignatureKind,
+    StructKind,
+    ArrayKind,
+  } kind;
+  union {
+    Signature signature;
+    Struct struct_;
+    Array array;
+  };
+  HeapType(Kind kind) : kind(kind) { assert(kind <= _last_basic_kind); }
+  HeapType(const Signature& signature)
+    : kind(SignatureKind), signature(signature) {}
+  HeapType(Signature&& signature)
+    : kind(SignatureKind), signature(std::move(signature)) {}
+  HeapType(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
+  HeapType(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
+  HeapType(const Array& array) : kind(ArrayKind), array(array) {}
+  HeapType(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
+  HeapType(const HeapType& other);
+  ~HeapType();
+
+  bool isSignature() const { return kind == SignatureKind; }
+  Signature getSignature() const {
+    assert(isSignature() && "Not a signature");
+    return signature;
+  }
+  bool isStruct() const { return kind == StructKind; }
+  Struct getStruct() const {
+    assert(isStruct() && "Not a struct");
+    return struct_;
+  }
+  bool isArray() const { return kind == ArrayKind; }
+  Array getArray() const {
+    assert(isArray() && "Not an array");
+    return array;
+  }
+  bool isException() const { return kind == ExnKind; }
+
+  bool operator==(const HeapType& other) const;
+  bool operator!=(const HeapType& other) const { return !(*this == other); }
+  HeapType& operator=(const HeapType& other);
+  std::string toString() const;
+};
+
+struct Rtt {
+  uint32_t depth;
+  HeapType heapType;
+  Rtt(uint32_t depth, const HeapType& heapType)
+    : depth(depth), heapType(heapType) {}
+  Rtt(uint32_t depth, HeapType&& heapType)
+    : depth(depth), heapType(std::move(heapType)) {}
+  bool operator==(const Rtt& other) const {
+    return depth == other.depth && heapType == other.heapType;
+  }
+  bool operator!=(const Rtt& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
 std::ostream& operator<<(std::ostream&, Type);
 std::ostream& operator<<(std::ostream&, ParamType);
 std::ostream& operator<<(std::ostream&, ResultType);
@@ -311,6 +402,8 @@ std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
+std::ostream& operator<<(std::ostream&, HeapType);
+std::ostream& operator<<(std::ostream&, Rtt);
 
 } // namespace wasm
 
@@ -339,6 +432,14 @@ public:
 template<> class hash<wasm::Array> {
 public:
   size_t operator()(const wasm::Array&) const;
+};
+template<> class hash<wasm::HeapType> {
+public:
+  size_t operator()(const wasm::HeapType&) const;
+};
+template<> class hash<wasm::Rtt> {
+public:
+  size_t operator()(const wasm::Rtt&) const;
 };
 
 } // namespace std

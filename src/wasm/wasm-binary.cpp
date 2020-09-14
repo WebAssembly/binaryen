@@ -555,20 +555,79 @@ void WasmBinaryWriter::writeNames() {
   BYN_TRACE("== writeNames\n");
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::Name);
-  auto substart =
-    startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
-  o << U32LEB(indexes.functionIndexes.size());
-  Index emitted = 0;
-  auto add = [&](Function* curr) {
-    o << U32LEB(emitted);
-    writeEscapedName(curr->name.str);
-    emitted++;
-  };
-  ModuleUtils::iterImportedFunctions(*wasm, add);
-  ModuleUtils::iterDefinedFunctions(*wasm, add);
-  assert(emitted == indexes.functionIndexes.size());
-  finishSubsection(substart);
-  /* TODO: locals */
+
+  // module name
+  if (wasm->name.is()) {
+    auto substart =
+      startSubsection(BinaryConsts::UserSections::Subsection::NameModule);
+    writeEscapedName(wasm->name.str);
+    finishSubsection(substart);
+  }
+
+  // function names
+  {
+    auto substart =
+      startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
+    o << U32LEB(indexes.functionIndexes.size());
+    Index emitted = 0;
+    auto add = [&](Function* curr) {
+      o << U32LEB(emitted);
+      writeEscapedName(curr->name.str);
+      emitted++;
+    };
+    ModuleUtils::iterImportedFunctions(*wasm, add);
+    ModuleUtils::iterDefinedFunctions(*wasm, add);
+    assert(emitted == indexes.functionIndexes.size());
+    finishSubsection(substart);
+  }
+
+  // local names
+  {
+    // Find all functions with at least one local name and only emit the
+    // subsection if there is at least one.
+    std::vector<std::pair<Index, Function*>> functionsWithLocalNames;
+    Index checked = 0;
+    auto check = [&](Function* curr) {
+      auto numLocals = curr->getNumLocals();
+      for (Index i = 0; i < numLocals; ++i) {
+        if (curr->hasLocalName(i)) {
+          functionsWithLocalNames.push_back({checked, curr});
+          break;
+        }
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedFunctions(*wasm, check);
+    ModuleUtils::iterDefinedFunctions(*wasm, check);
+    assert(checked == indexes.functionIndexes.size());
+    if (functionsWithLocalNames.size() > 0) {
+      // Otherwise emit those functions but only include locals with a name.
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
+      o << U32LEB(functionsWithLocalNames.size());
+      Index emitted = 0;
+      for (auto& indexedFunc : functionsWithLocalNames) {
+        std::vector<std::pair<Index, Name>> localsWithNames;
+        auto numLocals = indexedFunc.second->getNumLocals();
+        for (Index i = 0; i < numLocals; ++i) {
+          if (indexedFunc.second->hasLocalName(i)) {
+            localsWithNames.push_back({i, indexedFunc.second->getLocalName(i)});
+          }
+        }
+        assert(localsWithNames.size());
+        o << U32LEB(indexedFunc.first);
+        o << U32LEB(localsWithNames.size());
+        for (auto& indexedLocal : localsWithNames) {
+          o << U32LEB(indexedLocal.first);
+          writeEscapedName(indexedLocal.second.str);
+        }
+        emitted++;
+      }
+      assert(emitted == functionsWithLocalNames.size());
+      finishSubsection(substart);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -691,6 +750,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
+      case FeatureSet::Anyref:
+        return BinaryConsts::UserSections::AnyrefFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1136,12 +1197,36 @@ Type WasmBinaryBuilder::getType() {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::nullref:
-      return Type::nullref;
     case BinaryConsts::EncodedType::exnref:
       return Type::exnref;
+    case BinaryConsts::EncodedType::anyref:
+      return Type::anyref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
+  }
+  WASM_UNREACHABLE("unexpeced type");
+}
+
+HeapType WasmBinaryBuilder::getHeapType() {
+  int type = getS32LEB(); // TODO: Actually encoded as s33
+  // Single heap types are negative; heap type indices are non-negative
+  if (type >= 0) {
+    if (size_t(type) >= signatures.size()) {
+      throwError("invalid signature index: " + std::to_string(type));
+    }
+    return HeapType(signatures[type]);
+  }
+  switch (type) {
+    case BinaryConsts::EncodedHeapType::func:
+      return HeapType::FuncKind;
+    case BinaryConsts::EncodedHeapType::extern_:
+      return HeapType::ExternKind;
+    case BinaryConsts::EncodedHeapType::exn:
+      return HeapType::ExnKind;
+    case BinaryConsts::EncodedHeapType::any:
+      return HeapType::AnyKind;
+    default:
+      throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpeced type");
 }
@@ -2100,33 +2185,72 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     auto nameType = getU32LEB();
     auto subsectionSize = getU32LEB();
     auto subsectionPos = pos;
-    if (nameType != BinaryConsts::UserSections::Subsection::NameFunction) {
-      // TODO: locals
+    if (nameType == BinaryConsts::UserSections::Subsection::NameModule) {
+      wasm.name = getInlineString();
+    } else if (nameType ==
+               BinaryConsts::UserSections::Subsection::NameFunction) {
+      auto num = getU32LEB();
+      std::set<Name> usedNames;
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        rawName = escape(rawName);
+        auto name = rawName;
+        // De-duplicate names by appending .1, .2, etc.
+        for (int i = 1; !usedNames.insert(name).second; ++i) {
+          name = rawName.str + std::string(".") + std::to_string(i);
+        }
+        // note: we silently ignore errors here, as name section errors
+        //       are not fatal. should we warn?
+        auto numFunctionImports = functionImports.size();
+        if (index < numFunctionImports) {
+          functionImports[index]->name = name;
+        } else if (index - numFunctionImports < functions.size()) {
+          functions[index - numFunctionImports]->name = name;
+        } else {
+          std::cerr << "warning: function index out of bounds in name section, "
+                       "function subsection: "
+                    << std::string(name.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameLocal) {
+      auto numFuncs = getU32LEB();
+      auto numFunctionImports = functionImports.size();
+      for (size_t i = 0; i < numFuncs; i++) {
+        auto funcIndex = getU32LEB();
+        Function* func = nullptr;
+        if (funcIndex < numFunctionImports) {
+          func = functionImports[funcIndex];
+        } else if (funcIndex - numFunctionImports < functions.size()) {
+          func = functions[funcIndex - numFunctionImports];
+        } else {
+          std::cerr
+            << "warning: function index out of bounds in name section, local "
+               "subsection: "
+            << std::to_string(funcIndex) << std::endl;
+        }
+        auto numLocals = getU32LEB();
+        for (size_t j = 0; j < numLocals; j++) {
+          auto localIndex = getU32LEB();
+          auto localName = getInlineString();
+          if (!func) {
+            continue; // read and discard in case of prior error
+          }
+          if (localIndex < func->getNumLocals()) {
+            func->localNames[localIndex] = localName;
+          } else {
+            std::cerr << "warning: local index out of bounds in name "
+                         "section, local subsection: "
+                      << std::string(localName.str) << " at index "
+                      << std::to_string(localIndex) << " in function "
+                      << std::string(func->name.str) << std::endl;
+          }
+        }
+      }
+    } else {
       std::cerr << "warning: unknown name subsection at " << pos << std::endl;
       pos = subsectionPos + subsectionSize;
-      continue;
-    }
-    auto num = getU32LEB();
-    std::set<Name> usedNames;
-    for (size_t i = 0; i < num; i++) {
-      auto index = getU32LEB();
-      auto rawName = getInlineString();
-      rawName = escape(rawName);
-      auto name = rawName;
-      // De-duplicate names by appending .1, .2, etc.
-      for (int i = 1; !usedNames.insert(name).second; ++i) {
-        name = rawName.str + std::string(".") + std::to_string(i);
-      }
-      // note: we silently ignore errors here, as name section errors
-      //       are not fatal. should we warn?
-      auto numFunctionImports = functionImports.size();
-      if (index < numFunctionImports) {
-        functionImports[index]->name = name;
-      } else if (index - numFunctionImports < functions.size()) {
-        functions[index - numFunctionImports]->name = name;
-      } else {
-        throwError("index out of bounds: " + std::string(name.str));
-      }
     }
     if (pos != subsectionPos + subsectionSize) {
       throwError("bad names subsection position change");
@@ -2183,6 +2307,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
+      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
+        wasm.features.setAnyref();
       }
     }
   }
@@ -4689,7 +4815,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
-  curr->finalize();
+  curr->finalize(getHeapType());
 }
 
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {

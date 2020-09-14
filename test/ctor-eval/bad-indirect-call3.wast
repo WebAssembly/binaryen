@@ -9,7 +9,7 @@
   )
   (func $sig_mismatch
     (call_indirect (type $funcref_=>_none) ;; unsafe to call, signature mismatch
-      (ref.null)
+      (ref.null func)
       (i32.const 0)
     )
   )
