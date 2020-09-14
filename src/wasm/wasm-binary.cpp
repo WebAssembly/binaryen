@@ -2441,7 +2441,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
     case BinaryConsts::Try:
-      visitTry((curr = allocator.alloc<Try>())->cast<Try>());
+      visitTryOrTryInBlock(curr);
       break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
@@ -2692,20 +2692,10 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 }
 
 // Gets a block of expressions. If it's just one, return that singleton.
-// numPops is the number of pop instructions we add before starting to parse the
-// block. Can be used when we need to assume certain number of values are on top
-// of the stack in the beginning.
-Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
-                                                   unsigned numPops) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type});
   auto start = expressionStack.size();
-
-  Builder builder(wasm);
-  for (unsigned i = 0; i < numPops; i++) {
-    auto* pop = builder.makePop(Type::exnref);
-    pushExpression(pop);
-  }
 
   processExpressions();
   size_t end = expressionStack.size();
@@ -2757,12 +2747,12 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
+  if (start > end) {
+    throwError("block cannot pop from outside");
+  }
   if (end - start == 1) {
     curr->body = popExpression();
   } else {
-    if (start > end) {
-      throwError("block cannot pop from outside");
-    }
     auto* block = allocator.alloc<Block>();
     pushBlockElements(block, curr->type, start);
     block->finalize(curr->type);
@@ -4834,8 +4824,9 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitTry(Try* curr) {
+void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   BYN_TRACE("zz node: Try\n");
+  auto* curr = allocator.alloc<Try>();
   startControlFlow(curr);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
@@ -4845,11 +4836,86 @@ void WasmBinaryBuilder::visitTry(Try* curr) {
   if (lastSeparator != BinaryConsts::Catch) {
     throwError("No catch instruction within a try scope");
   }
-  curr->catchBody = getBlockOrSingleton(curr->type, 1);
-  curr->finalize(curr->type);
-  if (lastSeparator != BinaryConsts::End) {
-    throwError("try should end with end");
+
+  // For simplicity, we create an inner block within the catch body too, but one
+  // within 'catch' should be omitted when we write out the binary back later,
+  // because 'catch' instruction pushes a value onto the stack and the inner
+  // block does not support block input parameters without multivalue support.
+  // try
+  //   ...
+  // catch    ;; Pushes a value onto the stack
+  //   block  ;; Inner block. Should be deleted when writing binary!
+  //     use the pushed value
+  //   end
+  // end
+  //
+  // But when input binary code is like
+  // try
+  //   ...
+  // catch
+  //   br 0
+  // end
+  //
+  // 'br 0' accidentally happens to target the inner block, creating code like
+  // this in Binaryen IR, making the inner block not deletable, resulting in a
+  // validation error:
+  // (try
+  //   ...
+  //   (catch
+  //     (block $label0 ;; Cannot be deleted, because there's a branch to this
+  //       ...
+  //       (br $label0)
+  //     )
+  //   )
+  // )
+  //
+  // When this happens, we fix this by creating a block that wraps the whole
+  // try-catch, and making the branches target that block instead, like this:
+  // (block $label  ;; New enclosing block, new target for the branch
+  //   (try
+  //     ...
+  //     (catch
+  //       (block   ;; Now this can be deleted when writing binary
+  //         ...
+  //         (br $label0)
+  //       )
+  //     )
+  //   )
+  // )
+  Name catchLabel = getNextLabel();
+  breakStack.push_back({catchLabel, curr->type});
+  auto start = expressionStack.size();
+
+  Builder builder(wasm);
+  pushExpression(builder.makePop(Type::exnref));
+
+  processExpressions();
+  size_t end = expressionStack.size();
+  if (start > end) {
+    throwError("block cannot pop from outside");
   }
+  if (end - start == 1) {
+    curr->catchBody = popExpression();
+  } else {
+    auto* block = allocator.alloc<Block>();
+    pushBlockElements(block, curr->type, start);
+    block->finalize(curr->type);
+    curr->catchBody = block;
+  }
+  curr->finalize(curr->type);
+
+  if (breakTargetNames.find(catchLabel) == breakTargetNames.end()) {
+    out = curr;
+  } else {
+    // Create a new block that encloses whole try-catch
+    auto* block = allocator.alloc<Block>();
+    block->list.push_back(curr);
+    block->name = catchLabel;
+    block->finalize(curr->type);
+    out = block;
+  }
+  breakStack.pop_back();
+  breakTargetNames.erase(catchLabel);
 }
 
 void WasmBinaryBuilder::visitThrow(Throw* curr) {
