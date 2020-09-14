@@ -1131,11 +1131,11 @@ private:
           left->op == Abstract::getBinary(type, Abstract::Shl) &&
           right->op == Abstract::getBinary(type, Abstract::ShrU);
 
-        bool isRotateRigth =
+        bool isRotateRight =
           left->op == Abstract::getBinary(type, Abstract::ShrU) &&
           right->op == Abstract::getBinary(type, Abstract::Shl);
 
-        if (!(isRotateLeft || isRotateRigth)) {
+        if (!(isRotateLeft || isRotateRight)) {
           return nullptr;
         }
 
@@ -1176,7 +1176,7 @@ private:
               // whole binary expression is side free.
               // (x <<>> (y - z)) | rhs   ==>   rhs | (x <<>> (y - z))
               std::swap(left, right);
-              std::swap(isRotateLeft, isRotateRigth);
+              std::swap(isRotateLeft, isRotateRight);
             } else if (leftRight->op ==
                        Abstract::getBinary(type, Abstract::And)) {
               if (leftRight->right->dynCast<Const>() &&
@@ -1185,7 +1185,7 @@ private:
                 // (x <<>> ((y op z) & C)) | rhs  ==>
                 //     rhs | (x <<>> ((y op z) & C))
                 std::swap(left, right);
-                std::swap(isRotateLeft, isRotateRigth);
+                std::swap(isRotateLeft, isRotateRight);
               }
             }
           }
