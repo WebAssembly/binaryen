@@ -2236,6 +2236,19 @@ BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 // specified `Function`.
 BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
                                                  BinaryenIndex index);
+// Gets the number of locals within the specified function. Includes parameters.
+BINARYEN_API BinaryenIndex
+BinaryenFunctionGetNumLocals(BinaryenFunctionRef func);
+// Tests if the local at the specified index has a name.
+BINARYEN_API int BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
+                                              BinaryenIndex index);
+// Gets the name of the local at the specified index.
+BINARYEN_API const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
+                                                      BinaryenIndex index);
+// Sets the name of the local at the specified index.
+BINARYEN_API void BinaryenFunctionSetLocalName(BinaryenFunctionRef func,
+                                               BinaryenIndex index,
+                                               const char* name);
 // Gets the body of the specified `Function`.
 BINARYEN_API BinaryenExpressionRef
 BinaryenFunctionGetBody(BinaryenFunctionRef func);

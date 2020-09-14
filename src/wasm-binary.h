@@ -386,6 +386,7 @@ extern const char* MultivalueFeature;
 extern const char* AnyrefFeature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
 };

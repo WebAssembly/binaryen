@@ -3709,6 +3709,22 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
   assert(index < vars.size());
   return vars[index].getID();
 }
+BinaryenIndex BinaryenFunctionGetNumLocals(BinaryenFunctionRef func) {
+  return ((Function*)func)->getNumLocals();
+}
+int BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
+                                 BinaryenIndex index) {
+  return ((Function*)func)->hasLocalName(index);
+}
+const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
+                                         BinaryenIndex index) {
+  return ((Function*)func)->getLocalName(index).str;
+}
+void BinaryenFunctionSetLocalName(BinaryenFunctionRef func,
+                                  BinaryenIndex index,
+                                  const char* name) {
+  ((Function*)func)->setLocalName(index, name);
+}
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   return ((Function*)func)->body;
 }
