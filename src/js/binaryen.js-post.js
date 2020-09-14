@@ -3043,8 +3043,11 @@ Module['setAllowInliningFunctionsWithLoops'] = function(value) {
 
 // Expression wrappers
 
-// Makes a wrapper class with the specified static members while
-// automatically deriving instance methods and accessors.
+// Private symbol used to store the underlying C-API pointer of a wrapped object.
+const thisPtr = Symbol();
+
+// Makes a specific expression wrapper class with the specified static members
+// while automatically deriving instance methods and accessors.
 function makeExpressionWrapper(ownStaticMembers) {
   function SpecificExpression(expr) {
     // can call the constructor without `new`
@@ -3060,21 +3063,30 @@ function makeExpressionWrapper(ownStaticMembers) {
   Object.assign(SpecificExpression, ownStaticMembers);
   // inherit from Expression
   (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
-  // make own instance members
-  makeWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  // derive own instance members
+  deriveWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
   return SpecificExpression;
 }
 
-// Makes instance members from the given static members
-function makeWrapperInstanceMembers(prototype, staticMembers, ref = 'expr') {
+// Derives the instance members of a wrapper class from the given static
+// members.
+function deriveWrapperInstanceMembers(prototype, staticMembers) {
+  // Given a static member `getName(ptr)` for example, an instance method
+  // `getName()` and a `name` accessor with the `this` argument bound will be
+  // derived and added to the wrapper's prototype. If a corresponding static
+  // `setName(ptr)` is present, a setter for the `name` accessor will be added
+  // as well.
   Object.keys(staticMembers).forEach(memberName => {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
-      // Instance method calls the respective static method
+      // Instance method calls the respective static method with `this` bound.
       prototype[memberName] = function(...args) {
-        return this.constructor[memberName](this[ref], ...args);
+        return this.constructor[memberName](this[thisPtr], ...args);
       };
-      // Instance accessor calls the respective static methods
+      // Instance accessors call the respective static methods. Accessors are
+      // derived only if the respective underlying static method takes exactly
+      // one argument, the `this` argument, e.g. `getChild(ptr, idx)` does not
+      // trigger an accessor.
       let match;
       if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
         const index = match[1].length;
@@ -3082,10 +3094,10 @@ function makeWrapperInstanceMembers(prototype, staticMembers, ref = 'expr') {
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
           get() {
-            return member(this[ref]);
+            return member(this[thisPtr]);
           },
           set(value) {
-            if (setterIfAny) setterIfAny(this[ref], value);
+            if (setterIfAny) setterIfAny(this[thisPtr], value);
             else throw Error("property '" + propertyName + "' has no setter");
           }
         });
@@ -3097,7 +3109,7 @@ function makeWrapperInstanceMembers(prototype, staticMembers, ref = 'expr') {
 // Base class of all expression wrappers
 function Expression(expr) {
   if (!expr) throw Error("expression reference must not be null");
-  this['expr'] = expr;
+  this[thisPtr] = expr;
 }
 Expression['getId'] = function(expr) {
   return Module['_BinaryenExpressionGetId'](expr);
@@ -3114,9 +3126,9 @@ Expression['finalize'] = function(expr) {
 Expression['toText'] = function(expr) {
   return Module['emitText'](expr);
 };
-makeWrapperInstanceMembers(Expression.prototype, Expression);
+deriveWrapperInstanceMembers(Expression.prototype, Expression);
 Expression.prototype['valueOf'] = function() {
-  return this['expr'];
+  return this[thisPtr];
 };
 
 Module['Expression'] = Expression;
@@ -4284,16 +4296,29 @@ Module['TupleExtract'] = makeExpressionWrapper({
 // Function wrapper
 
 Module['Function'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
   function Function(func) {
     if (!(this instanceof Function)) {
       if (!func) return null;
       return new Function(func);
     }
     if (!func) throw Error("function reference must not be null");
-    this['func'] = func;
+    this[thisPtr] = func;
   }
   Function['getName'] = function(func) {
-    return Module['_BinaryenFunctionGetName'](func);
+    return UTF8ToString(Module['_BinaryenFunctionGetName'](func));
+  };
+  Function['getParams'] = function(func) {
+    return Module['_BinaryenFunctionGetParams'](func);
+  };
+  Function['getResults'] = function(func) {
+    return Module['_BinaryenFunctionGetResults'](func);
+  };
+  Function['getNumVars'] = function(func) {
+    return Module['_BinaryenFunctionGetNumVars'](func);
+  };
+  Function['getVar'] = function(func, index) {
+    return Module['_BinaryenFunctionGetVar'](func, index);
   };
   Function['getNumLocals'] = function(func) {
     return Module['_BinaryenFunctionGetNumLocals'](func);
@@ -4309,10 +4334,15 @@ Module['Function'] = (() => {
       Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
     });
   };
-  // TODO: add more methods
-  makeWrapperInstanceMembers(Function.prototype, Function, 'func');
+  Function['getBody'] = function(func) {
+    return Module['_BinaryenFunctionGetBody'](func);
+  };
+  Function['setBody'] = function(func, bodyExpr) {
+    Module['_BinaryenFunctionSetBody'](func, bodyExpr);
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
   Function.prototype['valueOf'] = function() {
-    return this['func'];
+    return this[thisPtr];
   };
   return Function;
 })();

@@ -17,7 +17,6 @@ console.log("# Expression");
   assert(typeof binaryen.Block.getName === "function"); // own
   assert(typeof theExpression.getId === "function"); // proto
   assert(typeof theExpression.getName === "function"); // own
-  assert(theExpression.expr === 42);
   assert((theExpression | 0) === 42); // via valueOf
 })();
 
