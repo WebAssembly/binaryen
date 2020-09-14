@@ -69,12 +69,13 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
     case Type::funcref:
-      ret.func = x.getFunc().c_str();
-      break;
-    case Type::nullref:
+      ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
+      assert(x.isNull());
+      break;
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -95,11 +96,11 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::v128:
       return Literal(x.v128);
     case Type::funcref:
-      return Literal::makeFuncref(x.func);
-    case Type::nullref:
-      return Literal::makeNullref();
+      return Literal::makeFunc(x.func);
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
+      return Literal::makeNull(Type(x.type));
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -133,8 +134,8 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeNullref(void) { return Type::nullref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
+BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
@@ -325,6 +326,9 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 }
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
+}
+BinaryenFeatures BinaryenFeatureAnyref(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Anyref);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -1264,8 +1268,11 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
     Builder(*(Module*)module).makePop(Type(type)));
 }
 
-BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull());
+BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                      BinaryenType type) {
+  Type type_(type);
+  assert(type_.isNullable());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
@@ -3421,7 +3428,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
   try {
     SExpressionParser parser(const_cast<char*>(text));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0]);
+    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm text";
@@ -3528,12 +3535,12 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-int BinaryenGetAllowHeavyweight(void) {
-  return globalPassOptions.inlining.allowHeavyweight;
+int BinaryenGetAllowInliningFunctionsWithLoops(void) {
+  return globalPassOptions.inlining.allowFunctionsWithLoops;
 }
 
-void BinaryenSetAllowHeavyweight(int enabled) {
-  globalPassOptions.inlining.allowHeavyweight = enabled;
+void BinaryenSetAllowInliningFunctionsWithLoops(int enabled) {
+  globalPassOptions.inlining.allowFunctionsWithLoops = enabled;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module,
@@ -3701,6 +3708,22 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
   const auto& vars = ((Function*)func)->vars;
   assert(index < vars.size());
   return vars[index].getID();
+}
+BinaryenIndex BinaryenFunctionGetNumLocals(BinaryenFunctionRef func) {
+  return ((Function*)func)->getNumLocals();
+}
+int BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
+                                 BinaryenIndex index) {
+  return ((Function*)func)->hasLocalName(index);
+}
+const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
+                                         BinaryenIndex index) {
+  return ((Function*)func)->getLocalName(index).str;
+}
+void BinaryenFunctionSetLocalName(BinaryenFunctionRef func,
+                                  BinaryenIndex index,
+                                  const char* name) {
+  ((Function*)func)->setLocalName(index, name);
 }
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   return ((Function*)func)->body;
@@ -3941,9 +3964,8 @@ RelooperRef RelooperCreate(BinaryenModuleRef module) {
 
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
                                   BinaryenExpressionRef code) {
-  auto* ret = new CFG::Block((Expression*)code);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)->AddBlock((Expression*)code));
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -3957,9 +3979,9 @@ void RelooperAddBranch(RelooperBlockRef from,
 RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
                                             BinaryenExpressionRef code,
                                             BinaryenExpressionRef condition) {
-  auto* ret = new CFG::Block((Expression*)code, (Expression*)condition);
-  ((CFG::Relooper*)relooper)->AddBlock(ret);
-  return RelooperBlockRef(ret);
+  return RelooperBlockRef(
+    ((CFG::Relooper*)relooper)
+      ->AddBlock((Expression*)code, (Expression*)condition));
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,

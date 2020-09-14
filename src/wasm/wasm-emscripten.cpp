@@ -633,19 +633,12 @@ struct FixInvokeFunctionNamesWalker
                 getSig(sigWoOrigFunc.results, sigWoOrigFunc.params));
   }
 
-  Name fixEmEHSjLjNames(const Name& name, Signature sig) {
-    if (name == "emscripten_longjmp_jmpbuf") {
-      return "emscripten_longjmp";
-    }
-    return fixEmExceptionInvoke(name, sig);
-  }
-
   void visitFunction(Function* curr) {
     if (!curr->imported()) {
       return;
     }
 
-    Name newname = fixEmEHSjLjNames(curr->base, curr->sig);
+    Name newname = fixEmExceptionInvoke(curr->base, curr->sig);
     if (newname == curr->base) {
       return;
     }

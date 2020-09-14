@@ -1242,7 +1242,7 @@ public:
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
-    return Literal::makeNullref();
+    return Literal::makeNull(curr->type);
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
@@ -1250,14 +1250,14 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.getSingleValue();
+    const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal(value.type == Type::nullref);
+    return Literal(value.isNull());
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFuncref(curr->func);
+    return Literal::makeFunc(curr->func);
   }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1273,7 +1273,7 @@ public:
     for (auto item : arguments) {
       exn->values.push_back(item);
     }
-    throwException(Literal::makeExnref(std::move(exn)));
+    throwException(Literal::makeExn(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1282,10 +1282,11 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    const auto& value = flow.getSingleValue();
+    if (value.isNull()) {
       trap("rethrow: argument is null");
     }
-    throwException(flow.getSingleValue());
+    throwException(value);
     WASM_UNREACHABLE("rethrow");
   }
   Flow visitBrOnExn(BrOnExn* curr) {
@@ -1294,10 +1295,11 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    const auto& value = flow.getSingleValue();
+    if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }
-    auto ex = flow.getSingleValue().getExceptionPackage();
+    auto ex = value.getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
@@ -1644,8 +1646,8 @@ public:
           return Literal(load128(addr).data());
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
+        case Type::anyref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1701,8 +1703,8 @@ public:
           break;
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
+        case Type::anyref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

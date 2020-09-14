@@ -100,8 +100,8 @@ BINARYEN_API BinaryenType BinaryenTypeFloat64(void);
 BINARYEN_API BinaryenType BinaryenTypeVec128(void);
 BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
 BINARYEN_API BinaryenType BinaryenTypeExternref(void);
-BINARYEN_API BinaryenType BinaryenTypeNullref(void);
 BINARYEN_API BinaryenType BinaryenTypeExnref(void);
+BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
@@ -197,6 +197,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureAnyref(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -826,7 +827,8 @@ BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef value,
                    BinaryenExpressionRef size);
-BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
+                                                   BinaryenType type);
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
@@ -2124,13 +2126,13 @@ BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size);
 
-// Gets whether heavyweight functions are allowed to be inlined.
+// Gets whether functions with loops are allowed to be inlined.
 // Applies to all modules, globally.
-BINARYEN_API int BinaryenGetAllowHeavyweight(void);
+BINARYEN_API int BinaryenGetAllowInliningFunctionsWithLoops(void);
 
-// Sets whether heavyweight functions are allowed to be inlined.
+// Sets whether functions with loops are allowed to be inlined.
 // Applies to all modules, globally.
-BINARYEN_API void BinaryenSetAllowHeavyweight(int enabled);
+BINARYEN_API void BinaryenSetAllowInliningFunctionsWithLoops(int enabled);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
@@ -2234,6 +2236,19 @@ BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 // specified `Function`.
 BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
                                                  BinaryenIndex index);
+// Gets the number of locals within the specified function. Includes parameters.
+BINARYEN_API BinaryenIndex
+BinaryenFunctionGetNumLocals(BinaryenFunctionRef func);
+// Tests if the local at the specified index has a name.
+BINARYEN_API int BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
+                                              BinaryenIndex index);
+// Gets the name of the local at the specified index.
+BINARYEN_API const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
+                                                      BinaryenIndex index);
+// Sets the name of the local at the specified index.
+BINARYEN_API void BinaryenFunctionSetLocalName(BinaryenFunctionRef func,
+                                               BinaryenIndex index,
+                                               const char* name);
 // Gets the body of the specified `Function`.
 BINARYEN_API BinaryenExpressionRef
 BinaryenFunctionGetBody(BinaryenFunctionRef func);

@@ -17,6 +17,7 @@
 #ifndef wasm_ir_iteration_h
 #define wasm_ir_iteration_h
 
+#include "ir/properties.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -29,18 +30,24 @@ namespace wasm {
 //  * This skips missing children, e.g. if an if has no else, it is represented
 //    as having 2 children (and not 3 with the last a nullptr).
 //
-// In general, it is preferable not to use this class and to directly access
-// the children (using e.g. iff->ifTrue etc.), as that is faster. However, in
-// cases where speed does not matter, this can be convenient.
+// In general, it is preferable not to use this class and to directly access the
+// children (using e.g. iff->ifTrue etc.), as that is faster. However, in cases
+// where speed does not matter, this can be convenient. TODO: reimplement these
+// to avoid materializing all the chilren at once.
 //
-
-class ChildIterator {
+//   ChildIterator - Iterates over all children
+//
+//   ValueChildIterator - Iterates over all children that produce values used by
+//                        this instruction. For example, includes If::condition
+//                        but not If::ifTrue.
+//
+template<template<class, class> class Scanner> class AbstractChildIterator {
+  using Self = AbstractChildIterator<Scanner>;
   struct Iterator {
-    const ChildIterator& parent;
+    const Self& parent;
     Index index;
 
-    Iterator(const ChildIterator& parent, Index index)
-      : parent(parent), index(index) {}
+    Iterator(const Self& parent, Index index) : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
       return index != other.index || &parent != &(other.parent);
@@ -52,12 +59,12 @@ class ChildIterator {
   };
 
 public:
-  std::vector<Expression*> children;
+  SmallVector<Expression*, 4> children;
 
-  ChildIterator(Expression* parent) {
+  AbstractChildIterator(Expression* parent) {
     struct Traverser : public PostWalker<Traverser> {
       Expression* parent;
-      std::vector<Expression*>* children;
+      SmallVector<Expression*, 4>* children;
 
       // We need to scan subchildren exactly once - just the parent.
       bool scanned = false;
@@ -65,8 +72,8 @@ public:
       static void scan(Traverser* self, Expression** currp) {
         if (!self->scanned) {
           self->scanned = true;
-          PostWalker<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(
-            self, currp);
+          Scanner<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(self,
+                                                                        currp);
         } else {
           // This is one of the children. Do not scan further, just note it.
           self->children->push_back(*currp);
@@ -81,6 +88,25 @@ public:
   Iterator begin() const { return Iterator(*this, 0); }
   Iterator end() const { return Iterator(*this, children.size()); }
 };
+
+template<class SubType, class Visitor>
+struct ValueChildScanner : PostWalker<SubType, Visitor> {
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+    if (Properties::isControlFlowStructure(curr)) {
+      // If conditions are the only value children of control flow structures
+      if (auto* iff = curr->dynCast<If>()) {
+        self->pushTask(SubType::scan, &iff->condition);
+      }
+    } else {
+      // All children on non-control flow expressions are value children
+      PostWalker<SubType, Visitor>::scan(self, currp);
+    }
+  }
+};
+
+using ChildIterator = AbstractChildIterator<PostWalker>;
+using ValueChildIterator = AbstractChildIterator<ValueChildScanner>;
 
 // Returns true if the current expression contains a certain kind of expression,
 // within the given depth of BFS. If depth is -1, this searches all children.

@@ -382,7 +382,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       theVar,
       "memory",
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
-                            ValueBuilder::makeName("memory")));
+                            ValueBuilder::makeName(wasm->memory.base)));
   }
   // for emscripten, add a table import - otherwise we would have
   // FUNCTION_TABLE be an upvar, and not as easy to be minified.

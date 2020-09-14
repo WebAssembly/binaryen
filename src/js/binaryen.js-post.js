@@ -35,8 +35,8 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
+    ['anyref', 'Anyref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -121,6 +121,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
+    'Anyref',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2058,21 +2059,21 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
-    }
-  };
-
   self['exnref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
     }
   };
 
+  self['anyref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
@@ -3031,13 +3032,13 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
 };
 
 // Gets the value which allow inline functions that are not "lightweight".
-Module['getAllowHeavyweight'] = function() {
-  return Boolean(Module['_BinaryenGetAllowHeavyweight']());
+Module['getAllowInliningFunctionsWithLoops'] = function() {
+  return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
 };
 
 // Sets the value which allow inline functions that are not "lightweight".
-Module['setAllowHeavyweight'] = function(value) {
-  Module['_BinaryenSetAllowHeavyweight'](value);
+Module['setAllowInliningFunctionsWithLoops'] = function(value) {
+  Module['_BinaryenSetAllowInliningFunctionsWithLoops'](value);
 };
 
 // Expression wrappers
@@ -3060,18 +3061,18 @@ function makeExpressionWrapper(ownStaticMembers) {
   // inherit from Expression
   (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
   // make own instance members
-  makeExpressionWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  makeWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
   return SpecificExpression;
 }
 
 // Makes instance members from the given static members
-function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
+function makeWrapperInstanceMembers(prototype, staticMembers, ref = 'expr') {
   Object.keys(staticMembers).forEach(memberName => {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method
       prototype[memberName] = function(...args) {
-        return this.constructor[memberName](this['expr'], ...args);
+        return this.constructor[memberName](this[ref], ...args);
       };
       // Instance accessor calls the respective static methods
       let match;
@@ -3081,10 +3082,10 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
           get() {
-            return member(this['expr']);
+            return member(this[ref]);
           },
           set(value) {
-            if (setterIfAny) setterIfAny(this['expr'], value);
+            if (setterIfAny) setterIfAny(this[ref], value);
             else throw Error("property '" + propertyName + "' has no setter");
           }
         });
@@ -3113,7 +3114,7 @@ Expression['finalize'] = function(expr) {
 Expression['toText'] = function(expr) {
   return Module['emitText'](expr);
 };
-makeExpressionWrapperInstanceMembers(Expression.prototype, Expression);
+makeWrapperInstanceMembers(Expression.prototype, Expression);
 Expression.prototype['valueOf'] = function() {
   return this['expr'];
 };
@@ -4279,6 +4280,42 @@ Module['TupleExtract'] = makeExpressionWrapper({
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
   }
 });
+
+// Function wrapper
+
+Module['Function'] = (() => {
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this['func'] = func;
+  }
+  Function['getName'] = function(func) {
+    return Module['_BinaryenFunctionGetName'](func);
+  };
+  Function['getNumLocals'] = function(func) {
+    return Module['_BinaryenFunctionGetNumLocals'](func);
+  };
+  Function['hasLocalName'] = function(func, index) {
+    return Boolean(Module['_BinaryenFunctionHasLocalName'](func, index));
+  };
+  Function['getLocalName'] = function(func, index) {
+    return UTF8ToString(Module['_BinaryenFunctionGetLocalName'](func, index));
+  };
+  Function['setLocalName'] = function(func, index, name) {
+    preserveStack(() => {
+      Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
+    });
+  };
+  // TODO: add more methods
+  makeWrapperInstanceMembers(Function.prototype, Function, 'func');
+  Function.prototype['valueOf'] = function() {
+    return this['func'];
+  };
+  return Function;
+})();
 
 // Additional customizations
 
