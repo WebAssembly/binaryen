@@ -202,7 +202,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary)) {
+      if (Properties::isSymmetric(binary) || isSpecialSymmetric(binary)) {
         canonicalize(binary);
       }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
@@ -731,7 +731,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(Properties::isSymmetric(binary));
+    assert(Properties::isSymmetric(binary) || isSpecialSymmetric(binary));
     FeatureSet features = getModule()->features;
     auto swap = [&]() {
       assert(EffectAnalyzer::canReorder(
@@ -1568,6 +1568,26 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  bool isSpecialSymmetric(Binary* binary) {
+    switch (binary->op) {
+      case AddFloat32:
+      case MulFloat32:
+      case AddFloat64:
+      case MulFloat64: {
+        // If the LHS is known to be non-NaN, the operands can commute.
+        // We don't care about the RHS because right now we only know if
+        // an expression is non-NaN if it is constant, but if the RHS is
+        // constant, then this expression is already canonicalized.
+        if (auto* c = binary->left->dynCast<Const>()) {
+          return !c->value.isNaN();
+        }
+        return false;
+      }
+      default:
+        return false;
     }
   }
 };
