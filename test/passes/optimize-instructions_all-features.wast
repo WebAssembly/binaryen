@@ -4047,6 +4047,53 @@
     (i32.const 2)
    )
   )
+  (func $const-float-zero (param $fx f32) (param $fy f64)
+    ;; x - 0.0   ==>   x
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const 0)
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const 0)
+    ))
+    ;; x + (-0.0)   ==>   x
+    (drop (f32.add
+      (local.get $fx)
+      (f32.const -0)
+    ))
+    (drop (f64.add
+      (local.get $fy)
+      (f64.const -0)
+    ))
+    ;; x - (-0.0)   ==>   x + 0.0
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const -0) ;; skip
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const -0) ;; skip
+    ))
+    ;; 0.0 - x   ==>   0.0 - x
+    (drop (f32.sub
+      (f32.const 0)
+      (local.get $fx) ;; skip
+    ))
+    (drop (f64.sub
+      (f64.const 0)
+      (local.get $fy) ;; skip
+    ))
+    ;; x + 0.0   ==>   x + 0.0
+    (drop (f32.add
+      (local.get $fx) ;; skip
+      (f32.const 0)
+    ))
+    (drop (f64.add
+      (local.get $fy) ;; skip
+      (f64.const 0)
+    ))
+  )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
       (local.get $x)
