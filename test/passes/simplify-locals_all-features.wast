@@ -1717,10 +1717,10 @@
     (try
       (do)
       (catch
-        ;; This (local.set $0) of (exnref.pop) cannot be sinked to
-        ;; (local.get $0) below, because exnref.pop should follow right after
+        ;; This (local.set $0) of (pop exnref) cannot be sinked to
+        ;; (local.get $0) below, because pop exnref should follow right after
         ;; 'catch'.
-        (local.set $0 (exnref.pop))
+        (local.set $0 (pop exnref))
         (call $foo
           (i32.const 3)
           (local.get $0)
@@ -1739,7 +1739,7 @@
         (local.set $0
           (try (result exnref)
             (do (ref.null exn))
-            (catch (exnref.pop))
+            (catch (pop exnref))
           )
         )
         (call $foo
@@ -1762,7 +1762,7 @@
         (drop (local.get $0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )
@@ -1777,7 +1777,7 @@
         (drop (local.get $0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )

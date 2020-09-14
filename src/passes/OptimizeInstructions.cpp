@@ -1299,6 +1299,27 @@ private:
         }
       }
     }
+    if (type.isFloat()) {
+      auto value = right->value.getFloat();
+      if (value == 0.0) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (std::signbit(value)) {
+            // x - (-0.0)   ==>   x + 0.0
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+            right->value = right->value.neg();
+            return binary;
+          } else {
+            // x - 0.0   ==>   x
+            return binary->left;
+          }
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (std::signbit(value)) {
+            // x + (-0.0)   ==>   x
+            return binary->left;
+          }
+        }
+      }
+    }
     if (type.isInteger() || type.isFloat()) {
       // note that this is correct even on floats with a NaN on the left,
       // as a NaN would skip the computation and just return the NaN,

@@ -214,7 +214,7 @@ private:
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
   Expression* makePush(Element& s);
-  Expression* makePop(Type type);
+  Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

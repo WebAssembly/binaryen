@@ -1617,9 +1617,13 @@ Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makePop(Type type) {
+Expression* SExpressionWasmBuilder::makePop(Element& s) {
   auto ret = allocator.alloc<Pop>();
-  ret->type = type;
+  std::vector<Type> types;
+  for (size_t i = 1; i < s.size(); ++i) {
+    types.push_back(stringToType(s[i]->str()));
+  }
+  ret->type = Type(types);
   ret->finalize();
   return ret;
 }

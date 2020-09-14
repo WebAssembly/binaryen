@@ -249,7 +249,7 @@
         )
         (catch
           (drop
-            (exnref.pop)
+            (pop exnref)
           )
           (i32.eqz
             (i32.eqz
@@ -4047,6 +4047,53 @@
     (i32.const 2)
    )
   )
+  (func $const-float-zero (param $fx f32) (param $fy f64)
+    ;; x - 0.0   ==>   x
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const 0)
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const 0)
+    ))
+    ;; x + (-0.0)   ==>   x
+    (drop (f32.add
+      (local.get $fx)
+      (f32.const -0)
+    ))
+    (drop (f64.add
+      (local.get $fy)
+      (f64.const -0)
+    ))
+    ;; x - (-0.0)   ==>   x + 0.0
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const -0) ;; skip
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const -0) ;; skip
+    ))
+    ;; 0.0 - x   ==>   0.0 - x
+    (drop (f32.sub
+      (f32.const 0)
+      (local.get $fx) ;; skip
+    ))
+    (drop (f64.sub
+      (f64.const 0)
+      (local.get $fy) ;; skip
+    ))
+    ;; x + 0.0   ==>   x + 0.0
+    (drop (f32.add
+      (local.get $fx) ;; skip
+      (f32.const 0)
+    ))
+    (drop (f64.add
+      (local.get $fy) ;; skip
+      (f64.const 0)
+    ))
+  )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
       (local.get $x)
@@ -4207,8 +4254,17 @@
       (unreachable)
     )
   )
-  ;; Tests when if arms are subtype of if's type
-  (func $if-arms-subtype (result anyref)
+  ;; These functions test if an `if` with subtyped arms is correctly folded
+  ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
+  (func $if-arms-subtype-fold (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null extern)
+    )
+  )
+  ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
+  (func $if-arms-subtype-nofold (result anyref)
     (if (result anyref)
       (i32.const 0)
       (ref.null extern)

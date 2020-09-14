@@ -1,0 +1,4 @@
+*
+!.gitignore
+!wasm2c
+!wasm2c/*

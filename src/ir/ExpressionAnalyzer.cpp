@@ -219,7 +219,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
     }
-    void visitRefNull(RefNull* curr) {}
+    void visitRefNull(RefNull* curr) { visitor.visitType(curr->type); }
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
     void visitTry(Try* curr) {}

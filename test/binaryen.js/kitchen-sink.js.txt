@@ -1844,7 +1844,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -1896,28 +1896,28 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (v128.pop)
+       (pop v128)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (exnref.pop)
+       (pop exnref)
       )
       (nop)
       (unreachable)
@@ -3684,7 +3684,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -3736,28 +3736,28 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (v128.pop)
+       (pop v128)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (exnref.pop)
+       (pop exnref)
       )
       (nop)
       (unreachable)

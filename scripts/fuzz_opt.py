@@ -962,7 +962,7 @@ if __name__ == '__main__':
 echo "should be 0:" $?
 
 # run the command
-./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "should be 1:" $?
 
 #
@@ -989,6 +989,7 @@ echo "should be 1:" $?
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
+                         'bin': shared.options.binaryen_bin,
                          'seed': seed,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
