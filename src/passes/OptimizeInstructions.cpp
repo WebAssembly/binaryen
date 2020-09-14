@@ -507,20 +507,16 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      // we could potentially eliminate masked rhs for shift operations
       if (binary->op == ShlInt32 || binary->op == ShlInt64 ||
           binary->op == ShrSInt32 || binary->op == ShrSInt64 ||
           binary->op == ShrUInt32 || binary->op == ShrUInt64) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          // x <<>> (32 | 64 | -32 | -64))   ==>   x
-          if (binary->type == Type::i32) {
-            if ((c->value.geti32() & 31) == 0) {
-              return binary->left;
-            }
-          } else if (binary->type == Type::i64) {
-            if ((c->value.geti64() & 63LL) == 0LL) {
-              return binary->left;
-            }
+          // truncate shift constants
+          // x <<>> (C & (31 | 63))
+          c->value = c->value.and_(Literal(binary->type.getByteSize() * 8 - 1));
+          // x <<>> 0   ==>   x
+          if (c->value.getInteger() == 0LL) {
+            return binary->left;
           }
         } else if (auto* right = binary->right->dynCast<Binary>()) {
           if (right->op == Abstract::getBinary(binary->type, Abstract::And)) {
