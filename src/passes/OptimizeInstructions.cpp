@@ -202,7 +202,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary) || isSpecialSymmetric(binary)) {
+      if (isSymmetric(binary)) {
         canonicalize(binary);
       }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
@@ -731,7 +731,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(Properties::isSymmetric(binary) || isSpecialSymmetric(binary));
+    assert(isSymmetric(binary));
     FeatureSet features = getModule()->features;
     auto swap = [&]() {
       assert(EffectAnalyzer::canReorder(
@@ -1571,7 +1571,10 @@ private:
     }
   }
 
-  bool isSpecialSymmetric(Binary* binary) {
+  bool isSymmetric(Binary* binary) {
+    if (Properties::isSymmetric(binary)) {
+      return true;
+    }
     switch (binary->op) {
       case AddFloat32:
       case MulFloat32:
