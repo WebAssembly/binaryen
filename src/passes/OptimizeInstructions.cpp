@@ -513,7 +513,8 @@ struct OptimizeInstructions
         if (auto* c = binary->right->dynCast<Const>()) {
           // truncate shift constants
           // x <<>> (C & (31 | 63))
-          c->value = c->value.and_(Literal(binary->type.getByteSize() * 8 - 1));
+          c->value = c->value.and_(Literal::makeFromInt32(
+            binary->type.getByteSize() * 8 - 1, binary->type));
           // x <<>> 0   ==>   x
           if (c->value.getInteger() == 0LL) {
             return binary->left;
