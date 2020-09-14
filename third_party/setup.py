@@ -70,7 +70,7 @@ mozjs_bin = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'mozjs')
 
 def mozjs_determine_platform():
     is_64bits = sys.maxsize > 2**32
-    if sys.platform == 'linux' or sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         return 'linux-x86_64' if is_64bits else 'linux-i686'
     if sys.platform == 'darwin':
         return 'mac'
@@ -126,7 +126,7 @@ v8_bin = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'v8')
 
 def v8_determine_platform():
     is_64bits = sys.maxsize > 2**32
-    if sys.platform == 'linux' or sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         return 'linux64' if is_64bits else 'linux32'
     if sys.platform == 'darwin':
         return 'mac64'
@@ -173,7 +173,7 @@ wabt_bin = os.path.join(wabt_dir, 'bin')
 
 
 def wabt_determine_platform():
-    if sys.platform == 'linux' or sys.platform == 'linux2':
+    if sys.platform.startswith('linux'):
         return 'ubuntu'
     if sys.platform == 'darwin':
         return 'macos'
