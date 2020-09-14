@@ -387,16 +387,12 @@
    (i32.const 11)
    (i64.const 0)
   )
-  (i64.store16
-   (i32.const 12)
-   (i64.const 65535)
-  )
   (i64.store32
-   (i32.const 13)
+   (i32.const 12)
    (i64.const 4294967295)
   )
   (i64.store32
-   (i32.const 14)
+   (i32.const 13)
    (i64.const 0)
   )
   (i64.store

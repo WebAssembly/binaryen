@@ -325,9 +325,8 @@
     (i64.store8 (i32.const 9) (i64.const 256))          ;; 0
     (i64.store16 (i32.const 10) (i64.const 65535))
     (i64.store16 (i32.const 11) (i64.const 65536))      ;; 0
-    (i64.store16 (i32.const 12) (i64.const 65535))
-    (i64.store32 (i32.const 13) (i64.const 4294967295))
-    (i64.store32 (i32.const 14) (i64.const 4294967296)) ;; 0
+    (i64.store32 (i32.const 12) (i64.const 4294967295))
+    (i64.store32 (i32.const 13) (i64.const 4294967296)) ;; 0
     (i64.store (i32.const 14) (i64.const 4294967296))
   )
   (func $and-neg1
