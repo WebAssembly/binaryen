@@ -560,7 +560,7 @@ struct OptimizeInstructions
               if (left->op == right->op) {
                 if (left->op ==
                     Abstract::getBinary(binary->type, Abstract::Mul)) {
-                  if (!EffectAnalyzer(getPassOptions(), features, binary)
+                  if (!EffectAnalyzer(getPassOptions(), features, binary->right)
                          .hasSideEffects()) {
                     // (x * y) op (x * z)
                     // (x * y) op (z * x)
