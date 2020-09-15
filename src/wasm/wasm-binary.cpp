@@ -4837,10 +4837,11 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     throwError("No catch instruction within a try scope");
   }
 
-  // For simplicity, we create an inner block within the catch body too, but the one
-  // within the 'catch' *must* be omitted when we write out the binary back later,
-  // because the 'catch' instruction pushes a value onto the stack and the inner
-  // block does not support block input parameters without multivalue support.
+  // For simplicity, we create an inner block within the catch body too, but the
+  // one within the 'catch' *must* be omitted when we write out the binary back
+  // later, because the 'catch' instruction pushes a value onto the stack and
+  // the inner block does not support block input parameters without multivalue
+  // support.
   // try
   //   ...
   // catch    ;; Pushes a value onto the stack
@@ -4908,10 +4909,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     out = curr;
   } else {
     // Create a new block that encloses the whole try-catch
-    auto* block = allocator.alloc<Block>();
-    block->list.push_back(curr);
-    block->name = catchLabel;
-    block->finalize(curr->type);
+    auto* block = builder.makeBlock(catchLabel, curr);
     out = block;
   }
   breakStack.pop_back();
