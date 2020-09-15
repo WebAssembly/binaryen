@@ -513,8 +513,8 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      // x * y + x * z   ==>   x * (y + z)
-      // x * y - x * z   ==>   x * (y - z)
+      // x * y + x * z   ==>   (y + z) * x
+      // x * y - x * z   ==>   (y - z) * x
       if (binary->type.isInteger()) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
@@ -536,7 +536,7 @@ struct OptimizeInstructions
                         // swap z and x
                         std::swap(right->left, right->right);
                       }
-                      // => x * (y op z)
+                      // => (y op z) * x
                       Builder builder(*getModule());
                       return builder.makeBinary(
                         Abstract::getBinary(binary->type, Abstract::Mul),
@@ -554,7 +554,7 @@ struct OptimizeInstructions
                         // swap y and z
                         std::swap(right->left, right->right);
                       }
-                      // => y * (x op z)
+                      // => (x op z) * y
                       Builder builder(*getModule());
                       return builder.makeBinary(
                         Abstract::getBinary(binary->type, Abstract::Mul),

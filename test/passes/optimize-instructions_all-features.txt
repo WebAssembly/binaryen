@@ -8,10 +8,10 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $none_=>_anyref (func (result anyref)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
@@ -3749,6 +3749,62 @@
   (drop
    (i32.ge_s
     (local.get $x)
+    (local.get $y)
+   )
+  )
+ )
+ (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32)
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $x)
+     (local.get $z)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $x)
+     (local.get $z)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (local.get $x)
+     (local.get $z)
+    )
     (local.get $y)
    )
   )

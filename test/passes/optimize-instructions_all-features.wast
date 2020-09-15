@@ -4244,6 +4244,85 @@
     ))
     ;; TODO: more stuff here
   )
+  (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32)
+    ;; x * y + x * z
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $z)
+      )
+    ))
+    ;; x * y + z * y
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $y)
+      )
+    ))
+    ;; x * y + y * z
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $y)
+        (local.get $z)
+      )
+    ))
+    ;; x * y + z * x
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $x)
+      )
+    ))
+    ;; x * y - x * z
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $z)
+      )
+    ))
+    ;; x * y - z * y
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $y)
+      )
+    ))
+    ;; x * y + z * z
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $z)
+      )
+    ))
+  )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if
       (select
