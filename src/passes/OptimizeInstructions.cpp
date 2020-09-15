@@ -522,8 +522,8 @@ struct OptimizeInstructions
         }
       }
       if (binary->type.isInteger()) {
-        // x * C1 + x * C2   ==>   x * (C1 + C2)
-        // x * C1 - x * C2   ==>   x * (C1 - C2)
+        // x op C1 + x op C2   ==>   x * (C1 + C2)
+        // x op C1 - x op C2   ==>   x * (C1 - C2), op = (`*`|`<<`)
         // x * y + x * z   ==>   (y + z) * x
         // x * y - x * z   ==>   (y - z) * x
         if (auto* left = binary->left->dynCast<Binary>()) {
@@ -541,20 +541,25 @@ struct OptimizeInstructions
                   if (left->type == right->type) {
                     auto type = left->type;
                     if (ExpressionAnalyzer::equal(left->left, right->left)) {
-                      if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
+                      if (left->op ==
+                          Abstract::getBinary(type, Abstract::Shl)) {
                         left->op = Abstract::getBinary(type, Abstract::Mul);
-                        c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
+                        c1->value =
+                          Literal::makeFromInt32(1, type).shl(c1->value);
                       }
-                      if (right->op == Abstract::getBinary(type, Abstract::Shl)) {
+                      if (right->op ==
+                          Abstract::getBinary(type, Abstract::Shl)) {
                         right->op = Abstract::getBinary(type, Abstract::Mul);
-                        c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
+                        c2->value =
+                          Literal::makeFromInt32(1, type).shl(c2->value);
                       }
                     }
                   }
                 }
               }
               if (left->op == right->op) {
-                if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
+                if (left->op ==
+                    Abstract::getBinary(binary->type, Abstract::Mul)) {
                   if (!EffectAnalyzer(getPassOptions(), features, binary)
                          .hasSideEffects()) {
                     // (x * y) op (x * z)
