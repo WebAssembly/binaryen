@@ -513,6 +513,62 @@ struct OptimizeInstructions
           return ret;
         }
       }
+      // x * y + x * z   ==>   x * (y + z)
+      // x * y - x * z   ==>   x * (y - z)
+      if (binary->type.isInteger()) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
+            if (binary->op ==
+                  Abstract::getBinary(binary->type, Abstract::Add) ||
+                binary->op ==
+                  Abstract::getBinary(binary->type, Abstract::Sub)) {
+              if (auto* right = binary->right->dynCast<Binary>()) {
+                if (left->op == right->op) {
+                  if (!EffectAnalyzer(getPassOptions(), features, binary)
+                         .hasSideEffects()) {
+                    // (x * y) op (x * z)
+                    // (x * y) op (z * x)
+                    bool mirrored =
+                      ExpressionAnalyzer::equal(left->left, right->right);
+                    if (mirrored ||
+                        ExpressionAnalyzer::equal(left->left, right->left)) {
+                      if (mirrored) {
+                        // swap z and x
+                        std::swap(right->left, right->right);
+                      }
+                      // => x * (y op z)
+                      Builder builder(*getModule());
+                      return builder.makeBinary(
+                        Abstract::getBinary(binary->type, Abstract::Mul),
+                        left->left,
+                        builder.makeBinary(
+                          binary->op, left->right, right->right));
+                    }
+                    // (z * y) op (x * y)
+                    // (x * z) op (y * x)
+                    mirrored =
+                      ExpressionAnalyzer::equal(left->right, right->left);
+                    if (mirrored ||
+                        ExpressionAnalyzer::equal(left->right, right->right)) {
+                      if (mirrored) {
+                        // swap y and z
+                        std::swap(right->left, right->right);
+                      }
+                      // => y * (x op z)
+                      Builder builder(*getModule());
+                      return builder.makeBinary(
+                        Abstract::getBinary(binary->type, Abstract::Mul),
+                        left->right,
+                        builder.makeBinary(
+                          binary->op, left->left, right->left));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       // finally, try more expensive operations on the binary in
       // the case that they have no side effects
       if (!EffectAnalyzer(getPassOptions(), features, binary->left)
