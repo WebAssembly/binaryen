@@ -522,16 +522,39 @@ struct OptimizeInstructions
         }
       }
       if (binary->type.isInteger()) {
+        // x * C1 + x * C2   ==>   x * (C1 + C2)
+        // x * C1 - x * C2   ==>   x * (C1 - C2)
         // x * y + x * z   ==>   (y + z) * x
         // x * y - x * z   ==>   (y - z) * x
         if (auto* left = binary->left->dynCast<Binary>()) {
-          if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
+          if (auto* right = binary->right->dynCast<Binary>()) {
             if (binary->op ==
                   Abstract::getBinary(binary->type, Abstract::Add) ||
                 binary->op ==
                   Abstract::getBinary(binary->type, Abstract::Sub)) {
-              if (auto* right = binary->right->dynCast<Binary>()) {
-                if (left->op == right->op) {
+              // canonicalize
+              // (x << C1) op (x << C2)
+              // to
+              // (x * (1 << C1)) op (x * (1 << C2))
+              if (auto* c1 = left->right->dynCast<Const>()) {
+                if (auto* c2 = right->right->dynCast<Const>()) {
+                  if (left->type == right->type) {
+                    auto type = left->type;
+                    if (ExpressionAnalyzer::equal(left->left, right->left)) {
+                      if (left->op == Abstract::getBinary(type, Abstract::Shl)) {
+                        left->op = Abstract::getBinary(type, Abstract::Mul);
+                        c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
+                      }
+                      if (right->op == Abstract::getBinary(type, Abstract::Shl)) {
+                        right->op = Abstract::getBinary(type, Abstract::Mul);
+                        c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
+                      }
+                    }
+                  }
+                }
+              }
+              if (left->op == right->op) {
+                if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
                   if (!EffectAnalyzer(getPassOptions(), features, binary)
                          .hasSideEffects()) {
                     // (x * y) op (x * z)

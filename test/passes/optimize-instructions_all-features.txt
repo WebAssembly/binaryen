@@ -3770,6 +3770,36 @@
   (drop
    (i32.mul
     (i32.add
+     (i32.const 3)
+     (i32.const 2)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.mul
+    (i64.add
+     (i64.const 3)
+     (i64.const 2)
+    )
+    (local.get $wx)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (local.get $x)
+     (i32.const 3)
+    )
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
      (local.get $y)
      (local.get $z)
     )

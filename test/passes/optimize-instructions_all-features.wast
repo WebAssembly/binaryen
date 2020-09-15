@@ -4254,6 +4254,38 @@
       (local.get $wx)
       (local.get $wx)
     ))
+    ;; x * 3 + x * 2
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 2)
+      )
+    ))
+    (drop (i64.add
+      (i64.mul
+        (local.get $wx)
+        (i64.const 3)
+      )
+      (i64.mul
+        (local.get $wx)
+        (i64.const 2)
+      )
+    ))
+    ;; (x * 3) + (x >> 1)
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
     ;; x * y + x * z
     (drop (i32.add
       (i32.mul
