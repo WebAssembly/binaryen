@@ -3804,6 +3804,15 @@
    )
   )
   (drop
+   (i64.mul
+    (i64.add
+     (i64.const 2)
+     (i64.const 4)
+    )
+    (local.get $wx)
+   )
+  )
+  (drop
    (i32.mul
     (i32.add
      (local.get $y)
@@ -3903,6 +3912,18 @@
     (i32.mul
      (local.get $x)
      (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.sub
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.mul
+     (local.get $x)
+     (i32.const 3)
     )
    )
   )

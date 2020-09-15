@@ -4297,6 +4297,17 @@
         (i32.const 3)
       )
     ))
+    ;; (wx << 1) + (wx << 2)
+    (drop (i64.add
+      (i64.shl
+        (local.get $wx)
+        (i64.const 1)
+      )
+      (i64.shl
+        (local.get $wx)
+        (i64.const 2)
+      )
+    ))
     ;; x * y + x * z
     (drop (i32.add
       (i32.mul
@@ -4409,6 +4420,17 @@
       (i32.mul
         (local.get $x)
         (local.get $y)
+      )
+    ))
+    ;; (x >> 1) - (x * 3)  ->  skip
+    (drop (i32.sub
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
       )
     ))
   )
