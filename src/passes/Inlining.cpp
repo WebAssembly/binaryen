@@ -48,13 +48,15 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
-  std::atomic<bool> lightweight;
+  bool hasCalls;
+  bool hasLoops;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
     refs = 0;
     size = 0;
-    lightweight = true;
+    hasCalls = false;
+    hasLoops = false;
     usedGlobally = false;
   }
 
@@ -79,12 +81,16 @@ struct FunctionInfo {
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
-    // more than one use, so we can't eliminate it after inlining,
+    // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size, and if it's lightweight so a good candidate for
-    // speeding us up.
+    // about size. First, check if it has calls. In that case it is not
+    // likely to speed us up, and also if we want to inline such
+    // functions we would need to be careful to avoid infinite recursion.
+    if (hasCalls) {
+      return false;
+    }
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (lightweight || options.inlining.allowHeavyweight);
+           (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
 
@@ -101,16 +107,16 @@ struct FunctionInfoScanner
   }
 
   void visitLoop(Loop* curr) {
-    // having a loop is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a loop
+    (*infos)[getFunction()->name].hasLoops = true;
   }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].refs++;
-    // having a call is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a call
+    (*infos)[getFunction()->name].hasCalls = true;
   }
 
   void visitRefFunc(RefFunc* curr) {

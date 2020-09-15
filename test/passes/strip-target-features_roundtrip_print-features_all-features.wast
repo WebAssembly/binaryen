@@ -5,7 +5,7 @@
   (func $foo (result v128 externref )
     (tuple.make
       (v128.const i32x4 0 0 0 0)
-      (ref.null)
+      (ref.null extern)
     )
   )
   (func $bar (result v128 externref)
