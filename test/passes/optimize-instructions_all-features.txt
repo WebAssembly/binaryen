@@ -3789,6 +3789,18 @@
    (local.get $x)
   )
   (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $z)
+  )
+  (drop
+   (local.get $z)
+  )
+  (drop
    (local.get $z)
   )
   (drop

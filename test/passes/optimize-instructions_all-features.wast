@@ -4303,6 +4303,14 @@
       (local.get $x)
       (i32.const 64)
     ))
+    (drop (i32.rotl
+      (local.get $x)
+      (i32.const 64)
+    ))
+    (drop (i32.rotr
+      (local.get $x)
+      (i32.const 64)
+    ))
     ;; i64
     (drop (i64.shl
       (local.get $z)
@@ -4313,6 +4321,14 @@
       (i64.const 64)
     ))
     (drop (i64.shr_u
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotl
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotr
       (local.get $z)
       (i64.const 128)
     ))

@@ -509,7 +509,9 @@ struct OptimizeInstructions
       }
       if (binary->op == ShlInt32 || binary->op == ShlInt64 ||
           binary->op == ShrSInt32 || binary->op == ShrSInt64 ||
-          binary->op == ShrUInt32 || binary->op == ShrUInt64) {
+          binary->op == ShrUInt32 || binary->op == ShrUInt64 ||
+          binary->op == RotLInt32 || binary->op == RotLInt64 ||
+          binary->op == RotRInt32 || binary->op == RotRInt64) {
         if (auto* c = binary->right->dynCast<Const>()) {
           // truncate shift constants
           // x <<>> (C & (31 | 63))
