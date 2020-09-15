@@ -4385,6 +4385,32 @@
         (local.get $y)
       )
     ))
+    ;; SE * x + x * y   ->   (SE + y) * x
+    (drop (i32.add
+      (i32.mul
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+        (local.get $x)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x * SE - y * x   ->   (SE - y) * x
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+      )
+      (i32.mul
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
     ;; x * y + z * z   ->   skip
     (drop (i32.add
       (i32.mul
@@ -4405,21 +4431,23 @@
       (i32.mul
         (local.get $x)
         (i32.load
-          (i32.const 3) ;; side effect
+          (i32.const 0) ;; side effect
         )
       )
     ))
-    ;; SE * x + x * y   ->   skip
+    ;; x * SE + x * SE   ->   skip
     (drop (i32.add
       (i32.mul
-        (i32.load
-          (i32.const 3) ;; side effect
-        )
         (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
       )
       (i32.mul
         (local.get $x)
-        (local.get $y)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
       )
     ))
     ;; (x >> 1) - (x * 3)  ->  skip

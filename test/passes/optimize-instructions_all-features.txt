@@ -3876,40 +3876,67 @@
    )
   )
   (drop
-   (i32.add
-    (i32.mul
-     (local.get $x)
-     (local.get $y)
-    )
-    (i32.mul
-     (local.get $z)
-     (local.get $z)
-    )
-   )
-  )
-  (drop
-   (i32.add
-    (i32.mul
-     (local.get $x)
-     (local.get $y)
-    )
-    (i32.mul
-     (i32.load
-      (i32.const 3)
-     )
-     (local.get $x)
-    )
-   )
-  )
-  (drop
    (i32.mul
     (i32.add
      (i32.load
-      (i32.const 3)
+      (i32.const 0)
      )
      (local.get $y)
     )
     (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $y)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.mul
+     (local.get $z)
+     (local.get $z)
+    )
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
    )
   )
   (drop
