@@ -1549,20 +1549,20 @@ private:
   // either, we can fold various things
   // TODO: trinaries, things like (x & (y & x)) ?
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
+    auto type = binary->left->type;
     switch (binary->op) {
       case AddInt32:
       case AddInt64: {
         // x + x  ==>  x * 2
-        binary->op = Abstract::getBinary(binary->left->type, Abstract::Mul);
-        binary->right =
-          LiteralUtils::makeFromInt32(2, binary->left->type, *getModule());
+        binary->op = Abstract::getBinary(type, Abstract::Mul);
+        binary->right = LiteralUtils::makeFromInt32(2, type, *getModule());
         return binary;
       }
       case SubInt32:
       case XorInt32:
       case SubInt64:
       case XorInt64:
-        return LiteralUtils::makeZero(binary->left->type, *getModule());
+        return LiteralUtils::makeZero(type, *getModule());
       case NeInt64:
       case LtSInt64:
       case LtUInt64:
