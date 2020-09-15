@@ -99,7 +99,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
-        switch (import->type.getSingle()) {
+        TODO_SINGLE_COMPOUND(import->type);
+        switch (import->type.getBasic()) {
           case Type::i32:
             globals[import->name] = {Literal(int32_t(666))};
             break;
@@ -116,9 +117,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             assert(false && "v128 not implemented yet");
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
-            globals[import->name] = {Literal::makeNullref()};
+          case Type::anyref:
+            globals[import->name] = {Literal::makeNull(import->type)};
             break;
           case Type::none:
           case Type::unreachable:
@@ -164,12 +165,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (sig != func->sig) {
       trap("callIndirect: function signatures don't match");
     }
-    const std::vector<Type>& params = func->sig.params.expand();
-    if (params.size() != arguments.size()) {
+    if (func->sig.params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < params.size(); i++) {
-      if (!Type::isSubType(arguments[i].type, params[i])) {
+    size_t i = 0;
+    for (const auto& param : func->sig.params) {
+      if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }

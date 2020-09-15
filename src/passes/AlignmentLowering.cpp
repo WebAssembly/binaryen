@@ -232,7 +232,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     Builder builder(*getModule());
-    auto type = curr->type.getSingle();
+    auto type = curr->type.getBasic();
     Expression* replacement;
     switch (type) {
       default:
@@ -303,7 +303,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       // the operation is unaligned.
       return;
     }
-    auto type = curr->value->type.getSingle();
+    auto type = curr->value->type.getBasic();
     Expression* replacement;
     switch (type) {
       default:

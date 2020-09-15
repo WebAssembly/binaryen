@@ -314,8 +314,8 @@ Element* SExpressionParser::parseString() {
 
 SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
                                                Element& module,
-                                               Name* moduleName)
-  : wasm(wasm), allocator(wasm.allocator) {
+                                               IRProfile profile)
+  : wasm(wasm), allocator(wasm.allocator), profile(profile) {
   if (module.size() == 0) {
     throw ParseException("empty toplevel, expected module");
   }
@@ -327,9 +327,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   }
   Index i = 1;
   if (module[i]->dollared()) {
-    if (moduleName) {
-      *moduleName = module[i]->str();
-    }
+    wasm.name = module[i]->str();
     i++;
   }
   if (i < module.size() && module[i]->isStr()) {
@@ -640,9 +638,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   // If only (type) is specified, populate `namedParams`
   if (!paramsOrResultsExist) {
-    const std::vector<Type>& funcParams = functionSignature.params.expand();
-    for (size_t index = 0, e = funcParams.size(); index < e; index++) {
-      namedParams.emplace_back(Name::fromInt(index), funcParams[index]);
+    size_t index = 0;
+    for (const auto& param : functionSignature.params) {
+      namedParams.emplace_back(Name::fromInt(index++), param);
     }
   }
 
@@ -795,6 +793,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   // make a new function
   currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
     name, std::move(params), sig.results, std::move(vars)));
+  currFunction->profile = profile;
 
   // parse body
   Block* autoBlock = nullptr; // may need to add a block for the very top level
@@ -869,16 +868,51 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type::externref;
   }
-  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::nullref;
-  }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::exnref;
+  }
+  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
+    return Type::anyref;
   }
   if (allowError) {
     return Type::none;
   }
   throw ParseException(std::string("invalid wasm type: ") + str);
+}
+
+HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
+                                                  bool prefix) {
+  if (str[0] == 'a') {
+    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
+      return HeapType::AnyKind;
+    }
+  }
+  if (str[0] == 'e') {
+    if (str[1] == 'q' && (prefix || str[2] == 0)) {
+      return HeapType::EqKind;
+    }
+    if (str[1] == 'x') {
+      if (str[2] == 'n' && (prefix || str[3] == 0)) {
+        return HeapType::ExnKind;
+      }
+      if (str[2] == 't' && str[3] == 'e' && str[4] == 'r' && str[5] == 'n' &&
+          (prefix || str[6] == 0)) {
+        return HeapType::ExternKind;
+      }
+    }
+  }
+  if (str[0] == 'i') {
+    if (str[1] == '3' && str[2] == '1' && (prefix || str[3] == 0)) {
+      return HeapType::I31Kind;
+    }
+  }
+  if (str[0] == 'f') {
+    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
+        (prefix || str[4] == 0)) {
+      return HeapType::FuncKind;
+    }
+  }
+  throw ParseException(std::string("invalid wasm heap type: ") + str);
 }
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
@@ -1583,9 +1617,13 @@ Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makePop(Type type) {
+Expression* SExpressionWasmBuilder::makePop(Element& s) {
   auto ret = allocator.alloc<Pop>();
-  ret->type = type;
+  std::vector<Type> types;
+  for (size_t i = 1; i < s.size(); ++i) {
+    types.push_back(stringToType(s[i]->str()));
+  }
+  ret->type = Type(types);
   ret->finalize();
   return ret;
 }
@@ -1779,8 +1817,12 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  if (s.size() != 2) {
+    throw ParseException("invalid heap type reference", s.line, s.col);
+  }
+  auto heapType = stringToHeapType(s[1]->str());
   auto ret = allocator.alloc<RefNull>();
-  ret->finalize();
+  ret->finalize(heapType);
   return ret;
 }
 

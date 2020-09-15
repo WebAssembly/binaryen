@@ -17,6 +17,7 @@
 #ifndef wasm_ir_branch_h
 #define wasm_ir_branch_h
 
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -52,10 +53,12 @@ inline bool isBranchReachable(Expression* expr) {
   WASM_UNREACHABLE("unexpected expression type");
 }
 
-inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
+using NameSet = std::set<Name>;
 
-inline std::set<Name> getUniqueTargets(Switch* sw) {
-  std::set<Name> ret;
+inline NameSet getUniqueTargets(Break* br) { return {br->name}; }
+
+inline NameSet getUniqueTargets(Switch* sw) {
+  NameSet ret;
   for (auto target : sw->targets) {
     ret.insert(target);
   }
@@ -63,8 +66,20 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
   return ret;
 }
 
-inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
+inline NameSet getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
+inline NameSet getUniqueTargets(Expression* expr) {
+  if (auto* br = expr->dynCast<Break>()) {
+    return getUniqueTargets(br);
+  }
+  if (auto* br = expr->dynCast<Switch>()) {
+    return getUniqueTargets(br);
+  }
+  if (auto* br = expr->dynCast<BrOnExn>()) {
+    return getUniqueTargets(br);
+  }
+  return {};
+}
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   bool worked = false;
@@ -97,9 +112,9 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 
 // returns the set of targets to which we branch that are
 // outside of a node
-inline std::set<Name> getExitingBranches(Expression* ast) {
+inline NameSet getExitingBranches(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+    NameSet targets;
 
     void visitBreak(Break* curr) { targets.insert(curr->name); }
     void visitSwitch(Switch* curr) {
@@ -128,9 +143,9 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
 
 // returns the list of all branch targets in a node
 
-inline std::set<Name> getBranchTargets(Expression* ast) {
+inline NameSet getBranchTargets(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+    NameSet targets;
 
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
@@ -215,6 +230,77 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found;
+  }
+};
+
+// Accumulates all the branches in an entire tree.
+struct BranchAccumulator
+  : public PostWalker<BranchAccumulator,
+                      UnifiedExpressionVisitor<BranchAccumulator>> {
+  NameSet branches;
+
+  void visitExpression(Expression* curr) {
+    auto selfBranches = getUniqueTargets(curr);
+    branches.insert(selfBranches.begin(), selfBranches.end());
+  }
+};
+
+// A helper structure for the common case of post-walking some IR while querying
+// whether a branch is present. We can cache results for children in order to
+// avoid quadratic time searches.
+// We assume that a node will be scanned *once* here. That means that if we
+// scan a node, we can discard all information for its children. This avoids
+// linearly increasing memory usage over time.
+class BranchSeekerCache {
+  // Maps all the branches present in an expression and all its nested children.
+  std::unordered_map<Expression*, NameSet> branches;
+
+public:
+  const NameSet& getBranches(Expression* curr) {
+    auto iter = branches.find(curr);
+    if (iter != branches.end()) {
+      return iter->second;
+    }
+    NameSet currBranches;
+    auto add = [&](NameSet& moreBranches) {
+      // Make sure to do a fast swap for the first set of branches to arrive.
+      // This helps the case of the first child being a block with a very large
+      // set of names.
+      if (currBranches.empty()) {
+        currBranches.swap(moreBranches);
+      } else {
+        currBranches.insert(moreBranches.begin(), moreBranches.end());
+      }
+    };
+    // Add from the children, which are hopefully cached.
+    for (auto child : ChildIterator(curr)) {
+      auto iter = branches.find(child);
+      if (iter != branches.end()) {
+        add(iter->second);
+        // We are scanning the parent, which means we assume the child will
+        // never be visited again.
+        branches.erase(iter);
+      } else {
+        // The child was not cached. Scan it manually.
+        BranchAccumulator childBranches;
+        childBranches.walk(child);
+        add(childBranches.branches);
+        // Don't bother caching anything - we are scanning the parent, so the
+        // child will presumably not be scanned again.
+      }
+    }
+    // Finish with the parent's own branches.
+    auto selfBranches = getUniqueTargets(curr);
+    add(selfBranches);
+    return branches[curr] = std::move(currBranches);
+  }
+
+  bool hasBranch(Expression* curr, Name target) {
+    bool result = getBranches(curr).count(target);
+#ifdef BRANCH_UTILS_DEBUG
+    assert(bresult == BranchSeeker::has(curr, target));
+#endif
+    return result;
   }
 };
 

@@ -19,7 +19,6 @@
 
 #include "ir/bits.h"
 #include "ir/effects.h"
-#include "ir/iteration.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -52,6 +51,11 @@ inline bool isSymmetric(Binary* binary) {
     case XorInt64:
     case EqInt64:
     case NeInt64:
+
+    case EqFloat32:
+    case NeFloat32:
+    case EqFloat64:
+    case NeFloat64:
       return true;
 
     default:
@@ -93,10 +97,10 @@ inline bool isConstantExpression(const Expression* curr) {
 inline Literal getSingleLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal(Type::nullref);
-  } else if (auto* c = curr->dynCast<RefFunc>()) {
-    return Literal(c->func);
+  } else if (auto* n = curr->dynCast<RefNull>()) {
+    return Literal(n->type);
+  } else if (auto* r = curr->dynCast<RefFunc>()) {
+    return Literal(r->func);
   } else {
     WASM_UNREACHABLE("non-constant expression");
   }

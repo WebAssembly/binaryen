@@ -42,7 +42,8 @@ Type asmToWasmType(AsmType asmType) {
 }
 
 AsmType wasmToAsmType(Type type) {
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
       return ASM_INT;
     case Type::f32:
@@ -55,8 +56,8 @@ AsmType wasmToAsmType(Type type) {
       assert(false && "v128 not implemented yet");
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
       assert(false && "reference types are not supported by asm2wasm");
     case Type::none:
       return ASM_NONE;
@@ -67,7 +68,8 @@ AsmType wasmToAsmType(Type type) {
 }
 
 char getSig(Type type) {
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
       return 'i';
     case Type::i64:
@@ -82,10 +84,10 @@ char getSig(Type type) {
       return 'F';
     case Type::externref:
       return 'X';
-    case Type::nullref:
-      return 'N';
     case Type::exnref:
       return 'E';
+    case Type::anyref:
+      return 'A';
     case Type::none:
       return 'v';
     case Type::unreachable:
@@ -99,11 +101,11 @@ std::string getSig(Function* func) {
 }
 
 std::string getSig(Type results, Type params) {
-  assert(!results.isMulti());
+  assert(!results.isTuple());
   std::string sig;
   sig += getSig(results);
-  for (Type t : params.expand()) {
-    sig += getSig(t);
+  for (const auto& param : params) {
+    sig += getSig(param);
   }
   return sig;
 }

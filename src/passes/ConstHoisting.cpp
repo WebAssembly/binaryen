@@ -77,7 +77,8 @@ private:
     }
     // measure the size of the constant
     Index size = 0;
-    switch (value.type.getSingle()) {
+    TODO_SINGLE_COMPOUND(value.type);
+    switch (value.type.getBasic()) {
       case Type::i32: {
         size = getWrittenSize(S32LEB(value.geti32()));
         break;
@@ -95,8 +96,8 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
-      case Type::exnref: {
+      case Type::exnref:
+      case Type::anyref: {
         return false;
       }
       case Type::none:

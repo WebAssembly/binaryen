@@ -45,6 +45,12 @@ def test_wasm_opt():
 
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
+        # windows has some failures that need to be investigated:
+        # * ttf tests have different outputs - order of execution of params?
+        # * dwarf tests print windows slashes instead of unix
+        if ('translate-to-fuzz' in t or 'dwarf' in t) and \
+           shared.skip_if_on_windows('fuzz translation tests'):
+            continue
         binary = '.wasm' in t
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
@@ -198,3 +204,29 @@ def update_wasm_opt_tests():
         support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
         actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
         open(f, 'w').write(actual)
+
+    print('\n[ checking binary format testcases... ]\n')
+    for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
+        for debug_info in [0, 1]:
+            cmd = shared.WASM_AS + [wast, '-o', 'a.wasm', '-all']
+            if debug_info:
+                cmd += ['-g']
+            print(' '.join(cmd))
+            if os.path.exists('a.wasm'):
+                os.unlink('a.wasm')
+            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            assert os.path.exists('a.wasm')
+
+            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
+            print(' '.join(cmd))
+            if os.path.exists('a.wast'):
+                os.unlink('a.wast')
+            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            assert os.path.exists('a.wast')
+            actual = open('a.wast').read()
+            binary_file = wast + '.fromBinary'
+            if not debug_info:
+                binary_file += '.noDebugInfo'
+            with open(binary_file, 'w') as o:
+                print('writey', binary_file)
+                o.write(actual)

@@ -51,7 +51,7 @@ def in_binaryen(*args):
 
 
 def in_bin(tool):
-    return os.path.join(shared.options.binaryen_root, 'bin', tool)
+    return os.path.join(shared.options.binaryen_bin, tool)
 
 
 def random_size():
@@ -111,6 +111,8 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
+                if possible in IMPLIED_FEATURE_OPTS:
+                    FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
@@ -402,7 +404,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
+                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-anyref']])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -502,7 +504,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue', '--disable-anyref']])
 
 
 # Check for determinism - the same command must have the same output.
@@ -633,7 +635,7 @@ class Wasm2JS(TestCaseHandler):
         return run_vm([shared.NODEJS, js_file, 'a.wasm'])
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-anyref']])
 
 
 class Asyncify(TestCaseHandler):
@@ -687,7 +689,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue', '--disable-anyref']])
 
 
 # The global list of all test case handlers
@@ -870,6 +872,12 @@ def randomize_opt_flags():
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
+# some features depend on other features, so if a required feature is
+# disabled, its dependent features need to be disabled as well.
+IMPLIED_FEATURE_OPTS = {
+    '--disable-reference-types': ['--disable-exception-handling', '--disable-anyref']
+}
+
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
@@ -877,11 +885,11 @@ if __name__ == '__main__':
     # instead of the randomly generating one. this can be useful for
     # reduction.
     given_wasm = None
-    if len(sys.argv) >= 2:
-        given_seed = int(sys.argv[1])
+    if len(shared.requested) >= 1:
+        given_seed = int(shared.requested[0])
         print('checking a single given seed', given_seed)
-        if len(sys.argv) >= 3:
-            given_wasm = sys.argv[2]
+        if len(shared.requested) >= 2:
+            given_wasm = shared.requested[1]
             print('using given wasm file', given_wasm)
     else:
         given_seed = None
@@ -954,7 +962,7 @@ if __name__ == '__main__':
 echo "should be 0:" $?
 
 # run the command
-./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "should be 1:" $?
 
 #
@@ -981,6 +989,7 @@ echo "should be 1:" $?
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
+                         'bin': shared.options.binaryen_bin,
                          'seed': seed,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),

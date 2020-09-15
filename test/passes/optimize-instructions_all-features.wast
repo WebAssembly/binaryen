@@ -249,7 +249,7 @@
         )
         (catch
           (drop
-            (exnref.pop)
+            (pop exnref)
           )
           (i32.eqz
             (i32.eqz
@@ -4139,6 +4139,53 @@
     (i32.const 2)
    )
   )
+  (func $const-float-zero (param $fx f32) (param $fy f64)
+    ;; x - 0.0   ==>   x
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const 0)
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const 0)
+    ))
+    ;; x + (-0.0)   ==>   x
+    (drop (f32.add
+      (local.get $fx)
+      (f32.const -0)
+    ))
+    (drop (f64.add
+      (local.get $fy)
+      (f64.const -0)
+    ))
+    ;; x - (-0.0)   ==>   x + 0.0
+    (drop (f32.sub
+      (local.get $fx)
+      (f32.const -0) ;; skip
+    ))
+    (drop (f64.sub
+      (local.get $fy)
+      (f64.const -0) ;; skip
+    ))
+    ;; 0.0 - x   ==>   0.0 - x
+    (drop (f32.sub
+      (f32.const 0)
+      (local.get $fx) ;; skip
+    ))
+    (drop (f64.sub
+      (f64.const 0)
+      (local.get $fy) ;; skip
+    ))
+    ;; x + 0.0   ==>   x + 0.0
+    (drop (f32.add
+      (local.get $fx) ;; skip
+      (f32.const 0)
+    ))
+    (drop (f64.add
+      (local.get $fy) ;; skip
+      (f64.const 0)
+    ))
+  )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
       (local.get $x)
@@ -4299,12 +4346,21 @@
       (unreachable)
     )
   )
-  ;; Tests when if arms are subtype of if's type
-  (func $if-arms-subtype (result externref)
-    (if (result externref)
+  ;; These functions test if an `if` with subtyped arms is correctly folded
+  ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
+  (func $if-arms-subtype-fold (result anyref)
+    (if (result anyref)
       (i32.const 0)
-      (ref.null)
-      (ref.null)
+      (ref.null extern)
+      (ref.null extern)
+    )
+  )
+  ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
+  (func $if-arms-subtype-nofold (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null func)
     )
   )
   (func $optimize-boolean-context (param $x i32) (param $y i32)
@@ -4324,6 +4380,87 @@
         (local.get $x)
       )
     ))
+  )
+  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $dst)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 0)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 1)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 2)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 3)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 4)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 5)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 6)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 7)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 8)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (i32.const 0)
+      (i32.const 0)
+      (i32.load
+        (i32.const 3) ;; side effect
+      )
+    )
   )
 )
 (module

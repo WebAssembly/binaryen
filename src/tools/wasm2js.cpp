@@ -18,13 +18,13 @@
 // wasm2js console tool
 //
 
+#include "wasm2js.h"
 #include "optimization-options.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-s-parser.h"
-#include "wasm2js.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -123,7 +123,8 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(node, [](Ref node) {}, visit);
+  traversePrePost(
+    node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {
@@ -604,7 +605,8 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType.getSingle()) {
+    TODO_SINGLE_COMPOUND(resType);
+    switch (resType.getBasic()) {
       case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
@@ -823,7 +825,7 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       options.applyFeatures(wasm);
-      SExpressionWasmBuilder builder(wasm, e);
+      SExpressionWasmBuilder builder(wasm, e, options.profile);
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
@@ -970,7 +972,8 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
+      sexprBuilder =
+        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

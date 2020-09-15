@@ -528,9 +528,9 @@ public:
     ret->finalize();
     return ret;
   }
-  RefNull* makeRefNull() {
+  RefNull* makeRefNull(Type type) {
     auto* ret = allocator.alloc<RefNull>();
-    ret->finalize();
+    ret->finalize(type);
     return ret;
   }
   RefIsNull* makeRefIsNull(Expression* value) {
@@ -622,14 +622,18 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    switch (value.type.getSingle()) {
-      case Type::nullref:
-        return makeRefNull();
+    TODO_SINGLE_COMPOUND(value.type);
+    switch (value.type.getBasic()) {
       case Type::funcref:
-        if (value.getFunc()[0] != 0) {
+        if (!value.isNull()) {
           return makeRefFunc(value.getFunc());
         }
-        return makeRefNull();
+        return makeRefNull(value.type);
+      case Type::externref:
+      case Type::exnref: // TODO: ExceptionPackage?
+      case Type::anyref:
+        assert(value.isNull());
+        return makeRefNull(value.type);
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -656,7 +660,7 @@ public:
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    std::vector<Type> params = func->sig.params.expand();
+    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
     params.push_back(type);
     func->sig.params = Type(params);
     Index index = func->localNames.size();
@@ -794,12 +798,13 @@ public:
   // minimal contents. as a replacement, this may reuse the
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZero(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->type);
+    switch (curr->type.getBasic()) {
       case Type::i32:
         value = Literal(int32_t(0));
         break;
@@ -820,9 +825,9 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
-        return ExpressionManipulator::refNull(curr);
+      case Type::anyref:
+        return ExpressionManipulator::refNull(curr, curr->type);
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

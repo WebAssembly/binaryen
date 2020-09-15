@@ -192,7 +192,7 @@
 // unwinding/rewinding finishes, and not at the specific spot where the
 // stack end was exceeded.
 //
-// By default this pass is very carefuly: it assumes that any import and
+// By default this pass is very careful: it assumes that any import and
 // any indirect call may start an unwind/rewind operation. If you know more
 // specific information you can inform asyncify about that, which can reduce
 // a great deal of overhead, as it can instrument less code. The relevant
@@ -1304,10 +1304,9 @@ private:
       if (!relevantLiveLocals.count(i)) {
         continue;
       }
-      const auto& types = func->getLocalType(i).expand();
+      auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
-      for (Index j = 0; j < types.size(); j++) {
-        auto type = types[j];
+      for (const auto& type : localType) {
         auto size = type.getByteSize();
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
@@ -1323,7 +1322,7 @@ private:
       Expression* load;
       if (loads.size() == 1) {
         load = loads[0];
-      } else if (types.size() > 1) {
+      } else if (localType.size() > 1) {
         load = builder->makeTupleMake(std::move(loads));
       } else {
         WASM_UNREACHABLE("Unexpected empty type");
@@ -1350,12 +1349,11 @@ private:
         continue;
       }
       auto localType = func->getLocalType(i);
-      const auto& types = localType.expand();
-      for (Index j = 0; j < types.size(); j++) {
-        auto type = types[j];
+      size_t j = 0;
+      for (const auto& type : localType) {
         auto size = type.getByteSize();
         Expression* localGet = builder->makeLocalGet(i, localType);
-        if (types.size() > 1) {
+        if (localType.size() > 1) {
           localGet = builder->makeTupleExtract(localGet, j);
         }
         assert(size % STACK_ALIGN == 0);
@@ -1368,6 +1366,7 @@ private:
                              localGet,
                              type));
         offset += size;
+        ++j;
       }
     }
     block->list.push_back(builder->makeIncStackPos(offset));

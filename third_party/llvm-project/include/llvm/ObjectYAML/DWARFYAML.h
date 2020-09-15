@@ -55,6 +55,16 @@ struct Abbrev {
   llvm::dwarf::Tag Tag;
   llvm::dwarf::Constants Children;
   std::vector<AttributeAbbrev> Attributes;
+  // XXX BINARYEN: Represent the binary offset in the abbreviation section for
+  // this abbreviation's list. The abbreviation section has multiple lists,
+  // each null-terminated, and those lists are what are referred to by compile
+  // units by offset. We need to match the offset in a compile unit to the
+  // abbreviation at that offset (which must be the beginning of an
+  // abbreviation list, that is, either the very first element, or after a null
+  // terminator). All abbreviations in the same list have the same offset
+  // (DWARFAbbreviationDeclarationSet does not track anything else, and we don't
+  // need it).
+  uint64_t ListOffset;
 };
 
 struct ARangeDescriptor {

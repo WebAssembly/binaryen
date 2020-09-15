@@ -61,7 +61,7 @@ enum Op {
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
 inline UnaryOp getUnary(Type type, Op op) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32: {
       switch (op) {
         case EqZ:
@@ -103,8 +103,8 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -114,7 +114,7 @@ inline UnaryOp getUnary(Type type, Op op) {
 }
 
 inline BinaryOp getBinary(Type type, Op op) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32: {
       switch (op) {
         case Add:
@@ -268,8 +268,8 @@ inline BinaryOp getBinary(Type type, Op op) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;

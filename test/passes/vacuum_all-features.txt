@@ -457,7 +457,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (local.set $0
      (i32.const 1)

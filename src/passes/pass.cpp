@@ -146,6 +146,11 @@ void PassRegistry::registerPasses() {
   registerPass("generate-dyncalls",
                "generate dynCall fuctions used by emscripten ABI",
                createGenerateDynCallsPass);
+  registerPass("generate-i64-dyncalls",
+               "generate dynCall functions used by emscripten ABI, but only for "
+               "functions with i64 in their signature (which cannot be invoked "
+               "via the wasm table without JavaScript BigInt support).",
+               createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -686,7 +691,7 @@ struct AfterEffectFunctionChecker {
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
   bool beganWithStackIR;
-  HashType originalFunctionHash;
+  size_t originalFunctionHash;
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.

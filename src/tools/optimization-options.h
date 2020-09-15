@@ -165,6 +165,13 @@ struct OptimizationOptions : public ToolOptions {
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
+      .add("--inline-functions-with-loops",
+           "-ifwl",
+           "Allow inlining functions with loops",
+           Options::Arguments::Zero,
+           [this](Options* o, const std::string&) {
+             passOptions.inlining.allowFunctionsWithLoops = true;
+           })
       .add("--ignore-implicit-traps",
            "-iit",
            "Optimize under the helpful assumption that no surprising traps "

@@ -33,9 +33,6 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  void setStandalone(bool standalone_) { standalone = standalone_; }
-  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
-
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
@@ -64,13 +61,17 @@ public:
 
   void generateDynCallThunk(Signature sig);
 
+  bool standalone = false;
+  bool sideModule = false;
+  bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
+
 private:
   Module& wasm;
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
-  bool standalone;
-  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;

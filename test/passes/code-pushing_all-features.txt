@@ -51,7 +51,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
     )
    )
@@ -83,7 +83,7 @@
     )
     (catch
      (rethrow
-      (exnref.pop)
+      (pop exnref)
      )
     )
    )

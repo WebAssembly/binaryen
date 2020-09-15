@@ -120,7 +120,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
-    switch (type.getSingle()) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::i32:
         return 32;
       case Type::i64:
@@ -201,7 +202,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary)) {
+      if (isSymmetric(binary)) {
         canonicalize(binary);
       }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
@@ -725,6 +726,11 @@ struct OptimizeInstructions
           store->value = unary->value;
         }
       }
+    } else if (auto* memCopy = curr->dynCast<MemoryCopy>()) {
+      assert(features.hasBulkMemory());
+      if (auto* ret = optimizeMemoryCopy(memCopy)) {
+        return ret;
+      }
     }
     return nullptr;
   }
@@ -741,7 +747,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(Properties::isSymmetric(binary));
+    assert(isSymmetric(binary));
     FeatureSet features = getModule()->features;
     auto swap = [&]() {
       assert(EffectAnalyzer::canReorder(
@@ -1099,7 +1105,8 @@ private:
               }
               break;
             }
-            default: {}
+            default: {
+            }
           }
         }
       }
@@ -1319,6 +1326,27 @@ private:
         }
       }
     }
+    if (type.isFloat()) {
+      auto value = right->value.getFloat();
+      if (value == 0.0) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (std::signbit(value)) {
+            // x - (-0.0)   ==>   x + 0.0
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+            right->value = right->value.neg();
+            return binary;
+          } else {
+            // x - 0.0   ==>   x
+            return binary->left;
+          }
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (std::signbit(value)) {
+            // x + (-0.0)   ==>   x
+            return binary->left;
+          }
+        }
+      }
+    }
     if (type.isInteger() || type.isFloat()) {
       // note that this is correct even on floats with a NaN on the left,
       // as a NaN would skip the computation and just return the NaN,
@@ -1416,6 +1444,76 @@ private:
     rightConst->value = rightConst->value.sub(extra);
     binary->left = left->left;
     return binary;
+  }
+
+  Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
+    PassOptions options = getPassOptions();
+
+    if (options.ignoreImplicitTraps) {
+      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+        // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
+        Builder builder(*getModule());
+        return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                  builder.makeDrop(memCopy->source),
+                                  builder.makeDrop(memCopy->size)});
+      }
+    }
+
+    // memory.copy(dst, src, C)  ==>  store(dst, load(src))
+    if (auto* csize = memCopy->size->dynCast<Const>()) {
+      auto bytes = csize->value.geti32();
+      Builder builder(*getModule());
+
+      switch (bytes) {
+        case 0: {
+          if (options.ignoreImplicitTraps) {
+            // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
+            return builder.makeBlock({builder.makeDrop(memCopy->dest),
+                                      builder.makeDrop(memCopy->source)});
+          }
+          break;
+        }
+        case 1:
+        case 2:
+        case 4: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i32),
+            Type::i32);
+        }
+        case 8: {
+          return builder.makeStore(
+            bytes, // bytes
+            0,     // offset
+            1,     // align
+            memCopy->dest,
+            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i64),
+            Type::i64);
+        }
+        case 16: {
+          if (options.shrinkLevel == 0) {
+            // This adds an extra 2 bytes so apply it only for
+            // minimal shrink level
+            if (getModule()->features.hasSIMD()) {
+              return builder.makeStore(
+                bytes, // bytes
+                0,     // offset
+                1,     // align
+                memCopy->dest,
+                builder.makeLoad(
+                  bytes, false, 0, 1, memCopy->source, Type::v128),
+                Type::v128);
+            }
+          }
+        }
+        default: {
+        }
+      }
+    }
+    return nullptr;
   }
 
   // given a binary expression with equal children and no side effects in
@@ -1518,6 +1616,29 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  bool isSymmetric(Binary* binary) {
+    if (Properties::isSymmetric(binary)) {
+      return true;
+    }
+    switch (binary->op) {
+      case AddFloat32:
+      case MulFloat32:
+      case AddFloat64:
+      case MulFloat64: {
+        // If the LHS is known to be non-NaN, the operands can commute.
+        // We don't care about the RHS because right now we only know if
+        // an expression is non-NaN if it is constant, but if the RHS is
+        // constant, then this expression is already canonicalized.
+        if (auto* c = binary->left->dynCast<Const>()) {
+          return !c->value.isNaN();
+        }
+        return false;
+      }
+      default:
+        return false;
     }
   }
 };
