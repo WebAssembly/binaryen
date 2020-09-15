@@ -4319,6 +4319,22 @@
     ))
 
     ;; binary
+    ;; ((signed)x % y) % y
+    (drop (i32.rem_s
+      (i32.rem_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $y)
+    ))
+    ;; ((unsigned)x % y) % y
+    (drop (i32.rem_u
+      (i32.rem_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $y)
+    ))
     ;; 0 - (0 - y)
     (drop (i32.sub
       (i32.const 0)
@@ -4493,6 +4509,22 @@
       (i32.or
         (call $ne0) ;; side effect
         (local.get $x)
+      )
+    ))
+    ;; (y % x) % y   -   skip
+    (drop (i32.rem_s
+      (i32.rem_s
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $y)
+    ))
+    ;; y % (x % y)   -   skip
+    (drop (i32.rem_u
+      (local.get $y)
+      (i32.rem_u
+        (local.get $x)
+        (local.get $y)
       )
     ))
   )

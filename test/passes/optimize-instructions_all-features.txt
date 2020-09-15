@@ -3865,6 +3865,18 @@
    )
   )
   (drop
+   (i32.rem_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
    (local.get $y)
   )
   (drop
@@ -3987,6 +3999,24 @@
     (i32.or
      (call $ne0)
      (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.rem_s
+    (i32.rem_s
+     (local.get $y)
+     (local.get $x)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (local.get $y)
+    (i32.rem_u
+     (local.get $x)
+     (local.get $y)
     )
    )
   )

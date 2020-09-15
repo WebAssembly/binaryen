@@ -1440,75 +1440,74 @@ private:
     return nullptr;
   }
 
-  Expression* deduplicateBinary(Binary* binaryOuter) {
-    Type type = binaryOuter->type;
+  Expression* deduplicateBinary(Binary* outer) {
+    Type type = outer->type;
     if (type.isInteger()) {
-      if (auto* binaryInner = binaryOuter->right->dynCast<Binary>()) {
-        if (binaryOuter->op == binaryInner->op) {
+      if (auto* inner = outer->right->dynCast<Binary>()) {
+        if (outer->op == inner->op) {
           if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, binaryOuter->left)
+                 getPassOptions(), getModule()->features, outer->left)
                  .hasSideEffects()) {
-            if (ExpressionAnalyzer::equal(binaryInner->left,
-                                          binaryOuter->left)) {
+            if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
               // x - (x - y)  ==>   y
               // x ^ (x ^ y)  ==>   y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::Sub) ||
-                  binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
-                return binaryInner->right;
+              if (outer->op == Abstract::getBinary(type, Abstract::Sub) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->right;
               }
               // x & (x & y)  ==>   x & y
               // x | (x | y)  ==>   x | y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
-                  binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
-                return binaryInner;
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(binaryInner->right,
-                                          binaryOuter->left)) {
+            if (ExpressionAnalyzer::equal(inner->right, outer->left)) {
               // x ^ (y ^ x)  ==>   y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
-                return binaryInner->left;
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->left;
               }
 
               // x & (y & x)  ==>   y & x
               // x | (y | x)  ==>   y | x
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
-                  binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
-                return binaryInner;
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
               }
             }
           }
         }
       }
-      if (auto* binaryInner = binaryOuter->left->dynCast<Binary>()) {
-        if (binaryOuter->op == binaryInner->op) {
+      if (auto* inner = outer->left->dynCast<Binary>()) {
+        if (outer->op == inner->op) {
           if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, binaryOuter->right)
+                 getPassOptions(), getModule()->features, outer->right)
                  .hasSideEffects()) {
-            if (ExpressionAnalyzer::equal(binaryInner->right,
-                                          binaryOuter->right)) {
+            if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
               // (x ^ y) ^ y  ==>   x
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
-                return binaryInner->left;
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->left;
               }
+              // (x % y) % y  ==>   x % y
               // (x & y) & y  ==>   x & y
               // (x | y) | y  ==>   x | y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
-                  binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
-                return binaryInner;
+              if (outer->op == Abstract::getBinary(type, Abstract::RemS) ||
+                  outer->op == Abstract::getBinary(type, Abstract::RemU) ||
+                  outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(binaryInner->left,
-                                          binaryOuter->right)) {
+            if (ExpressionAnalyzer::equal(inner->left, outer->right)) {
               // (x ^ y) ^ x  ==>   y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::Xor)) {
-                return binaryInner->right;
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->right;
               }
               // (x & y) & x  ==>   x & y
               // (x | y) | x  ==>   x | y
-              if (binaryOuter->op == Abstract::getBinary(type, Abstract::And) ||
-                  binaryOuter->op == Abstract::getBinary(type, Abstract::Or)) {
-                return binaryInner;
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
               }
             }
           }
