@@ -4244,7 +4244,16 @@
     ))
     ;; TODO: more stuff here
   )
-  (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32)
+  (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32) (param $wx i64)
+    ;; x + x
+    (drop (i32.add
+      (local.get $x)
+      (local.get $x)
+    ))
+    (drop (i64.add
+      (local.get $wx)
+      (local.get $wx)
+    ))
     ;; x * y + x * z
     (drop (i32.add
       (i32.mul
@@ -4289,6 +4298,17 @@
         (local.get $x)
       )
     ))
+    ;; x * y + x * y
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
     ;; x * y - x * z
     (drop (i32.sub
       (i32.mul
@@ -4311,7 +4331,7 @@
         (local.get $y)
       )
     ))
-    ;; x * y + z * z
+    ;; x * y + z * z   ->   skip
     (drop (i32.add
       (i32.mul
         (local.get $x)
@@ -4320,6 +4340,32 @@
       (i32.mul
         (local.get $z)
         (local.get $z)
+      )
+    ))
+    ;; x * y + x * SE   ->   skip
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 3) ;; side effect
+        )
+      )
+    ))
+    ;; SE * x + x * y   ->   skip
+    (drop (i32.add
+      (i32.mul
+        (i32.load
+          (i32.const 3) ;; side effect
+        )
+        (local.get $x)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
       )
     ))
   )

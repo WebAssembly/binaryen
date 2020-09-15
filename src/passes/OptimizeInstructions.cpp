@@ -513,9 +513,17 @@ struct OptimizeInstructions
           return ret;
         }
       }
-      // x * y + x * z   ==>   (y + z) * x
-      // x * y - x * z   ==>   (y - z) * x
+      // finally, try more expensive operations on the binary in
+      // the case that they have no side effects
+      if (!EffectAnalyzer(getPassOptions(), features, binary->left)
+             .hasSideEffects()) {
+        if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
+          return optimizeBinaryWithEqualEffectlessChildren(binary);
+        }
+      }
       if (binary->type.isInteger()) {
+        // x * y + x * z   ==>   (y + z) * x
+        // x * y - x * z   ==>   (y - z) * x
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(binary->type, Abstract::Mul)) {
             if (binary->op ==
@@ -567,14 +575,6 @@ struct OptimizeInstructions
               }
             }
           }
-        }
-      }
-      // finally, try more expensive operations on the binary in
-      // the case that they have no side effects
-      if (!EffectAnalyzer(getPassOptions(), features, binary->left)
-             .hasSideEffects()) {
-        if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
-          return optimizeBinaryWithEqualEffectlessChildren(binary);
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -1549,8 +1549,15 @@ private:
   // either, we can fold various things
   // TODO: trinaries, things like (x & (y & x)) ?
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
-    // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {
+      case AddInt32:
+      case AddInt64: {
+        // x + x  ==>  x * 2
+        binary->op = Abstract::getBinary(binary->left->type, Abstract::Mul);
+        binary->right =
+          LiteralUtils::makeFromInt32(2, binary->left->type, *getModule());
+        return binary;
+      }
       case SubInt32:
       case XorInt32:
       case SubInt64:
