@@ -522,8 +522,8 @@ struct OptimizeInstructions
         }
       }
       if (binary->type.isInteger()) {
-        // x op C1 + x op C2   ==>   x * (C1 + C2)
-        // x op C1 - x op C2   ==>   x * (C1 - C2), op = (`*`|`<<`)
+        // (x op C1) + (x op C2)   ==>   x * (C1 + C2)
+        // (x op C1) - (x op C2)   ==>   x * (C1 - C2), op = (`*`|`<<`)
         // x * y + x * z   ==>   (y + z) * x
         // x * y - x * z   ==>   (y - z) * x
         if (auto* left = binary->left->dynCast<Binary>()) {
@@ -539,8 +539,8 @@ struct OptimizeInstructions
               if (auto* c1 = left->right->dynCast<Const>()) {
                 if (auto* c2 = right->right->dynCast<Const>()) {
                   if (left->type == right->type) {
-                    auto type = left->type;
                     if (ExpressionAnalyzer::equal(left->left, right->left)) {
+                      auto type = left->type;
                       if (left->op ==
                           Abstract::getBinary(type, Abstract::Shl)) {
                         left->op = Abstract::getBinary(type, Abstract::Mul);
