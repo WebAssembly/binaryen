@@ -4275,15 +4275,26 @@
         (i64.const 2)
       )
     ))
-    ;; (x * 3) + (x >> 1)
+    ;; (x * 3) + (x << 1)
     (drop (i32.add
       (i32.mul
         (local.get $x)
         (i32.const 3)
       )
-      (i32.shr_u
+      (i32.shl
         (local.get $x)
         (i32.const 1)
+      )
+    ))
+    ;; (x << 1) - (x * 3)
+    (drop (i32.sub
+      (i32.shl
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
       )
     ))
     ;; x * y + x * z
