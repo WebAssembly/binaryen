@@ -199,8 +199,8 @@ Index getMaxBits(Expression* curr,
         return 32;
       }
       case AndInt32: {
-        auto maxBits = getMaxBits(binary->right, localInfoProvider);
-        return std::min(getMaxBits(binary->left, localInfoProvider), maxBits);
+        return std::min(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case OrInt32:
       case XorInt32: {
