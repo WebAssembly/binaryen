@@ -4309,6 +4309,10 @@
     (drop (i32.eqz (i32.eqz (i64.eqz (i64.const 1)))))
     (drop (i32.eqz (i32.eqz (i32.ne (local.get $x) (i32.const 2)))))
 
+    (drop (i32.extend8_s (i32.extend8_s (local.get $x))))
+    (drop (i32.extend16_s (i32.extend16_s (local.get $x))))
+
+
     (drop (i32.eqz
       (i32.eqz
         (i32.and

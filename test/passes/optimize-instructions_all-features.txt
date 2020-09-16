@@ -3859,6 +3859,16 @@
    )
   )
   (drop
+   (i32.extend8_s
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.extend16_s
+    (local.get $x)
+   )
+  )
+  (drop
    (i32.and
     (local.get $x)
     (i32.const 1)

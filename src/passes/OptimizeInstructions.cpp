@@ -1425,6 +1425,11 @@ private:
             // unaryOp(unaryOp(x))  ==>   unaryOp(x)
             return unaryInner;
           }
+          case ExtendS8Int32:
+          case ExtendS16Int32: {
+            assert(getModule()->features.hasSignExt());
+            return unaryInner;
+          }
           case EqZInt32: {
             // eqz(eqz(bool(x)))  ==>   bool(x)
             if (Bits::getMaxBits(unaryInner->value, this) == 1) {
