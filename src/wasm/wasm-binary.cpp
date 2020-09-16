@@ -750,8 +750,6 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
-      case FeatureSet::Anyref:
-        return BinaryConsts::UserSections::AnyrefFeature;
       case FeatureSet::GC:
         return BinaryConsts::UserSections::GCFeature;
       default:
@@ -2309,8 +2307,6 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
-      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
-        wasm.features.setAnyref();
       } else if (name == BinaryConsts::UserSections::GCFeature) {
         wasm.features.setGC();
       }

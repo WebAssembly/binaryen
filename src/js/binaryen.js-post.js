@@ -121,7 +121,6 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
-    'Anyref',
     'GC',
     'All'
   ].forEach(name => {

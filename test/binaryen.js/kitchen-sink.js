@@ -106,7 +106,6 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
-  console.log("Features.Anyref: " + binaryen.Features.Anyref);
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.All: " + binaryen.Features.All);
 }

@@ -2685,7 +2685,7 @@ private:
     if (wasm.features.hasExceptionHandling()) {
       options.push_back(Type::exnref);
     }
-    if (wasm.features.hasAnyref() || wasm.features.hasGC()) {
+    if (wasm.features.hasGC()) {
       options.push_back(Type::anyref);
     }
   }

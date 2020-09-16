@@ -198,7 +198,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         addImport(
           curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
       }
-      if (curr->features.hasAnyref() || curr->features.hasGC()) {
+      if (curr->features.hasGC()) {
         addImport(
           curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
         addImport(

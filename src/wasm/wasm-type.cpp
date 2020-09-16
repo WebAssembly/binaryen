@@ -442,7 +442,7 @@ Type Type::reinterpret() const {
   }
 }
 
-FeatureSet Type::getFeatures(FeatureSet knownFeatures) const {
+FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [&](Type t) -> FeatureSet {
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
@@ -454,13 +454,7 @@ FeatureSet Type::getFeatures(FeatureSet knownFeatures) const {
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       case Type::anyref:
-        if (knownFeatures.hasGC()) {
-          return FeatureSet::ReferenceTypes | FeatureSet::GC;
-        } else {
-          // Assume anyref feature in case of doubt, and only require GC if
-          // other GC types like `eqref` are present as well.
-          return FeatureSet::ReferenceTypes | FeatureSet::Anyref;
-        }
+        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
     }
