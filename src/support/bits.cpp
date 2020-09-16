@@ -152,7 +152,6 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 #endif
 }
 
-
 template<> int CeilLog2<uint32_t>(uint32_t v) {
   return 32 - CountLeadingZeroes(v - 1);
 }
