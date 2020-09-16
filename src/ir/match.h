@@ -465,7 +465,7 @@ decltype(auto) i64(int64_t x) {
     nullptr, Internal::I64Lit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 // disambiguate literal 0
-decltype(i64(std::declval<int64_t>())) i64(int x) { return i64(int64_t(x)); }
+decltype(auto) i64(int x) { return i64(int64_t(x)); }
 decltype(auto) i64(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Any(binder)));
