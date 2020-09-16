@@ -112,6 +112,25 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
+  build-clang-debug:
+    name: clang-debug
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
   # TODO(sbc): Find a way to reduce the duplicate between these sanitizer jobs
   build-asan:
     name: asan
