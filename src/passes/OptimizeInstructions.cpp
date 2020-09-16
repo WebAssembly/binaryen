@@ -1317,7 +1317,8 @@ private:
     }
     {
       double value;
-      if (matches(curr, binary(Abstract::Sub, any(), fval(&value)))) {
+      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+          value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
           curr->op = Abstract::getBinary(type, Abstract::Add);
