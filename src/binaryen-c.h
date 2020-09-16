@@ -223,7 +223,7 @@ BINARYEN_API void BinaryenModuleDispose(BinaryenModuleRef module);
 // Literals. These are passed by value.
 
 struct BinaryenLiteral {
-  int32_t type;
+  uintptr_t type;
   union {
     int32_t i32;
     int64_t i64;
@@ -231,6 +231,7 @@ struct BinaryenLiteral {
     double f64;
     uint8_t v128[16];
     const char* func;
+    // TODO: exn
   };
 };
 
