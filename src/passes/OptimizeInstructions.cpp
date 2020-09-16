@@ -194,7 +194,7 @@ struct OptimizeInstructions
     return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
   }
 
-  bool commutable(Expression* a, Expression* b) {
+  bool canReorder(Expression* a, Expression* b) {
     return EffectAnalyzer::canReorder(
       getPassOptions(), getModule()->features, a, b);
   }
@@ -253,7 +253,7 @@ struct OptimizeInstructions
                     binary(AddInt32,
                            binary(&sub, SubInt32, i32(0), any(&x)),
                            any(&y))) &&
-            commutable(x, y)) {
+            canReorder(x, y)) {
           sub->left = y;
           sub->right = x;
           return sub;
@@ -339,7 +339,7 @@ struct OptimizeInstructions
               curr,
               select(
                 &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-            commutable(ifTrue, ifFalse)) {
+            canReorder(ifTrue, ifFalse)) {
           s->ifTrue = ifFalse;
           s->ifFalse = ifTrue;
           s->condition = c;
@@ -751,11 +751,11 @@ private:
   void canonicalize(Binary* binary) {
     assert(isSymmetric(binary));
     auto swap = [&]() {
-      assert(commutable(binary->left, binary->right));
+      assert(canReorder(binary->left, binary->right));
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (commutable(binary->left, binary->right)) {
+      if (canReorder(binary->left, binary->right)) {
         swap();
       }
     };
