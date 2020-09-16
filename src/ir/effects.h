@@ -428,7 +428,8 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
@@ -446,14 +447,19 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
   void visitSelect(Select* curr) {}
   void visitDrop(Drop* curr) {}
   void visitReturn(Return* curr) { branchesOut = true; }
-  void visitHost(Host* curr) {
+  void visitMemorySize(MemorySize* curr) {
+    // Atomics are sequentially consistent with memory.size.
+    isAtomic = true;
+  }
+  void visitMemoryGrow(MemoryGrow* curr) {
     calls = true;
     // memory.grow modifies the set of valid addresses, and thus can be modeled
     // as modifying memory

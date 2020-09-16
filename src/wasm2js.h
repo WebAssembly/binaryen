@@ -1321,8 +1321,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             !FindAll<Call>(curr->value).list.empty() ||
             !FindAll<CallIndirect>(curr->ptr).list.empty() ||
             !FindAll<CallIndirect>(curr->value).list.empty() ||
-            !FindAll<Host>(curr->ptr).list.empty() ||
-            !FindAll<Host>(curr->value).list.empty()) {
+            !FindAll<MemoryGrow>(curr->ptr).list.empty() ||
+            !FindAll<MemoryGrow>(curr->value).list.empty()) {
           Ref ret;
           ScopedTemp ptr(Type::i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
@@ -1842,21 +1842,20 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeReturn(val);
     }
 
-    Ref visitHost(Host* curr) {
-      if (curr->op == HostOp::MemoryGrow) {
-        if (module->memory.exists &&
-            module->memory.max > module->memory.initial) {
-          return ValueBuilder::makeCall(
-            WASM_MEMORY_GROW,
-            makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
-                            wasmToAsmType(curr->operands[0]->type)));
-        } else {
-          return ValueBuilder::makeCall(ABORT_FUNC);
-        }
-      } else if (curr->op == HostOp::MemorySize) {
-        return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    Ref visitMemorySize(MemorySize* curr) {
+      return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    }
+
+    Ref visitMemoryGrow(MemoryGrow* curr) {
+      if (module->memory.exists &&
+          module->memory.max > module->memory.initial) {
+        return ValueBuilder::makeCall(
+          WASM_MEMORY_GROW,
+          makeAsmCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                          wasmToAsmType(curr->delta->type)));
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      WASM_UNREACHABLE("unexpected expr type"); // TODO
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }

@@ -131,7 +131,8 @@ function test_ids() {
   console.log("SelectId: " + binaryen.SelectId);
   console.log("DropId: " + binaryen.DropId);
   console.log("ReturnId: " + binaryen.ReturnId);
-  console.log("HostId: " + binaryen.HostId);
+  console.log("MemorySizeId: " + binaryen.MemorySizeId);
+  console.log("MemoryGrowId: " + binaryen.MemoryGrowId);
   console.log("NopId: " + binaryen.NopId);
   console.log("UnreachableId: " + binaryen.UnreachableId);
   console.log("AtomicCmpxchgId: " + binaryen.AtomicCmpxchgId);
@@ -572,7 +573,12 @@ function test_core() {
     module.externref.pop(),
     module.funcref.pop(),
     module.exnref.pop(),
-    // TODO: Host
+
+    // Memory
+    module.memory.size(),
+    module.memory.grow(makeInt32(0)),
+
+    // Other
     module.nop(),
     module.unreachable(),
   ];

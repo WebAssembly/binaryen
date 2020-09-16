@@ -71,7 +71,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSelect(Select* curr) { return ReturnType(); }
   ReturnType visitDrop(Drop* curr) { return ReturnType(); }
   ReturnType visitReturn(Return* curr) { return ReturnType(); }
-  ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitMemorySize(MemorySize* curr) { return ReturnType(); }
+  ReturnType visitMemoryGrow(MemoryGrow* curr) { return ReturnType(); }
   ReturnType visitRefNull(RefNull* curr) { return ReturnType(); }
   ReturnType visitRefIsNull(RefIsNull* curr) { return ReturnType(); }
   ReturnType visitRefFunc(RefFunc* curr) { return ReturnType(); }
@@ -169,8 +170,10 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Drop);
       case Expression::Id::ReturnId:
         DELEGATE(Return);
-      case Expression::Id::HostId:
-        DELEGATE(Host);
+      case Expression::Id::MemorySizeId:
+        DELEGATE(MemorySize);
+      case Expression::Id::MemoryGrowId:
+        DELEGATE(MemoryGrow);
       case Expression::Id::RefNullId:
         DELEGATE(RefNull);
       case Expression::Id::RefIsNullId:
@@ -252,7 +255,8 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Select);
   UNIMPLEMENTED(Drop);
   UNIMPLEMENTED(Return);
-  UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(MemorySize);
+  UNIMPLEMENTED(MemoryGrow);
   UNIMPLEMENTED(RefNull);
   UNIMPLEMENTED(RefIsNull);
   UNIMPLEMENTED(RefFunc);
@@ -351,8 +355,10 @@ struct OverriddenVisitor {
         DELEGATE(Drop);
       case Expression::Id::ReturnId:
         DELEGATE(Return);
-      case Expression::Id::HostId:
-        DELEGATE(Host);
+      case Expression::Id::MemorySizeId:
+        DELEGATE(MemorySize);
+      case Expression::Id::MemoryGrowId:
+        DELEGATE(MemoryGrow);
       case Expression::Id::RefNullId:
         DELEGATE(RefNull);
       case Expression::Id::RefIsNullId:
@@ -497,7 +503,10 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitReturn(Return* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitHost(Host* curr) {
+  ReturnType visitMemorySize(MemorySize* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitMemoryGrow(MemoryGrow* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitRefNull(RefNull* curr) {
@@ -811,8 +820,11 @@ struct Walker : public VisitorType {
   static void doVisitReturn(SubType* self, Expression** currp) {
     self->visitReturn((*currp)->cast<Return>());
   }
-  static void doVisitHost(SubType* self, Expression** currp) {
-    self->visitHost((*currp)->cast<Host>());
+  static void doVisitMemorySize(SubType* self, Expression** currp) {
+    self->visitMemorySize((*currp)->cast<MemorySize>());
+  }
+  static void doVisitMemoryGrow(SubType* self, Expression** currp) {
+    self->visitMemoryGrow((*currp)->cast<MemoryGrow>());
   }
   static void doVisitRefNull(SubType* self, Expression** currp) {
     self->visitRefNull((*currp)->cast<RefNull>());
@@ -1076,14 +1088,13 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
-      case Expression::Id::HostId: {
-        self->pushTask(SubType::doVisitHost, currp);
-        auto& list = curr->cast<Host>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
+      case Expression::Id::MemorySizeId:
+        self->pushTask(SubType::doVisitMemorySize, currp);
         break;
-      }
+      case Expression::Id::MemoryGrowId:
+        self->pushTask(SubType::doVisitMemoryGrow, currp);
+        self->pushTask(SubType::scan, &curr->cast<MemoryGrow>()->delta);
+        break;
       case Expression::Id::RefNullId: {
         self->pushTask(SubType::doVisitRefNull, currp);
         break;
@@ -1210,7 +1221,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
-      default: {}
+      default: {
+      }
     }
 
     PostWalker<SubType, VisitorType>::scan(self, currp);
@@ -1223,7 +1235,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }
-      default: {}
+      default: {
+      }
     }
   }
 };

@@ -326,7 +326,8 @@ public:
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
-  void visitHost(Host* curr);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
@@ -1897,24 +1898,18 @@ void FunctionValidator::visitReturn(Return* curr) {
   returnTypes.insert(curr->value ? curr->value->type : Type::none);
 }
 
-void FunctionValidator::visitHost(Host* curr) {
+void FunctionValidator::visitMemorySize(MemorySize* curr) {
   shouldBeTrue(
     getModule()->memory.exists, curr, "Memory operations require a memory");
-  switch (curr->op) {
-    case MemoryGrow: {
-      shouldBeEqual(curr->operands.size(),
-                    size_t(1),
-                    curr,
-                    "memory.grow must have 1 operand");
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[0]->type,
-                                        Type(Type::i32),
-                                        curr,
-                                        "memory.grow must have i32 operand");
-      break;
-    }
-    case MemorySize:
-      break;
-  }
+}
+
+void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "memory.grow must have i32 operand");
 }
 
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {

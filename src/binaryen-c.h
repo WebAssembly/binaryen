@@ -142,7 +142,8 @@ BINARYEN_API BinaryenExpressionId BinaryenBinaryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSelectId(void);
 BINARYEN_API BinaryenExpressionId BinaryenDropId(void);
 BINARYEN_API BinaryenExpressionId BinaryenReturnId(void);
-BINARYEN_API BinaryenExpressionId BinaryenHostId(void);
+BINARYEN_API BinaryenExpressionId BinaryenMemorySizeId(void);
+BINARYEN_API BinaryenExpressionId BinaryenMemoryGrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenNopId(void);
 BINARYEN_API BinaryenExpressionId BinaryenUnreachableId(void);
 BINARYEN_API BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
@@ -382,8 +383,6 @@ BINARYEN_API BinaryenOp BinaryenLtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenLeFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGeFloat64(void);
-BINARYEN_API BinaryenOp BinaryenMemorySize(void);
-BINARYEN_API BinaryenOp BinaryenMemoryGrow(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAdd(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWSub(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAnd(void);
@@ -728,12 +727,9 @@ BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 // Return: value can be NULL
 BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
-// Host: name may be NULL
-BINARYEN_API BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module,
-                                                BinaryenOp op,
-                                                const char* name,
-                                                BinaryenExpressionRef* operands,
-                                                BinaryenIndex numOperands);
+BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryGrow(BinaryenModuleRef module, BinaryenExpressionRef delta);
 BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnreachable(BinaryenModuleRef module);
@@ -1152,43 +1148,14 @@ BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef valueExpr);
 
-// Host
+// MemoryGrow
 
-// Gets the operation being performed by a host expression.
-BINARYEN_API BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr);
-// Sets the operation being performed by a host expression.
-BINARYEN_API void BinaryenHostSetOp(BinaryenExpressionRef expr, BinaryenOp op);
-// Gets the name operand, if any, of a host expression.
-BINARYEN_API const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr);
-// Sets the name operand, if any, of a host expression.
-BINARYEN_API void BinaryenHostSetNameOperand(BinaryenExpressionRef expr,
-                                             const char* nameOperand);
-// Gets the number of operands of a host expression.
-BINARYEN_API BinaryenIndex
-BinaryenHostGetNumOperands(BinaryenExpressionRef expr);
-// Gets the operand at the specified index of a host expression.
+// Gets the delta of a `memory.grow` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenHostGetOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
-// Sets the operand at the specified index of a host expression.
-BINARYEN_API void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
-                                           BinaryenIndex index,
-                                           BinaryenExpressionRef operandExpr);
-// Appends an operand expression to a host expression, returning its insertion
-// index.
-BINARYEN_API BinaryenIndex BinaryenHostAppendOperand(
-  BinaryenExpressionRef expr, BinaryenExpressionRef operandExpr);
-// Inserts an operand expression at the specified index of a host expression,
-// moving existing operands including the one previously at that index one index
-// up.
-BINARYEN_API void
-BinaryenHostInsertOperandAt(BinaryenExpressionRef expr,
-                            BinaryenIndex index,
-                            BinaryenExpressionRef operandExpr);
-// Removes the operand expression at the specified index of a host expression,
-// moving all subsequent operands one index down. Returns the operand
-// expression.
-BINARYEN_API BinaryenExpressionRef
-BinaryenHostRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr);
+// Sets the delta of a `memory.grow` expression.
+BINARYEN_API void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef delta);
 
 // Load
 
