@@ -443,7 +443,7 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [&](Type t) -> FeatureSet {
+  auto getSingleFeatures = [](Type t) -> FeatureSet {
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
       case Type::v128:
