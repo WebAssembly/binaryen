@@ -254,6 +254,16 @@ void test_internal_literal() {
   assert(!onefp.matches(f64Zero));
   assert(onefp.matches(f64One));
 
+  auto number = Internal::NumberLit(nullptr, 1);
+  assert(!number.matches(i32Zero));
+  assert(number.matches(i32One));
+  assert(!number.matches(f32Zero));
+  assert(number.matches(f32One));
+  assert(!number.matches(i64Zero));
+  assert(number.matches(i64One));
+  assert(!number.matches(f64Zero));
+  assert(number.matches(f64One));
+
   int64_t x = 0;
   Literal xLit;
   Literal imatched(int32_t(42));
@@ -267,6 +277,11 @@ void test_internal_literal() {
   assert(Internal::FloatLit(&fLit, Internal::Any(&f)).matches(fmatched));
   assert(fLit == fmatched);
   assert(f == 42.0);
+
+  Literal numLit;
+  Literal numMatched(1.0f);
+  assert(Internal::NumberLit(&numLit, 1).matches(numMatched));
+  assert(numLit == numMatched);
 }
 
 void test_internal_const() {

@@ -17,10 +17,7 @@
 //
 // match.h: Convenience structs for matching and transforming Binaryen IR
 // patterns. Most matchers take an optional pointer to an Expression* variable
-// that will be set equal to the expression they match. When building a pattern,
-// the matchers will instead insert the optional Expression* at their location
-// in the pattern.
-//
+// that will be set equal to the expression they match.
 
 #ifndef wasm_ir_match_h
 #define wasm_ir_match_h
@@ -34,44 +31,50 @@ namespace Match {
 
 // The available matchers are:
 //
-//  i32(x), i64(x), f32(x), f64(x)
+//  i32, i64, f32, f64
 //
-//    Match constants of the exact corresponding type. Do not support building.
+//    Match constants of the corresponding type. Takes zero or one argument. The
+//    argument can be a specific value to match or it can be a pointer to a
+//    value, Literal, or Const* at which to store the matched entity.
 //
-//  ival(x), fval(x)
+//  ival, fval
 //
-//    Match any integer constant or any floating point constant. Do not support
-//    building.
+//    Match any integer constant or any floating point constant. Takes neither,
+//    either, or both of two possible arguments: first, a pointer to a value,
+//    Literal, or Const* at which to store the matched entity and second, a
+//    specific value to match.
 //
-//  number(x)
+//  constant
 //
-//    Matches any integer or floating point constant equal to `x`. Does not
-//    support building.
+//    Matches any numeric Const expression. Takes neither, either, or both of
+//    two possible arguments: first, a pointer to either Literal or Const* at
+//    which to store the matched entity and second, a specific value (given as
+//    an int32_t) to match..
 //
-//  constant([e])
+//  any
 //
-//    Matches any Const expression and binds it to `e`, if provided.
+//    Matches any Expression. Optionally takes as an argument a pointer to
+//    Expression* at which to store the matched Expression*.
 //
-//  any([e])
+//  unary
 //
-//    Matches any expression and binds it to `e`, if provided.
+//    Matches Unary expressions. Takes an optional pointer to Unary* at which to
+//    store the matched Unary*, followed by either a UnaryOp or an Abstract::Op
+//    describing which unary expressions to match, followed by a matcher to
+//    apply to the unary expression's operand.
 //
-//  unary([e], op, val)
+//  binary
 //
-//    Matches Unary expressions implementing `op`, which is either a UnaryOp or
-//    an Abstract::Op, whose operand matches `val`. Binds the matched expression
-//    to `e`, if provided.
+//    Matches Binary expressions. Takes an optional pointer to Binary* at which
+//    to store the matched Binary*, followed by either a BinaryOp or an
+//    Abstract::Op describing which binary expresions to match, followed by
+//    matchers to apply to the binary expression's left and right operands.
 //
-//  binary([e], op, left, right)
+//  select
 //
-//    Matches Binary expressions implementing `op`, which is either a BinaryOp
-//    or an Abstract::Op, whose operands match `left` and `right`. Binds the
-//    matched expression to `e`, if provided.
-//
-//  select([e], ifTrue, ifFalse, cond)
-//
-//    Matches Select expressions whose operands match `ifTrue`, `ifFalse`, and
-//    `cond`. Binds the matched expression to `e`, if provided.
+//    Matches Select expressions. Takes an optional pointer to Select* at which
+//    to store the matched Select*, followed by matchers to apply to the ifTrue,
+//    ifFalse, and condition operands.
 //
 
 // The main entrypoint for matching.
@@ -79,19 +82,7 @@ template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
   return matcher.matches(expr);
 }
 
-// The main entrypoint for building. The top-level matcher must point to an
-// expression, which will be modified in place by inserting bound expressions at
-// the locations corresponding to their position in the pattern. Matchers in the
-// pattern that do not have bound expressions are assumed to match the output.
-// Returns the top-level modified expression.
-template<class Matcher> Expression* build(Matcher matcher) {
-  Expression* expr = nullptr;
-  matcher.build(&expr);
-  return expr;
-}
-
 namespace Internal {
-// Generic matcher implementation
 
 struct unused_t {};
 
@@ -186,8 +177,8 @@ template<class Kind> struct NumComponents;
 //   const T& operator()(matched_t<Kind>)
 //
 // where T is the component's type. Components will be matched from first to
-// last and built in reverse order. Uses a struct instead of a function because
-// partial specialization of functions is not allowed.
+// last. Uses a struct instead of a function because partial specialization of
+// functions is not allowed.
 template<class Kind, int pos> struct GetComponent;
 
 // A type-level linked list to hold an arbitrary number of matchers.
@@ -274,7 +265,7 @@ template<class T> decltype(auto) Exact(T* binder, T data) {
   return Matcher<ExactKind<T>>(binder, data);
 }
 
-// {I32,I64,Int,F32,F64,Float}Lit: match `Literal` of the expected `Type`
+// {I32,I64,Int,F32,F64,Float,Number}Lit: match `Literal` of the expected `Type`
 struct I32LK {
   static bool matchType(Literal& lit) { return lit.type == Type::i32; }
   static int32_t getVal(Literal& lit) { return lit.geti32(); }
@@ -330,6 +321,23 @@ template<class S> decltype(auto) F64Lit(Literal* binder, S s) {
 }
 template<class S> decltype(auto) FloatLit(Literal* binder, S s) {
   return Matcher<LitKind<FloatLK>, S>(binder, {}, s);
+}
+struct NumberLitKind {};
+template<> struct KindTypeRegistry<NumberLitKind> {
+  using matched_t = Literal;
+  using data_t = int32_t;
+};
+template<> struct MatchSelf<NumberLitKind> {
+  bool operator()(Literal& lit, int32_t expected) {
+    return lit.type.isNumber() &&
+           Literal::makeFromInt32(expected, lit.type) == lit;
+  }
+};
+template<> struct NumComponents<NumberLitKind> {
+  static constexpr size_t value = 0;
+};
+decltype(auto) NumberLit(Literal* binder, int32_t expected) {
+  return Matcher<NumberLitKind>(binder, expected);
 }
 
 // Const
@@ -434,291 +442,215 @@ decltype(auto) SelectMatcher(Select** binder, S1 s1, S2 s2, S3 s3) {
 
 } // namespace Internal
 
-// TODO: Make this a template once we have C++20 (needs non-type class template
-// arguments)
-#define LITERAL_MATCHER(matcher, T, typePred, getValue)                        \
-  struct matcher {                                                             \
-    T val;                                                                     \
-    matcher(T val) : val(val) {}                                               \
-                                                                               \
-    bool matches(Expression* expr) const {                                     \
-      auto* c = expr->dynCast<Const>();                                        \
-      return c && typePred && c->value.getValue() == val;                      \
-    }                                                                          \
-  }
+// Public matching API
 
-LITERAL_MATCHER(i32, int32_t, c->type == Type::i32, geti32);
-LITERAL_MATCHER(i64, int64_t, c->type == Type::i64, geti64);
-LITERAL_MATCHER(ival, int64_t, c->type.isInteger(), getInteger);
-LITERAL_MATCHER(f32, float, c->type == Type::f32, getf32);
-LITERAL_MATCHER(f64, double, c->type == Type::f64, getf64);
-LITERAL_MATCHER(fval, double, c->type.isFloat(), getFloat);
-#undef LITERAL_MATCHER
-
-struct number {
-  int32_t val;
-  number(int32_t val) : val(val) {}
-
-  bool matches(Expression* expr) const {
-    auto* c = expr->dynCast<Const>();
-    return c && (c->type.isInteger() || c->type.isFloat()) &&
-           c->value == Literal::makeFromInt32(val, c->type);
-  }
-};
-
-struct any {
-  Expression** curr;
-
-  any(Expression** curr = nullptr) : curr(curr) {}
-
-  bool matches(Expression* expr) const {
-    if (curr) {
-      *curr = expr;
-    }
-    return true;
-  }
-
-  void build(Expression** outp) const {
-    if (curr) {
-      *outp = *curr;
-    }
-  }
-};
-
-struct constant {
-  Const** curr;
-
-  constant(Const** curr = nullptr) : curr(curr) {}
-
-  bool matches(Expression* expr) const {
-    if (auto* c = expr->dynCast<Const>()) {
-      if (curr) {
-        *curr = c;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  void build(Expression** outp) const {
-    if (curr) {
-      *outp = *curr;
-    }
-  }
-};
-
-// UnOp can be either UnaryOp or Abstract::Op. We use CRTP to abstract over
-// the differences in functionality they require.
-template<class SubClass, class UnOp, class ValueMatcher> struct UnaryMatcher {
-  Unary** curr;
-  UnOp op;
-  ValueMatcher value;
-
-  UnaryMatcher(Unary** curr, UnOp op, ValueMatcher&& value)
-    : curr(curr), op(op), value(std::move(value)) {}
-
-  UnaryOp getOp(Type type) const {
-    return static_cast<const SubClass*>(this)->getOp(type, op);
-  }
-
-  bool matches(Expression* expr) const {
-    auto* unary = expr->dynCast<Unary>();
-    if (unary && unary->op == getOp(unary->value->type)) {
-      if (curr) {
-        *curr = unary;
-      }
-      return value.matches(unary->value);
-    }
-    return false;
-  }
-
-  void build(Expression** outp) const {
-    if (curr) {
-      *outp = *curr;
-    }
-    auto* out = (*outp)->cast<Unary>();
-    value.build(&out->value);
-    out->op = getOp(out->value->type);
-  }
-};
-
-template<class V>
-struct PlainUnaryMatcher : UnaryMatcher<PlainUnaryMatcher<V>, UnaryOp, V> {
-  UnaryOp getOp(Type, UnaryOp op) const { return op; }
-};
-
-template<class V>
-struct AbstractUnaryMatcher
-  : UnaryMatcher<AbstractUnaryMatcher<V>, Abstract::Op, V> {
-  UnaryOp getOp(Type type, Abstract::Op op) const {
-    if (type.isInteger() || type.isFloat()) {
-      return Abstract::getUnary(type, op);
-    } else {
-      return InvalidUnary;
-    }
-  }
-};
-
-// Type-level mapping of UnOp (UnaryOp or Abstract::Op) to the corresponding
-// CRTP UnaryMatcher subtype.
-template<class UnOp, class V> struct UnaryMatcherOf {};
-
-template<class V> struct UnaryMatcherOf<UnaryOp, V> {
-  using type = PlainUnaryMatcher<V>;
-};
-
-template<class V> struct UnaryMatcherOf<Abstract::Op, V> {
-  using type = AbstractUnaryMatcher<V>;
-  ;
-};
-
-// TODO: Once we move to C++17, remove these wrapper functions and use the
-// matcher constructors directly like we do with the leaf matchers already.
-template<class UnOp, class V> decltype(auto) unary(UnOp op, V&& value) {
-  return UnaryMatcher<typename UnaryMatcherOf<UnOp, V>::type, UnOp, V>(
-    nullptr, op, std::move(value));
+decltype(auto) i32() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr)));
+}
+// Use int rather than int32_t to disambiguate literal 0
+decltype(auto) i32(int x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I32Lit(nullptr, Internal::Exact<int32_t>(nullptr, x)));
+}
+decltype(auto) i32(int32_t* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I32Lit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) i32(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I32Lit(binder, Internal::Any<int32_t>(nullptr)));
+}
+decltype(auto) i32(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr)));
 }
 
-template<class UnOp, class V>
-decltype(auto) unary(Unary** curr, UnOp op, V&& value) {
-  return UnaryMatcher<typename UnaryMatcherOf<UnOp, V>::type, UnOp, V>(
-    curr, op, std::move(value));
+decltype(auto) i64() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I64Lit(nullptr, Internal::Any<int64_t>(nullptr)));
+}
+decltype(auto) i64(int64_t x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I64Lit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
+}
+// disambiguate literal 0
+decltype(i64(std::declval<int64_t>())) i64(int x) { return i64(int32_t(x)); }
+decltype(auto) i64(int64_t* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I64Lit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) i64(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::I64Lit(binder, Internal::Any<int64_t>(nullptr)));
+}
+decltype(auto) i64(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::I64Lit(nullptr, Internal::Any<int64_t>(nullptr)));
 }
 
-// BinOp can be either BinaryOp or Abstract::Op. We use CRTP to abstract over
-// the differences in functionality they require.
-template<class SubClass, class BinOp, class LeftMatcher, class RightMatcher>
-struct BinaryMatcher {
-  Binary** curr;
-  BinOp op;
-  LeftMatcher left;
-  RightMatcher right;
-
-  BinaryMatcher(Binary** curr,
-                BinOp op,
-                LeftMatcher&& left,
-                RightMatcher&& right)
-    : curr(curr), op(op), left(std::move(left)), right(std::move(right)) {}
-
-  BinaryOp getOp(Type type) const {
-    return static_cast<const SubClass*>(this)->getOp(type, op);
-  }
-
-  bool matches(Expression* expr) const {
-    auto* binary = expr->dynCast<Binary>();
-    if (binary && binary->op == getOp(binary->left->type)) {
-      if (curr) {
-        *curr = binary;
-      }
-      return left.matches(binary->left) && right.matches(binary->right);
-    }
-    return false;
-  }
-
-  void build(Expression** outp) const {
-    if (curr) {
-      *outp = *curr;
-    }
-    auto* out = (*outp)->cast<Binary>();
-    left.build(&out->left);
-    right.build(&out->right);
-    out->op = getOp(out->left->type);
-  }
-};
-
-template<class L, class R>
-struct PlainBinaryMatcher
-  : BinaryMatcher<PlainBinaryMatcher<L, R>, BinaryOp, L, R> {
-  BinaryOp getOp(Type, BinaryOp op) const { return op; }
-};
-
-template<class L, class R>
-struct AbstractBinaryMatcher
-  : BinaryMatcher<AbstractBinaryMatcher<L, R>, Abstract::Op, L, R> {
-  BinaryOp getOp(Type type, Abstract::Op op) const {
-    if (type.isInteger() || type.isFloat()) {
-      return Abstract::getBinary(type, op);
-    } else {
-      return InvalidBinary;
-    }
-  }
-};
-
-// Type-level mapping of BinOp (BinaryOp or Abstract::Op) to the corresponding
-// CRTP BinaryMatcher subtype.
-template<class BinOp, class L, class R> struct BinaryMatcherOf {};
-
-template<class L, class R> struct BinaryMatcherOf<BinaryOp, L, R> {
-  using type = PlainBinaryMatcher<L, R>;
-};
-
-template<class L, class R> struct BinaryMatcherOf<Abstract::Op, L, R> {
-  using type = AbstractBinaryMatcher<L, R>;
-};
-
-template<class BinOp, class L, class R>
-decltype(auto) binary(BinOp op, L&& left, R&& right) {
-  return BinaryMatcher<typename BinaryMatcherOf<BinOp, L, R>::type,
-                       BinOp,
-                       L,
-                       R>(nullptr, op, std::move(left), std::move(right));
+decltype(auto) f32() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F32Lit(nullptr, Internal::Any<float>(nullptr)));
+}
+decltype(auto) f32(float x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F32Lit(nullptr, Internal::Exact<float>(nullptr, x)));
+}
+decltype(auto) f32(int x) { return f32(float(x)); } // disambiguate literal 0
+decltype(auto) f32(float* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F32Lit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) f32(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F32Lit(binder, Internal::Any<float>(nullptr)));
+}
+decltype(auto) f32(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::F32Lit(nullptr, Internal::Any<float>(nullptr)));
 }
 
-template<class BinOp, class L, class R>
-decltype(auto) binary(Binary** curr, BinOp op, L&& left, R&& right) {
-  return BinaryMatcher<typename BinaryMatcherOf<BinOp, L, R>::type,
-                       BinOp,
-                       L,
-                       R>(curr, op, std::move(left), std::move(right));
+decltype(auto) f64() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F64Lit(nullptr, Internal::Any<double>(nullptr)));
+}
+decltype(auto) f64(double x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F64Lit(nullptr, Internal::Exact<double>(nullptr, x)));
+}
+decltype(auto) f64(int x) { return f64(double(x)); } // disambiguate literal 0
+decltype(auto) f64(double* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F64Lit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) f64(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::F64Lit(binder, Internal::Any<double>(nullptr)));
+}
+decltype(auto) f64(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::F64Lit(nullptr, Internal::Any<double>(nullptr)));
 }
 
-template<class IfTrueMatcher, class IfFalseMatcher, class CondMatcher>
-struct SelectMatcher {
-  Select** curr;
-  IfTrueMatcher ifTrue;
-  IfFalseMatcher ifFalse;
-  CondMatcher condition;
-
-  SelectMatcher(Select** curr,
-                IfTrueMatcher&& ifTrue,
-                IfFalseMatcher&& ifFalse,
-                CondMatcher&& condition)
-    : curr(curr), ifTrue(ifTrue), ifFalse(ifFalse), condition(condition) {}
-
-  bool matches(Expression* expr) const {
-    if (auto* select = expr->dynCast<Select>()) {
-      if (curr) {
-        *curr = select;
-      }
-      return ifTrue.matches(select->ifTrue) &&
-             ifFalse.matches(select->ifFalse) &&
-             condition.matches(select->condition);
-    }
-    return false;
-  }
-
-  void build(Expression** outp) const {
-    if (curr) {
-      *outp = *curr;
-    }
-    auto* out = (*outp)->cast<Select>();
-    ifTrue.build(&out->ifTrue);
-    ifFalse.build(&out->ifFalse);
-    condition.build(&out->condition);
-  }
-};
-
-template<class T, class F, class C>
-SelectMatcher<T, F, C> select(T&& ifTrue, F&& ifFalse, C&& condition) {
-  return SelectMatcher<T, F, C>(
-    nullptr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
+decltype(auto) ival() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::IntLit(nullptr, Internal::Any<int64_t>(nullptr)));
+}
+decltype(auto) ival(int64_t x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
+}
+decltype(auto) ival(int x) { return ival(int64_t(x)); } // disambiguate 0
+decltype(auto) ival(int64_t* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::IntLit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) ival(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::IntLit(binder, Internal::Any<int64_t>(nullptr)));
+}
+decltype(auto) ival(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::IntLit(nullptr, Internal::Any<int64_t>(nullptr)));
+}
+decltype(auto) ival(Literal* binder, int64_t x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::IntLit(binder, Internal::Exact<int64_t>(nullptr, x)));
+}
+decltype(auto) ival(Const** binder, int64_t x) {
+  return Internal::ConstMatcher(
+    binder, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 
-template<class T, class F, class C>
-SelectMatcher<T, F, C>
-select(Select** curr, T&& ifTrue, F&& ifFalse, C&& condition) {
-  return SelectMatcher<T, F, C>(
-    curr, std::move(ifTrue), std::move(ifFalse), std::move(condition));
+decltype(auto) fval() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::FloatLit(nullptr, Internal::Any<double>(nullptr)));
+}
+decltype(auto) fval(double x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
+}
+decltype(auto) fval(int x) { return fval(double(x)); } // disambiguate literal 0
+decltype(auto) fval(double* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::FloatLit(nullptr, Internal::Any(binder)));
+}
+decltype(auto) fval(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::FloatLit(binder, Internal::Any<double>(nullptr)));
+}
+decltype(auto) fval(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::FloatLit(nullptr, Internal::Any<double>(nullptr)));
+}
+decltype(auto) fval(Literal* binder, double x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::FloatLit(binder, Internal::Exact<double>(nullptr, x)));
+}
+decltype(auto) fval(Const** binder, double x) {
+  return Internal::ConstMatcher(
+    binder, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
+}
+
+decltype(auto) constant() {
+  return Internal::ConstMatcher(nullptr, Internal::Any<Literal>(nullptr));
+}
+decltype(auto) constant(int x) {
+  return Internal::ConstMatcher(nullptr, Internal::NumberLit(nullptr, x));
+}
+decltype(auto) constant(Literal* binder) {
+  return Internal::ConstMatcher(nullptr, Internal::Any(binder));
+}
+decltype(auto) constant(Const** binder) {
+  return Internal::ConstMatcher(binder, Internal::Any<Literal>(nullptr));
+}
+decltype(auto) constant(Literal* binder, int32_t x) {
+  return Internal::ConstMatcher(nullptr, Internal::NumberLit(binder, x));
+}
+decltype(auto) constant(Const** binder, int32_t x) {
+  return Internal::ConstMatcher(binder, Internal::NumberLit(nullptr, x));
+}
+
+decltype(auto) any() { return Internal::Any<Expression*>(nullptr); }
+decltype(auto) any(Expression** binder) { return Internal::Any(binder); }
+
+template<class S> decltype(auto) unary(UnaryOp op, S s) {
+  return Internal::UnaryMatcher(nullptr, op, s);
+}
+template<class S> decltype(auto) unary(Abstract::Op op, S s) {
+  return Internal::AbstractUnaryMatcher(nullptr, op, s);
+}
+template<class S> decltype(auto) unary(Unary** binder, UnaryOp op, S s) {
+  return Internal::UnaryMatcher(binder, op, s);
+}
+template<class S> decltype(auto) unary(Unary** binder, Abstract::Op op, S s) {
+  return Internal::AbstractUnaryMatcher(binder, op, s);
+}
+
+template<class S1, class S2> decltype(auto) binary(BinaryOp op, S1 s1, S2 s2) {
+  return Internal::BinaryMatcher(nullptr, op, s1, s2);
+}
+template<class S1, class S2>
+decltype(auto) binary(Abstract::Op op, S1 s1, S2 s2) {
+  return Internal::AbstractBinaryMatcher(nullptr, op, s1, s2);
+}
+template<class S1, class S2>
+decltype(auto) binary(Binary** binder, BinaryOp op, S1 s1, S2 s2) {
+  return Internal::BinaryMatcher(binder, op, s1, s2);
+}
+template<class S1, class S2>
+decltype(auto) binary(Binary** binder, Abstract::Op op, S1 s1, S2 s2) {
+  return Internal::AbstractBinaryMatcher(binder, op, s1, s2);
+}
+
+template<class S1, class S2, class S3>
+decltype(auto) select(S1 s1, S2 s2, S3 s3) {
+  return Internal::SelectMatcher(nullptr, s1, s2, s3);
+}
+template<class S1, class S2, class S3>
+decltype(auto) select(Select** binder, S1 s1, S2 s2, S3 s3) {
+  return Internal::SelectMatcher(binder, s1, s2, s3);
 }
 
 } // namespace Match

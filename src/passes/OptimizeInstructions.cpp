@@ -254,7 +254,9 @@ struct OptimizeInstructions
                            binary(&sub, SubInt32, i32(0), any(&x)),
                            any(&y))) &&
             commutable(x, y)) {
-          return build(binary(&sub, SubInt32, any(&y), any(&x)));
+          sub->left = y;
+          sub->right = x;
+          return sub;
         }
       }
       {
@@ -277,7 +279,8 @@ struct OptimizeInstructions
                     binary(AddInt32,
                            any(&y),
                            binary(&sub, SubInt32, i32(0), any())))) {
-          return build(binary(&sub, SubInt32, any(&y), any()));
+          sub->left = y;
+          return sub;
         }
       }
       {
@@ -296,8 +299,11 @@ struct OptimizeInstructions
                            AndInt32,
                            unary(&un, EqZInt32, any(&x)),
                            unary(EqZInt32, any(&y))))) {
-          return build(
-            unary(&un, EqZInt32, binary(&bin, OrInt32, any(&x), any(&y))));
+          bin->op = OrInt32;
+          bin->left = x;
+          bin->right = y;
+          un->value = bin;
+          return un;
         }
       }
       // Selects
@@ -315,7 +321,7 @@ struct OptimizeInstructions
             return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
           }
         }
-        if (matches(curr, select(any(&ifTrue), any(&ifFalse), constant()))) {
+        if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32()))) {
           // The condition must be non-zero
           if (!effects(ifFalse).hasSideEffects()) {
             return ifTrue;
@@ -334,15 +340,17 @@ struct OptimizeInstructions
               select(
                 &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
             commutable(ifTrue, ifFalse)) {
-          curr = build(select(&s, any(&ifFalse), any(&ifTrue), any(&c)));
+          s->ifTrue = ifFalse;
+          s->ifFalse = ifTrue;
+          s->condition = c;
         }
       }
       {
         // Simplify selects between 0 and 1
         Expression* c;
-        bool matchReversed = matches(curr, select(ival(0), ival(1), any(&c)));
-        if (matchReversed || matches(curr, select(ival(1), ival(0), any(&c)))) {
-          if (matchReversed) {
+        bool reversed = matches(curr, select(ival(0), ival(1), any(&c)));
+        if (reversed || matches(curr, select(ival(1), ival(0), any(&c)))) {
+          if (reversed) {
             c = optimizeBoolean(builder.makeUnary(EqZInt32, c));
           }
           if (!Properties::emitsBoolean(c)) {
@@ -1234,22 +1242,22 @@ private:
 
     // Operations on all 1s
     // x & -1   ==>   x
-    if (matches(curr, binary(Abstract::And, any(&left), ival(-1LL)))) {
+    if (matches(curr, binary(Abstract::And, any(&left), ival(-1)))) {
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Abstract::Or, any(&left), ival(-1LL))) &&
+    if (matches(curr, binary(Abstract::Or, any(&left), ival(-1))) &&
         !effects(left).hasSideEffects()) {
       return right;
     }
     // (signed)x % -1   ==>   0
-    if (matches(curr, binary(Abstract::RemS, any(&left), ival(-1LL))) &&
+    if (matches(curr, binary(Abstract::RemS, any(&left), ival(-1))) &&
         !effects(left).hasSideEffects()) {
       right->value = Literal::makeSingleZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
-    if (matches(curr, binary(Abstract::GtU, any(&left), ival(-1LL))) &&
+    if (matches(curr, binary(Abstract::GtU, any(&left), ival(-1))) &&
         !effects(left).hasSideEffects()) {
       right->value = Literal::makeSingleZero(Type::i32);
       right->type = Type::i32;
@@ -1258,21 +1266,26 @@ private:
     // (unsigned)x < -1   ==>   x != -1
     // Friendlier to JS emitting as we don't need to write an unsigned -1 value
     // which is large.
-    if (matches(curr, binary(Abstract::LtU, any(), ival(-1LL)))) {
-      return build(binary(&curr, Abstract::Ne, any(), any()));
+    if (matches(curr, binary(Abstract::LtU, any(), ival(-1)))) {
+      curr->op = Abstract::getBinary(type, Abstract::Ne);
+      return curr;
     }
     // (unsigned)x / -1   ==>   x == -1
     // TODO: i64 as well if sign-extension is enabled
-    if (matches(curr, binary(DivUInt32, any(), ival(-1LL)))) {
-      return build(binary(&curr, Abstract::Eq, any(), any()));
+    if (matches(curr, binary(DivUInt32, any(), ival(-1)))) {
+      curr->op = Abstract::getBinary(type, Abstract::Eq);
+      return curr;
     }
     // x * -1   ==>   0 - x
-    if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1LL)))) {
+    if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeSingleZero(type);
-      return build(binary(&curr, Abstract::Sub, constant(&right), any(&left)));
+      curr->op = Abstract::getBinary(type, Abstract::Sub);
+      curr->left = right;
+      curr->right = left;
+      return curr;
     }
     // (unsigned)x <= -1   ==>   1
-    if (matches(curr, binary(Abstract::LeU, any(&left), ival(-1LL))) &&
+    if (matches(curr, binary(Abstract::LeU, any(&left), ival(-1))) &&
         !effects(left).hasSideEffects()) {
       right->value = Literal::makeFromInt32(1, Type::i32);
       right->type = Type::i32;
@@ -1285,29 +1298,28 @@ private:
     // have bad effects on gzip compression (as it would mean more subtractions
     // than the more common additions).
     // TODO: Simplify this by adding an ival matcher than can bind int64_t vars.
-    if ((matches(curr, binary(Abstract::Add, any(), constant())) ||
-         matches(curr, binary(Abstract::Sub, any(), constant()))) &&
-        type.isInteger()) {
-      auto value = right->value.getInteger();
-      if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-          value == 0x8000000 || value == 0x400000000LL ||
-          value == 0x20000000000LL || value == 0x1000000000000LL ||
-          value == 0x80000000000000LL || value == 0x4000000000000000LL) {
-        right->value = right->value.neg();
-        if (matches(curr, binary(Abstract::Add, any(), constant()))) {
-          return build(binary(&curr, Abstract::Sub, any(), any()));
-        } else {
-          return build(binary(&curr, Abstract::Add, any(), any()));
-        }
+    int64_t value;
+    if ((matches(curr, binary(Abstract::Add, any(), ival(&value))) ||
+         matches(curr, binary(Abstract::Sub, any(), ival(&value)))) &&
+        (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+         value == 0x8000000 || value == 0x400000000LL ||
+         value == 0x20000000000LL || value == 0x1000000000000LL ||
+         value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
+      right->value = right->value.neg();
+      if (matches(curr, binary(Abstract::Add, any(), constant()))) {
+        curr->op = Abstract::getBinary(type, Abstract::Sub);
+      } else {
+        curr->op = Abstract::getBinary(type, Abstract::Add);
       }
+      return curr;
     }
     // Note that this is correct even on floats with a NaN on the left,
     // as a NaN would skip the computation and just return the NaN,
     // and that is precisely what we do here. but, the same with -1
     // (change to a negation) would be incorrect for that reason.
-    if (matches(curr, binary(Abstract::Mul, any(&left), number(1))) ||
-        matches(curr, binary(Abstract::DivS, any(&left), number(1))) ||
-        matches(curr, binary(Abstract::DivU, any(&left), number(1)))) {
+    if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
+        matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
+        matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
       return left;
     }
     return nullptr;
