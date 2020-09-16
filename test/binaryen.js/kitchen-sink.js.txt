@@ -1,25 +1,29 @@
   // BinaryenTypeNone: 0
-  // []
+  // 
   // BinaryenTypeUnreachable: 1
-  // [ 1 ]
+  // 1
   // BinaryenTypeInt32: 2
-  // [ 2 ]
+  // 2
   // BinaryenTypeInt64: 3
-  // [ 3 ]
+  // 3
   // BinaryenTypeFloat32: 4
-  // [ 4 ]
+  // 4
   // BinaryenTypeFloat64: 5
-  // [ 5 ]
+  // 5
   // BinaryenTypeVec128: 6
-  // [ 6 ]
+  // 6
+  // BinaryenTypeFuncref: 7
+  // 7
   // BinaryenTypeExternref: 8
-  // [ 8 ]
-  // BinaryenTypeExnref: 10
-  // [ 10 ]
+  // 8
+  // BinaryenTypeExnref: 9
+  // 9
+  // BinaryenTypeAnyref: 10
+  // 10
   // BinaryenTypeAuto: -1
-  // [ 2, 2 ]
-  // [ 2, 2 ]
-  // [ 4, 4 ]
+  // 2,2
+  // 2,2
+  // 4,4
 Features.MVP: 0
 Features.Atomics: 1
 Features.BulkMemory: 16
@@ -31,7 +35,8 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.All: 1023
+Features.Anyref: 1024
+Features.All: 2047
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -1811,7 +1816,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
@@ -1821,7 +1831,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -1834,7 +1844,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -1886,31 +1896,28 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (v128.pop)
+       (pop v128)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (nullref.pop)
-      )
-      (drop
-       (exnref.pop)
+       (pop exnref)
       )
       (nop)
       (unreachable)
@@ -3649,7 +3656,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
+       )
+      )
+      (drop
+       (ref.is_null
+        (ref.null func)
        )
       )
       (drop
@@ -3659,7 +3671,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -3672,7 +3684,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -3724,31 +3736,28 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (v128.pop)
+       (pop v128)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (nullref.pop)
-      )
-      (drop
-       (exnref.pop)
+       (pop exnref)
       )
       (nop)
       (unreachable)

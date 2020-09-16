@@ -299,12 +299,12 @@ struct DAE : public Pass {
               value = c->value;
             } else if (value != c->value) {
               // Not identical, give up
-              value.type = Type::none;
+              value = Literal(Type::none);
               break;
             }
           } else {
             // Not a constant, give up
-            value.type = Type::none;
+            value = Literal(Type::none);
             break;
           }
         }

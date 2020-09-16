@@ -597,8 +597,8 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::nullref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -623,8 +623,8 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::nullref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -649,8 +649,8 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::nullref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -675,8 +675,8 @@ struct Reducer
               case Type::v128:
               case Type::funcref:
               case Type::externref:
-              case Type::nullref:
               case Type::exnref:
+              case Type::anyref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -687,8 +687,8 @@ struct Reducer
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
             continue; // not implemented yet
           case Type::none:
           case Type::unreachable:
@@ -1015,8 +1015,8 @@ struct Reducer
       return false;
     }
     // try to replace with a trivial value
-    if (curr->type.isRef()) {
-      RefNull* n = builder->makeRefNull();
+    if (curr->type.isNullable()) {
+      RefNull* n = builder->makeRefNull(curr->type);
       return tryToReplaceCurrent(n);
     }
     if (curr->type.isTuple()) {

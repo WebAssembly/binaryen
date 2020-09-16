@@ -1440,7 +1440,10 @@ struct PrintExpressionContents
         break;
     }
   }
-  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
+  void visitRefNull(RefNull* curr) {
+    printMedium(o, "ref.null ");
+    o << curr->type.getHeapType();
+  }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
@@ -1466,8 +1469,11 @@ struct PrintExpressionContents
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
-    prepareColor(o) << curr->type;
-    o << ".pop";
+    prepareColor(o) << "pop";
+    for (auto type : curr->type) {
+      assert(type.isBasic() && "TODO: print and parse compound types");
+      o << " " << type;
+    }
     restoreNormalColor(o);
   }
   void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
@@ -2392,6 +2398,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     currModule = curr;
     o << '(';
     printMajor(o, "module");
+    if (curr->name.is()) {
+      o << ' ';
+      printName(curr->name, o);
+    }
     incIndent();
     std::vector<Signature> signatures;
     std::unordered_map<Signature, Index> indices;

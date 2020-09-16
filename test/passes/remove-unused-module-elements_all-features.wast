@@ -276,7 +276,7 @@
     (throw $e-throw (i32.const 0))
    )
    (catch
-    (local.set $exn (exnref.pop))
+    (local.set $exn (pop exnref))
     (drop
      (block $l0 (result i32)
       (rethrow

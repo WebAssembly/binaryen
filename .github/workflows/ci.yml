@@ -117,8 +117,7 @@ jobs:
     name: asan
     runs-on: ubuntu-latest
     env:
-      # FIXME we currently must disable LSAN entirely, see #1351
-      ASAN_OPTIONS: "detect_leaks=0 symbolize=1"
+      ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
     steps:
     - uses: actions/setup-python@v1
