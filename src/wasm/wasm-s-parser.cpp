@@ -314,8 +314,7 @@ Element* SExpressionParser::parseString() {
 
 SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
                                                Element& module,
-                                               IRProfile profile,
-                                               Name* moduleName)
+                                               IRProfile profile)
   : wasm(wasm), allocator(wasm.allocator), profile(profile) {
   if (module.size() == 0) {
     throw ParseException("empty toplevel, expected module");
@@ -328,9 +327,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   }
   Index i = 1;
   if (module[i]->dollared()) {
-    if (moduleName) {
-      *moduleName = module[i]->str();
-    }
+    wasm.name = module[i]->str();
     i++;
   }
   if (i < module.size() && module[i]->isStr()) {

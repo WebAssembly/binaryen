@@ -126,10 +126,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm,
-                         Element& module,
-                         IRProfile profile,
-                         Name* moduleName = nullptr);
+  SExpressionWasmBuilder(Module& wasm, Element& module, IRProfile profile);
 
 private:
   // pre-parse types and function definitions, so we know function return types

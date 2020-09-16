@@ -986,6 +986,11 @@ bool Function::hasLocalName(Index index) const {
 
 Name Function::getLocalName(Index index) { return localNames.at(index); }
 
+void Function::setLocalName(Index index, Name name) {
+  assert(index < getNumLocals());
+  localNames[index] = name;
+}
+
 Name Function::getLocalNameOrDefault(Index index) {
   auto nameIt = localNames.find(index);
   if (nameIt != localNames.end()) {

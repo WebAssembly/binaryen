@@ -386,6 +386,7 @@ extern const char* MultivalueFeature;
 extern const char* AnyrefFeature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
 };
@@ -1393,7 +1394,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
+  Expression* getBlockOrSingleton(Type type);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1443,7 +1444,7 @@ public:
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
+  void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);

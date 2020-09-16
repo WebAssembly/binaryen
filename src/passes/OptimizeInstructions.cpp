@@ -212,7 +212,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary)) {
+      if (isSymmetric(binary)) {
         canonicalize(binary);
       }
     }
@@ -749,7 +749,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(Properties::isSymmetric(binary));
+    assert(isSymmetric(binary));
     auto swap = [&]() {
       assert(commutable(binary->left, binary->right));
       std::swap(binary->left, binary->right);
@@ -1291,27 +1291,51 @@ private:
       right->type = Type::i32;
       return right;
     }
-    // Wasm binary encoding uses signed LEBs, which slightly favor negative
-    // numbers: -64 is more efficient than +64 etc., as well as other powers of
-    // two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
-    // theory we could just prefer negative numbers over positive, but that can
-    // have bad effects on gzip compression (as it would mean more subtractions
-    // than the more common additions).
-    // TODO: Simplify this by adding an ival matcher than can bind int64_t vars.
-    int64_t value;
-    if ((matches(curr, binary(Abstract::Add, any(), ival(&value))) ||
-         matches(curr, binary(Abstract::Sub, any(), ival(&value)))) &&
-        (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-         value == 0x8000000 || value == 0x400000000LL ||
-         value == 0x20000000000LL || value == 0x1000000000000LL ||
-         value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
-      right->value = right->value.neg();
-      if (matches(curr, binary(Abstract::Add, any(), constant()))) {
-        curr->op = Abstract::getBinary(type, Abstract::Sub);
-      } else {
-        curr->op = Abstract::getBinary(type, Abstract::Add);
+    {
+      // Wasm binary encoding uses signed LEBs, which slightly favor negative
+      // numbers: -64 is more efficient than +64 etc., as well as other powers
+      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
+      // theory we could just prefer negative numbers over positive, but that
+      // can have bad effects on gzip compression (as it would mean more
+      // subtractions than the more common additions). TODO: Simplify this by
+      // adding an ival matcher than can bind int64_t vars.
+      int64_t value;
+      if ((matches(curr, binary(Abstract::Add, any(), ival(&value))) ||
+           matches(curr, binary(Abstract::Sub, any(), ival(&value)))) &&
+          (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+           value == 0x8000000 || value == 0x400000000LL ||
+           value == 0x20000000000LL || value == 0x1000000000000LL ||
+           value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
+        right->value = right->value.neg();
+        if (matches(curr, binary(Abstract::Add, any(), constant()))) {
+          curr->op = Abstract::getBinary(type, Abstract::Sub);
+        } else {
+          curr->op = Abstract::getBinary(type, Abstract::Add);
+        }
+        return curr;
       }
-      return curr;
+    }
+    {
+      double value;
+      if (matches(curr, binary(Abstract::Sub, any(), fval(&value)))) {
+        // x - (-0.0)   ==>   x + 0.0
+        if (std::signbit(value)) {
+          curr->op = Abstract::getBinary(type, Abstract::Add);
+          right->value = right->value.neg();
+          return curr;
+        } else {
+          // x - 0.0   ==>   x
+          return curr->left;
+        }
+      }
+    }
+    {
+      // x + (-0.0)   ==>   x
+      double value;
+      if (matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+          std::signbit(value)) {
+        return curr->left;
+      }
     }
     // Note that this is correct even on floats with a NaN on the left,
     // as a NaN would skip the computation and just return the NaN,
@@ -1575,6 +1599,29 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  bool isSymmetric(Binary* binary) {
+    if (Properties::isSymmetric(binary)) {
+      return true;
+    }
+    switch (binary->op) {
+      case AddFloat32:
+      case MulFloat32:
+      case AddFloat64:
+      case MulFloat64: {
+        // If the LHS is known to be non-NaN, the operands can commute.
+        // We don't care about the RHS because right now we only know if
+        // an expression is non-NaN if it is constant, but if the RHS is
+        // constant, then this expression is already canonicalized.
+        if (auto* c = binary->left->dynCast<Const>()) {
+          return !c->value.isNaN();
+        }
+        return false;
+      }
+      default:
+        return false;
     }
   }
 };

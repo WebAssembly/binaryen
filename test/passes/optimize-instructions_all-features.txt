@@ -10,11 +10,12 @@
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $none_=>_anyref (func (result anyref)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
+ (type $f32_f64_=>_none (func (param f32 f64)))
  (type $none_=>_f64 (func (result f64)))
- (type $none_=>_anyref (func (result anyref)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
@@ -3541,6 +3542,56 @@
    (i32.const 2)
   )
  )
+ (func $const-float-zero (param $fx f32) (param $fy f64)
+  (drop
+   (local.get $fx)
+  )
+  (drop
+   (local.get $fy)
+  )
+  (drop
+   (local.get $fx)
+  )
+  (drop
+   (local.get $fy)
+  )
+  (drop
+   (f32.add
+    (local.get $fx)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $fy)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (f32.sub
+    (f32.const 0)
+    (local.get $fx)
+   )
+  )
+  (drop
+   (f64.sub
+    (f64.const 0)
+    (local.get $fy)
+   )
+  )
+  (drop
+   (f32.add
+    (local.get $fx)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $fy)
+    (f64.const 0)
+   )
+  )
+ )
  (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
   (drop
    (i32.sub
@@ -3712,8 +3763,15 @@
    (unreachable)
   )
  )
- (func $if-arms-subtype (result anyref)
+ (func $if-arms-subtype-fold (result anyref)
   (ref.null extern)
+ )
+ (func $if-arms-subtype-nofold (result anyref)
+  (if (result anyref)
+   (i32.const 0)
+   (ref.null extern)
+   (ref.null func)
+  )
  )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if
