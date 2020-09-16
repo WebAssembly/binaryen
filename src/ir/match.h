@@ -15,9 +15,11 @@
  */
 
 //
-// match.h: Convenience structs for matching and transforming Binaryen IR
-// patterns. Most matchers take an optional pointer to an Expression* variable
-// that will be set equal to the expression they match.
+// match.h - Provides an easily extensible layered API for matching expression
+// patterns and extracting their components. The low-level API provides modular
+// building blocks for creating matchers for any data type and the high-level
+// API provides a succinct and flexible interface for matching expressions and
+// extracting useful information from them.
 
 #ifndef wasm_ir_match_h
 #define wasm_ir_match_h
