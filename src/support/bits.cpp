@@ -152,6 +152,15 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 #endif
 }
 
+
+template<> int CeilLog2<uint32_t>(uint32_t v) {
+  return 32 - CountLeadingZeroes(v - 1);
+}
+
+template<> int CeilLog2<uint64_t>(uint64_t v) {
+  return 64 - CountLeadingZeroes(v - 1);
+}
+
 uint32_t Log2(uint32_t v) {
   switch (v) {
     default:
