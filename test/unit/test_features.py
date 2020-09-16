@@ -339,6 +339,12 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.check_features(filename, ['reference-types', 'anyref'])
         self.assertIn('anyref', self.disassemble(filename))
 
+    def test_gc(self):
+        filename = 'gc_target_feature.wasm'
+        self.roundtrip(filename)
+        self.check_features(filename, ['reference-types', 'gc'])
+        self.assertIn('anyref', self.disassemble(filename))
+
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
@@ -387,5 +393,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-tail-call',
             '--enable-reference-types',
             '--enable-multivalue',
-            '--enable-anyref'
+            '--enable-anyref',
+            '--enable-gc'
         ], p2.stdout.splitlines())

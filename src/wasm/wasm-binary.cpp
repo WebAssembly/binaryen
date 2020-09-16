@@ -752,6 +752,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::MultivalueFeature;
       case FeatureSet::Anyref:
         return BinaryConsts::UserSections::AnyrefFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -2309,6 +2311,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setMultivalue();
       } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
         wasm.features.setAnyref();
+      } else if (name == BinaryConsts::UserSections::GCFeature) {
+        wasm.features.setGC();
       }
     }
   }

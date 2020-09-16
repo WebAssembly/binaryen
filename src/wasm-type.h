@@ -153,7 +153,7 @@ public:
   Type reinterpret() const;
 
   // Returns the feature set required to use this type.
-  FeatureSet getFeatures() const;
+  FeatureSet getFeatures(FeatureSet knownFeatures = FeatureSet::MVP) const;
 
   // Gets the heap type corresponding to this type
   HeapType getHeapType() const;

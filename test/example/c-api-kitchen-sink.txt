@@ -22,7 +22,8 @@ BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureAnyref: 1024
-BinaryenFeatureAll: 2047
+BinaryenFeatureGC: 2048
+BinaryenFeatureAll: 4095
 (f32.neg
  (f32.const -33.61199951171875)
 )

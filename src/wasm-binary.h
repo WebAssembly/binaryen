@@ -384,6 +384,7 @@ extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* AnyrefFeature;
+extern const char* GCFeature;
 
 enum Subsection {
   NameModule = 0,

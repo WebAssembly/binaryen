@@ -842,7 +842,8 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 }
 
 void FunctionValidator::visitConst(Const* curr) {
-  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
+  shouldBeTrue(curr->type.getFeatures(getModule()->features) <=
+                 getModule()->features,
                curr,
                "all used features should be allowed");
 }
@@ -2073,15 +2074,15 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   FeatureSet features;
   for (const auto& param : curr->sig.params) {
-    features |= param.getFeatures();
+    features |= param.getFeatures(getModule()->features);
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
   }
   for (const auto& result : curr->sig.results) {
-    features |= result.getFeatures();
+    features |= result.getFeatures(getModule()->features);
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
   for (const auto& var : curr->vars) {
-    features |= var.getFeatures();
+    features |= var.getFeatures(getModule()->features);
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(features <= getModule()->features,
@@ -2335,7 +2336,8 @@ static void validateExports(Module& module, ValidationInfo& info) {
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
-    info.shouldBeTrue(curr->type.getFeatures() <= module.features,
+    info.shouldBeTrue(curr->type.getFeatures(module.features) <=
+                        module.features,
                       curr->name,
                       "all used types should be allowed");
     info.shouldBeTrue(
@@ -2482,6 +2484,11 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(module.features.hasReferenceTypes(),
                       module.features,
                       "--enable-anyref requires --enable-reference-types");
+  }
+  if (module.features.hasGC()) {
+    info.shouldBeTrue(module.features.hasReferenceTypes(),
+                      module.features,
+                      "--enable-gc requires --enable-reference-types");
   }
   if (module.features.hasExceptionHandling()) { // implies exnref
     info.shouldBeTrue(

@@ -2610,14 +2610,7 @@ private:
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
     SmallVector<Type, 2> options;
-    options.push_back(Type::externref);
-    options.push_back(Type::funcref);
-    if (wasm.features.hasExceptionHandling()) {
-      options.push_back(Type::exnref);
-    }
-    if (wasm.features.hasAnyref()) {
-      options.push_back(Type::anyref);
-    }
+    addSingleConcreteReferenceTypes(options);
     return builder.makeRefIsNull(make(pick(options)));
   }
 
@@ -2677,14 +2670,25 @@ private:
 
   // special getters
   std::vector<Type> getSingleConcreteTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::Anyref, Type::anyref));
+    std::vector<Type> options{Type::i32, Type::i64, Type::f32, Type::f64};
+    if (wasm.features.has(FeatureSet::SIMD)) {
+      options.push_back(Type::v128);
+    }
+    if (wasm.features.hasReferenceTypes()) {
+      addSingleConcreteReferenceTypes(options);
+    }
+    return options;
+  }
+
+  template<typename T> void addSingleConcreteReferenceTypes(T& options) {
+    options.push_back(Type::funcref);
+    options.push_back(Type::externref);
+    if (wasm.features.hasExceptionHandling()) {
+      options.push_back(Type::exnref);
+    }
+    if (wasm.features.hasAnyref() || wasm.features.hasGC()) {
+      options.push_back(Type::anyref);
+    }
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }

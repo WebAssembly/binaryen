@@ -46,6 +46,7 @@ const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* AnyrefFeature = "anyref";
+const char* GCFeature = "gc";
 } // namespace UserSections
 } // namespace BinaryConsts
 
