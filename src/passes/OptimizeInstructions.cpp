@@ -1334,7 +1334,7 @@ private:
       // x + (-0.0)   ==>   x
       double value;
       if (matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
-          std::signbit(value)) {
+          value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
     }
