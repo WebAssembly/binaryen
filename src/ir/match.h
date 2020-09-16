@@ -161,15 +161,12 @@ template<class Kind> struct MatchSelf {
   bool operator()(matched_t<Kind>&, data_t<Kind>&) { return true; }
 };
 
-// This needs to be specialized for each kind of matcher. Each specialization
-// should define
-//
-//   static constexpr size_t value;
-//
-// This serves a sanity check to ensure that every matcher has the correct
-// number of submatchers. Uses a struct instead of a function because partial
-// specialization of functions is not allowed.
-template<class Kind> struct NumComponents;
+// Used to statically ensure that each matcher has the correct number of
+// submatchers. This needs to be specialized for each kind of matcher that has
+// submatchers.
+template<class Kind> struct NumComponents {
+  static constexpr size_t value = 0;
+};
 
 // Every kind of matcher needs to partially specialize this for each of its
 // components. Each specialization should define
@@ -242,9 +239,6 @@ template<class T> struct KindTypeRegistry<AnyKind<T>> {
   using matched_t = T;
   using data_t = unused_t;
 };
-template<class T> struct NumComponents<AnyKind<T>> {
-  static constexpr size_t value = 0;
-};
 template<class T> decltype(auto) Any(T* binder) {
   return Matcher<AnyKind<T>>(binder, {});
 }
@@ -257,9 +251,6 @@ template<class T> struct KindTypeRegistry<ExactKind<T>> {
 };
 template<class T> struct MatchSelf<ExactKind<T>> {
   bool operator()(T& self, T& expected) { return self == expected; }
-};
-template<class T> struct NumComponents<ExactKind<T>> {
-  static constexpr size_t value = 0;
 };
 template<class T> decltype(auto) Exact(T* binder, T data) {
   return Matcher<ExactKind<T>>(binder, data);
@@ -332,9 +323,6 @@ template<> struct MatchSelf<NumberLitKind> {
     return lit.type.isNumber() &&
            Literal::makeFromInt32(expected, lit.type) == lit;
   }
-};
-template<> struct NumComponents<NumberLitKind> {
-  static constexpr size_t value = 0;
 };
 decltype(auto) NumberLit(Literal* binder, int32_t expected) {
   return Matcher<NumberLitKind>(binder, expected);
