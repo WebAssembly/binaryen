@@ -157,7 +157,7 @@ Index getMaxBits(Expression* curr,
       case DivSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft or right constant is negative
+          // If either side might be negative, then the result will be negative
           if (maxBitsLeft == 32 || c->value.geti32() < 0) {
             return 32;
           }
