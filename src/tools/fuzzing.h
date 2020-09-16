@@ -848,8 +848,7 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    bool canMakeControlFlow =
-      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
+    bool canMakeControlFlow = !type.isTuple() || wasm.features.hasMultivalue();
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -2671,7 +2670,7 @@ private:
   // special getters
   std::vector<Type> getSingleConcreteTypes() {
     std::vector<Type> options{Type::i32, Type::i64, Type::f32, Type::f64};
-    if (wasm.features.has(FeatureSet::SIMD)) {
+    if (wasm.features.hasSIMD()) {
       options.push_back(Type::v128);
     }
     if (wasm.features.hasReferenceTypes()) {
