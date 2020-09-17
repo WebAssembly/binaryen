@@ -848,8 +848,7 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    bool canMakeControlFlow =
-      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
+    bool canMakeControlFlow = !type.isTuple() || wasm.features.hasMultivalue();
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -2609,16 +2608,7 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    SmallVector<Type, 2> options;
-    options.push_back(Type::externref);
-    options.push_back(Type::funcref);
-    if (wasm.features.hasExceptionHandling()) {
-      options.push_back(Type::exnref);
-    }
-    if (wasm.features.hasAnyref()) {
-      options.push_back(Type::anyref);
-    }
-    return builder.makeRefIsNull(make(pick(options)));
+    return builder.makeRefIsNull(make(getReferenceType()));
   }
 
   Expression* makeMemoryInit() {
@@ -2684,10 +2674,21 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::Anyref, Type::anyref));
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC, Type::anyref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  std::vector<Type> getReferenceTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC, Type::anyref));
+  }
+
+  Type getReferenceType() { return pick(getReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;

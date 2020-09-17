@@ -218,14 +218,11 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitReturn(Return* curr) {
       return builder.makeReturn(copy(curr->value));
     }
-    Expression* visitHost(Host* curr) {
-      std::vector<Expression*> operands;
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        operands.push_back(copy(curr->operands[i]));
-      }
-      auto* ret =
-        builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
-      return ret;
+    Expression* visitMemorySize(MemorySize* curr) {
+      return builder.makeMemorySize();
+    }
+    Expression* visitMemoryGrow(MemoryGrow* curr) {
+      return builder.makeMemoryGrow(copy(curr->delta));
     }
     Expression* visitRefNull(RefNull* curr) {
       return builder.makeRefNull(curr->type);

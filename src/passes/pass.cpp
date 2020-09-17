@@ -591,16 +591,15 @@ void PassRunner::run() {
         if (!WasmValidator().validate(*wasm, validationFlags)) {
           WasmPrinter::printModule(wasm);
           if (passDebug >= 2) {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Here is the module before: \n"
-                      << moduleBefore.str() << "\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Here is the module before: \n"
+                    << moduleBefore.str() << "\n";
           } else {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
-                         "in the env to see the earlier state, or 3 to dump "
-                         "byn-* files for each pass\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
+                       "in the env to see the earlier state, or 3 to dump "
+                       "byn-* files for each pass\n";
           }
-          abort();
         }
       }
       if (passDebug >= 3) {
@@ -613,8 +612,7 @@ void PassRunner::run() {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
         WasmPrinter::printModule(wasm);
-        std::cerr << "final module does not validate\n";
-        abort();
+        Fatal() << "final module does not validate\n";
       }
     }
   } else {

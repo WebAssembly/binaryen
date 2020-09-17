@@ -1021,19 +1021,15 @@ Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
-  auto ret = allocator.alloc<Host>();
-  ret->op = op;
-  parseCallOperands(s, 1, s.size(), ret);
-  if (ret->op == HostOp::MemoryGrow) {
-    if (ret->operands.size() != 1) {
-      throw ParseException("memory.grow needs one operand", s.line, s.col);
-    }
-  } else {
-    if (ret->operands.size() != 0) {
-      throw ParseException("host needs zero operands", s.line, s.col);
-    }
-  }
+Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
+  auto ret = allocator.alloc<MemorySize>();
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
+  auto ret = allocator.alloc<MemoryGrow>();
+  ret->delta = parseExpression(s[1]);
   ret->finalize();
   return ret;
 }

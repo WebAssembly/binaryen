@@ -199,7 +199,12 @@ BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
 BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
 BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
 BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
-BinaryenExpressionId BinaryenHostId(void) { return Expression::Id::HostId; }
+BinaryenExpressionId BinaryenMemorySizeId(void) {
+  return Expression::Id::MemorySizeId;
+}
+BinaryenExpressionId BinaryenMemoryGrowId(void) {
+  return Expression::Id::MemoryGrowId;
+}
 BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
 BinaryenExpressionId BinaryenUnreachableId(void) {
   return Expression::Id::UnreachableId;
@@ -327,8 +332,8 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
 }
-BinaryenFeatures BinaryenFeatureAnyref(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Anyref);
+BinaryenFeatures BinaryenFeatureGC(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::GC);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -509,8 +514,6 @@ BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
 BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
-BinaryenOp BinaryenMemorySize(void) { return MemorySize; }
-BinaryenOp BinaryenMemoryGrow(void) { return MemoryGrow; }
 BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
 BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
 BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
@@ -1056,20 +1059,13 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module,
-                                   BinaryenOp op,
-                                   const char* name,
-                                   BinaryenExpressionRef* operands,
-                                   BinaryenIndex numOperands) {
-  auto* ret = ((Module*)module)->allocator.alloc<Host>();
-  ret->op = HostOp(op);
-  if (name) {
-    ret->nameOperand = name;
-  }
-  for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
-  }
-  ret->finalize();
+BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module) {
+  auto* ret = Builder(*(Module*)module).makeMemorySize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
+                                         BinaryenExpressionRef delta) {
+  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
@@ -1826,72 +1822,18 @@ void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
   assert(valueExpr);
   static_cast<GlobalSet*>(expression)->value = (Expression*)valueExpr;
 }
-// Host
-BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
+// MemoryGrow
+BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  return static_cast<Host*>(expression)->op;
+  assert(expression->is<MemoryGrow>());
+  return static_cast<MemoryGrow*>(expression)->delta;
 }
-void BinaryenHostSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef deltaExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  static_cast<Host*>(expression)->op = (HostOp)op;
-}
-const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  return static_cast<Host*>(expression)->nameOperand.c_str();
-}
-void BinaryenHostSetNameOperand(BinaryenExpressionRef expr, const char* name) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  static_cast<Host*>(expression)->nameOperand = name ? name : "";
-}
-BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  return static_cast<Host*>(expression)->operands.size();
-}
-BinaryenExpressionRef BinaryenHostGetOperandAt(BinaryenExpressionRef expr,
-                                               BinaryenIndex index) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  assert(index < static_cast<Host*>(expression)->operands.size());
-  return static_cast<Host*>(expression)->operands[index];
-}
-void BinaryenHostSetOperandAt(BinaryenExpressionRef expr,
-                              BinaryenIndex index,
-                              BinaryenExpressionRef operandExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  assert(index < static_cast<Host*>(expression)->operands.size());
-  assert(operandExpr);
-  static_cast<Host*>(expression)->operands[index] = (Expression*)operandExpr;
-}
-BinaryenIndex BinaryenHostAppendOperand(BinaryenExpressionRef expr,
-                                        BinaryenExpressionRef operandExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  assert(operandExpr);
-  auto& list = static_cast<Host*>(expression)->operands;
-  auto index = list.size();
-  list.push_back((Expression*)operandExpr);
-  return index;
-}
-void BinaryenHostInsertOperandAt(BinaryenExpressionRef expr,
-                                 BinaryenIndex index,
-                                 BinaryenExpressionRef operandExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  assert(operandExpr);
-  static_cast<Host*>(expression)
-    ->operands.insertAt(index, (Expression*)operandExpr);
-}
-BinaryenExpressionRef BinaryenHostRemoveOperandAt(BinaryenExpressionRef expr,
-                                                  BinaryenIndex index) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Host>());
-  return static_cast<Host*>(expression)->operands.removeAt(index);
+  assert(expression->is<MemoryGrow>());
+  assert(deltaExpr);
+  static_cast<MemoryGrow*>(expression)->delta = (Expression*)deltaExpr;
 }
 // Load
 int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {

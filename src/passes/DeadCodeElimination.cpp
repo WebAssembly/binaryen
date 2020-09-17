@@ -315,8 +315,10 @@ struct DeadCodeElimination
           DELEGATE(Drop);
         case Expression::Id::ReturnId:
           DELEGATE(Return);
-        case Expression::Id::HostId:
-          DELEGATE(Host);
+        case Expression::Id::MemorySizeId:
+          DELEGATE(MemorySize);
+        case Expression::Id::MemoryGrowId:
+          DELEGATE(MemoryGrow);
         case Expression::Id::NopId:
           DELEGATE(Nop);
         case Expression::Id::UnreachableId:
@@ -519,7 +521,11 @@ struct DeadCodeElimination
     blockifyReachableOperands({curr->value}, curr->type);
   }
 
-  void visitHost(Host* curr) { handleCall(curr); }
+  void visitMemorySize(MemorySize* curr) {}
+
+  void visitMemoryGrow(MemoryGrow* curr) {
+    blockifyReachableOperands({curr->delta}, curr->type);
+  }
 
   void visitFunction(Function* curr) { assert(reachableBreaks.size() == 0); }
 };

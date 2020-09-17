@@ -65,7 +65,8 @@ function initializeConstants() {
     'Select',
     'Drop',
     'Return',
-    'Host',
+    'MemorySize',
+    'MemoryGrow',
     'Nop',
     'Unreachable',
     'AtomicCmpxchg',
@@ -121,7 +122,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
-    'Anyref',
+    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -265,8 +266,6 @@ function initializeConstants() {
     'LeFloat64',
     'GtFloat64',
     'GeFloat64',
-    'MemorySize',
-    'MemoryGrow',
     'AtomicRMWAdd',
     'AtomicRMWSub',
     'AtomicRMWAnd',
@@ -599,10 +598,10 @@ function wrapModule(module, self = {}) {
 
   self['memory'] = {
     'size'() {
-      return Module['_BinaryenHost'](module, Module['MemorySize']);
+      return Module['_BinaryenMemorySize'](module);
     },
     'grow'(value) {
-      return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
+      return Module['_BinaryenMemoryGrow'](module, value);
     },
     'init'(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
@@ -2092,9 +2091,6 @@ function wrapModule(module, self = {}) {
   self['return'] = function(value) {
     return Module['_BinaryenReturn'](module, value);
   };
-  self['host'] = function(op, name, operands = []) {
-    return preserveStack(() => Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length));
-  };
   self['nop'] = function() {
     return Module['_BinaryenNop'](module);
   };
@@ -2637,14 +2633,17 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type
       };
-    case Module['HostId']:
+    case Module['MemorySizeId']:
+      return {
+        'id': id,
+        'type': type
+      };
+    case Module['MemoryGrowId']:
       return {
         'id': id,
         'type': type,
-        'op': Module['_BinaryenHostGetOp'](expr),
-        'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperandAt'])
-      };
+        'delta': Module['_BinaryenMemoryGrowGetDelta'](expr)
+      }
     case Module['AtomicRMWId']:
       return {
         'id': id,
@@ -3479,63 +3478,15 @@ Module['GlobalSet'] = makeExpressionWrapper({
   }
 });
 
-Module['Host'] = makeExpressionWrapper({
-  'getOp'(expr) {
-    return Module['_BinaryenHostGetOp'](expr);
+Module['MemorySize'] = makeExpressionWrapper({});
+
+Module['MemoryGrow'] = makeExpressionWrapper({
+  'getDelta'(expr) {
+    return Module['_BinaryenMemoryGrowGetDelta'](expr);
   },
-  'setOp'(expr, op) {
-    Module['_BinaryenHostSetOp'](expr, op);
-  },
-  'getNameOperand'(expr) {
-    const name = Module['_BinaryenHostGetNameOperand'](expr);
-    return name ? UTF8ToString(name) : null;
-  },
-  'setNameOperand'(expr, name) {
-    preserveStack(() => { Module['_BinaryenHostSetNameOperand'](expr, strToStack(name)) });
-  },
-  'getNumOperands'(expr) {
-    return Module['_BinaryenHostGetNumOperands'](expr);
-  },
-  'getOperands'(expr) {
-    const numOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenHostGetOperandAt'](expr, index++);
-    }
-    return operands;
-  },
-  'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenHostSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenHostAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
-    }
-  },
-  'getOperandAt'(expr, index) {
-    return Module['_BinaryenHostGetOperandAt'](expr, index);
-  },
-  'setOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
-  },
-  'appendOperand'(expr, operandExpr) {
-    return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
-  },
-  'insertOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
-  },
-  'removeOperandAt'(expr, index) {
-    return Module['_BinaryenHostRemoveOperandAt'](expr, index);
-  },
+  'setDelta'(expr, deltaExpr) {
+    Module['_BinaryenMemoryGrowSetDelta'](expr, deltaExpr);
+  }
 });
 
 Module['Load'] = makeExpressionWrapper({

@@ -434,8 +434,6 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum HostOp { MemorySize, MemoryGrow };
-
 enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 
 enum SIMDExtractOp {
@@ -534,7 +532,8 @@ public:
     SelectId,
     DropId,
     ReturnId,
-    HostId,
+    MemorySizeId,
+    MemoryGrowId,
     NopId,
     UnreachableId,
     AtomicRMWId,
@@ -1066,13 +1065,20 @@ public:
   Expression* value = nullptr;
 };
 
-class Host : public SpecificExpression<Expression::HostId> {
+class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
 public:
-  Host(MixedArena& allocator) : operands(allocator) {}
+  MemorySize() { type = Type::i32; }
+  MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  HostOp op;
-  Name nameOperand;
-  ExpressionList operands;
+  void finalize();
+};
+
+class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
+public:
+  MemoryGrow() { type = Type::i32; }
+  MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
+
+  Expression* delta = nullptr;
 
   void finalize();
 };

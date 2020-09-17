@@ -202,7 +202,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (Properties::isSymmetric(binary)) {
+      if (isSymmetric(binary)) {
         canonicalize(binary);
       }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
@@ -368,13 +368,11 @@ struct OptimizeInstructions
             }
           }
         }
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       } else if (binary->op == SubInt32) {
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       }
@@ -401,8 +399,7 @@ struct OptimizeInstructions
           }
         }
         // some math operations have trivial results
-        Expression* ret = optimizeWithConstantOnRight(binary);
-        if (ret) {
+        if (auto* ret = optimizeWithConstantOnRight(binary)) {
           return ret;
         }
         // the square of some operations can be merged
@@ -465,8 +462,7 @@ struct OptimizeInstructions
       }
       // a bunch of operations on a constant left side can be simplified
       if (binary->left->is<Const>()) {
-        Expression* ret = optimizeWithConstantOnLeft(binary);
-        if (ret) {
+        if (auto* ret = optimizeWithConstantOnLeft(binary)) {
           return ret;
         }
       }
@@ -551,8 +547,14 @@ struct OptimizeInstructions
       if (!EffectAnalyzer(getPassOptions(), features, binary->left)
              .hasSideEffects()) {
         if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
-          return optimizeBinaryWithEqualEffectlessChildren(binary);
+          if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(binary)) {
+            return ret;
+          }
         }
+      }
+
+      if (auto* ret = deduplicateBinary(binary)) {
+        return ret;
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
@@ -572,6 +574,10 @@ struct OptimizeInstructions
           unary->value = makeZeroExt(ext, bits);
           return unary;
         }
+      }
+
+      if (auto* ret = deduplicateUnary(unary)) {
+        return ret;
       }
     } else if (auto* set = curr->dynCast<GlobalSet>()) {
       // optimize out a set of a get
@@ -764,7 +770,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(Properties::isSymmetric(binary));
+    assert(isSymmetric(binary));
     FeatureSet features = getModule()->features;
     auto swap = [&]() {
       assert(EffectAnalyzer::canReorder(
@@ -1430,6 +1436,125 @@ private:
     return nullptr;
   }
 
+  Expression* deduplicateUnary(Unary* unaryOuter) {
+    if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+      if (unaryInner->op == unaryOuter->op) {
+        switch (unaryInner->op) {
+          case NegFloat32:
+          case NegFloat64: {
+            // neg(neg(x))  ==>   x
+            return unaryInner->value;
+          }
+          case AbsFloat32:
+          case CeilFloat32:
+          case FloorFloat32:
+          case TruncFloat32:
+          case NearestFloat32:
+          case AbsFloat64:
+          case CeilFloat64:
+          case FloorFloat64:
+          case TruncFloat64:
+          case NearestFloat64: {
+            // unaryOp(unaryOp(x))  ==>   unaryOp(x)
+            return unaryInner;
+          }
+          case ExtendS8Int32:
+          case ExtendS16Int32: {
+            assert(getModule()->features.hasSignExt());
+            return unaryInner;
+          }
+          case EqZInt32: {
+            // eqz(eqz(bool(x)))  ==>   bool(x)
+            if (Bits::getMaxBits(unaryInner->value, this) == 1) {
+              return unaryInner->value;
+            }
+            break;
+          }
+          default: {
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* deduplicateBinary(Binary* outer) {
+    Type type = outer->type;
+    if (type.isInteger()) {
+      if (auto* inner = outer->right->dynCast<Binary>()) {
+        if (outer->op == inner->op) {
+          if (!EffectAnalyzer(
+                 getPassOptions(), getModule()->features, outer->left)
+                 .hasSideEffects()) {
+            if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
+              // x - (x - y)  ==>   y
+              // x ^ (x ^ y)  ==>   y
+              if (outer->op == Abstract::getBinary(type, Abstract::Sub) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->right;
+              }
+              // x & (x & y)  ==>   x & y
+              // x | (x | y)  ==>   x | y
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
+              }
+            }
+            if (ExpressionAnalyzer::equal(inner->right, outer->left)) {
+              // x ^ (y ^ x)  ==>   y
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->left;
+              }
+
+              // x & (y & x)  ==>   y & x
+              // x | (y | x)  ==>   y | x
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
+              }
+            }
+          }
+        }
+      }
+      if (auto* inner = outer->left->dynCast<Binary>()) {
+        if (outer->op == inner->op) {
+          if (!EffectAnalyzer(
+                 getPassOptions(), getModule()->features, outer->right)
+                 .hasSideEffects()) {
+            if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
+              // (x ^ y) ^ y  ==>   x
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->left;
+              }
+              // (x % y) % y  ==>   x % y
+              // (x & y) & y  ==>   x & y
+              // (x | y) | y  ==>   x | y
+              if (outer->op == Abstract::getBinary(type, Abstract::RemS) ||
+                  outer->op == Abstract::getBinary(type, Abstract::RemU) ||
+                  outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
+              }
+            }
+            if (ExpressionAnalyzer::equal(inner->left, outer->right)) {
+              // (x ^ y) ^ x  ==>   y
+              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+                return inner->right;
+              }
+              // (x & y) & x  ==>   x & y
+              // (x | y) | x  ==>   x | y
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+                return inner;
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
   // given a relational binary with a const on both sides, combine the constants
   // left is also a binary, and has a constant; right may be just a constant, in
   // which case right is nullptr
@@ -1524,7 +1649,6 @@ private:
 
   // given a binary expression with equal children and no side effects in
   // either, we can fold various things
-  // TODO: trinaries, things like (x & (y & x)) ?
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
     // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {
@@ -1533,16 +1657,16 @@ private:
       case SubInt64:
       case XorInt64:
         return LiteralUtils::makeZero(binary->left->type, *getModule());
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case GtSInt64:
-      case GtUInt64:
       case NeInt32:
       case LtSInt32:
       case LtUInt32:
       case GtSInt32:
       case GtUInt32:
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case GtSInt64:
+      case GtUInt64:
         return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
@@ -1622,6 +1746,29 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  bool isSymmetric(Binary* binary) {
+    if (Properties::isSymmetric(binary)) {
+      return true;
+    }
+    switch (binary->op) {
+      case AddFloat32:
+      case MulFloat32:
+      case AddFloat64:
+      case MulFloat64: {
+        // If the LHS is known to be non-NaN, the operands can commute.
+        // We don't care about the RHS because right now we only know if
+        // an expression is non-NaN if it is constant, but if the RHS is
+        // constant, then this expression is already canonicalized.
+        if (auto* c = binary->left->dynCast<Const>()) {
+          return !c->value.isNaN();
+        }
+        return false;
+      }
+      default:
+        return false;
     }
   }
 };
