@@ -77,9 +77,8 @@ const size_t DATA_DROP_SIZE = 3;
 namespace {
 
 Expression* makeShiftedMemorySize(Builder& builder) {
-  return builder.makeBinary(ShlInt32,
-                            builder.makeHost(MemorySize, Name(), {}),
-                            builder.makeConst(int32_t(16)));
+  return builder.makeBinary(
+    ShlInt32, builder.makeMemorySize(), builder.makeConst(int32_t(16)));
 }
 
 } // anonymous namespace

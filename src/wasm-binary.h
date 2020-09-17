@@ -383,7 +383,7 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
-extern const char* AnyrefFeature;
+extern const char* GCFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1394,7 +1394,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
+  Expression* getBlockOrSingleton(Type type);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1437,14 +1437,15 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
-  bool maybeVisitHost(Expression*& out, uint8_t code);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
+  void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);

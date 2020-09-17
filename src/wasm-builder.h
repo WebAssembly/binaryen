@@ -519,12 +519,14 @@ public:
     ret->value = value;
     return ret;
   }
-  Host*
-  makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = allocator.alloc<Host>();
-    ret->op = op;
-    ret->nameOperand = nameOperand;
-    ret->operands.set(operands);
+  MemorySize* makeMemorySize() {
+    auto* ret = allocator.alloc<MemorySize>();
+    ret->finalize();
+    return ret;
+  }
+  MemoryGrow* makeMemoryGrow(Expression* delta) {
+    auto* ret = allocator.alloc<MemoryGrow>();
+    ret->delta = delta;
     ret->finalize();
     return ret;
   }

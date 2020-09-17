@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 96)
+project(binaryen LANGUAGES C CXX VERSION 97)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -145,6 +145,8 @@ if(MSVC)
   add_compile_flag("/wd4244")
   # 4722 warns that destructors never return, even with WASM_NORETURN.
   add_compile_flag("/wd4722")
+  # "destructor was implicitly defined as deleted" caused by LLVM headers.
+  add_compile_flag("/wd4624")
   add_compile_flag("/WX-")
   add_debug_compile_flag("/Od")
   add_nondebug_compile_flag("/O2")
@@ -155,6 +157,9 @@ if(MSVC)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
+
+  # multi-core build.
+  add_compile_flag("/MP")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
@@ -294,8 +299,10 @@ ENDIF()
 
 # Sources.
 
+file(GLOB binaryen_HEADERS src/*.h)
 set(binaryen_SOURCES
   src/binaryen-c.cpp
+  ${binaryen_HEADERS}
 )
 if(BUILD_STATIC_LIB)
   message(STATUS "Building libbinaryen as statically linked library.")
@@ -342,6 +349,7 @@ binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
 if(EMSCRIPTEN)
   set(binaryen_emscripten_SOURCES
     src/binaryen-c.cpp
+    ${binaryen_HEADERS}
   )
 
   # binaryen.js WebAssembly variant

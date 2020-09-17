@@ -145,7 +145,8 @@ struct ReFinalize
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
-  void visitHost(Host* curr);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
@@ -213,7 +214,8 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSelect(Select* curr) { curr->finalize(); }
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
-  void visitHost(Host* curr) { curr->finalize(); }
+  void visitMemorySize(MemorySize* curr) { curr->finalize(); }
+  void visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
   void visitRefNull(RefNull* curr) { curr->finalize(); }
   void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
   void visitRefFunc(RefFunc* curr) { curr->finalize(); }
