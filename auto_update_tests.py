@@ -50,13 +50,16 @@ def update_example_tests():
             expected = os.path.splitext(t)[0] + '.txt'
         if not src.endswith(('.c', '.cpp')):
             continue
+        # windows + gcc will need some work
+        if shared.skip_if_on_windows('gcc'):
+            return
         # build the C file separately
         extra = [os.environ.get('CC') or 'gcc',
                  src, '-c', '-o', 'example.o',
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libdir, '-pthread']
         print('build: ', ' '.join(extra))
         if src.endswith('.cpp'):
-            extra += ['-std=c++14']
+            extra += ['-std=c++' + str(shared.cxx_standard)]
         print(os.getcwd())
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using rpath
@@ -65,7 +68,7 @@ def update_example_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [os.environ.get('CXX') or 'g++', '-std=c++14'] + cmd
+        cmd = [os.environ.get('CXX') or 'g++', '-std=c++' + str(shared.cxx_standard)] + cmd
         try:
             print('link: ', ' '.join(cmd))
             subprocess.check_call(cmd)
@@ -120,8 +123,6 @@ def update_metadce_tests():
 
 
 def update_reduce_tests():
-    if not shared.has_shell_timeout():
-        return
     print('\n[ checking wasm-reduce ]\n')
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))

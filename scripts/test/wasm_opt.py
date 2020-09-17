@@ -159,6 +159,12 @@ def update_wasm_opt_tests():
     print('\n[ checking wasm-opt passes... ]\n')
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
+        # windows has some failures that need to be investigated:
+        # * ttf tests have different outputs - order of execution of params?
+        # * dwarf tests print windows slashes instead of unix
+        if ('translate-to-fuzz' in t or 'dwarf' in t) and \
+           shared.skip_if_on_windows('fuzz translation tests'):
+            continue
         binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base

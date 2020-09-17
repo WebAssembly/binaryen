@@ -79,6 +79,7 @@ public:
   }
 };
 
+struct Relooper;
 struct Block;
 struct Shape;
 
@@ -241,6 +242,8 @@ typedef InsertOrderedMap<Block*, Branch*> BlockBranchMap;
 // Represents a basic block of code - some instructions that end with a
 // control flow modifier (a branch, return or throw).
 struct Block {
+  // Reference to the relooper containing this block.
+  Relooper* relooper;
   // Branches become processed after we finish the shape relevant to them. For
   // example, when we recreate a loop, branches to the loop start become
   // continues and are now processed. When we calculate what shape to generate
@@ -262,9 +265,9 @@ struct Block {
   // variable
   bool IsCheckedMultipleEntry;
 
-  Block(wasm::Expression* CodeInit,
+  Block(Relooper* relooper,
+        wasm::Expression* CodeInit,
         wasm::Expression* SwitchConditionInit = nullptr);
-  ~Block();
 
   // Add a branch: if the condition holds we branch (or if null, we branch if
   // all others failed) Note that there can be only one branch from A to B (if
@@ -373,26 +376,44 @@ struct LoopShape : public Shape {
 //
 // Usage:
 //  1. Instantiate this struct.
-//  2. Call AddBlock with the blocks you have. Each should already
-//     have its branchings in specified (the branchings out will
+//  2. Create the blocks you have. Each should have its
+//     branchings in specified (the branchings out will
 //     be calculated by the relooper).
 //  3. Call Render().
 //
-// Implementation details: The Relooper instance has
-// ownership of the blocks and shapes, and frees them when done.
+// Implementation details: The Relooper instance takes ownership of the blocks,
+// branches and shapes when created using the `AddBlock` etc. methods, and frees
+// them when done.
 struct Relooper {
   wasm::Module* Module;
-  std::deque<Block*> Blocks;
-  std::deque<Shape*> Shapes;
+  std::deque<std::unique_ptr<Block>> Blocks;
+  std::deque<std::unique_ptr<Branch>> Branches;
+  std::deque<std::unique_ptr<Shape>> Shapes;
   Shape* Root;
   bool MinSize;
   int BlockIdCounter;
   int ShapeIdCounter;
 
   Relooper(wasm::Module* ModuleInit);
-  ~Relooper();
 
-  void AddBlock(Block* New, int Id = -1);
+  // Creates a new block associated with (and cleaned up along) this relooper.
+  Block* AddBlock(wasm::Expression* CodeInit,
+                  wasm::Expression* SwitchConditionInit = nullptr);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(wasm::Expression* ConditionInit,
+                    wasm::Expression* CodeInit);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(std::vector<wasm::Index>&& ValuesInit,
+                    wasm::Expression* CodeInit = nullptr);
+  // Creates a new simple shape associated with (and cleaned up along) this
+  // relooper.
+  SimpleShape* AddSimpleShape();
+  // Creates a new multiple shape associated with (and cleaned up along) this
+  // relooper.
+  MultipleShape* AddMultipleShape();
+  // Creates a new loop shape associated with (and cleaned up along) this
+  // relooper.
+  LoopShape* AddLoopShape();
 
   // Calculates the shapes
   void Calculate(Block* Entry);

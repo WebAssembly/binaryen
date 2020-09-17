@@ -29,37 +29,53 @@ namespace wasm {
 
 template<int N> using LaneArray = std::array<Literal, N>;
 
+Literal::Literal(Type type) : type(type) {
+  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+  if (type.isException()) {
+    new (&exn) std::unique_ptr<ExceptionPackage>();
+  } else {
+    memset(&v128, 0, 16);
+  }
+}
+
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::funcref:
-      func = other.func;
-      break;
-    case Type::exnref:
-      // Avoid calling the destructor on an uninitialized value
+  if (type.isException()) {
+    // Avoid calling the destructor on an uninitialized value
+    if (other.exn != nullptr) {
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-      break;
-    case Type::none:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+    } else {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    }
+  } else if (type.isFunction()) {
+    func = other.func;
+  } else {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        break;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        break;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        break;
+      case Type::none:
+        break;
+      case Type::externref:
+      case Type::anyref:
+        break; // null
+      case Type::funcref:
+      case Type::exnref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
   }
 }
 
@@ -116,7 +132,7 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    return makeNull(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -130,8 +146,8 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type == Type::exnref);
-  return *exn.get();
+  assert(type.isException() && exn != nullptr);
+  return *exn;
 }
 
 Literal Literal::castToF32() {
@@ -199,11 +215,18 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
+    // TODO: investigate changing bits returned for reference types. currently,
+    // `null` values and even non-`null` functions return all zeroes, but only
+    // to avoid introducing a functional change.
     case Type::funcref:
-    case Type::nullref:
       break;
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
+      if (isNull()) {
+        break;
+      }
+      // falls through
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -211,21 +234,21 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
-  }
   if (type != other.type) {
     return false;
   }
   if (type == Type::none) {
     return true;
+  }
+  if (isNull() || other.isNull()) {
+    return isNull() == other.isNull();
+  }
+  if (type.isFunction()) {
+    return func == other.func;
+  }
+  if (type.isException()) {
+    assert(exn != nullptr && other.exn != nullptr);
+    return *exn == *other.exn;
   }
   uint8_t bits[16], other_bits[16];
   getBits(bits);
@@ -350,15 +373,27 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       literal.printVec128(o, literal.getv128());
       break;
     case Type::funcref:
-      o << "funcref(" << literal.getFunc() << ")";
-      break;
-    case Type::nullref:
-      o << "nullref";
+      if (literal.isNull()) {
+        o << "funcref(null)";
+      } else {
+        o << "funcref(" << literal.getFunc() << ")";
+      }
       break;
     case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      if (literal.isNull()) {
+        o << "exnref(null)";
+      } else {
+        o << "exnref(" << literal.getExceptionPackage() << ")";
+      }
+      break;
+    case Type::anyref:
+      assert(literal.isNull() && "TODO: non-null anyref values");
+      o << "anyref(null)";
       break;
     case Type::externref:
+      assert(literal.isNull() && "TODO: non-null externref values");
+      o << "externref(null)";
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -582,8 +617,8 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -604,8 +639,8 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -626,8 +661,8 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -731,8 +766,8 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -753,8 +788,8 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -839,15 +874,40 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(uint32_t(i32) * uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
-    case Type::f32:
-      return Literal(getf32() * other.getf32());
-    case Type::f64:
-      return Literal(getf64() * other.getf64());
+    case Type::f32: {
+      // Special-case multiplication by 1. nan * 1 can change nan bits per the
+      // wasm spec, but it is ok to just return that original nan, and we
+      // do that here so that we are consistent with the optimization of
+      // removing the * 1 and leaving just the nan. That is, if we just
+      // do a normal multiply and the CPU decides to change the bits, we'd
+      // give a different result on optimized code, which would look like
+      // it was a bad optimization. So out of all the valid results to
+      // return here, return the simplest one that is consistent with
+      // our optimization for the case of 1.
+      float lhs = getf32(), rhs = other.getf32();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
+    case Type::f64: {
+      double lhs = getf64(), rhs = other.getf64();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -880,15 +940,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // Special-case division by 1. nan / 1 can change nan bits per the
-          // wasm spec, but it is ok to just return that original nan, and we
-          // do that here so that we are consistent with the optimization of
-          // removing the / 1 and leaving just the nan. That is, if we just
-          // do a normal divide and the CPU decides to change the bits, we'd
-          // give a different result on optimized code, which would look like
-          // it was a bad optimization. So out of all the valid results to
-          // return here, return the simplest one that is consistent with
-          // optimization.
+          // Special-case division by 1, similar to multiply from earlier.
           if (rhs == 1) {
             return Literal(lhs);
           }
@@ -1100,8 +1152,8 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1122,8 +1174,8 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

@@ -36,7 +36,7 @@
           (throw $e (i32.const 0))
         )
         (catch
-          (drop (exnref.pop))
+          (drop (pop exnref))
         )
       )
       (drop (i32.const 1))
@@ -56,7 +56,7 @@
           (throw $e (i32.const 0))
         )
         (catch
-          (rethrow (exnref.pop))
+          (rethrow (pop exnref))
         )
       )
       (drop (i32.const 1))

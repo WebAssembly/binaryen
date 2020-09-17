@@ -11,8 +11,8 @@
     (throw $e-i32-f32 (i32.const 3) (f32.const 3.5))
   )
 
-  (func (export "rethrow_nullref")
-    (rethrow (ref.null))
+  (func (export "rethrow_null")
+    (rethrow (ref.null exn))
   )
 
   (func (export "try_nothrow") (result i32)
@@ -21,7 +21,7 @@
         (i32.const 3)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 0)
       )
     )
@@ -33,7 +33,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 3)
       )
     )
@@ -46,7 +46,7 @@
         (unreachable)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (i32.const 3)
       )
     )
@@ -58,7 +58,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (rethrow (exnref.pop))
+        (rethrow (pop exnref))
       )
     )
   )
@@ -69,15 +69,15 @@
         (call $throw_single_value)
       )
       (catch
-        (rethrow (exnref.pop))
+        (rethrow (pop exnref))
       )
     )
   )
 
-  (func (export "br_on_exn_nullref") (result i32)
+  (func (export "br_on_exn_null") (result i32)
     (block $l0 (result i32)
       (drop
-        (br_on_exn $l0 $e-i32 (ref.null))
+        (br_on_exn $l0 $e-i32 (ref.null exn))
       )
       (i32.const 0)
     )
@@ -89,7 +89,7 @@
         (throw $e-v)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0
           (rethrow
             (br_on_exn $l0 $e-v (local.get $exn))
@@ -105,7 +105,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))
@@ -122,7 +122,7 @@
         (throw $e-i32-f32 (i32.const 3) (f32.const 3.5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32 f32)
           (rethrow
             (br_on_exn $l0 $e-i32-f32 (local.get $exn))
@@ -138,7 +138,7 @@
         (throw $e-i32 (i32.const 5))
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0
           (rethrow
             (br_on_exn $l0 $e-v (local.get $exn))
@@ -155,7 +155,7 @@
         (unreachable)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))
@@ -172,7 +172,7 @@
         (unreachable)
       )
       (catch
-        (local.set $exn (exnref.pop))
+        (local.set $exn (pop exnref))
         (block $l0 (result i32)
           (rethrow
             (br_on_exn $l0 $e-i32 (local.get $exn))
@@ -185,13 +185,13 @@
 
 (assert_trap (invoke "throw_single_value"))
 (assert_trap (invoke "throw_multiple_values"))
-(assert_trap (invoke "rethrow_nullref"))
+(assert_trap (invoke "rethrow_null"))
 (assert_return (invoke "try_nothrow") (i32.const 3))
 (assert_return (invoke "try_throw_catch") (i32.const 3))
 (assert_return (invoke "try_call_catch") (i32.const 3))
 (assert_trap (invoke "try_throw_rethrow"))
 (assert_trap (invoke "try_call_rethrow"))
-(assert_trap (invoke "br_on_exn_nullref"))
+(assert_trap (invoke "br_on_exn_null"))
 (assert_return (invoke "br_on_exn_match_no_value"))
 (assert_return (invoke "br_on_exn_match_single_value") (i32.const 5))
 (assert_return (invoke "br_on_exn_match_multiple_values") (tuple.make (i32.const 3) (f32.const 3.5)))

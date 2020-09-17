@@ -347,14 +347,21 @@ enum EncodedType {
   funcref = -0x10, // 0x70
   // opaque host reference type
   externref = -0x11, // 0x6f
-  // null reference type
-  nullref = -0x12, // 0x6e
+  // any reference type
+  anyref = -0x12, // 0x6e
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
   Func = -0x20, // 0x60
   // block_type
   Empty = -0x40 // 0x40
+};
+
+enum EncodedHeapType {
+  func = -0x10,    // 0x70
+  extern_ = -0x11, // 0x6f
+  any = -0x12,     // 0x6e
+  exn = -0x18,     // 0x68
 };
 
 namespace UserSections {
@@ -376,8 +383,10 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
+extern const char* GCFeature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
 };
@@ -968,16 +977,41 @@ inline S32LEB binaryType(Type type) {
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
-    case Type::nullref:
-      ret = BinaryConsts::EncodedType::nullref;
-      break;
     case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
+      break;
+    case Type::anyref:
+      ret = BinaryConsts::EncodedType::anyref;
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);
+}
+
+inline S32LEB binaryHeapType(HeapType type) {
+  int ret = 0;
+  switch (type.kind) {
+    case HeapType::FuncKind:
+      ret = BinaryConsts::EncodedHeapType::func;
+      break;
+    case HeapType::ExternKind:
+      ret = BinaryConsts::EncodedHeapType::extern_;
+      break;
+    case HeapType::ExnKind:
+      ret = BinaryConsts::EncodedHeapType::exn;
+      break;
+    case HeapType::AnyKind:
+      ret = BinaryConsts::EncodedHeapType::any;
+      break;
+    case HeapType::EqKind:
+    case HeapType::I31Kind:
+    case HeapType::SignatureKind:
+    case HeapType::StructKind:
+    case HeapType::ArrayKind:
+      WASM_UNREACHABLE("TODO: GC types");
+  }
+  return S32LEB(ret); // TODO: Actually encoded as s33
 }
 
 // Writes out wasm to the binary format
@@ -1209,6 +1243,7 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   Type getType();
+  HeapType getHeapType();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
@@ -1359,7 +1394,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
+  Expression* getBlockOrSingleton(Type type);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1402,14 +1437,15 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
-  bool maybeVisitHost(Expression*& out, uint8_t code);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
+  void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);

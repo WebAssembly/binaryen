@@ -15,7 +15,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (call $0)
     (call $1)

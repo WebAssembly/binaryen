@@ -21,8 +21,15 @@ void test_compound() {
     HeapType sameExtern(HeapType::ExternKind);
     assert(Type(extern_, false).getID() == Type(sameExtern, false).getID());
 
+    HeapType exn(HeapType::ExnKind);
+    assert(Type(exn, true).getID() == Type::exnref);
+    assert(Type(exn, false).getID() == Type(exn, false).getID());
+    assert(Type(exn, false).getID() != Type(exn, true).getID());
+    HeapType sameExn(HeapType::ExnKind);
+    assert(Type(exn, false).getID() == Type(sameExn, false).getID());
+
     HeapType any(HeapType::AnyKind);
-    // assert(Type(any, true).getID() == Type::anyref);
+    assert(Type(any, true).getID() == Type::anyref);
     assert(Type(any, false).getID() == Type(any, false).getID());
     assert(Type(any, false).getID() != Type(any, true).getID());
     HeapType sameAny(HeapType::AnyKind);
@@ -41,13 +48,6 @@ void test_compound() {
     assert(Type(i31, false).getID() != Type(i31, true).getID());
     HeapType sameI31(HeapType::I31Kind);
     assert(Type(i31, false).getID() == Type(sameI31, false).getID());
-
-    HeapType exn(HeapType::ExnKind);
-    assert(Type(exn, true).getID() == Type::exnref);
-    assert(Type(exn, false).getID() == Type(exn, false).getID());
-    assert(Type(exn, false).getID() != Type(exn, true).getID());
-    HeapType sameExn(HeapType::ExnKind);
-    assert(Type(exn, false).getID() == Type(sameExn, false).getID());
   }
   {
     Signature signature(Type::i32, Type::none);

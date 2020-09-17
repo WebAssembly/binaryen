@@ -43,15 +43,6 @@ instructions = [
     ("data.drop",      "makeDataDrop(s)"),
     ("memory.copy",    "makeMemoryCopy(s)"),
     ("memory.fill",    "makeMemoryFill(s)"),
-    ("i32.pop",        "makePop(Type::i32)"),
-    ("i64.pop",        "makePop(Type::i64)"),
-    ("f32.pop",        "makePop(Type::f32)"),
-    ("f64.pop",        "makePop(Type::f64)"),
-    ("v128.pop",       "makePop(Type::v128)"),
-    ("funcref.pop",    "makePop(Type::funcref)"),
-    ("externref.pop",  "makePop(Type::externref)"),
-    ("nullref.pop",    "makePop(Type::nullref)"),
-    ("exnref.pop",     "makePop(Type::exnref)"),
     ("i32.load",       "makeLoad(s, Type::i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, Type::i64, /*isAtomic=*/false)"),
     ("f32.load",       "makeLoad(s, Type::f32, /*isAtomic=*/false)"),
@@ -75,8 +66,8 @@ instructions = [
     ("i64.store8",     "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store16",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store32",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
-    ("memory.size",    "makeHost(s, HostOp::MemorySize)"),
-    ("memory.grow",    "makeHost(s, HostOp::MemoryGrow)"),
+    ("memory.size",    "makeMemorySize(s)"),
+    ("memory.grow",    "makeMemoryGrow(s)"),
     ("i32.const",      "makeConst(s, Type::i32)"),
     ("i64.const",      "makeConst(s, Type::i64)"),
     ("f32.const",      "makeConst(s, Type::f32)"),
@@ -503,7 +494,8 @@ instructions = [
     ("br_on_exn",            "makeBrOnExn(s)"),
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
-    ("tuple.extract",        "makeTupleExtract(s)")
+    ("tuple.extract",        "makeTupleExtract(s)"),
+    ("pop",                  "makePop(s)")
 ]
 
 
