@@ -235,10 +235,6 @@ struct OptimizeInstructions
         }
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
-          if (binary->op == EqInt32 && c->value.geti32() == 0) {
-            // equal 0 => eqz
-            return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
-          }
           if (auto* ext = Properties::getSignExtValue(binary->left)) {
             // we are comparing a sign extend to a constant, which means we can
             // use a cheaper zext
@@ -812,8 +808,8 @@ private:
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
       if (binary->op == SubInt32) {
-        if (auto* num = binary->left->dynCast<Const>()) {
-          if (num->value.geti32() == 0) {
+        if (auto* c = binary->left->dynCast<Const>()) {
+          if (c->value.geti32() == 0) {
             // bool(0 - x)   ==>   bool(x)
             return binary->right;
           }
@@ -824,9 +820,9 @@ private:
         binary->left = optimizeBoolean(binary->left);
         binary->right = optimizeBoolean(binary->right);
       } else if (binary->op == NeInt32) {
-        if (auto* num = binary->right->dynCast<Const>()) {
+        if (auto* c = binary->right->dynCast<Const>()) {
           // x != 0 is just x if it's used as a bool
-          if (num->value.geti32() == 0) {
+          if (c->value.geti32() == 0) {
             return binary->left;
           }
           // TODO: Perhaps use it for separate final pass???
@@ -1220,8 +1216,9 @@ private:
                    !EffectAnalyzer(getPassOptions(), features, binary->left)
                       .hasSideEffects()) {
           return binary->right;
-        } else if (binary->op == EqInt64) {
-          return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Eq)) {
+          return Builder(*getModule())
+            .makeUnary(Abstract::getUnary(type, Abstract::EqZ), binary->left);
         }
       }
       // operations on one
@@ -1232,6 +1229,44 @@ private:
                .hasSideEffects()) {
           right->value = Literal::makeSingleZero(type);
           return right;
+        }
+        // bool(x) | 1  ==>  1
+        // bool(x) & 1  ==>  bool(x)
+        // bool(x) == 1  ==>  bool(x)
+        // bool(x) != 1  ==>  !bool(x)
+        if (Bits::getMaxBits(binary->left, this) == 1) {
+          switch (binary->op) {
+            case OrInt32:
+            case OrInt64: {
+              if (!EffectAnalyzer(getPassOptions(), features, binary->left)
+                     .hasSideEffects()) {
+                // bool(x) | 1  ==>  1
+                return binary->right;
+              }
+              break;
+            }
+            case AndInt32:
+            case AndInt64:
+            case EqInt32: {
+              // bool(x) & 1  ==>  bool(x)
+              // bool(x) == 1  ==>  bool(x)
+              return binary->left;
+            }
+            case EqInt64: {
+              // i64(bool(x)) == 1  ==>  i32(bool(x))
+              return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
+            }
+            case NeInt32:
+            case NeInt64: {
+              // bool(x) != 1  ==>  !bool(x)
+              return Builder(*getModule())
+                .makeUnary(
+                  Abstract::getUnary(binary->left->type, Abstract::EqZ),
+                  binary->left);
+            }
+            default: {
+            }
+          }
         }
       }
       // operations on all 1s
