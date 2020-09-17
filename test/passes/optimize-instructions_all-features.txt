@@ -3433,21 +3433,19 @@
    )
   )
   (drop
-   (i64.eq
+   (i32.wrap_i64
     (i64.and
      (local.get $y)
      (i64.const 1)
     )
-    (i64.const 1)
    )
   )
   (drop
-   (i64.ne
+   (i64.eqz
     (i64.and
      (local.get $y)
      (i64.const 1)
     )
-    (i64.const 1)
    )
   )
   (drop
@@ -3461,21 +3459,12 @@
   )
   (drop
    (i64.and
-    (i64.and
-     (local.get $y)
-     (i64.const 1)
-    )
+    (local.get $y)
     (i64.const 1)
    )
   )
   (drop
-   (i64.or
-    (i64.and
-     (local.get $y)
-     (i64.const 1)
-    )
-    (i64.const 1)
-   )
+   (i64.const 1)
   )
  )
  (func $getFallthrough

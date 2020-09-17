@@ -1256,12 +1256,13 @@ private:
               // i64(bool(x)) == 1  ==>  i32(bool(x))
               return Builder(*getModule()).makeUnary(WrapInt64, binary->left);
             }
-            case NeInt32:
-            case NeInt64: {
+            case NeInt32: {
               // bool(x) != 1  ==>  !bool(x)
-              return Builder(*getModule())
-                .makeUnary(Abstract::getUnary(binary->type, Abstract::EqZ),
-                           binary->left);
+              return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
+            }
+            case NeInt64: {
+              // i64(bool(x)) != 1  ==>  !bool(x)
+              return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
             }
             default: {
             }
