@@ -456,6 +456,9 @@ struct EffectAnalyzer
   void visitDrop(Drop* curr) {}
   void visitReturn(Return* curr) { branchesOut = true; }
   void visitMemorySize(MemorySize* curr) {
+    // memory.size accesses the size of the memory, and thus can be modeled as
+    // reading memory
+    readsMemory = true;
     // Atomics are sequentially consistent with memory.size.
     isAtomic = true;
   }
