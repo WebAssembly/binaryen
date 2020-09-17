@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 96)
+project(binaryen LANGUAGES C CXX VERSION 97)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.

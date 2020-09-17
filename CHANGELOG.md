@@ -14,6 +14,10 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+v97
+---
+
 - Remove asm2wasm, which supported Emscripten's fastcomp backend, after fastcomp
   was removed.
 - The new feature flag `--enable-anyref` enables just the `anyref` type incl.
@@ -26,6 +30,7 @@ Current Trunk
 
 v96
 ---
+
 - Fuzzing: Compare wasm2js to the interpreter (#3026)
 - Fix CountLeadingZeroes on MSVC, which lead to bad optimizations (#3028)
 - Asyncify verbose option (#3022)
