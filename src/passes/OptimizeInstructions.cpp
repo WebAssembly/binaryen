@@ -1309,11 +1309,23 @@ private:
             right->value = right->value.neg();
             return binary;
           } else {
+            // don't apply it to `NaN - 0.0`
+            if (auto* leftConst = binary->left->dynCast<Const>()) {
+              if (leftConst->value.isNaN()) {
+                return nullptr;
+              }
+            }
             // x - 0.0   ==>   x
             return binary->left;
           }
         } else if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
           if (std::signbit(value)) {
+            // don't apply it to `NaN - 0.0`
+            if (auto* leftConst = binary->left->dynCast<Const>()) {
+              if (leftConst->value.isNaN()) {
+                return nullptr;
+              }
+            }
             // x + (-0.0)   ==>   x
             return binary->left;
           }
