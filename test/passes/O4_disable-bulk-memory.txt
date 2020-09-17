@@ -968,8 +968,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $4)
+        (f64.const 0.01)
        )
       )
      )
@@ -980,8 +980,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $5)
+        (f64.const 0.01)
        )
       )
      )
@@ -992,8 +992,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $6)
+        (f64.const 0.01)
        )
       )
      )
@@ -1067,12 +1067,12 @@
        (local.get $1)
        (f64.mul
         (f64.mul
-         (f64.const 0.5)
          (local.tee $10
           (f64.load offset=48
            (local.get $0)
           )
          )
+         (f64.const 0.5)
         )
         (f64.add
          (f64.add

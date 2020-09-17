@@ -382,7 +382,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       theVar,
       "memory",
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
-                            ValueBuilder::makeName("memory")));
+                            ValueBuilder::makeName(wasm->memory.base)));
   }
   // for emscripten, add a table import - otherwise we would have
   // FUNCTION_TABLE be an upvar, and not as easy to be minified.
@@ -424,13 +424,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   });
   if (generateFetchHighBits) {
     Builder builder(allocator);
-    asmFunc[3]->push_back(processFunction(
-      wasm,
-      builder.makeFunction(WASM_FETCH_HIGH_BITS,
-                           Signature(Type::none, Type::i32),
-                           {},
-                           builder.makeReturn(builder.makeGlobalGet(
-                             INT64_TO_32_HIGH_BITS, Type::i32)))));
+    asmFunc[3]->push_back(
+      processFunction(wasm,
+                      wasm->addFunction(builder.makeFunction(
+                        WASM_FETCH_HIGH_BITS,
+                        Signature(Type::none, Type::i32),
+                        {},
+                        builder.makeReturn(builder.makeGlobalGet(
+                          INT64_TO_32_HIGH_BITS, Type::i32))))));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
     e->value = WASM_FETCH_HIGH_BITS;
@@ -1267,9 +1268,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                           ValueBuilder::makePtrShift(ptr, 2));
               break;
             default: {
-              std::cerr << "Unhandled number of bytes in i32 load: "
-                        << curr->bytes << std::endl;
-              abort();
+              Fatal() << "Unhandled number of bytes in i32 load: "
+                      << curr->bytes;
             }
           }
           break;
@@ -1283,8 +1283,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
-          abort();
+          Fatal() << "Unhandled type in load: " << curr->type;
         }
       }
       if (curr->isAtomic) {
@@ -1320,8 +1319,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             !FindAll<Call>(curr->value).list.empty() ||
             !FindAll<CallIndirect>(curr->ptr).list.empty() ||
             !FindAll<CallIndirect>(curr->value).list.empty() ||
-            !FindAll<Host>(curr->ptr).list.empty() ||
-            !FindAll<Host>(curr->value).list.empty()) {
+            !FindAll<MemoryGrow>(curr->ptr).list.empty() ||
+            !FindAll<MemoryGrow>(curr->value).list.empty()) {
           Ref ret;
           ScopedTemp ptr(Type::i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
@@ -1377,9 +1376,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in store: " << curr->valueType
-                    << std::endl;
-          abort();
+          Fatal() << "Unhandled type in store: " << curr->valueType;
         }
       }
       if (curr->isAtomic) {
@@ -1430,7 +1427,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
         default:
-          abort();
+          Fatal() << "unknown const type";
       }
     }
 
@@ -1509,9 +1506,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 ValueBuilder::makeNum(16));
             }
             default: {
-              std::cerr << "Unhandled unary i32 operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled unary i32 operator: " << curr;
             }
           }
         }
@@ -1606,8 +1601,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           return ret;
         }
         default: {
-          std::cerr << "Unhandled type in unary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in unary: " << curr;
         }
       }
     }
@@ -1770,17 +1764,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             case CopySignFloat32:
             case CopySignFloat64:
             default:
-              std::cerr << "Unhandled binary float operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled binary float operator: ";
           }
           if (curr->type == Type::f32) {
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
         default:
-          std::cerr << "Unhandled type in binary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in binary: " << curr;
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1841,21 +1832,20 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeReturn(val);
     }
 
-    Ref visitHost(Host* curr) {
-      if (curr->op == HostOp::MemoryGrow) {
-        if (module->memory.exists &&
-            module->memory.max > module->memory.initial) {
-          return ValueBuilder::makeCall(
-            WASM_MEMORY_GROW,
-            makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
-                            wasmToAsmType(curr->operands[0]->type)));
-        } else {
-          return ValueBuilder::makeCall(ABORT_FUNC);
-        }
-      } else if (curr->op == HostOp::MemorySize) {
-        return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    Ref visitMemorySize(MemorySize* curr) {
+      return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    }
+
+    Ref visitMemoryGrow(MemoryGrow* curr) {
+      if (module->memory.exists &&
+          module->memory.max > module->memory.initial) {
+        return ValueBuilder::makeCall(
+          WASM_MEMORY_GROW,
+          makeAsmCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                          wasmToAsmType(curr->delta->type)));
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      WASM_UNREACHABLE("unexpected expr type"); // TODO
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
@@ -2266,8 +2256,7 @@ void Wasm2JSGlue::emitPreES6() {
     // yet.
     if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
       Fatal() << "the name " << base << " cannot be imported from "
-              << "two different modules yet\n";
-      abort();
+              << "two different modules yet";
     }
     baseModuleMap[base] = module;
 

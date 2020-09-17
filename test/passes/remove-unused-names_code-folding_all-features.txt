@@ -1721,7 +1721,7 @@
       )
       (catch
        (local.set $exn
-        (exnref.pop)
+        (pop exnref)
        )
        (br $folding-inner0)
       )
@@ -1729,7 +1729,7 @@
     )
     (catch
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (br $folding-inner0)
     )
@@ -1799,23 +1799,23 @@
     (call $foo)
     (call $foo)
     (return
-     (ref.null)
+     (ref.null exn)
     )
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
     (call $foo)
     (call $foo)
     (call $foo)
     (call $foo)
     (return
-     (ref.null)
+     (ref.null exn)
     )
    )
   )
-  (ref.null)
+  (ref.null exn)
  )
  (func $try-call-optimize-expression-tails
   (local $exn exnref)
@@ -1823,7 +1823,7 @@
    (try
     (do
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (call $foo)
      (call $foo)
@@ -1832,7 +1832,7 @@
     )
     (catch
      (local.set $exn
-      (exnref.pop)
+      (pop exnref)
      )
      (call $foo)
      (call $foo)

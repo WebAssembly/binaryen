@@ -79,7 +79,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     std::string input(IntrinsicsModuleWast);
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(intrinsicsModule, *root[0]);
+    SExpressionWasmBuilder builder(
+      intrinsicsModule, *root[0], IRProfile::Normal);
 
     std::set<Name> neededFunctions;
 

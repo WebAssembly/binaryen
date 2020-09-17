@@ -7,8 +7,8 @@
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
-  // BinaryenTypeNullref: 9
-  // BinaryenTypeExnref: 10
+  // BinaryenTypeExnref: 9
+  // BinaryenTypeAnyref: 10
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -21,7 +21,8 @@ BinaryenFeatureExceptionHandling: 64
 BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
-BinaryenFeatureAll: 1023
+BinaryenFeatureGC: 1024
+BinaryenFeatureAll: 2047
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1753,7 +1754,7 @@ BinaryenFeatureAll: 1023
       )
       (drop
        (ref.is_null
-        (ref.null)
+        (ref.null extern)
        )
       )
       (drop
@@ -1762,8 +1763,13 @@ BinaryenFeatureAll: 1023
        )
       )
       (drop
+       (ref.is_null
+        (ref.null exn)
+       )
+      )
+      (drop
        (select (result funcref)
-        (ref.null)
+        (ref.null func)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
@@ -1776,7 +1782,7 @@ BinaryenFeatureAll: 1023
        )
        (catch
         (local.set $5
-         (exnref.pop)
+         (pop exnref)
         )
         (drop
          (block $try-block (result i32)
@@ -1828,37 +1834,36 @@ BinaryenFeatureAll: 1023
        )
       )
       (drop
-       (i32.pop)
+       (pop i32)
       )
       (drop
-       (i64.pop)
+       (pop i64)
       )
       (drop
-       (f32.pop)
+       (pop f32)
       )
       (drop
-       (f64.pop)
+       (pop f64)
       )
       (drop
-       (funcref.pop)
+       (pop funcref)
       )
       (drop
-       (externref.pop)
+       (pop externref)
       )
       (drop
-       (nullref.pop)
+       (pop exnref)
       )
       (drop
-       (exnref.pop)
+       (pop i32 i64 f32 f64)
       )
       (drop
-       (funcref.pop)
+       (memory.size)
       )
       (drop
-       (nullref.pop)
-      )
-      (drop
-       (exnref.pop)
+       (memory.grow
+        (i32.const 0)
+       )
       )
       (nop)
       (unreachable)

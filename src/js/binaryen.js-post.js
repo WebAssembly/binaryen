@@ -35,8 +35,8 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
+    ['anyref', 'Anyref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -65,7 +65,8 @@ function initializeConstants() {
     'Select',
     'Drop',
     'Return',
-    'Host',
+    'MemorySize',
+    'MemoryGrow',
     'Nop',
     'Unreachable',
     'AtomicCmpxchg',
@@ -121,6 +122,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
+    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -264,8 +266,6 @@ function initializeConstants() {
     'LeFloat64',
     'GtFloat64',
     'GeFloat64',
-    'MemorySize',
-    'MemoryGrow',
     'AtomicRMWAdd',
     'AtomicRMWSub',
     'AtomicRMWAnd',
@@ -598,10 +598,10 @@ function wrapModule(module, self = {}) {
 
   self['memory'] = {
     'size'() {
-      return Module['_BinaryenHost'](module, Module['MemorySize']);
+      return Module['_BinaryenMemorySize'](module);
     },
     'grow'(value) {
-      return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
+      return Module['_BinaryenMemoryGrow'](module, value);
     },
     'init'(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
@@ -2058,21 +2058,21 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
-    }
-  };
-
   self['exnref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
     }
   };
 
+  self['anyref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
@@ -2090,9 +2090,6 @@ function wrapModule(module, self = {}) {
   };
   self['return'] = function(value) {
     return Module['_BinaryenReturn'](module, value);
-  };
-  self['host'] = function(op, name, operands = []) {
-    return preserveStack(() => Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length));
   };
   self['nop'] = function() {
     return Module['_BinaryenNop'](module);
@@ -2636,14 +2633,17 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type
       };
-    case Module['HostId']:
+    case Module['MemorySizeId']:
+      return {
+        'id': id,
+        'type': type
+      };
+    case Module['MemoryGrowId']:
       return {
         'id': id,
         'type': type,
-        'op': Module['_BinaryenHostGetOp'](expr),
-        'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperandAt'])
-      };
+        'delta': Module['_BinaryenMemoryGrowGetDelta'](expr)
+      }
     case Module['AtomicRMWId']:
       return {
         'id': id,
@@ -3030,6 +3030,16 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
+// Gets the value which allow inline functions that are not "lightweight".
+Module['getAllowInliningFunctionsWithLoops'] = function() {
+  return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
+};
+
+// Sets the value which allow inline functions that are not "lightweight".
+Module['setAllowInliningFunctionsWithLoops'] = function(value) {
+  Module['_BinaryenSetAllowInliningFunctionsWithLoops'](value);
+};
+
 // Expression wrappers
 
 // Makes a wrapper class with the specified static members while
@@ -3050,18 +3060,18 @@ function makeExpressionWrapper(ownStaticMembers) {
   // inherit from Expression
   (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
   // make own instance members
-  makeExpressionWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  makeWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
   return SpecificExpression;
 }
 
 // Makes instance members from the given static members
-function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
+function makeWrapperInstanceMembers(prototype, staticMembers, ref = 'expr') {
   Object.keys(staticMembers).forEach(memberName => {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method
       prototype[memberName] = function(...args) {
-        return this.constructor[memberName](this['expr'], ...args);
+        return this.constructor[memberName](this[ref], ...args);
       };
       // Instance accessor calls the respective static methods
       let match;
@@ -3071,10 +3081,10 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
           get() {
-            return member(this['expr']);
+            return member(this[ref]);
           },
           set(value) {
-            if (setterIfAny) setterIfAny(this['expr'], value);
+            if (setterIfAny) setterIfAny(this[ref], value);
             else throw Error("property '" + propertyName + "' has no setter");
           }
         });
@@ -3103,7 +3113,7 @@ Expression['finalize'] = function(expr) {
 Expression['toText'] = function(expr) {
   return Module['emitText'](expr);
 };
-makeExpressionWrapperInstanceMembers(Expression.prototype, Expression);
+makeWrapperInstanceMembers(Expression.prototype, Expression);
 Expression.prototype['valueOf'] = function() {
   return this['expr'];
 };
@@ -3468,63 +3478,15 @@ Module['GlobalSet'] = makeExpressionWrapper({
   }
 });
 
-Module['Host'] = makeExpressionWrapper({
-  'getOp'(expr) {
-    return Module['_BinaryenHostGetOp'](expr);
+Module['MemorySize'] = makeExpressionWrapper({});
+
+Module['MemoryGrow'] = makeExpressionWrapper({
+  'getDelta'(expr) {
+    return Module['_BinaryenMemoryGrowGetDelta'](expr);
   },
-  'setOp'(expr, op) {
-    Module['_BinaryenHostSetOp'](expr, op);
-  },
-  'getNameOperand'(expr) {
-    const name = Module['_BinaryenHostGetNameOperand'](expr);
-    return name ? UTF8ToString(name) : null;
-  },
-  'setNameOperand'(expr, name) {
-    preserveStack(() => { Module['_BinaryenHostSetNameOperand'](expr, strToStack(name)) });
-  },
-  'getNumOperands'(expr) {
-    return Module['_BinaryenHostGetNumOperands'](expr);
-  },
-  'getOperands'(expr) {
-    const numOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenHostGetOperandAt'](expr, index++);
-    }
-    return operands;
-  },
-  'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenHostSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenHostAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
-    }
-  },
-  'getOperandAt'(expr, index) {
-    return Module['_BinaryenHostGetOperandAt'](expr, index);
-  },
-  'setOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
-  },
-  'appendOperand'(expr, operandExpr) {
-    return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
-  },
-  'insertOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
-  },
-  'removeOperandAt'(expr, index) {
-    return Module['_BinaryenHostRemoveOperandAt'](expr, index);
-  },
+  'setDelta'(expr, deltaExpr) {
+    Module['_BinaryenMemoryGrowSetDelta'](expr, deltaExpr);
+  }
 });
 
 Module['Load'] = makeExpressionWrapper({
@@ -4269,6 +4231,42 @@ Module['TupleExtract'] = makeExpressionWrapper({
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
   }
 });
+
+// Function wrapper
+
+Module['Function'] = (() => {
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this['func'] = func;
+  }
+  Function['getName'] = function(func) {
+    return Module['_BinaryenFunctionGetName'](func);
+  };
+  Function['getNumLocals'] = function(func) {
+    return Module['_BinaryenFunctionGetNumLocals'](func);
+  };
+  Function['hasLocalName'] = function(func, index) {
+    return Boolean(Module['_BinaryenFunctionHasLocalName'](func, index));
+  };
+  Function['getLocalName'] = function(func, index) {
+    return UTF8ToString(Module['_BinaryenFunctionGetLocalName'](func, index));
+  };
+  Function['setLocalName'] = function(func, index, name) {
+    preserveStack(() => {
+      Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
+    });
+  };
+  // TODO: add more methods
+  makeWrapperInstanceMembers(Function.prototype, Function, 'func');
+  Function.prototype['valueOf'] = function() {
+    return this['func'];
+  };
+  return Function;
+})();
 
 // Additional customizations
 

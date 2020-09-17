@@ -519,18 +519,20 @@ public:
     ret->value = value;
     return ret;
   }
-  Host*
-  makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = allocator.alloc<Host>();
-    ret->op = op;
-    ret->nameOperand = nameOperand;
-    ret->operands.set(operands);
+  MemorySize* makeMemorySize() {
+    auto* ret = allocator.alloc<MemorySize>();
     ret->finalize();
     return ret;
   }
-  RefNull* makeRefNull() {
-    auto* ret = allocator.alloc<RefNull>();
+  MemoryGrow* makeMemoryGrow(Expression* delta) {
+    auto* ret = allocator.alloc<MemoryGrow>();
+    ret->delta = delta;
     ret->finalize();
+    return ret;
+  }
+  RefNull* makeRefNull(Type type) {
+    auto* ret = allocator.alloc<RefNull>();
+    ret->finalize(type);
     return ret;
   }
   RefIsNull* makeRefIsNull(Expression* value) {
@@ -624,13 +626,16 @@ public:
   Expression* makeConstantExpression(Literal value) {
     TODO_SINGLE_COMPOUND(value.type);
     switch (value.type.getBasic()) {
-      case Type::nullref:
-        return makeRefNull();
       case Type::funcref:
-        if (value.getFunc()[0] != 0) {
+        if (!value.isNull()) {
           return makeRefFunc(value.getFunc());
         }
-        return makeRefNull();
+        return makeRefNull(value.type);
+      case Type::externref:
+      case Type::exnref: // TODO: ExceptionPackage?
+      case Type::anyref:
+        assert(value.isNull());
+        return makeRefNull(value.type);
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -822,9 +827,9 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
-        return ExpressionManipulator::refNull(curr);
+      case Type::anyref:
+        return ExpressionManipulator::refNull(curr, curr->type);
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

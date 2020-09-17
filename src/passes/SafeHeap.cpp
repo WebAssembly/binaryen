@@ -32,8 +32,7 @@
 namespace wasm {
 
 static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
-static const Name GET_SBRK_PTR_IMPORT("emscripten_get_sbrk_ptr");
-static const Name GET_SBRK_PTR_EXPORT("_emscripten_get_sbrk_ptr");
+static const Name GET_SBRK_PTR("emscripten_get_sbrk_ptr");
 static const Name SBRK("sbrk");
 static const Name SEGFAULT_IMPORT("segfault");
 static const Name ALIGNFAULT_IMPORT("alignfault");
@@ -66,12 +65,21 @@ static Name getStoreName(Store* curr) {
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
+  // If the getSbrkPtr function is implemented in the wasm, we must not
+  // instrument that, as it would lead to infinite recursion of it calling
+  // SAFE_HEAP_LOAD that calls it and so forth.
+  Name getSbrkPtr;
+
   bool isFunctionParallel() override { return true; }
 
-  AccessInstrumenter* create() override { return new AccessInstrumenter; }
+  AccessInstrumenter* create() override {
+    return new AccessInstrumenter(getSbrkPtr);
+  }
+
+  AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
-    if (curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -85,7 +93,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -108,7 +116,7 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter().run(runner, module);
+    AccessInstrumenter(getSbrkPtr).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
@@ -118,24 +126,20 @@ struct SafeHeap : public Pass {
   void addImports(Module* module) {
     ImportInfo info(*module);
     // Older emscripten imports env.DYNAMICTOP_PTR.
-    // Newer emscripten imports emscripten_get_sbrk_ptr(), which is later
-    // optimized to have the number in the binary (or in the case of fastcomp,
-    // emscripten_get_sbrk_ptr is an asm.js library function so it is inside
-    // the wasm, and discoverable via an export).
+    // Newer emscripten imports or exports emscripten_get_sbrk_ptr().
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
-    } else if (auto* existing =
-                 info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
+    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
       auto* import = new Function;
-      import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
+      import->name = getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
-      import->base = GET_SBRK_PTR_IMPORT;
+      import->base = GET_SBRK_PTR;
       import->sig = Signature(Type::none, Type::i32);
       module->addFunction(import);
     }
