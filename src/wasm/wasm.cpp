@@ -145,8 +145,10 @@ const char* getExpressionName(Expression* curr) {
       return "drop";
     case Expression::Id::ReturnId:
       return "return";
-    case Expression::Id::HostId:
-      return "host";
+    case Expression::Id::MemorySizeId:
+      return "memory.size";
+    case Expression::Id::MemoryGrowId:
+      return "memory.grow";
     case Expression::Id::NopId:
       return "nop";
     case Expression::Id::UnreachableId:
@@ -879,21 +881,13 @@ void Drop::finalize() {
   }
 }
 
-void Host::finalize() {
-  switch (op) {
-    case MemorySize: {
-      type = Type::i32;
-      break;
-    }
-    case MemoryGrow: {
-      // if the single operand is not reachable, so are we
-      if (operands[0]->type == Type::unreachable) {
-        type = Type::unreachable;
-      } else {
-        type = Type::i32;
-      }
-      break;
-    }
+void MemorySize::finalize() { type = Type::i32; }
+
+void MemoryGrow::finalize() {
+  if (delta->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
   }
 }
 

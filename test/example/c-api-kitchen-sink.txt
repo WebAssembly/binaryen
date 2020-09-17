@@ -1857,6 +1857,14 @@ BinaryenFeatureAll: 2047
       (drop
        (pop i32 i64 f32 f64)
       )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
+      )
       (nop)
       (unreachable)
      )

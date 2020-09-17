@@ -20,6 +20,9 @@ Current Trunk
   basic subtyping of `externref`, `funcref` and `exnref` (if enabled).
 - Enabling the exception handling or anyref features without also enabling
   reference types is a validation error now.
+- The `Host` expression and its respective APIs have been refactored into
+  separate `MemorySize` and `MemoryGrow` expressions to align with other memory
+  instructions.
 
 v96
 ---

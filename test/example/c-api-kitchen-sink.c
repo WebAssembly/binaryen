@@ -756,8 +756,10 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, BinaryenTypeExnref()),
     BinaryenPop(module, iIfF),
-
-    // TODO: Host
+    // Memory
+    BinaryenMemorySize(module),
+    BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    // Other
     BinaryenNop(module),
     BinaryenUnreachable(module),
   };

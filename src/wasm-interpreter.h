@@ -1226,7 +1226,8 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitHost(Host* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemorySize(MemorySize* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryGrow(MemoryGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1491,8 +1492,12 @@ public:
     NOTE_ENTER("Store");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitHost(Host* curr) {
-    NOTE_ENTER("Host");
+  Flow visitMemorySize(MemorySize* curr) {
+    NOTE_ENTER("MemorySize");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitMemoryGrow(MemoryGrow* curr) {
+    NOTE_ENTER("MemoryGrow");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitMemoryInit(MemoryInit* curr) {
@@ -2288,37 +2293,33 @@ private:
         return Literal(std::array<Literal, 2>{{val, zero}});
       }
     }
-    Flow visitHost(Host* curr) {
-      NOTE_ENTER("Host");
-      switch (curr->op) {
-        case MemorySize:
-          return Literal(int32_t(instance.memorySize));
-        case MemoryGrow: {
-          auto fail = Literal(int32_t(-1));
-          Flow flow = this->visit(curr->operands[0]);
-          if (flow.breaking()) {
-            return flow;
-          }
-          int32_t ret = instance.memorySize;
-          uint32_t delta = flow.getSingleValue().geti32();
-          if (delta > uint32_t(-1) / Memory::kPageSize) {
-            return fail;
-          }
-          if (instance.memorySize >= uint32_t(-1) - delta) {
-            return fail;
-          }
-          uint32_t newSize = instance.memorySize + delta;
-          if (newSize > instance.wasm.memory.max) {
-            return fail;
-          }
-          instance.externalInterface->growMemory(instance.memorySize *
-                                                   Memory::kPageSize,
-                                                 newSize * Memory::kPageSize);
-          instance.memorySize = newSize;
-          return Literal(int32_t(ret));
-        }
+    Flow visitMemorySize(MemorySize* curr) {
+      NOTE_ENTER("MemorySize");
+      return Literal(int32_t(instance.memorySize));
+    }
+    Flow visitMemoryGrow(MemoryGrow* curr) {
+      NOTE_ENTER("MemoryGrow");
+      auto fail = Literal(int32_t(-1));
+      Flow flow = this->visit(curr->delta);
+      if (flow.breaking()) {
+        return flow;
       }
-      WASM_UNREACHABLE("invalid op");
+      int32_t ret = instance.memorySize;
+      uint32_t delta = flow.getSingleValue().geti32();
+      if (delta > uint32_t(-1) / Memory::kPageSize) {
+        return fail;
+      }
+      if (instance.memorySize >= uint32_t(-1) - delta) {
+        return fail;
+      }
+      uint32_t newSize = instance.memorySize + delta;
+      if (newSize > instance.wasm.memory.max) {
+        return fail;
+      }
+      instance.externalInterface->growMemory(
+        instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+      instance.memorySize = newSize;
+      return Literal(int32_t(ret));
     }
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
