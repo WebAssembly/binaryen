@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
+ (type $none_=>_i32_anyref_externref (func (result i32 anyref externref)))
  (type $f32_=>_none (func (param f32)))
  (type $exnref_=>_none (func (param exnref)))
- (type $none_=>_i32_anyref_externref (func (result i32 anyref externref)))
  (type $none_=>_externref_anyref_anyref_anyref (func (result externref anyref anyref anyref)))
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
@@ -899,7 +899,7 @@
     )
     (return
      (tuple.make
-      (i32.const -91)
+      (i32.const 127)
       (ref.null any)
       (ref.null extern)
      )
@@ -912,7 +912,7 @@
     )
    )
   )
-  (block $label$0
+  (block $label$0 (result i32 anyref externref)
    (f64.store offset=2
     (select
      (local.get $1)
@@ -927,7 +927,7 @@
           )
           (return
            (tuple.make
-            (i32.const -16383)
+            (i32.const 40)
             (ref.null any)
             (ref.null extern)
            )
@@ -977,7 +977,7 @@
              )
              (return
               (tuple.make
-               (i32.const 622862719)
+               (i32.const 1499027801)
                (ref.null any)
                (ref.null extern)
               )
@@ -1000,7 +1000,7 @@
                 )
                 (return
                  (tuple.make
-                  (i32.const 0)
+                  (i32.const -90)
                   (ref.null any)
                   (ref.null extern)
                  )
@@ -1030,7 +1030,7 @@
                )
                (return
                 (tuple.make
-                 (i32.const 25948)
+                 (i32.const -88)
                  (ref.null any)
                  (ref.null extern)
                 )
@@ -1103,95 +1103,10 @@
      (v128.const i32x4 0x14171109 0x0109440d 0x10031007 0x021d1401)
     )
    )
-   (if
-    (local.tee $1
-     (local.tee $1
-      (block $label$18 (result i32)
-       (call $log-f64
-        (loop $label$19 (result f64)
-         (block
-          (if
-           (i32.eqz
-            (global.get $hangLimit)
-           )
-           (return
-            (tuple.make
-             (i32.const -10)
-             (ref.null any)
-             (ref.null extern)
-            )
-           )
-          )
-          (global.set $hangLimit
-           (i32.sub
-            (global.get $hangLimit)
-            (i32.const 1)
-           )
-          )
-         )
-         (block (result f64)
-          (block $label$20
-           (call $log-f32
-            (block $label$21
-             (call $log-i32
-              (call $hashMemory)
-             )
-             (br $label$19)
-            )
-           )
-           (call $log-i32
-            (call $hashMemory)
-           )
-          )
-          (br_if $label$19
-           (i32.eqz
-            (ref.is_null
-             (ref.null extern)
-            )
-           )
-          )
-          (f64.const 4294967278)
-         )
-        )
-       )
-       (i32.atomic.load16_u offset=3
-        (i32.and
-         (local.get $1)
-         (i32.const 15)
-        )
-       )
-      )
-     )
-    )
-    (block $label$1
-     (return
-      (tuple.make
-       (i32.const -131072)
-       (ref.null any)
-       (ref.null extern)
-      )
-     )
-    )
-    (block $label$2
-     (i32.atomic.store16 offset=4
-      (i32.and
-       (local.tee $1
-        (local.get $1)
-       )
-       (i32.const 15)
-      )
-      (local.tee $1
-       (i32.const 843005738)
-      )
-     )
-     (return
-      (tuple.make
-       (i32.const -8388607)
-       (ref.null any)
-       (ref.null extern)
-      )
-     )
-    )
+   (tuple.make
+    (i32.const 65534)
+    (ref.null any)
+    (ref.null extern)
    )
   )
  )

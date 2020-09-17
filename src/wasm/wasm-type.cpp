@@ -454,7 +454,7 @@ FeatureSet Type::getFeatures() const {
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       case Type::anyref:
-        return FeatureSet::ReferenceTypes | FeatureSet::Anyref;
+        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
     }

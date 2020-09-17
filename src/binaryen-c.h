@@ -197,7 +197,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureAnyref(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules

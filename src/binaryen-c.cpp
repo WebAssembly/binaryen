@@ -327,8 +327,8 @@ BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
 BinaryenFeatures BinaryenFeatureMultivalue(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multivalue);
 }
-BinaryenFeatures BinaryenFeatureAnyref(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Anyref);
+BinaryenFeatures BinaryenFeatureGC(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::GC);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);

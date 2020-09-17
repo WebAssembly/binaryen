@@ -2478,10 +2478,10 @@ static void validateModule(Module& module, ValidationInfo& info) {
 }
 
 static void validateFeatures(Module& module, ValidationInfo& info) {
-  if (module.features.hasAnyref()) {
+  if (module.features.hasGC()) {
     info.shouldBeTrue(module.features.hasReferenceTypes(),
                       module.features,
-                      "--enable-anyref requires --enable-reference-types");
+                      "--enable-gc requires --enable-reference-types");
   }
   if (module.features.hasExceptionHandling()) { // implies exnref
     info.shouldBeTrue(

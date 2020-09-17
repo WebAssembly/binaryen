@@ -121,7 +121,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
-    'Anyref',
+    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
