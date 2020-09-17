@@ -4289,6 +4289,247 @@
       )
     ))
   )
+  (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
+    ;; unary
+    (drop (f64.abs (f64.abs (local.get $w))))
+    (drop (f64.ceil (f64.ceil (local.get $w))))
+    (drop (f64.floor (f64.floor (local.get $w))))
+    (drop (f64.trunc (f64.trunc (local.get $w))))
+    (drop (f64.nearest (f64.nearest (local.get $w))))
+
+    (drop (f64.nearest (f64.trunc (local.get $w)))) ;; skip
+    (drop (f64.trunc (f64.nearest (local.get $w)))) ;; skip
+
+    (drop (f64.neg (f64.neg (local.get $w))))
+    (drop (f64.neg (f64.neg (f64.neg (local.get $w)))))
+    (drop (f64.neg (f64.neg (f64.neg (f64.neg (local.get $w))))))
+
+    (drop (i32.eqz (i32.eqz (local.get $x)))) ;; skip
+    (drop (i32.eqz (i32.eqz (i32.eqz (local.get $x)))))
+    (drop (i32.eqz (i32.eqz (i64.eqz (i64.const 1)))))
+    (drop (i32.eqz (i32.eqz (i32.ne (local.get $x) (i32.const 2)))))
+
+    (drop (i32.extend8_s (i32.extend8_s (local.get $x))))
+    (drop (i32.extend16_s (i32.extend16_s (local.get $x))))
+    (drop (i32.eqz
+      (i32.eqz
+        (i32.and
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+    ))
+
+    ;; binary
+    ;; ((signed)x % y) % y
+    (drop (i32.rem_s
+      (i32.rem_s
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $y)
+    ))
+    ;; ((unsigned)x % y) % y
+    (drop (i32.rem_u
+      (i32.rem_u
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $y)
+    ))
+    ;; 0 - (0 - y)
+    (drop (i32.sub
+      (i32.const 0)
+      (i32.sub
+        (i32.const 0)
+        (local.get $y)
+      )
+    ))
+    ;; x - (x - y)
+    (drop (i32.sub
+      (local.get $x)
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; y - (x - y)   -   skip
+    (drop (i32.sub
+      (local.get $y)
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x ^ (x ^ y)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x ^ (y ^ x)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x ^ y) ^ x
+    (drop (i32.xor
+      (i32.xor
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y ^ x) ^ x
+    (drop (i32.xor
+      (i32.xor
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; x ^ (x ^ x)
+    (drop (i32.xor
+      (local.get $x)
+      (i32.xor
+        (local.get $x)
+        (local.get $x)
+      )
+    ))
+    ;; x & (x & y)
+    (drop (i32.and
+      (local.get $x)
+      (i32.and
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x & (y & x)
+    (drop (i32.and
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x & y) & x
+    (drop (i32.and
+      (i32.and
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y & x) & x
+    (drop (i32.and
+      (i32.and
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; x | (x | y)
+    (drop (i32.or
+      (local.get $x)
+      (i32.or
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x | (y | x)
+    (drop (i32.or
+      (local.get $x)
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; (x | y) | x
+    (drop (i32.or
+      (i32.or
+        (local.get $x)
+        (local.get $y)
+      )
+      (local.get $x)
+    ))
+    ;; (y | x) | x
+    (drop (i32.or
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; (y | x) | z   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $z)
+    ))
+    ;; (z | x) | y   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $z)
+        (local.get $x)
+      )
+      (local.get $y)
+    ))
+    ;; (SE() | x) | x
+    (drop (i32.or
+      (i32.or
+        (call $ne0) ;; side effect
+        (local.get $x)
+      )
+      (local.get $x)
+    ))
+    ;; (x | SE()) | SE()   -   skip
+    (drop (i32.or
+      (i32.or
+        (local.get $x)
+        (call $ne0) ;; side effect
+      )
+      (call $ne0) ;; side effect
+    ))
+    ;; x | (SE() | x)
+    (drop (i32.or
+      (local.get $x)
+      (i32.or
+        (local.get $x)
+        (call $ne0) ;; side effect
+      )
+    ))
+    ;; SE() | (x | SE())   -   skip
+    (drop (i32.or
+      (call $ne0) ;; side effect
+      (i32.or
+        (call $ne0) ;; side effect
+        (local.get $x)
+      )
+    ))
+    ;; (y % x) % y   -   skip
+    (drop (i32.rem_s
+      (i32.rem_s
+        (local.get $y)
+        (local.get $x)
+      )
+      (local.get $y)
+    ))
+    ;; y % (x % y)   -   skip
+    (drop (i32.rem_u
+      (local.get $y)
+      (i32.rem_u
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+  )
   (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
     (memory.copy  ;; skip
       (local.get $dst)
