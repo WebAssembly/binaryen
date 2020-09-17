@@ -1201,10 +1201,14 @@ Type WasmBinaryBuilder::getType() {
       return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
+    case BinaryConsts::EncodedType::eqref:
+      return Type::eqref;
+    case BinaryConsts::EncodedType::i31ref:
+      return Type::i31ref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 HeapType WasmBinaryBuilder::getHeapType() {
@@ -1225,10 +1229,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::ExnKind;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::AnyKind;
+    case BinaryConsts::EncodedHeapType::eq:
+      return HeapType::EqKind;
+    case BinaryConsts::EncodedHeapType::i31:
+      return HeapType::I31Kind;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type WasmBinaryBuilder::getConcreteType() {

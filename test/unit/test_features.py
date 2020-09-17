@@ -276,6 +276,24 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_gc(module, 'all used types should be allowed')
 
+    def test_eqref_global(self):
+        module = '''
+        (module
+         (global $foo eqref (ref.null eq))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 eqref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
@@ -337,7 +355,9 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         filename = 'gc_target_feature.wasm'
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types', 'gc'])
-        self.assertIn('anyref', self.disassemble(filename))
+        disassembly = self.disassemble(filename)
+        self.assertIn('anyref', disassembly)
+        self.assertIn('eqref', disassembly)
 
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')

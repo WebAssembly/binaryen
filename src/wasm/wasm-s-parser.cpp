@@ -874,6 +874,12 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::anyref;
   }
+  if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
+    return Type::eqref;
+  }
+  if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
+    return Type::i31ref;
+  }
   if (allowError) {
     return Type::none;
   }

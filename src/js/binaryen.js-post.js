@@ -37,6 +37,8 @@ function initializeConstants() {
     ['externref', 'Externref'],
     ['exnref', 'Exnref'],
     ['anyref', 'Anyref'],
+    ['eqref', 'Eqref'],
+    ['i31ref', 'I31ref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -2067,6 +2069,18 @@ function wrapModule(module, self = {}) {
   self['anyref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['eqref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['eqref']);
+    }
+  };
+
+  self['i31ref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['i31ref']);
     }
   };
 
