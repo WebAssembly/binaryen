@@ -464,8 +464,10 @@ struct EffectAnalyzer
   }
   void visitMemoryGrow(MemoryGrow* curr) {
     calls = true;
-    // memory.grow modifies the set of valid addresses, and thus can be modeled
-    // as modifying memory
+    // memory.grow technically does a read-modify-write operation on the memory
+    // size in the successful case, modifying the set of valid addresses, and
+    // just a read operation in the failure case
+    readsMemory = true;
     writesMemory = true;
     // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
