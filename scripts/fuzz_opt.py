@@ -916,7 +916,12 @@ if __name__ == '__main__':
         mean = float(total_input_size) / counter
         mean_of_squares = float(total_input_size_squares) / counter
         stddev = math.sqrt(mean_of_squares - (mean ** 2))
-        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(mean) + ', stddev:', str(stddev) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
+        elapsed = max(0.000001, time.time() - start_time)
+        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size,
+              '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
+              'speed:', counter / elapsed,
+              'iters/sec, ', total_wasm_size / elapsed,
+              'wasm_bytes/sec\n')
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
