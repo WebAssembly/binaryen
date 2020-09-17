@@ -40,6 +40,7 @@ template<typename T> int PopCount(T);
 template<typename T> uint32_t BitReverse(T);
 template<typename T> int CountTrailingZeroes(T);
 template<typename T> int CountLeadingZeroes(T);
+template<typename T> int CeilLog2(T);
 
 #ifndef wasm_support_bits_definitions
 // The template specializations are provided elsewhere.
@@ -52,6 +53,8 @@ extern template int CountTrailingZeroes(uint32_t);
 extern template int CountTrailingZeroes(uint64_t);
 extern template int CountLeadingZeroes(uint32_t);
 extern template int CountLeadingZeroes(uint64_t);
+extern template int CeilLog2(uint32_t);
+extern template int CeilLog2(uint64_t);
 #endif
 
 // Convenience signed -> unsigned. It usually doesn't make much sense to use bit
@@ -64,6 +67,9 @@ template<typename T> int CountTrailingZeroes(T v) {
 }
 template<typename T> int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
+}
+template<typename T> int CeilLog2(T v) {
+  return CeilLog2(typename std::make_unsigned<T>::type(v));
 }
 template<typename T> bool IsPowerOf2(T v) {
   return v != 0 && (v & (v - 1)) == 0;
