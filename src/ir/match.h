@@ -78,6 +78,138 @@ namespace Match {
 //    to store the matched Select*, followed by matchers to apply to the ifTrue,
 //    ifFalse, and condition operands.
 //
+//
+// How to create new matchers:
+//
+//  Lets add a matcher for an expression type that is declared in wasm.h:
+//
+//    class Frozzle : public SpecificExpression<Expression::FrozzleId> {
+//    public:
+//      Expression* foo;
+//      Expression* bar;
+//      Expression* baz;
+//    };
+//
+//  This expression is very simple; in order to match it, all we need to do is
+//  apply other matchers to its subexpressions. The matcher infrastructure will
+//  handle this automatically once we tell it how to access the subexpressions.
+//  To tell the matcher infrastructure how many subexpressions there are we need
+//  to specialize `NumComponents`.
+//
+//    template<> struct NumComponents<Frozzle*> {
+//      static constexpr size_t value = 3;
+//    };
+//
+//  And to tell the matcher infrastructure how to access those three
+//  subexpressions, we need to specialize `GetComponent` three times.
+//
+//    template<> struct GetComponent<Frozzle*, 0> {
+//      Expression*& operator()(Frozzle* curr) { return curr->foo; }
+//    };
+//    template<> struct GetComponent<Frozzle*, 1> {
+//      Expression*& operator()(Frozzle* curr) { return curr->bar; }
+//    };
+//    template<> struct GetComponent<Frozzle*, 2> {
+//      Expression*& operator()(Frozzle* curr) { return curr->baz; }
+//    };
+//
+//  For simple expressions, that's all we need to do to get a fully functional
+//  matcher that we can construct and use like this, where S1, S2, and S3 are
+//  the types of the submatchers to use and s1, s2, and s3 are instances of
+//  those types:
+//
+//    Frozzle* extracted;
+//    auto matcher = Matcher<Frozzle*, S1, S2, S3>(&extracted, {}, s1, s2, s3);
+//    if (matches(expr, matcher)) {
+//      // `extracted` set to `expr` here
+//    }
+//
+//  It's annoying to have to write out the types S1, S2, and S3 and we don't get
+//  class template argument deduction (CTAD) until C++17, so it's useful to
+//  create a wrapper function so can take advantage of function template
+//  argument deduction. We can also take this opportunity to make the interface
+//  more compact.
+//
+//    template<class S1, class S2, class S3>
+//    decltype(auto) frozzle(Frozzle** binder, S1 s1, S2 s2, S3 s3) {
+//      return Matcher<Frozzle*, S1, S2, S3>(binder, {}, s1, s2, s3);
+//    }
+//    template<class S1, class S2, class S3>
+//    decltype(auto) frozzle(S1 s1, S2 s2, S3 s3) {
+//      return Matcher<Frozzle*, S1, S2, S3>(nullptr, {}, s1, s2, s3);
+//    }
+//
+//  Notice that we make the interface more compact by providing overloads with
+//  and without the binder. Here is the final matcher usage:
+//
+//    Frozzle* extracted;
+//    if (matches(expr, frozzle(&extracted, s1, s2, s3))) {
+//      // `extracted` set to `expr` here
+//    }
+//
+//  Some matchers are more complicated, though, because they need to do
+//  something besides just applying submatchers to the components of an
+//  expression. These matchers require slightly more work.
+//
+//
+// Complex matchers:
+//
+//  Lets add a matcher that will match calls to functions whose names start with
+//  certain prefixes. Since this is not a normal matcher for Call expressions,
+//  we can't identify it by the Call* type. Instead, we have to create a new
+//  identifier type, called a "Kind" for it.
+//
+//    struct PrefixCallKind {};
+//
+//  Next, since we're not in the common case of using a specific expression
+//  pointer as our kind, we have to tell the matcher infrastructure what type of
+//  thing this matcher matches. Since we want this matcher to be able to match
+//  any given prefix, we also need the matcher to contain the given prefix as
+//  state, and we need to tell the matcher infrastructure what type that state
+//  is as well. To specify these types, we need to specialize
+//  `KindTypeRegistry` for `PrefixCallKind`.
+//
+//    template<> struct KindTypeRegistry<PrefixCallKind> {
+//      using matched_t = Call*;
+//      using data_t = Name;
+//    };
+//
+//  Note that because `matched_t` is set to a specific expression pointer, this
+//  matcher will automatically be able to be applied to any `Expression*`, not
+//  just `Call*`. If `matched_t` were not a specific expression pointer, this
+//  matcher would only be able to be applied to types compatible with
+//  `matched_t`. Also note that if a matcher does not need to store any state,
+//  its `data_t` should be set to `unused_t`.
+//
+//  Now we need to tell the matcher infrastructure what custom logic to apply
+//  for this matcher. We do this by specializing `MatchSelf`.
+//
+//    template<> struct MatchSelf<PrefixCallKind> {
+//      bool operator()(Call*& curr, Name& prefix) {
+//        return curr->name.startsWith(prefix);
+//      }
+//    };
+//
+//  Note that the first parameter to `MatchSelf<Kind>::operator()` will be that
+//  kind's `matched_t` and the second parameter will be that kind's `data_t`,
+//  which may be `unused_t`. (TODO: detect if `data_t` is `unused_t` and don't
+//  expose it in the Matcher interface if so.)
+//
+//  After this, everything is the same as in the simple matcher case. This
+//  particular matcher doesn't need to recurse into any subcomponents, so we can
+//  skip straight to creating the wrapper function.
+//
+//    decltype(auto) prefixCall(Call** binder, Name prefix) {
+//      return Matcher<PrefixCallKind>(binder, prefix);
+//    }
+//
+//  Now we can use the new matcher:
+//
+//    Call* call;
+//    if (matches(expr, prefixCall(&call, "__foo"))) {
+//      // `call` set to `expr` here
+//    }
+//
 
 // The main entrypoint for matching.
 template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
@@ -173,7 +305,7 @@ template<class Kind> struct NumComponents {
 // Every kind of matcher needs to partially specialize this for each of its
 // components. Each specialization should define
 //
-//   const T& operator()(matched_t<Kind>)
+//   T& operator()(matched_t<Kind>)
 //
 // where T is the component's type. Components will be matched from first to
 // last. Uses a struct instead of a function because partial specialization of
