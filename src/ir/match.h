@@ -106,8 +106,8 @@ template<class Kind> struct KindTypeRegistry {
 
 // Given a `Kind`, produce the type `matched_t` that is matched by that Kind and
 // the type `candidate_t` that is the type of the parameter of the `matches`
-// method. These types are only different if `val_t` is a pointer to a subtype
-// of Expression, in which case `candidate_t` is Expression*.
+// method. These types are only different if `matched_t` is a pointer to a
+// subtype of Expression, in which case `candidate_t` is Expression*.
 template<class Kind> struct MatchTypes {
   using matched_t = typename std::conditional_t<
     std::is_base_of<Expression, std::remove_pointer_t<Kind>>::value,
