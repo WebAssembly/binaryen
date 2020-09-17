@@ -330,7 +330,6 @@ private:
           }
         }
         break;
-      eqref:
       case Type::eqref:
         if (wasm.features.hasGC()) {
           // TODO: i31ref
