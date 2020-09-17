@@ -524,8 +524,9 @@ struct OptimizeInstructions
         return ret;
       }
       if (binary->type.isInteger()) {
-        // (x op C1) + (x op C2)   ==>   x * (C1 + C2)
-        // (x op C1) - (x op C2)   ==>   x * (C1 - C2), op = (`*`|`<<`)
+        // (x op C1) + (x op C2)   ==>   x * (C1' + C2')
+        // (x op C1) - (x op C2)   ==>   x * (C1' - C2')
+        // where op = (`*`|`<<`)
         // x * y + x * z   ==>   (y + z) * x
         // x * y - x * z   ==>   (y - z) * x
         if (auto* left = binary->left->dynCast<Binary>()) {
