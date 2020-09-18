@@ -402,7 +402,7 @@
                   (block $label$6
                    (call $log-f32
                     (f32.min
-                     (f32.const -1)
+                     (f32.const -1.1754943508222875e-38)
                      (f32.demote_f64
                       (f64.copysign
                        (f64.const 28)
@@ -523,7 +523,7 @@
                      (call $log-v128
                       (i32x4.ne
                        (local.get $4)
-                       (v128.const i32x4 0xffe3e76d 0x41dfffff 0xd70a3d70 0x3ffb70a3)
+                       (v128.const i32x4 0xffe3e76d 0x41dfffff 0xae147ae1 0x3fe6e147)
                       )
                      )
                      (br $label$3)
