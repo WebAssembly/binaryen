@@ -760,7 +760,7 @@ Literal Literal::add(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
     case Type::f32: {
-      // Special-case addition of 1. nan + 1 can change nan bits per the
+      // Special-case addition of 0. nan + 0 can change nan bits per the
       // wasm spec, but it is ok to just return that original nan, and we
       // do that here so that we are consistent with the optimization of
       // removing the * 1 and leaving just the nan. That is, if we just
