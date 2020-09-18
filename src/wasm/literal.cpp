@@ -759,10 +759,35 @@ Literal Literal::add(const Literal& other) const {
       return Literal(uint32_t(i32) + uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
-    case Type::f32:
-      return Literal(getf32() + other.getf32());
-    case Type::f64:
-      return Literal(getf64() + other.getf64());
+    case Type::f32: {
+      // Special-case addition of -0. nan + -0 can change nan bits per the
+      // wasm spec, but it is ok to just return that original nan, and we
+      // do that here so that we are consistent with the optimization of
+      // removing the + -0 and leaving just the nan. That is, if we just
+      // do a normal add and the CPU decides to change the bits, we'd
+      // give a different result on optimized code, which would look like
+      // it was a bad optimization. So out of all the valid results to
+      // return here, return the simplest one that is consistent with
+      // our optimization for the case of 1.
+      float lhs = getf32(), rhs = other.getf32();
+      if (lhs == 0 && std::signbit(lhs)) {
+        return Literal(rhs);
+      }
+      if (rhs == 0 && std::signbit(rhs)) {
+        return Literal(lhs);
+      }
+      return Literal(lhs + rhs);
+    }
+    case Type::f64: {
+      double lhs = getf64(), rhs = other.getf64();
+      if (lhs == 0 && std::signbit(lhs)) {
+        return Literal(rhs);
+      }
+      if (rhs == 0 && std::signbit(rhs)) {
+        return Literal(lhs);
+      }
+      return Literal(lhs + rhs);
+    }
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -783,15 +808,8 @@ Literal Literal::sub(const Literal& other) const {
       return Literal(uint64_t(i64) - uint64_t(other.i64));
     case Type::f32: {
       float lhs = getf32(), rhs = other.getf32();
-      // Special-case subtraction of 0. nan - 0 can change nan bits per the
-      // wasm spec, but it is ok to just return that original nan, and we
-      // do that here so that we are consistent with the optimization of
-      // removing the - 0 and leaving just the nan. That is, if we just
-      // do a normal add and the CPU decides to change the bits, we'd
-      // give a different result on optimized code, which would look like
-      // it was a bad optimization. So out of all the valid results to
-      // return here, return the simplest one that is consistent with
-      // our optimization for the case of 1.
+      // As with addition, make sure to not change NaN bits in trivial
+      // operations.
       if (rhs == 0 && !std::signbit(rhs)) {
         return Literal(lhs);
       }

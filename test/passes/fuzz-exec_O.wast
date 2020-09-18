@@ -42,19 +42,31 @@
  (func "add1" (result f32)
   (f32.add
    (f32.const -nan:0x34546d)
-   (f32.const 0)
+   (f32.const -0)
   )
  )
  (func "add2" (result f32)
   (f32.add
-   (f32.const 0)
+   (f32.const -0)
    (f32.const -nan:0x34546d)
+  )
+ )
+ (func "add3" (result f32)
+  (f32.add
+   (f32.const -nan:0x34546d)
+   (f32.const 0)
   )
  )
  (func "sub" (result f32)
   (f32.sub
    (f32.const -nan:0x34546d)
    (f32.const 0)
+  )
+ )
+ (func "sub" (result f32)
+  (f32.sub
+   (f32.const -nan:0x34546d)
+   (f32.const -0)
   )
  )
 )
