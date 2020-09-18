@@ -50,6 +50,9 @@ def update_example_tests():
             expected = os.path.splitext(t)[0] + '.txt'
         if not src.endswith(('.c', '.cpp')):
             continue
+        # windows + gcc will need some work
+        if shared.skip_if_on_windows('gcc'):
+            return
         # build the C file separately
         extra = [os.environ.get('CC') or 'gcc',
                  src, '-c', '-o', 'example.o',
@@ -120,8 +123,6 @@ def update_metadce_tests():
 
 
 def update_reduce_tests():
-    if not shared.has_shell_timeout():
-        return
     print('\n[ checking wasm-reduce ]\n')
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))

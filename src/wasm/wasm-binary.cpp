@@ -750,8 +750,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
-      case FeatureSet::Anyref:
-        return BinaryConsts::UserSections::AnyrefFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -2307,8 +2307,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
-      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
-        wasm.features.setAnyref();
+      } else if (name == BinaryConsts::UserSections::GCFeature) {
+        wasm.features.setGC();
       }
     }
   }
@@ -2452,6 +2452,14 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnExn:
       visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
+    case BinaryConsts::MemorySize:
+      visitMemorySize(
+        (curr = allocator.alloc<MemorySize>())->cast<MemorySize>());
+      break;
+    case BinaryConsts::MemoryGrow:
+      visitMemoryGrow(
+        (curr = allocator.alloc<MemoryGrow>())->cast<MemoryGrow>());
+      break;
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -2549,9 +2557,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) {
-        break;
-      }
-      if (maybeVisitHost(curr, code)) {
         break;
       }
       throwError("bad node code " + std::to_string(code));
@@ -4763,32 +4768,23 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
   curr->finalize();
 }
 
-bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
-  Host* curr;
-  switch (code) {
-    case BinaryConsts::MemorySize: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemorySize;
-      break;
-    }
-    case BinaryConsts::MemoryGrow: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemoryGrow;
-      curr->operands.resize(1);
-      curr->operands[0] = popNonVoidExpression();
-      break;
-    }
-    default:
-      return false;
-  }
-  BYN_TRACE("zz node: Host\n");
+void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
+  BYN_TRACE("zz node: MemorySize\n");
   auto reserved = getU32LEB();
   if (reserved != 0) {
-    throwError("Invalid reserved field on memory.grow/memory.size");
+    throwError("Invalid reserved field on memory.size");
   }
   curr->finalize();
-  out = curr;
-  return true;
+}
+
+void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
+  BYN_TRACE("zz node: MemoryGrow\n");
+  curr->delta = popNonVoidExpression();
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("Invalid reserved field on memory.grow");
+  }
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }

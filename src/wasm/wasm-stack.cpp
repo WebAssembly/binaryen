@@ -1671,17 +1671,13 @@ void BinaryInstWriter::visitReturn(Return* curr) {
   o << int8_t(BinaryConsts::Return);
 }
 
-void BinaryInstWriter::visitHost(Host* curr) {
-  switch (curr->op) {
-    case MemorySize: {
-      o << int8_t(BinaryConsts::MemorySize);
-      break;
-    }
-    case MemoryGrow: {
-      o << int8_t(BinaryConsts::MemoryGrow);
-      break;
-    }
-  }
+void BinaryInstWriter::visitMemorySize(MemorySize* curr) {
+  o << int8_t(BinaryConsts::MemorySize);
+  o << U32LEB(0); // Reserved flags field
+}
+
+void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
+  o << int8_t(BinaryConsts::MemoryGrow);
   o << U32LEB(0); // Reserved flags field
 }
 

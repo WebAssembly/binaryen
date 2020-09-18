@@ -215,10 +215,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitSelect(Select* curr) {}
     void visitDrop(Drop* curr) {}
     void visitReturn(Return* curr) {}
-    void visitHost(Host* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitNonScopeName(curr->nameOperand);
-    }
+    void visitMemorySize(MemorySize* curr) {}
+    void visitMemoryGrow(MemoryGrow* curr) {}
     void visitRefNull(RefNull* curr) { visitor.visitType(curr->type); }
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }

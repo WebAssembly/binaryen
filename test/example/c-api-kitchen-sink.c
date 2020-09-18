@@ -247,7 +247,7 @@ void test_features() {
   printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
-  printf("BinaryenFeatureAnyref: %d\n", BinaryenFeatureAnyref());
+  printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -756,8 +756,10 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, BinaryenTypeExnref()),
     BinaryenPop(module, iIfF),
-
-    // TODO: Host
+    // Memory
+    BinaryenMemorySize(module),
+    BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    // Other
     BinaryenNop(module),
     BinaryenUnreachable(module),
   };

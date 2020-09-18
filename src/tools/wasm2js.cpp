@@ -630,8 +630,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
       }
 
       default: {
-        std::cerr << "Unhandled type in assert: " << resType << std::endl;
-        abort();
+        Fatal() << "Unhandled type in assert: " << resType;
       }
     }
   } else {

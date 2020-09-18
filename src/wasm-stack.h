@@ -132,7 +132,8 @@ public:
   void visitBinary(Binary* curr);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
-  void visitHost(Host* curr);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);

@@ -2503,13 +2503,13 @@ switch (op[0]) {
         if (strcmp(op, "memory.fill") == 0) { return makeMemoryFill(s); }
         goto parse_error;
       case 'g':
-        if (strcmp(op, "memory.grow") == 0) { return makeHost(s, HostOp::MemoryGrow); }
+        if (strcmp(op, "memory.grow") == 0) { return makeMemoryGrow(s); }
         goto parse_error;
       case 'i':
         if (strcmp(op, "memory.init") == 0) { return makeMemoryInit(s); }
         goto parse_error;
       case 's':
-        if (strcmp(op, "memory.size") == 0) { return makeHost(s, HostOp::MemorySize); }
+        if (strcmp(op, "memory.size") == 0) { return makeMemorySize(s); }
         goto parse_error;
       default: goto parse_error;
     }

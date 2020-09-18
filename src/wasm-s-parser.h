@@ -183,7 +183,8 @@ private:
   Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
-  Expression* makeHost(Element& s, HostOp op);
+  Expression* makeMemorySize(Element& s);
+  Expression* makeMemoryGrow(Element& s);
   Index getLocalIndex(Element& s);
   Expression* makeLocalGet(Element& s);
   Expression* makeLocalTee(Element& s);

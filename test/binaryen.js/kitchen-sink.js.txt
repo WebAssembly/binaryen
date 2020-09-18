@@ -35,7 +35,7 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.Anyref: 1024
+Features.GC: 1024
 Features.All: 2047
 InvalidId: 0
 BlockId: 1
@@ -57,28 +57,29 @@ BinaryId: 16
 SelectId: 17
 DropId: 18
 ReturnId: 19
-HostId: 20
-NopId: 21
-UnreachableId: 22
-AtomicCmpxchgId: 24
-AtomicRMWId: 23
-AtomicWaitId: 25
-AtomicNotifyId: 26
-SIMDExtractId: 28
-SIMDReplaceId: 29
-SIMDShuffleId: 30
-SIMDTernaryId: 31
-SIMDShiftId: 32
-SIMDLoadId: 33
-MemoryInitId: 34
-DataDropId: 35
-MemoryCopyId: 36
-MemoryFillId: 37
-TryId: 42
-ThrowId: 43
-RethrowId: 44
-BrOnExnId: 45
-PopId: 38
+MemorySizeId: 20
+MemoryGrowId: 21
+NopId: 22
+UnreachableId: 23
+AtomicCmpxchgId: 25
+AtomicRMWId: 24
+AtomicWaitId: 26
+AtomicNotifyId: 27
+SIMDExtractId: 29
+SIMDReplaceId: 30
+SIMDShuffleId: 31
+SIMDTernaryId: 32
+SIMDShiftId: 33
+SIMDLoadId: 34
+MemoryInitId: 35
+DataDropId: 36
+MemoryCopyId: 37
+MemoryFillId: 38
+TryId: 43
+ThrowId: 44
+RethrowId: 45
+BrOnExnId: 46
+PopId: 39
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1919,6 +1920,14 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (pop exnref)
       )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -3759,6 +3768,14 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (pop exnref)
       )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -4336,5 +4353,5 @@ sizeof Literal: 24
  )
 )
 
-getExpressionInfo(memory.grow)={"id":20,"type":2,"op":1,"nameOperand":"","operands":[1]}
+getExpressionInfo(memory.grow)={"id":21,"type":2,"delta":1}
 getExpressionInfo(switch)={"id":5,"type":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
