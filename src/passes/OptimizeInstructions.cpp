@@ -833,8 +833,11 @@ private:
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
         return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
       }
-      if (matches(curr, select(any(&ifTrue), pure(&ifFalse), i32()))) {
-        // The condition must be non-zero
+      int32_t cond;
+      if (matches(curr, select(any(&ifTrue), pure(&ifFalse), i32(&cond)))) {
+        // The condition must be non-zero because a zero would have matched one
+        // of the previous patterns.
+        assert(cond != 0);
         return ifTrue;
       }
       // Don't bother when `ifFalse` isn't pure - we would need to reverse the
