@@ -763,8 +763,8 @@ Literal Literal::add(const Literal& other) const {
       // Special-case addition of 0. nan + 0 can change nan bits per the
       // wasm spec, but it is ok to just return that original nan, and we
       // do that here so that we are consistent with the optimization of
-      // removing the * 1 and leaving just the nan. That is, if we just
-      // do a normal multiply and the CPU decides to change the bits, we'd
+      // removing the + 0 and leaving just the nan. That is, if we just
+      // do a normal add and the CPU decides to change the bits, we'd
       // give a different result on optimized code, which would look like
       // it was a bad optimization. So out of all the valid results to
       // return here, return the simplest one that is consistent with
