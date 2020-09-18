@@ -1907,7 +1907,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
 
 StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
                                            Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = module.allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

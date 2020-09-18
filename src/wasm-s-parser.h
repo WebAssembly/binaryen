@@ -174,6 +174,7 @@ public:
   Expression* parseExpression(Element& s);
 
   MixedArena& getAllocator() { return allocator; }
+  Module& getModule() { return wasm; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -246,6 +247,7 @@ private:
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);

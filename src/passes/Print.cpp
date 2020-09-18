@@ -2298,6 +2298,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "shared ");
     }
+    if (curr->is64()) {
+      o << "i64 ";
+    }
     o << curr->initial;
     if (curr->hasMax()) {
       o << ' ' << curr->max;
@@ -2446,7 +2449,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         << section.data.size();
       bool isPrintable = true;
       for (auto c : section.data) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
           isPrintable = false;
           break;
         }

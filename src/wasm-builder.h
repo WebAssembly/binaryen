@@ -35,10 +35,12 @@ struct NameType {
 
 class Builder {
   MixedArena& allocator;
+  Module& wasm;
 
 public:
-  Builder(MixedArena& allocator) : allocator(allocator) {}
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(MixedArena& allocator, Module& wasm)
+    : allocator(allocator), wasm(wasm) {}
+  Builder(Module& wasm) : allocator(wasm.allocator), wasm(wasm) {}
 
   // make* functions, other globals
 
@@ -486,6 +488,9 @@ public:
     ret->finalize();
     return ret;
   }
+  Const* makeConstPtr(uint64_t val) {
+    return makeConst(Literal::makeFromUInt64(val, wasm.memory.indexType));
+  }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = allocator.alloc<Binary>();
     ret->op = op;
@@ -521,11 +526,17 @@ public:
   }
   MemorySize* makeMemorySize() {
     auto* ret = allocator.alloc<MemorySize>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
     ret->finalize();
     return ret;
   }
   MemoryGrow* makeMemoryGrow(Expression* delta) {
     auto* ret = allocator.alloc<MemoryGrow>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
     ret->delta = delta;
     ret->finalize();
     return ret;
