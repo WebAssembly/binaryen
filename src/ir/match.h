@@ -573,7 +573,8 @@ decltype(auto) i32() {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr)));
 }
-// Use int rather than int32_t to disambiguate literal 0
+// Use int rather than int32_t to disambiguate literal 0, which otherwise could
+// be resolved to either the int32_t overload or any of the pointer overloads.
 decltype(auto) i32(int x) {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(nullptr, Internal::Exact<int32_t>(nullptr, x)));
@@ -599,7 +600,7 @@ decltype(auto) i64(int64_t x) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
-// disambiguate literal 0
+// Disambiguate literal 0, which could otherwise be interpreted as a pointer
 decltype(auto) i64(int x) { return i64(int64_t(x)); }
 decltype(auto) i64(int64_t* binder) {
   return Internal::ConstMatcher(
@@ -622,7 +623,8 @@ decltype(auto) f32(float x) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Exact<float>(nullptr, x)));
 }
-decltype(auto) f32(int x) { return f32(float(x)); } // disambiguate literal 0
+// Disambiguate literal 0, which could otherwise be interpreted as a pointer
+decltype(auto) f32(int x) { return f32(float(x)); }
 decltype(auto) f32(float* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Any(binder)));
@@ -644,7 +646,8 @@ decltype(auto) f64(double x) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
-decltype(auto) f64(int x) { return f64(double(x)); } // disambiguate literal 0
+// Disambiguate literal 0, which could otherwise be interpreted as a pointer
+decltype(auto) f64(int x) { return f64(double(x)); }
 decltype(auto) f64(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Any(binder)));
@@ -666,7 +669,8 @@ decltype(auto) ival(int64_t x) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
-decltype(auto) ival(int x) { return ival(int64_t(x)); } // disambiguate 0
+// Disambiguate literal 0, which could otherwise be interpreted as a pointer
+decltype(auto) ival(int x) { return ival(int64_t(x)); }
 decltype(auto) ival(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Any(binder)));
@@ -696,7 +700,8 @@ decltype(auto) fval(double x) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
-decltype(auto) fval(int x) { return fval(double(x)); } // disambiguate literal 0
+// Disambiguate literal 0, which could otherwise be interpreted as a pointer
+decltype(auto) fval(int x) { return fval(double(x)); }
 decltype(auto) fval(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Any(binder)));
