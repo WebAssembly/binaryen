@@ -306,88 +306,10 @@ struct OptimizeInstructions
           return un;
         }
       }
-      // Selects
-      if (auto* select = curr->dynCast<Select>()) {
-        select->condition = optimizeBoolean(select->condition);
-      }
-      {
-        // Constant condition, we can just pick the right side (barring side
-        // effects)
-        Expression *ifTrue, *ifFalse;
-        if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
-          if (!effects(ifTrue).hasSideEffects()) {
-            return ifFalse;
-          } else {
-            return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
-          }
-        }
-        if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32()))) {
-          // The condition must be non-zero
-          if (!effects(ifFalse).hasSideEffects()) {
-            return ifTrue;
-          } else {
-            // Don't bother - we would need to reverse the order using a temp
-            // local, which would be bad
-          }
-        }
-      }
-      {
-        // Flip select to remove eqz if we can reorder
-        Select* s;
-        Expression *ifTrue, *ifFalse, *c;
-        if (matches(
-              curr,
-              select(
-                &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-            canReorder(ifTrue, ifFalse)) {
-          s->ifTrue = ifFalse;
-          s->ifFalse = ifTrue;
-          s->condition = c;
-        }
-      }
-      {
-        // Simplify selects between 0 and 1
-        Expression* c;
-        bool reversed = matches(curr, select(ival(0), ival(1), any(&c)));
-        if (reversed || matches(curr, select(ival(1), ival(0), any(&c)))) {
-          if (reversed) {
-            c = optimizeBoolean(builder.makeUnary(EqZInt32, c));
-          }
-          if (!Properties::emitsBoolean(c)) {
-            // cond ? 1 : 0 ==> !!cond
-            c = builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt32, c));
-          }
-          return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c)
-                                         : c;
-        }
-      }
-      {
-        // Sides are identical, fold
-        Expression *ifTrue, *ifFalse, *c;
-        if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-            ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
-          auto value = effects(ifTrue);
-          if (value.hasSideEffects()) {
-            // At best we don't need the condition, but need to execute the
-            // value twice. a block is larger than a select by 2 bytes, and we
-            // must drop one value, so 3, while we save the condition, so it's
-            // not clear this is worth it, TODO
-          } else {
-            // value has no side effects
-            auto condition = effects(c);
-            if (!condition.hasSideEffects()) {
-              return ifTrue;
-            } else {
-              // The condition is last, so we need a new local, and it may be a
-              // bad idea to use a block like we do for an if. Do it only if we
-              // can reorder
-              if (!condition.invalidates(value)) {
-                return builder.makeSequence(builder.makeDrop(c), ifTrue);
-              }
-            }
-          }
-        }
-      }
+    }
+
+    if (auto* select = curr->dynCast<Select>()) {
+      return optimizeSelect(select);
     }
 
     if (auto* binary = curr->dynCast<Binary>()) {
@@ -871,6 +793,90 @@ private:
     }
     // TODO: recurse into br values?
     return boolean;
+  }
+
+  Expression* optimizeSelect(Select* curr) {
+    using namespace Match;
+    Builder builder(*getModule());
+    curr->condition = optimizeBoolean(curr->condition);
+    {
+      // Constant condition, we can just pick the right side (barring side
+      // effects)
+      Expression *ifTrue, *ifFalse;
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
+        if (!effects(ifTrue).hasSideEffects()) {
+          return ifFalse;
+        } else {
+          return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
+        }
+      }
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32()))) {
+        // The condition must be non-zero
+        if (!effects(ifFalse).hasSideEffects()) {
+          return ifTrue;
+        } else {
+          // Don't bother - we would need to reverse the order using a temp
+          // local, which would be bad
+        }
+      }
+    }
+    {
+      // Flip select to remove eqz if we can reorder
+      Select* s;
+      Expression *ifTrue, *ifFalse, *c;
+      if (matches(
+            curr,
+            select(
+              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
+          canReorder(ifTrue, ifFalse)) {
+        s->ifTrue = ifFalse;
+        s->ifFalse = ifTrue;
+        s->condition = c;
+      }
+    }
+    {
+      // Simplify selects between 0 and 1
+      Expression* c;
+      bool reversed = matches(curr, select(ival(0), ival(1), any(&c)));
+      if (reversed || matches(curr, select(ival(1), ival(0), any(&c)))) {
+        if (reversed) {
+          c = optimizeBoolean(builder.makeUnary(EqZInt32, c));
+        }
+        if (!Properties::emitsBoolean(c)) {
+          // cond ? 1 : 0 ==> !!cond
+          c = builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt32, c));
+        }
+        return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
+      }
+    }
+    {
+      // Sides are identical, fold
+      Expression *ifTrue, *ifFalse, *c;
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
+          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
+        auto value = effects(ifTrue);
+        if (value.hasSideEffects()) {
+          // At best we don't need the condition, but need to execute the
+          // value twice. a block is larger than a select by 2 bytes, and we
+          // must drop one value, so 3, while we save the condition, so it's
+          // not clear this is worth it, TODO
+        } else {
+          // value has no side effects
+          auto condition = effects(c);
+          if (!condition.hasSideEffects()) {
+            return ifTrue;
+          } else {
+            // The condition is last, so we need a new local, and it may be a
+            // bad idea to use a block like we do for an if. Do it only if we
+            // can reorder
+            if (!condition.invalidates(value)) {
+              return builder.makeSequence(builder.makeDrop(c), ifTrue);
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 
   // find added constants in an expression tree, including multiplied/shifted,
