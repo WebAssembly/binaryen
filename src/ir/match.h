@@ -233,7 +233,7 @@ struct unused_t {};
 template<class Kind> struct KindTypeRegistry {
   // The matched type
   using matched_t = void;
-  // Type type of additional state needed to perform a match. Can be set to
+  // The type of additional state needed to perform a match. Can be set to
   // `unused_t` if it's not needed.
   using data_t = unused_t;
 };
