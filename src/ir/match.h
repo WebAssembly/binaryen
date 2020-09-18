@@ -104,13 +104,13 @@ namespace Match {
 //  subexpressions, we need to specialize `GetComponent` three times.
 //
 //    template<> struct GetComponent<Frozzle*, 0> {
-//      Expression*& operator()(Frozzle* curr) { return curr->foo; }
+//      Expression* operator()(Frozzle* curr) { return curr->foo; }
 //    };
 //    template<> struct GetComponent<Frozzle*, 1> {
-//      Expression*& operator()(Frozzle* curr) { return curr->bar; }
+//      Expression* operator()(Frozzle* curr) { return curr->bar; }
 //    };
 //    template<> struct GetComponent<Frozzle*, 2> {
-//      Expression*& operator()(Frozzle* curr) { return curr->baz; }
+//      Expression* operator()(Frozzle* curr) { return curr->baz; }
 //    };
 //
 //  For simple expressions, that's all we need to do to get a fully functional
@@ -185,7 +185,7 @@ namespace Match {
 //  for this matcher. We do this by specializing `MatchSelf`.
 //
 //    template<> struct MatchSelf<PrefixCallKind> {
-//      bool operator()(Call*& curr, Name& prefix) {
+//      bool operator()(Call* curr, Name prefix) {
 //        return curr->name.startsWith(prefix);
 //      }
 //    };
@@ -292,7 +292,7 @@ bool dynCastCandidate(candidate_t<Kind> candidate, matched_t<Kind>& out) {
 // before recursing into submatchers, potentially short-circuiting the match.
 // Uses a struct because partial specialization of functions is not allowed.
 template<class Kind> struct MatchSelf {
-  bool operator()(matched_t<Kind>&, data_t<Kind>&) { return true; }
+  bool operator()(matched_t<Kind>, data_t<Kind>) { return true; }
 };
 
 // Used to statically ensure that each matcher has the correct number of
@@ -305,7 +305,7 @@ template<class Kind> struct NumComponents {
 // Every kind of matcher needs to partially specialize this for each of its
 // components. Each specialization should define
 //
-//   T& operator()(matched_t<Kind>)
+//   T operator()(matched_t<Kind>)
 //
 // where T is the component's type. Components will be matched from first to
 // last. Uses a struct instead of a function because partial specialization of
@@ -327,7 +327,7 @@ struct SubMatchers<CurrMatcher, NextMatchers...> {
 // specialization of functions is not allowed.
 template<class Kind, int pos, class CurrMatcher = void, class... NextMatchers>
 struct Components {
-  static bool match(matched_t<Kind>& candidate,
+  static bool match(matched_t<Kind> candidate,
                     SubMatchers<CurrMatcher, NextMatchers...>& matchers) {
     return matchers.curr.matches(GetComponent<Kind, pos>{}(candidate)) &&
            Components<Kind, pos + 1, NextMatchers...>::match(candidate,
@@ -337,7 +337,7 @@ struct Components {
 template<class Kind, int pos> struct Components<Kind, pos> {
   static_assert(pos == NumComponents<Kind>::value,
                 "Unexpected number of submatchers");
-  static bool match(matched_t<Kind>&, SubMatchers<>&) {
+  static bool match(matched_t<Kind>, SubMatchers<>) {
     // Base case when there are no components left; trivially true.
     return true;
   }
@@ -384,7 +384,7 @@ template<class T> struct KindTypeRegistry<ExactKind<T>> {
   using data_t = T;
 };
 template<class T> struct MatchSelf<ExactKind<T>> {
-  bool operator()(T& self, T& expected) { return self == expected; }
+  bool operator()(T self, T expected) { return self == expected; }
 };
 template<class T> decltype(auto) Exact(T* binder, T data) {
   return Matcher<ExactKind<T>>(binder, data);
@@ -392,28 +392,28 @@ template<class T> decltype(auto) Exact(T* binder, T data) {
 
 // {I32,I64,Int,F32,F64,Float,Number}Lit: match `Literal` of the expected `Type`
 struct I32LK {
-  static bool matchType(Literal& lit) { return lit.type == Type::i32; }
-  static int32_t getVal(Literal& lit) { return lit.geti32(); }
+  static bool matchType(Literal lit) { return lit.type == Type::i32; }
+  static int32_t getVal(Literal lit) { return lit.geti32(); }
 };
 struct I64LK {
-  static bool matchType(Literal& lit) { return lit.type == Type::i64; }
-  static int64_t getVal(Literal& lit) { return lit.geti64(); }
+  static bool matchType(Literal lit) { return lit.type == Type::i64; }
+  static int64_t getVal(Literal lit) { return lit.geti64(); }
 };
 struct IntLK {
-  static bool matchType(Literal& lit) { return lit.type.isInteger(); }
-  static int64_t getVal(Literal& lit) { return lit.getInteger(); }
+  static bool matchType(Literal lit) { return lit.type.isInteger(); }
+  static int64_t getVal(Literal lit) { return lit.getInteger(); }
 };
 struct F32LK {
-  static bool matchType(Literal& lit) { return lit.type == Type::f32; }
-  static float getVal(Literal& lit) { return lit.getf32(); }
+  static bool matchType(Literal lit) { return lit.type == Type::f32; }
+  static float getVal(Literal lit) { return lit.getf32(); }
 };
 struct F64LK {
-  static bool matchType(Literal& lit) { return lit.type == Type::f64; }
-  static double getVal(Literal& lit) { return lit.getf64(); }
+  static bool matchType(Literal lit) { return lit.type == Type::f64; }
+  static double getVal(Literal lit) { return lit.getf64(); }
 };
 struct FloatLK {
-  static bool matchType(Literal& lit) { return lit.type.isFloat(); }
-  static double getVal(Literal& lit) { return lit.getFloat(); }
+  static bool matchType(Literal lit) { return lit.type.isFloat(); }
+  static double getVal(Literal lit) { return lit.getFloat(); }
 };
 template<class T> struct LitKind {};
 template<class T> struct KindTypeRegistry<LitKind<T>> {
@@ -421,7 +421,7 @@ template<class T> struct KindTypeRegistry<LitKind<T>> {
   using data_t = unused_t;
 };
 template<class T> struct MatchSelf<LitKind<T>> {
-  bool operator()(Literal& lit, unused_t) { return T::matchType(lit); }
+  bool operator()(Literal lit, unused_t) { return T::matchType(lit); }
 };
 template<class T> struct NumComponents<LitKind<T>> {
   static constexpr size_t value = 1;
@@ -453,7 +453,7 @@ template<> struct KindTypeRegistry<NumberLitKind> {
   using data_t = int32_t;
 };
 template<> struct MatchSelf<NumberLitKind> {
-  bool operator()(Literal& lit, int32_t expected) {
+  bool operator()(Literal lit, int32_t expected) {
     return lit.type.isNumber() &&
            Literal::makeFromInt32(expected, lit.type) == lit;
   }
@@ -465,7 +465,7 @@ decltype(auto) NumberLit(Literal* binder, int32_t expected) {
 // Const
 template<> struct NumComponents<Const*> { static constexpr size_t value = 1; };
 template<> struct GetComponent<Const*, 0> {
-  Literal& operator()(Const* c) { return c->value; }
+  Literal operator()(Const* c) { return c->value; }
 };
 template<class S> decltype(auto) ConstMatcher(Const** binder, S s) {
   return Matcher<Const*, S>(binder, {}, s);
@@ -496,7 +496,7 @@ template<class T> struct NumComponents<UnaryKind<T>> {
   static constexpr size_t value = 1;
 };
 template<class T> struct GetComponent<UnaryKind<T>, 0> {
-  Expression*& operator()(Unary* curr) { return curr->value; }
+  Expression* operator()(Unary* curr) { return curr->value; }
 };
 template<class S> decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S s) {
   return Matcher<UnaryKind<UnaryK>, S>(binder, op, s);
@@ -531,10 +531,10 @@ template<class T> struct NumComponents<BinaryKind<T>> {
   static constexpr size_t value = 2;
 };
 template<class T> struct GetComponent<BinaryKind<T>, 0> {
-  Expression*& operator()(Binary* curr) { return curr->left; }
+  Expression* operator()(Binary* curr) { return curr->left; }
 };
 template<class T> struct GetComponent<BinaryKind<T>, 1> {
-  Expression*& operator()(Binary* curr) { return curr->right; }
+  Expression* operator()(Binary* curr) { return curr->right; }
 };
 template<class S1, class S2>
 decltype(auto) BinaryMatcher(Binary** binder, BinaryOp op, S1 s1, S2 s2) {
@@ -549,13 +549,13 @@ AbstractBinaryMatcher(Binary** binder, Abstract::Op op, S1 s1, S2 s2) {
 // Select
 template<> struct NumComponents<Select*> { static constexpr size_t value = 3; };
 template<> struct GetComponent<Select*, 0> {
-  Expression*& operator()(Select* curr) { return curr->ifTrue; }
+  Expression* operator()(Select* curr) { return curr->ifTrue; }
 };
 template<> struct GetComponent<Select*, 1> {
-  Expression*& operator()(Select* curr) { return curr->ifFalse; }
+  Expression* operator()(Select* curr) { return curr->ifFalse; }
 };
 template<> struct GetComponent<Select*, 2> {
-  Expression*& operator()(Select* curr) { return curr->condition; }
+  Expression* operator()(Select* curr) { return curr->condition; }
 };
 template<class S1, class S2, class S3>
 decltype(auto) SelectMatcher(Select** binder, S1 s1, S2 s2, S3 s3) {
