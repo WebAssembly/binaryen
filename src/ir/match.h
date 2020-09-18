@@ -131,11 +131,11 @@ namespace Match {
 //  more compact.
 //
 //    template<class S1, class S2, class S3>
-//    decltype(auto) frozzle(Frozzle** binder, S1 s1, S2 s2, S3 s3) {
+//    decltype(auto) frozzle(Frozzle** binder, S1&& s1, S2&& s2, S3&& s3) {
 //      return Matcher<Frozzle*, S1, S2, S3>(binder, {}, s1, s2, s3);
 //    }
 //    template<class S1, class S2, class S3>
-//    decltype(auto) frozzle(S1 s1, S2 s2, S3 s3) {
+//    decltype(auto) frozzle(S1&& s1, S2&& s2, S3&& s3) {
 //      return Matcher<Frozzle*, S1, S2, S3>(nullptr, {}, s1, s2, s3);
 //    }
 //
@@ -429,22 +429,22 @@ template<class T> struct NumComponents<LitKind<T>> {
 template<class T> struct GetComponent<LitKind<T>, 0> {
   decltype(auto) operator()(Literal lit) { return T::getVal(lit); }
 };
-template<class S> decltype(auto) I32Lit(Literal* binder, S s) {
+template<class S> decltype(auto) I32Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<I32LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) I64Lit(Literal* binder, S s) {
+template<class S> decltype(auto) I64Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<I64LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) IntLit(Literal* binder, S s) {
+template<class S> decltype(auto) IntLit(Literal* binder, S&& s) {
   return Matcher<LitKind<IntLK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) F32Lit(Literal* binder, S s) {
+template<class S> decltype(auto) F32Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<F32LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) F64Lit(Literal* binder, S s) {
+template<class S> decltype(auto) F64Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<F64LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) FloatLit(Literal* binder, S s) {
+template<class S> decltype(auto) FloatLit(Literal* binder, S&& s) {
   return Matcher<LitKind<FloatLK>, S>(binder, {}, s);
 }
 struct NumberLitKind {};
@@ -467,7 +467,7 @@ template<> struct NumComponents<Const*> { static constexpr size_t value = 1; };
 template<> struct GetComponent<Const*, 0> {
   Literal operator()(Const* c) { return c->value; }
 };
-template<class S> decltype(auto) ConstMatcher(Const** binder, S s) {
+template<class S> decltype(auto) ConstMatcher(Const** binder, S&& s) {
   return Matcher<Const*, S>(binder, {}, s);
 }
 
@@ -498,11 +498,12 @@ template<class T> struct NumComponents<UnaryKind<T>> {
 template<class T> struct GetComponent<UnaryKind<T>, 0> {
   Expression* operator()(Unary* curr) { return curr->value; }
 };
-template<class S> decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S s) {
+template<class S>
+decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S&& s) {
   return Matcher<UnaryKind<UnaryK>, S>(binder, op, s);
 }
 template<class S>
-decltype(auto) AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S s) {
+decltype(auto) AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
   return Matcher<UnaryKind<AbstractUnaryK>, S>(binder, op, s);
 }
 
@@ -537,12 +538,12 @@ template<class T> struct GetComponent<BinaryKind<T>, 1> {
   Expression* operator()(Binary* curr) { return curr->right; }
 };
 template<class S1, class S2>
-decltype(auto) BinaryMatcher(Binary** binder, BinaryOp op, S1 s1, S2 s2) {
+decltype(auto) BinaryMatcher(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
   return Matcher<BinaryKind<BinaryK>, S1, S2>(binder, op, s1, s2);
 }
 template<class S1, class S2>
 decltype(auto)
-AbstractBinaryMatcher(Binary** binder, Abstract::Op op, S1 s1, S2 s2) {
+AbstractBinaryMatcher(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
   return Matcher<BinaryKind<AbstractBinaryK>, S1, S2>(binder, op, s1, s2);
 }
 
@@ -558,7 +559,7 @@ template<> struct GetComponent<Select*, 2> {
   Expression* operator()(Select* curr) { return curr->condition; }
 };
 template<class S1, class S2, class S3>
-decltype(auto) SelectMatcher(Select** binder, S1 s1, S2 s2, S3 s3) {
+decltype(auto) SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Matcher<Select*, S1, S2, S3>(binder, {}, s1, s2, s3);
 }
 
@@ -737,41 +738,42 @@ decltype(auto) constant(Const** binder, int32_t x) {
 decltype(auto) any() { return Internal::Any<Expression*>(nullptr); }
 decltype(auto) any(Expression** binder) { return Internal::Any(binder); }
 
-template<class S> decltype(auto) unary(UnaryOp op, S s) {
+template<class S> decltype(auto) unary(UnaryOp op, S&& s) {
   return Internal::UnaryMatcher(nullptr, op, s);
 }
-template<class S> decltype(auto) unary(Abstract::Op op, S s) {
+template<class S> decltype(auto) unary(Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(nullptr, op, s);
 }
-template<class S> decltype(auto) unary(Unary** binder, UnaryOp op, S s) {
+template<class S> decltype(auto) unary(Unary** binder, UnaryOp op, S&& s) {
   return Internal::UnaryMatcher(binder, op, s);
 }
-template<class S> decltype(auto) unary(Unary** binder, Abstract::Op op, S s) {
+template<class S> decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(binder, op, s);
 }
 
-template<class S1, class S2> decltype(auto) binary(BinaryOp op, S1 s1, S2 s2) {
+template<class S1, class S2>
+decltype(auto) binary(BinaryOp op, S1&& s1, S2&& s2) {
   return Internal::BinaryMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Abstract::Op op, S1 s1, S2 s2) {
+decltype(auto) binary(Abstract::Op op, S1&& s1, S2&& s2) {
   return Internal::AbstractBinaryMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Binary** binder, BinaryOp op, S1 s1, S2 s2) {
+decltype(auto) binary(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
   return Internal::BinaryMatcher(binder, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Binary** binder, Abstract::Op op, S1 s1, S2 s2) {
+decltype(auto) binary(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
   return Internal::AbstractBinaryMatcher(binder, op, s1, s2);
 }
 
 template<class S1, class S2, class S3>
-decltype(auto) select(S1 s1, S2 s2, S3 s3) {
+decltype(auto) select(S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(nullptr, s1, s2, s3);
 }
 template<class S1, class S2, class S3>
-decltype(auto) select(Select** binder, S1 s1, S2 s2, S3 s3) {
+decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(binder, s1, s2, s3);
 }
 
