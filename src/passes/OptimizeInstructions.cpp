@@ -133,6 +133,19 @@ struct LocalScanner : PostWalker<LocalScanner> {
   }
 };
 
+// Create a custom matcher for checking side effects
+template<class Opt> struct PureMatcherKind {};
+template<class Opt>
+struct Match::Internal::KindTypeRegistry<PureMatcherKind<Opt>> {
+  using matched_t = Expression*;
+  using data_t = Opt*;
+};
+template<class Opt> struct Match::Internal::MatchSelf<PureMatcherKind<Opt>> {
+  bool operator()(Expression* curr, Opt* opt) {
+    return !opt->effects(curr).hasSideEffects();
+  }
+};
+
 // Main pass class
 struct OptimizeInstructions
   : public WalkerPass<
@@ -192,6 +205,11 @@ struct OptimizeInstructions
 
   EffectAnalyzer effects(Expression* expr) {
     return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
+  }
+
+  decltype(auto) pure(Expression** binder) {
+    using namespace Match::Internal;
+    return Matcher<PureMatcherKind<OptimizeInstructions>>(binder, this);
   }
 
   bool canReorder(Expression* a, Expression* b) {
@@ -806,25 +824,21 @@ private:
     Builder builder(*getModule());
     curr->condition = optimizeBoolean(curr->condition);
     {
-      // Constant condition, we can just pick the right side (barring side
+      // Constant condition, we can just pick the correct side (barring side
       // effects)
       Expression *ifTrue, *ifFalse;
+      if (matches(curr, select(pure(&ifTrue), any(&ifFalse), i32(0)))) {
+        return ifFalse;
+      }
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
-        if (!effects(ifTrue).hasSideEffects()) {
-          return ifFalse;
-        } else {
-          return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
-        }
+        return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
       }
-      if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32()))) {
+      if (matches(curr, select(any(&ifTrue), pure(&ifFalse), i32()))) {
         // The condition must be non-zero
-        if (!effects(ifFalse).hasSideEffects()) {
-          return ifTrue;
-        } else {
-          // Don't bother - we would need to reverse the order using a temp
-          // local, which would be bad
-        }
+        return ifTrue;
       }
+      // Don't bother when `ifFalse` isn't pure - we would need to reverse the
+      // order using a temp local, which would be bad
     }
     {
       // Flip select to remove eqz if we can reorder
@@ -1232,9 +1246,8 @@ private:
         matches(curr, binary(Abstract::Xor, any(&left), ival(0)))) {
       return left;
     }
-    if ((matches(curr, binary(Abstract::Mul, any(&left), ival(0))) ||
-         matches(curr, binary(Abstract::And, any(&left), ival(0)))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::Mul, pure(&left), ival(0))) ||
+        matches(curr, binary(Abstract::And, pure(&left), ival(0)))) {
       return right;
     }
     // x == 0   ==>   eqz x
@@ -1244,14 +1257,13 @@ private:
 
     // Operations on one
     // (signed)x % 1   ==>   0
-    if (matches(curr, binary(Abstract::RemS, any(&left), ival(1))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
       right->value = Literal::makeSingleZero(type);
       return right;
     }
     // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Abstract::Or, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1 && !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
+        Bits::getMaxBits(left, this) == 1) {
       return right;
     }
     // bool(x) & 1  ==>  bool(x)
@@ -1281,19 +1293,16 @@ private:
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Abstract::Or, any(&left), ival(-1))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::Or, pure(&left), ival(-1)))) {
       return right;
     }
     // (signed)x % -1   ==>   0
-    if (matches(curr, binary(Abstract::RemS, any(&left), ival(-1))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
       right->value = Literal::makeSingleZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
-    if (matches(curr, binary(Abstract::GtU, any(&left), ival(-1))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
       right->value = Literal::makeSingleZero(Type::i32);
       right->type = Type::i32;
       return right;
@@ -1320,8 +1329,7 @@ private:
       return curr;
     }
     // (unsigned)x <= -1   ==>   1
-    if (matches(curr, binary(Abstract::LeU, any(&left), ival(-1))) &&
-        !effects(left).hasSideEffects()) {
+    if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
       right->value = Literal::makeFromInt32(1, Type::i32);
       right->type = Type::i32;
       return right;
