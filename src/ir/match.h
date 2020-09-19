@@ -131,11 +131,12 @@ namespace Match {
 //  more compact.
 //
 //    template<class S1, class S2, class S3>
-//    decltype(auto) frozzle(Frozzle** binder, S1&& s1, S2&& s2, S3&& s3) {
+//    inline decltype(auto) frozzle(Frozzle** binder,
+//                                  S1&& s1, S2&& s2, S3&& s3) {
 //      return Matcher<Frozzle*, S1, S2, S3>(binder, {}, s1, s2, s3);
 //    }
 //    template<class S1, class S2, class S3>
-//    decltype(auto) frozzle(S1&& s1, S2&& s2, S3&& s3) {
+//    inline decltype(auto) frozzle(S1&& s1, S2&& s2, S3&& s3) {
 //      return Matcher<Frozzle*, S1, S2, S3>(nullptr, {}, s1, s2, s3);
 //    }
 //
@@ -277,7 +278,7 @@ using enable_if_not_castable_t = typename std::enable_if<
 // Do a normal dynCast from Expression* to the subtype, storing the result in
 // `out` and returning `true` iff the cast succeeded.
 template<class Kind, enable_if_castable_t<Kind> = 0>
-static bool dynCastCandidate(candidate_t<Kind> candidate,
+inline bool dynCastCandidate(candidate_t<Kind> candidate,
                              matched_t<Kind>& out) {
   out = candidate->template dynCast<std::remove_pointer_t<matched_t<Kind>>>();
   return out != nullptr;
@@ -285,7 +286,8 @@ static bool dynCastCandidate(candidate_t<Kind> candidate,
 
 // Otherwise we are not matching an Expression, so this is infallible.
 template<class Kind, enable_if_not_castable_t<Kind> = 0>
-bool dynCastCandidate(candidate_t<Kind> candidate, matched_t<Kind>& out) {
+inline bool dynCastCandidate(candidate_t<Kind> candidate,
+                             matched_t<Kind>& out) {
   out = candidate;
   return true;
 }
@@ -329,8 +331,9 @@ struct SubMatchers<CurrMatcher, NextMatchers...> {
 // specialization of functions is not allowed.
 template<class Kind, int pos, class CurrMatcher = void, class... NextMatchers>
 struct Components {
-  static bool match(matched_t<Kind> candidate,
-                    SubMatchers<CurrMatcher, NextMatchers...>& matchers) {
+  static inline bool
+  match(matched_t<Kind> candidate,
+        SubMatchers<CurrMatcher, NextMatchers...>& matchers) {
     return matchers.curr.matches(GetComponent<Kind, pos>{}(candidate)) &&
            Components<Kind, pos + 1, NextMatchers...>::match(candidate,
                                                              matchers.next);
@@ -339,7 +342,7 @@ struct Components {
 template<class Kind, int pos> struct Components<Kind, pos> {
   static_assert(pos == NumComponents<Kind>::value,
                 "Unexpected number of submatchers");
-  static bool match(matched_t<Kind>, SubMatchers<>) {
+  static inline bool match(matched_t<Kind>, SubMatchers<>) {
     // Base case when there are no components left; trivially true.
     return true;
   }
@@ -353,7 +356,7 @@ template<class Kind, class... Matchers> struct Matcher {
   Matcher(matched_t<Kind>* binder, data_t<Kind> data, Matchers... submatchers)
     : binder(binder), data(data), submatchers(submatchers...) {}
 
-  bool matches(candidate_t<Kind> candidate) {
+  inline bool matches(candidate_t<Kind> candidate) {
     matched_t<Kind> casted;
     if (dynCastCandidate<Kind>(candidate, casted)) {
       if (binder != nullptr) {
@@ -375,7 +378,7 @@ template<class T> struct KindTypeRegistry<AnyKind<T>> {
   using matched_t = T;
   using data_t = unused_t;
 };
-template<class T> decltype(auto) Any(T* binder) {
+template<class T> inline decltype(auto) Any(T* binder) {
   return Matcher<AnyKind<T>>(binder, {});
 }
 
@@ -388,7 +391,7 @@ template<class T> struct KindTypeRegistry<ExactKind<T>> {
 template<class T> struct MatchSelf<ExactKind<T>> {
   bool operator()(T self, T expected) { return self == expected; }
 };
-template<class T> decltype(auto) Exact(T* binder, T data) {
+template<class T> inline decltype(auto) Exact(T* binder, T data) {
   return Matcher<ExactKind<T>>(binder, data);
 }
 
@@ -431,22 +434,22 @@ template<class T> struct NumComponents<LitKind<T>> {
 template<class T> struct GetComponent<LitKind<T>, 0> {
   decltype(auto) operator()(Literal lit) { return T::getVal(lit); }
 };
-template<class S> decltype(auto) I32Lit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) I32Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<I32LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) I64Lit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) I64Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<I64LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) IntLit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) IntLit(Literal* binder, S&& s) {
   return Matcher<LitKind<IntLK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) F32Lit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) F32Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<F32LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) F64Lit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) F64Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<F64LK>, S>(binder, {}, s);
 }
-template<class S> decltype(auto) FloatLit(Literal* binder, S&& s) {
+template<class S> inline decltype(auto) FloatLit(Literal* binder, S&& s) {
   return Matcher<LitKind<FloatLK>, S>(binder, {}, s);
 }
 struct NumberLitKind {};
@@ -460,7 +463,7 @@ template<> struct MatchSelf<NumberLitKind> {
            Literal::makeFromInt32(expected, lit.type) == lit;
   }
 };
-decltype(auto) NumberLit(Literal* binder, int32_t expected) {
+inline decltype(auto) NumberLit(Literal* binder, int32_t expected) {
   return Matcher<NumberLitKind>(binder, expected);
 }
 
@@ -469,7 +472,7 @@ template<> struct NumComponents<Const*> { static constexpr size_t value = 1; };
 template<> struct GetComponent<Const*, 0> {
   Literal operator()(Const* c) { return c->value; }
 };
-template<class S> decltype(auto) ConstMatcher(Const** binder, S&& s) {
+template<class S> inline decltype(auto) ConstMatcher(Const** binder, S&& s) {
   return Matcher<Const*, S>(binder, {}, s);
 }
 
@@ -501,11 +504,12 @@ template<class T> struct GetComponent<UnaryKind<T>, 0> {
   Expression* operator()(Unary* curr) { return curr->value; }
 };
 template<class S>
-decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S&& s) {
+inline decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S&& s) {
   return Matcher<UnaryKind<UnaryK>, S>(binder, op, s);
 }
 template<class S>
-decltype(auto) AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
+inline decltype(auto)
+AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
   return Matcher<UnaryKind<AbstractUnaryK>, S>(binder, op, s);
 }
 
@@ -540,11 +544,12 @@ template<class T> struct GetComponent<BinaryKind<T>, 1> {
   Expression* operator()(Binary* curr) { return curr->right; }
 };
 template<class S1, class S2>
-decltype(auto) BinaryMatcher(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
+inline decltype(auto)
+BinaryMatcher(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
   return Matcher<BinaryKind<BinaryK>, S1, S2>(binder, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto)
+inline decltype(auto)
 AbstractBinaryMatcher(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
   return Matcher<BinaryKind<AbstractBinaryK>, S1, S2>(binder, op, s1, s2);
 }
@@ -561,7 +566,8 @@ template<> struct GetComponent<Select*, 2> {
   Expression* operator()(Select* curr) { return curr->condition; }
 };
 template<class S1, class S2, class S3>
-decltype(auto) SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
+inline decltype(auto)
+SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Matcher<Select*, S1, S2, S3>(binder, {}, s1, s2, s3);
 }
 
@@ -569,218 +575,221 @@ decltype(auto) SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
 
 // Public matching API
 
-decltype(auto) i32() {
+inline decltype(auto) i32() {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr)));
 }
 // Use int rather than int32_t to disambiguate literal 0, which otherwise could
 // be resolved to either the int32_t overload or any of the pointer overloads.
-decltype(auto) i32(int x) {
+inline decltype(auto) i32(int x) {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(nullptr, Internal::Exact<int32_t>(nullptr, x)));
 }
-decltype(auto) i32(int32_t* binder) {
+inline decltype(auto) i32(int32_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) i32(Literal* binder) {
+inline decltype(auto) i32(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I32Lit(binder, Internal::Any<int32_t>(nullptr)));
 }
-decltype(auto) i32(Const** binder) {
+inline decltype(auto) i32(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr)));
 }
 
-decltype(auto) i64() {
+inline decltype(auto) i64() {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Any<int64_t>(nullptr)));
 }
-decltype(auto) i64(int64_t x) {
+inline decltype(auto) i64(int64_t x) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-decltype(auto) i64(int x) { return i64(int64_t(x)); }
-decltype(auto) i64(int64_t* binder) {
+inline decltype(auto) i64(int x) { return i64(int64_t(x)); }
+inline decltype(auto) i64(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) i64(Literal* binder) {
+inline decltype(auto) i64(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(binder, Internal::Any<int64_t>(nullptr)));
 }
-decltype(auto) i64(Const** binder) {
+inline decltype(auto) i64(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::I64Lit(nullptr, Internal::Any<int64_t>(nullptr)));
 }
 
-decltype(auto) f32() {
+inline decltype(auto) f32() {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Any<float>(nullptr)));
 }
-decltype(auto) f32(float x) {
+inline decltype(auto) f32(float x) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Exact<float>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-decltype(auto) f32(int x) { return f32(float(x)); }
-decltype(auto) f32(float* binder) {
+inline decltype(auto) f32(int x) { return f32(float(x)); }
+inline decltype(auto) f32(float* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) f32(Literal* binder) {
+inline decltype(auto) f32(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(binder, Internal::Any<float>(nullptr)));
 }
-decltype(auto) f32(Const** binder) {
+inline decltype(auto) f32(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::F32Lit(nullptr, Internal::Any<float>(nullptr)));
 }
 
-decltype(auto) f64() {
+inline decltype(auto) f64() {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Any<double>(nullptr)));
 }
-decltype(auto) f64(double x) {
+inline decltype(auto) f64(double x) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-decltype(auto) f64(int x) { return f64(double(x)); }
-decltype(auto) f64(double* binder) {
+inline decltype(auto) f64(int x) { return f64(double(x)); }
+inline decltype(auto) f64(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) f64(Literal* binder) {
+inline decltype(auto) f64(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(binder, Internal::Any<double>(nullptr)));
 }
-decltype(auto) f64(Const** binder) {
+inline decltype(auto) f64(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::F64Lit(nullptr, Internal::Any<double>(nullptr)));
 }
 
-decltype(auto) ival() {
+inline decltype(auto) ival() {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Any<int64_t>(nullptr)));
 }
-decltype(auto) ival(int64_t x) {
+inline decltype(auto) ival(int64_t x) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-decltype(auto) ival(int x) { return ival(int64_t(x)); }
-decltype(auto) ival(int64_t* binder) {
+inline decltype(auto) ival(int x) { return ival(int64_t(x)); }
+inline decltype(auto) ival(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) ival(Literal* binder) {
+inline decltype(auto) ival(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(binder, Internal::Any<int64_t>(nullptr)));
 }
-decltype(auto) ival(Const** binder) {
+inline decltype(auto) ival(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::IntLit(nullptr, Internal::Any<int64_t>(nullptr)));
 }
-decltype(auto) ival(Literal* binder, int64_t x) {
+inline decltype(auto) ival(Literal* binder, int64_t x) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(binder, Internal::Exact<int64_t>(nullptr, x)));
 }
-decltype(auto) ival(Const** binder, int64_t x) {
+inline decltype(auto) ival(Const** binder, int64_t x) {
   return Internal::ConstMatcher(
     binder, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 
-decltype(auto) fval() {
+inline decltype(auto) fval() {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Any<double>(nullptr)));
 }
-decltype(auto) fval(double x) {
+inline decltype(auto) fval(double x) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-decltype(auto) fval(int x) { return fval(double(x)); }
-decltype(auto) fval(double* binder) {
+inline decltype(auto) fval(int x) { return fval(double(x)); }
+inline decltype(auto) fval(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Any(binder)));
 }
-decltype(auto) fval(Literal* binder) {
+inline decltype(auto) fval(Literal* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(binder, Internal::Any<double>(nullptr)));
 }
-decltype(auto) fval(Const** binder) {
+inline decltype(auto) fval(Const** binder) {
   return Internal::ConstMatcher(
     binder, Internal::FloatLit(nullptr, Internal::Any<double>(nullptr)));
 }
-decltype(auto) fval(Literal* binder, double x) {
+inline decltype(auto) fval(Literal* binder, double x) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(binder, Internal::Exact<double>(nullptr, x)));
 }
-decltype(auto) fval(Const** binder, double x) {
+inline decltype(auto) fval(Const** binder, double x) {
   return Internal::ConstMatcher(
     binder, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
 
-decltype(auto) constant() {
+inline decltype(auto) constant() {
   return Internal::ConstMatcher(nullptr, Internal::Any<Literal>(nullptr));
 }
-decltype(auto) constant(int x) {
+inline decltype(auto) constant(int x) {
   return Internal::ConstMatcher(nullptr, Internal::NumberLit(nullptr, x));
 }
-decltype(auto) constant(Literal* binder) {
+inline decltype(auto) constant(Literal* binder) {
   return Internal::ConstMatcher(nullptr, Internal::Any(binder));
 }
-decltype(auto) constant(Const** binder) {
+inline decltype(auto) constant(Const** binder) {
   return Internal::ConstMatcher(binder, Internal::Any<Literal>(nullptr));
 }
-decltype(auto) constant(Literal* binder, int32_t x) {
+inline decltype(auto) constant(Literal* binder, int32_t x) {
   return Internal::ConstMatcher(nullptr, Internal::NumberLit(binder, x));
 }
-decltype(auto) constant(Const** binder, int32_t x) {
+inline decltype(auto) constant(Const** binder, int32_t x) {
   return Internal::ConstMatcher(binder, Internal::NumberLit(nullptr, x));
 }
 
-decltype(auto) any() { return Internal::Any<Expression*>(nullptr); }
-decltype(auto) any(Expression** binder) { return Internal::Any(binder); }
+inline decltype(auto) any() { return Internal::Any<Expression*>(nullptr); }
+inline decltype(auto) any(Expression** binder) { return Internal::Any(binder); }
 
-template<class S> decltype(auto) unary(UnaryOp op, S&& s) {
+template<class S> inline decltype(auto) unary(UnaryOp op, S&& s) {
   return Internal::UnaryMatcher(nullptr, op, s);
 }
-template<class S> decltype(auto) unary(Abstract::Op op, S&& s) {
+template<class S> inline decltype(auto) unary(Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(nullptr, op, s);
 }
-template<class S> decltype(auto) unary(Unary** binder, UnaryOp op, S&& s) {
+template<class S>
+inline decltype(auto) unary(Unary** binder, UnaryOp op, S&& s) {
   return Internal::UnaryMatcher(binder, op, s);
 }
-template<class S> decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
+template<class S>
+inline decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(binder, op, s);
 }
 
 template<class S1, class S2>
-decltype(auto) binary(BinaryOp op, S1&& s1, S2&& s2) {
+inline decltype(auto) binary(BinaryOp op, S1&& s1, S2&& s2) {
   return Internal::BinaryMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Abstract::Op op, S1&& s1, S2&& s2) {
+inline decltype(auto) binary(Abstract::Op op, S1&& s1, S2&& s2) {
   return Internal::AbstractBinaryMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
+inline decltype(auto) binary(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
   return Internal::BinaryMatcher(binder, op, s1, s2);
 }
 template<class S1, class S2>
-decltype(auto) binary(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
+inline decltype(auto)
+binary(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
   return Internal::AbstractBinaryMatcher(binder, op, s1, s2);
 }
 
 template<class S1, class S2, class S3>
-decltype(auto) select(S1&& s1, S2&& s2, S3&& s3) {
+inline decltype(auto) select(S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(nullptr, s1, s2, s3);
 }
 template<class S1, class S2, class S3>
-decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
+inline decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(binder, s1, s2, s3);
 }
 
