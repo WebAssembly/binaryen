@@ -8,8 +8,8 @@
 using namespace wasm;
 using namespace wasm::Match;
 
-MixedArena allocator;
-Builder builder(allocator);
+Module module;
+Builder builder(module);
 
 void test_internal_any() {
   std::cout << "Testing Internal::Any\n";

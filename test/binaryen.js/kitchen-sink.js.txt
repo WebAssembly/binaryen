@@ -36,7 +36,7 @@ Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
-Features.All: 2047
+Features.All: 4095
 InvalidId: 0
 BlockId: 1
 IfId: 2

@@ -475,13 +475,11 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
     void visitLiteral(Literal curr) { rehash(digest, curr); }
     void visitType(Type curr) { rehash(digest, curr.getID()); }
     void visitIndex(Index curr) {
-      static_assert(sizeof(Index) == sizeof(int32_t),
+      static_assert(sizeof(Index) == sizeof(uint32_t),
                     "wasm64 will need changes here");
       rehash(digest, curr);
     }
     void visitAddress(Address curr) {
-      static_assert(sizeof(Address) == sizeof(int32_t),
-                    "wasm64 will need changes here");
       rehash(digest, curr.addr);
     }
   };

@@ -331,10 +331,7 @@ enum Section {
   Event = 13
 };
 
-enum SegmentFlag {
-  IsPassive = 0x01,
-  HasMemIndex = 0x02,
-};
+enum SegmentFlag { IsPassive = 0x01, HasMemIndex = 0x02 };
 
 enum EncodedType {
   // value_type
@@ -384,6 +381,7 @@ extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
+extern const char* Memory64Feature;
 
 enum Subsection {
   NameModule = 0,
@@ -938,7 +936,7 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -1097,10 +1095,8 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial,
-                            Address maximum,
-                            bool hasMaximum,
-                            bool shared);
+  void writeResizableLimits(
+    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -1264,6 +1260,7 @@ public:
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
+                          Type& indexType,
                           Address defaultIfNoMax);
   void readImports();
 

@@ -46,6 +46,7 @@ const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
+const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -881,13 +882,15 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::finalize() { type = Type::i32; }
+void MemorySize::make64() { type = ptrType = Type::i64; }
+void MemorySize::finalize() { type = ptrType; }
 
+void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::i32;
+    type = ptrType;
   }
 }
 

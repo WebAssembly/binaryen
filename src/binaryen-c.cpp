@@ -3262,7 +3262,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        uint8_t shared) {
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
-  wasm->memory.max = maximum;
+  wasm->memory.max = int32_t(maximum); // Make sure -1 extends.
   wasm->memory.exists = true;
   wasm->memory.shared = shared;
   if (exportName) {
