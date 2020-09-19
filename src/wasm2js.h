@@ -423,7 +423,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(processFunction(wasm, func));
   });
   if (generateFetchHighBits) {
-    Builder builder(allocator, *wasm);
+    Builder builder(*wasm);
     asmFunc[3]->push_back(
       processFunction(wasm,
                       wasm->addFunction(builder.makeFunction(
