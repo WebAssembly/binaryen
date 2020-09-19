@@ -4354,7 +4354,7 @@
       )
     ))
   )
-  (func $unsigned-context (param $x i32)
+  (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s
       (i32.and
         (local.get $x)
@@ -4362,12 +4362,33 @@
       )
       (i32.const 3)
     ))
-     (drop (i32.div_s
+    (drop (i32.div_s
       (i32.and
         (local.get $x)
         (i32.const 0x7fffffff)
       )
       (i32.const -3) ;; skip
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 0x80000000) ;; skip
+    ))
+    (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const 2)
+    ))
+     (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const -1) ;; skip
     ))
     (drop (i32.rem_s
       (i32.and
