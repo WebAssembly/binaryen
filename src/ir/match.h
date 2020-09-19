@@ -215,7 +215,7 @@ namespace Match {
 // The main entrypoint for matching. If the match succeeds, all variables bound
 // in the matcher will be set to their corresponding matched values. Otherwise,
 // the value of the bound variables is unspecified and may have changed.
-template<class Matcher> bool matches(Expression* expr, Matcher matcher) {
+template<class Matcher> inline bool matches(Expression* expr, Matcher matcher) {
   return matcher.matches(expr);
 }
 
