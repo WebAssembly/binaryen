@@ -740,6 +740,10 @@ void test_core() {
                    BinaryenRefNull(module, BinaryenTypeFuncref()),
                    BinaryenRefFunc(module, "kitchen()sinker"),
                    BinaryenTypeFuncref()),
+    // GC
+    BinaryenRefEq(module,
+      BinaryenRefNull(module, BinaryenTypeEqref()),
+      BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics

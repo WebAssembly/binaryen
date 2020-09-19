@@ -558,6 +558,13 @@ public:
     ret->finalize();
     return ret;
   }
+  RefEq* makeRefEq(Expression* left, Expression* right) {
+    auto* ret = allocator.alloc<RefEq>();
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
   Try* makeTry(Expression* body, Expression* catchBody) {
     auto* ret = allocator.alloc<Try>();
     ret->body = body;

@@ -330,6 +330,7 @@ public:
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -1955,6 +1956,17 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
+}
+
+void FunctionValidator::visitRefEq(RefEq* curr) {
+  shouldBeTrue(curr->left->type == Type::unreachable ||
+                 Type::isSubType(curr->left->type, Type::eqref),
+               curr->left,
+               "ref.eq's left argument should be a subtype of eqref");
+  shouldBeTrue(curr->right->type == Type::unreachable ||
+                 Type::isSubType(curr->right->type, Type::eqref),
+               curr->right,
+               "ref.eq's right argument should be a subtype of eqref");
 }
 
 void FunctionValidator::visitTry(Try* curr) {

@@ -1850,6 +1850,14 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
+  auto ret = allocator.alloc<RefEq>();
+  ret->left = parseExpression(s[1]);
+  ret->right = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
 // try-catch-end is written in the folded wast format as
 // (try
 //   ...

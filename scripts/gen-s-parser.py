@@ -495,7 +495,9 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
-    ("pop",                  "makePop(s)")
+    ("pop",                  "makePop(s)"),
+    # GC instructions
+    ("ref.eq",               "makeRefEq(s)")
 ]
 
 

@@ -892,6 +892,8 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2640,6 +2642,13 @@ private:
     return builder.makeRefIsNull(make(getReferenceType()));
   }
 
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    return builder.makeRefEq(make(getEqReferenceType()),
+                             make(getEqReferenceType()));
+  }
+
   Expression* makeMemoryInit() {
     if (!allowMemory) {
       return makeTrivial(Type::none);
@@ -2722,6 +2731,14 @@ private:
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(
+      FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                 Type::eqref)); // TODO: i31ref
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;

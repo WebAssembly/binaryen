@@ -1701,6 +1701,10 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
     << U32LEB(parent.getFunctionIndex(curr->func));
 }
 
+void BinaryInstWriter::visitRefEq(RefEq* curr) {
+  o << int8_t(BinaryConsts::RefEq);
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);

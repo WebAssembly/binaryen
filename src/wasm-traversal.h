@@ -76,6 +76,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitRefNull(RefNull* curr) { return ReturnType(); }
   ReturnType visitRefIsNull(RefIsNull* curr) { return ReturnType(); }
   ReturnType visitRefFunc(RefFunc* curr) { return ReturnType(); }
+  ReturnType visitRefEq(RefEq* curr) { return ReturnType(); }
   ReturnType visitTry(Try* curr) { return ReturnType(); }
   ReturnType visitThrow(Throw* curr) { return ReturnType(); }
   ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
@@ -180,6 +181,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -260,6 +263,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(RefNull);
   UNIMPLEMENTED(RefIsNull);
   UNIMPLEMENTED(RefFunc);
+  UNIMPLEMENTED(RefEq);
   UNIMPLEMENTED(Try);
   UNIMPLEMENTED(Throw);
   UNIMPLEMENTED(Rethrow);
@@ -365,6 +369,8 @@ struct OverriddenVisitor {
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -516,6 +522,9 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitRefFunc(RefFunc* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefEq(RefEq* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitTry(Try* curr) {
@@ -835,6 +844,9 @@ struct Walker : public VisitorType {
   static void doVisitRefFunc(SubType* self, Expression** currp) {
     self->visitRefFunc((*currp)->cast<RefFunc>());
   }
+  static void doVisitRefEq(SubType* self, Expression** currp) {
+    self->visitRefEq((*currp)->cast<RefEq>());
+  }
   static void doVisitTry(SubType* self, Expression** currp) {
     self->visitTry((*currp)->cast<Try>());
   }
@@ -1106,6 +1118,12 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::RefFuncId: {
         self->pushTask(SubType::doVisitRefFunc, currp);
+        break;
+      }
+      case Expression::Id::RefEqId: {
+        self->pushTask(SubType::doVisitRefEq, currp);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->right);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->left);
         break;
       }
       case Expression::Id::TryId: {
