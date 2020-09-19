@@ -317,7 +317,10 @@ def run_gcc_tests():
                 for f in os.environ.get('COMPILER_FLAGS').split(' '):
                     extra.append(f)
             print('build: ', ' '.join(extra))
-            subprocess.check_call(extra)
+            built = subprocess.run(extra, capture_output=True)
+            if built.returncode != 0:
+                print(built.stderr)
+                sys.exit(1)
             # Link against the binaryen C library DSO, using an executable-relative rpath
             cmd = ['example.o', '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
         else:
