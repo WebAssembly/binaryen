@@ -325,7 +325,7 @@ template<class CurrMatcher, class... NextMatchers>
 struct SubMatchers<CurrMatcher, NextMatchers...> {
   CurrMatcher curr;
   SubMatchers<NextMatchers...> next;
-  SubMatchers(CurrMatcher curr, NextMatchers... next)
+  WASM_ALWAYS_INLINE SubMatchers(CurrMatcher curr, NextMatchers... next)
     : curr(curr), next(next...){};
 };
 
@@ -356,6 +356,7 @@ template<class Kind, class... Matchers> struct Matcher {
   data_t<Kind> data;
   SubMatchers<Matchers...> submatchers;
 
+  WASM_ALWAYS_INLINE
   Matcher(matched_t<Kind>* binder, data_t<Kind> data, Matchers... submatchers)
     : binder(binder), data(data), submatchers(submatchers...) {}
 
