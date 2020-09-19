@@ -41,7 +41,7 @@
 
 #ifdef __GNUC__
 #define WASM_NORETURN __attribute__((noreturn))
-#define WASM_ALWAYS_INLINE __attribute__((always_inline))
+#define WASM_ALWAYS_INLINE __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
 #define WASM_NORETURN __declspec(noreturn)
 #define WASM_ALWAYS_INLINE __forceinline
