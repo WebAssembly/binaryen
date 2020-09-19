@@ -502,7 +502,7 @@ struct OptimizeInstructions
         // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
-          if (!(c >> 31) && getMaxBits(binary->left, this) <= 31) {
+          if (!(c >> 31) && Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
@@ -520,7 +520,7 @@ struct OptimizeInstructions
         }
         if (right->type == Type::i64) {
           uint64_t c = right->value.geti64();
-          if (!(c >> 63) && getMaxBits(binary->left, this) <= 63) {
+          if (!(c >> 63) && Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
