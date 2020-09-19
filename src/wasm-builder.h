@@ -645,8 +645,11 @@ public:
       case Type::externref:
       case Type::exnref: // TODO: ExceptionPackage?
       case Type::anyref:
-        assert(value.isNull());
+      case Type::eqref:
+        assert(value.isNull() && "unexpected non-null reference type literal");
         return makeRefNull(value.type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -840,7 +843,10 @@ public:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

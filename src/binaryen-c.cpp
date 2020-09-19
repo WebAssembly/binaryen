@@ -74,8 +74,11 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
-      assert(x.isNull());
+    case Type::eqref:
+      assert(x.isNull() && "unexpected non-null reference type literal");
       break;
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -100,7 +103,10 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
       return Literal::makeNull(Type(x.type));
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -136,6 +142,8 @@ BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
+BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 

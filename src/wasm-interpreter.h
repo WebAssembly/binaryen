@@ -1653,6 +1653,8 @@ public:
         case Type::externref:
         case Type::exnref:
         case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1710,6 +1712,8 @@ public:
         case Type::externref:
         case Type::exnref:
         case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

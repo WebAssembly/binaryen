@@ -20,6 +20,10 @@
   // 9
   // BinaryenTypeAnyref: 10
   // 10
+  // BinaryenTypeEqref: 11
+  // 11
+  // BinaryenTypeI31ref: 12
+  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -1912,13 +1916,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
       )
       (drop
        (memory.size)
@@ -3760,13 +3773,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
       )
       (drop
        (memory.size)
