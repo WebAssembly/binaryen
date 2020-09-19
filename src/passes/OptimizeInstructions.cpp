@@ -502,7 +502,8 @@ struct OptimizeInstructions
         // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
-          if (!(c >> 31) && Bits::getMaxBits(binary->left, this) <= 31) {
+          if (!(c >> 31) && isSignedBinaryOp(binary->op) &&
+              Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
@@ -520,7 +521,8 @@ struct OptimizeInstructions
         }
         if (right->type == Type::i64) {
           uint64_t c = right->value.geti64();
-          if (!(c >> 63) && Bits::getMaxBits(binary->left, this) <= 63) {
+          if (!(c >> 63) && isSignedBinaryOp(binary->op) &&
+              Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = makeUnsignedBinaryOp(binary->op);
           }
           if (IsPowerOf2(c)) {
@@ -1780,6 +1782,12 @@ private:
   }
 
   BinaryOp makeUnsignedBinaryOp(BinaryOp op) {
+    // This procedure is based on the facts that we know for sure that
+    // the operation is signed and that signed and unsigned values ​​differ
+    // by one and have proper ordering.
+    assert(isSignedBinaryOp(op));
+    return BinaryOp(op + 1);
+    /*
     switch (op) {
       case DivSInt32:
         return DivUInt32;
@@ -1813,6 +1821,30 @@ private:
 
       default:
         return op;
+    }*/
+  }
+
+  bool isSignedBinaryOp(BinaryOp op) {
+    switch (op) {
+      case DivSInt32:
+      case RemSInt32:
+      case ShrSInt32:
+      case LtSInt32:
+      case LeSInt32:
+      case GtSInt32:
+      case GeSInt32:
+
+      case DivSInt64:
+      case RemSInt64:
+      case ShrSInt64:
+      case LtSInt64:
+      case LeSInt64:
+      case GtSInt64:
+      case GeSInt64:
+        return true;
+
+      default:
+        return false;
     }
   }
 

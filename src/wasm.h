@@ -225,8 +225,8 @@ enum BinaryOp {
   OrInt32,
   XorInt32,
   ShlInt32,
-  ShrUInt32,
   ShrSInt32,
+  ShrUInt32,
   RotLInt32,
   RotRInt32,
 
@@ -258,8 +258,8 @@ enum BinaryOp {
   OrInt64,
   XorInt64,
   ShlInt64,
-  ShrUInt64,
   ShrSInt64,
+  ShrUInt64,
   RotLInt64,
   RotRInt64,
 
