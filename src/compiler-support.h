@@ -47,7 +47,7 @@
 #define WASM_ALWAYS_INLINE __forceinline
 #else
 #define WASM_NORETURN
-#define WASM_ALWAYS_INLINE
+#define WASM_ALWAYS_INLINE inline
 #endif
 
 // The code might contain TODOs or stubs that read some values but do nothing
