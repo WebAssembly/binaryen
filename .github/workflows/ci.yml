@@ -90,9 +90,6 @@ jobs:
         name: build-${{ matrix.os }}
         path: out/install
 
-    - name: Check gcc version
-      run: /usr/bin/gcc --version
-
     - name: test
       run: python check.py --binaryen-bin=out/install/bin
 
