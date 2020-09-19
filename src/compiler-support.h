@@ -31,12 +31,23 @@
 #define WASM_BUILTIN_UNREACHABLE __assume(false)
 #endif
 
+#if __has_builtin(__builtin_expect)
+#define WASM_LIKELY(x) __builtin_expect((bool)(x), true)
+#define WASM_UNLIKELY(x) __builtin_expect((bool)(x), false)
+#else
+#define LLVM_LIKELY(x) (x)
+#define LLVM_UNLIKELY(x) (x)
+#endif
+
 #ifdef __GNUC__
 #define WASM_NORETURN __attribute__((noreturn))
+#define WASM_ALWAYS_INLINE __attribute__((always_inline))
 #elif defined(_MSC_VER)
 #define WASM_NORETURN __declspec(noreturn)
+#define WASM_ALWAYS_INLINE __forceinline
 #else
 #define WASM_NORETURN
+#define WASM_ALWAYS_INLINE
 #endif
 
 // The code might contain TODOs or stubs that read some values but do nothing

@@ -141,7 +141,7 @@ struct Match::Internal::KindTypeRegistry<PureMatcherKind<Opt>> {
   using data_t = Opt*;
 };
 template<class Opt> struct Match::Internal::MatchSelf<PureMatcherKind<Opt>> {
-  bool operator()(Expression* curr, Opt* opt) {
+  WASM_ALWAYS_INLINE bool operator()(Expression* curr, Opt* opt) {
     return !opt->effects(curr).hasSideEffects();
   }
 };
