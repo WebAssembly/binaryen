@@ -35,8 +35,8 @@
 #define WASM_LIKELY(x) __builtin_expect((bool)(x), true)
 #define WASM_UNLIKELY(x) __builtin_expect((bool)(x), false)
 #else
-#define LLVM_LIKELY(x) (x)
-#define LLVM_UNLIKELY(x) (x)
+#define WASM_LIKELY(x) (x)
+#define WASM_UNLIKELY(x) (x)
 #endif
 
 #ifdef __GNUC__
