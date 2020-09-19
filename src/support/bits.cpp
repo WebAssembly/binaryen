@@ -97,7 +97,7 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
   }
 #if __has_builtin(__builtin_ctzll) || defined(__GNUC__)
   return __builtin_ctzll(v);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanForward64(&count, v);
   return (int)count;
@@ -116,7 +116,10 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanReverse(&count, v);
-  return (int)count;
+  // BitScanReverse gives the bit position (0 for the LSB, then 1, etc.) of the
+  // first bit that is 1, when looking from the MSB. To count leading zeros, we
+  // need to adjust that.
+  return 31 - int(count);
 #else
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -139,14 +142,22 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
   }
 #if __has_builtin(__builtin_clzll) || defined(__GNUC__)
   return __builtin_clzll(v);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanReverse64(&count, v);
-  return (int)count;
+  return 63 - int(count);
 #else
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);
 #endif
+}
+
+template<> int CeilLog2<uint32_t>(uint32_t v) {
+  return 32 - CountLeadingZeroes(v - 1);
+}
+
+template<> int CeilLog2<uint64_t>(uint64_t v) {
+  return 64 - CountLeadingZeroes(v - 1);
 }
 
 uint32_t Log2(uint32_t v) {

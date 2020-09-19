@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 95)
+project(binaryen LANGUAGES C CXX VERSION 97)
 include(GNUInstallDirs)
+
+# The C++ standard whose features are required to build Binaryen.
+# Keep in sync with scripts/test/shared.py cxx_standard
+set(CXX_STANDARD 14)
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
@@ -141,6 +145,8 @@ if(MSVC)
   add_compile_flag("/wd4244")
   # 4722 warns that destructors never return, even with WASM_NORETURN.
   add_compile_flag("/wd4722")
+  # "destructor was implicitly defined as deleted" caused by LLVM headers.
+  add_compile_flag("/wd4624")
   add_compile_flag("/WX-")
   add_debug_compile_flag("/Od")
   add_nondebug_compile_flag("/O2")
@@ -151,6 +157,9 @@ if(MSVC)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
+
+  # multi-core build.
+  add_compile_flag("/MP")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
@@ -188,7 +197,7 @@ else()
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   set(CMAKE_THREAD_PREFER_PTHREAD ON)
   find_package(Threads REQUIRED)
-  add_cxx_flag("-std=c++14")
+  add_cxx_flag("-std=c++${CXX_STANDARD}")
   if(NOT EMSCRIPTEN)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
       # wasm doesn't allow for x87 floating point math
@@ -290,8 +299,10 @@ ENDIF()
 
 # Sources.
 
+file(GLOB binaryen_HEADERS src/*.h)
 set(binaryen_SOURCES
   src/binaryen-c.cpp
+  ${binaryen_HEADERS}
 )
 if(BUILD_STATIC_LIB)
   message(STATUS "Building libbinaryen as statically linked library.")
@@ -312,7 +323,7 @@ function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
   target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
   target_link_libraries(${name} binaryen)
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -321,7 +332,6 @@ endfunction()
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
 binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
 binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
-binaryen_add_executable(asm2wasm src/tools/asm2wasm.cpp)
 binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
 binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
 binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
@@ -339,6 +349,7 @@ binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
 if(EMSCRIPTEN)
   set(binaryen_emscripten_SOURCES
     src/binaryen-c.cpp
+    ${binaryen_HEADERS}
   )
 
   # binaryen.js WebAssembly variant
@@ -352,9 +363,10 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
+  target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
   target_link_libraries(binaryen_wasm debug "--profiling")
-  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -366,7 +378,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
     # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
+    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
   endif()
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
@@ -375,25 +387,11 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
+  target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_js optimized "--llvm-lto 1")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-s ASSERTIONS")
-  set_property(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_js PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Testing
-#
-# Currently just some very simple smoke tests.
-
-enable_testing()
-
-add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
-add_test(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
-add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
-add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

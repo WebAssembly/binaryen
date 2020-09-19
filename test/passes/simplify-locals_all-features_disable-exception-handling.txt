@@ -1831,12 +1831,14 @@
  )
  (func $data-drop-load
   (local $x i32)
-  (nop)
-  (data.drop 0)
-  (drop
+  (local.set $x
    (i32.load
     (i32.const 0)
    )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
   )
  )
  (func $data-drop-store
@@ -1874,11 +1876,11 @@
  )
 )
 (module
- (type $none_=>_funcref (func (result funcref)))
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
+ (type $none_=>_anyref (func (result anyref)))
+ (func $subtype-test (result anyref)
+  (local $0 funcref)
+  (local $1 anyref)
+  (local $2 anyref)
   (block $block
    (nop)
   )

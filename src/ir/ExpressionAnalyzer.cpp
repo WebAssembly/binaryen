@@ -215,11 +215,9 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitSelect(Select* curr) {}
     void visitDrop(Drop* curr) {}
     void visitReturn(Return* curr) {}
-    void visitHost(Host* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitNonScopeName(curr->nameOperand);
-    }
-    void visitRefNull(RefNull* curr) {}
+    void visitMemorySize(MemorySize* curr) {}
+    void visitMemoryGrow(MemoryGrow* curr) {}
+    void visitRefNull(RefNull* curr) { visitor.visitType(curr->type); }
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
     void visitTry(Try* curr) {}
@@ -408,9 +406,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 }
 
 // hash an expression, ignoring superficial details like specific internal names
-HashType ExpressionAnalyzer::hash(Expression* curr) {
+size_t ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
-    HashType digest = 0;
+    size_t digest = wasm::hash(0);
 
     Index internalCounter = 0;
     // for each internal name, its unique id
@@ -432,7 +430,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         if (!curr) {
           continue;
         }
-        hash(curr->_id);
+        rehash(digest, curr->_id);
         // we often don't need to hash the type, as it is tied to other values
         // we are hashing anyhow, but there are exceptions: for example, a
         // local.get's type is determined by the function, so if we are
@@ -441,7 +439,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         // if we hash between modules, then we need to take int account
         // call_imports type, etc. The simplest thing is just to hash the
         // type for all of them.
-        hash(curr->type.getID());
+        rehash(digest, curr->type.getID());
         // Blocks and loops introduce scoping.
         if (auto* block = curr->dynCast<Block>()) {
           noteScopeName(block->name);
@@ -459,13 +457,8 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         }
         // Sometimes children are optional, e.g. return, so we must hash
         // their number as well.
-        hash(counter);
+        rehash(digest, counter);
       }
-    }
-
-    void hash(HashType hash) { digest = rehash(digest, hash); }
-    void hash64(uint64_t hash) {
-      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
     }
 
     void visitScopeName(Name curr) {
@@ -475,21 +468,19 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");
       assert(internalNames.find(curr) != internalNames.end());
-      return hash(internalNames[curr]);
+      rehash(digest, internalNames[curr]);
     }
-    void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
-    void visitInt(int32_t curr) { hash(curr); }
-    void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
-    void visitType(Type curr) { hash(int32_t(curr.getSingle())); }
+    void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
+    void visitInt(int32_t curr) { rehash(digest, curr); }
+    void visitLiteral(Literal curr) { rehash(digest, curr); }
+    void visitType(Type curr) { rehash(digest, curr.getID()); }
     void visitIndex(Index curr) {
-      static_assert(sizeof(Index) == sizeof(int32_t),
+      static_assert(sizeof(Index) == sizeof(uint32_t),
                     "wasm64 will need changes here");
-      hash(int32_t(curr));
+      rehash(digest, curr);
     }
     void visitAddress(Address curr) {
-      static_assert(sizeof(Address) == sizeof(int32_t),
-                    "wasm64 will need changes here");
-      hash(int32_t(curr));
+      rehash(digest, curr.addr);
     }
   };
 

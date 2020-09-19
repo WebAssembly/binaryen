@@ -104,6 +104,9 @@ void PassRegistry::registerPasses() {
                createConstHoistingPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("dealign",
+               "forces all loads and stores to have alignment 1",
+               createDeAlignPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);
@@ -140,6 +143,14 @@ void PassRegistry::registerPasses() {
                createFuncCastEmulationPass);
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
+  registerPass("generate-dyncalls",
+               "generate dynCall fuctions used by emscripten ABI",
+               createGenerateDynCallsPass);
+  registerPass("generate-i64-dyncalls",
+               "generate dynCall functions used by emscripten ABI, but only for "
+               "functions with i64 in their signature (which cannot be invoked "
+               "via the wasm table without JavaScript BigInt support).",
+               createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -334,6 +345,9 @@ void PassRegistry::registerPasses() {
   registerPass("spill-pointers",
                "spill pointers to the C stack (useful for Boehm-style GC)",
                createSpillPointersPass);
+  registerPass("stub-unsupported-js",
+               "stub out unsupported JS operations",
+               createStubUnsupportedJSOpsPass);
   registerPass("ssa",
                "ssa-ify variables so that they have a single assignment",
                createSSAifyPass);
@@ -343,6 +357,9 @@ void PassRegistry::registerPasses() {
     createSSAifyNoMergePass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
+  registerPass("stack-check",
+               "enforce limits on llvm's __stack_pointer global",
+               createStackCheckPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
@@ -574,16 +591,15 @@ void PassRunner::run() {
         if (!WasmValidator().validate(*wasm, validationFlags)) {
           WasmPrinter::printModule(wasm);
           if (passDebug >= 2) {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Here is the module before: \n"
-                      << moduleBefore.str() << "\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Here is the module before: \n"
+                    << moduleBefore.str() << "\n";
           } else {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
-                         "in the env to see the earlier state, or 3 to dump "
-                         "byn-* files for each pass\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
+                       "in the env to see the earlier state, or 3 to dump "
+                       "byn-* files for each pass\n";
           }
-          abort();
         }
       }
       if (passDebug >= 3) {
@@ -596,8 +612,7 @@ void PassRunner::run() {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
         WasmPrinter::printModule(wasm);
-        std::cerr << "final module does not validate\n";
-        abort();
+        Fatal() << "final module does not validate\n";
       }
     }
   } else {
@@ -674,7 +689,7 @@ struct AfterEffectFunctionChecker {
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
   bool beganWithStackIR;
-  HashType originalFunctionHash;
+  size_t originalFunctionHash;
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.

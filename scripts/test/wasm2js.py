@@ -18,8 +18,11 @@ from scripts.test import shared
 from scripts.test import support
 
 tests = shared.get_tests(shared.options.binaryen_test)
+# memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
+tests = [t for t in tests if '64.wast' not in t]
 spec_tests = shared.options.spec_tests
 spec_tests = [t for t in spec_tests if '.fail' not in t]
+spec_tests = [t for t in spec_tests if '64.wast' not in t]
 wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), ['.wast'])
 assert_tests = ['wasm2js.wast.asserts']
 # These tests exercise functionality not supported by wasm2js
@@ -121,6 +124,8 @@ def test_asserts_output():
 
 def test_wasm2js():
     print('\n[ checking wasm2js testcases... ]\n')
+    if shared.skip_if_on_windows('wasm2js'):
+        return
     test_wasm2js_output()
     test_asserts_output()
 

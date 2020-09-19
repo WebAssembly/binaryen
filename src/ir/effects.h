@@ -392,8 +392,10 @@ struct EffectAnalyzer
     }
   }
   void visitDataDrop(DataDrop* curr) {
-    // prevent reordering with memory.init
-    readsMemory = true;
+    // data.drop does not actually write memory, but it does alter the size of
+    // a segment, which can be noticeable later by memory.init, so we need to
+    // mark it as having a global side effect of some kind.
+    writesMemory = true;
     if (!ignoreImplicitTraps) {
       implicitTrap = true;
     }
@@ -426,7 +428,8 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
@@ -444,17 +447,27 @@ struct EffectAnalyzer
           implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
   void visitSelect(Select* curr) {}
   void visitDrop(Drop* curr) {}
   void visitReturn(Return* curr) { branchesOut = true; }
-  void visitHost(Host* curr) {
+  void visitMemorySize(MemorySize* curr) {
+    // memory.size accesses the size of the memory, and thus can be modeled as
+    // reading memory
+    readsMemory = true;
+    // Atomics are sequentially consistent with memory.size.
+    isAtomic = true;
+  }
+  void visitMemoryGrow(MemoryGrow* curr) {
     calls = true;
-    // memory.grow modifies the set of valid addresses, and thus can be modeled
-    // as modifying memory
+    // memory.grow technically does a read-modify-write operation on the memory
+    // size in the successful case, modifying the set of valid addresses, and
+    // just a read operation in the failure case
+    readsMemory = true;
     writesMemory = true;
     // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;

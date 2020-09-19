@@ -16,11 +16,16 @@ from __future__ import print_function
 
 import argparse
 import difflib
+import fnmatch
 import glob
 import os
 import shutil
 import subprocess
 import sys
+
+# The C++ standard whose features are required to build Binaryen.
+# Keep in sync with CMakeLists.txt CXX_STANDARD
+cxx_standard = 14
 
 
 def parse_args(args):
@@ -81,6 +86,10 @@ def parse_args(args):
     parser.add_argument(
         '--list-suites', action='store_true',
         help='List the test suites that can be run.')
+    parser.add_argument(
+        '--filter', dest='test_name_filter', default='',
+        help=('Specifies a filter. Only tests whose paths contains this '
+              'substring will be run'))
 
     return parser.parse_args(args)
 
@@ -146,7 +155,13 @@ def which(program):
         if is_exe(program):
             return program
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
+        paths = [
+            # Prefer tools installed using third_party/setup.py
+            os.path.join(options.binaryen_root, 'third_party', 'mozjs'),
+            os.path.join(options.binaryen_root, 'third_party', 'v8'),
+            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin')
+        ] + os.environ['PATH'].split(os.pathsep)
+        for path in paths:
             path = path.strip('"')
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
@@ -362,6 +377,8 @@ def get_tests(test_dir, extensions=[]):
         tests += glob.glob(os.path.join(test_dir, '*'))
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
+    if options.test_name_filter:
+        tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
 
 
@@ -376,13 +393,13 @@ else:
 
 # 11/27/2019: We updated the spec test suite to upstream spec repo. For some
 # files that started failing after this update, we added the new files to this
-# blacklist and preserved old ones by renaming them to 'old_[FILENAME].wast'
+# skip-list and preserved old ones by renaming them to 'old_[FILENAME].wast'
 # not to lose coverage. When the cause of the error is fixed or the unsupported
 # construct gets support so the new test passes, we can delete the
 # corresponding 'old_[FILENAME].wast' file. When you fix the new file and
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
-SPEC_TEST_BLACKLIST = [
+SPEC_TESTS_TO_SKIP = [
     # Stacky code / notation
     'block.wast',
     'call.wast',
@@ -437,20 +454,10 @@ SPEC_TEST_BLACKLIST = [
     'unreached-invalid.wast'  # 'assert_invalid' failure
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in SPEC_TEST_BLACKLIST]
+                      in SPEC_TESTS_TO_SKIP]
 
 
 # check utilities
-
-
-def validate_binary(wasm):
-    if V8:
-        cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', wasm]
-        print('            ', ' '.join(cmd))
-        subprocess.check_call(cmd, stdout=subprocess.PIPE)
-    else:
-        print('(skipping v8 binary validation)')
-
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
                         binary_suffix='.fromBinary', original_wast=None):
@@ -463,13 +470,6 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
         os.unlink('a.wasm')
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
     assert os.path.exists('a.wasm')
-
-    # make sure it is a valid wasm, using a real wasm VM
-    if os.path.basename(original_wast or wast) not in [
-        'atomics.wast',    # https://bugs.chromium.org/p/v8/issues/detail?id=9425
-        'simd.wast',    # https://bugs.chromium.org/p/v8/issues/detail?id=8460
-    ]:
-        validate_binary('a.wasm')
 
     cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
     print('            ', ' '.join(cmd))
@@ -524,3 +524,13 @@ def with_pass_debug(check):
         else:
             if 'BINARYEN_PASS_DEBUG' in os.environ:
                 del os.environ['BINARYEN_PASS_DEBUG']
+
+
+# checks if we are on windows, and if so logs out that a test is being skipped,
+# and returns True. This is a central location for all test skipping on
+# windows, so that we can easily find which tests are skipped.
+def skip_if_on_windows(name):
+    if get_platform() == 'windows':
+        print('skipping test "%s" on windows' % name)
+        return True
+    return False

@@ -130,7 +130,7 @@
 (module
   (import "env" "global-1" (global $g1 externref))
   (global $g2 (mut externref) (global.get $g1))
-  (global $g3 externref (ref.null))
+  (global $g3 externref (ref.null extern))
   (func $test1
     (drop (global.get $g1))
     (drop (global.get $g2))

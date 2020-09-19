@@ -84,7 +84,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   private:
     void freeIdx() {
-      auto& freeList = pass.freeTemps[ty.getSingle()];
+      auto& freeList = pass.freeTemps[ty.getBasic()];
       assert(std::find(freeList.begin(), freeList.end(), idx) ==
              freeList.end());
       freeList.push_back(idx);
@@ -272,7 +272,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     visitGenericCall<CallIndirect>(
       curr, [&](std::vector<Expression*>& args, Type results) {
         std::vector<Type> params;
-        for (auto param : curr->sig.params.expand()) {
+        for (const auto& param : curr->sig.params) {
           if (param == Type::i64) {
             params.push_back(Type::i32);
             params.push_back(Type::i32);
@@ -696,6 +696,38 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // Mostly just shuffling things around here with coercions and whatnot!
     // Note though that all arithmetic is done with f64 to have as much
     // precision as we can.
+    //
+    // NB: this is *not* accurate for i64 -> f32. Using f64s for intermediate
+    // operations can give slightly inaccurate results in some cases, as we
+    // round to an f64, then round again to an f32, which is not always the
+    // same as a single rounding of i64 to f32 directly. Example:
+    //
+    //   #include <stdio.h>
+    //   int main() {
+    //     unsigned long long x = 18446743523953737727ULL;
+    //     float y = x;
+    //     double z = x;
+    //     float w = z;
+    //     printf("i64          : %llu\n"
+    //            "i64->f32     : %f\n"
+    //            "i64->f64     : %f\n"
+    //            "i64->f64->f32: %f\n", x, y, z, w);
+    //   }
+    //
+    //   i64          : 18446743523953737727
+    //   i64->f32     : 18446742974197923840.000000 ;; correct rounding to f32
+    //   i64->f64     : 18446743523953737728.000000 ;; correct rounding to f64
+    //   i64->f64->f32: 18446744073709551616.000000 ;; incorrect rounding to f32
+    //
+    // This is even a problem if we use BigInts in JavaScript to represent
+    // i64s, as Math.fround(BigInt) is not supported - the BigInt must be
+    // converted to a Number first, so we again have that extra rounding.
+    //
+    // A more precise approach could use compiled floatdisf/floatundisf from
+    // compiler-rt, but that is much larger and slower. (Note that we are in the
+    // interesting situation of having f32 and f64 operations and only missing
+    // i64 ones, so we have a different problem to solve than compiler-rt, and
+    // maybe there is a better solution we haven't found yet.)
     TempVar highBits = fetchOutParam(curr->value);
     TempVar lowBits = getTemp();
     TempVar highResult = getTemp();
@@ -1493,7 +1525,7 @@ private:
 
   TempVar getTemp(Type ty = Type::i32) {
     Index ret;
-    auto& freeList = freeTemps[ty.getSingle()];
+    auto& freeList = freeTemps[ty.getBasic()];
     if (freeList.size() > 0) {
       ret = freeList.back();
       freeList.pop_back();

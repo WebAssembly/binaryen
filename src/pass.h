@@ -77,6 +77,9 @@ struct InliningOptions {
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
+  // Loops usually mean the function does heavy work, so the call overhead
+  // is not significant and we do not inline such functions by default.
+  bool allowFunctionsWithLoops = false;
 };
 
 struct PassOptions {
@@ -153,7 +156,6 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
-  void setOptions(PassOptions newOptions) { options = newOptions; }
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging

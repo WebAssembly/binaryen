@@ -27,6 +27,7 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   auto AbbrevSetPtr = DCtx.getDebugAbbrev();
   if (AbbrevSetPtr) {
     for (auto AbbrvDeclSet : *AbbrevSetPtr) {
+      auto ListOffset = AbbrvDeclSet.second.getOffset();
       for (auto AbbrvDecl : AbbrvDeclSet.second) {
         DWARFYAML::Abbrev Abbrv;
         Abbrv.Code = AbbrvDecl.getCode();
@@ -41,6 +42,7 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             AttAbrv.Value = Attribute.getImplicitConstValue();
           Abbrv.Attributes.push_back(AttAbrv);
         }
+        Abbrv.ListOffset = ListOffset;
         Y.AbbrevDecls.push_back(Abbrv);
       }
       // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate

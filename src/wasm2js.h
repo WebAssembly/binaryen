@@ -85,7 +85,13 @@ IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
+//
+// Export: Export names
+// Top: The main scope which contains functions and globals
+// Local: Local variables in a function.
+// Label: Label identifiers in a function
 enum class NameScope {
+  Export,
   Top,
   Local,
   Label,
@@ -145,11 +151,12 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    if (frees[type.getSingle()].size() > 0) {
-      ret = frees[type.getSingle()].back();
-      frees[type.getSingle()].pop_back();
+    TODO_SINGLE_COMPOUND(type);
+    if (frees[type.getBasic()].size() > 0) {
+      ret = frees[type.getBasic()].back();
+      frees[type.getBasic()].pop_back();
     } else {
-      size_t index = temps[type.getSingle()]++;
+      size_t index = temps[type.getBasic()]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
@@ -163,7 +170,8 @@ public:
 
   // Free a temp var.
   void freeTemp(Type type, IString temp) {
-    frees[type.getSingle()].push_back(temp);
+    TODO_SINGLE_COMPOUND(type);
+    frees[type.getBasic()].push_back(temp);
   }
 
   // Generates a mangled name from `name` within the specified scope.
@@ -181,11 +189,15 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& mangledScope = mangledNames[(int)scope];
-    auto it = mangledScope.find(name.c_str());
-    if (it != mangledScope.end()) {
+    auto& map = wasmNameToMangledName[(int)scope];
+    auto it = map.find(name.c_str());
+    if (it != map.end()) {
       return it->second;
     }
+    // The mangled names in our scope.
+    auto& scopeMangledNames = mangledNames[(int)scope];
+    // In some cases (see below) we need to also check the Top scope.
+    auto& topMangledNames = mangledNames[int(NameScope::Top)];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -203,28 +215,30 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (!allMangledNames.count(ret)) {
-        break;
+      if (scopeMangledNames.count(ret)) {
+        // When export names collide things may be confusing, as this is
+        // observable externally by the person using the JS. Report a warning.
+        if (scope == NameScope::Export) {
+          std::cerr << "wasm2js: warning: export names colliding: " << mangled
+                    << '\n';
+        }
+        continue;
       }
-
-      // In the global scope that's how you refer to actual function exports, so
-      // it's a bug currently if they're not globally unique. This should
-      // probably be fixed via a different namespace for exports or something
-      // like that.
-      // XXX This is not actually a valid check atm, since functions are not in
-      //     the global-most scope, but rather in the "asmFunc" scope which is
-      //     inside it. Also, for emscripten style glue, we emit the exports as
-      //     a return, so there is no name placed into the scope. For these
-      //     reasons, just warn here, don't error.
-      if (scope == NameScope::Top) {
-        std::cerr << "wasm2js: warning: global scope may be colliding with "
-                     "other scope: "
-                  << mangled << '\n';
+      // The Local scope is special: a Local name must not collide with a Top
+      // name, as they are in a single namespace in JS and can conflict:
+      //
+      // function foo(bar) {
+      //   var bar = 0;
+      // }
+      // function bar() { ..
+      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+        continue;
       }
+      // We found a good name, use it.
+      scopeMangledNames.insert(ret);
+      map[name.c_str()] = ret;
+      return ret;
     }
-    allMangledNames.insert(ret);
-    mangledScope[name.c_str()] = ret;
-    return ret;
   }
 
 private:
@@ -238,8 +252,10 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNames[(int)NameScope::Max];
-  std::unordered_set<IString> allMangledNames;
+  std::unordered_map<const char*, IString>
+    wasmNameToMangledName[(int)NameScope::Max];
+  // Set of all mangled names in each scope.
+  std::unordered_set<IString> mangledNames[(int)NameScope::Max];
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -366,7 +382,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       theVar,
       "memory",
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
-                            ValueBuilder::makeName("memory")));
+                            ValueBuilder::makeName(wasm->memory.base)));
   }
   // for emscripten, add a table import - otherwise we would have
   // FUNCTION_TABLE be an upvar, and not as easy to be minified.
@@ -383,16 +399,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
 
-  // make sure exports get their expected names
-  for (auto& e : wasm->exports) {
-    if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Top);
-    }
-  }
+  // Note the names of functions. We need to do this here as when generating
+  // mangled local names we need them not to conflict with these (see fromName)
+  // so we can't wait until we parse each function to note its name.
   for (auto& f : wasm->functions) {
     fromName(f->name, NameScope::Top);
   }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
+
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
@@ -410,14 +423,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(processFunction(wasm, func));
   });
   if (generateFetchHighBits) {
-    Builder builder(allocator);
-    asmFunc[3]->push_back(processFunction(
-      wasm,
-      builder.makeFunction(WASM_FETCH_HIGH_BITS,
-                           Signature(Type::none, Type::i32),
-                           {},
-                           builder.makeReturn(builder.makeGlobalGet(
-                             INT64_TO_32_HIGH_BITS, Type::i32)))));
+    Builder builder(allocator, *wasm);
+    asmFunc[3]->push_back(
+      processFunction(wasm,
+                      wasm->addFunction(builder.makeFunction(
+                        WASM_FETCH_HIGH_BITS,
+                        Signature(Type::none, Type::i32),
+                        {},
+                        builder.makeReturn(builder.makeGlobalGet(
+                          INT64_TO_32_HIGH_BITS, Type::i32))))));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
     e->value = WASM_FETCH_HIGH_BITS;
@@ -589,7 +603,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObjectWithQuotes(
         exports,
-        fromName(export_->name, NameScope::Top),
+        fromName(export_->name, NameScope::Export),
         ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -615,7 +629,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
                               IString("prototype")));
       ValueBuilder::appendToCall(memory, descs);
       ValueBuilder::appendToObjectWithQuotes(
-        exports, fromName(export_->name, NameScope::Top), memory);
+        exports, fromName(export_->name, NameScope::Export), memory);
     }
   }
   if (wasm->memory.exists) {
@@ -628,7 +642,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
-    switch (const_->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(const_->type);
+    switch (const_->type.getBasic()) {
       case Type::i32: {
         theValue = ValueBuilder::makeInt(const_->value.geti32());
         break;
@@ -645,7 +660,9 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
           ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE);
         break;
       }
-      default: { assert(false && "Top const type not supported"); }
+      default: {
+        assert(false && "Top const type not supported");
+      }
     }
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
@@ -1229,7 +1246,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // normal load
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1251,9 +1268,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                           ValueBuilder::makePtrShift(ptr, 2));
               break;
             default: {
-              std::cerr << "Unhandled number of bytes in i32 load: "
-                        << curr->bytes << std::endl;
-              abort();
+              Fatal() << "Unhandled number of bytes in i32 load: "
+                      << curr->bytes;
             }
           }
           break;
@@ -1267,8 +1283,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
-          abort();
+          Fatal() << "Unhandled type in load: " << curr->type;
         }
       }
       if (curr->isAtomic) {
@@ -1304,8 +1319,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             !FindAll<Call>(curr->value).list.empty() ||
             !FindAll<CallIndirect>(curr->ptr).list.empty() ||
             !FindAll<CallIndirect>(curr->value).list.empty() ||
-            !FindAll<Host>(curr->ptr).list.empty() ||
-            !FindAll<Host>(curr->value).list.empty()) {
+            !FindAll<MemoryGrow>(curr->ptr).list.empty() ||
+            !FindAll<MemoryGrow>(curr->value).list.empty()) {
           Ref ret;
           ScopedTemp ptr(Type::i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
@@ -1332,7 +1347,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->valueType.getSingle()) {
+      switch (curr->valueType.getBasic()) {
         case Type::i32: {
           switch (curr->bytes) {
             case 1:
@@ -1361,9 +1376,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in store: " << curr->valueType
-                    << std::endl;
-          abort();
+          Fatal() << "Unhandled type in store: " << curr->valueType;
         }
       }
       if (curr->isAtomic) {
@@ -1380,7 +1393,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitDrop(Drop* curr) { return visit(curr->value, NO_RESULT); }
 
     Ref visitConst(Const* curr) {
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32:
           return ValueBuilder::makeInt(curr->value.geti32());
         // An i64 argument translates to two actual arguments to asm.js
@@ -1414,13 +1427,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
         default:
-          abort();
+          Fatal() << "unknown const type";
       }
     }
 
     Ref visitUnary(Unary* curr) {
       // normal unary
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->op) {
             case ClzInt32: {
@@ -1493,9 +1506,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 ValueBuilder::makeNum(16));
             }
             default: {
-              std::cerr << "Unhandled unary i32 operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled unary i32 operator: " << curr;
             }
           }
         }
@@ -1590,8 +1601,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           return ret;
         }
         default: {
-          std::cerr << "Unhandled type in unary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in unary: " << curr;
         }
       }
     }
@@ -1601,7 +1611,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type.getSingle()) {
+      switch (curr->type.getBasic()) {
         case Type::i32: {
           switch (curr->op) {
             case AddInt32:
@@ -1754,17 +1764,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             case CopySignFloat32:
             case CopySignFloat64:
             default:
-              std::cerr << "Unhandled binary float operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled binary float operator: ";
           }
           if (curr->type == Type::f32) {
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
         default:
-          std::cerr << "Unhandled type in binary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in binary: " << curr;
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1825,21 +1832,20 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeReturn(val);
     }
 
-    Ref visitHost(Host* curr) {
-      if (curr->op == HostOp::MemoryGrow) {
-        if (module->memory.exists &&
-            module->memory.max > module->memory.initial) {
-          return ValueBuilder::makeCall(
-            WASM_MEMORY_GROW,
-            makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
-                            wasmToAsmType(curr->operands[0]->type)));
-        } else {
-          return ValueBuilder::makeCall(ABORT_FUNC);
-        }
-      } else if (curr->op == HostOp::MemorySize) {
-        return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    Ref visitMemorySize(MemorySize* curr) {
+      return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    }
+
+    Ref visitMemoryGrow(MemoryGrow* curr) {
+      if (module->memory.exists &&
+          module->memory.max > module->memory.initial) {
+        return ValueBuilder::makeCall(
+          WASM_MEMORY_GROW,
+          makeAsmCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                          wasmToAsmType(curr->delta->type)));
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      WASM_UNREACHABLE("unexpected expr type"); // TODO
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
@@ -2116,7 +2122,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
       IString("&&"),
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
                                LT,
-                               ValueBuilder::makeInt(Memory::kMaxSize))),
+                               ValueBuilder::makeInt(Memory::kMaxSize32))),
     block,
     NULL));
 
@@ -2250,8 +2256,7 @@ void Wasm2JSGlue::emitPreES6() {
     // yet.
     if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
       Fatal() << "the name " << base << " cannot be imported from "
-              << "two different modules yet\n";
-      abort();
+              << "two different modules yet";
     }
     baseModuleMap[base] = module;
 

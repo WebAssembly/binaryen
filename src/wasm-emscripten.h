@@ -33,16 +33,9 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  void setStandalone(bool standalone_) { standalone = standalone_; }
-  void setSideModule(bool sideModule_) { sideModule = sideModule_; }
-
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
-
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void generateDynCallThunks();
 
   // Remove the import of a mutable __stack_pointer and instead initialize the
   // stack pointer from an immutable import.
@@ -54,15 +47,11 @@ public:
 
   void fixInvokeFunctionNames();
 
-  void enforceStackLimit();
-
   // clang uses name mangling to rename the argc/argv form of main to
   // __main_argc_argv.  Emscripten in non-standalone mode expects that function
   // to be exported as main.  This function renames __main_argc_argv to main
   // as expected by emscripten.
   void renameMainArgcArgv();
-
-  void exportWasiStart();
 
   // Emits the data segments to a file. The file contains data from address base
   // onwards (we must pass in base, as we can't tell it from the wasm - the
@@ -70,20 +59,22 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
+  void generateDynCallThunk(Signature sig);
+
+  bool standalone = false;
+  bool sideModule = false;
+  bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
+
 private:
   Module& wasm;
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
-  bool standalone;
-  bool sideModule;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
-
-  void generateDynCallThunk(Signature sig);
-  void generateSetStackLimitFunction();
-  Name importStackOverflowHandler();
 };
 
 } // namespace wasm

@@ -1837,12 +1837,14 @@
  )
  (func $data-drop-load
   (local $x i32)
-  (nop)
-  (data.drop 0)
-  (drop
+  (local.set $x
    (i32.load
     (i32.const 0)
    )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
   )
  )
  (func $data-drop-store
@@ -1880,11 +1882,11 @@
  )
 )
 (module
- (type $none_=>_funcref (func (result funcref)))
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
+ (type $none_=>_anyref (func (result anyref)))
+ (func $subtype-test (result anyref)
+  (local $0 externref)
+  (local $1 anyref)
+  (local $2 anyref)
   (block $block
    (nop)
   )
@@ -1905,7 +1907,7 @@
   (block $label$0
    (local.set $0
     (br_on_exn $label$0 $event$0
-     (ref.null)
+     (ref.null exn)
     )
    )
   )
@@ -1916,7 +1918,7 @@
   (drop
    (block $label$1 (result exnref)
     (br_on_exn $label$1 $event$1
-     (ref.null)
+     (ref.null exn)
     )
    )
   )
@@ -1928,7 +1930,7 @@
     (try
      (do
       (rethrow
-       (ref.null)
+       (ref.null exn)
       )
      )
      (catch
@@ -1950,7 +1952,7 @@
    )
    (catch
     (local.set $0
-     (exnref.pop)
+     (pop exnref)
     )
     (call $foo
      (i32.const 3)
@@ -1971,10 +1973,10 @@
      (i32.const 3)
      (try (result exnref)
       (do
-       (ref.null)
+       (ref.null exn)
       )
       (catch
-       (exnref.pop)
+       (pop exnref)
       )
      )
     )
@@ -1997,7 +1999,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -2013,9 +2015,28 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
+  )
+ )
+)
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (memory $0 (shared 1 1))
+ (data passive "data")
+ (export "foo" (func $0))
+ (func $0 (result i32)
+  (local $0 i32)
+  (block $block (result i32)
+   (local.set $0
+    (i32.rem_u
+     (i32.const 0)
+     (i32.const 0)
+    )
+   )
+   (data.drop 0)
+   (local.get $0)
   )
  )
 )

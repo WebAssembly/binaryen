@@ -6,8 +6,10 @@
  (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
  (type $i32_i32_funcref_=>_funcref (func (param i32 i32 funcref) (result funcref)))
  (type $i32_i32_externref_=>_externref (func (param i32 i32 externref) (result externref)))
- (type $i32_i32_nullref_=>_nullref (func (param i32 i32 nullref) (result nullref)))
  (type $i32_i32_exnref_=>_exnref (func (param i32 i32 exnref) (result exnref)))
+ (type $i32_i32_anyref_=>_anyref (func (param i32 i32 anyref) (result anyref)))
+ (type $i32_i32_eqref_=>_eqref (func (param i32 i32 eqref) (result eqref)))
+ (type $i32_i32_i31ref_=>_i31ref (func (param i32 i32 i31ref) (result i31ref)))
  (type $none_=>_none (func))
  (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
  (import "env" "get_i64" (func $get_i64 (param i32 i32 i64) (result i64)))
@@ -21,10 +23,14 @@
  (import "env" "set_funcref" (func $set_funcref (param i32 i32 funcref) (result funcref)))
  (import "env" "get_externref" (func $get_externref (param i32 i32 externref) (result externref)))
  (import "env" "set_externref" (func $set_externref (param i32 i32 externref) (result externref)))
- (import "env" "get_nullref" (func $get_nullref (param i32 i32 nullref) (result nullref)))
- (import "env" "set_nullref" (func $set_nullref (param i32 i32 nullref) (result nullref)))
  (import "env" "get_exnref" (func $get_exnref (param i32 i32 exnref) (result exnref)))
  (import "env" "set_exnref" (func $set_exnref (param i32 i32 exnref) (result exnref)))
+ (import "env" "get_anyref" (func $get_anyref (param i32 i32 anyref) (result anyref)))
+ (import "env" "set_anyref" (func $set_anyref (param i32 i32 anyref) (result anyref)))
+ (import "env" "get_eqref" (func $get_eqref (param i32 i32 eqref) (result eqref)))
+ (import "env" "set_eqref" (func $set_eqref (param i32 i32 eqref) (result eqref)))
+ (import "env" "get_i31ref" (func $get_i31ref (param i32 i32 i31ref) (result i31ref)))
+ (import "env" "set_i31ref" (func $set_i31ref (param i32 i32 i31ref) (result i31ref)))
  (import "env" "get_v128" (func $get_v128 (param i32 i32 v128) (result v128)))
  (import "env" "set_v128" (func $set_v128 (param i32 i32 v128) (result v128)))
  (func $test
@@ -34,7 +40,6 @@
   (local $w f64)
   (local $F funcref)
   (local $X externref)
-  (local $N nullref)
   (local $E exnref)
   (local $S v128)
   (drop
@@ -76,22 +81,15 @@
    )
   )
   (drop
-   (call $get_nullref
+   (call $get_exnref
     (i32.const 5)
     (i32.const 6)
-    (local.get $N)
-   )
-  )
-  (drop
-   (call $get_exnref
-    (i32.const 6)
-    (i32.const 7)
     (local.get $E)
    )
   )
   (drop
    (call $get_i32
-    (i32.const 7)
+    (i32.const 6)
     (i32.const 0)
     (local.get $x)
    )
@@ -101,49 +99,42 @@
   )
   (drop
    (call $get_f32
-    (i32.const 8)
+    (i32.const 7)
     (i32.const 2)
     (local.get $z)
    )
   )
   (drop
    (call $get_f64
-    (i32.const 9)
+    (i32.const 8)
     (i32.const 3)
     (local.get $w)
    )
   )
   (drop
    (call $get_funcref
-    (i32.const 10)
+    (i32.const 9)
     (i32.const 4)
     (local.get $F)
    )
   )
   (drop
    (call $get_externref
-    (i32.const 11)
+    (i32.const 10)
     (i32.const 5)
     (local.get $X)
    )
   )
   (drop
-   (call $get_nullref
-    (i32.const 12)
-    (i32.const 6)
-    (local.get $N)
-   )
-  )
-  (drop
    (call $get_exnref
-    (i32.const 13)
-    (i32.const 7)
+    (i32.const 11)
+    (i32.const 6)
     (local.get $E)
    )
   )
   (local.set $x
    (call $set_i32
-    (i32.const 14)
+    (i32.const 12)
     (i32.const 0)
     (i32.const 1)
    )
@@ -153,57 +144,50 @@
   )
   (local.set $z
    (call $set_f32
-    (i32.const 15)
+    (i32.const 13)
     (i32.const 2)
     (f32.const 3.2100000381469727)
    )
   )
   (local.set $w
    (call $set_f64
-    (i32.const 16)
+    (i32.const 14)
     (i32.const 3)
     (f64.const 4.321)
    )
   )
   (local.set $F
    (call $set_funcref
-    (i32.const 17)
+    (i32.const 15)
     (i32.const 4)
     (ref.func $test)
    )
   )
   (local.set $X
    (call $set_externref
-    (i32.const 19)
+    (i32.const 17)
     (i32.const 5)
     (call $get_externref
-     (i32.const 18)
+     (i32.const 16)
      (i32.const 5)
      (local.get $X)
     )
    )
   )
-  (local.set $N
-   (call $set_nullref
-    (i32.const 20)
-    (i32.const 6)
-    (ref.null)
-   )
-  )
   (local.set $E
    (call $set_exnref
-    (i32.const 22)
-    (i32.const 7)
+    (i32.const 19)
+    (i32.const 6)
     (call $get_exnref
-     (i32.const 21)
-     (i32.const 7)
+     (i32.const 18)
+     (i32.const 6)
      (local.get $E)
     )
    )
   )
   (local.set $x
    (call $set_i32
-    (i32.const 23)
+    (i32.const 20)
     (i32.const 0)
     (i32.const 11)
    )
@@ -213,24 +197,24 @@
   )
   (local.set $z
    (call $set_f32
-    (i32.const 24)
+    (i32.const 21)
     (i32.const 2)
     (f32.const 33.209999084472656)
    )
   )
   (local.set $w
    (call $set_f64
-    (i32.const 25)
+    (i32.const 22)
     (i32.const 3)
     (f64.const 44.321)
    )
   )
   (local.set $F
    (call $set_funcref
-    (i32.const 27)
+    (i32.const 24)
     (i32.const 4)
     (call $get_funcref
-     (i32.const 26)
+     (i32.const 23)
      (i32.const 4)
      (local.get $F)
     )
@@ -238,60 +222,46 @@
   )
   (local.set $X
    (call $set_externref
-    (i32.const 29)
+    (i32.const 26)
     (i32.const 5)
     (call $get_externref
-     (i32.const 28)
+     (i32.const 25)
      (i32.const 5)
      (local.get $X)
     )
    )
   )
-  (local.set $N
-   (call $set_nullref
-    (i32.const 31)
-    (i32.const 6)
-    (call $get_nullref
-     (i32.const 30)
-     (i32.const 6)
-     (local.get $N)
-    )
-   )
-  )
   (local.set $E
    (call $set_exnref
-    (i32.const 33)
-    (i32.const 7)
+    (i32.const 28)
+    (i32.const 6)
     (call $get_exnref
-     (i32.const 32)
-     (i32.const 7)
+     (i32.const 27)
+     (i32.const 6)
      (local.get $E)
     )
    )
   )
   (local.set $F
-   (funcref.pop)
+   (pop funcref)
   )
   (local.set $X
-   (externref.pop)
-  )
-  (local.set $N
-   (nullref.pop)
+   (pop externref)
   )
   (local.set $E
-   (exnref.pop)
+   (pop exnref)
   )
   (drop
    (call $get_v128
-    (i32.const 34)
-    (i32.const 8)
+    (i32.const 29)
+    (i32.const 7)
     (local.get $S)
    )
   )
   (local.set $S
    (call $set_v128
-    (i32.const 35)
-    (i32.const 8)
+    (i32.const 30)
+    (i32.const 7)
     (v128.const i32x4 0x00000000 0x00000001 0x00000002 0x00000003)
    )
   )

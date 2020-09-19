@@ -12,8 +12,8 @@
  (func $call-and-unary (param $0 i32) (result i32)
   (unreachable)
  )
- (func $tee (param $0 i32)
-  (local $1 f32)
+ (func $tee (param $x i32)
+  (local $y f32)
   (unreachable)
  )
  (func $tee2

@@ -811,6 +811,9 @@ struct SimplifyLocals
   }
 
   void doWalkFunction(Function* func) {
+    if (func->getNumLocals() == 0) {
+      return; // nothing to do
+    }
     // scan local.gets
     getCounter.analyze(func);
     // multiple passes may be required per function, consider this:

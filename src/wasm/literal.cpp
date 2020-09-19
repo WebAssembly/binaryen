@@ -29,39 +29,63 @@ namespace wasm {
 
 template<int N> using LaneArray = std::array<Literal, N>;
 
+Literal::Literal(Type type) : type(type) {
+  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+  if (type.isException()) {
+    new (&exn) std::unique_ptr<ExceptionPackage>();
+  } else {
+    memset(&v128, 0, 16);
+  }
+}
+
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(const Literal& other) { *this = other; }
+Literal::Literal(const Literal& other) : type(other.type) {
+  if (type.isException()) {
+    // Avoid calling the destructor on an uninitialized value
+    if (other.exn != nullptr) {
+      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
+    } else {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    }
+  } else if (type.isFunction()) {
+    func = other.func;
+  } else {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        break;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        break;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        break;
+      case Type::none:
+        break;
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+        break; // null
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
+      case Type::funcref:
+      case Type::exnref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+}
 
 Literal& Literal::operator=(const Literal& other) {
-  type = other.type;
-  assert(!type.isMulti());
-  switch (type.getSingle()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::funcref:
-      func = other.func;
-      break;
-    case Type::exnref:
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-      break;
-    case Type::none:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  if (this != &other) {
+    this->~Literal();
+    new (this) auto(other);
   }
   return *this;
 }
@@ -102,7 +126,7 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
 Literals Literal::makeZero(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
-  for (auto t : type.expand()) {
+  for (const auto& t : type) {
     zeroes.push_back(makeSingleZero(t));
   }
   return zeroes;
@@ -111,7 +135,7 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    return makeNull(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -124,36 +148,41 @@ std::array<uint8_t, 16> Literal::getv128() const {
   return ret;
 }
 
+ExceptionPackage Literal::getExceptionPackage() const {
+  assert(type.isException() && exn != nullptr);
+  return *exn;
+}
+
 Literal Literal::castToF32() {
   assert(type == Type::i32);
-  Literal ret(i32);
-  ret.type = Type::f32;
+  Literal ret(Type::f32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToF64() {
   assert(type == Type::i64);
-  Literal ret(i64);
-  ret.type = Type::f64;
+  Literal ret(Type::f64);
+  ret.i64 = i64;
   return ret;
 }
 
 Literal Literal::castToI32() {
   assert(type == Type::f32);
-  Literal ret(i32);
-  ret.type = Type::i32;
+  Literal ret(Type::i32);
+  ret.i32 = i32;
   return ret;
 }
 
 Literal Literal::castToI64() {
   assert(type == Type::f64);
-  Literal ret(i64);
-  ret.type = Type::i64;
+  Literal ret(Type::i64);
+  ret.i64 = i64;
   return ret;
 }
 
 int64_t Literal::getInteger() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return i32;
     case Type::i64:
@@ -164,7 +193,7 @@ int64_t Literal::getInteger() const {
 }
 
 double Literal::getFloat() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return getf32();
     case Type::f64:
@@ -176,7 +205,8 @@ double Literal::getFloat() const {
 
 void Literal::getBits(uint8_t (&buf)[16]) const {
   memset(buf, 0, 16);
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
       memcpy(buf, &i32, sizeof(i32));
@@ -188,11 +218,19 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
+    // TODO: investigate changing bits returned for reference types. currently,
+    // `null` values and even non-`null` functions return all zeroes, but only
+    // to avoid introducing a functional change.
     case Type::funcref:
-    case Type::nullref:
       break;
     case Type::externref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+      assert(isNull() && "unexpected non-null reference type literal");
+      break;
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -200,21 +238,21 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
-  }
   if (type != other.type) {
     return false;
   }
   if (type == Type::none) {
     return true;
+  }
+  if (isNull() || other.isNull()) {
+    return isNull() == other.isNull();
+  }
+  if (type.isFunction()) {
+    return func == other.func;
+  }
+  if (type.isException()) {
+    assert(exn != nullptr && other.exn != nullptr);
+    return *exn == *other.exn;
   }
   uint8_t bits[16], other_bits[16];
   getBits(bits);
@@ -317,7 +355,8 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   prepareMinorColor(o);
-  switch (literal.type.getSingle()) {
+  TODO_SINGLE_COMPOUND(literal.type);
+  switch (literal.type.getBasic()) {
     case Type::none:
       o << "?";
       break;
@@ -338,15 +377,33 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       literal.printVec128(o, literal.getv128());
       break;
     case Type::funcref:
-      o << "funcref(" << literal.getFunc() << ")";
-      break;
-    case Type::nullref:
-      o << "nullref";
-      break;
-    case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      if (literal.isNull()) {
+        o << "funcref(null)";
+      } else {
+        o << "funcref(" << literal.getFunc() << ")";
+      }
       break;
     case Type::externref:
+      assert(literal.isNull() && "unexpected non-null externref literal");
+      o << "externref(null)";
+      break;
+    case Type::exnref:
+      if (literal.isNull()) {
+        o << "exnref(null)";
+      } else {
+        o << "exnref(" << literal.getExceptionPackage() << ")";
+      }
+      break;
+    case Type::anyref:
+      assert(literal.isNull() && "unexpected non-null anyref literal");
+      o << "anyref(null)";
+      break;
+    case Type::eqref:
+      assert(literal.isNull() && "unexpected non-null eqref literal");
+      o << "eqref(null)";
+      break;
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -558,7 +615,7 @@ Literal Literal::truncSatToUI64() const {
 }
 
 Literal Literal::eqz() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return eq(Literal(int32_t(0)));
     case Type::i64:
@@ -570,8 +627,10 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -580,7 +639,7 @@ Literal Literal::eqz() const {
 }
 
 Literal Literal::neg() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(-uint32_t(i32));
     case Type::i64:
@@ -592,8 +651,10 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -602,7 +663,7 @@ Literal Literal::neg() const {
 }
 
 Literal Literal::abs() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(std::abs(i32));
     case Type::i64:
@@ -614,8 +675,10 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -624,7 +687,7 @@ Literal Literal::abs() const {
 }
 
 Literal Literal::ceil() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(std::ceil(getf32()));
     case Type::f64:
@@ -635,7 +698,7 @@ Literal Literal::ceil() const {
 }
 
 Literal Literal::floor() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(std::floor(getf32()));
     case Type::f64:
@@ -646,7 +709,7 @@ Literal Literal::floor() const {
 }
 
 Literal Literal::trunc() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(std::trunc(getf32()));
     case Type::f64:
@@ -657,7 +720,7 @@ Literal Literal::trunc() const {
 }
 
 Literal Literal::nearbyint() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(std::nearbyint(getf32()));
     case Type::f64:
@@ -668,7 +731,7 @@ Literal Literal::nearbyint() const {
 }
 
 Literal Literal::sqrt() const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(std::sqrt(getf32()));
     case Type::f64:
@@ -707,7 +770,7 @@ Literal Literal::demote() const {
 }
 
 Literal Literal::add(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) + uint32_t(other.i32));
     case Type::i64:
@@ -719,8 +782,10 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -729,7 +794,7 @@ Literal Literal::add(const Literal& other) const {
 }
 
 Literal Literal::sub(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) - uint32_t(other.i32));
     case Type::i64:
@@ -741,8 +806,10 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -822,20 +889,47 @@ Literal Literal::subSatUI16(const Literal& other) const {
 }
 
 Literal Literal::mul(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) * uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
-    case Type::f32:
-      return Literal(getf32() * other.getf32());
-    case Type::f64:
-      return Literal(getf64() * other.getf64());
+    case Type::f32: {
+      // Special-case multiplication by 1. nan * 1 can change nan bits per the
+      // wasm spec, but it is ok to just return that original nan, and we
+      // do that here so that we are consistent with the optimization of
+      // removing the * 1 and leaving just the nan. That is, if we just
+      // do a normal multiply and the CPU decides to change the bits, we'd
+      // give a different result on optimized code, which would look like
+      // it was a bad optimization. So out of all the valid results to
+      // return here, return the simplest one that is consistent with
+      // our optimization for the case of 1.
+      float lhs = getf32(), rhs = other.getf32();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
+    case Type::f64: {
+      double lhs = getf64(), rhs = other.getf64();
+      if (rhs == 1) {
+        return Literal(lhs);
+      }
+      if (lhs == 1) {
+        return Literal(rhs);
+      }
+      return Literal(lhs * rhs);
+    }
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -844,7 +938,7 @@ Literal Literal::mul(const Literal& other) const {
 }
 
 Literal Literal::div(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32: {
       float lhs = getf32(), rhs = other.getf32();
       float sign = std::signbit(lhs) == std::signbit(rhs) ? 0.f : -0.f;
@@ -868,15 +962,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // Special-case division by 1. nan / 1 can change nan bits per the
-          // wasm spec, but it is ok to just return that original nan, and we
-          // do that here so that we are consistent with the optimization of
-          // removing the / 1 and leaving just the nan. That is, if we just
-          // do a normal divide and the CPU decides to change the bits, we'd
-          // give a different result on optimized code, which would look like
-          // it was a bad optimization. So out of all the valid results to
-          // return here, return the simplest one that is consistent with
-          // optimization.
+          // Special-case division by 1, similar to multiply from earlier.
           if (rhs == 1) {
             return Literal(lhs);
           }
@@ -923,7 +1009,7 @@ Literal Literal::div(const Literal& other) const {
 }
 
 Literal Literal::divS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 / other.i32);
     case Type::i64:
@@ -934,7 +1020,7 @@ Literal Literal::divS(const Literal& other) const {
 }
 
 Literal Literal::divU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) / uint32_t(other.i32));
     case Type::i64:
@@ -945,7 +1031,7 @@ Literal Literal::divU(const Literal& other) const {
 }
 
 Literal Literal::remS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 % other.i32);
     case Type::i64:
@@ -956,7 +1042,7 @@ Literal Literal::remS(const Literal& other) const {
 }
 
 Literal Literal::remU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) % uint32_t(other.i32));
     case Type::i64:
@@ -984,7 +1070,7 @@ Literal Literal::avgrUInt(const Literal& other) const {
 }
 
 Literal Literal::and_(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 & other.i32);
     case Type::i64:
@@ -995,7 +1081,7 @@ Literal Literal::and_(const Literal& other) const {
 }
 
 Literal Literal::or_(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 | other.i32);
     case Type::i64:
@@ -1006,7 +1092,7 @@ Literal Literal::or_(const Literal& other) const {
 }
 
 Literal Literal::xor_(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 ^ other.i32);
     case Type::i64:
@@ -1017,7 +1103,7 @@ Literal Literal::xor_(const Literal& other) const {
 }
 
 Literal Literal::shl(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32)
                      << Bits::getEffectiveShifts(other.i32, Type::i32));
@@ -1030,7 +1116,7 @@ Literal Literal::shl(const Literal& other) const {
 }
 
 Literal Literal::shrS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 >> Bits::getEffectiveShifts(other.i32, Type::i32));
     case Type::i64:
@@ -1041,7 +1127,7 @@ Literal Literal::shrS(const Literal& other) const {
 }
 
 Literal Literal::shrU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) >>
                      Bits::getEffectiveShifts(other.i32, Type::i32));
@@ -1054,7 +1140,7 @@ Literal Literal::shrU(const Literal& other) const {
 }
 
 Literal Literal::rotL(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
@@ -1065,7 +1151,7 @@ Literal Literal::rotL(const Literal& other) const {
 }
 
 Literal Literal::rotR(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
@@ -1076,7 +1162,7 @@ Literal Literal::rotR(const Literal& other) const {
 }
 
 Literal Literal::eq(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 == other.i32);
     case Type::i64:
@@ -1088,8 +1174,10 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1098,7 +1186,7 @@ Literal Literal::eq(const Literal& other) const {
 }
 
 Literal Literal::ne(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 != other.i32);
     case Type::i64:
@@ -1110,8 +1198,10 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1120,7 +1210,7 @@ Literal Literal::ne(const Literal& other) const {
 }
 
 Literal Literal::ltS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 < other.i32);
     case Type::i64:
@@ -1131,7 +1221,7 @@ Literal Literal::ltS(const Literal& other) const {
 }
 
 Literal Literal::ltU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) < uint32_t(other.i32));
     case Type::i64:
@@ -1142,7 +1232,7 @@ Literal Literal::ltU(const Literal& other) const {
 }
 
 Literal Literal::lt(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(getf32() < other.getf32());
     case Type::f64:
@@ -1153,7 +1243,7 @@ Literal Literal::lt(const Literal& other) const {
 }
 
 Literal Literal::leS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 <= other.i32);
     case Type::i64:
@@ -1164,7 +1254,7 @@ Literal Literal::leS(const Literal& other) const {
 }
 
 Literal Literal::leU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) <= uint32_t(other.i32));
     case Type::i64:
@@ -1175,7 +1265,7 @@ Literal Literal::leU(const Literal& other) const {
 }
 
 Literal Literal::le(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(getf32() <= other.getf32());
     case Type::f64:
@@ -1186,7 +1276,7 @@ Literal Literal::le(const Literal& other) const {
 }
 
 Literal Literal::gtS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 > other.i32);
     case Type::i64:
@@ -1197,7 +1287,7 @@ Literal Literal::gtS(const Literal& other) const {
 }
 
 Literal Literal::gtU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) > uint32_t(other.i32));
     case Type::i64:
@@ -1208,7 +1298,7 @@ Literal Literal::gtU(const Literal& other) const {
 }
 
 Literal Literal::gt(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(getf32() > other.getf32());
     case Type::f64:
@@ -1219,7 +1309,7 @@ Literal Literal::gt(const Literal& other) const {
 }
 
 Literal Literal::geS(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(i32 >= other.i32);
     case Type::i64:
@@ -1230,7 +1320,7 @@ Literal Literal::geS(const Literal& other) const {
 }
 
 Literal Literal::geU(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(uint32_t(i32) >= uint32_t(other.i32));
     case Type::i64:
@@ -1241,7 +1331,7 @@ Literal Literal::geU(const Literal& other) const {
 }
 
 Literal Literal::ge(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal(getf32() >= other.getf32());
     case Type::f64:
@@ -1252,7 +1342,7 @@ Literal Literal::ge(const Literal& other) const {
 }
 
 Literal Literal::min(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (l == r && l == 0) {
@@ -1295,7 +1385,7 @@ Literal Literal::min(const Literal& other) const {
 }
 
 Literal Literal::max(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (l == r && l == 0) {
@@ -1338,7 +1428,7 @@ Literal Literal::max(const Literal& other) const {
 }
 
 Literal Literal::pmin(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
     case Type::f64:
       return other.lt(*this).geti32() ? other : *this;
@@ -1348,7 +1438,7 @@ Literal Literal::pmin(const Literal& other) const {
 }
 
 Literal Literal::pmax(const Literal& other) const {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
     case Type::f64:
       return this->lt(other).geti32() ? other : *this;
@@ -1359,7 +1449,7 @@ Literal Literal::pmax(const Literal& other) const {
 
 Literal Literal::copysign(const Literal& other) const {
   // operate on bits directly, to avoid signalling bit being set on a float
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::f32:
       return Literal((i32 & 0x7fffffff) | (other.i32 & 0x80000000)).castToF32();
       break;
@@ -1433,8 +1523,7 @@ Literal Literal::shuffleV8x16(const Literal& other,
   return Literal(bytes);
 }
 
-template<Type::ValueType Ty, int Lanes>
-static Literal splat(const Literal& val) {
+template<Type::BasicID Ty, int Lanes> static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
   lanes.fill(val);

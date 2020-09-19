@@ -1,3 +1,4 @@
+file(GLOB wasm_HEADERS ../*.h)
 set(wasm_SOURCES
   literal.cpp
   wasm.cpp
@@ -11,5 +12,6 @@ set(wasm_SOURCES
   wasm-stack.cpp
   wasm-type.cpp
   wasm-validator.cpp
+  ${wasm_HEADERS}
 )
 add_library(wasm OBJECT ${wasm_SOURCES})

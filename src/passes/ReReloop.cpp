@@ -50,9 +50,7 @@ struct ReReloop final : public Pass {
   CFG::Block* currCFGBlock = nullptr;
 
   CFG::Block* makeCFGBlock() {
-    auto* ret = new CFG::Block(builder->makeBlock());
-    relooper->AddBlock(ret);
-    return ret;
+    return relooper->AddBlock(builder->makeBlock());
   }
 
   CFG::Block* setCurrCFGBlock(CFG::Block* curr) {
@@ -321,7 +319,7 @@ struct ReReloop final : public Pass {
     // blocks that do not have any exits are dead ends in the relooper. we need
     // to make sure that are in fact dead ends, and do not flow control
     // anywhere. add a return as needed
-    for (auto* cfgBlock : relooper->Blocks) {
+    for (auto& cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
         block->list.push_back(function->sig.results == Type::none

@@ -18,13 +18,13 @@
 // wasm2js console tool
 //
 
+#include "wasm2js.h"
 #include "optimization-options.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-s-parser.h"
-#include "wasm2js.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -123,7 +123,8 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(node, [](Ref node) {}, visit);
+  traversePrePost(
+    node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {
@@ -254,29 +255,34 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBinary(node, XOR, 1)) {
-      // x ^ 1  =>  !x
-      node[0]->setString(UNARY_PREFIX);
-      node[1]->setString(L_NOT);
-      node[3]->setNull();
-    } else if (isOrZero(node) || isTrshiftZero(node)) {
-      // Just being different from 0 is enough, casts don't matter. However,
-      // in deterministic mode we care about corner cases that would trap in
-      // wasm, like an integer divide by zero:
-      //
-      //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
-      //
-      // while
-      //
-      //  if (1 / 0)  =>  condition is Infinity which is truthy
-      //
-      // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
-      // which has the right truthiness).
-      if (!(flags.deterministic && isBinary(node[2], DIV))) {
-        return node[2];
-      }
-    }
+    // TODO: in some cases it may be possible to turn
+    //
+    //   if (x | 0)
+    //
+    // into
+    //
+    //   if (x)
+    //
+    // In general this is unsafe if e.g. x is -2147483648 + -2147483648 (which
+    // the | 0 turns into 0, but without it is a truthy value).
+    //
+    // Another issue is that in deterministic mode we care about corner cases
+    // that would trap in wasm, like an integer divide by zero:
+    //
+    //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
+    //
+    // while
+    //
+    //  if (1 / 0)  =>  condition is Infinity which is truthy
+    //
+    // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
+    // which has the right truthiness), so we could perhaps do
+    //
+    //   if (!(flags.deterministic && isBinary(node[2], DIV))) return node[2];
+    //
+    // (but there is still the first issue).
     return node;
   };
 
@@ -599,7 +605,8 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType.getSingle()) {
+    TODO_SINGLE_COMPOUND(resType);
+    switch (resType.getBasic()) {
       case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
@@ -623,8 +630,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
       }
 
       default: {
-        std::cerr << "Unhandled type in assert: " << resType << std::endl;
-        abort();
+        Fatal() << "Unhandled type in assert: " << resType;
       }
     }
   } else {
@@ -804,7 +810,7 @@ void AssertionEmitter::emit() {
     }
   )";
 
-  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Builder wasmBuilder(sexpBuilder.getAllocator(), sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
@@ -818,7 +824,7 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       options.applyFeatures(wasm);
-      SExpressionWasmBuilder builder(wasm, e);
+      SExpressionWasmBuilder builder(wasm, e, options.profile);
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
@@ -965,7 +971,8 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
+      sexprBuilder =
+        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

@@ -51,7 +51,7 @@ def in_binaryen(*args):
 
 
 def in_bin(tool):
-    return os.path.join(shared.options.binaryen_root, 'bin', tool)
+    return os.path.join(shared.options.binaryen_bin, tool)
 
 
 def random_size():
@@ -79,7 +79,7 @@ def run_unchecked(cmd):
 
 
 def randomize_pass_debug():
-    if random.random() < 0.125:
+    if random.random() < 0.1:
         print('[pass-debug]')
         os.environ['BINARYEN_PASS_DEBUG'] = '1'
     else:
@@ -111,6 +111,8 @@ def randomize_feature_opts():
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
+                if possible in IMPLIED_FEATURE_OPTS:
+                    FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
@@ -192,9 +194,9 @@ def numbers_are_close_enough(x, y):
         pass
     # otherwise, try a full eval which can handle i64s too
     try:
-        x = eval(x)
-        y = eval(y)
-        return x == y or float(x) == float(y)
+        ex = eval(x)
+        ey = eval(y)
+        return ex == ey or float(ex) == float(ey)
     except Exception as e:
         print('failed to check if numbers are close enough:', e)
         return False
@@ -355,7 +357,7 @@ class FuzzExec(TestCaseHandler):
 
 
 class CompareVMs(TestCaseHandler):
-    frequency = 0.5
+    frequency = 0.6
 
     def __init__(self):
         super(CompareVMs, self).__init__()
@@ -398,8 +400,11 @@ class CompareVMs(TestCaseHandler):
                 # if we legalize for JS, the ABI is not what C wants
                 if LEGALIZE:
                     return False
+                # relatively slow, so run it less frequently
+                if random.random() < 0.5:
+                    return False
                 # wasm2c doesn't support most features
-                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
+                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -447,6 +452,9 @@ class CompareVMs(TestCaseHandler):
                 return run_d8_js('a.out.js')
 
             def can_run(self, wasm):
+                # quite slow (more steps), so run it less frequently
+                if random.random() < 0.8:
+                    return False
                 # prefer not to run if the wasm is very large, as it can OOM
                 # the JS engine.
                 return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
@@ -496,13 +504,13 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue', '--disable-gc']])
 
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
     # not that important
-    frequency = 0.3
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
@@ -515,9 +523,34 @@ class Wasm2JS(TestCaseHandler):
     frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        before_wasm_temp = before_wasm + '.temp.wasm'
+        after_wasm_temp = after_wasm + '.temp.wasm'
+        # legalize the before wasm, so that comparisons to the interpreter
+        # later make sense (if we don't do this, the wasm may have i64 exports).
+        # after applying other necessary fixes, we'll recreate the after wasm
+        # from scratch.
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        compare_before_to_after = random.random() < 0.5
+        compare_to_interpreter = compare_before_to_after and random.random() < 0.5
+        if compare_before_to_after:
+            # to compare the wasm before and after optimizations, we must
+            # remove operations that wasm2js does not support with full
+            # precision, such as i64-to-f32, as the optimizer can give different
+            # results.
+            simplification_passes = ['--stub-unsupported-js']
+            if compare_to_interpreter:
+                # unexpectedly-unaligned loads/stores work fine in wasm in general but
+                # not in wasm2js, since typed arrays silently round down, effectively.
+                # if we want to compare to the interpreter, remove unaligned
+                # operations (by forcing alignment 1, then lowering those into aligned
+                # components, which means all loads and stores are of a single byte).
+                simplification_passes += ['--dealign', '--alignment-lowering']
+            run([in_bin('wasm-opt'), before_wasm_temp, '-o', before_wasm_temp] + simplification_passes + FEATURE_OPTS)
+        # now that the before wasm is fixed up, generate a proper after wasm
+        run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
         # always check for compiler crashes
-        before = self.run(before_wasm)
-        after = self.run(after_wasm)
+        before = self.run(before_wasm_temp)
+        after = self.run(after_wasm_temp)
         if NANS:
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
@@ -526,18 +559,55 @@ class Wasm2JS(TestCaseHandler):
         # trap on many things wasm would, and in those cases it can do weird
         # undefined things. in such a case, at least compare up until before
         # the trap, which lets us compare at least some results in some cases.
-        interpreter_output = run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
-        if TRAP_PREFIX in interpreter_output:
-            trap_index = interpreter_output.index(TRAP_PREFIX)
+        # (this is why wasm2js is not in CompareVMs, which does full
+        # comparisons - we need to limit the comparison in a special way here)
+        interpreter = run([in_bin('wasm-opt'), before_wasm_temp, '--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter:
+            trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
             # erase everything from this function's output and onward, so we
             # only compare the previous trap-free code
-            call_start = interpreter_output.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
-            call_end = interpreter_output.index('\n', call_start)
-            call_line = interpreter_output[call_start:call_end]
+            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter.index('\n', call_start)
+            call_line = interpreter[call_start:call_end]
             before = before[:before.index(call_line)]
             after = after[:after.index(call_line)]
-        compare(before, after, 'Wasm2JS')
+            interpreter = interpreter[:interpreter.index(call_line)]
+
+        def fix_output_for_js(x):
+            # start with the normal output fixes that all VMs need
+            x = fix_output(x)
+
+            # check if a number is 0 or a subnormal, which is basically zero
+            def is_basically_zero(x):
+                # to check if something is a subnormal, compare it to the largest one
+                return x >= 0 and x <= 2.22507385850720088902e-308
+
+            def fix_number(x):
+                x = x.group(1)
+                try:
+                    x = float(x)
+                    # There appear to be some cases where JS VMs will print
+                    # subnormals in full detail while other VMs do not, and vice
+                    # versa. Ignore such really tiny numbers.
+                    if is_basically_zero(x):
+                        x = 0
+                except ValueError:
+                    # not a floating-point number, nothing to do
+                    pass
+                return ' => ' + str(x)
+
+            # logging notation is "function_name => result", look for that with
+            # a floating-point result that may need to be fixed up
+            return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
+
+        before = fix_output_for_js(before)
+        after = fix_output_for_js(after)
+        if compare_before_to_after:
+            compare_between_vms(before, after, 'Wasm2JS (before/after)')
+            if compare_to_interpreter:
+                interpreter = fix_output_for_js(interpreter)
+                compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
         wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
@@ -562,10 +632,10 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        return fix_output(run_vm([shared.NODEJS, js_file, 'a.wasm']))
+        return run_vm([shared.NODEJS, js_file, 'a.wasm'])
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
 
 class Asyncify(TestCaseHandler):
@@ -619,7 +689,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
 
 # The global list of all test case handlers
@@ -644,7 +714,7 @@ def test_one(random_input, opts, given_wasm):
         # apply properties like not having any NaNs, which the original fuzz
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
-        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS)
+        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
@@ -802,6 +872,12 @@ def randomize_opt_flags():
 POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
 print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
+# some features depend on other features, so if a required feature is
+# disabled, its dependent features need to be disabled as well.
+IMPLIED_FEATURE_OPTS = {
+    '--disable-reference-types': ['--disable-exception-handling', '--disable-gc']
+}
+
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
@@ -809,11 +885,11 @@ if __name__ == '__main__':
     # instead of the randomly generating one. this can be useful for
     # reduction.
     given_wasm = None
-    if len(sys.argv) >= 2:
-        given_seed = int(sys.argv[1])
+    if len(shared.requested) >= 1:
+        given_seed = int(shared.requested[0])
         print('checking a single given seed', given_seed)
-        if len(sys.argv) >= 3:
-            given_wasm = sys.argv[2]
+        if len(shared.requested) >= 2:
+            given_wasm = shared.requested[1]
             print('using given wasm file', given_wasm)
     else:
         given_seed = None
@@ -840,7 +916,12 @@ if __name__ == '__main__':
         mean = float(total_input_size) / counter
         mean_of_squares = float(total_input_size_squares) / counter
         stddev = math.sqrt(mean_of_squares - (mean ** 2))
-        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size, '(mean:', str(mean) + ', stddev:', str(stddev) + ')', 'speed:', counter / (time.time() - start_time), 'iters/sec, ', total_wasm_size / (time.time() - start_time), 'wasm_bytes/sec\n')
+        elapsed = max(0.000001, time.time() - start_time)
+        print('ITERATION:', counter, 'seed:', seed, 'size:', input_size,
+              '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
+              'speed:', counter / elapsed,
+              'iters/sec, ', total_wasm_size / elapsed,
+              'wasm_bytes/sec\n')
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
@@ -886,7 +967,7 @@ if __name__ == '__main__':
 echo "should be 0:" $?
 
 # run the command
-./scripts/fuzz_opt.py %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "should be 1:" $?
 
 #
@@ -913,6 +994,7 @@ echo "should be 1:" $?
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
+                         'bin': shared.options.binaryen_bin,
                          'seed': seed,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),

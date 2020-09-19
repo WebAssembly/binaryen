@@ -130,11 +130,29 @@ struct PostEmscripten : public Pass {
       }
     }
 
+    // Optimize imports
+    optimizeImports(runner, module);
+
     // Optimize calls
     OptimizeCalls().run(runner, module);
 
     // Optimize exceptions
     optimizeExceptions(runner, module);
+  }
+
+  void optimizeImports(PassRunner* runner, Module* module) {
+    // Calling emscripten_longjmp_jmpbuf is the same as emscripten_longjmp.
+    Name EMSCRIPTEN_LONGJMP("emscripten_longjmp");
+    Name EMSCRIPTEN_LONGJMP_JMPBUF("emscripten_longjmp_jmpbuf");
+    ImportInfo info(*module);
+    auto* emscripten_longjmp =
+      info.getImportedFunction(ENV, EMSCRIPTEN_LONGJMP);
+    auto* emscripten_longjmp_jmpbuf =
+      info.getImportedFunction(ENV, EMSCRIPTEN_LONGJMP_JMPBUF);
+    if (emscripten_longjmp && emscripten_longjmp_jmpbuf) {
+      // Both exist, so it is worth renaming so that we have only one.
+      emscripten_longjmp_jmpbuf->base = EMSCRIPTEN_LONGJMP;
+    }
   }
 
   // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.
@@ -175,10 +193,11 @@ struct PostEmscripten : public Pass {
       });
 
     // Assume an indirect call might throw.
-    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
-                           [](const Info& info) { return true; },
-                           [](Info& info) { info.canThrow = true; },
-                           analyzer.IndirectCallsHaveProperty);
+    analyzer.propagateBack(
+      [](const Info& info) { return info.canThrow; },
+      [](const Info& info) { return true; },
+      [](Info& info, Function* reason) { info.canThrow = true; },
+      analyzer.IndirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {

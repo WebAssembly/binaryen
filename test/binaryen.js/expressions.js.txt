@@ -64,9 +64,12 @@
  (f64.const 3)
 )
 
-# Host
+# MemorySize
+(memory.size)
+
+# MemoryGrow
 (memory.grow
- (i32.const 1)
+ (i32.const 2)
 )
 
 # Load

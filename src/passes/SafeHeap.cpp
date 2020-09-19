@@ -32,8 +32,7 @@
 namespace wasm {
 
 static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
-static const Name GET_SBRK_PTR_IMPORT("emscripten_get_sbrk_ptr");
-static const Name GET_SBRK_PTR_EXPORT("_emscripten_get_sbrk_ptr");
+static const Name GET_SBRK_PTR("emscripten_get_sbrk_ptr");
 static const Name SBRK("sbrk");
 static const Name SEGFAULT_IMPORT("segfault");
 static const Name ALIGNFAULT_IMPORT("alignfault");
@@ -66,37 +65,39 @@ static Name getStoreName(Store* curr) {
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
+  // If the getSbrkPtr function is implemented in the wasm, we must not
+  // instrument that, as it would lead to infinite recursion of it calling
+  // SAFE_HEAP_LOAD that calls it and so forth.
+  Name getSbrkPtr;
+
   bool isFunctionParallel() override { return true; }
 
-  AccessInstrumenter* create() override { return new AccessInstrumenter; }
+  AccessInstrumenter* create() override {
+    return new AccessInstrumenter(getSbrkPtr);
+  }
+
+  AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
-    if (curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
     replaceCurrent(
       builder.makeCall(getLoadName(curr),
-                       {
-                         curr->ptr,
-                         builder.makeConst(Literal(int32_t(curr->offset))),
-                       },
+                       {curr->ptr, builder.makeConstPtr(curr->offset.addr)},
                        curr->type));
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == Type::unreachable) {
+    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeCall(getStoreName(curr),
-                       {
-                         curr->ptr,
-                         builder.makeConst(Literal(int32_t(curr->offset))),
-                         curr->value,
-                       },
-                       Type::none));
+    replaceCurrent(builder.makeCall(
+      getStoreName(curr),
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr), curr->value},
+      Type::none));
   }
 };
 
@@ -108,7 +109,7 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter().run(runner, module);
+    AccessInstrumenter(getSbrkPtr).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
@@ -117,26 +118,23 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     ImportInfo info(*module);
+    auto indexType = module->memory.indexType;
     // Older emscripten imports env.DYNAMICTOP_PTR.
-    // Newer emscripten imports emscripten_get_sbrk_ptr(), which is later
-    // optimized to have the number in the binary (or in the case of fastcomp,
-    // emscripten_get_sbrk_ptr is an asm.js library function so it is inside
-    // the wasm, and discoverable via an export).
+    // Newer emscripten imports or exports emscripten_get_sbrk_ptr().
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
-    } else if (auto* existing =
-                 info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
+    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
       auto* import = new Function;
-      import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
+      import->name = getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
-      import->base = GET_SBRK_PTR_IMPORT;
-      import->sig = Signature(Type::none, Type::i32);
+      import->base = GET_SBRK_PTR;
+      import->sig = Signature(Type::none, indexType);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
@@ -247,25 +245,27 @@ struct SafeHeap : public Pass {
     auto* func = new Function;
     func->name = name;
     // pointer, offset
-    func->sig = Signature({Type::i32, Type::i32}, style.type);
-    func->vars.push_back(Type::i32); // pointer + offset
+    auto indexType = module->memory.indexType;
+    func->sig = Signature({indexType, indexType}, style.type);
+    func->vars.push_back(indexType); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(AddInt32,
-                         builder.makeLocalGet(0, Type::i32),
-                         builder.makeLocalGet(1, Type::i32))));
+      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+                         builder.makeLocalGet(0, indexType),
+                         builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(makeBoundsCheck(style.type, builder, 2, style.bytes));
+    block->list.push_back(
+      makeBoundsCheck(style.type, builder, 2, style.bytes, module));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 2));
+      block->list.push_back(makeAlignCheck(style.align, builder, 2, module));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
-    load->ptr = builder.makeLocalGet(2, Type::i32);
+    load->ptr = builder.makeLocalGet(2, indexType);
     Expression* last = load;
     if (load->isAtomic && load->signed_) {
       // atomic loads cannot be signed, manually sign it
@@ -287,26 +287,27 @@ struct SafeHeap : public Pass {
     auto* func = new Function;
     func->name = name;
     // pointer, offset, value
-    func->sig = Signature({Type::i32, Type::i32, style.valueType}, Type::none);
-    func->vars.push_back(Type::i32); // pointer + offset
+    auto indexType = module->memory.indexType;
+    func->sig = Signature({indexType, indexType, style.valueType}, Type::none);
+    func->vars.push_back(indexType); // pointer + offset
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
-      builder.makeBinary(AddInt32,
-                         builder.makeLocalGet(0, Type::i32),
-                         builder.makeLocalGet(1, Type::i32))));
+      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+                         builder.makeLocalGet(0, indexType),
+                         builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes));
+      makeBoundsCheck(style.valueType, builder, 3, style.bytes, module));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 3));
+      block->list.push_back(makeAlignCheck(style.align, builder, 3, module));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
-    store->ptr = builder.makeLocalGet(3, Type::i32);
+    store->ptr = builder.makeLocalGet(3, indexType);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
     block->finalize(Type::none);
@@ -314,42 +315,53 @@ struct SafeHeap : public Pass {
     module->addFunction(func);
   }
 
-  Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
+  Expression*
+  makeAlignCheck(Address align, Builder& builder, Index local, Module* module) {
+    auto indexType = module->memory.indexType;
+    Expression* ptrBits = builder.makeLocalGet(local, indexType);
+    if (module->memory.is64()) {
+      ptrBits = builder.makeUnary(WrapInt64, ptrBits);
+    }
     return builder.makeIf(
-      builder.makeBinary(AndInt32,
-                         builder.makeLocalGet(local, Type::i32),
-                         builder.makeConst(Literal(int32_t(align - 1)))),
+      builder.makeBinary(
+        AndInt32, ptrBits, builder.makeConst(int32_t(align - 1))),
       builder.makeCall(alignfault, {}, Type::none));
   }
 
-  Expression*
-  makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
-    auto upperOp = options.lowMemoryUnused ? LtUInt32 : EqInt32;
+  Expression* makeBoundsCheck(
+    Type type, Builder& builder, Index local, Index bytes, Module* module) {
+    auto indexType = module->memory.indexType;
+    auto upperOp = module->memory.is64()
+                     ? options.lowMemoryUnused ? LtUInt64 : EqInt64
+                     : options.lowMemoryUnused ? LtUInt32 : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
-      brkLocation = builder.makeCall(
-        sbrk, {builder.makeConst(Literal(int32_t(0)))}, Type::i32);
+      brkLocation =
+        builder.makeCall(sbrk, {builder.makeConstPtr(0)}, indexType);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
-        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, Type::i32);
+        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, indexType);
       } else {
-        sbrkPtr = builder.makeCall(getSbrkPtr, {}, Type::i32);
+        sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
       }
-      brkLocation = builder.makeLoad(4, false, 0, 4, sbrkPtr, Type::i32);
+      auto size = module->memory.is64() ? 8 : 4;
+      brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType);
     }
+    auto gtuOp = module->memory.is64() ? GtUInt64 : GtUInt32;
+    auto addOp = module->memory.is64() ? AddInt64 : AddInt32;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(upperOp,
-                           builder.makeLocalGet(local, Type::i32),
-                           builder.makeConst(Literal(int32_t(upperBound)))),
+                           builder.makeLocalGet(local, indexType),
+                           builder.makeConstPtr(upperBound)),
         builder.makeBinary(
-          GtUInt32,
-          builder.makeBinary(AddInt32,
-                             builder.makeLocalGet(local, Type::i32),
-                             builder.makeConst(Literal(int32_t(bytes)))),
+          gtuOp,
+          builder.makeBinary(addOp,
+                             builder.makeLocalGet(local, indexType),
+                             builder.makeConstPtr(bytes)),
           brkLocation)),
       builder.makeCall(segfault, {}, Type::none));
   }
