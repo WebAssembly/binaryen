@@ -809,8 +809,8 @@ WASM_ALWAYS_INLINE decltype(auto) unary(Unary** binder, UnaryOp op, S&& s) {
   return Internal::UnaryMatcher(binder, op, s);
 }
 template<class S>
-WASM_ALWAYS_INLINE
-decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
+WASM_ALWAYS_INLINE decltype(auto)
+unary(Unary** binder, Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(binder, op, s);
 }
 
