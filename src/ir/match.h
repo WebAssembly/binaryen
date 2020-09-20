@@ -512,7 +512,7 @@ WASM_ALWAYS_INLINE decltype(auto) ConstMatcher(Const** binder, S&& s) {
 // Unary and AbstractUnary
 struct UnaryK {
   using Op = UnaryOp;
-  WASM_ALWAYS_INLINE static UnaryOp getOp(Type, Op op) { return op; }
+  static WASM_ALWAYS_INLINE UnaryOp getOp(Type, Op op) { return op; }
 };
 struct AbstractUnaryK {
   using Op = Abstract::Op;
@@ -550,7 +550,7 @@ AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
 // Binary and AbstractBinary
 struct BinaryK {
   using Op = BinaryOp;
-  static BinaryOp getOp(Type, Op op) { return op; }
+  static WASM_ALWAYS_INLINE BinaryOp getOp(Type, Op op) { return op; }
 };
 struct AbstractBinaryK {
   using Op = Abstract::Op;
