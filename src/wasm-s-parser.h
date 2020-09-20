@@ -174,6 +174,7 @@ public:
   Expression* parseExpression(Element& s);
 
   MixedArena& getAllocator() { return allocator; }
+  Module& getModule() { return wasm; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -183,7 +184,8 @@ private:
   Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
-  Expression* makeHost(Element& s, HostOp op);
+  Expression* makeMemorySize(Element& s);
+  Expression* makeMemoryGrow(Element& s);
   Index getLocalIndex(Element& s);
   Expression* makeLocalGet(Element& s);
   Expression* makeLocalTee(Element& s);
@@ -245,6 +247,7 @@ private:
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);

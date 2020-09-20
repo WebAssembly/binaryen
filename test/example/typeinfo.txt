@@ -9,11 +9,11 @@ any
 anyref
 (ref any)
 eq
-(ref null eq)
+eqref
 (ref eq)
 i31
 (ref null i31)
-(ref i31)
+i31ref
 exn
 exnref
 (ref exn)

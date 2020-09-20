@@ -152,6 +152,14 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 #endif
 }
 
+template<> int CeilLog2<uint32_t>(uint32_t v) {
+  return 32 - CountLeadingZeroes(v - 1);
+}
+
+template<> int CeilLog2<uint64_t>(uint64_t v) {
+  return 64 - CountLeadingZeroes(v - 1);
+}
+
 template<> bool IsPowerOf2Float<double>(double v) {
   const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
   const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022

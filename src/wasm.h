@@ -42,20 +42,18 @@ namespace wasm {
 // An index in a wasm module
 typedef uint32_t Index;
 
-// An address in linear memory. For now only wasm32
+// An address in linear memory.
 struct Address {
-  typedef uint32_t address_t;
-  address_t addr;
+  typedef uint32_t address32_t;
+  typedef uint64_t address64_t;
+  address64_t addr;
   Address() : addr(0) {}
-  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
-    assert(a <= std::numeric_limits<address_t>::max());
-  }
+  Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
-    assert(a <= std::numeric_limits<address_t>::max());
-    addr = static_cast<address_t>(a);
+    addr = a;
     return *this;
   }
-  operator address_t() const { return addr; }
+  operator address64_t() const { return addr; }
   Address& operator++() {
     ++addr;
     return *this;
@@ -434,8 +432,6 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum HostOp { MemorySize, MemoryGrow };
-
 enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 
 enum SIMDExtractOp {
@@ -534,7 +530,8 @@ public:
     SelectId,
     DropId,
     ReturnId,
-    HostId,
+    MemorySizeId,
+    MemoryGrowId,
     NopId,
     UnreachableId,
     AtomicRMWId,
@@ -1066,14 +1063,26 @@ public:
   Expression* value = nullptr;
 };
 
-class Host : public SpecificExpression<Expression::HostId> {
+class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
 public:
-  Host(MixedArena& allocator) : operands(allocator) {}
+  MemorySize() { type = Type::i32; }
+  MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  HostOp op;
-  Name nameOperand;
-  ExpressionList operands;
+  Type ptrType = Type::i32;
 
+  void make64();
+  void finalize();
+};
+
+class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
+public:
+  MemoryGrow() { type = Type::i32; }
+  MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
+
+  Expression* delta = nullptr;
+  Type ptrType = Type::i32;
+
+  void make64();
   void finalize();
 };
 
@@ -1355,9 +1364,9 @@ public:
 
 class Table : public Importable {
 public:
-  static const Address::address_t kPageSize = 1;
+  static const Address::address32_t kPageSize = 1;
   static const Index kUnlimitedSize = Index(-1);
-  // In wasm32, the maximum table size is limited by a 32-bit pointer: 4GB
+  // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
@@ -1392,12 +1401,11 @@ public:
 
 class Memory : public Importable {
 public:
-  static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kUnlimitedSize = Address::address_t(-1);
+  static const Address::address32_t kPageSize = 64 * 1024;
+  static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address_t kMaxSize =
+  static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
-  static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
     bool isPassive = false;
@@ -1423,21 +1431,24 @@ public:
   bool exists = false;
   Name name;
   Address initial = 0; // sizes are in pages
-  Address max = kMaxSize;
+  Address max = kMaxSize32;
   std::vector<Segment> segments;
 
   // See comment in Table.
   bool shared = false;
+  Type indexType = Type::i32;
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  bool is64() { return indexType == Type::i64; }
   void clear() {
     exists = false;
     name = "";
     initial = 0;
-    max = kMaxSize;
+    max = kMaxSize32;
     segments.clear();
     shared = false;
+    indexType = Type::i32;
   }
 };
 
@@ -1562,7 +1573,7 @@ public:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address_t>()(a.addr);
+    return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
 } // namespace std

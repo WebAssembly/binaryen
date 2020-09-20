@@ -49,9 +49,9 @@ class FeatureValidationTest(utils.BinaryenTestCase):
                            ['--enable-exception-handling',
                             '--enable-reference-types'])
 
-    def check_anyref(self, module, error):
-        # Anyref handling implies reference types
-        self.check_feature(module, error, '--enable-anyref',
+    def check_gc(self, module, error):
+        # GC implies reference types
+        self.check_feature(module, error, '--enable-gc',
                            ['--enable-reference-types'])
 
     def test_v128_signature(self):
@@ -264,7 +264,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (global $foo anyref (ref.null any))
         )
         '''
-        self.check_anyref(module, 'all used types should be allowed')
+        self.check_gc(module, 'all used types should be allowed')
 
     def test_anyref_local(self):
         module = '''
@@ -274,7 +274,25 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_anyref(module, 'all used types should be allowed')
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_global(self):
+        module = '''
+        (module
+         (global $foo eqref (ref.null eq))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 eqref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
@@ -333,11 +351,13 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.check_features(filename, ['exception-handling', 'reference-types'])
         self.assertIn('throw', self.disassemble(filename))
 
-    def test_anyref(self):
-        filename = 'anyref_target_feature.wasm'
+    def test_gc(self):
+        filename = 'gc_target_feature.wasm'
         self.roundtrip(filename)
-        self.check_features(filename, ['reference-types', 'anyref'])
-        self.assertIn('anyref', self.disassemble(filename))
+        self.check_features(filename, ['reference-types', 'gc'])
+        disassembly = self.disassemble(filename)
+        self.assertIn('anyref', disassembly)
+        self.assertIn('eqref', disassembly)
 
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
@@ -387,5 +407,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-tail-call',
             '--enable-reference-types',
             '--enable-multivalue',
-            '--enable-anyref'
+            '--enable-gc',
+            '--enable-memory64'
         ], p2.stdout.splitlines())

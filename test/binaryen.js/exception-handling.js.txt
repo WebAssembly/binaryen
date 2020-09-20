@@ -28,7 +28,7 @@
  )
 )
 
-getExpressionInfo(throw) = {"id":43,"type":1,"event":"e"}
-getExpressionInfo(br_on_exn) = {"id":45,"type":9,"name":"l","event":"e"}
-getExpressionInfo(rethrow) = {"id":44,"type":1}
-getExpressionInfo(try) = {"id":42,"type":0}
+getExpressionInfo(throw) = {"id":44,"type":1,"event":"e"}
+getExpressionInfo(br_on_exn) = {"id":46,"type":9,"name":"l","event":"e"}
+getExpressionInfo(rethrow) = {"id":45,"type":1}
+getExpressionInfo(try) = {"id":43,"type":0}

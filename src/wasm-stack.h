@@ -132,7 +132,8 @@ public:
   void visitBinary(Binary* curr);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
-  void visitHost(Host* curr);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
@@ -428,8 +429,8 @@ private:
 // Queues the expressions linearly in Stack IR (SIR)
 class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
 public:
-  StackIRGenerator(MixedArena& allocator, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), allocator(allocator) {}
+  StackIRGenerator(Module& module, Function* func)
+    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
 
   void emit(Expression* curr);
   void emitScopeEnd(Expression* curr);
@@ -442,7 +443,7 @@ public:
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {
-    stackIR.push_back(makeStackInst(Builder(allocator).makeUnreachable()));
+    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
   }
   void emitDebugLocation(Expression* curr) {}
 
@@ -454,7 +455,7 @@ private:
     return makeStackInst(StackInst::Basic, origin);
   }
 
-  MixedArena& allocator;
+  Module& module;
   StackIR stackIR; // filled in write()
 };
 

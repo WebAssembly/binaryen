@@ -40,6 +40,7 @@ template<typename T> int PopCount(T);
 template<typename T> uint32_t BitReverse(T);
 template<typename T> int CountTrailingZeroes(T);
 template<typename T> int CountLeadingZeroes(T);
+template<typename T> int CeilLog2(T);
 template<typename T> bool IsPowerOf2Float(T);
 
 #ifndef wasm_support_bits_definitions
@@ -53,6 +54,8 @@ extern template int CountTrailingZeroes(uint32_t);
 extern template int CountTrailingZeroes(uint64_t);
 extern template int CountLeadingZeroes(uint32_t);
 extern template int CountLeadingZeroes(uint64_t);
+extern template int CeilLog2(uint32_t);
+extern template int CeilLog2(uint64_t);
 extern template bool IsPowerOf2Float(float);
 extern template bool IsPowerOf2Float(double);
 #endif
@@ -67,6 +70,9 @@ template<typename T> int CountTrailingZeroes(T v) {
 }
 template<typename T> int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
+}
+template<typename T> int CeilLog2(T v) {
+  return CeilLog2(typename std::make_unsigned<T>::type(v));
 }
 template<typename T> bool IsPowerOf2(T v) {
   static_assert(std::is_integral<T>::value, "unexpected type");

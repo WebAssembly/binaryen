@@ -35,10 +35,12 @@ struct NameType {
 
 class Builder {
   MixedArena& allocator;
+  Module& wasm;
 
 public:
-  Builder(MixedArena& allocator) : allocator(allocator) {}
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(MixedArena& allocator, Module& wasm)
+    : allocator(allocator), wasm(wasm) {}
+  Builder(Module& wasm) : allocator(wasm.allocator), wasm(wasm) {}
 
   // make* functions, other globals
 
@@ -486,6 +488,9 @@ public:
     ret->finalize();
     return ret;
   }
+  Const* makeConstPtr(uint64_t val) {
+    return makeConst(Literal::makeFromUInt64(val, wasm.memory.indexType));
+  }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = allocator.alloc<Binary>();
     ret->op = op;
@@ -519,12 +524,20 @@ public:
     ret->value = value;
     return ret;
   }
-  Host*
-  makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = allocator.alloc<Host>();
-    ret->op = op;
-    ret->nameOperand = nameOperand;
-    ret->operands.set(operands);
+  MemorySize* makeMemorySize() {
+    auto* ret = allocator.alloc<MemorySize>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
+    ret->finalize();
+    return ret;
+  }
+  MemoryGrow* makeMemoryGrow(Expression* delta) {
+    auto* ret = allocator.alloc<MemoryGrow>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
+    ret->delta = delta;
     ret->finalize();
     return ret;
   }
@@ -632,8 +645,11 @@ public:
       case Type::externref:
       case Type::exnref: // TODO: ExceptionPackage?
       case Type::anyref:
-        assert(value.isNull());
+      case Type::eqref:
+        assert(value.isNull() && "unexpected non-null reference type literal");
         return makeRefNull(value.type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -827,7 +843,10 @@ public:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

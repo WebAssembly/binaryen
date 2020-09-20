@@ -192,6 +192,8 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -294,6 +296,8 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -697,6 +701,8 @@ void BinaryInstWriter::visitConst(Const* curr) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1671,17 +1677,13 @@ void BinaryInstWriter::visitReturn(Return* curr) {
   o << int8_t(BinaryConsts::Return);
 }
 
-void BinaryInstWriter::visitHost(Host* curr) {
-  switch (curr->op) {
-    case MemorySize: {
-      o << int8_t(BinaryConsts::MemorySize);
-      break;
-    }
-    case MemoryGrow: {
-      o << int8_t(BinaryConsts::MemoryGrow);
-      break;
-    }
-  }
+void BinaryInstWriter::visitMemorySize(MemorySize* curr) {
+  o << int8_t(BinaryConsts::MemorySize);
+  o << U32LEB(0); // Reserved flags field
+}
+
+void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
+  o << int8_t(BinaryConsts::MemoryGrow);
   o << U32LEB(0); // Reserved flags field
 }
 
@@ -1911,7 +1913,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
 
 StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
                                            Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = module.allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

@@ -9,6 +9,8 @@
   // BinaryenTypeExternref: 8
   // BinaryenTypeExnref: 9
   // BinaryenTypeAnyref: 10
+  // BinaryenTypeEqref: 11
+  // BinaryenTypeI31ref: 12
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -21,8 +23,8 @@ BinaryenFeatureExceptionHandling: 64
 BinaryenFeatureTailCall: 128
 BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
-BinaryenFeatureAnyref: 1024
-BinaryenFeatureAll: 2047
+BinaryenFeatureGC: 1024
+BinaryenFeatureAll: 4095
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1856,6 +1858,14 @@ BinaryenFeatureAll: 2047
       )
       (drop
        (pop i32 i64 f32 f64)
+      )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
       )
       (nop)
       (unreachable)

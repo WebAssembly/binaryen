@@ -87,7 +87,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::TailCall, "tail call operations")
       .addFeature(FeatureSet::ReferenceTypes, "reference types")
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
-      .addFeature(FeatureSet::Anyref, "anyref type (without GC)")
+      .addFeature(FeatureSet::GC, "garbage collection")
+      .addFeature(FeatureSet::Memory64, "memory64")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",

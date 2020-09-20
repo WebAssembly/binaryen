@@ -1430,16 +1430,8 @@ struct PrintExpressionContents
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
-  void visitHost(Host* curr) {
-    switch (curr->op) {
-      case MemorySize:
-        printMedium(o, "memory.size");
-        break;
-      case MemoryGrow:
-        printMedium(o, "memory.grow");
-        break;
-    }
-  }
+  void visitMemorySize(MemorySize* curr) { printMedium(o, "memory.size"); }
+  void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
     o << curr->type.getHeapType();
@@ -1577,7 +1569,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   void printFullLine(Expression* expression) {
-    !minify && doIndent(o, indent);
+    if (!minify) {
+      doIndent(o, indent);
+    }
     if (full) {
       o << "[" << expression->type << "] ";
     }
@@ -1945,20 +1939,17 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  void visitHost(Host* curr) {
+  void visitMemorySize(MemorySize* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    switch (curr->op) {
-      case MemoryGrow: {
-        incIndent();
-        printFullLine(curr->operands[0]);
-        decIndent();
-        break;
-      }
-      case MemorySize: {
-        o << ')';
-      }
-    }
+    o << ')';
+  }
+  void visitMemoryGrow(MemoryGrow* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->delta);
+    decIndent();
   }
   void visitRefNull(RefNull* curr) {
     o << '(';
@@ -2307,6 +2298,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "shared ");
     }
+    if (curr->is64()) {
+      o << "i64 ";
+    }
     o << curr->initial;
     if (curr->hasMax()) {
       o << ' ' << curr->max;
@@ -2455,7 +2449,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         << section.data.size();
       bool isPrintable = true;
       for (auto c : section.data) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
           isPrintable = false;
           break;
         }

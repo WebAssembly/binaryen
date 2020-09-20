@@ -99,12 +99,11 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return ret;
 }
 
-void WasmBinaryWriter::writeResizableLimits(Address initial,
-                                            Address maximum,
-                                            bool hasMaximum,
-                                            bool shared) {
+void WasmBinaryWriter::writeResizableLimits(
+  Address initial, Address maximum, bool hasMaximum, bool shared, bool is64) {
   uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U);
+                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
+                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -203,7 +202,8 @@ void WasmBinaryWriter::writeMemory() {
   writeResizableLimits(wasm->memory.initial,
                        wasm->memory.max,
                        wasm->memory.hasMax(),
-                       wasm->memory.shared);
+                       wasm->memory.shared,
+                       wasm->memory.is64());
   finishSection(start);
 }
 
@@ -267,7 +267,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->memory.initial,
                          wasm->memory.max,
                          wasm->memory.hasMax(),
-                         wasm->memory.shared);
+                         wasm->memory.shared,
+                         wasm->memory.is64());
   }
   if (wasm->table.imported()) {
     BYN_TRACE("write one table\n");
@@ -277,7 +278,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->table.initial,
                          wasm->table.max,
                          wasm->table.hasMax(),
-                         /*shared=*/false);
+                         /*shared=*/false,
+                         /*is64*/ false);
   }
   finishSection(start);
 }
@@ -505,7 +507,8 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   writeResizableLimits(wasm->table.initial,
                        wasm->table.max,
                        wasm->table.hasMax(),
-                       /*shared=*/false);
+                       /*shared=*/false,
+                       /*is64*/ false);
   finishSection(start);
 }
 
@@ -750,8 +753,10 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
-      case FeatureSet::Anyref:
-        return BinaryConsts::UserSections::AnyrefFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
+      case FeatureSet::Memory64:
+        return BinaryConsts::UserSections::Memory64Feature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1201,10 +1206,14 @@ Type WasmBinaryBuilder::getType() {
       return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
+    case BinaryConsts::EncodedType::eqref:
+      return Type::eqref;
+    case BinaryConsts::EncodedType::i31ref:
+      return Type::i31ref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 HeapType WasmBinaryBuilder::getHeapType() {
@@ -1225,10 +1234,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::ExnKind;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::AnyKind;
+    case BinaryConsts::EncodedHeapType::eq:
+      return HeapType::EqKind;
+    case BinaryConsts::EncodedHeapType::i31:
+      return HeapType::I31Kind;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1317,6 +1330,7 @@ void WasmBinaryBuilder::readMemory() {
   getResizableLimits(wasm.memory.initial,
                      wasm.memory.max,
                      wasm.memory.shared,
+                     wasm.memory.indexType,
                      Memory::kUnlimitedSize);
 }
 
@@ -1370,15 +1384,18 @@ Name WasmBinaryBuilder::getEventName(Index index) {
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
                                            Address& max,
                                            bool& shared,
+                                           Type& indexType,
                                            Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
   bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
   bool isShared = (flags & BinaryConsts::IsShared) != 0;
+  bool is64 = (flags & BinaryConsts::Is64) != 0;
   if (isShared && !hasMax) {
     throwError("shared memory must have max size");
   }
   shared = isShared;
+  indexType = is64 ? Type::i64 : Type::i32;
   if (hasMax) {
     max = getU32LEB();
   } else {
@@ -1425,10 +1442,17 @@ void WasmBinaryBuilder::readImports() {
         }
         wasm.table.exists = true;
         bool is_shared;
-        getResizableLimits(
-          wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+        Type indexType;
+        getResizableLimits(wasm.table.initial,
+                           wasm.table.max,
+                           is_shared,
+                           indexType,
+                           Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
+        }
+        if (indexType == Type::i64) {
+          throwError("Tables may not be 64-bit");
         }
         break;
       }
@@ -1440,6 +1464,7 @@ void WasmBinaryBuilder::readImports() {
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
                            wasm.memory.shared,
+                           wasm.memory.indexType,
                            Memory::kUnlimitedSize);
         break;
       }
@@ -2096,10 +2121,17 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
     throwError("ElementType must be funcref in MVP");
   }
   bool is_shared;
-  getResizableLimits(
-    wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+  Type indexType;
+  getResizableLimits(wasm.table.initial,
+                     wasm.table.max,
+                     is_shared,
+                     indexType,
+                     Table::kUnlimitedSize);
   if (is_shared) {
     throwError("Tables may not be shared");
+  }
+  if (indexType == Type::i64) {
+    throwError("Tables may not be 64-bit");
   }
 }
 
@@ -2307,8 +2339,10 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
-      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
-        wasm.features.setAnyref();
+      } else if (name == BinaryConsts::UserSections::GCFeature) {
+        wasm.features.setGC();
+      } else if (name == BinaryConsts::UserSections::Memory64Feature) {
+        wasm.features.setMemory64();
       }
     }
   }
@@ -2441,7 +2475,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
     case BinaryConsts::Try:
-      visitTry((curr = allocator.alloc<Try>())->cast<Try>());
+      visitTryOrTryInBlock(curr);
       break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
@@ -2452,6 +2486,24 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnExn:
       visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
+    case BinaryConsts::MemorySize: {
+      auto size = allocator.alloc<MemorySize>();
+      if (wasm.memory.is64()) {
+        size->make64();
+      }
+      curr = size;
+      visitMemorySize(size);
+      break;
+    }
+    case BinaryConsts::MemoryGrow: {
+      auto grow = allocator.alloc<MemoryGrow>();
+      if (wasm.memory.is64()) {
+        grow->make64();
+      }
+      curr = grow;
+      visitMemoryGrow(grow);
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -2549,9 +2601,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) {
-        break;
-      }
-      if (maybeVisitHost(curr, code)) {
         break;
       }
       throwError("bad node code " + std::to_string(code));
@@ -2692,20 +2741,10 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 }
 
 // Gets a block of expressions. If it's just one, return that singleton.
-// numPops is the number of pop instructions we add before starting to parse the
-// block. Can be used when we need to assume certain number of values are on top
-// of the stack in the beginning.
-Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
-                                                   unsigned numPops) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type});
   auto start = expressionStack.size();
-
-  Builder builder(wasm);
-  for (unsigned i = 0; i < numPops; i++) {
-    auto* pop = builder.makePop(Type::exnref);
-    pushExpression(pop);
-  }
 
   processExpressions();
   size_t end = expressionStack.size();
@@ -2757,12 +2796,12 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
+  if (start > end) {
+    throwError("block cannot pop from outside");
+  }
   if (end - start == 1) {
     curr->body = popExpression();
   } else {
-    if (start > end) {
-      throwError("block cannot pop from outside");
-    }
     auto* block = allocator.alloc<Block>();
     pushBlockElements(block, curr->type, start);
     block->finalize(curr->type);
@@ -4773,32 +4812,23 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
   curr->finalize();
 }
 
-bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
-  Host* curr;
-  switch (code) {
-    case BinaryConsts::MemorySize: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemorySize;
-      break;
-    }
-    case BinaryConsts::MemoryGrow: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemoryGrow;
-      curr->operands.resize(1);
-      curr->operands[0] = popNonVoidExpression();
-      break;
-    }
-    default:
-      return false;
-  }
-  BYN_TRACE("zz node: Host\n");
+void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
+  BYN_TRACE("zz node: MemorySize\n");
   auto reserved = getU32LEB();
   if (reserved != 0) {
-    throwError("Invalid reserved field on memory.grow/memory.size");
+    throwError("Invalid reserved field on memory.size");
   }
   curr->finalize();
-  out = curr;
-  return true;
+}
+
+void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
+  BYN_TRACE("zz node: MemoryGrow\n");
+  curr->delta = popNonVoidExpression();
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("Invalid reserved field on memory.grow");
+  }
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }
@@ -4834,8 +4864,9 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitTry(Try* curr) {
+void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   BYN_TRACE("zz node: Try\n");
+  auto* curr = allocator.alloc<Try>();
   startControlFlow(curr);
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
@@ -4845,11 +4876,84 @@ void WasmBinaryBuilder::visitTry(Try* curr) {
   if (lastSeparator != BinaryConsts::Catch) {
     throwError("No catch instruction within a try scope");
   }
-  curr->catchBody = getBlockOrSingleton(curr->type, 1);
-  curr->finalize(curr->type);
-  if (lastSeparator != BinaryConsts::End) {
-    throwError("try should end with end");
+
+  // For simplicity, we create an inner block within the catch body too, but the
+  // one within the 'catch' *must* be omitted when we write out the binary back
+  // later, because the 'catch' instruction pushes a value onto the stack and
+  // the inner block does not support block input parameters without multivalue
+  // support.
+  // try
+  //   ...
+  // catch    ;; Pushes a value onto the stack
+  //   block  ;; Inner block. Should be deleted when writing binary!
+  //     use the pushed value
+  //   end
+  // end
+  //
+  // But when input binary code is like
+  // try
+  //   ...
+  // catch
+  //   br 0
+  // end
+  //
+  // 'br 0' accidentally happens to target the inner block, creating code like
+  // this in Binaryen IR, making the inner block not deletable, resulting in a
+  // validation error:
+  // (try
+  //   ...
+  //   (catch
+  //     (block $label0 ;; Cannot be deleted, because there's a branch to this
+  //       ...
+  //       (br $label0)
+  //     )
+  //   )
+  // )
+  //
+  // When this happens, we fix this by creating a block that wraps the whole
+  // try-catch, and making the branches target that block instead, like this:
+  // (block $label  ;; New enclosing block, new target for the branch
+  //   (try
+  //     ...
+  //     (catch
+  //       (block   ;; Now this can be deleted when writing binary
+  //         ...
+  //         (br $label0)
+  //       )
+  //     )
+  //   )
+  // )
+  Name catchLabel = getNextLabel();
+  breakStack.push_back({catchLabel, curr->type});
+  auto start = expressionStack.size();
+
+  Builder builder(wasm);
+  pushExpression(builder.makePop(Type::exnref));
+
+  processExpressions();
+  size_t end = expressionStack.size();
+  if (start > end) {
+    throwError("block cannot pop from outside");
   }
+  if (end - start == 1) {
+    curr->catchBody = popExpression();
+  } else {
+    auto* block = allocator.alloc<Block>();
+    pushBlockElements(block, curr->type, start);
+    block->finalize(curr->type);
+    curr->catchBody = block;
+  }
+  curr->finalize(curr->type);
+
+  if (breakTargetNames.find(catchLabel) == breakTargetNames.end()) {
+    out = curr;
+  } else {
+    // Create a new block that encloses the whole try-catch
+    auto* block = builder.makeBlock(catchLabel, curr);
+    out = block;
+  }
+  breakStack.pop_back();
+  breakTargetNames.erase(catchLabel);
 }
 
 void WasmBinaryBuilder::visitThrow(Throw* curr) {
