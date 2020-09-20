@@ -2037,7 +2037,15 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [i32_t0, i32_t1, i64_t0, i64_t1, f32_t0, f32_t1, f64_t0, f64_t1];
+ var FUNCTION_TABLE = [];
+ FUNCTION_TABLE[0] = i32_t0;
+ FUNCTION_TABLE[1] = i32_t1;
+ FUNCTION_TABLE[2] = i64_t0;
+ FUNCTION_TABLE[3] = i64_t1;
+ FUNCTION_TABLE[4] = f32_t0;
+ FUNCTION_TABLE[5] = f32_t1;
+ FUNCTION_TABLE[6] = f64_t0;
+ FUNCTION_TABLE[7] = f64_t1;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

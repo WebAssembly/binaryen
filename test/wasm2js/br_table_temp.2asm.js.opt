@@ -12627,7 +12627,6 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "type_i32": dummy, 
   "type_i64": dummy, 

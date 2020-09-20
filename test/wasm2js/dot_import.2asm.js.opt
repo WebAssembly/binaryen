@@ -26,7 +26,6 @@ function asmFunc(global, env, buffer) {
   base();
  }
  
- var FUNCTION_TABLE = [];
  return {
   "exported": $0
  };

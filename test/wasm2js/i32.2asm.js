@@ -233,7 +233,6 @@ function asmFunc(global, env, buffer) {
   return ((-1 << var$2 | 0) & var$0 | 0) >>> var$2 | 0 | (((-1 >>> var$1 | 0) & var$0 | 0) << var$1 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "add": $0, 
   "sub": $1, 

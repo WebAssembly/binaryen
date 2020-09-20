@@ -231,7 +231,6 @@ function asmFunc(global, env, buffer) {
   return $2($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "check_add_i64": legalstub$1, 
   "check_sub_i64": legalstub$2

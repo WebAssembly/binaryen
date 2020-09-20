@@ -122,7 +122,6 @@ function asmFunc(global, env, buffer) {
   return $0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "rotl": legalstub$1, 
   "rotr": legalstub$2

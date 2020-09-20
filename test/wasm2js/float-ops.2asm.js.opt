@@ -270,7 +270,6 @@ function asmFunc(global, env, buffer) {
   return +($0 >>> 0) + +($1_1 >>> 0) * 4294967296.0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "f32_add": $1, 
   "f32_sub": $2, 

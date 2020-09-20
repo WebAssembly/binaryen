@@ -39,7 +39,6 @@ function asmFunc(global, env, buffer) {
   return $0_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "func_50": $0
  };

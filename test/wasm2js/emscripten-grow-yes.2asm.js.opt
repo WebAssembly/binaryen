@@ -1,5 +1,4 @@
-function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
-
+function instantiate(asmLibraryArg, wasmMemory) {
 function asmFunc(global, env, buffer) {
  var memory = env.memory;
  var HEAP8 = new global.Int8Array(buffer);
@@ -26,7 +25,6 @@ function asmFunc(global, env, buffer) {
 ;
  // EMSCRIPTEN_END_FUNCS
 ;
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
