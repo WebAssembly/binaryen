@@ -299,6 +299,7 @@
       (br_if $label$0
        (i32.eqz
         (ref.eq
+         (ref.null eq)
          (loop $label$21
           (block
            (if
@@ -319,7 +320,6 @@
            (br $label$21)
           )
          )
-         (ref.null eq)
         )
        )
       )

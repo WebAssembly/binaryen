@@ -2645,8 +2645,9 @@ private:
   Expression* makeRefEq(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-    return builder.makeRefEq(make(getEqReferenceType()),
-                             make(getEqReferenceType()));
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
   }
 
   Expression* makeMemoryInit() {
