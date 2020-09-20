@@ -530,20 +530,16 @@ struct OptimizeInstructions
             }
           }
         }
-        if (right->type == Type::f32) {
-          if (binary->op == DivFloat32) {
-            float c = right->value.getf32();
-            if (IsPowerOf2Float(c)) {
-              return optimizePowerOf2FDiv(binary, c);
-            }
+        if (binary->op == DivFloat32) {
+          float c = right->value.getf32();
+          if (IsPowerOf2Float(c)) {
+            return optimizePowerOf2FDiv(binary, c);
           }
         }
-        if (right->type == Type::f64) {
-          if (binary->op == DivFloat64) {
-            double c = right->value.getf64();
-            if (IsPowerOf2Float(c)) {
-              return optimizePowerOf2FDiv(binary, c);
-            }
+        if (binary->op == DivFloat64) {
+          double c = right->value.getf64();
+          if (IsPowerOf2Float(c)) {
+            return optimizePowerOf2FDiv(binary, c);
           }
         }
       }
