@@ -1959,6 +1959,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
   shouldBeTrue(curr->left->type == Type::unreachable ||
                  Type::isSubType(curr->left->type, Type::eqref),
                curr->left,
