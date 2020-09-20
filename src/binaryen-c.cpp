@@ -343,6 +343,9 @@ BinaryenFeatures BinaryenFeatureMultivalue(void) {
 BinaryenFeatures BinaryenFeatureGC(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::GC);
 }
+BinaryenFeatures BinaryenFeatureMemory64(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Memory64);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
