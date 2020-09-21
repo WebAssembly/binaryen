@@ -588,11 +588,16 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
 
   if (isTableExported(*wasm)) {
     // If the table is exported use a fake WebAssembly.Table object
+    // We don't handle the case where a table is both imported and exported.
+    if (wasm->table.imported()) {
+      Fatal() << "wasm2js doesn't support a table that is both imported and "
+                 "exported\n";
+    }
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
 
-    Ref table = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(IString("Table"), theArray));
+    Ref table =
+      ValueBuilder::makeNew(ValueBuilder::makeCall(IString("Table"), theArray));
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
     // Otherwise if the table is internal (neither imported not exported).
