@@ -3104,6 +3104,53 @@
       (i64.const 1)
     ))
   )
+  (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+    ;; (signed)x % 2 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 2)
+      )
+      (i32.const 0)
+    ))
+    ;; (drop (i64.eq
+    ;;   (i64.rem_s
+    ;;     (local.get $y)
+    ;;     (i64.const 2)
+    ;;   )
+    ;;   (i64.const 0)
+    ;; ))
+    ;; ;; (signed)x % 2 != 0
+    ;; (drop (i32.ne
+    ;;   (i32.rem_s
+    ;;     (local.get $x)
+    ;;     (i32.const 2)
+    ;;   )
+    ;;   (i32.const 0)
+    ;; ))
+    ;; (drop (i64.ne
+    ;;   (i64.rem_s
+    ;;     (local.get $y)
+    ;;     (i64.const 2)
+    ;;   )
+    ;;   (i64.const 0)
+    ;; ))
+    ;; ;;
+    ;; (drop (i32.eq
+    ;;   (i32.rem_s
+    ;;     (local.get $x)
+    ;;     (i32.const 3) ;; skip
+    ;;   )
+    ;;   (i32.const 0)
+    ;; ))
+    ;; (drop (i64.eq
+    ;;   (i64.rem_s
+    ;;     (local.get $y)
+    ;;     (i64.const 3) ;; skip
+    ;;   )
+    ;;   (i64.const 0)
+    ;; ))
+  )
   (func $orZero (param $0 i32) (result i32)
     (i32.or
       (local.get $0)

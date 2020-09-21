@@ -2744,6 +2744,16 @@
    (i64.const 0)
   )
  )
+ (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+  (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const 2)
+    )
+   )
+  )
+ )
  (func $orZero (param $0 i32) (result i32)
   (local.get $0)
  )

@@ -1243,6 +1243,8 @@ private:
   Expression* optimizeWithConstantOnRight(Binary* curr) {
     using namespace Match;
     Builder builder(*getModule());
+    Const* c;
+    Binary* inner;
     Expression* left;
     auto* right = curr->right->cast<Const>();
     auto type = curr->right->type;
@@ -1259,8 +1261,26 @@ private:
         matches(curr, binary(Abstract::And, pure(&left), ival(0)))) {
       return right;
     }
+    // (signed)x % C_pot == 0   ==>  x & (C_pot - 1) == 0
+    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    if (matches(curr,
+                binary(Abstract::Eq,
+                       binary(&inner, Abstract::RemS, any(&left), constant(&c)),
+                       ival(0))) ||
+        matches(curr,
+                binary(Abstract::Ne,
+                       binary(&inner, Abstract::RemS, any(&left), constant(&c)),
+                       ival(0)))) {
+      curr->dump();
+      abort();
+      if (IsPowerOf2((uint64_t)c->value.getInteger())) {
+        inner->op = Abstract::getBinary(left->type, Abstract::And);
+        c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+      }
+    }
+
     // x == 0   ==>   eqz x
-    if ((matches(curr, binary(Abstract::Eq, any(&left), ival(0))))) {
+    if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
       return builder.makeUnary(EqZInt64, left);
     }
 
