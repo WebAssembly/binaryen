@@ -622,6 +622,19 @@ public:
     ret->finalize();
     return ret;
   }
+  I31New* makeI31New(Expression* value) {
+    auto* ret = allocator.alloc<I31New>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  I31Get* makeI31Get(Expression* i31, bool signed_) {
+    auto* ret = allocator.alloc<I31Get>();
+    ret->i31 = i31;
+    ret->signed_ = signed_;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

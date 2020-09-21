@@ -1867,6 +1867,25 @@ BinaryenFeatureAll: 4095
         (i32.const 0)
        )
       )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
+      )
       (nop)
       (unreachable)
      )

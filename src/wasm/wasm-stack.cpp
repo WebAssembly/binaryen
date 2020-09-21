@@ -1771,6 +1771,15 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
 }
 
+void BinaryInstWriter::visitI31New(I31New* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+}
+
+void BinaryInstWriter::visitI31Get(I31Get* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

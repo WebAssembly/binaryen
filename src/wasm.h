@@ -559,6 +559,8 @@ public:
     BrOnExnId,
     TupleMakeId,
     TupleExtractId,
+    I31NewId,
+    I31GetId,
     NumExpressionIds
   };
   Id _id;
@@ -1188,6 +1190,25 @@ public:
 
   Expression* tuple;
   Index index;
+
+  void finalize();
+};
+
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_;
 
   void finalize();
 };

@@ -504,6 +504,8 @@ struct EffectAnalyzer
   }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
+  void visitI31New(I31New* curr) {}
+  void visitI31Get(I31Get* curr) {}
 
   // Helpers
 

@@ -1618,3 +1618,60 @@ console.log("# TupleExtract");
 
   module.dispose();
 })();
+
+console.log("# I31New");
+(function testI31New() {
+  const module = new binaryen.Module();
+
+  var value = module.local.get(1, binaryen.i32);
+  const theI31New = binaryen.I31New(module.i31.new(value));
+  assert(theI31New instanceof binaryen.I31New);
+  assert(theI31New instanceof binaryen.Expression);
+  assert(theI31New.value === value);
+  assert(theI31New.type === binaryen.i31ref);
+
+  theI31New.value = value = module.local.get(2, binaryen.i32);
+  assert(theI31New.value === value);
+  theI31New.type = binaryen.f64;
+  theI31New.finalize();
+  assert(theI31New.type === binaryen.i31ref);
+
+  console.log(theI31New.toText());
+  assert(
+    theI31New.toText()
+    ==
+    "(i31.new\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# I31Get");
+(function testI31Get() {
+  const module = new binaryen.Module();
+
+  var i31 = module.local.get(1, binaryen.i31ref);
+  const theI31Get = binaryen.I31Get(module.i31.get_s(i31));
+  assert(theI31Get instanceof binaryen.I31Get);
+  assert(theI31Get instanceof binaryen.Expression);
+  assert(theI31Get.i31 === i31);
+  assert(theI31Get.signed === true);
+  assert(theI31Get.type === binaryen.i32);
+
+  theI31Get.i31 = i31 = module.local.get(2, binaryen.i31ref);
+  assert(theI31Get.i31 === i31);
+  theI31Get.signed = false;
+  assert(theI31Get.signed === false);
+  theI31Get.type = binaryen.f64;
+  theI31Get.finalize();
+  assert(theI31Get.type === binaryen.i32);
+
+  console.log(theI31Get.toText());
+  assert(
+    theI31Get.toText()
+    ==
+    "(i31.get_u\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();

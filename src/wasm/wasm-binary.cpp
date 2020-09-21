@@ -2586,6 +2586,17 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
       break;
     }
+    case BinaryConsts::GCPrefix: {
+      auto opcode = getU32LEB();
+      if (maybeVisitI31New(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitI31Get(curr, opcode)) {
+        break;
+      }
+      throwError("invalid code after GC prefix: " + std::to_string(opcode));
+      break;
+    }
     default: {
       // otherwise, the code is a subcode TODO: optimize
       if (maybeVisitBinary(curr, code)) {
@@ -4996,6 +5007,37 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
   // refinalized without the module.
   curr->sent = event->sig.params;
   curr->finalize();
+}
+
+bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::I31New) {
+    return false;
+  }
+  auto* curr = allocator.alloc<I31New>();
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
+  I31Get* curr;
+  switch (code) {
+    case BinaryConsts::I31GetS:
+      curr = allocator.alloc<I31Get>();
+      curr->signed_ = true;
+      break;
+    case BinaryConsts::I31GetU:
+      curr = allocator.alloc<I31Get>();
+      curr->signed_ = false;
+      break;
+    default:
+      return false;
+  }
+  curr->i31 = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
 }
 
 void WasmBinaryBuilder::throwError(std::string text) {

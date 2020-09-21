@@ -204,6 +204,10 @@ const char* getExpressionName(Expression* curr) {
       return "tuple.make";
     case Expression::Id::TupleExtractId:
       return "tuple.extract";
+    case Expression::Id::I31NewId:
+      return "i31.new";
+    case Expression::Id::I31GetId:
+      return "i31.get";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
@@ -956,6 +960,22 @@ void TupleExtract::finalize() {
     type = Type::unreachable;
   } else {
     type = tuple->type[index];
+  }
+}
+
+void I31New::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i31ref;
+  }
+}
+
+void I31Get::finalize() {
+  if (i31->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
   }
 }
 

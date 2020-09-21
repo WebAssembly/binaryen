@@ -1309,6 +1309,26 @@ public:
     flow.breakTo = curr->name;
     return flow;
   }
+  Flow visitI31New(I31New* curr) {
+    NOTE_ENTER("I31New");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal::makeI31(value.geti32());
+  }
+  Flow visitI31Get(I31Get* curr) {
+    NOTE_ENTER("I31Get");
+    Flow flow = visit(curr->i31);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal(value.geti31(curr->signed_));
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
