@@ -81,10 +81,11 @@ void sequenceAppend(Ref& ast, Ref extra) {
 }
 
 bool isTableExported(Module& wasm) {
-  if (!wasm.table.exists || wasm.table.imported())
+  if (!wasm.table.exists || wasm.table.imported()) {
     return false;
+  }
   for (auto& ex : wasm.exports) {
-    if (ex->value == wasm.table.name) {
+    if (ex->kind == ExternalKind::Table && ex->value == wasm.table.name) {
       return true;
     }
   }
@@ -553,20 +554,21 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 }
 
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
-  if (!wasm->table.exists)
+  if (!wasm->table.exists) {
     return;
+  }
 
   if (isTableExported(*wasm)) {
     // If the table is exported use a fake WebAssembly.Table object
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref table = ValueBuilder::makeNew(ValueBuilder::makeCall(
-      IString("FakeTable"),
+      IString("ExportedTable"),
       ValueBuilder::makeInt(Address::address32_t(wasm->table.initial.addr))));
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
-    // Otherwise if the table is interal (not imported eithe, just use
-    // a plain array.
+    // Otherwise if the table is internal (neither imported not exported).
+    // Just use a plain array in this case, avoiding the ExportedTable.
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref theArray = ValueBuilder::makeArray();
@@ -2275,7 +2277,7 @@ void Wasm2JSGlue::emitPre() {
   }
 
   if (isTableExported(wasm)) {
-    out << "function FakeTable(size) {\n"
+    out << "function ExportedTable(size) {\n"
         << "  var ret = new Array(size);\n";
     if (wasm.table.initial == wasm.table.max) {
       out << "  // grow method not included; table is not growable\n";

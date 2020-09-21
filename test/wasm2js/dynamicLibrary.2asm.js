@@ -1,7 +1,7 @@
 import { memoryBase } from 'env';
 import { tableBase } from 'env';
 
-function FakeTable(size) {
+function ExportedTable(size) {
   var ret = new Array(size);
   // grow method not included; table is not growable
   ret.set = function(i, func) {
@@ -49,7 +49,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
- var FUNCTION_TABLE = new FakeTable(10);
+ var FUNCTION_TABLE = new ExportedTable(10);
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  function __wasm_memory_size() {
