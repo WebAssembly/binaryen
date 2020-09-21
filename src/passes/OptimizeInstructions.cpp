@@ -570,6 +570,22 @@ struct OptimizeInstructions
         return ret;
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
+      if (unary->op == EqZInt32 || unary->op == EqZInt64) {
+        using namespace Match;
+        Const* c;
+        Binary* inner;
+        Expression* left;
+        // eqz((signed)x % C_pot)   ==>   eqz(x & (C_pot - 1))
+        if (matches(unary->value,
+                    Match::binary(
+                      &inner, Abstract::RemS, any(&left), constant(&c)))) {
+          if (IsPowerOf2((uint64_t)c->value.getInteger())) {
+            inner->op = Abstract::getBinary(left->type, Abstract::And);
+            c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+            return unary;
+          }
+        }
+      }
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to invert a relational operation using De Morgan's law
@@ -1271,8 +1287,6 @@ private:
                 binary(Abstract::Ne,
                        binary(&inner, Abstract::RemS, any(&left), constant(&c)),
                        ival(0)))) {
-      curr->dump();
-      abort();
       if (IsPowerOf2((uint64_t)c->value.getInteger())) {
         inner->op = Abstract::getBinary(left->type, Abstract::And);
         c->value = c->value.sub(Literal::makeFromInt32(1, left->type));

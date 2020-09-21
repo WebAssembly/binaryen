@@ -3105,51 +3105,64 @@
     ))
   )
   (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
-    ;; (signed)x % 2 == 0
+    ;; eqz((signed)x % 4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 4)
+      )
+    ))
+    ;; (signed)x % 4 == 0
     (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; ;; (signed)x % 2 != 0
+    (drop (i32.ne
       (i32.rem_s
         (local.get $x)
         (i32.const 2)
       )
       (i32.const 0)
     ))
-    ;; (drop (i64.eq
-    ;;   (i64.rem_s
-    ;;     (local.get $y)
-    ;;     (i64.const 2)
-    ;;   )
-    ;;   (i64.const 0)
-    ;; ))
-    ;; ;; (signed)x % 2 != 0
-    ;; (drop (i32.ne
-    ;;   (i32.rem_s
-    ;;     (local.get $x)
-    ;;     (i32.const 2)
-    ;;   )
-    ;;   (i32.const 0)
-    ;; ))
-    ;; (drop (i64.ne
-    ;;   (i64.rem_s
-    ;;     (local.get $y)
-    ;;     (i64.const 2)
-    ;;   )
-    ;;   (i64.const 0)
-    ;; ))
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
     ;; ;;
-    ;; (drop (i32.eq
-    ;;   (i32.rem_s
-    ;;     (local.get $x)
-    ;;     (i32.const 3) ;; skip
-    ;;   )
-    ;;   (i32.const 0)
-    ;; ))
-    ;; (drop (i64.eq
-    ;;   (i64.rem_s
-    ;;     (local.get $y)
-    ;;     (i64.const 3) ;; skip
-    ;;   )
-    ;;   (i64.const 0)
-    ;; ))
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 3) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 3) ;; skip
+      )
+      (i64.const 0)
+    ))
   )
   (func $orZero (param $0 i32) (result i32)
     (i32.or
