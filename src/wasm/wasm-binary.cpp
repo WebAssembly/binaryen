@@ -2474,6 +2474,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::RefFunc:
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
+    case BinaryConsts::RefEq:
+      visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -4872,6 +4875,13 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
     throwError("ref.func: invalid call index");
   }
   functionRefs[index].push_back(curr); // we don't know function names yet
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
+  BYN_TRACE("zz node: RefEq\n");
+  curr->right = popNonVoidExpression();
+  curr->left = popNonVoidExpression();
   curr->finalize();
 }
 

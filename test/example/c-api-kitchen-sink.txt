@@ -1776,6 +1776,12 @@ BinaryenFeatureAll: 4095
         (i32.const 1)
        )
       )
+      (drop
+       (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+       )
+      )
       (try
        (do
         (throw $a-event

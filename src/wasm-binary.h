@@ -928,6 +928,10 @@ enum ASTNodes {
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
 
+  // GC opcodes
+
+  RefEq = 0xd5,
+
   // exception handling opcodes
 
   Try = 0x06,
@@ -1467,6 +1471,7 @@ public:
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

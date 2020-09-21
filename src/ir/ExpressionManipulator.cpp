@@ -233,6 +233,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);
     }
+    Expression* visitRefEq(RefEq* curr) {
+      return builder.makeRefEq(copy(curr->left), copy(curr->right));
+    }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(
         copy(curr->body), copy(curr->catchBody), curr->type);

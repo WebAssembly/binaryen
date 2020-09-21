@@ -2548,6 +2548,9 @@ switch (op[0]) {
     switch (op[2]) {
       case 'f': {
         switch (op[4]) {
+          case 'e':
+            if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
+            goto parse_error;
           case 'f':
             if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
             goto parse_error;

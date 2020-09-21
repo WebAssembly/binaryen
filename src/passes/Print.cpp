@@ -1441,6 +1441,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->type.isConcrete()) {
@@ -1971,6 +1972,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
+  }
+  void visitRefEq(RefEq* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
   }
   // try-catch-end is written in the folded wat format as
   // (try

@@ -361,6 +361,8 @@ struct DeadCodeElimination
           DELEGATE(RefIsNull);
         case Expression::Id::RefFuncId:
           DELEGATE(RefFunc);
+        case Expression::Id::RefEqId:
+          DELEGATE(RefEq);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:
@@ -529,6 +531,14 @@ struct DeadCodeElimination
 
   void visitMemoryGrow(MemoryGrow* curr) {
     blockifyReachableOperands({curr->delta}, curr->type);
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    blockifyReachableOperands({curr->value}, curr->type);
+  }
+
+  void visitRefEq(RefEq* curr) {
+    blockifyReachableOperands({curr->left, curr->right}, curr->type);
   }
 
   void visitFunction(Function* curr) { assert(reachableBreaks.size() == 0); }

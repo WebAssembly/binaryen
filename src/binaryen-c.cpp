@@ -271,6 +271,7 @@ BinaryenExpressionId BinaryenRefIsNullId(void) {
 BinaryenExpressionId BinaryenRefFuncId(void) {
   return Expression::Id::RefFuncId;
 }
+BinaryenExpressionId BinaryenRefEqId(void) { return Expression::Id::RefEqId; }
 BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
 BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
 BinaryenExpressionId BinaryenRethrowId(void) {
@@ -1290,6 +1291,13 @@ BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                       const char* func) {
   return static_cast<Expression*>(Builder(*(Module*)module).makeRefFunc(func));
+}
+
+BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
+                                    BinaryenExpressionRef left,
+                                    BinaryenExpressionRef right) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefEq((Expression*)left, (Expression*)right));
 }
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
@@ -2800,6 +2808,29 @@ void BinaryenRefFuncSetFunc(BinaryenExpressionRef expr, const char* funcName) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefFunc>());
   static_cast<RefFunc*>(expression)->func = funcName;
+}
+// RefEq
+BinaryenExpressionRef BinaryenRefEqGetLeft(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  return static_cast<RefEq*>(expression)->left;
+}
+void BinaryenRefEqSetLeft(BinaryenExpressionRef expr,
+                          BinaryenExpressionRef left) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  static_cast<RefEq*>(expression)->left = (Expression*)left;
+}
+BinaryenExpressionRef BinaryenRefEqGetRight(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  return static_cast<RefEq*>(expression)->right;
+}
+void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef right) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  static_cast<RefEq*>(expression)->right = (Expression*)right;
 }
 // Try
 BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {

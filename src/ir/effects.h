@@ -475,6 +475,7 @@ struct EffectAnalyzer
   void visitRefNull(RefNull* curr) {}
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
+  void visitRefEq(RefEq* curr) {}
   void visitTry(Try* curr) {}
   void visitThrow(Throw* curr) {
     if (tryDepth == 0) {
