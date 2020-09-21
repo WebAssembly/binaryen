@@ -29,6 +29,19 @@ assert_tests = ['wasm2js.wast.asserts']
 wasm2js_blacklist = ['empty_imported_table.wast']
 
 
+def check_for_stale_files():
+    # TODO(sbc): Generalize and apply other test suites
+    all_tests = []
+    for t in tests + spec_tests + wasm2js_tests:
+        all_tests.append(os.path.basename(os.path.splitext(t)[0]))
+
+    all_files = os.listdir(shared.get_test_dir('wasm2js'))
+    for f in all_files:
+        prefix = f.split('.')[0]
+        if prefix not in all_tests:
+            shared.fail_with_error('orphan test output: %s' % f)
+
+
 def test_wasm2js_output():
     for opt in (0, 1):
         for t in tests + spec_tests + wasm2js_tests:
@@ -124,6 +137,7 @@ def test_asserts_output():
 
 def test_wasm2js():
     print('\n[ checking wasm2js testcases... ]\n')
+    check_for_stale_files()
     if shared.skip_if_on_windows('wasm2js'):
         return
     test_wasm2js_output()
