@@ -1961,14 +1961,16 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 void FunctionValidator::visitRefEq(RefEq* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
-  shouldBeTrue(curr->left->type == Type::unreachable ||
-                 Type::isSubType(curr->left->type, Type::eqref),
-               curr->left,
-               "ref.eq's left argument should be a subtype of eqref");
-  shouldBeTrue(curr->right->type == Type::unreachable ||
-                 Type::isSubType(curr->right->type, Type::eqref),
-               curr->right,
-               "ref.eq's right argument should be a subtype of eqref");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->left->type,
+    Type::eqref,
+    curr->left,
+    "ref.eq's left argument should be a subtype of eqref");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->right->type,
+    Type::eqref,
+    curr->right,
+    "ref.eq's right argument should be a subtype of eqref");
 }
 
 void FunctionValidator::visitTry(Try* curr) {
