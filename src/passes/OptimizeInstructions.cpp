@@ -987,7 +987,9 @@ private:
       ZeroRemover(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBinary(Binary* curr) {
-        if (!curr->type.isInteger()) return;
+        if (!curr->type.isInteger()) {
+          return;
+        }
         FeatureSet features = getModule()->features;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
