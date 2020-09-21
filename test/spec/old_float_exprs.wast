@@ -105,10 +105,8 @@
     (f64.mul (local.get $x) (f64.const 1.0)))
 )
 
-;; XXX BINARYEN: disable this test, as we have testing for the more strict property
-;;               of not changing the bits at all in our interpreter
-;; (assert_return (invoke "f32.no_fold_mul_one" (f32.const nan:0x200000)) (f32.const nan:0x600000))
-;; (assert_return (invoke "f64.no_fold_mul_one" (f64.const nan:0x4000000000000)) (f64.const nan:0xc000000000000))
+(assert_return (invoke "f32.no_fold_mul_one" (f32.const nan:0x200000)) (f32.const nan:0x600000))
+(assert_return (invoke "f64.no_fold_mul_one" (f64.const nan:0x4000000000000)) (f64.const nan:0xc000000000000))
 
 ;; Test that 0.0/x is not folded to 0.0.
 
@@ -137,10 +135,8 @@
     (f64.div (local.get $x) (f64.const 1.0)))
 )
 
-;; XXX BINARYEN: disable this test, as we have testing for the more strict property
-;;               of not changing the bits at all in our interpreter
-;; (assert_return (invoke "f32.no_fold_div_one" (f32.const nan:0x200000)) (f32.const nan:arithmetic))
-;; (assert_return (invoke "f64.no_fold_div_one" (f64.const nan:0x4000000000000)) (f64.const nan:arithmetic))
+(assert_return (invoke "f32.no_fold_div_one" (f32.const nan:0x200000)) (f32.const nan:arithmetic))
+(assert_return (invoke "f64.no_fold_div_one" (f64.const nan:0x4000000000000)) (f64.const nan:arithmetic))
 
 ;; Test that x/-1.0 is not folded to -x.
 
