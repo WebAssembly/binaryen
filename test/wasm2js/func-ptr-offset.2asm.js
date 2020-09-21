@@ -37,10 +37,7 @@ function asmFunc(global, env, buffer) {
   return FUNCTION_TABLE[$0 | 0]() | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
- FUNCTION_TABLE[1] = t1;
- FUNCTION_TABLE[2] = t2;
- FUNCTION_TABLE[3] = t3;
+ var FUNCTION_TABLE = [null, t1, t2, t3];
  return {
   "call": $3
  };

@@ -558,42 +558,71 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     return;
   }
 
+  bool perElementInit = false;
+
+  // Emit a simple flat table as a JS array literal. Otherwise,
+  // emit assignments separately for each index.
+  Ref theArray = ValueBuilder::makeArray();
+  if (!wasm->table.imported()) {
+    TableUtils::FlatTable flat(wasm->table);
+    if (flat.valid) {
+      Name null("null");
+      for (auto& name : flat.names) {
+        if (name.is()) {
+          name = fromName(name, NameScope::Top);
+        } else {
+          name = null;
+        }
+        ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
+      }
+    } else {
+      perElementInit = true;
+      Ref initial =
+        ValueBuilder::makeInt(Address::address32_t(wasm->table.initial.addr));
+      theArray = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(IString("Array"), initial));
+    }
+  } else {
+    perElementInit = true;
+  }
+
   if (isTableExported(*wasm)) {
     // If the table is exported use a fake WebAssembly.Table object
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
-    Ref table = ValueBuilder::makeNew(ValueBuilder::makeCall(
-      IString("ExportedTable"),
-      ValueBuilder::makeInt(Address::address32_t(wasm->table.initial.addr))));
+
+    Ref table = ValueBuilder::makeNew(
+      ValueBuilder::makeCall(IString("ExportedTable"), theArray));
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
     // Otherwise if the table is internal (neither imported not exported).
     // Just use a plain array in this case, avoiding the ExportedTable.
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
-    Ref theArray = ValueBuilder::makeArray();
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
   }
 
-  // TODO: optimize for size
-  for (auto& segment : wasm->table.segments) {
-    auto offset = segment.offset;
-    for (Index i = 0; i < segment.data.size(); i++) {
-      Ref index;
-      if (auto* c = offset->dynCast<Const>()) {
-        index = ValueBuilder::makeInt(c->value.geti32() + i);
-      } else if (auto* get = offset->dynCast<GlobalGet>()) {
-        index = ValueBuilder::makeBinary(
-          ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
-          PLUS,
-          ValueBuilder::makeNum(i));
-      } else {
-        WASM_UNREACHABLE("unexpected expr type");
+  if (perElementInit) {
+    // TODO: optimize for size
+    for (auto& segment : wasm->table.segments) {
+      auto offset = segment.offset;
+      for (Index i = 0; i < segment.data.size(); i++) {
+        Ref index;
+        if (auto* c = offset->dynCast<Const>()) {
+          index = ValueBuilder::makeInt(c->value.geti32() + i);
+        } else if (auto* get = offset->dynCast<GlobalGet>()) {
+          index = ValueBuilder::makeBinary(
+            ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
+            PLUS,
+            ValueBuilder::makeNum(i));
+        } else {
+          WASM_UNREACHABLE("unexpected expr type");
+        }
+        ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
+          SET,
+          ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top)))));
       }
-      ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-        ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
-        SET,
-        ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top)))));
     }
   }
 }
@@ -2277,8 +2306,7 @@ void Wasm2JSGlue::emitPre() {
   }
 
   if (isTableExported(wasm)) {
-    out << "function ExportedTable(size) {\n"
-        << "  var ret = new Array(size);\n";
+    out << "function ExportedTable(ret) {\n";
     if (wasm.table.initial == wasm.table.max) {
       out << "  // grow method not included; table is not growable\n";
     } else {

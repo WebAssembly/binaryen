@@ -107,14 +107,7 @@ function asmFunc(global, env, buffer) {
   return FUNCTION_TABLE[i | 0]() | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
- FUNCTION_TABLE[0] = t1;
- FUNCTION_TABLE[1] = t2;
- FUNCTION_TABLE[2] = t3;
- FUNCTION_TABLE[3] = u1;
- FUNCTION_TABLE[4] = u2;
- FUNCTION_TABLE[5] = t1;
- FUNCTION_TABLE[6] = t3;
+ var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
  return {
   "callt": $5, 
   "callu": $6
@@ -160,9 +153,7 @@ function asmFunc(global, env, buffer) {
   return FUNCTION_TABLE[i | 0]() | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
- FUNCTION_TABLE[0] = t1;
- FUNCTION_TABLE[1] = t2;
+ var FUNCTION_TABLE = [t1, t2];
  return {
   "callt": $2
  };
