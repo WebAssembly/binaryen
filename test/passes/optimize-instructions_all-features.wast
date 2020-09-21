@@ -3156,6 +3156,13 @@
       )
       (i32.const 0)
     ))
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4) ;; skip
+      )
+      (i32.const 0)
+    ))
     (drop (i64.eq
       (i64.rem_s
         (local.get $y)

@@ -2804,6 +2804,14 @@
    )
   )
   (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const -4)
+    )
+   )
+  )
+  (drop
    (i64.eqz
     (i64.rem_s
      (local.get $y)
