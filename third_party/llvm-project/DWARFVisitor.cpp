@@ -101,19 +101,19 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
     if (Unit.Entries.empty()) { // XXX BINARYEN
       continue;
     }
-    auto FirstAbbrevCode = Unit.Entries[0].AbbrCode;
     for (auto &Entry : Unit.Entries) {
       onStartDIE(Unit, Entry);
       if (Entry.AbbrCode == 0u)
         continue;
-      // XXX BINARYEN
-      if (Entry.AbbrCode - FirstAbbrevCode + AbbrevStart >= AbbrevEnd) {
+      // XXX BINARYEN valid abbreviation codes start from 1, so subtract that,
+      //              and are relative to the start of the abbrev table
+      auto RelativeAbbrIndex = Entry.AbbrCode - 1 + AbbrevStart;
+      if (RelativeAbbrIndex >= AbbrevEnd) {
         errs() << "warning: invalid abbreviation code " << Entry.AbbrCode
-               << " (range: " << FirstAbbrevCode << " : " << AbbrevStart
-               << ".." << AbbrevEnd << ")\n";
+               << " (range: " << AbbrevStart << ".." << AbbrevEnd << ")\n";
         continue;
       }
-      auto &Abbrev = DebugInfo.AbbrevDecls[Entry.AbbrCode - FirstAbbrevCode + AbbrevStart];
+      auto &Abbrev = DebugInfo.AbbrevDecls[RelativeAbbrIndex];
       auto FormVal = Entry.Values.begin();
       auto AbbrForm = Abbrev.Attributes.begin();
       for (;
