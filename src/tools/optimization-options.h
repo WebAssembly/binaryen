@@ -188,13 +188,12 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
            })
-      .add("--fast-math",
-           "-ffm",
-           "Optimize floats without handling corner cases of NaNs and rounding",
-           Options::Arguments::Zero,
-           [this](Options*, const std::string&) {
-             passOptions.fastMath = true;
-           });
+      .add(
+        "--fast-math",
+        "-ffm",
+        "Optimize floats without handling corner cases of NaNs and rounding",
+        Options::Arguments::Zero,
+        [this](Options*, const std::string&) { passOptions.fastMath = true; });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
       (*this).add(
