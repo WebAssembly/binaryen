@@ -252,15 +252,15 @@ struct OptimizeInstructions
       {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
-        //   (i32.add
-        //     (i32.sub
-        //       (i32.const 0)
+        //   (ival.add
+        //     (ival.sub
+        //       (ival.const 0)
         //       X
         //     )
         //     Y
         //   )
         // =>
-        //   (i32.sub
+        //   (ival.sub
         //     Y
         //     X
         //   )
@@ -279,15 +279,15 @@ struct OptimizeInstructions
       }
       {
         // The flip case is even easier, as no reordering occurs:
-        //   (i32.add
+        //   (ival.add
         //     Y
-        //     (i32.sub
-        //       (i32.const 0)
+        //     (ival.sub
+        //       (ival.const 0)
         //       X
         //     )
         //   )
         // =>
-        //   (i32.sub
+        //   (ival.sub
         //     Y
         //     X
         //   )
