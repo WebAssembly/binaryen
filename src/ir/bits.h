@@ -113,8 +113,7 @@ struct DummyLocalInfoProvider {
   Index getMaxBitsForLocal(LocalGet* get) {
     if (get->type == Type::i32) {
       return 32;
-    }
-    if (get->type == Type::i32) {
+    } else if (get->type == Type::i64) {
       return 64;
     }
     WASM_UNREACHABLE("type has no integer bit size");
