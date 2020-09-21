@@ -1372,7 +1372,8 @@ private:
     }
     {
       double value;
-      if (fastMath && matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
           value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
@@ -1388,7 +1389,8 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (fastMath && matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
