@@ -20,7 +20,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var FUNCTION_TABLE = [];
  return {
   
  };
@@ -75,7 +74,6 @@ function asmFunc(global, env, buffer) {
   return HEAPU8[$0_1 >> 0] | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -158,7 +156,6 @@ function asmFunc(global, env, buffer) {
   return HEAPU8[$0_1 >> 0] | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -241,7 +238,6 @@ function asmFunc(global, env, buffer) {
   return HEAPU8[$0_1 >> 0] | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -355,7 +351,6 @@ function asmFunc(global, env, buffer) {
   wasm2js_memory_init(1, 0, 0, 0);
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

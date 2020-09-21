@@ -131,7 +131,6 @@ function asmFunc(global, env, buffer) {
   return $5;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_popcnt": $1, 
   "check_popcnt_i64": legalstub$2, 

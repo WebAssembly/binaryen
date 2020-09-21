@@ -42,7 +42,6 @@ function asmFunc(global, env, buffer) {
   abort();
  }
  
- var FUNCTION_TABLE = [];
  return {
   "foo": foo
  };

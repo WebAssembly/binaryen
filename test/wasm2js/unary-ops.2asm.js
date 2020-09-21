@@ -511,7 +511,6 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$5 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_popcnt": $1, 
   "check_popcnt_i64": legalstub$2, 

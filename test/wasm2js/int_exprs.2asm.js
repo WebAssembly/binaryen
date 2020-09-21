@@ -229,7 +229,6 @@ function asmFunc(global, env, buffer) {
   return $3($9 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_cmp_s_offset": $0, 
   "i32_no_fold_cmp_u_offset": $1, 
@@ -325,7 +324,6 @@ function asmFunc(global, env, buffer) {
   return $2 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i64_no_fold_wrap_extend_s": legalstub$0
  };
@@ -414,7 +412,6 @@ function asmFunc(global, env, buffer) {
   return $2 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i64_no_fold_wrap_extend_u": legalstub$0
  };
@@ -612,7 +609,6 @@ function asmFunc(global, env, buffer) {
   return $2_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_shl_shr_s": $0, 
   "i32_no_fold_shl_shr_u": $1, 
@@ -816,7 +812,6 @@ function asmFunc(global, env, buffer) {
   return $2_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_shr_s_shl": $0, 
   "i32_no_fold_shr_u_shl": $1, 
@@ -1639,7 +1634,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_div_s_mul": $0, 
   "i32_no_fold_div_u_mul": $1, 
@@ -2368,7 +2362,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_div_s_self": $0, 
   "i32_no_fold_div_u_self": $1, 
@@ -3079,7 +3072,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_rem_s_self": $0, 
   "i32_no_fold_rem_u_self": $1, 
@@ -3902,7 +3894,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_mul_div_s": $0, 
   "i32_no_fold_mul_div_u": $1, 
@@ -4569,7 +4560,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_div_s_2": $0, 
   "i64_no_fold_div_s_2": legalstub$1
@@ -5214,7 +5204,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_rem_s_2": $0, 
   "i64_no_fold_rem_s_2": legalstub$1
@@ -5939,7 +5928,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_div_s_0": $0, 
   "i32_div_u_0": $1, 
@@ -6668,7 +6656,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_div_s_3": $0, 
   "i32_div_u_3": $1, 
@@ -7397,7 +7384,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_div_s_5": $0, 
   "i32_div_u_5": $1, 
@@ -8126,7 +8112,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_div_s_7": $0, 
   "i32_div_u_7": $1, 
@@ -8837,7 +8822,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_rem_s_3": $0, 
   "i32_rem_u_3": $1, 
@@ -9548,7 +9532,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_rem_s_5": $0, 
   "i32_rem_u_5": $1, 
@@ -10259,7 +10242,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_rem_s_7": $0, 
   "i32_rem_u_7": $1, 
@@ -10926,7 +10908,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_div_neg1": $0, 
   "i64_no_fold_div_neg1": legalstub$1
