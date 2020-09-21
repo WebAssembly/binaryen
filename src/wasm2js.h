@@ -423,7 +423,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(processFunction(wasm, func));
   });
   if (generateFetchHighBits) {
-    Builder builder(allocator);
+    Builder builder(allocator, *wasm);
     asmFunc[3]->push_back(
       processFunction(wasm,
                       wasm->addFunction(builder.makeFunction(
@@ -2019,6 +2019,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitRefEq(RefEq* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2122,7 +2126,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
       IString("&&"),
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
                                LT,
-                               ValueBuilder::makeInt(Memory::kMaxSize))),
+                               ValueBuilder::makeInt(Memory::kMaxSize32))),
     block,
     NULL));
 

@@ -46,6 +46,7 @@ const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
+const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -191,6 +192,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -881,13 +884,15 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::finalize() { type = Type::i32; }
+void MemorySize::make64() { type = ptrType = Type::i64; }
+void MemorySize::finalize() { type = ptrType; }
 
+void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::i32;
+    type = ptrType;
   }
 }
 
@@ -911,6 +916,14 @@ void RefIsNull::finalize() {
 }
 
 void RefFunc::finalize() { type = Type::funcref; }
+
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);

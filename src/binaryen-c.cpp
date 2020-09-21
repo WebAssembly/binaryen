@@ -74,8 +74,11 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
-      assert(x.isNull());
+    case Type::eqref:
+      assert(x.isNull() && "unexpected non-null reference type literal");
       break;
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -100,7 +103,10 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
       return Literal::makeNull(Type(x.type));
+    case Type::i31ref:
+      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -136,6 +142,8 @@ BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
 BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
+BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
@@ -263,6 +271,7 @@ BinaryenExpressionId BinaryenRefIsNullId(void) {
 BinaryenExpressionId BinaryenRefFuncId(void) {
   return Expression::Id::RefFuncId;
 }
+BinaryenExpressionId BinaryenRefEqId(void) { return Expression::Id::RefEqId; }
 BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
 BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
 BinaryenExpressionId BinaryenRethrowId(void) {
@@ -1280,6 +1289,13 @@ BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                       const char* func) {
   return static_cast<Expression*>(Builder(*(Module*)module).makeRefFunc(func));
+}
+
+BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
+                                    BinaryenExpressionRef left,
+                                    BinaryenExpressionRef right) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefEq((Expression*)left, (Expression*)right));
 }
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
@@ -2778,6 +2794,29 @@ void BinaryenRefFuncSetFunc(BinaryenExpressionRef expr, const char* funcName) {
   assert(expression->is<RefFunc>());
   static_cast<RefFunc*>(expression)->func = funcName;
 }
+// RefEq
+BinaryenExpressionRef BinaryenRefEqGetLeft(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  return static_cast<RefEq*>(expression)->left;
+}
+void BinaryenRefEqSetLeft(BinaryenExpressionRef expr,
+                          BinaryenExpressionRef left) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  static_cast<RefEq*>(expression)->left = (Expression*)left;
+}
+BinaryenExpressionRef BinaryenRefEqGetRight(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  return static_cast<RefEq*>(expression)->right;
+}
+void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef right) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefEq>());
+  static_cast<RefEq*>(expression)->right = (Expression*)right;
+}
 // Try
 BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3262,7 +3301,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        uint8_t shared) {
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
-  wasm->memory.max = maximum;
+  wasm->memory.max = int32_t(maximum); // Make sure -1 extends.
   wasm->memory.exists = true;
   wasm->memory.shared = shared;
   if (exportName) {

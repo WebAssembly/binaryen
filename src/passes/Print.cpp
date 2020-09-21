@@ -1441,6 +1441,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->type.isConcrete()) {
@@ -1968,6 +1969,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
+  void visitRefEq(RefEq* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
+  }
   // try-catch-end is written in the folded wat format as
   // (try
   //  (do
@@ -2298,6 +2307,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "shared ");
     }
+    if (curr->is64()) {
+      o << "i64 ";
+    }
     o << curr->initial;
     if (curr->hasMax()) {
       o << ' ' << curr->max;
@@ -2446,7 +2458,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         << section.data.size();
       bool isPrintable = true;
       for (auto c : section.data) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
           isPrintable = false;
           break;
         }

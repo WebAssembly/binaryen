@@ -37,7 +37,8 @@ struct FeatureSet {
     ReferenceTypes = 1 << 8,
     Multivalue = 1 << 9,
     GC = 1 << 10,
-    All = (1 << 11) - 1
+    Memory64 = 1 << 11,
+    All = (1 << 12) - 1
   };
 
   static std::string toString(Feature f) {
@@ -64,6 +65,8 @@ struct FeatureSet {
         return "multivalue";
       case GC:
         return "gc";
+      case Memory64:
+        return "memory64";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -105,6 +108,7 @@ struct FeatureSet {
   void setReferenceTypes(bool v = true) { set(ReferenceTypes, v); }
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
+  void setMemory64(bool v = true) { set(Memory64, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }

@@ -102,6 +102,8 @@ BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
 BINARYEN_API BinaryenType BinaryenTypeExternref(void);
 BINARYEN_API BinaryenType BinaryenTypeExnref(void);
 BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
+BINARYEN_API BinaryenType BinaryenTypeEqref(void);
+BINARYEN_API BinaryenType BinaryenTypeI31ref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
@@ -164,6 +166,7 @@ BINARYEN_API BinaryenExpressionId BinaryenMemoryFillId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRefNullId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRefIsNullId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRefFuncId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRefEqId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenThrowId(void);
 BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
@@ -830,6 +833,9 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                                    const char* func);
+BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
+                                                 BinaryenExpressionRef left,
+                                                 BinaryenExpressionRef right);
 BINARYEN_API BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                                BinaryenExpressionRef body,
                                                BinaryenExpressionRef catchBody);
@@ -1707,6 +1713,21 @@ BINARYEN_API const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr);
 // Sets the name of the function being wrapped by a `ref.func` expression.
 BINARYEN_API void BinaryenRefFuncSetFunc(BinaryenExpressionRef expr,
                                          const char* funcName);
+
+// RefEq
+
+// Gets the left expression of a `ref.eq` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefEqGetLeft(BinaryenExpressionRef expr);
+// Sets the left expression of a `ref.eq` expression.
+BINARYEN_API void BinaryenRefEqSetLeft(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef left);
+// Gets the right expression of a `ref.eq` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefEqGetRight(BinaryenExpressionRef expr);
+// Sets the right expression of a `ref.eq` expression.
+BINARYEN_API void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef right);
 
 // Try
 

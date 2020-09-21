@@ -217,6 +217,18 @@ void test_types() {
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
+  BinaryenType eqref = BinaryenTypeEqref();
+  printf("  // BinaryenTypeEqref: %d\n", eqref);
+  assert(BinaryenTypeArity(eqref) == 1);
+  BinaryenTypeExpand(eqref, &valueType);
+  assert(valueType == eqref);
+
+  BinaryenType i31ref = BinaryenTypeI31ref();
+  printf("  // BinaryenTypeI31ref: %d\n", i31ref);
+  assert(BinaryenTypeArity(i31ref) == 1);
+  BinaryenTypeExpand(i31ref, &valueType);
+  assert(valueType == i31ref);
+
   printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
@@ -728,6 +740,10 @@ void test_core() {
                    BinaryenRefNull(module, BinaryenTypeFuncref()),
                    BinaryenRefFunc(module, "kitchen()sinker"),
                    BinaryenTypeFuncref()),
+    // GC
+    BinaryenRefEq(module,
+      BinaryenRefNull(module, BinaryenTypeEqref()),
+      BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics

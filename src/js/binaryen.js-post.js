@@ -37,6 +37,8 @@ function initializeConstants() {
     ['externref', 'Externref'],
     ['exnref', 'Exnref'],
     ['anyref', 'Anyref'],
+    ['eqref', 'Eqref'],
+    ['i31ref', 'I31ref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -87,6 +89,7 @@ function initializeConstants() {
     'RefNull',
     'RefIsNull',
     'RefFunc',
+    'RefEq',
     'Try',
     'Throw',
     'Rethrow',
@@ -2070,6 +2073,18 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['eqref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['eqref']);
+    }
+  };
+
+  self['i31ref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['i31ref']);
+    }
+  };
+
   self['ref'] = {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
@@ -2079,6 +2094,9 @@ function wrapModule(module, self = {}) {
     },
     'func'(func) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func)));
+    },
+    'eq'(left, right) {
+      return Module['_BinaryenRefEq'](module, left, right);
     }
   };
 
@@ -2788,6 +2806,13 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
+      };
+    case Module['RefEqId']:
+      return {
+        'id': id,
+        'type': type,
+        'left': Module['_BinaryenRefEqGetLeft'](expr),
+        'right': Module['_BinaryenRefEqGetRight'](expr)
       };
     case Module['TryId']:
       return {
@@ -4083,6 +4108,21 @@ Module['RefFunc'] = makeExpressionWrapper({
   },
   'setFunc'(expr, funcName) {
     preserveStack(() => { Module['_BinaryenRefFuncSetFunc'](expr, strToStack(funcName)) });
+  }
+});
+
+Module['RefEq'] = makeExpressionWrapper({
+  'getLeft'(expr) {
+    return Module['_BinaryenRefEqGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    return Module['_BinaryenRefEqSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenRefEqGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    return Module['_BinaryenRefEqSetRight'](expr, rightExpr);
   }
 });
 
