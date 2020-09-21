@@ -268,8 +268,8 @@ struct OptimizeInstructions
         Expression *x, *y;
         Binary* sub;
         if (matches(curr,
-                    binary(AddInt32,
-                           binary(&sub, SubInt32, i32(0), any(&x)),
+                    binary(Abstract::Add,
+                           binary(&sub, Abstract::Sub, ival(0), any(&x)),
                            any(&y))) &&
             canReorder(x, y)) {
           sub->left = y;
@@ -294,9 +294,9 @@ struct OptimizeInstructions
         Expression* y;
         Binary* sub;
         if (matches(curr,
-                    binary(AddInt32,
+                    binary(Abstract::Add,
                            any(&y),
-                           binary(&sub, SubInt32, i32(0), any())))) {
+                           binary(&sub, Abstract::Sub, ival(0), any())))) {
           sub->left = y;
           return sub;
         }
@@ -439,64 +439,11 @@ struct OptimizeInstructions
         // note that both left and right may be consts, but then we let
         // precompute compute the constant result
       } else if (binary->op == AddInt32 || binary->op == AddInt64) {
-        // try to get rid of (0 - ..), that is, a zero only used to negate an
-        // int. an add of a subtract can be flipped in order to remove it:
-        //   (i32.add
-        //     (i32.sub
-        //       (i32.const 0)
-        //       X
-        //     )
-        //     Y
-        //   )
-        // =>
-        //   (i32.sub
-        //     Y
-        //     X
-        //   )
-        // Note that this reorders X and Y, so we need to be careful about that.
-        if (auto* sub = binary->left->dynCast<Binary>()) {
-          if (sub->op == Abstract::getBinary(sub->type, Abstract::Sub)) {
-            if (auto* subZero = sub->left->dynCast<Const>()) {
-              if (subZero->value.getInteger() == 0LL) {
-                if (EffectAnalyzer::canReorder(
-                      getPassOptions(), features, sub->right, binary->right)) {
-                  sub->left = binary->right;
-                  return sub;
-                }
-              }
-            }
-          }
-        }
-        // The flip case is even easier, as no reordering occurs:
-        //   (i32.add
-        //     Y
-        //     (i32.sub
-        //       (i32.const 0)
-        //       X
-        //     )
-        //   )
-        // =>
-        //   (i32.sub
-        //     Y
-        //     X
-        //   )
-        if (auto* sub = binary->right->dynCast<Binary>()) {
-          if (sub->op == Abstract::getBinary(sub->type, Abstract::Sub)) {
-            if (auto* subZero = sub->left->dynCast<Const>()) {
-              if (subZero->value.getInteger() == 0LL) {
-                sub->left = binary->left;
-                return sub;
-              }
-            }
-          }
-        }
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       } else if (binary->op == SubInt32 || binary->op == SubInt64) {
-        auto* ret = optimizeAddedConstants(binary);
-        if (ret) {
+        if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
       }
@@ -1098,14 +1045,14 @@ private:
       // Accumulated 64-bit constant value in 32-bit context will be wrapped
       // during downcasting. So it's valid unification for 32-bit and 64-bit
       // values.
-      c->value = Literal::makeFromInt64(constant, c->type);
+      c->value = Literal::makeFromUInt64(constant, c->type);
       return c;
     }
     Builder builder(*getModule());
     return builder.makeBinary(
       Abstract::getBinary(walked->type, Abstract::Add),
       walked,
-      builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
+      builder.makeConst(Literal::makeFromUInt64(constant, walked->type)));
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,
