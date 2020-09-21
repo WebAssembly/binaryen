@@ -200,7 +200,8 @@ Index getMaxBits(Expression* curr,
       }
       case OrInt32:
       case XorInt32: {
-        return std::max(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
@@ -289,11 +290,13 @@ Index getMaxBits(Expression* curr,
         return 64;
       }
       case AndInt64: {
-        return std::min(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
+        return std::min(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case OrInt64:
       case XorInt64: {
-        return std::max(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case ShlInt64: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
