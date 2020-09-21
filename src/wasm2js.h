@@ -592,11 +592,11 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     ast->push_back(theVar);
 
     Ref table = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(IString("ExportedTable"), theArray));
+      ValueBuilder::makeCall(IString("Table"), theArray));
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
     // Otherwise if the table is internal (neither imported not exported).
-    // Just use a plain array in this case, avoiding the ExportedTable.
+    // Just use a plain array in this case, avoiding the Table.
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
@@ -2306,7 +2306,7 @@ void Wasm2JSGlue::emitPre() {
   }
 
   if (isTableExported(wasm)) {
-    out << "function ExportedTable(ret) {\n";
+    out << "function Table(ret) {\n";
     if (wasm.table.initial == wasm.table.max) {
       out << "  // grow method not included; table is not growable\n";
     } else {
