@@ -79,7 +79,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     std::string input(IntrinsicsModuleWast);
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(intrinsicsModule, *root[0]);
+    SExpressionWasmBuilder builder(
+      intrinsicsModule, *root[0], IRProfile::Normal);
 
     std::set<Name> neededFunctions;
 
@@ -169,7 +170,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned loads of floats to unaligned loads of integers (which we
     // can actually implement) and then use reinterpretation to get the float
     // back out.
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::f32:
         curr->type = Type::i32;
         replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
@@ -191,7 +192,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned stores of floats to unaligned stores of integers (which
     // we can actually implement) and then use reinterpretation to store the
     // right value.
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::f32:
         curr->valueType = Type::i32;
         curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);

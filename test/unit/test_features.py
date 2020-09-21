@@ -42,8 +42,17 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-reference-types')
 
     def check_multivalue(self, module, error):
+        self.check_feature(module, error, '--enable-multivalue')
+
+    def check_multivalue_exception_handling(self, module, error):
         self.check_feature(module, error, '--enable-multivalue',
-                           ['--enable-exception-handling'])
+                           ['--enable-exception-handling',
+                            '--enable-reference-types'])
+
+    def check_gc(self, module, error):
+        # GC implies reference types
+        self.check_feature(module, error, '--enable-gc',
+                           ['--enable-reference-types'])
 
     def test_v128_signature(self):
         module = '''
@@ -228,8 +237,8 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (event $foo (attr 0) (param i32 i64))
         )
         '''
-        self.check_multivalue(module, 'Multivalue event type ' +
-                              '(multivalue is not enabled)')
+        self.check_multivalue_exception_handling(module, 'Multivalue event type ' +
+                                                 '(multivalue is not enabled)')
 
     def test_multivalue_block(self):
         module = '''
@@ -248,6 +257,42 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_multivalue(module, 'Multivalue block type ' +
                               '(multivalue is not enabled)')
+
+    def test_anyref_global(self):
+        module = '''
+        (module
+         (global $foo anyref (ref.null any))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_anyref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 anyref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_global(self):
+        module = '''
+        (module
+         (global $foo eqref (ref.null eq))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 eqref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
@@ -303,8 +348,16 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
         self.roundtrip(filename)
-        self.check_features(filename, ['exception-handling'])
+        self.check_features(filename, ['exception-handling', 'reference-types'])
         self.assertIn('throw', self.disassemble(filename))
+
+    def test_gc(self):
+        filename = 'gc_target_feature.wasm'
+        self.roundtrip(filename)
+        self.check_features(filename, ['reference-types', 'gc'])
+        disassembly = self.disassemble(filename)
+        self.assertIn('anyref', disassembly)
+        self.assertIn('eqref', disassembly)
 
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
@@ -353,5 +406,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-exception-handling',
             '--enable-tail-call',
             '--enable-reference-types',
-            '--enable-multivalue'
-        ], p2.stdout.split())
+            '--enable-multivalue',
+            '--enable-gc',
+            '--enable-memory64'
+        ], p2.stdout.splitlines())

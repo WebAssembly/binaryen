@@ -315,8 +315,10 @@ struct DeadCodeElimination
           DELEGATE(Drop);
         case Expression::Id::ReturnId:
           DELEGATE(Return);
-        case Expression::Id::HostId:
-          DELEGATE(Host);
+        case Expression::Id::MemorySizeId:
+          DELEGATE(MemorySize);
+        case Expression::Id::MemoryGrowId:
+          DELEGATE(MemoryGrow);
         case Expression::Id::NopId:
           DELEGATE(Nop);
         case Expression::Id::UnreachableId:
@@ -359,6 +361,8 @@ struct DeadCodeElimination
           DELEGATE(RefIsNull);
         case Expression::Id::RefFuncId:
           DELEGATE(RefFunc);
+        case Expression::Id::RefEqId:
+          DELEGATE(RefEq);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:
@@ -519,7 +523,19 @@ struct DeadCodeElimination
     blockifyReachableOperands({curr->value}, curr->type);
   }
 
-  void visitHost(Host* curr) { handleCall(curr); }
+  void visitMemorySize(MemorySize* curr) {}
+
+  void visitMemoryGrow(MemoryGrow* curr) {
+    blockifyReachableOperands({curr->delta}, curr->type);
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    blockifyReachableOperands({curr->value}, curr->type);
+  }
+
+  void visitRefEq(RefEq* curr) {
+    blockifyReachableOperands({curr->left, curr->right}, curr->type);
+  }
 
   void visitFunction(Function* curr) { assert(reachableBreaks.size() == 0); }
 };

@@ -33,7 +33,7 @@
    )
    (catch
     (local.set $exn
-     (exnref.pop)
+     (pop exnref)
     )
     (drop
      (block $l0 (result i32)

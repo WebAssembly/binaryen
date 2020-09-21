@@ -21,7 +21,6 @@ import sys
 import unittest
 from collections import OrderedDict
 
-from scripts.test import asm2wasm
 from scripts.test import binaryenjs
 from scripts.test import lld
 from scripts.test import shared
@@ -190,7 +189,11 @@ def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
     for wast in shared.options.spec_tests:
-        print('..', os.path.basename(wast))
+        base = os.path.basename(wast)
+        print('..', base)
+        # windows has some failures that need to be investigated
+        if base == 'names.wast' and shared.skip_if_on_windows('spec: ' + base):
+            continue
 
         def run_spec_test(wast):
             cmd = shared.WASM_SHELL + [wast]
@@ -214,13 +217,13 @@ def run_spec_tests():
                 if actual != expected:
                     shared.fail(actual, expected)
 
-        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(wast) + '.log')
+        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log')
 
         # some spec tests should fail (actual process failure, not just assert_invalid)
         try:
             actual = run_spec_test(wast)
         except Exception as e:
-            if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in os.path.basename(wast):
+            if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in base:
                 print('<< test failed as expected >>')
                 continue  # don't try all the binary format stuff TODO
             else:
@@ -229,7 +232,7 @@ def run_spec_tests():
         check_expected(actual, expected)
 
         # skip binary checks for tests that reuse previous modules by name, as that's a wast-only feature
-        if 'exports.wast' in os.path.basename(wast):  # FIXME
+        if 'exports.wast' in base:  # FIXME
             continue
 
         # check binary format. here we can verify execution of the final
@@ -240,7 +243,7 @@ def run_spec_tests():
 
         # FIXME Remove reference type tests from this list after nullref is
         # implemented in V8
-        if os.path.basename(wast) not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
+        if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
             for module, asserts in support.split_wast(wast):
@@ -254,7 +257,7 @@ def run_spec_tests():
                 open(result_wast, 'a').write('\n' + '\n'.join(asserts))
                 actual += run_spec_test(result_wast)
             # compare all the outputs to the expected output
-            check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(wast) + '.log'))
+            check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
         else:
             # handle unsplittable wast files
             run_spec_test(wast)
@@ -282,6 +285,9 @@ def run_gcc_tests():
     if not shared.NATIVECC or not shared.NATIVEXX:
         shared.fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
+    # windows + gcc will need some work
+    if shared.skip_if_on_windows('gcc'):
+        return
 
     for t in sorted(os.listdir(shared.get_test_dir('example'))):
         output_file = 'example'
@@ -306,7 +312,7 @@ def run_gcc_tests():
             extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
                      '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
             if src.endswith('.cpp'):
-                extra += ['-std=c++14']
+                extra += ['-std=c++' + str(shared.cxx_standard)]
             if os.environ.get('COMPILER_FLAGS'):
                 for f in os.environ.get('COMPILER_FLAGS').split(' '):
                     extra.append(f)
@@ -320,7 +326,7 @@ def run_gcc_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [shared.NATIVEXX, '-std=c++14'] + cmd
+        cmd = [shared.NATIVEXX, '-std=c++' + str(shared.cxx_standard)] + cmd
         print('link: ', ' '.join(cmd))
         subprocess.check_call(cmd)
         print('run...', output_file)
@@ -343,8 +349,6 @@ def run_unittest():
 TEST_SUITES = OrderedDict([
     ('help-messages', run_help_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
-    ('asm2wasm', asm2wasm.test_asm2wasm),
-    ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
     ('wasm-dis', run_wasm_dis_tests),
     ('crash', run_crash_tests),
     ('dylink', run_dylink_tests),

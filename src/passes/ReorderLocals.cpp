@@ -46,6 +46,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   enum { Unseen = 0 };
 
   void doWalkFunction(Function* curr) {
+    if (curr->getNumVars() == 0) {
+      return; // nothing to do. All locals are parameters
+    }
     Index num = curr->getNumLocals();
     counts.resize(num);
     std::fill(counts.begin(), counts.end(), 0);
@@ -54,9 +57,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     // Gather information about local usages.
     walk(curr->body);
     // Use the information about local usages.
-    std::vector<Index> newToOld;
+    std::vector<Index> newToOld(num);
     for (size_t i = 0; i < num; i++) {
-      newToOld.push_back(i);
+      newToOld[i] = i;
     }
     // sort, keeping params in front (where they will not be moved)
     sort(
@@ -82,8 +85,6 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     size_t numParams = curr->sig.params.size();
     for (size_t i = 0; i < numParams; i++) {
       assert(newToOld[i] < numParams);
-    }
-    for (size_t i = 0; i < numParams; i++) {
       newToOld[i] = i;
     }
     // sort vars, and drop unused ones

@@ -17,7 +17,6 @@ console.log("# Expression");
   assert(typeof binaryen.Block.getName === "function"); // own
   assert(typeof theExpression.getId === "function"); // proto
   assert(typeof theExpression.getName === "function"); // own
-  assert(theExpression.expr === 42);
   assert((theExpression | 0) === 42); // via valueOf
 })();
 
@@ -465,39 +464,55 @@ console.log("# GlobalSet");
   module.dispose();
 })();
 
-console.log("# Host");
-(function testHost() {
+console.log("# MemorySize");
+(function testMemorySize() {
   const module = new binaryen.Module();
 
-  var op = binaryen.Operations.MemorySize;
-  var nameOp = null;
-  var operands = [];
-  const theHost = binaryen.Host(module.memory.size());
-  assert(theHost instanceof binaryen.Host);
-  assert(theHost instanceof binaryen.Expression);
-  assert(theHost.op === op);
-  assert(theHost.nameOperand === nameOp);
-  assertDeepEqual(theHost.operands, operands);
-  assert(theHost.type === binaryen.i32);
+  var type = binaryen.i32;
+  const theMemorySize = binaryen.MemorySize(module.memory.size());
+  assert(theMemorySize instanceof binaryen.MemorySize);
+  assert(theMemorySize instanceof binaryen.Expression);
+  assert(theMemorySize.type === type);
 
-  theHost.op = op = binaryen.Operations.MemoryGrow;
-  assert(theHost.op === op);
-  theHost.nameOperand = nameOp = "a";
-  assert(theHost.nameOperand === nameOp);
-  theHost.nameOperand = null;
-  theHost.operands = operands = [
-    module.i32.const(1)
-  ];
-  assertDeepEqual(theHost.operands, operands);
-  theHost.type = binaryen.f64;
-  theHost.finalize();
-  assert(theHost.type === binaryen.i32);
+  theMemorySize.type = type = binaryen.f64;
+  assert(theMemorySize.type === type);
+  theMemorySize.finalize();
+  assert(theMemorySize.type === binaryen.i32);
 
-  console.log(theHost.toText());
+  console.log(theMemorySize.toText());
   assert(
-    theHost.toText()
+    theMemorySize.toText()
     ==
-    "(memory.grow\n (i32.const 1)\n)\n"
+    "(memory.size)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# MemoryGrow");
+(function testMemoryGrow() {
+  const module = new binaryen.Module();
+
+  var type = binaryen.i32;
+  var delta = module.i32.const(1);
+  const theMemoryGrow = binaryen.MemoryGrow(module.memory.grow(delta));
+  assert(theMemoryGrow instanceof binaryen.MemoryGrow);
+  assert(theMemoryGrow instanceof binaryen.Expression);
+  assert(theMemoryGrow.delta === delta);
+  assert(theMemoryGrow.type === type);
+
+  theMemoryGrow.delta = delta = module.i32.const(2);
+  assert(theMemoryGrow.delta === delta);
+  theMemoryGrow.type = type = binaryen.f64;
+  assert(theMemoryGrow.type === type);
+  theMemoryGrow.finalize();
+  assert(theMemoryGrow.type === binaryen.i32);
+
+  console.log(theMemoryGrow.toText());
+  assert(
+    theMemoryGrow.toText()
+    ==
+    "(memory.grow\n (i32.const 2)\n)\n"
   );
 
   module.dispose();
@@ -1380,6 +1395,37 @@ console.log("# RefFunc");
     theRefFunc.toText()
     ==
     "(ref.func $b)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# RefEq");
+(function testRefEq() {
+  const module = new binaryen.Module();
+
+  var left = module.local.get(0, binaryen.eqref);
+  var right = module.local.get(1, binaryen.eqref);
+  const theRefEq = binaryen.RefEq(module.ref.eq(left, right));
+  assert(theRefEq instanceof binaryen.RefEq);
+  assert(theRefEq instanceof binaryen.Expression);
+  assert(theRefEq.left === left);
+  assert(theRefEq.right === right);
+  assert(theRefEq.type === binaryen.i32);
+
+  theRefEq.left = left = module.local.get(2, binaryen.eqref);
+  assert(theRefEq.left === left);
+  theRefEq.right = right = module.local.get(3, binaryen.eqref);
+  assert(theRefEq.right === right);
+  theRefEq.type = binaryen.f64;
+  theRefEq.finalize();
+  assert(theRefEq.type === binaryen.i32);
+
+  console.log(theRefEq.toText());
+  assert(
+    theRefEq.toText()
+    ==
+    "(ref.eq\n (local.get $2)\n (local.get $3)\n)\n"
   );
 
   module.dispose();

@@ -35,10 +35,12 @@ struct NameType {
 
 class Builder {
   MixedArena& allocator;
+  Module& wasm;
 
 public:
-  Builder(MixedArena& allocator) : allocator(allocator) {}
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(MixedArena& allocator, Module& wasm)
+    : allocator(allocator), wasm(wasm) {}
+  Builder(Module& wasm) : allocator(wasm.allocator), wasm(wasm) {}
 
   // make* functions, other globals
 
@@ -486,6 +488,9 @@ public:
     ret->finalize();
     return ret;
   }
+  Const* makeConstPtr(uint64_t val) {
+    return makeConst(Literal::makeFromUInt64(val, wasm.memory.indexType));
+  }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = allocator.alloc<Binary>();
     ret->op = op;
@@ -519,18 +524,26 @@ public:
     ret->value = value;
     return ret;
   }
-  Host*
-  makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = allocator.alloc<Host>();
-    ret->op = op;
-    ret->nameOperand = nameOperand;
-    ret->operands.set(operands);
+  MemorySize* makeMemorySize() {
+    auto* ret = allocator.alloc<MemorySize>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
     ret->finalize();
     return ret;
   }
-  RefNull* makeRefNull() {
-    auto* ret = allocator.alloc<RefNull>();
+  MemoryGrow* makeMemoryGrow(Expression* delta) {
+    auto* ret = allocator.alloc<MemoryGrow>();
+    if (wasm.memory.is64()) {
+      ret->make64();
+    }
+    ret->delta = delta;
     ret->finalize();
+    return ret;
+  }
+  RefNull* makeRefNull(Type type) {
+    auto* ret = allocator.alloc<RefNull>();
+    ret->finalize(type);
     return ret;
   }
   RefIsNull* makeRefIsNull(Expression* value) {
@@ -542,6 +555,13 @@ public:
   RefFunc* makeRefFunc(Name func) {
     auto* ret = allocator.alloc<RefFunc>();
     ret->func = func;
+    ret->finalize();
+    return ret;
+  }
+  RefEq* makeRefEq(Expression* left, Expression* right) {
+    auto* ret = allocator.alloc<RefEq>();
+    ret->left = left;
+    ret->right = right;
     ret->finalize();
     return ret;
   }
@@ -622,14 +642,21 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    switch (value.type.getSingle()) {
-      case Type::nullref:
-        return makeRefNull();
+    TODO_SINGLE_COMPOUND(value.type);
+    switch (value.type.getBasic()) {
       case Type::funcref:
-        if (value.getFunc()[0] != 0) {
+        if (!value.isNull()) {
           return makeRefFunc(value.getFunc());
         }
-        return makeRefNull();
+        return makeRefNull(value.type);
+      case Type::externref:
+      case Type::exnref: // TODO: ExceptionPackage?
+      case Type::anyref:
+      case Type::eqref:
+        assert(value.isNull() && "unexpected non-null reference type literal");
+        return makeRefNull(value.type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -656,7 +683,7 @@ public:
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    std::vector<Type> params = func->sig.params.expand();
+    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
     params.push_back(type);
     func->sig.params = Type(params);
     Index index = func->localNames.size();
@@ -794,12 +821,13 @@ public:
   // minimal contents. as a replacement, this may reuse the
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZero(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    switch (curr->type.getSingle()) {
+    TODO_SINGLE_COMPOUND(curr->type);
+    switch (curr->type.getBasic()) {
       case Type::i32:
         value = Literal(int32_t(0));
         break;
@@ -820,9 +848,12 @@ public:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
-        return ExpressionManipulator::refNull(curr);
+      case Type::anyref:
+      case Type::eqref:
+        return ExpressionManipulator::refNull(curr, curr->type);
+      case Type::i31ref:
+        WASM_UNREACHABLE("TODO: i31ref");
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

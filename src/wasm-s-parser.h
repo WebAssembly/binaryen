@@ -111,6 +111,7 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
+  IRProfile profile;
   std::vector<Signature> signatures;
   std::unordered_map<std::string, size_t> signatureIndices;
   std::vector<Name> functionNames;
@@ -125,9 +126,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm,
-                         Element& module,
-                         Name* moduleName = nullptr);
+  SExpressionWasmBuilder(Module& wasm, Element& module, IRProfile profile);
 
 private:
   // pre-parse types and function definitions, so we know function return types
@@ -160,6 +159,10 @@ private:
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
+  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+    return stringToHeapType(str.str, prefix);
+  }
+  HeapType stringToHeapType(const char* str, bool prefix = false);
   Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
@@ -171,6 +174,7 @@ public:
   Expression* parseExpression(Element& s);
 
   MixedArena& getAllocator() { return allocator; }
+  Module& getModule() { return wasm; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -180,7 +184,8 @@ private:
   Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
-  Expression* makeHost(Element& s, HostOp op);
+  Expression* makeMemorySize(Element& s);
+  Expression* makeMemoryGrow(Element& s);
   Index getLocalIndex(Element& s);
   Expression* makeLocalGet(Element& s);
   Expression* makeLocalTee(Element& s);
@@ -211,7 +216,7 @@ private:
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
   Expression* makePush(Element& s);
-  Expression* makePop(Type type);
+  Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);
@@ -231,6 +236,7 @@ private:
   Expression* makeRefNull(Element& s);
   Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
+  Expression* makeRefEq(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -242,6 +248,7 @@ private:
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);

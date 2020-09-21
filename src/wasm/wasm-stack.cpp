@@ -23,7 +23,7 @@ namespace wasm {
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);
-  } else if (type.isMulti()) {
+  } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
     o << binaryType(type);
@@ -134,7 +134,7 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 
 void BinaryInstWriter::visitLoad(Load* curr) {
   if (!curr->isAtomic) {
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -190,14 +190,16 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         return;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -244,7 +246,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic) {
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -292,15 +294,17 @@ void BinaryInstWriter::visitStore(Store* curr) {
         break;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
@@ -348,7 +352,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 #define CASE_FOR_OP(Op)                                                        \
   case Op:                                                                     \
-    switch (curr->type.getSingle()) {                                          \
+    switch (curr->type.getBasic()) {                                           \
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
@@ -404,7 +408,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->type.getSingle()) {
+  switch (curr->type.getBasic()) {
     case Type::i32:
       switch (curr->bytes) {
         case 1:
@@ -446,7 +450,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->expectedType.getSingle()) {
+  switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
       emitMemoryAccess(4, 4, curr->offset);
@@ -668,7 +672,7 @@ void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
-  switch (curr->type.getSingle()) {
+  switch (curr->type.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
       break;
@@ -695,8 +699,10 @@ void BinaryInstWriter::visitConst(Const* curr) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1671,22 +1677,19 @@ void BinaryInstWriter::visitReturn(Return* curr) {
   o << int8_t(BinaryConsts::Return);
 }
 
-void BinaryInstWriter::visitHost(Host* curr) {
-  switch (curr->op) {
-    case MemorySize: {
-      o << int8_t(BinaryConsts::MemorySize);
-      break;
-    }
-    case MemoryGrow: {
-      o << int8_t(BinaryConsts::MemoryGrow);
-      break;
-    }
-  }
+void BinaryInstWriter::visitMemorySize(MemorySize* curr) {
+  o << int8_t(BinaryConsts::MemorySize);
+  o << U32LEB(0); // Reserved flags field
+}
+
+void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
+  o << int8_t(BinaryConsts::MemoryGrow);
   o << U32LEB(0); // Reserved flags field
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
-  o << int8_t(BinaryConsts::RefNull);
+  o << int8_t(BinaryConsts::RefNull)
+    << binaryHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -1696,6 +1699,10 @@ void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
 void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
   o << int8_t(BinaryConsts::RefFunc)
     << U32LEB(parent.getFunctionIndex(curr->func));
+}
+
+void BinaryInstWriter::visitRefEq(RefEq* curr) {
+  o << int8_t(BinaryConsts::RefEq);
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
@@ -1808,17 +1815,16 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     return;
   }
   for (auto type : func->vars) {
-    for (auto t : type.expand()) {
+    for (const auto& t : type) {
       numLocalsByType[t]++;
     }
   }
   countScratchLocals();
   std::map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    const std::vector<Type> types = func->getLocalType(i).expand();
-    for (Index j = 0; j < types.size(); j++) {
-      Type type = types[j];
-      auto fullIndex = std::make_pair(i, j);
+    Index j = 0;
+    for (const auto& type : func->getLocalType(i)) {
+      auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
       for (auto& typeCount : numLocalsByType) {
         if (type == typeCount.first) {
@@ -1911,7 +1917,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
 
 StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
                                            Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = module.allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

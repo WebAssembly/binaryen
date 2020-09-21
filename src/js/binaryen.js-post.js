@@ -35,8 +35,10 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['nullref', 'Nullref'],
     ['exnref', 'Exnref'],
+    ['anyref', 'Anyref'],
+    ['eqref', 'Eqref'],
+    ['i31ref', 'I31ref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -65,7 +67,8 @@ function initializeConstants() {
     'Select',
     'Drop',
     'Return',
-    'Host',
+    'MemorySize',
+    'MemoryGrow',
     'Nop',
     'Unreachable',
     'AtomicCmpxchg',
@@ -86,6 +89,7 @@ function initializeConstants() {
     'RefNull',
     'RefIsNull',
     'RefFunc',
+    'RefEq',
     'Try',
     'Throw',
     'Rethrow',
@@ -121,6 +125,7 @@ function initializeConstants() {
     'TailCall',
     'ReferenceTypes',
     'Multivalue',
+    'GC',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -264,8 +269,6 @@ function initializeConstants() {
     'LeFloat64',
     'GtFloat64',
     'GeFloat64',
-    'MemorySize',
-    'MemoryGrow',
     'AtomicRMWAdd',
     'AtomicRMWSub',
     'AtomicRMWAnd',
@@ -598,10 +601,10 @@ function wrapModule(module, self = {}) {
 
   self['memory'] = {
     'size'() {
-      return Module['_BinaryenHost'](module, Module['MemorySize']);
+      return Module['_BinaryenMemorySize'](module);
     },
     'grow'(value) {
-      return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
+      return Module['_BinaryenMemoryGrow'](module, value);
     },
     'init'(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
@@ -2058,27 +2061,42 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['nullref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['nullref']);
-    }
-  };
-
   self['exnref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['exnref']);
     }
   };
 
+  self['anyref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['eqref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['eqref']);
+    }
+  };
+
+  self['i31ref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['i31ref']);
+    }
+  };
+
   self['ref'] = {
-    'null'() {
-      return Module['_BinaryenRefNull'](module);
+    'null'(type) {
+      return Module['_BinaryenRefNull'](module, type);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
     },
     'func'(func) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func)));
+    },
+    'eq'(left, right) {
+      return Module['_BinaryenRefEq'](module, left, right);
     }
   };
 
@@ -2090,9 +2108,6 @@ function wrapModule(module, self = {}) {
   };
   self['return'] = function(value) {
     return Module['_BinaryenReturn'](module, value);
-  };
-  self['host'] = function(op, name, operands = []) {
-    return preserveStack(() => Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length));
   };
   self['nop'] = function() {
     return Module['_BinaryenNop'](module);
@@ -2636,14 +2651,17 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type
       };
-    case Module['HostId']:
+    case Module['MemorySizeId']:
+      return {
+        'id': id,
+        'type': type
+      };
+    case Module['MemoryGrowId']:
       return {
         'id': id,
         'type': type,
-        'op': Module['_BinaryenHostGetOp'](expr),
-        'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperandAt'])
-      };
+        'delta': Module['_BinaryenMemoryGrowGetDelta'](expr)
+      }
     case Module['AtomicRMWId']:
       return {
         'id': id,
@@ -2788,6 +2806,13 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
+      };
+    case Module['RefEqId']:
+      return {
+        'id': id,
+        'type': type,
+        'left': Module['_BinaryenRefEqGetLeft'](expr),
+        'right': Module['_BinaryenRefEqGetRight'](expr)
       };
     case Module['TryId']:
       return {
@@ -3030,10 +3055,23 @@ Module['setOneCallerInlineMaxSize'] = function(size) {
   Module['_BinaryenSetOneCallerInlineMaxSize'](size);
 };
 
+// Gets the value which allow inline functions that are not "lightweight".
+Module['getAllowInliningFunctionsWithLoops'] = function() {
+  return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
+};
+
+// Sets the value which allow inline functions that are not "lightweight".
+Module['setAllowInliningFunctionsWithLoops'] = function(value) {
+  Module['_BinaryenSetAllowInliningFunctionsWithLoops'](value);
+};
+
 // Expression wrappers
 
-// Makes a wrapper class with the specified static members while
-// automatically deriving instance methods and accessors.
+// Private symbol used to store the underlying C-API pointer of a wrapped object.
+const thisPtr = Symbol();
+
+// Makes a specific expression wrapper class with the specified static members
+// while automatically deriving instance methods and accessors.
 function makeExpressionWrapper(ownStaticMembers) {
   function SpecificExpression(expr) {
     // can call the constructor without `new`
@@ -3049,21 +3087,30 @@ function makeExpressionWrapper(ownStaticMembers) {
   Object.assign(SpecificExpression, ownStaticMembers);
   // inherit from Expression
   (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
-  // make own instance members
-  makeExpressionWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  // derive own instance members
+  deriveWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
   return SpecificExpression;
 }
 
-// Makes instance members from the given static members
-function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
+// Derives the instance members of a wrapper class from the given static
+// members.
+function deriveWrapperInstanceMembers(prototype, staticMembers) {
+  // Given a static member `getName(ptr)` for example, an instance method
+  // `getName()` and a `name` accessor with the `this` argument bound will be
+  // derived and added to the wrapper's prototype. If a corresponding static
+  // `setName(ptr)` is present, a setter for the `name` accessor will be added
+  // as well.
   Object.keys(staticMembers).forEach(memberName => {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
-      // Instance method calls the respective static method
+      // Instance method calls the respective static method with `this` bound.
       prototype[memberName] = function(...args) {
-        return this.constructor[memberName](this['expr'], ...args);
+        return this.constructor[memberName](this[thisPtr], ...args);
       };
-      // Instance accessor calls the respective static methods
+      // Instance accessors call the respective static methods. Accessors are
+      // derived only if the respective underlying static method takes exactly
+      // one argument, the `this` argument, e.g. `getChild(ptr, idx)` does not
+      // trigger an accessor.
       let match;
       if (member.length === 1 && (match = memberName.match(/^(get|is)/))) {
         const index = match[1].length;
@@ -3071,10 +3118,10 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
           get() {
-            return member(this['expr']);
+            return member(this[thisPtr]);
           },
           set(value) {
-            if (setterIfAny) setterIfAny(this['expr'], value);
+            if (setterIfAny) setterIfAny(this[thisPtr], value);
             else throw Error("property '" + propertyName + "' has no setter");
           }
         });
@@ -3086,7 +3133,7 @@ function makeExpressionWrapperInstanceMembers(prototype, staticMembers) {
 // Base class of all expression wrappers
 function Expression(expr) {
   if (!expr) throw Error("expression reference must not be null");
-  this['expr'] = expr;
+  this[thisPtr] = expr;
 }
 Expression['getId'] = function(expr) {
   return Module['_BinaryenExpressionGetId'](expr);
@@ -3103,9 +3150,9 @@ Expression['finalize'] = function(expr) {
 Expression['toText'] = function(expr) {
   return Module['emitText'](expr);
 };
-makeExpressionWrapperInstanceMembers(Expression.prototype, Expression);
+deriveWrapperInstanceMembers(Expression.prototype, Expression);
 Expression.prototype['valueOf'] = function() {
-  return this['expr'];
+  return this[thisPtr];
 };
 
 Module['Expression'] = Expression;
@@ -3468,63 +3515,15 @@ Module['GlobalSet'] = makeExpressionWrapper({
   }
 });
 
-Module['Host'] = makeExpressionWrapper({
-  'getOp'(expr) {
-    return Module['_BinaryenHostGetOp'](expr);
+Module['MemorySize'] = makeExpressionWrapper({});
+
+Module['MemoryGrow'] = makeExpressionWrapper({
+  'getDelta'(expr) {
+    return Module['_BinaryenMemoryGrowGetDelta'](expr);
   },
-  'setOp'(expr, op) {
-    Module['_BinaryenHostSetOp'](expr, op);
-  },
-  'getNameOperand'(expr) {
-    const name = Module['_BinaryenHostGetNameOperand'](expr);
-    return name ? UTF8ToString(name) : null;
-  },
-  'setNameOperand'(expr, name) {
-    preserveStack(() => { Module['_BinaryenHostSetNameOperand'](expr, strToStack(name)) });
-  },
-  'getNumOperands'(expr) {
-    return Module['_BinaryenHostGetNumOperands'](expr);
-  },
-  'getOperands'(expr) {
-    const numOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenHostGetOperandAt'](expr, index++);
-    }
-    return operands;
-  },
-  'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenHostGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenHostSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenHostAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenHostRemoveOperandAt'](expr, --prevNumOperands);
-    }
-  },
-  'getOperandAt'(expr, index) {
-    return Module['_BinaryenHostGetOperandAt'](expr, index);
-  },
-  'setOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostSetOperandAt'](expr, index, operandExpr);
-  },
-  'appendOperand'(expr, operandExpr) {
-    return Module['_BinaryenHostAppendOperand'](expr, operandExpr);
-  },
-  'insertOperandAt'(expr, index, operandExpr) {
-    Module['_BinaryenHostInsertOperandAt'](expr, index, operandExpr);
-  },
-  'removeOperandAt'(expr, index) {
-    return Module['_BinaryenHostRemoveOperandAt'](expr, index);
-  },
+  'setDelta'(expr, deltaExpr) {
+    Module['_BinaryenMemoryGrowSetDelta'](expr, deltaExpr);
+  }
 });
 
 Module['Load'] = makeExpressionWrapper({
@@ -4112,6 +4111,21 @@ Module['RefFunc'] = makeExpressionWrapper({
   }
 });
 
+Module['RefEq'] = makeExpressionWrapper({
+  'getLeft'(expr) {
+    return Module['_BinaryenRefEqGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    return Module['_BinaryenRefEqSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenRefEqGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    return Module['_BinaryenRefEqSetRight'](expr, rightExpr);
+  }
+});
+
 Module['Try'] = makeExpressionWrapper({
   'getBody'(expr) {
     return Module['_BinaryenTryGetBody'](expr);
@@ -4269,6 +4283,60 @@ Module['TupleExtract'] = makeExpressionWrapper({
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
   }
 });
+
+// Function wrapper
+
+Module['Function'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getName'] = function(func) {
+    return UTF8ToString(Module['_BinaryenFunctionGetName'](func));
+  };
+  Function['getParams'] = function(func) {
+    return Module['_BinaryenFunctionGetParams'](func);
+  };
+  Function['getResults'] = function(func) {
+    return Module['_BinaryenFunctionGetResults'](func);
+  };
+  Function['getNumVars'] = function(func) {
+    return Module['_BinaryenFunctionGetNumVars'](func);
+  };
+  Function['getVar'] = function(func, index) {
+    return Module['_BinaryenFunctionGetVar'](func, index);
+  };
+  Function['getNumLocals'] = function(func) {
+    return Module['_BinaryenFunctionGetNumLocals'](func);
+  };
+  Function['hasLocalName'] = function(func, index) {
+    return Boolean(Module['_BinaryenFunctionHasLocalName'](func, index));
+  };
+  Function['getLocalName'] = function(func, index) {
+    return UTF8ToString(Module['_BinaryenFunctionGetLocalName'](func, index));
+  };
+  Function['setLocalName'] = function(func, index, name) {
+    preserveStack(() => {
+      Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
+    });
+  };
+  Function['getBody'] = function(func) {
+    return Module['_BinaryenFunctionGetBody'](func);
+  };
+  Function['setBody'] = function(func, bodyExpr) {
+    Module['_BinaryenFunctionSetBody'](func, bodyExpr);
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
 
 // Additional customizations
 

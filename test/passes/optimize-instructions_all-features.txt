@@ -4,16 +4,19 @@
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $none_=>_anyref (func (result anyref)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
+ (type $f32_f64_=>_none (func (param f32 f64)))
  (type $none_=>_f64 (func (result f64)))
- (type $none_=>_externref (func (result externref)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
@@ -224,7 +227,7 @@
     )
     (catch
      (drop
-      (exnref.pop)
+      (pop exnref)
      )
      (i32.const 456)
     )
@@ -884,15 +887,9 @@
    )
   )
   (drop
-   (i32.shr_s
-    (i32.shl
-     (i32.div_s
-      (i32.const 1)
-      (i32.const 2)
-     )
-     (i32.const 24)
-    )
-    (i32.const 24)
+   (i32.div_s
+    (i32.const 1)
+    (i32.const 2)
    )
   )
   (drop
@@ -1299,10 +1296,7 @@
   (drop
    (i32.and
     (local.get $0)
-    (i32.and
-     (local.get $0)
-     (i32.const 11)
-    )
+    (i32.const 11)
    )
   )
   (drop
@@ -3432,13 +3426,61 @@
    )
   )
  )
- (func $optimize-boolean (param $x i32)
+ (func $optimize-boolean (param $x i32) (param $y i64)
   (drop
    (select
     (i32.const 1)
     (i32.const 2)
     (local.get $x)
    )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.and
+     (local.get $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.wrap_i64
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i64.and
+    (local.get $y)
+    (i64.const 1)
+   )
+  )
+  (drop
+   (i64.const 1)
   )
  )
  (func $getFallthrough
@@ -3554,6 +3596,56 @@
     (local.get $temp)
    )
    (i32.const 2)
+  )
+ )
+ (func $const-float-zero (param $fx f32) (param $fy f64)
+  (drop
+   (local.get $fx)
+  )
+  (drop
+   (local.get $fy)
+  )
+  (drop
+   (local.get $fx)
+  )
+  (drop
+   (local.get $fy)
+  )
+  (drop
+   (f32.add
+    (local.get $fx)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $fy)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (f32.sub
+    (f32.const 0)
+    (local.get $fx)
+   )
+  )
+  (drop
+   (f64.sub
+    (f64.const 0)
+    (local.get $fy)
+   )
+  )
+  (drop
+   (f32.add
+    (local.get $fx)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $fy)
+    (f64.const 0)
+   )
   )
  )
  (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
@@ -3727,8 +3819,15 @@
    (unreachable)
   )
  )
- (func $if-arms-subtype (result externref)
-  (ref.null)
+ (func $if-arms-subtype-fold (result anyref)
+  (ref.null extern)
+ )
+ (func $if-arms-subtype-nofold (result anyref)
+  (if (result anyref)
+   (i32.const 0)
+   (ref.null extern)
+   (ref.null func)
+  )
  )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if
@@ -3740,6 +3839,327 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
+  (drop
+   (f64.abs
+    (local.get $w)
+   )
+  )
+  (drop
+   (f64.ceil
+    (local.get $w)
+   )
+  )
+  (drop
+   (f64.floor
+    (local.get $w)
+   )
+  )
+  (drop
+   (f64.trunc
+    (local.get $w)
+   )
+  )
+  (drop
+   (f64.nearest
+    (local.get $w)
+   )
+  )
+  (drop
+   (f64.nearest
+    (f64.trunc
+     (local.get $w)
+    )
+   )
+  )
+  (drop
+   (f64.trunc
+    (f64.nearest
+     (local.get $w)
+    )
+   )
+  )
+  (drop
+   (local.get $w)
+  )
+  (drop
+   (f64.neg
+    (local.get $w)
+   )
+  )
+  (drop
+   (local.get $w)
+  )
+  (drop
+   (i32.eqz
+    (i32.eqz
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.const 1)
+   )
+  )
+  (drop
+   (i32.ne
+    (local.get $x)
+    (i32.const 2)
+   )
+  )
+  (drop
+   (i32.extend8_s
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.extend16_s
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.rem_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (i32.sub
+    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $z)
+    (i32.or
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $y)
+    (i32.or
+     (local.get $x)
+     (local.get $z)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (call $ne0)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.or
+    (i32.or
+     (call $ne0)
+     (local.get $x)
+    )
+    (call $ne0)
+   )
+  )
+  (drop
+   (i32.or
+    (call $ne0)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.or
+    (call $ne0)
+    (i32.or
+     (call $ne0)
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.rem_s
+    (i32.rem_s
+     (local.get $y)
+     (local.get $x)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (local.get $y)
+    (i32.rem_u
+     (local.get $x)
+     (local.get $y)
+    )
+   )
+  )
+ )
+ (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+  (memory.copy
+   (local.get $dst)
+   (local.get $dst)
+   (local.get $sz)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 0)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.load8_u
+    (local.get $src)
+   )
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.load16_u align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 3)
+  )
+  (i32.store align=1
+   (local.get $dst)
+   (i32.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 5)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 6)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 7)
+  )
+  (i64.store align=1
+   (local.get $dst)
+   (i64.load align=1
+    (local.get $src)
+   )
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (v128.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (local.get $sz)
+  )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 0)
+   (i32.load
+    (i32.const 3)
    )
   )
  )

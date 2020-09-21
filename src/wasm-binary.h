@@ -331,10 +331,7 @@ enum Section {
   Event = 13
 };
 
-enum SegmentFlag {
-  IsPassive = 0x01,
-  HasMemIndex = 0x02,
-};
+enum SegmentFlag { IsPassive = 0x01, HasMemIndex = 0x02 };
 
 enum EncodedType {
   // value_type
@@ -347,14 +344,27 @@ enum EncodedType {
   funcref = -0x10, // 0x70
   // opaque host reference type
   externref = -0x11, // 0x6f
-  // null reference type
-  nullref = -0x12, // 0x6e
+  // any reference type
+  anyref = -0x12, // 0x6e
+  // comparable reference type
+  eqref = -0x13, // 0x6d
+  // integer reference type
+  i31ref = -0x16, // 0x6a
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
   Func = -0x20, // 0x60
   // block_type
   Empty = -0x40 // 0x40
+};
+
+enum EncodedHeapType {
+  func = -0x10,    // 0x70
+  extern_ = -0x11, // 0x6f
+  any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  i31 = -0x17,     // 0x69, != i31ref
+  exn = -0x18,     // 0x68
 };
 
 namespace UserSections {
@@ -376,8 +386,11 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
+extern const char* GCFeature;
+extern const char* Memory64Feature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
 };
@@ -914,6 +927,10 @@ enum ASTNodes {
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
 
+  // GC opcodes
+
+  RefEq = 0xd5,
+
   // exception handling opcodes
 
   Try = 0x06,
@@ -929,7 +946,7 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -941,7 +958,8 @@ enum FeaturePrefix {
 
 inline S32LEB binaryType(Type type) {
   int ret = 0;
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     // None only used for block signatures. TODO: Separate out?
     case Type::none:
       ret = BinaryConsts::EncodedType::Empty;
@@ -967,16 +985,51 @@ inline S32LEB binaryType(Type type) {
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
-    case Type::nullref:
-      ret = BinaryConsts::EncodedType::nullref;
-      break;
     case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
+      break;
+    case Type::anyref:
+      ret = BinaryConsts::EncodedType::anyref;
+      break;
+    case Type::eqref:
+      ret = BinaryConsts::EncodedType::eqref;
+      break;
+    case Type::i31ref:
+      ret = BinaryConsts::EncodedType::i31ref;
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);
+}
+
+inline S32LEB binaryHeapType(HeapType type) {
+  int ret = 0;
+  switch (type.kind) {
+    case HeapType::FuncKind:
+      ret = BinaryConsts::EncodedHeapType::func;
+      break;
+    case HeapType::ExternKind:
+      ret = BinaryConsts::EncodedHeapType::extern_;
+      break;
+    case HeapType::ExnKind:
+      ret = BinaryConsts::EncodedHeapType::exn;
+      break;
+    case HeapType::AnyKind:
+      ret = BinaryConsts::EncodedHeapType::any;
+      break;
+    case HeapType::EqKind:
+      ret = BinaryConsts::EncodedHeapType::eq;
+      break;
+    case HeapType::I31Kind:
+      ret = BinaryConsts::EncodedHeapType::i31;
+      break;
+    case HeapType::SignatureKind:
+    case HeapType::StructKind:
+    case HeapType::ArrayKind:
+      WASM_UNREACHABLE("TODO: compound GC types");
+  }
+  return S32LEB(ret); // TODO: Actually encoded as s33
 }
 
 // Writes out wasm to the binary format
@@ -1062,10 +1115,8 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial,
-                            Address maximum,
-                            bool hasMaximum,
-                            bool shared);
+  void writeResizableLimits(
+    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -1208,6 +1259,7 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   Type getType();
+  HeapType getHeapType();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
@@ -1228,6 +1280,7 @@ public:
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
+                          Type& indexType,
                           Address defaultIfNoMax);
   void readImports();
 
@@ -1358,7 +1411,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
+  Expression* getBlockOrSingleton(Type type);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1401,14 +1454,16 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
-  bool maybeVisitHost(Expression*& out, uint8_t code);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
+  void visitRefEq(RefEq* curr);
+  void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);

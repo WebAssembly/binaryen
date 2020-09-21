@@ -1,0 +1,28 @@
+=== input wast ===
+(module $hello
+ (global $world i32 (i32.const 0))
+ (func $of (param $wasm i32)
+  (local $!#$%&'*+-./:<=>?@\^_`|~ f64)
+ )
+)
+
+=== parsed wast ===
+(module $hello
+ (type $i32_=>_none (func (param i32)))
+ (global $world i32 (i32.const 0))
+ (func $of (param $wasm i32)
+  (local $!#$%&'*+-./:<=>?@\^_`|~ f64)
+  (nop)
+ )
+)
+
+=== roundtripped ===
+(module $hello
+ (type $i32_=>_none (func (param i32)))
+ (global $global$0 i32 (i32.const 0))
+ (func $of (param $js i32)
+  (local $!#$%&'*+-./:<=>?@\^_`|~ f64)
+  (nop)
+ )
+)
+

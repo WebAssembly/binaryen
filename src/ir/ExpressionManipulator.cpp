@@ -16,7 +16,6 @@
 
 #include "ir/load-utils.h"
 #include "ir/utils.h"
-#include "support/hash.h"
 
 namespace wasm {
 
@@ -219,21 +218,23 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitReturn(Return* curr) {
       return builder.makeReturn(copy(curr->value));
     }
-    Expression* visitHost(Host* curr) {
-      std::vector<Expression*> operands;
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        operands.push_back(copy(curr->operands[i]));
-      }
-      auto* ret =
-        builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
-      return ret;
+    Expression* visitMemorySize(MemorySize* curr) {
+      return builder.makeMemorySize();
     }
-    Expression* visitRefNull(RefNull* curr) { return builder.makeRefNull(); }
+    Expression* visitMemoryGrow(MemoryGrow* curr) {
+      return builder.makeMemoryGrow(copy(curr->delta));
+    }
+    Expression* visitRefNull(RefNull* curr) {
+      return builder.makeRefNull(curr->type);
+    }
     Expression* visitRefIsNull(RefIsNull* curr) {
       return builder.makeRefIsNull(copy(curr->value));
     }
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);
+    }
+    Expression* visitRefEq(RefEq* curr) {
+      return builder.makeRefEq(copy(curr->left), copy(curr->right));
     }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(

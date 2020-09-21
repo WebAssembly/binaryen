@@ -14,7 +14,8 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-coroutine.wat'), '--asyncify', '-o', 'b.wasm'])
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wat'), '--asyncify', '-o', 'c.wasm'])
             print('  file size: %d' % os.path.getsize('a.wasm'))
-            shared.run_process([shared.NODEJS, self.input_path('asyncify.js')])
+            if shared.NODEJS:
+                shared.run_process([shared.NODEJS, self.input_path('asyncify.js')])
 
         test(['-g'])
         test([])
@@ -29,7 +30,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
             output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
             with open(self.input_path('asyncify-pure.txt'), 'r') as f:
-                self.assertEqual(f.read(), output)
+                self.assert_equal_ignoring_line_endings(f.read(), output)
 
         # test wat input
         wat = self.input_path('asyncify-pure.wat')

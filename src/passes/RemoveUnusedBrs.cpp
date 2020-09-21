@@ -319,7 +319,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
             // Multivalue selects are not supported
-            if (br->value && br->value->type.isMulti()) {
+            if (br->value && br->value->type.isTuple()) {
               return;
             }
             // If running the br's condition unconditionally is too expensive,

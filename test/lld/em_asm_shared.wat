@@ -94,6 +94,6 @@
  ;;   memoryalignment: 0
  ;;   tablesize: 0
  ;;   tablealignment: 0
- ;; custom section "producers", size 112
+ ;; custom section "producers", size 157
 )
 

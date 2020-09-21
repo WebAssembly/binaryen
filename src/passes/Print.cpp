@@ -66,16 +66,17 @@ struct SExprType {
 
 static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   Type type = localType.type;
-  if (type.isMulti()) {
-    const std::vector<Type>& types = type.expand();
-    o << '(' << types[0];
-    for (size_t i = 1; i < types.size(); ++i) {
-      o << ' ' << types[i];
+  if (type.isTuple()) {
+    o << '(';
+    auto sep = "";
+    for (const auto& t : type) {
+      o << sep << t;
+      sep = " ";
     }
     o << ')';
-    return o;
+  } else {
+    o << type;
   }
-  o << type;
   return o;
 }
 
@@ -90,12 +91,10 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
     if (type == Type::none) {
       os << "none";
     } else {
-      const std::vector<Type>& types = type.expand();
-      for (size_t i = 0; i < types.size(); ++i) {
-        if (i != 0) {
-          os << '_';
-        }
-        os << types[i];
+      auto sep = "";
+      for (const auto& t : type) {
+        os << sep << t;
+        sep = "_";
       }
     }
   };
@@ -1431,22 +1430,18 @@ struct PrintExpressionContents
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
-  void visitHost(Host* curr) {
-    switch (curr->op) {
-      case MemorySize:
-        printMedium(o, "memory.size");
-        break;
-      case MemoryGrow:
-        printMedium(o, "memory.grow");
-        break;
-    }
+  void visitMemorySize(MemorySize* curr) { printMedium(o, "memory.size"); }
+  void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
+  void visitRefNull(RefNull* curr) {
+    printMedium(o, "ref.null ");
+    o << curr->type.getHeapType();
   }
-  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->type.isConcrete()) {
@@ -1467,8 +1462,11 @@ struct PrintExpressionContents
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
-    prepareColor(o) << curr->type;
-    o << ".pop";
+    prepareColor(o) << "pop";
+    for (auto type : curr->type) {
+      assert(type.isBasic() && "TODO: print and parse compound types");
+      o << " " << type;
+    }
     restoreNormalColor(o);
   }
   void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
@@ -1572,7 +1570,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   void printFullLine(Expression* expression) {
-    !minify && doIndent(o, indent);
+    if (!minify) {
+      doIndent(o, indent);
+    }
     if (full) {
       o << "[" << expression->type << "] ";
     }
@@ -1940,20 +1940,17 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  void visitHost(Host* curr) {
+  void visitMemorySize(MemorySize* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    switch (curr->op) {
-      case MemoryGrow: {
-        incIndent();
-        printFullLine(curr->operands[0]);
-        decIndent();
-        break;
-      }
-      case MemorySize: {
-        o << ')';
-      }
-    }
+    o << ')';
+  }
+  void visitMemoryGrow(MemoryGrow* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->delta);
+    decIndent();
   }
   void visitRefNull(RefNull* curr) {
     o << '(';
@@ -1971,6 +1968,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
+  }
+  void visitRefEq(RefEq* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
   }
   // try-catch-end is written in the folded wat format as
   // (try
@@ -2169,14 +2174,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    const std::vector<Type>& params = curr->sig.params.expand();
-    if (params.size() > 0) {
-      for (size_t i = 0; i < params.size(); i++) {
+    if (curr->sig.params.size() > 0) {
+      Index i = 0;
+      for (const auto& param : curr->sig.params) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << params[i] << ')';
+        o << ' ' << param << ')';
+        ++i;
       }
     }
     if (curr->sig.results != Type::none) {
@@ -2301,6 +2307,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "shared ");
     }
+    if (curr->is64()) {
+      o << "i64 ";
+    }
     o << curr->initial;
     if (curr->hasMax()) {
       o << ' ' << curr->max;
@@ -2392,6 +2401,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     currModule = curr;
     o << '(';
     printMajor(o, "module");
+    if (curr->name.is()) {
+      o << ' ';
+      printName(curr->name, o);
+    }
     incIndent();
     std::vector<Signature> signatures;
     std::unordered_map<Signature, Index> indices;
@@ -2445,7 +2458,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         << section.data.size();
       bool isPrintable = true;
       for (auto c : section.data) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
           isPrintable = false;
           break;
         }
