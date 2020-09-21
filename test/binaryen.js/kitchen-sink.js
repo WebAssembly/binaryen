@@ -155,11 +155,15 @@ function test_ids() {
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
+  console.log("PopId: " + binaryen.PopId);
+  console.log("RefNullId: " + binaryen.RefNullId);
+  console.log("RefIsNullId: " + binaryen.RefIsNullId);
+  console.log("RefFuncId: " + binaryen.RefFuncId);
+  console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
-  console.log("PopId: " + binaryen.PopId);
 }
 
 function test_core() {
@@ -520,6 +524,9 @@ function test_core() {
     module.ref.is_null(module.ref.null(binaryen.funcref)),
     module.ref.is_null(module.ref.func("kitchen()sinker")),
     module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
+
+    // GC
+    module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
 
     // Exception handling
     module.try(

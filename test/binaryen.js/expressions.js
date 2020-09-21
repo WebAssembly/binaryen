@@ -1400,6 +1400,37 @@ console.log("# RefFunc");
   module.dispose();
 })();
 
+console.log("# RefEq");
+(function testRefEq() {
+  const module = new binaryen.Module();
+
+  var left = module.local.get(0, binaryen.eqref);
+  var right = module.local.get(1, binaryen.eqref);
+  const theRefEq = binaryen.RefEq(module.ref.eq(left, right));
+  assert(theRefEq instanceof binaryen.RefEq);
+  assert(theRefEq instanceof binaryen.Expression);
+  assert(theRefEq.left === left);
+  assert(theRefEq.right === right);
+  assert(theRefEq.type === binaryen.i32);
+
+  theRefEq.left = left = module.local.get(2, binaryen.eqref);
+  assert(theRefEq.left === left);
+  theRefEq.right = right = module.local.get(3, binaryen.eqref);
+  assert(theRefEq.right === right);
+  theRefEq.type = binaryen.f64;
+  theRefEq.finalize();
+  assert(theRefEq.type === binaryen.i32);
+
+  console.log(theRefEq.toText());
+  assert(
+    theRefEq.toText()
+    ==
+    "(ref.eq\n (local.get $2)\n (local.get $3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();

@@ -553,6 +553,7 @@ public:
     RefNullId,
     RefIsNullId,
     RefFuncId,
+    RefEqId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1124,6 +1125,16 @@ public:
   RefFunc(MixedArena& allocator) {}
 
   Name func;
+
+  void finalize();
+};
+
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };
