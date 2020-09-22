@@ -71,10 +71,12 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSelect(Select* curr) { return ReturnType(); }
   ReturnType visitDrop(Drop* curr) { return ReturnType(); }
   ReturnType visitReturn(Return* curr) { return ReturnType(); }
-  ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitMemorySize(MemorySize* curr) { return ReturnType(); }
+  ReturnType visitMemoryGrow(MemoryGrow* curr) { return ReturnType(); }
   ReturnType visitRefNull(RefNull* curr) { return ReturnType(); }
   ReturnType visitRefIsNull(RefIsNull* curr) { return ReturnType(); }
   ReturnType visitRefFunc(RefFunc* curr) { return ReturnType(); }
+  ReturnType visitRefEq(RefEq* curr) { return ReturnType(); }
   ReturnType visitTry(Try* curr) { return ReturnType(); }
   ReturnType visitThrow(Throw* curr) { return ReturnType(); }
   ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
@@ -169,14 +171,18 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Drop);
       case Expression::Id::ReturnId:
         DELEGATE(Return);
-      case Expression::Id::HostId:
-        DELEGATE(Host);
+      case Expression::Id::MemorySizeId:
+        DELEGATE(MemorySize);
+      case Expression::Id::MemoryGrowId:
+        DELEGATE(MemoryGrow);
       case Expression::Id::RefNullId:
         DELEGATE(RefNull);
       case Expression::Id::RefIsNullId:
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -252,10 +258,12 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Select);
   UNIMPLEMENTED(Drop);
   UNIMPLEMENTED(Return);
-  UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(MemorySize);
+  UNIMPLEMENTED(MemoryGrow);
   UNIMPLEMENTED(RefNull);
   UNIMPLEMENTED(RefIsNull);
   UNIMPLEMENTED(RefFunc);
+  UNIMPLEMENTED(RefEq);
   UNIMPLEMENTED(Try);
   UNIMPLEMENTED(Throw);
   UNIMPLEMENTED(Rethrow);
@@ -351,14 +359,18 @@ struct OverriddenVisitor {
         DELEGATE(Drop);
       case Expression::Id::ReturnId:
         DELEGATE(Return);
-      case Expression::Id::HostId:
-        DELEGATE(Host);
+      case Expression::Id::MemorySizeId:
+        DELEGATE(MemorySize);
+      case Expression::Id::MemoryGrowId:
+        DELEGATE(MemoryGrow);
       case Expression::Id::RefNullId:
         DELEGATE(RefNull);
       case Expression::Id::RefIsNullId:
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -497,7 +509,10 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitReturn(Return* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitHost(Host* curr) {
+  ReturnType visitMemorySize(MemorySize* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitMemoryGrow(MemoryGrow* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitRefNull(RefNull* curr) {
@@ -507,6 +522,9 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitRefFunc(RefFunc* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefEq(RefEq* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitTry(Try* curr) {
@@ -811,8 +829,11 @@ struct Walker : public VisitorType {
   static void doVisitReturn(SubType* self, Expression** currp) {
     self->visitReturn((*currp)->cast<Return>());
   }
-  static void doVisitHost(SubType* self, Expression** currp) {
-    self->visitHost((*currp)->cast<Host>());
+  static void doVisitMemorySize(SubType* self, Expression** currp) {
+    self->visitMemorySize((*currp)->cast<MemorySize>());
+  }
+  static void doVisitMemoryGrow(SubType* self, Expression** currp) {
+    self->visitMemoryGrow((*currp)->cast<MemoryGrow>());
   }
   static void doVisitRefNull(SubType* self, Expression** currp) {
     self->visitRefNull((*currp)->cast<RefNull>());
@@ -822,6 +843,9 @@ struct Walker : public VisitorType {
   }
   static void doVisitRefFunc(SubType* self, Expression** currp) {
     self->visitRefFunc((*currp)->cast<RefFunc>());
+  }
+  static void doVisitRefEq(SubType* self, Expression** currp) {
+    self->visitRefEq((*currp)->cast<RefEq>());
   }
   static void doVisitTry(SubType* self, Expression** currp) {
     self->visitTry((*currp)->cast<Try>());
@@ -1076,14 +1100,13 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
-      case Expression::Id::HostId: {
-        self->pushTask(SubType::doVisitHost, currp);
-        auto& list = curr->cast<Host>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
+      case Expression::Id::MemorySizeId:
+        self->pushTask(SubType::doVisitMemorySize, currp);
         break;
-      }
+      case Expression::Id::MemoryGrowId:
+        self->pushTask(SubType::doVisitMemoryGrow, currp);
+        self->pushTask(SubType::scan, &curr->cast<MemoryGrow>()->delta);
+        break;
       case Expression::Id::RefNullId: {
         self->pushTask(SubType::doVisitRefNull, currp);
         break;
@@ -1095,6 +1118,12 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::RefFuncId: {
         self->pushTask(SubType::doVisitRefFunc, currp);
+        break;
+      }
+      case Expression::Id::RefEqId: {
+        self->pushTask(SubType::doVisitRefEq, currp);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->right);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->left);
         break;
       }
       case Expression::Id::TryId: {
@@ -1210,7 +1239,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
-      default: {}
+      default: {
+      }
     }
 
     PostWalker<SubType, VisitorType>::scan(self, currp);
@@ -1223,7 +1253,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }
-      default: {}
+      default: {
+      }
     }
   }
 };

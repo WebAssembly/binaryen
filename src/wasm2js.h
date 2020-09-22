@@ -80,6 +80,18 @@ void sequenceAppend(Ref& ast, Ref extra) {
   ast = ValueBuilder::makeSeq(ast, extra);
 }
 
+bool isTableExported(Module& wasm) {
+  if (!wasm.table.exists || wasm.table.imported()) {
+    return false;
+  }
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Table && ex->value == wasm.table.name) {
+      return true;
+    }
+  }
+  return false;
+}
+
 IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 
 // Used when taking a wasm name and generating a JS identifier. Each scope here
@@ -384,13 +396,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                             ValueBuilder::makeName(wasm->memory.base)));
   }
-  // for emscripten, add a table import - otherwise we would have
-  // FUNCTION_TABLE be an upvar, and not as easy to be minified.
-  if (flags.emscripten && wasm->table.exists && wasm->table.imported()) {
+  // add table import
+  if (wasm->table.exists && wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     asmFunc[3]->push_back(theVar);
     ValueBuilder::appendToVar(
-      theVar, FUNCTION_TABLE, ValueBuilder::makeName("wasmTable"));
+      theVar,
+      FUNCTION_TABLE,
+      ValueBuilder::makeDot(ValueBuilder::makeName(ENV), wasm->table.base));
   }
   // create heaps, etc
   addBasics(asmFunc[3]);
@@ -423,7 +436,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(processFunction(wasm, func));
   });
   if (generateFetchHighBits) {
-    Builder builder(allocator);
+    Builder builder(allocator, *wasm);
     asmFunc[3]->push_back(
       processFunction(wasm,
                       wasm->addFunction(builder.makeFunction(
@@ -541,31 +554,60 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 }
 
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
+  if (!wasm->table.exists) {
+    return;
+  }
+
+  bool perElementInit = false;
+
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
-  TableUtils::FlatTable flat(wasm->table);
-  if (flat.valid && !wasm->table.imported()) {
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    Ref theArray = ValueBuilder::makeArray();
-    ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
-    Name null("null");
-    for (auto& name : flat.names) {
-      if (name.is()) {
-        name = fromName(name, NameScope::Top);
-      } else {
-        name = null;
+  Ref theArray = ValueBuilder::makeArray();
+  if (!wasm->table.imported()) {
+    TableUtils::FlatTable flat(wasm->table);
+    if (flat.valid) {
+      Name null("null");
+      for (auto& name : flat.names) {
+        if (name.is()) {
+          name = fromName(name, NameScope::Top);
+        } else {
+          name = null;
+        }
+        ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
       }
-      ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
+    } else {
+      perElementInit = true;
+      Ref initial =
+        ValueBuilder::makeInt(Address::address32_t(wasm->table.initial.addr));
+      theArray = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(IString("Array"), initial));
     }
   } else {
-    if (!wasm->table.imported()) {
-      Ref theVar = ValueBuilder::makeVar();
-      ast->push_back(theVar);
-      ValueBuilder::appendToVar(
-        theVar, FUNCTION_TABLE, ValueBuilder::makeArray());
-    }
+    perElementInit = true;
+  }
 
+  if (isTableExported(*wasm)) {
+    // If the table is exported use a fake WebAssembly.Table object
+    // We don't handle the case where a table is both imported and exported.
+    if (wasm->table.imported()) {
+      Fatal() << "wasm2js doesn't support a table that is both imported and "
+                 "exported\n";
+    }
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+
+    Ref table =
+      ValueBuilder::makeNew(ValueBuilder::makeCall(IString("Table"), theArray));
+    ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
+  } else if (!wasm->table.imported()) {
+    // Otherwise if the table is internal (neither imported not exported).
+    // Just use a plain array in this case, avoiding the Table.
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
+  }
+
+  if (perElementInit) {
     // TODO: optimize for size
     for (auto& segment : wasm->table.segments) {
       auto offset = segment.offset;
@@ -600,36 +642,60 @@ void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
-    if (export_->kind == ExternalKind::Function) {
-      ValueBuilder::appendToObjectWithQuotes(
-        exports,
-        fromName(export_->name, NameScope::Export),
-        ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
-    }
-    if (export_->kind == ExternalKind::Memory) {
-      Ref descs = ValueBuilder::makeObject();
-      Ref growDesc = ValueBuilder::makeObject();
-      ValueBuilder::appendToObjectWithQuotes(descs, IString("grow"), growDesc);
-      if (wasm->memory.max > wasm->memory.initial) {
+    switch (export_->kind) {
+      case ExternalKind::Function: {
         ValueBuilder::appendToObjectWithQuotes(
-          growDesc, IString("value"), ValueBuilder::makeName(WASM_MEMORY_GROW));
+          exports,
+          fromName(export_->name, NameScope::Export),
+          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+        break;
       }
-      Ref bufferDesc = ValueBuilder::makeObject();
-      Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
-      bufferGetter[3]->push_back(
-        ValueBuilder::makeReturn(ValueBuilder::makeName(BUFFER)));
-      ValueBuilder::appendToObjectWithQuotes(
-        bufferDesc, IString("get"), bufferGetter);
-      ValueBuilder::appendToObjectWithQuotes(
-        descs, IString("buffer"), bufferDesc);
-      Ref memory = ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")),
-                              IString("create")),
-        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")),
-                              IString("prototype")));
-      ValueBuilder::appendToCall(memory, descs);
-      ValueBuilder::appendToObjectWithQuotes(
-        exports, fromName(export_->name, NameScope::Export), memory);
+      case ExternalKind::Memory: {
+        Ref descs = ValueBuilder::makeObject();
+        Ref growDesc = ValueBuilder::makeObject();
+        ValueBuilder::appendToObjectWithQuotes(
+          descs, IString("grow"), growDesc);
+        if (wasm->memory.max > wasm->memory.initial) {
+          ValueBuilder::appendToObjectWithQuotes(
+            growDesc,
+            IString("value"),
+            ValueBuilder::makeName(WASM_MEMORY_GROW));
+        }
+        Ref bufferDesc = ValueBuilder::makeObject();
+        Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
+        bufferGetter[3]->push_back(
+          ValueBuilder::makeReturn(ValueBuilder::makeName(BUFFER)));
+        ValueBuilder::appendToObjectWithQuotes(
+          bufferDesc, IString("get"), bufferGetter);
+        ValueBuilder::appendToObjectWithQuotes(
+          descs, IString("buffer"), bufferDesc);
+        Ref memory = ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")),
+                                IString("create")),
+          ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")),
+                                IString("prototype")));
+        ValueBuilder::appendToCall(memory, descs);
+        ValueBuilder::appendToObjectWithQuotes(
+          exports, fromName(export_->name, NameScope::Export), memory);
+        break;
+      }
+      case ExternalKind::Table: {
+        ValueBuilder::appendToObjectWithQuotes(
+          exports,
+          fromName(export_->name, NameScope::Export),
+          ValueBuilder::makeName(FUNCTION_TABLE));
+        break;
+      }
+      case ExternalKind::Global: {
+        ValueBuilder::appendToObjectWithQuotes(
+          exports,
+          fromName(export_->name, NameScope::Export),
+          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+        break;
+      }
+      case ExternalKind::Event:
+      case ExternalKind::Invalid:
+        Fatal() << "unsupported export type: " << export_->name << "\n";
     }
   }
   if (wasm->memory.exists) {
@@ -1268,9 +1334,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                           ValueBuilder::makePtrShift(ptr, 2));
               break;
             default: {
-              std::cerr << "Unhandled number of bytes in i32 load: "
-                        << curr->bytes << std::endl;
-              abort();
+              Fatal() << "Unhandled number of bytes in i32 load: "
+                      << curr->bytes;
             }
           }
           break;
@@ -1284,8 +1349,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
-          abort();
+          Fatal() << "Unhandled type in load: " << curr->type;
         }
       }
       if (curr->isAtomic) {
@@ -1321,8 +1385,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             !FindAll<Call>(curr->value).list.empty() ||
             !FindAll<CallIndirect>(curr->ptr).list.empty() ||
             !FindAll<CallIndirect>(curr->value).list.empty() ||
-            !FindAll<Host>(curr->ptr).list.empty() ||
-            !FindAll<Host>(curr->value).list.empty()) {
+            !FindAll<MemoryGrow>(curr->ptr).list.empty() ||
+            !FindAll<MemoryGrow>(curr->value).list.empty()) {
           Ref ret;
           ScopedTemp ptr(Type::i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
@@ -1378,9 +1442,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
-          std::cerr << "Unhandled type in store: " << curr->valueType
-                    << std::endl;
-          abort();
+          Fatal() << "Unhandled type in store: " << curr->valueType;
         }
       }
       if (curr->isAtomic) {
@@ -1431,7 +1493,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
         default:
-          abort();
+          Fatal() << "unknown const type";
       }
     }
 
@@ -1510,9 +1572,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 ValueBuilder::makeNum(16));
             }
             default: {
-              std::cerr << "Unhandled unary i32 operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled unary i32 operator: " << curr;
             }
           }
         }
@@ -1607,8 +1667,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           return ret;
         }
         default: {
-          std::cerr << "Unhandled type in unary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in unary: " << curr;
         }
       }
     }
@@ -1771,17 +1830,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             case CopySignFloat32:
             case CopySignFloat64:
             default:
-              std::cerr << "Unhandled binary float operator: " << curr
-                        << std::endl;
-              abort();
+              Fatal() << "Unhandled binary float operator: ";
           }
           if (curr->type == Type::f32) {
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
         default:
-          std::cerr << "Unhandled type in binary: " << curr << std::endl;
-          abort();
+          Fatal() << "Unhandled type in binary: " << curr;
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1842,21 +1898,20 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeReturn(val);
     }
 
-    Ref visitHost(Host* curr) {
-      if (curr->op == HostOp::MemoryGrow) {
-        if (module->memory.exists &&
-            module->memory.max > module->memory.initial) {
-          return ValueBuilder::makeCall(
-            WASM_MEMORY_GROW,
-            makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
-                            wasmToAsmType(curr->operands[0]->type)));
-        } else {
-          return ValueBuilder::makeCall(ABORT_FUNC);
-        }
-      } else if (curr->op == HostOp::MemorySize) {
-        return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    Ref visitMemorySize(MemorySize* curr) {
+      return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
+    }
+
+    Ref visitMemoryGrow(MemoryGrow* curr) {
+      if (module->memory.exists &&
+          module->memory.max > module->memory.initial) {
+        return ValueBuilder::makeCall(
+          WASM_MEMORY_GROW,
+          makeAsmCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                          wasmToAsmType(curr->delta->type)));
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      WASM_UNREACHABLE("unexpected expr type"); // TODO
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
@@ -2030,6 +2085,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitRefEq(RefEq* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2133,7 +2192,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
       IString("&&"),
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
                                LT,
-                               ValueBuilder::makeInt(Memory::kMaxSize))),
+                               ValueBuilder::makeInt(Memory::kMaxSize32))),
     block,
     NULL));
 
@@ -2251,11 +2310,32 @@ void Wasm2JSGlue::emitPre() {
     emitPreES6();
   }
 
+  if (isTableExported(wasm)) {
+    out << "function Table(ret) {\n";
+    if (wasm.table.initial == wasm.table.max) {
+      out << "  // grow method not included; table is not growable\n";
+    } else {
+      out << "  ret.grow = function(by) {\n"
+          << "    var old = this.length;\n"
+          << "    this.length = this.length + by;\n"
+          << "    return old;\n"
+          << "  };\n";
+    }
+    out << "  ret.set = function(i, func) {\n"
+        << "    this[i] = func;\n"
+        << "  };\n"
+        << "  ret.get = function(i) {\n"
+        << "    return this[i];\n"
+        << "  };\n"
+        << "  return ret;\n"
+        << "}\n\n";
+  }
+
   emitSpecialSupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
+  out << "function instantiate(asmLibraryArg, wasmMemory) {\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
@@ -2267,8 +2347,7 @@ void Wasm2JSGlue::emitPreES6() {
     // yet.
     if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
       Fatal() << "the name " << base << " cannot be imported from "
-              << "two different modules yet\n";
-      abort();
+              << "two different modules yet";
     }
     baseModuleMap[base] = module;
 
@@ -2280,6 +2359,8 @@ void Wasm2JSGlue::emitPreES6() {
 
   ModuleUtils::iterImportedGlobals(
     wasm, [&](Global* import) { noteImport(import->module, import->base); });
+  ModuleUtils::iterImportedTables(
+    wasm, [&](Table* import) { noteImport(import->module, import->base); });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
     // below.
@@ -2288,10 +2369,6 @@ void Wasm2JSGlue::emitPreES6() {
     }
     noteImport(import->module, import->base);
   });
-
-  if (wasm.table.exists && wasm.table.imported()) {
-    out << "import { FUNCTION_TABLE } from 'env';\n";
-  }
 
   out << '\n';
 }
@@ -2373,6 +2450,16 @@ void Wasm2JSGlue::emitPostES6() {
     }
     out << "," << asmangle(import->base.str);
   });
+
+  ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
+    // The special helpers are emitted in the glue, see code and comments
+    // below.
+    if (ABI::wasm2js::isHelper(import->base)) {
+      return;
+    }
+    out << "," << asmangle(import->base.str);
+  });
+
   out << "},mem" << moduleName.str << ");\n";
 
   if (flags.allowAsserts) {

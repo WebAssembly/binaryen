@@ -66,8 +66,8 @@ instructions = [
     ("i64.store8",     "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store16",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store32",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
-    ("memory.size",    "makeHost(s, HostOp::MemorySize)"),
-    ("memory.grow",    "makeHost(s, HostOp::MemoryGrow)"),
+    ("memory.size",    "makeMemorySize(s)"),
+    ("memory.grow",    "makeMemoryGrow(s)"),
     ("i32.const",      "makeConst(s, Type::i32)"),
     ("i64.const",      "makeConst(s, Type::i64)"),
     ("f32.const",      "makeConst(s, Type::f32)"),
@@ -495,7 +495,9 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
-    ("pop",                  "makePop(s)")
+    ("pop",                  "makePop(s)"),
+    # GC instructions
+    ("ref.eq",               "makeRefEq(s)")
 ]
 
 

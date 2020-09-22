@@ -24,7 +24,6 @@ function asmFunc(global, env, buffer) {
   HEAP32[1 >> 2] = 2;
  }
  
- var FUNCTION_TABLE = [];
  foo();
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;

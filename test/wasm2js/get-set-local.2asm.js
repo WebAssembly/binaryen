@@ -63,7 +63,6 @@ function asmFunc(global, env, buffer) {
   return $1($3 | 0, i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "check_extend_ui32": legalstub$1
  };

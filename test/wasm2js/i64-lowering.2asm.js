@@ -782,7 +782,6 @@ function asmFunc(global, env, buffer) {
   return $10($9_1 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "eq_i64": legalstub$1, 
   "ne_i64": legalstub$2, 

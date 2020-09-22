@@ -48,7 +48,6 @@ function asmFunc(global, env, buffer) {
   return HEAP32[0 >> 2] | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

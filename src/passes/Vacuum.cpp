@@ -92,7 +92,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
         case Expression::Id::GlobalSetId:
-        case Expression::Id::HostId:
+        case Expression::Id::MemorySizeId:
+        case Expression::Id::MemoryGrowId:
         case Expression::Id::UnreachableId:
           return curr; // always needed
 

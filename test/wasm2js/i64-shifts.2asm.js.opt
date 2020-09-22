@@ -64,7 +64,6 @@ function asmFunc(global, env, buffer) {
   return $2($0, $1_1, $2_1, $4, $5);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "shl_i64": legalstub$1, 
   "shr_i64": legalstub$2

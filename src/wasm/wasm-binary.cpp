@@ -99,12 +99,11 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return ret;
 }
 
-void WasmBinaryWriter::writeResizableLimits(Address initial,
-                                            Address maximum,
-                                            bool hasMaximum,
-                                            bool shared) {
+void WasmBinaryWriter::writeResizableLimits(
+  Address initial, Address maximum, bool hasMaximum, bool shared, bool is64) {
   uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U);
+                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
+                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -203,7 +202,8 @@ void WasmBinaryWriter::writeMemory() {
   writeResizableLimits(wasm->memory.initial,
                        wasm->memory.max,
                        wasm->memory.hasMax(),
-                       wasm->memory.shared);
+                       wasm->memory.shared,
+                       wasm->memory.is64());
   finishSection(start);
 }
 
@@ -267,7 +267,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->memory.initial,
                          wasm->memory.max,
                          wasm->memory.hasMax(),
-                         wasm->memory.shared);
+                         wasm->memory.shared,
+                         wasm->memory.is64());
   }
   if (wasm->table.imported()) {
     BYN_TRACE("write one table\n");
@@ -277,7 +278,8 @@ void WasmBinaryWriter::writeImports() {
     writeResizableLimits(wasm->table.initial,
                          wasm->table.max,
                          wasm->table.hasMax(),
-                         /*shared=*/false);
+                         /*shared=*/false,
+                         /*is64*/ false);
   }
   finishSection(start);
 }
@@ -505,7 +507,8 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   writeResizableLimits(wasm->table.initial,
                        wasm->table.max,
                        wasm->table.hasMax(),
-                       /*shared=*/false);
+                       /*shared=*/false,
+                       /*is64*/ false);
   finishSection(start);
 }
 
@@ -750,8 +753,10 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       case FeatureSet::Multivalue:
         return BinaryConsts::UserSections::MultivalueFeature;
-      case FeatureSet::Anyref:
-        return BinaryConsts::UserSections::AnyrefFeature;
+      case FeatureSet::GC:
+        return BinaryConsts::UserSections::GCFeature;
+      case FeatureSet::Memory64:
+        return BinaryConsts::UserSections::Memory64Feature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1201,10 +1206,14 @@ Type WasmBinaryBuilder::getType() {
       return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
+    case BinaryConsts::EncodedType::eqref:
+      return Type::eqref;
+    case BinaryConsts::EncodedType::i31ref:
+      return Type::i31ref;
     default:
       throwError("invalid wasm type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 HeapType WasmBinaryBuilder::getHeapType() {
@@ -1225,10 +1234,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::ExnKind;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::AnyKind;
+    case BinaryConsts::EncodedHeapType::eq:
+      return HeapType::EqKind;
+    case BinaryConsts::EncodedHeapType::i31:
+      return HeapType::I31Kind;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE("unexpeced type");
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1317,6 +1330,7 @@ void WasmBinaryBuilder::readMemory() {
   getResizableLimits(wasm.memory.initial,
                      wasm.memory.max,
                      wasm.memory.shared,
+                     wasm.memory.indexType,
                      Memory::kUnlimitedSize);
 }
 
@@ -1370,15 +1384,18 @@ Name WasmBinaryBuilder::getEventName(Index index) {
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
                                            Address& max,
                                            bool& shared,
+                                           Type& indexType,
                                            Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
   bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
   bool isShared = (flags & BinaryConsts::IsShared) != 0;
+  bool is64 = (flags & BinaryConsts::Is64) != 0;
   if (isShared && !hasMax) {
     throwError("shared memory must have max size");
   }
   shared = isShared;
+  indexType = is64 ? Type::i64 : Type::i32;
   if (hasMax) {
     max = getU32LEB();
   } else {
@@ -1425,10 +1442,17 @@ void WasmBinaryBuilder::readImports() {
         }
         wasm.table.exists = true;
         bool is_shared;
-        getResizableLimits(
-          wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+        Type indexType;
+        getResizableLimits(wasm.table.initial,
+                           wasm.table.max,
+                           is_shared,
+                           indexType,
+                           Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
+        }
+        if (indexType == Type::i64) {
+          throwError("Tables may not be 64-bit");
         }
         break;
       }
@@ -1440,6 +1464,7 @@ void WasmBinaryBuilder::readImports() {
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
                            wasm.memory.shared,
+                           wasm.memory.indexType,
                            Memory::kUnlimitedSize);
         break;
       }
@@ -2096,10 +2121,17 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
     throwError("ElementType must be funcref in MVP");
   }
   bool is_shared;
-  getResizableLimits(
-    wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
+  Type indexType;
+  getResizableLimits(wasm.table.initial,
+                     wasm.table.max,
+                     is_shared,
+                     indexType,
+                     Table::kUnlimitedSize);
   if (is_shared) {
     throwError("Tables may not be shared");
+  }
+  if (indexType == Type::i64) {
+    throwError("Tables may not be 64-bit");
   }
 }
 
@@ -2307,8 +2339,10 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setReferenceTypes();
       } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
         wasm.features.setMultivalue();
-      } else if (name == BinaryConsts::UserSections::AnyrefFeature) {
-        wasm.features.setAnyref();
+      } else if (name == BinaryConsts::UserSections::GCFeature) {
+        wasm.features.setGC();
+      } else if (name == BinaryConsts::UserSections::Memory64Feature) {
+        wasm.features.setMemory64();
       }
     }
   }
@@ -2440,6 +2474,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::RefFunc:
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
+    case BinaryConsts::RefEq:
+      visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -2452,6 +2489,24 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnExn:
       visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
+    case BinaryConsts::MemorySize: {
+      auto size = allocator.alloc<MemorySize>();
+      if (wasm.memory.is64()) {
+        size->make64();
+      }
+      curr = size;
+      visitMemorySize(size);
+      break;
+    }
+    case BinaryConsts::MemoryGrow: {
+      auto grow = allocator.alloc<MemoryGrow>();
+      if (wasm.memory.is64()) {
+        grow->make64();
+      }
+      curr = grow;
+      visitMemoryGrow(grow);
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -2549,9 +2604,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) {
-        break;
-      }
-      if (maybeVisitHost(curr, code)) {
         break;
       }
       throwError("bad node code " + std::to_string(code));
@@ -4763,32 +4815,23 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
   curr->finalize();
 }
 
-bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
-  Host* curr;
-  switch (code) {
-    case BinaryConsts::MemorySize: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemorySize;
-      break;
-    }
-    case BinaryConsts::MemoryGrow: {
-      curr = allocator.alloc<Host>();
-      curr->op = MemoryGrow;
-      curr->operands.resize(1);
-      curr->operands[0] = popNonVoidExpression();
-      break;
-    }
-    default:
-      return false;
-  }
-  BYN_TRACE("zz node: Host\n");
+void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
+  BYN_TRACE("zz node: MemorySize\n");
   auto reserved = getU32LEB();
   if (reserved != 0) {
-    throwError("Invalid reserved field on memory.grow/memory.size");
+    throwError("Invalid reserved field on memory.size");
   }
   curr->finalize();
-  out = curr;
-  return true;
+}
+
+void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
+  BYN_TRACE("zz node: MemoryGrow\n");
+  curr->delta = popNonVoidExpression();
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("Invalid reserved field on memory.grow");
+  }
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }
@@ -4821,6 +4864,13 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
     throwError("ref.func: invalid call index");
   }
   functionRefs[index].push_back(curr); // we don't know function names yet
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
+  BYN_TRACE("zz node: RefEq\n");
+  curr->right = popNonVoidExpression();
+  curr->left = popNonVoidExpression();
   curr->finalize();
 }
 

@@ -45,7 +45,8 @@ const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
-const char* AnyrefFeature = "anyref";
+const char* GCFeature = "gc";
+const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -145,8 +146,10 @@ const char* getExpressionName(Expression* curr) {
       return "drop";
     case Expression::Id::ReturnId:
       return "return";
-    case Expression::Id::HostId:
-      return "host";
+    case Expression::Id::MemorySizeId:
+      return "memory.size";
+    case Expression::Id::MemoryGrowId:
+      return "memory.grow";
     case Expression::Id::NopId:
       return "nop";
     case Expression::Id::UnreachableId:
@@ -189,6 +192,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -810,12 +815,6 @@ void Unary::finalize() {
 
 bool Binary::isRelational() {
   switch (op) {
-    case EqFloat64:
-    case NeFloat64:
-    case LtFloat64:
-    case LeFloat64:
-    case GtFloat64:
-    case GeFloat64:
     case EqInt32:
     case NeInt32:
     case LtSInt32:
@@ -842,6 +841,12 @@ bool Binary::isRelational() {
     case LeFloat32:
     case GtFloat32:
     case GeFloat32:
+    case EqFloat64:
+    case NeFloat64:
+    case LtFloat64:
+    case LeFloat64:
+    case GtFloat64:
+    case GeFloat64:
       return true;
     default:
       return false;
@@ -879,21 +884,15 @@ void Drop::finalize() {
   }
 }
 
-void Host::finalize() {
-  switch (op) {
-    case MemorySize: {
-      type = Type::i32;
-      break;
-    }
-    case MemoryGrow: {
-      // if the single operand is not reachable, so are we
-      if (operands[0]->type == Type::unreachable) {
-        type = Type::unreachable;
-      } else {
-        type = Type::i32;
-      }
-      break;
-    }
+void MemorySize::make64() { type = ptrType = Type::i64; }
+void MemorySize::finalize() { type = ptrType; }
+
+void MemoryGrow::make64() { type = ptrType = Type::i64; }
+void MemoryGrow::finalize() {
+  if (delta->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ptrType;
   }
 }
 
@@ -917,6 +916,14 @@ void RefIsNull::finalize() {
 }
 
 void RefFunc::finalize() { type = Type::funcref; }
+
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);

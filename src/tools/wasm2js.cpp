@@ -630,8 +630,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
       }
 
       default: {
-        std::cerr << "Unhandled type in assert: " << resType << std::endl;
-        abort();
+        Fatal() << "Unhandled type in assert: " << resType;
       }
     }
   } else {
@@ -811,7 +810,7 @@ void AssertionEmitter::emit() {
     }
   )";
 
-  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Builder wasmBuilder(sexpBuilder.getAllocator(), sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
