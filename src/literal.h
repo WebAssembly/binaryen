@@ -205,6 +205,7 @@ public:
 
   int64_t getInteger() const;
   double getFloat() const;
+  // Obtains the bits of a basic value typed literal.
   void getBits(uint8_t (&buf)[16]) const;
   // Equality checks for the type and the bits, so a nan float would
   // be compared bitwise (which means that a Literal containing a nan
@@ -552,14 +553,60 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
-    uint8_t bytes[16];
-    a.getBits(bytes);
-    int64_t chunks[2];
-    memcpy(chunks, bytes, sizeof(chunks));
     auto digest = wasm::hash(a.type.getID());
-    wasm::rehash(digest, chunks[0]);
-    wasm::rehash(digest, chunks[1]);
-    return digest;
+    if (a.type.isBasic()) {
+      switch (a.type.getBasic()) {
+        case wasm::Type::i32:
+          wasm::rehash(digest, a.geti32());
+          return digest;
+        case wasm::Type::f32:
+          wasm::rehash(digest, a.reinterpreti32());
+          return digest;
+        case wasm::Type::i64:
+          wasm::rehash(digest, a.geti64());
+          return digest;
+        case wasm::Type::f64:
+          wasm::rehash(digest, a.reinterpreti64());
+          return digest;
+        case wasm::Type::v128:
+          uint64_t chunks[2];
+          memcpy(&chunks, a.getv128Ptr(), 16);
+          wasm::rehash(digest, chunks[0]);
+          wasm::rehash(digest, chunks[1]);
+          return digest;
+        case wasm::Type::funcref:
+        case wasm::Type::externref:
+        case wasm::Type::exnref:
+        case wasm::Type::anyref:
+        case wasm::Type::eqref:
+        case wasm::Type::i31ref:
+          goto is_ref;
+        case wasm::Type::none:
+        case wasm::Type::unreachable:
+          break;
+      }
+    } else if (a.type.isRef()) {
+    is_ref:
+      if (a.isNull()) {
+        return digest;
+      }
+      if (a.type.isFunction()) {
+        wasm::rehash(digest, a.getFunc());
+        return digest;
+      }
+      if (a.type.isException()) {
+        auto exn = a.getExceptionPackage();
+        wasm::rehash(digest, exn.event);
+        wasm::rehash(digest, exn.values);
+        return digest;
+      }
+      // other non-null reference type literals cannot represent concrete
+      // values, i.e. there is no concrete externref, anyref or eqref other than
+      // null.
+    } else if (a.type.isRtt()) {
+      WASM_UNREACHABLE("TODO: rtt literals");
+    }
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 template<> struct hash<wasm::Literals> {
