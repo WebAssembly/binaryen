@@ -556,7 +556,7 @@ public:
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
-    auto* ret = allocator.alloc<RefEq>();
+    auto* ret = wasm.allocator.alloc<RefEq>();
     ret->left = left;
     ret->right = right;
     ret->finalize();

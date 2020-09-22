@@ -127,8 +127,6 @@ enum class NameScope {
 //
 
 class Wasm2JSBuilder {
-  MixedArena allocator;
-
 public:
   struct Flags {
     // see wasm2js.cpp for details
@@ -939,7 +937,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Function* func;
     Module* module;
     bool standaloneFunction;
-    MixedArena allocator;
 
     SwitchProcessor switchProcessor;
 
@@ -1095,7 +1092,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         // we need an equivalent to an if here, so use that code
         Break fakeBreak = *curr;
         fakeBreak.condition = nullptr;
-        If fakeIf(allocator);
+        If fakeIf;
         fakeIf.condition = curr->condition;
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
@@ -1476,7 +1473,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         }
         case Type::f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
-          Const fake(allocator);
+          Const fake;
           fake.value = Literal(double(curr->value.getf32()));
           fake.type = Type::f64;
           ret[2]->push_back(visitConst(&fake));
