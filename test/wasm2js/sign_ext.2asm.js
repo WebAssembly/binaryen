@@ -30,7 +30,6 @@ function asmFunc(global, env, buffer) {
   return x << 16 >> 16 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "test8": $0, 
   "test16": $1

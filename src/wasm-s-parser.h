@@ -173,7 +173,6 @@ public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);
 
-  MixedArena& getAllocator() { return allocator; }
   Module& getModule() { return wasm; }
 
 private:

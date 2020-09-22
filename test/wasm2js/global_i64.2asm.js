@@ -36,7 +36,6 @@ function asmFunc(global, env, buffer) {
   f$hi = i64toi32_i32$0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "exp": $1
  };

@@ -128,6 +128,7 @@ function initializeConstants() {
     'ReferenceTypes',
     'Multivalue',
     'GC',
+    'Memory64',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();

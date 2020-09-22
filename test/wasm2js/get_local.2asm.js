@@ -234,7 +234,6 @@ function asmFunc(global, env, buffer) {
   return +(+$9(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, Math_fround($2_1), +$3_1, $4_1 | 0, $5_1 | 0));
  }
  
- var FUNCTION_TABLE = [];
  return {
   "type_local_i32": $0, 
   "type_local_i64": legalstub$1, 

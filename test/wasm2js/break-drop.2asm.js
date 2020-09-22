@@ -32,7 +32,6 @@ function asmFunc(global, env, buffer) {
   
  }
  
- var FUNCTION_TABLE = [];
  return {
   "br": $0, 
   "br_if": $1, 

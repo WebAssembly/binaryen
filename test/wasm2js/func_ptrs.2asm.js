@@ -41,7 +41,6 @@ function asmFunc(global, env, buffer) {
   print($0 | 0);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "one": $3, 
   "two": $4, 

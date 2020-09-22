@@ -260,6 +260,7 @@ void test_features() {
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
+  printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

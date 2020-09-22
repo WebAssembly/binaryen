@@ -76,7 +76,6 @@ function asmFunc(global, env, buffer) {
   return $5;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "a": legalstub$popcnt64, 
   "b": legalstub$ctz64

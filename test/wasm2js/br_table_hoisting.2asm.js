@@ -176,7 +176,6 @@ function asmFunc(global, env, buffer) {
   zed(-10 | 0);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "foo1": $1, 
   "foo2": $2, 

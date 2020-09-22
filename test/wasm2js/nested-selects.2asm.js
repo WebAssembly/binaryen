@@ -25,7 +25,6 @@ function asmFunc(global, env, buffer) {
   return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0) ? 1 : 0) | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "sign": $1
  };

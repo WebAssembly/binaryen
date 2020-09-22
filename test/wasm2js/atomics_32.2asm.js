@@ -119,7 +119,6 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = wasm2js_get_stashed_bits() | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

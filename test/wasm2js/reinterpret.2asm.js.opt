@@ -70,7 +70,6 @@ function asmFunc(global, env, buffer) {
   return $2($0, $1_1);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_roundtrip": $1, 
   "i64_roundtrip": legalstub$2

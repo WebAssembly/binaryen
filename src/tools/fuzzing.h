@@ -1699,7 +1699,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1710,7 +1711,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),

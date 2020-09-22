@@ -654,7 +654,6 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "type_i32": $1, 
   "type_i64": $2, 
