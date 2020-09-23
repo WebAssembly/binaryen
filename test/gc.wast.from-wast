@@ -8,10 +8,10 @@
  (global $global_anyref3 (mut anyref) (global.get $trivial_i31ref))
  (global $global_eqref2 (mut eqref) (global.get $trivial_i31ref))
  (func $test
+  (local $local_i32 i32)
   (local $local_anyref anyref)
   (local $local_eqref eqref)
   (local $local_i31ref i31ref)
-  (local $local_i32 i32)
   (local.set $local_anyref
    (local.get $local_anyref)
   )
