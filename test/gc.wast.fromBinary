@@ -1,0 +1,150 @@
+(module
+ (type $none_=>_none (func))
+ (import "env" "trivial_i31ref" (global $gimport$0 i31ref))
+ (global $global$0 (mut anyref) (ref.null any))
+ (global $global$1 (mut eqref) (ref.null eq))
+ (global $global$2 (mut i31ref) (global.get $gimport$0))
+ (global $global$3 (mut anyref) (ref.null eq))
+ (global $global$4 (mut anyref) (global.get $gimport$0))
+ (global $global$5 (mut eqref) (global.get $gimport$0))
+ (func $test
+  (local $local_anyref i32)
+  (local $local_eqref anyref)
+  (local $local_i31ref eqref)
+  (local $local_i32 i31ref)
+  (local.set $local_eqref
+   (local.get $local_eqref)
+  )
+  (local.set $local_eqref
+   (global.get $global$0)
+  )
+  (local.set $local_eqref
+   (ref.null any)
+  )
+  (local.set $local_i31ref
+   (local.get $local_i31ref)
+  )
+  (local.set $local_i31ref
+   (global.get $global$1)
+  )
+  (local.set $local_i31ref
+   (ref.null eq)
+  )
+  (local.set $local_i32
+   (local.get $local_i32)
+  )
+  (local.set $local_i32
+   (global.get $global$2)
+  )
+  (local.set $local_i32
+   (global.get $gimport$0)
+  )
+  (local.set $local_eqref
+   (local.get $local_i31ref)
+  )
+  (local.set $local_eqref
+   (global.get $global$1)
+  )
+  (local.set $local_eqref
+   (ref.null eq)
+  )
+  (local.set $local_eqref
+   (local.get $local_i32)
+  )
+  (local.set $local_eqref
+   (global.get $global$2)
+  )
+  (local.set $local_eqref
+   (global.get $gimport$0)
+  )
+  (local.set $local_i31ref
+   (local.get $local_i32)
+  )
+  (local.set $local_i31ref
+   (global.get $global$2)
+  )
+  (local.set $local_i31ref
+   (global.get $gimport$0)
+  )
+  (global.set $global$0
+   (local.get $local_eqref)
+  )
+  (global.set $global$0
+   (global.get $global$0)
+  )
+  (global.set $global$0
+   (ref.null any)
+  )
+  (global.set $global$1
+   (local.get $local_i31ref)
+  )
+  (global.set $global$1
+   (global.get $global$1)
+  )
+  (global.set $global$1
+   (ref.null eq)
+  )
+  (global.set $global$2
+   (local.get $local_i32)
+  )
+  (global.set $global$2
+   (global.get $global$2)
+  )
+  (global.set $global$2
+   (global.get $gimport$0)
+  )
+  (global.set $global$0
+   (local.get $local_i31ref)
+  )
+  (global.set $global$0
+   (global.get $global$1)
+  )
+  (global.set $global$0
+   (ref.null eq)
+  )
+  (global.set $global$0
+   (local.get $local_i32)
+  )
+  (global.set $global$0
+   (global.get $global$2)
+  )
+  (global.set $global$0
+   (global.get $gimport$0)
+  )
+  (global.set $global$1
+   (local.get $local_i32)
+  )
+  (global.set $global$1
+   (global.get $global$2)
+  )
+  (global.set $global$1
+   (global.get $gimport$0)
+  )
+  (local.set $local_i32
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $local_eqref
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $local_i31ref
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $local_anyref
+   (i31.get_s
+    (local.get $local_i32)
+   )
+  )
+  (local.set $local_anyref
+   (i31.get_u
+    (local.get $local_i32)
+   )
+  )
+ )
+)
+
