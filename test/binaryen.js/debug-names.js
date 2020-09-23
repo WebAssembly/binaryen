@@ -1,13 +1,13 @@
 var wast = `
-(module $hello
- (global $world i32 (i32.const 0))
+(module $hel
+ (memory $lo 0 0)
+ (table $wor 0 0 funcref)
+ (global $ld i32 (i32.const 0))
  (func $of (param $wasm i32)
   (local $!#$%&'*+-./:<=>?@\\^_\`|~ f64)
  )
 )
 `;
-// Note that global names are not yet covered by the name section, so it is
-// expected that the global's name is lost after roundtripping.
 
 console.log("=== input wast ===" + wast);
 

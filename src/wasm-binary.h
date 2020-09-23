@@ -393,6 +393,14 @@ enum Subsection {
   NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
+  // see: https://github.com/WebAssembly/extended-name-section
+  NameLabel = 3,
+  NameType = 4,
+  NameTable = 5,
+  NameMemory = 6,
+  NameGlobal = 7,
+  NameElem = 8,
+  NameData = 9
 };
 
 } // namespace UserSections
@@ -1292,8 +1300,8 @@ public:
 
   Name getNextLabel();
 
-  // We read functions before we know their names, so we need to backpatch the
-  // names later
+  // We read functions and globals before we know their names, so we need to
+  // backpatch the names later
 
   // we store functions here before wasm.addFunction after we know their names
   std::vector<Function*> functions;
@@ -1306,6 +1314,14 @@ public:
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
+
+  // we store globals here before wasm.addGlobal after we know their names
+  std::vector<Global*> globals;
+  // we store global imports here before wasm.addGlobalImport after we know
+  // their names
+  std::vector<Global*> globalImports;
+  // at index i we have all refs to the global i
+  std::map<Index, std::vector<Expression*>> globalRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1375,7 +1391,7 @@ public:
   Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
-  void processFunctions();
+  void processNames();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
