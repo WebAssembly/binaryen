@@ -1979,6 +1979,21 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
+  auto ret = allocator.alloc<I31New>();
+  ret->value = parseExpression(s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
+  auto ret = allocator.alloc<I31Get>();
+  ret->i31 = parseExpression(s[1]);
+  ret->signed_ = signed_;
+  ret->finalize();
+  return ret;
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

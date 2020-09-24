@@ -30,11 +30,16 @@ namespace wasm {
 template<int N> using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(Type type) : type(type) {
-  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-  if (type.isException()) {
-    new (&exn) std::unique_ptr<ExceptionPackage>();
+  if (type == Type::i31ref) {
+    // i31ref is special in that it is non-nullable, so we construct with zero
+    i32 = 0;
   } else {
-    memset(&v128, 0, 16);
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    if (type.isException()) {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else {
+      memset(&v128, 0, 16);
+    }
   }
 }
 
@@ -57,6 +62,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     switch (type.getBasic()) {
       case Type::i32:
       case Type::f32:
+      case Type::i31ref:
         i32 = other.i32;
         break;
       case Type::i64:
@@ -72,8 +78,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::anyref:
       case Type::eqref:
         break; // null
-      case Type::i31ref:
-        WASM_UNREACHABLE("TODO: i31ref");
       case Type::funcref:
       case Type::exnref:
       case Type::unreachable:
@@ -232,6 +236,7 @@ bool Literal::operator==(const Literal& other) const {
         return true; // special voided literal
       case Type::i32:
       case Type::f32:
+      case Type::i31ref:
         return i32 == other.i32;
       case Type::i64:
       case Type::f64:
@@ -243,7 +248,6 @@ bool Literal::operator==(const Literal& other) const {
       case Type::exnref:
       case Type::anyref:
       case Type::eqref:
-      case Type::i31ref:
         goto is_ref;
       case Type::unreachable:
         break;
@@ -412,7 +416,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "eqref(null)";
       break;
     case Type::i31ref:
-      WASM_UNREACHABLE("TODO: i31ref");
+      o << "i31ref(" << literal.geti31(false) << ")";
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }

@@ -337,6 +337,8 @@ public:
   void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2107,6 +2109,26 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
         "tuple.extract type does not match the type of the extracted element");
     }
   }
+}
+
+void FunctionValidator::visitI31New(I31New* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "i31.new requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(curr->value->type,
+                                      Type::i32,
+                                      curr->value,
+                                      "i31.new's argument should be i32");
+}
+
+void FunctionValidator::visitI31Get(I31Get* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "i31.get_s/u requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->i31->type,
+    Type::i31ref,
+    curr->i31,
+    "i31.get_s/u's argument should be i31ref");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
