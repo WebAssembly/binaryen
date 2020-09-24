@@ -1685,25 +1685,23 @@ private:
     using namespace Match;
     assert(curr->type.isInteger());
 
-    Expression* leftExp;
-    Expression* rightExp;
+    Expression* lhs;
+    Expression* rhs;
     Binary* left;
     Binary* right;
     Const* c1;
     Const* c2;
 
-    if (matches(curr, binary(Abstract::Add, any(&leftExp), any(&rightExp))) ||
-        matches(curr, binary(Abstract::Sub, any(&leftExp), any(&rightExp)))) {
-      bool isShlLR =
-        matches(leftExp, binary(&left, Abstract::Shl, any(), constant(&c1)));
-      bool isShlRR =
-        matches(rightExp, binary(&right, Abstract::Shl, any(), constant(&c2)));
-      bool isMulLR =
-        matches(leftExp, binary(&left, Abstract::Mul, any(), any()));
-      bool isMulRR =
-        matches(rightExp, binary(&right, Abstract::Mul, any(), any()));
-      if ((isShlLR && isMulRR) || (isMulLR && isShlRR) ||
-          (isShlLR && isShlRR) || (isMulLR && isMulRR)) {
+    if (matches(curr, binary(Abstract::Add, any(&lhs), any(&rhs))) ||
+        matches(curr, binary(Abstract::Sub, any(&lhs), any(&rhs)))) {
+      bool isShlL =
+        matches(lhs, binary(&left, Abstract::Shl, any(), constant(&c1)));
+      bool isShlR =
+        matches(rhs, binary(&right, Abstract::Shl, any(), constant(&c2)));
+      bool isMulL = matches(lhs, binary(&left, Abstract::Mul, any(), any()));
+      bool isMulR = matches(rhs, binary(&right, Abstract::Mul, any(), any()));
+      if ((isShlL && isMulR) || (isMulL && isShlR) || (isShlL && isShlR) ||
+          (isMulL && isMulR)) {
         if ((c1 || c2) && left->type == right->type) {
           // canonicalize
           // (x << C1) op (x << C2)
