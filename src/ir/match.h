@@ -513,45 +513,60 @@ AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
   return Matcher<UnaryKind<AbstractUnaryK>, S>(binder, op, s);
 }
 
-// Binary and AbstractBinary
-struct BinaryK {
+// Binary, BinaryOp and AbstractBinaryOp
+template<> struct NumComponents<Binary*> { static constexpr size_t value = 3; };
+template<> struct GetComponent<Binary*, 0> {
+  BinaryOp operator()(Binary* curr) { return curr->op; }
+};
+template<> struct GetComponent<Binary*, 1> {
+  Expression* operator()(Binary* curr) { return curr->left; }
+};
+template<> struct GetComponent<Binary*, 2> {
+  Expression* operator()(Binary* curr) { return curr->right; }
+};
+struct BinaryOpK {
   using Op = BinaryOp;
   static BinaryOp getOp(Type, Op op) { return op; }
 };
-struct AbstractBinaryK {
+struct AbstractBinaryOpK {
   using Op = Abstract::Op;
   static BinaryOp getOp(Type type, Abstract::Op op) {
     return Abstract::getBinary(type, op);
   }
 };
-template<class T> struct BinaryKind {};
-template<class T> struct KindTypeRegistry<BinaryKind<T>> {
+template<class T> struct BinaryOpKind {};
+template<class T> struct KindTypeRegistry<BinaryOpKind<T>> {
   using matched_t = Binary*;
   using data_t = typename T::Op;
 };
-template<class T> struct MatchSelf<BinaryKind<T>> {
+template<class T> struct MatchSelf<BinaryOpKind<T>> {
   bool operator()(Binary* curr, typename T::Op op) {
     return curr->op == T::getOp(curr->left->type, op);
   }
 };
-template<class T> struct NumComponents<BinaryKind<T>> {
+template<class T> struct NumComponents<BinaryOpKind<T>> {
   static constexpr size_t value = 2;
 };
-template<class T> struct GetComponent<BinaryKind<T>, 0> {
+template<class T> struct GetComponent<BinaryOpKind<T>, 0> {
   Expression* operator()(Binary* curr) { return curr->left; }
 };
-template<class T> struct GetComponent<BinaryKind<T>, 1> {
+template<class T> struct GetComponent<BinaryOpKind<T>, 1> {
   Expression* operator()(Binary* curr) { return curr->right; }
 };
-template<class S1, class S2>
+template<class S1, class S2, class S3>
 inline decltype(auto)
-BinaryMatcher(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
-  return Matcher<BinaryKind<BinaryK>, S1, S2>(binder, op, s1, s2);
+BinaryMatcher(Binary** binder, S1&& s1, S2&& s2, S3&& s3) {
+  return Matcher<Binary*, S1, S2, S3>(binder, {}, s1, s2, s3);
 }
 template<class S1, class S2>
 inline decltype(auto)
-AbstractBinaryMatcher(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
-  return Matcher<BinaryKind<AbstractBinaryK>, S1, S2>(binder, op, s1, s2);
+BinaryOpMatcher(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
+  return Matcher<BinaryOpKind<BinaryOpK>, S1, S2>(binder, op, s1, s2);
+}
+template<class S1, class S2>
+inline decltype(auto)
+AbstractBinaryOpMatcher(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
+  return Matcher<BinaryOpKind<AbstractBinaryOpK>, S1, S2>(binder, op, s1, s2);
 }
 
 // Select
@@ -766,22 +781,36 @@ inline decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
   return Internal::AbstractUnaryMatcher(binder, op, s);
 }
 
+template<class S1, class S2> inline decltype(auto) binary(S1&& s1, S2&& s2) {
+  return Internal::BinaryMatcher(
+    nullptr, Internal::Any<BinaryOp>(nullptr), s1, s2);
+}
+template<class S1, class S2>
+inline decltype(auto) binary(Binary** binder, S1&& s1, S2&& s2) {
+  return Internal::BinaryMatcher(
+    binder, Internal::Any<BinaryOp>(nullptr), s1, s2);
+}
+template<class S1, class S2>
+inline decltype(auto) binary(BinaryOp* binder, S1&& s1, S2&& s2) {
+  return Internal::BinaryMatcher(
+    nullptr, Internal::Any<BinaryOp>(binder), s1, s2);
+}
 template<class S1, class S2>
 inline decltype(auto) binary(BinaryOp op, S1&& s1, S2&& s2) {
-  return Internal::BinaryMatcher(nullptr, op, s1, s2);
+  return Internal::BinaryOpMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
 inline decltype(auto) binary(Abstract::Op op, S1&& s1, S2&& s2) {
-  return Internal::AbstractBinaryMatcher(nullptr, op, s1, s2);
+  return Internal::AbstractBinaryOpMatcher(nullptr, op, s1, s2);
 }
 template<class S1, class S2>
 inline decltype(auto) binary(Binary** binder, BinaryOp op, S1&& s1, S2&& s2) {
-  return Internal::BinaryMatcher(binder, op, s1, s2);
+  return Internal::BinaryOpMatcher(binder, op, s1, s2);
 }
 template<class S1, class S2>
 inline decltype(auto)
 binary(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
-  return Internal::AbstractBinaryMatcher(binder, op, s1, s2);
+  return Internal::AbstractBinaryOpMatcher(binder, op, s1, s2);
 }
 
 template<class S1, class S2, class S3>
