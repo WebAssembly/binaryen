@@ -570,7 +570,7 @@ struct OptimizeInstructions
         return ret;
       }
       if (binary->type.isInteger()) {
-        if (auto* ret = optimizePairedInnerBinary(binary)) {
+        if (auto* ret = optimizeBinaryDistributions(binary)) {
           return ret;
         }
       }
@@ -1681,7 +1681,7 @@ private:
   // where op = (`*`|`<<`)
   // x * y + x * z   ==>   (y + z) * x
   // x * y - x * z   ==>   (y - z) * x
-  Expression* optimizePairedInnerBinary(Binary* curr) {
+  Expression* optimizeBinaryDistributions(Binary* curr) {
     using namespace Match;
     assert(curr->type.isInteger());
 
