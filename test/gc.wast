@@ -70,7 +70,7 @@
     ;; Test i31.new
     (local.set $local_i31ref (i31.new (i32.const 0)))
 
-    ;; Test subtype relationship for for i31.new
+    ;; Test subtype relationship for i31.new
     (local.set $local_anyref (i31.new (i32.const 0)))
     (local.set $local_eqref (i31.new (i32.const 0)))
 
