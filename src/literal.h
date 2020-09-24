@@ -158,7 +158,7 @@ public:
     assert(type == Type::i32);
     return i32;
   }
-  int32_t geti31(bool signed_) const {
+  int32_t geti31(bool signed_ = true) const {
     assert(type == Type::i31ref);
     return signed_ ? (i32 << 1) >> 1 : i32;
   }

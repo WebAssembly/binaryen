@@ -326,13 +326,13 @@ private:
           }
           if (wasm.features.hasGC()) {
             options.push_back(Type::eqref);
-            // TODO: i31ref
+            options.push_back(Type::i31ref);
           }
         }
         break;
       case Type::eqref:
         if (wasm.features.hasGC()) {
-          // TODO: i31ref
+          options.push_back(Type::i31ref);
         }
         break;
       default:
@@ -1786,6 +1786,9 @@ private:
         }
         return builder.makeRefFunc(target->name);
       }
+      if (type == Type::i31ref) {
+        return builder.makeI31New(makeConst(Type::i32));
+      }
       return builder.makeRefNull(type);
     }
     if (type.isTuple()) {
@@ -2717,7 +2720,8 @@ private:
              Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref)); // TODO: i31ref
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -2730,15 +2734,15 @@ private:
              Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref)); // TODO: i31ref
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
 
   std::vector<Type> getEqReferenceTypes() {
-    return items(
-      FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                                 Type::eqref)); // TODO: i31ref
+    return items(FeatureOptions<Type>().add(
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
   }
 
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }

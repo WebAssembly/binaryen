@@ -139,7 +139,11 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNull(type);
+    if (type == Type::i31ref) {
+      return makeI31(0);
+    } else {
+      return makeNull(type);
+    }
   } else {
     return makeFromInt32(0, type);
   }
@@ -406,7 +410,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "eqref(null)";
       break;
     case Type::i31ref:
-      o << "i31ref(" << literal.geti31(false) << ")";
+      o << "i31ref(" << literal.geti31() << ")";
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");

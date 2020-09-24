@@ -217,15 +217,8 @@ const char* getExpressionName(Expression* curr) {
 }
 
 Literal getSingleLiteralFromConstExpression(Expression* curr) {
-  if (auto* c = curr->dynCast<Const>()) {
-    return c->value;
-  } else if (auto* n = curr->dynCast<RefNull>()) {
-    return Literal::makeNull(n->type);
-  } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal::makeFunc(r->func);
-  } else {
-    WASM_UNREACHABLE("Not a constant expression");
-  }
+  assert(Properties::isConstantExpression(curr));
+  return Properties::getSingleLiteral(curr);
 }
 
 Literals getLiteralsFromConstExpression(Expression* curr) {
