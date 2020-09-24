@@ -56,8 +56,7 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
 inline bool canInitializeGlobal(const Expression* curr) {
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!Properties::isSingleConstantExpression(op) &&
-          !curr->is<GlobalGet>()) {
+      if (!Properties::isSingleConstantExpression(op) && !op->is<GlobalGet>()) {
         return false;
       }
     }
