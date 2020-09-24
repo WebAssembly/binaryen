@@ -893,10 +893,15 @@ private:
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeRefEq);
+                  &Self::makeRefEq,
+                  &Self::makeI31Get);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
+    if (type == Type::i31ref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
     return (this->*pick(options))(type);
   }
@@ -2653,6 +2658,20 @@ private:
     auto* left = make(getEqReferenceType());
     auto* right = make(getEqReferenceType());
     return builder.makeRefEq(left, right);
+  }
+
+  Expression* makeI31New(Type type) {
+    assert(type == Type::i31ref);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* value = make(Type::i32);
+    return builder.makeI31New(value);
+  }
+
+  Expression* makeI31Get(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* i31 = make(Type::i31ref);
+    return builder.makeI31Get(i31, oneIn(2));
   }
 
   Expression* makeMemoryInit() {
