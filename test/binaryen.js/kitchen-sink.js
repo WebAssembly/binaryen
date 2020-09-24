@@ -165,6 +165,10 @@ function test_ids() {
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
+  console.log("TupleMakeId: " + binaryen.TupleMakeId);
+  console.log("TupleExtractId: " + binaryen.TupleExtractId);
+  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("I31GetId: " + binaryen.I31GetId);
 }
 
 function test_core() {
@@ -594,6 +598,21 @@ function test_core() {
     // Memory
     module.memory.size(),
     module.memory.grow(makeInt32(0)),
+
+    // GC
+    module.i31.new(
+      module.i32.const(0)
+    ),
+    module.i31.get_s(
+      module.i31.new(
+        module.i32.const(1)
+      )
+    ),
+    module.i31.get_u(
+      module.i31.new(
+        module.i32.const(2)
+      )
+    ),
 
     // Other
     module.nop(),

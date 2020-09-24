@@ -86,6 +86,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitPop(Pop* curr) { return ReturnType(); }
   ReturnType visitTupleMake(TupleMake* curr) { return ReturnType(); }
   ReturnType visitTupleExtract(TupleExtract* curr) { return ReturnType(); }
+  ReturnType visitI31New(I31New* curr) { return ReturnType(); }
+  ReturnType visitI31Get(I31Get* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
@@ -201,6 +203,10 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(TupleMake);
       case Expression::Id::TupleExtractId:
         DELEGATE(TupleExtract);
+      case Expression::Id::I31NewId:
+        DELEGATE(I31New);
+      case Expression::Id::I31GetId:
+        DELEGATE(I31Get);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -273,6 +279,8 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Pop);
   UNIMPLEMENTED(TupleMake);
   UNIMPLEMENTED(TupleExtract);
+  UNIMPLEMENTED(I31New);
+  UNIMPLEMENTED(I31Get);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
@@ -389,6 +397,10 @@ struct OverriddenVisitor {
         DELEGATE(TupleMake);
       case Expression::Id::TupleExtractId:
         DELEGATE(TupleExtract);
+      case Expression::Id::I31NewId:
+        DELEGATE(I31New);
+      case Expression::Id::I31GetId:
+        DELEGATE(I31Get);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -552,6 +564,12 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitTupleExtract(TupleExtract* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitI31New(I31New* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitI31Get(I31Get* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
 };
@@ -874,6 +892,12 @@ struct Walker : public VisitorType {
   static void doVisitTupleExtract(SubType* self, Expression** currp) {
     self->visitTupleExtract((*currp)->cast<TupleExtract>());
   }
+  static void doVisitI31New(SubType* self, Expression** currp) {
+    self->visitI31New((*currp)->cast<I31New>());
+  }
+  static void doVisitI31Get(SubType* self, Expression** currp) {
+    self->visitI31Get((*currp)->cast<I31Get>());
+  }
 
   void setModule(Module* module) { currModule = module; }
 
@@ -1173,6 +1197,16 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::TupleExtractId: {
         self->pushTask(SubType::doVisitTupleExtract, currp);
         self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
+        break;
+      }
+      case Expression::Id::I31NewId: {
+        self->pushTask(SubType::doVisitI31New, currp);
+        self->pushTask(SubType::scan, &curr->cast<I31New>()->value);
+        break;
+      }
+      case Expression::Id::I31GetId: {
+        self->pushTask(SubType::doVisitI31Get, currp);
+        self->pushTask(SubType::scan, &curr->cast<I31Get>()->i31);
         break;
       }
       case Expression::Id::NumExpressionIds:
