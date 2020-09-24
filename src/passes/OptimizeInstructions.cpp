@@ -570,88 +570,8 @@ struct OptimizeInstructions
         return ret;
       }
       if (binary->type.isInteger()) {
-        // (x op C1) + (x op C2)   ==>   x * (C1' + C2')
-        // (x op C1) - (x op C2)   ==>   x * (C1' - C2')
-        // where op = (`*`|`<<`)
-        // x * y + x * z   ==>   (y + z) * x
-        // x * y - x * z   ==>   (y - z) * x
-        if (auto* left = binary->left->dynCast<Binary>()) {
-          if (auto* right = binary->right->dynCast<Binary>()) {
-            if (binary->op ==
-                  Abstract::getBinary(binary->type, Abstract::Add) ||
-                binary->op ==
-                  Abstract::getBinary(binary->type, Abstract::Sub)) {
-              // canonicalize
-              // (x << C1) op (x << C2)
-              // to
-              // (x * (1 << C1)) op (x * (1 << C2))
-              if (auto* c1 = left->right->dynCast<Const>()) {
-                if (auto* c2 = right->right->dynCast<Const>()) {
-                  if (left->type == right->type) {
-                    if (ExpressionAnalyzer::equal(left->left, right->left)) {
-                      auto type = left->type;
-                      if (left->op ==
-                          Abstract::getBinary(type, Abstract::Shl)) {
-                        left->op = Abstract::getBinary(type, Abstract::Mul);
-                        c1->value =
-                          Literal::makeFromInt32(1, type).shl(c1->value);
-                      }
-                      if (right->op ==
-                          Abstract::getBinary(type, Abstract::Shl)) {
-                        right->op = Abstract::getBinary(type, Abstract::Mul);
-                        c2->value =
-                          Literal::makeFromInt32(1, type).shl(c2->value);
-                      }
-                    }
-                  }
-                }
-              }
-              if (left->op == right->op) {
-                if (left->op ==
-                    Abstract::getBinary(binary->type, Abstract::Mul)) {
-                  if (!EffectAnalyzer(getPassOptions(), features, binary->right)
-                         .hasSideEffects()) {
-                    // (x * y) op (x * z)
-                    // (x * y) op (z * x)
-                    bool mirrored =
-                      ExpressionAnalyzer::equal(left->left, right->right);
-                    if (mirrored ||
-                        ExpressionAnalyzer::equal(left->left, right->left)) {
-                      if (mirrored) {
-                        // swap z and x
-                        std::swap(right->left, right->right);
-                      }
-                      // => (y op z) * x
-                      Builder builder(*getModule());
-                      return builder.makeBinary(
-                        Abstract::getBinary(binary->type, Abstract::Mul),
-                        left->left,
-                        builder.makeBinary(
-                          binary->op, left->right, right->right));
-                    }
-                    // (z * y) op (x * y)
-                    // (x * z) op (y * x)
-                    mirrored =
-                      ExpressionAnalyzer::equal(left->right, right->left);
-                    if (mirrored ||
-                        ExpressionAnalyzer::equal(left->right, right->right)) {
-                      if (mirrored) {
-                        // swap y and z
-                        std::swap(right->left, right->right);
-                      }
-                      // => (x op z) * y
-                      Builder builder(*getModule());
-                      return builder.makeBinary(
-                        Abstract::getBinary(binary->type, Abstract::Mul),
-                        left->right,
-                        builder.makeBinary(
-                          binary->op, left->left, right->left));
-                    }
-                  }
-                }
-              }
-            }
-          }
+        if (auto* ret = optimizePairedInnerBinary(binary)) {
+          return ret;
         }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -1750,6 +1670,92 @@ private:
           }
         }
         default: {
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // (x op C1) + (x op C2)   ==>   x * (C1' + C2')
+  // (x op C1) - (x op C2)   ==>   x * (C1' - C2')
+  // where op = (`*`|`<<`)
+  // x * y + x * z   ==>   (y + z) * x
+  // x * y - x * z   ==>   (y - z) * x
+  Expression* optimizePairedInnerBinary(Binary* curr) {
+    using namespace Match;
+    assert(curr->type.isInteger());
+
+    Expression* leftExp;
+    Expression* rightExp;
+    Binary* left;
+    Binary* right;
+    Const* c1;
+    Const* c2;
+
+    if (matches(curr, binary(Abstract::Add, any(&leftExp), any(&rightExp))) ||
+        matches(curr, binary(Abstract::Sub, any(&leftExp), any(&rightExp)))) {
+      bool isShlLR =
+        matches(leftExp, binary(&left, Abstract::Shl, any(), constant(&c1)));
+      bool isShlRR =
+        matches(rightExp, binary(&right, Abstract::Shl, any(), constant(&c2)));
+      bool isMulLR =
+        matches(leftExp, binary(&left, Abstract::Mul, any(), any()));
+      bool isMulRR =
+        matches(rightExp, binary(&right, Abstract::Mul, any(), any()));
+      if ((isShlLR && isMulRR) || (isMulLR && isShlRR) ||
+          (isShlLR && isShlRR) || (isMulLR && isMulRR)) {
+        if (left->type == right->type) {
+          // canonicalize
+          // (x << C1) op (x << C2)
+          // to
+          // (x * (1 << C1)) op (x * (1 << C2))
+          if (ExpressionAnalyzer::equal(left->left, right->left)) {
+            auto type = left->type;
+            if (isShlLR) {
+              left->op = Abstract::getBinary(type, Abstract::Mul);
+              c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
+            }
+            if (isShlRR) {
+              right->op = Abstract::getBinary(type, Abstract::Mul);
+              c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
+            }
+          }
+        }
+        if (left->op == right->op) {
+          if (!effects(right).hasSideEffects()) {
+            // (x * y) op (x * z)
+            // (x * y) op (z * x)
+            bool mirrored = ExpressionAnalyzer::equal(left->left, right->right);
+            if (mirrored ||
+                ExpressionAnalyzer::equal(left->left, right->left)) {
+              if (mirrored) {
+                // swap z and x
+                std::swap(right->left, right->right);
+              }
+              // => (y op z) * x
+              Builder builder(*getModule());
+              return builder.makeBinary(
+                Abstract::getBinary(curr->type, Abstract::Mul),
+                left->left,
+                builder.makeBinary(curr->op, left->right, right->right));
+            }
+            // (z * y) op (x * y)
+            // (x * z) op (y * x)
+            mirrored = ExpressionAnalyzer::equal(left->right, right->left);
+            if (mirrored ||
+                ExpressionAnalyzer::equal(left->right, right->right)) {
+              if (mirrored) {
+                // swap y and z
+                std::swap(right->left, right->right);
+              }
+              // => (x op z) * y
+              Builder builder(*getModule());
+              return builder.makeBinary(
+                Abstract::getBinary(curr->type, Abstract::Mul),
+                left->right,
+                builder.makeBinary(curr->op, left->left, right->left));
+            }
+          }
         }
       }
     }
