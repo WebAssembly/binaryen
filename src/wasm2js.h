@@ -272,7 +272,7 @@ private:
   // on operations.
   std::unordered_set<Name> functionsCallableFromOutside;
 
-  void addBasics(Ref ast);
+  void addBasics(Ref ast, Module* wasm);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
@@ -383,16 +383,18 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
-  ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
-  // add memory import
-  if (wasm->memory.exists && wasm->memory.imported()) {
-    Ref theVar = ValueBuilder::makeVar();
-    asmFunc[3]->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      "memory",
-      ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
-                            ValueBuilder::makeName(wasm->memory.base)));
+  if (wasm->memory.exists) {
+    ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
+    // add memory import
+    if (wasm->memory.imported()) {
+      Ref theVar = ValueBuilder::makeVar();
+      asmFunc[3]->push_back(theVar);
+      ValueBuilder::appendToVar(
+        theVar,
+        "memory",
+        ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
+                              ValueBuilder::makeName(wasm->memory.base)));
+    }
   }
   // add table import
   if (wasm->table.exists && wasm->table.imported()) {
@@ -404,7 +406,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV), wasm->table.base));
   }
   // create heaps, etc
-  addBasics(asmFunc[3]);
+  addBasics(asmFunc[3], wasm);
   ModuleUtils::iterImportedFunctions(
     *wasm, [&](Function* import) { addFunctionImport(asmFunc[3], import); });
   ModuleUtils::iterImportedGlobals(
@@ -459,26 +461,28 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   return ret;
 }
 
-void Wasm2JSBuilder::addBasics(Ref ast) {
-  // heaps, var HEAP8 = new global.Int8Array(buffer); etc
-  auto addHeap = [&](IString name, IString view) {
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      name,
-      ValueBuilder::makeNew(ValueBuilder::makeCall(
-        ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
-        ValueBuilder::makeName(BUFFER))));
-  };
-  addHeap(HEAP8, INT8ARRAY);
-  addHeap(HEAP16, INT16ARRAY);
-  addHeap(HEAP32, INT32ARRAY);
-  addHeap(HEAPU8, UINT8ARRAY);
-  addHeap(HEAPU16, UINT16ARRAY);
-  addHeap(HEAPU32, UINT32ARRAY);
-  addHeap(HEAPF32, FLOAT32ARRAY);
-  addHeap(HEAPF64, FLOAT64ARRAY);
+void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
+  if (wasm->memory.exists) {
+    // heaps, var HEAP8 = new global.Int8Array(buffer); etc
+    auto addHeap = [&](IString name, IString view) {
+      Ref theVar = ValueBuilder::makeVar();
+      ast->push_back(theVar);
+      ValueBuilder::appendToVar(
+        theVar,
+        name,
+        ValueBuilder::makeNew(ValueBuilder::makeCall(
+          ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
+          ValueBuilder::makeName(BUFFER))));
+    };
+    addHeap(HEAP8, INT8ARRAY);
+    addHeap(HEAP16, INT16ARRAY);
+    addHeap(HEAP32, INT32ARRAY);
+    addHeap(HEAPU8, UINT8ARRAY);
+    addHeap(HEAPU16, UINT16ARRAY);
+    addHeap(HEAPU32, UINT32ARRAY);
+    addHeap(HEAPF32, FLOAT32ARRAY);
+    addHeap(HEAPF64, FLOAT64ARRAY);
+  }
   // core asm.js imports
   auto addMath = [&](IString name, IString base) {
     Ref theVar = ValueBuilder::makeVar();
@@ -2419,33 +2423,32 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  {
-    auto pages = wasm.memory.initial == 0 ? 1 : wasm.memory.initial.addr;
+  if (wasm.memory.exists) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
-        << pages * Memory::kPageSize << ");\n";
-  }
+        << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
 
-  emitMemory(std::string("mem") + moduleName.str,
-             std::string("assign") + moduleName.str,
-             [](std::string globalName) { return globalName; });
+    emitMemory(std::string("mem") + moduleName.str,
+               std::string("assign") + moduleName.str,
+               [](std::string globalName) { return globalName; });
+  }
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "var ret" << moduleName.str << " = " << moduleName.str << "({"
-      << "Math,"
-      << "Int8Array,"
-      << "Uint8Array,"
-      << "Int16Array,"
-      << "Uint16Array,"
-      << "Int32Array,"
-      << "Uint32Array,"
-      << "Float32Array,"
-      << "Float64Array,"
-      << "NaN,"
-      << "Infinity"
-      << "}, {";
+  out << "var ret" << moduleName.str << " = " << moduleName.str << "({\n"
+      << "    Math,\n"
+      << "    Int8Array,\n"
+      << "    Uint8Array,\n"
+      << "    Int16Array,\n"
+      << "    Uint16Array,\n"
+      << "    Int32Array,\n"
+      << "    Uint32Array,\n"
+      << "    Float32Array,\n"
+      << "    Float64Array,\n"
+      << "    NaN,\n"
+      << "    Infinity\n"
+      << "  }, {\n";
 
-  out << "abort:function() { throw new Error('abort'); }";
+  out << "    abort: function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
@@ -2453,7 +2456,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << "," << asmangle(import->base.str);
+    out << ",\n    " << asmangle(import->base.str);
   });
 
   ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
@@ -2462,10 +2465,15 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << "," << asmangle(import->base.str);
+    out << ",\n    " << asmangle(import->base.str);
   });
 
-  out << "},mem" << moduleName.str << ");\n";
+  if (wasm.memory.exists) {
+    out << "\n  },\n  mem" << moduleName.str << "\n);\n";
+  } else {
+    out << "\n  });\n";
+  }
+
 
   if (flags.allowAsserts) {
     return;
