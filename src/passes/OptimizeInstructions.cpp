@@ -1704,18 +1704,18 @@ private:
         matches(rightExp, binary(&right, Abstract::Mul, any(), any()));
       if ((isShlLR && isMulRR) || (isMulLR && isShlRR) ||
           (isShlLR && isShlRR) || (isMulLR && isMulRR)) {
-        if (left->type == right->type) {
+        if ((c1 || c2) && left->type == right->type) {
           // canonicalize
           // (x << C1) op (x << C2)
           // to
           // (x * (1 << C1)) op (x * (1 << C2))
           if (ExpressionAnalyzer::equal(left->left, right->left)) {
             auto type = left->type;
-            if (isShlLR) {
+            if (c1) {
               left->op = Abstract::getBinary(type, Abstract::Mul);
               c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
             }
-            if (isShlRR) {
+            if (c2) {
               right->op = Abstract::getBinary(type, Abstract::Mul);
               c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
             }
