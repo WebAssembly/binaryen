@@ -260,9 +260,10 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
   {TypeInfo({Type::anyref}), Type::anyref},
   {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
-  // TODO (GC): Add canonical ids
-  // * `(ref null eq) == eqref`
-  // * `(ref i31) == i31ref`
+  {TypeInfo({Type::eqref}), Type::eqref},
+  {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
+  {TypeInfo({Type::i31ref}), Type::i31ref},
+  {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
 };
 
 } // anonymous namespace
@@ -341,7 +342,7 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= anyref;
+    return id >= funcref && id <= i31ref;
   } else {
     return getTypeInfo(*this)->isRef();
   }
@@ -367,7 +368,7 @@ bool Type::isException() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= anyref;
+    return id >= funcref && id <= eqref; // except i31ref
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -409,6 +410,8 @@ unsigned Type::getByteSize() const {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -454,6 +457,8 @@ FeatureSet Type::getFeatures() const {
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
@@ -484,6 +489,10 @@ HeapType Type::getHeapType() const {
         return HeapType::ExnKind;
       case anyref:
         return HeapType::AnyKind;
+      case eqref:
+        return HeapType::EqKind;
+      case i31ref:
+        return HeapType::I31Kind;
       default:
         break;
     }
@@ -512,7 +521,8 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isRef() && right.isRef()) {
-    return right == Type::anyref;
+    return right == Type::anyref ||
+           (left == Type::i31ref && right == Type::eqref);
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
@@ -543,6 +553,10 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   }
   if (a.isRef()) {
     if (b.isRef()) {
+      if ((a == Type::i31ref && b == Type::eqref) ||
+          (a == Type::eqref && b == Type::i31ref)) {
+        return Type::eqref;
+      }
       // The LUB of two different reference types is anyref, which may or may
       // not be a valid type depending on whether the anyref feature is enabled.
       // When anyref is disabled, it is possible for the finalization of invalid
@@ -753,6 +767,12 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         break;
       case Type::anyref:
         os << "anyref";
+        break;
+      case Type::eqref:
+        os << "eqref";
+        break;
+      case Type::i31ref:
+        os << "i31ref";
         break;
     }
   } else {

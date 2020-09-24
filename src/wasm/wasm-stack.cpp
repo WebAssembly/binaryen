@@ -192,6 +192,8 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -294,6 +296,8 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -697,6 +701,8 @@ void BinaryInstWriter::visitConst(Const* curr) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1695,6 +1701,10 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
     << U32LEB(parent.getFunctionIndex(curr->func));
 }
 
+void BinaryInstWriter::visitRefEq(RefEq* curr) {
+  o << int8_t(BinaryConsts::RefEq);
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
@@ -1763,6 +1773,15 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
     o << int8_t(BinaryConsts::Drop);
   }
   o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
+}
+
+void BinaryInstWriter::visitI31New(I31New* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+}
+
+void BinaryInstWriter::visitI31Get(I31Get* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
@@ -1907,7 +1926,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
 
 StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
                                            Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = module.allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

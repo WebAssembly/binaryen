@@ -330,12 +330,15 @@ public:
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -388,6 +391,8 @@ private:
   void validateAlignment(
     size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
+
+  Type indexType() { return getModule()->memory.indexType; }
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -931,7 +936,10 @@ void FunctionValidator::visitLoad(Load* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
-    curr->ptr->type, Type(Type::i32), curr, "load pointer type must be i32");
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "load pointer type must match memory index type");
   if (curr->isAtomic) {
     shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
     shouldBeIntOrUnreachable(
@@ -963,7 +971,10 @@ void FunctionValidator::visitStore(Store* curr) {
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
-    curr->ptr->type, Type(Type::i32), curr, "store pointer type must be i32");
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "store pointer must match memory index type");
   shouldBeUnequal(curr->value->type,
                   Type(Type::none),
                   curr,
@@ -986,10 +997,11 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
                 curr,
                 "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "AtomicRMW pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "AtomicRMW pointer type must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->type,
                                     curr->value->type,
                                     curr,
@@ -1009,7 +1021,10 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
                 "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
-    curr->ptr->type, Type(Type::i32), curr, "cmpxchg pointer type must be i32");
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "cmpxchg pointer must match memory index type");
   if (curr->expected->type != Type::unreachable &&
       curr->replacement->type != Type::unreachable) {
     shouldBeEqual(curr->expected->type,
@@ -1042,10 +1057,11 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
                 "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "AtomicWait pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "AtomicWait pointer must match memory index type");
   shouldBeIntOrUnreachable(
     curr->expected->type, curr, "AtomicWait expected type must be int");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1070,10 +1086,11 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
                 "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "AtomicNotify pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "AtomicNotify pointer must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->notifyCount->type,
     Type(Type::i32),
@@ -1230,10 +1247,11 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "load_splat must have type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "load_splat address must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "load_splat address must match memory index type");
   Type memAlignType = Type::none;
   switch (curr->op) {
     case LoadSplatVec8x16:
@@ -1264,7 +1282,10 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "memory.init dest must be an i32");
+    curr->dest->type,
+    indexType(),
+    curr,
+    "memory.init dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
                                     Type(Type::i32),
                                     curr,
@@ -1304,13 +1325,20 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "memory.copy dest must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->source->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "memory.copy source must be an i32");
+    curr->dest->type,
+    indexType(),
+    curr,
+    "memory.copy dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "memory.copy size must be an i32");
+    curr->source->type,
+    indexType(),
+    curr,
+    "memory.copy source must match memory index type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    indexType(),
+    curr,
+    "memory.copy size must match memory index type");
   shouldBeTrue(
     getModule()->memory.exists, curr, "Memory operations require a memory");
 }
@@ -1322,13 +1350,19 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "memory.fill dest must be an i32");
+    curr->dest->type,
+    indexType(),
+    curr,
+    "memory.fill dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type,
                                     Type(Type::i32),
                                     curr,
                                     "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "memory.fill size must be an i32");
+    curr->size->type,
+    indexType(),
+    curr,
+    "memory.fill size must match memory index type");
   shouldBeTrue(
     getModule()->memory.exists, curr, "Memory operations require a memory");
 }
@@ -1365,6 +1399,8 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1907,9 +1943,9 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   shouldBeTrue(
     getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
-                                    Type(Type::i32),
+                                    indexType(),
                                     curr,
-                                    "memory.grow must have i32 operand");
+                                    "memory.grow must match memory index type");
 }
 
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
@@ -1922,6 +1958,21 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
+}
+
+void FunctionValidator::visitRefEq(RefEq* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->left->type,
+    Type::eqref,
+    curr->left,
+    "ref.eq's left argument should be a subtype of eqref");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->right->type,
+    Type::eqref,
+    curr->right,
+    "ref.eq's right argument should be a subtype of eqref");
 }
 
 void FunctionValidator::visitTry(Try* curr) {
@@ -2060,6 +2111,26 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
   }
 }
 
+void FunctionValidator::visitI31New(I31New* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "i31.new requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(curr->value->type,
+                                      Type::i32,
+                                      curr->value,
+                                      "i31.new's argument should be i32");
+}
+
+void FunctionValidator::visitI31Get(I31Get* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "i31.get_s/u requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->i31->type,
+    Type::i31ref,
+    curr->i31,
+    "i31.get_s/u's argument should be i31ref");
+}
+
 void FunctionValidator::visitFunction(Function* curr) {
   if (curr->sig.results.isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
@@ -2113,7 +2184,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 }
 
-static bool checkOffset(Expression* curr, Address add, Address max) {
+static bool checkSegmentOffset(Expression* curr, Address add, Address max) {
   if (curr->is<GlobalGet>()) {
     return true;
   }
@@ -2122,10 +2193,10 @@ static bool checkOffset(Expression* curr, Address add, Address max) {
     return false;
   }
   uint64_t raw = c->value.getInteger();
-  if (raw > std::numeric_limits<Address::address_t>::max()) {
+  if (raw > std::numeric_limits<Address::address32_t>::max()) {
     return false;
   }
-  if (raw + uint64_t(add) > std::numeric_limits<Address::address_t>::max()) {
+  if (raw + uint64_t(add) > std::numeric_limits<Address::address32_t>::max()) {
     return false;
   }
   Address offset = raw;
@@ -2173,6 +2244,8 @@ void FunctionValidator::validateAlignment(
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");
   }
@@ -2354,12 +2427,14 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
   info.shouldBeFalse(
     curr.initial > curr.max, "memory", "memory max >= initial");
-  info.shouldBeTrue(curr.initial <= Memory::kMaxSize,
-                    "memory",
-                    "initial memory must be <= 4GB");
-  info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize,
-                    "memory",
-                    "max memory must be <= 4GB, or unlimited");
+  if (!curr.is64()) {
+    info.shouldBeTrue(curr.initial <= Memory::kMaxSize32,
+                      "memory",
+                      "initial memory must be <= 4GB");
+    info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize32,
+                      "memory",
+                      "max memory must be <= 4GB, or unlimited");
+  }
   info.shouldBeTrue(!curr.shared || curr.hasMax(),
                     "memory",
                     "shared memory must have max size");
@@ -2385,9 +2460,9 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                               "segment offset should be i32")) {
         continue;
       }
-      info.shouldBeTrue(checkOffset(segment.offset,
-                                    segment.data.size(),
-                                    curr.initial * Memory::kPageSize),
+      info.shouldBeTrue(checkSegmentOffset(segment.offset,
+                                           segment.data.size(),
+                                           curr.initial * Memory::kPageSize),
                         segment.offset,
                         "segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
@@ -2416,11 +2491,12 @@ static void validateTable(Module& module, ValidationInfo& info) {
                        Type(Type::i32),
                        segment.offset,
                        "segment offset should be i32");
-    info.shouldBeTrue(checkOffset(segment.offset,
-                                  segment.data.size(),
-                                  module.table.initial * Table::kPageSize),
-                      segment.offset,
-                      "segment offset should be reasonable");
+    info.shouldBeTrue(
+      checkSegmentOffset(segment.offset,
+                         segment.data.size(),
+                         module.table.initial * Table::kPageSize),
+      segment.offset,
+      "segment offset should be reasonable");
     for (auto name : segment.data) {
       info.shouldBeTrue(
         module.getFunctionOrNull(name), name, "segment name should be valid");

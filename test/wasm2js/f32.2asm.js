@@ -104,7 +104,6 @@ function asmFunc(global, env, buffer) {
   return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
  }
  
- var FUNCTION_TABLE = [];
  return {
   "add": $0, 
   "sub": $1, 

@@ -78,12 +78,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
     id++;
     Builder builder(*getModule());
+    auto indexType = getModule()->memory.indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr);
     curr->ptr = builder.makeCall(load_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),
-                                  builder.makeConst(int32_t(curr->offset.addr)),
+                                  offset,
                                   curr->ptr},
-                                 Type::i32);
+                                 indexType);
     Name target;
     switch (curr->type.getBasic()) {
       case Type::i32:
@@ -108,12 +110,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitStore(Store* curr) {
     id++;
     Builder builder(*getModule());
+    auto indexType = getModule()->memory.indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr);
     curr->ptr = builder.makeCall(store_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),
-                                  builder.makeConst(int32_t(curr->offset.addr)),
+                                  offset,
                                   curr->ptr},
-                                 Type::i32);
+                                 indexType);
     Name target;
     switch (curr->value->type.getBasic()) {
       case Type::i32:
@@ -136,14 +140,15 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module* curr) {
+    auto indexType = curr->memory.indexType;
     addImport(
-      curr, load_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+      curr, load_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, load_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, load_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, load_val_f32, {Type::i32, Type::f32}, Type::f32);
     addImport(curr, load_val_f64, {Type::i32, Type::f64}, Type::f64);
     addImport(
-      curr, store_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+      curr, store_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, store_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, store_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);

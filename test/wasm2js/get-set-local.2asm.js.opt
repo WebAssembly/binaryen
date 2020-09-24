@@ -24,7 +24,6 @@ function asmFunc(global, env, buffer) {
   return !$2 & ($0 | 0) == ($1 | 0);
  }
  
- var FUNCTION_TABLE = [];
  return {
   "check_extend_ui32": legalstub$1
  };

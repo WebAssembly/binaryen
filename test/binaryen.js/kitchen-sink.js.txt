@@ -20,6 +20,10 @@
   // 9
   // BinaryenTypeAnyref: 10
   // 10
+  // BinaryenTypeEqref: 11
+  // 11
+  // BinaryenTypeI31ref: 12
+  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -36,7 +40,8 @@ Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
-Features.All: 2047
+Features.Memory64: 2048
+Features.All: 4095
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -75,11 +80,19 @@ MemoryInitId: 35
 DataDropId: 36
 MemoryCopyId: 37
 MemoryFillId: 38
-TryId: 43
-ThrowId: 44
-RethrowId: 45
-BrOnExnId: 46
 PopId: 39
+RefNullId: 40
+RefIsNullId: 41
+RefFuncId: 42
+RefEqId: 43
+TryId: 44
+ThrowId: 45
+RethrowId: 46
+BrOnExnId: 47
+TupleMakeId: 48
+TupleExtractId: 49
+I31NewId: 50
+I31GetId: 51
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1837,6 +1850,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 1)
        )
       )
+      (drop
+       (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+       )
+      )
       (try
        (do
         (throw $a-event
@@ -1912,13 +1931,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
       )
       (drop
        (memory.size)
@@ -1926,6 +1954,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (memory.grow
         (i32.const 0)
+       )
+      )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
        )
       )
       (nop)
@@ -3685,6 +3732,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 1)
        )
       )
+      (drop
+       (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+       )
+      )
       (try
        (do
         (throw $a-event
@@ -3760,13 +3813,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
       )
       (drop
        (memory.size)
@@ -3774,6 +3836,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (memory.grow
         (i32.const 0)
+       )
+      )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
        )
       )
       (nop)

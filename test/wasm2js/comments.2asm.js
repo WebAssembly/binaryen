@@ -20,7 +20,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var FUNCTION_TABLE = [];
  return {
   
  };
@@ -50,7 +49,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var FUNCTION_TABLE = [];
  return {
   
  };

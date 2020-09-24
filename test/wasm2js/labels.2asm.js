@@ -327,7 +327,6 @@ function asmFunc(global, env, buffer) {
   return $1_1 + $2_1 | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "block": $0, 
   "loop1": $1, 

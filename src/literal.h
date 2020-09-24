@@ -117,6 +117,21 @@ public:
     }
   }
 
+  static Literal makeFromUInt64(uint64_t x, Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(int32_t(x));
+      case Type::i64:
+        return Literal(int64_t(x));
+      case Type::f32:
+        return Literal(float(x));
+      case Type::f64:
+        return Literal(double(x));
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
 
@@ -128,6 +143,11 @@ public:
   static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
   }
+  static Literal makeI31(int32_t value) {
+    auto lit = Literal(Type::i31ref);
+    lit.i32 = value & 0x7fffffff;
+    return lit;
+  }
 
   Literal castToF32();
   Literal castToF64();
@@ -137,6 +157,10 @@ public:
   int32_t geti32() const {
     assert(type == Type::i32);
     return i32;
+  }
+  int32_t geti31(bool signed_) const {
+    assert(type == Type::i31ref);
+    return signed_ ? (i32 << 1) >> 1 : i32;
   }
   int64_t geti64() const {
     assert(type == Type::i64);
@@ -580,6 +604,8 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::externref:
       case wasm::Type::exnref:
       case wasm::Type::anyref:
+      case wasm::Type::eqref:
+      case wasm::Type::i31ref:
       case wasm::Type::none:
       case wasm::Type::unreachable:
         return false;

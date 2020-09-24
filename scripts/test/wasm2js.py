@@ -18,12 +18,28 @@ from scripts.test import shared
 from scripts.test import support
 
 tests = shared.get_tests(shared.options.binaryen_test)
+# memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
+tests = [t for t in tests if '64.wast' not in t]
 spec_tests = shared.options.spec_tests
 spec_tests = [t for t in spec_tests if '.fail' not in t]
+spec_tests = [t for t in spec_tests if '64.wast' not in t]
 wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), ['.wast'])
 assert_tests = ['wasm2js.wast.asserts']
 # These tests exercise functionality not supported by wasm2js
 wasm2js_blacklist = ['empty_imported_table.wast']
+
+
+def check_for_stale_files():
+    # TODO(sbc): Generalize and apply other test suites
+    all_tests = []
+    for t in tests + spec_tests + wasm2js_tests:
+        all_tests.append(os.path.basename(os.path.splitext(t)[0]))
+
+    all_files = os.listdir(shared.get_test_dir('wasm2js'))
+    for f in all_files:
+        prefix = f.split('.')[0]
+        if prefix not in all_tests:
+            shared.fail_with_error('orphan test output: %s' % f)
 
 
 def test_wasm2js_output():
@@ -121,6 +137,7 @@ def test_asserts_output():
 
 def test_wasm2js():
     print('\n[ checking wasm2js testcases... ]\n')
+    check_for_stale_files()
     if shared.skip_if_on_windows('wasm2js'):
         return
     test_wasm2js_output()

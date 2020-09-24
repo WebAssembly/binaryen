@@ -324,6 +324,15 @@ private:
           if (wasm.features.hasExceptionHandling()) {
             options.push_back(Type::exnref);
           }
+          if (wasm.features.hasGC()) {
+            options.push_back(Type::eqref);
+            // TODO: i31ref
+          }
+        }
+        break;
+      case Type::eqref:
+        if (wasm.features.hasGC()) {
+          // TODO: i31ref
         }
         break;
       default:
@@ -883,6 +892,8 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -1362,6 +1373,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1466,6 +1479,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1595,6 +1610,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1640,6 +1657,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1680,7 +1699,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1691,7 +1711,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),
@@ -1708,6 +1729,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1735,6 +1758,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1845,6 +1870,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -1990,6 +2017,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2227,6 +2256,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2434,6 +2465,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2611,6 +2644,14 @@ private:
     return builder.makeRefIsNull(make(getReferenceType()));
   }
 
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
+  }
+
   Expression* makeMemoryInit() {
     if (!allowMemory) {
       return makeTrivial(Type::none);
@@ -2674,7 +2715,9 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC, Type::anyref));
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref)); // TODO: i31ref
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -2685,10 +2728,20 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC, Type::anyref));
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref)); // TODO: i31ref
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(
+      FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                 Type::eqref)); // TODO: i31ref
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;

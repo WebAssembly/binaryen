@@ -124,6 +124,7 @@ void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefFunc(RefFunc* curr) { curr->finalize(); }
+void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -140,6 +141,8 @@ void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

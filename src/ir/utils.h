@@ -150,6 +150,7 @@ struct ReFinalize
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -159,6 +160,8 @@ struct ReFinalize
   void visitPop(Pop* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
 
   void visitFunction(Function* curr);
 
@@ -219,6 +222,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitRefNull(RefNull* curr) { curr->finalize(); }
   void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
   void visitRefFunc(RefFunc* curr) { curr->finalize(); }
+  void visitRefEq(RefEq* curr) { curr->finalize(); }
   void visitTry(Try* curr) { curr->finalize(); }
   void visitThrow(Throw* curr) { curr->finalize(); }
   void visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -228,6 +232,8 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitPop(Pop* curr) { curr->finalize(); }
   void visitTupleMake(TupleMake* curr) { curr->finalize(); }
   void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+  void visitI31New(I31New* curr) { curr->finalize(); }
+  void visitI31Get(I31Get* curr) { curr->finalize(); }
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

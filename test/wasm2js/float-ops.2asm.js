@@ -460,7 +460,6 @@ function asmFunc(global, env, buffer) {
   return +(+$46(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0));
  }
  
- var FUNCTION_TABLE = [];
  return {
   "f32_add": $1, 
   "f32_sub": $2, 

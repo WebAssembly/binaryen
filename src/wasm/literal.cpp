@@ -30,11 +30,16 @@ namespace wasm {
 template<int N> using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(Type type) : type(type) {
-  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-  if (type.isException()) {
-    new (&exn) std::unique_ptr<ExceptionPackage>();
+  if (type == Type::i31ref) {
+    // i31ref is special in that it is non-nullable, so we construct with zero
+    i32 = 0;
   } else {
-    memset(&v128, 0, 16);
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    if (type.isException()) {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else {
+      memset(&v128, 0, 16);
+    }
   }
 }
 
@@ -57,6 +62,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     switch (type.getBasic()) {
       case Type::i32:
       case Type::f32:
+      case Type::i31ref:
         i32 = other.i32;
         break;
       case Type::i64:
@@ -70,6 +76,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
         break;
       case Type::externref:
       case Type::anyref:
+      case Type::eqref:
         break; // null
       case Type::funcref:
       case Type::exnref:
@@ -206,6 +213,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
+    case Type::i31ref:
       memcpy(buf, &i32, sizeof(i32));
       break;
     case Type::i64:
@@ -223,10 +231,9 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
-      if (isNull()) {
-        break;
-      }
-      // falls through
+    case Type::eqref:
+      assert(isNull() && "unexpected non-null reference type literal");
+      break;
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -379,6 +386,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         o << "funcref(" << literal.getFunc() << ")";
       }
       break;
+    case Type::externref:
+      assert(literal.isNull() && "unexpected non-null externref literal");
+      o << "externref(null)";
+      break;
     case Type::exnref:
       if (literal.isNull()) {
         o << "exnref(null)";
@@ -387,12 +398,15 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
       break;
     case Type::anyref:
-      assert(literal.isNull() && "TODO: non-null anyref values");
+      assert(literal.isNull() && "unexpected non-null anyref literal");
       o << "anyref(null)";
       break;
-    case Type::externref:
-      assert(literal.isNull() && "TODO: non-null externref values");
-      o << "externref(null)";
+    case Type::eqref:
+      assert(literal.isNull() && "unexpected non-null eqref literal");
+      o << "eqref(null)";
+      break;
+    case Type::i31ref:
+      o << "i31ref(" << literal.geti31(false) << ")";
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -619,6 +633,8 @@ Literal Literal::eqz() const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -641,6 +657,8 @@ Literal Literal::neg() const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -663,6 +681,8 @@ Literal Literal::abs() const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -768,6 +788,8 @@ Literal Literal::add(const Literal& other) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -790,6 +812,8 @@ Literal Literal::sub(const Literal& other) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -908,6 +932,8 @@ Literal Literal::mul(const Literal& other) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1154,6 +1180,8 @@ Literal Literal::eq(const Literal& other) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1176,6 +1204,8 @@ Literal Literal::ne(const Literal& other) const {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

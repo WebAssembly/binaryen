@@ -475,6 +475,7 @@ struct EffectAnalyzer
   void visitRefNull(RefNull* curr) {}
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
+  void visitRefEq(RefEq* curr) {}
   void visitTry(Try* curr) {}
   void visitThrow(Throw* curr) {
     if (tryDepth == 0) {
@@ -504,6 +505,8 @@ struct EffectAnalyzer
   }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
+  void visitI31New(I31New* curr) {}
+  void visitI31Get(I31Get* curr) {}
 
   // Helpers
 

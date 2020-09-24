@@ -1091,7 +1091,6 @@ function asmFunc(global, env, buffer) {
   return $0_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "f32_nan": $0, 
   "f32_positive_nan": $1, 

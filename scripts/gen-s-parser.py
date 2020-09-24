@@ -495,7 +495,12 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
-    ("pop",                  "makePop(s)")
+    ("pop",                  "makePop(s)"),
+    # GC
+    ("ref.eq",               "makeRefEq(s)"),
+    ("i31.new",              "makeI31New(s)"),
+    ("i31.get_s",            "makeI31Get(s, true)"),
+    ("i31.get_u",            "makeI31Get(s, false)")
 ]
 
 
