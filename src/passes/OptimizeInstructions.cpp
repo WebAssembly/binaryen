@@ -1685,12 +1685,12 @@ private:
     using namespace Match;
     assert(curr->type.isInteger());
 
-    Expression* lhs;
-    Expression* rhs;
-    Binary* left;
-    Binary* right;
-    Const* c1;
-    Const* c2;
+    Expression* lhs = nullptr;
+    Expression* rhs = nullptr;
+    Binary* left = nullptr;
+    Binary* right = nullptr;
+    Const* c1 = nullptr;
+    Const* c2 = nullptr;
 
     if (matches(curr, binary(Abstract::Add, any(&lhs), any(&rhs))) ||
         matches(curr, binary(Abstract::Sub, any(&lhs), any(&rhs)))) {
@@ -1700,8 +1700,9 @@ private:
         matches(rhs, binary(&right, Abstract::Shl, any(), constant(&c2)));
       bool isMulL = matches(lhs, binary(&left, Abstract::Mul, any(), any()));
       bool isMulR = matches(rhs, binary(&right, Abstract::Mul, any(), any()));
-      if ((isShlL && isMulR) || (isMulL && isShlR) || (isShlL && isShlR) ||
-          (isMulL && isMulR)) {
+      if (((isShlL && isMulR) || (isMulL && isShlR) || (isShlL && isShlR) ||
+           (isMulL && isMulR)) &&
+          left && right) {
         if ((c1 || c2) && left->type == right->type) {
           // canonicalize
           // (x << C1) op (x << C2)
