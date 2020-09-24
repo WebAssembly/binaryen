@@ -2474,7 +2474,6 @@ void Wasm2JSGlue::emitPostES6() {
     out << "\n  });\n";
   }
 
-
   if (flags.allowAsserts) {
     return;
   }
