@@ -1700,9 +1700,8 @@ private:
         matches(rhs, binary(&right, Abstract::Shl, any(), constant(&c2)));
       bool isMulL = matches(lhs, binary(&left, Abstract::Mul, any(), any()));
       bool isMulR = matches(rhs, binary(&right, Abstract::Mul, any(), any()));
-      if (((isShlL && isMulR) || (isMulL && isShlR) || (isShlL && isShlR) ||
-           (isMulL && isMulR)) &&
-          left && right) {
+      if ((left && right) && ((isShlL && isMulR) || (isMulL && isShlR) ||
+                              (isShlL && isShlR) || (isMulL && isMulR))) {
         if ((c1 || c2) && left->type == right->type) {
           // canonicalize
           // (x << C1) op (x << C2)
