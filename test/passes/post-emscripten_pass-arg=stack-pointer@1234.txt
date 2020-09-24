@@ -1,4 +1,0 @@
-(module
- (import "env" "not_stack" (global $import$global0 i32))
- (global $should_be_stack_pointer (mut i32) (i32.const 1234))
-)

@@ -66,7 +66,6 @@ function asmFunc(global, env, buffer) {
   }
  }
  
- var FUNCTION_TABLE = [];
  return {
   "func_50": $0
  };
