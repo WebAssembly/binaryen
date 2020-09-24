@@ -476,41 +476,52 @@ template<class S> inline decltype(auto) ConstMatcher(Const** binder, S&& s) {
   return Matcher<Const*, S>(binder, {}, s);
 }
 
-// Unary and AbstractUnary
-struct UnaryK {
+// Unary, UnaryOp and AbstractUnaryOp
+template<> struct NumComponents<Unary*> { static constexpr size_t value = 2; };
+template<> struct GetComponent<Unary*, 0> {
+  UnaryOp operator()(Unary* curr) { return curr->op; }
+};
+template<> struct GetComponent<Unary*, 1> {
+  Expression* operator()(Unary* curr) { return curr->value; }
+};
+struct UnaryOpK {
   using Op = UnaryOp;
   static UnaryOp getOp(Type, Op op) { return op; }
 };
-struct AbstractUnaryK {
+struct AbstractUnaryOpK {
   using Op = Abstract::Op;
   static UnaryOp getOp(Type type, Abstract::Op op) {
     return Abstract::getUnary(type, op);
   }
 };
-template<class T> struct UnaryKind {};
-template<class T> struct KindTypeRegistry<UnaryKind<T>> {
+template<class T> struct UnaryOpKind {};
+template<class T> struct KindTypeRegistry<UnaryOpKind<T>> {
   using matched_t = Unary*;
   using data_t = typename T::Op;
 };
-template<class T> struct MatchSelf<UnaryKind<T>> {
+template<class T> struct MatchSelf<UnaryOpKind<T>> {
   bool operator()(Unary* curr, typename T::Op op) {
     return curr->op == T::getOp(curr->value->type, op);
   }
 };
-template<class T> struct NumComponents<UnaryKind<T>> {
+template<class T> struct NumComponents<UnaryOpKind<T>> {
   static constexpr size_t value = 1;
 };
-template<class T> struct GetComponent<UnaryKind<T>, 0> {
+template<class T> struct GetComponent<UnaryOpKind<T>, 0> {
   Expression* operator()(Unary* curr) { return curr->value; }
 };
+template<class S1, class S2>
+inline decltype(auto) UnaryMatcher(Unary** binder, S1&& s1, S2&& s2) {
+  return Matcher<Unary*, S1, S2>(binder, {}, s1, s2);
+}
 template<class S>
-inline decltype(auto) UnaryMatcher(Unary** binder, UnaryOp op, S&& s) {
-  return Matcher<UnaryKind<UnaryK>, S>(binder, op, s);
+inline decltype(auto) UnaryOpMatcher(Unary** binder, UnaryOp op, S&& s) {
+  return Matcher<UnaryOpKind<UnaryOpK>, S>(binder, op, s);
 }
 template<class S>
 inline decltype(auto)
-AbstractUnaryMatcher(Unary** binder, Abstract::Op op, S&& s) {
-  return Matcher<UnaryKind<AbstractUnaryK>, S>(binder, op, s);
+AbstractUnaryOpMatcher(Unary** binder, Abstract::Op op, S&& s) {
+  return Matcher<UnaryOpKind<AbstractUnaryOpK>, S>(binder, op, s);
 }
 
 // Binary, BinaryOp and AbstractBinaryOp
@@ -766,21 +777,29 @@ inline decltype(auto) constant(Const** binder, int32_t x) {
 inline decltype(auto) any() { return Internal::Any<Expression*>(nullptr); }
 inline decltype(auto) any(Expression** binder) { return Internal::Any(binder); }
 
+template<class S> inline decltype(auto) unary(S&& s) {
+  return Internal::UnaryMatcher(nullptr, Internal::Any<UnaryOp>(nullptr), s);
+}
+template<class S> inline decltype(auto) unary(Unary** binder, S&& s) {
+  return Internal::UnaryMatcher(binder, Internal::Any<UnaryOp>(nullptr), s);
+}
+template<class S> inline decltype(auto) unary(UnaryOp* binder, S&& s) {
+  return Internal::UnaryMatcher(nullptr, Internal::Any<UnaryOp>(binder), s);
+}
 template<class S> inline decltype(auto) unary(UnaryOp op, S&& s) {
-  return Internal::UnaryMatcher(nullptr, op, s);
+  return Internal::UnaryOpMatcher(nullptr, op, s);
 }
 template<class S> inline decltype(auto) unary(Abstract::Op op, S&& s) {
-  return Internal::AbstractUnaryMatcher(nullptr, op, s);
+  return Internal::AbstractUnaryOpMatcher(nullptr, op, s);
 }
 template<class S>
 inline decltype(auto) unary(Unary** binder, UnaryOp op, S&& s) {
-  return Internal::UnaryMatcher(binder, op, s);
+  return Internal::UnaryOpMatcher(binder, op, s);
 }
 template<class S>
 inline decltype(auto) unary(Unary** binder, Abstract::Op op, S&& s) {
-  return Internal::AbstractUnaryMatcher(binder, op, s);
+  return Internal::AbstractUnaryOpMatcher(binder, op, s);
 }
-
 template<class S1, class S2> inline decltype(auto) binary(S1&& s1, S2&& s2) {
   return Internal::BinaryMatcher(
     nullptr, Internal::Any<BinaryOp>(nullptr), s1, s2);
