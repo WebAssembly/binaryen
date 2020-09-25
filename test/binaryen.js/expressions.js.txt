@@ -256,3 +256,13 @@
  )
 )
 
+# I31New
+(i31.new
+ (local.get $2)
+)
+
+# I31Get
+(i31.get_u
+ (local.get $2)
+)
+

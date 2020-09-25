@@ -269,6 +269,12 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitTupleExtract(TupleExtract* curr) {
       return builder.makeTupleExtract(copy(curr->tuple), curr->index);
     }
+    Expression* visitI31New(I31New* curr) {
+      return builder.makeI31New(copy(curr->value));
+    }
+    Expression* visitI31Get(I31Get* curr) {
+      return builder.makeI31Get(copy(curr->i31), curr->signed_);
+    }
   };
 
   Copier copier(wasm, custom);

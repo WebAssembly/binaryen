@@ -810,7 +810,7 @@ void AssertionEmitter::emit() {
     }
   )";
 
-  Builder wasmBuilder(sexpBuilder.getAllocator(), sexpBuilder.getModule());
+  Builder wasmBuilder(sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];

@@ -174,6 +174,8 @@ BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
+BINARYEN_API BinaryenExpressionId BinaryenI31NewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenI31GetId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -202,6 +204,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -859,6 +862,11 @@ BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
   BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
+BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+                                                  BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
+                                                  BinaryenExpressionRef i31,
+                                                  int signed_);
 
 // Expression
 
@@ -1850,6 +1858,29 @@ BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 // Sets the index extracted at of a `tuple.extract` expression.
 BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
                                                BinaryenIndex index);
+
+// I31New
+
+// Gets the value expression of an `i31.new` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenI31NewGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of an `i31.new` expression.
+BINARYEN_API void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef valueExpr);
+
+// I31Get
+
+// Gets the i31 expression of an `i31.get` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenI31GetGetI31(BinaryenExpressionRef expr);
+// Sets the i31 expression of an `i31.get` expression.
+BINARYEN_API void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef i31Expr);
+// Gets whether an `i31.get` expression returns a signed value (`_s`).
+BINARYEN_API int BinaryenI31GetIsSigned(BinaryenExpressionRef expr);
+// Sets whether an `i31.get` expression returns a signed value (`_s`).
+BINARYEN_API void BinaryenI31GetSetSigned(BinaryenExpressionRef expr,
+                                          int signed_);
 
 // Functions
 

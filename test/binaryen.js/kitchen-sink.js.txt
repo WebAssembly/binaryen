@@ -40,6 +40,7 @@ Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
+Features.Memory64: 2048
 Features.All: 4095
 InvalidId: 0
 BlockId: 1
@@ -88,6 +89,10 @@ TryId: 44
 ThrowId: 45
 RethrowId: 46
 BrOnExnId: 47
+TupleMakeId: 48
+TupleExtractId: 49
+I31NewId: 50
+I31GetId: 51
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1951,6 +1956,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -3812,6 +3836,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (memory.grow
         (i32.const 0)
+       )
+      )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
        )
       )
       (nop)

@@ -287,6 +287,8 @@ BinaryenExpressionId BinaryenTupleExtractId(void) {
   return Expression::Id::TupleExtractId;
 }
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
+BinaryenExpressionId BinaryenI31NewId(void) { return Expression::Id::I31NewId; }
+BinaryenExpressionId BinaryenI31GetId(void) { return Expression::Id::I31GetId; }
 
 // External kinds
 
@@ -343,6 +345,9 @@ BinaryenFeatures BinaryenFeatureMultivalue(void) {
 }
 BinaryenFeatures BinaryenFeatureGC(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::GC);
+}
+BinaryenFeatures BinaryenFeatureMemory64(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Memory64);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -1333,6 +1338,19 @@ BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
   assert(event && "br_on_exn's event must exist");
   return static_cast<Expression*>(
     Builder(*wasm).makeBrOnExn(name, event, (Expression*)exnref));
+}
+
+BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+                                     BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeI31New((Expression*)value));
+}
+
+BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
+                                     BinaryenExpressionRef i31,
+                                     int signed_) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
 
 // Expression utility
@@ -2995,7 +3013,6 @@ BinaryenTupleMakeRemoveOperandAt(BinaryenExpressionRef expr,
   assert(expression->is<TupleMake>());
   return static_cast<TupleMake*>(expression)->operands.removeAt(index);
 }
-
 // TupleExtract
 BinaryenExpressionRef BinaryenTupleExtractGetTuple(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3019,6 +3036,42 @@ void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
   auto* expression = (Expression*)expr;
   assert(expression->is<TupleExtract>());
   static_cast<TupleExtract*>(expression)->index = index;
+}
+// I31New
+BinaryenExpressionRef BinaryenI31NewGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31New>());
+  return static_cast<I31New*>(expression)->value;
+}
+void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+                            BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31New>());
+  assert(valueExpr);
+  static_cast<I31New*>(expression)->value = (Expression*)valueExpr;
+}
+// I31Get
+BinaryenExpressionRef BinaryenI31GetGetI31(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31Get>());
+  return static_cast<I31Get*>(expression)->i31;
+}
+void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
+                          BinaryenExpressionRef i31Expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31Get>());
+  assert(i31Expr);
+  static_cast<I31Get*>(expression)->i31 = (Expression*)i31Expr;
+}
+int BinaryenI31GetIsSigned(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31Get>());
+  return static_cast<I31Get*>(expression)->signed_;
+}
+void BinaryenI31GetSetSigned(BinaryenExpressionRef expr, int signed_) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<I31Get>());
+  static_cast<I31Get*>(expression)->signed_ = signed_ != 0;
 }
 
 // Functions

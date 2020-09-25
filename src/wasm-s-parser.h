@@ -173,7 +173,6 @@ public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);
 
-  MixedArena& getAllocator() { return allocator; }
   Module& getModule() { return wasm; }
 
 private:
@@ -244,6 +243,8 @@ private:
   Expression* makeBrOnExn(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
+  Expression* makeI31New(Element& s);
+  Expression* makeI31Get(Element& s, bool signed_);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
