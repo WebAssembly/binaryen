@@ -1700,27 +1700,23 @@ private:
       // (x << C1) op (x << C2)
       // to
       // (x * (1 << C1)) op (x * (1 << C2))
-      if (matches(curr->left, binary(&left, any(&ll), constant(&c1))) &&
-          matches(curr->right, binary(&right, any(&rl), constant(&c2)))) {
+      if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
+          matches(curr->right, binary(&right, any(&rl), any(&rr)))) {
         if (ExpressionAnalyzer::equal(ll, rl)) {
           auto type = left->type;
-          if (c1 && left->op == Abstract::getBinary(type, Abstract::Shl)) {
+          if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
             left->op = Abstract::getBinary(type, Abstract::Mul);
             c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
           }
-          if (c2 && right->op == Abstract::getBinary(type, Abstract::Shl)) {
+          if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
             right->op = Abstract::getBinary(type, Abstract::Mul);
             c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
           }
         }
-      }
-      // (x * y) op (x * z)
-      // (x * y) op (z * x)
-      if (matches(curr->left,
-                  binary(&left, Abstract::Mul, any(&ll), any(&lr))) &&
-          matches(curr->right,
-                  binary(&right, Abstract::Mul, any(&rl), any(&rr)))) {
-        if (left->op == right->op) {
+        // (x * y) op (x * z)
+        // (x * y) op (z * x)
+        if (left->op == right->op &&
+            left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
           if (!effects(right).hasSideEffects()) {
             bool mirrored = ExpressionAnalyzer::equal(ll, rr);
             if (mirrored || ExpressionAnalyzer::equal(ll, rl)) {
