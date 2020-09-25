@@ -98,7 +98,19 @@ function initializeConstants() {
     'TupleExtract',
     'Pop',
     'I31New',
-    'I31Get'
+    'I31Get',
+    'RefTest',
+    'RefCast',
+    'BrOnCast',
+    'RttCanon',
+    'RttSub',
+    'StructNew',
+    'StructGet',
+    'StructSet',
+    'ArrayNew',
+    'ArrayGet',
+    'ArraySet',
+    'ArrayLen'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });

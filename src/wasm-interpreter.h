@@ -1344,6 +1344,54 @@ public:
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
   }
+  Flow visitRefTest(RefTest* curr) {
+    NOTE_ENTER("RefTest");
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+  }
+  Flow visitRefCast(RefCast* curr) {
+    NOTE_ENTER("RefCast");
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+  }
+  Flow visitBrOnCast(BrOnCast* curr) {
+    NOTE_ENTER("BrOnCast");
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  }
+  Flow visitRttCanon(RttCanon* curr) {
+    NOTE_ENTER("RttCanon");
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  }
+  Flow visitRttSub(RttSub* curr) {
+    NOTE_ENTER("RttSub");
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  }
+  Flow visitStructNew(StructNew* curr) {
+    NOTE_ENTER("StructNew");
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+  }
+  Flow visitStructGet(StructGet* curr) {
+    NOTE_ENTER("StructGet");
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+  }
+  Flow visitStructSet(StructSet* curr) {
+    NOTE_ENTER("StructSet");
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+  }
+  Flow visitArrayNew(ArrayNew* curr) {
+    NOTE_ENTER("ArrayNew");
+    WASM_UNREACHABLE("TODO (gc): array.new");
+  }
+  Flow visitArrayGet(ArrayGet* curr) {
+    NOTE_ENTER("ArrayGet");
+    WASM_UNREACHABLE("TODO (gc): array.get");
+  }
+  Flow visitArraySet(ArraySet* curr) {
+    NOTE_ENTER("ArraySet");
+    WASM_UNREACHABLE("TODO (gc): array.set");
+  }
+  Flow visitArrayLen(ArrayLen* curr) {
+    NOTE_ENTER("ArrayLen");
+    WASM_UNREACHABLE("TODO (gc): array.len");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

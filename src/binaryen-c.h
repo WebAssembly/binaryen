@@ -176,6 +176,18 @@ BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
 BINARYEN_API BinaryenExpressionId BinaryenI31NewId(void);
 BINARYEN_API BinaryenExpressionId BinaryenI31GetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRefTestId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRefCastId(void);
+BINARYEN_API BinaryenExpressionId BinaryenBrOnCastId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRttCanonId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRttSubId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructNewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructGetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructSetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayNewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayGetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArraySetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayLenId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -867,6 +879,18 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
                                                   int signed_);
+// TODO (gc): ref.test
+// TODO (gc): ref.cast
+// TODO (gc): br_on_cast
+// TODO (gc): rtt.canon
+// TODO (gc): rtt.sub
+// TODO (gc): struct.new
+// TODO (gc): struct.get
+// TODO (gc): struct.set
+// TODO (gc): array.new
+// TODO (gc): array.get
+// TODO (gc): array.set
+// TODO (gc): array.len
 
 // Expression
 

@@ -1994,6 +1994,104 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
+  auto ret = allocator.alloc<RefTest>();
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
+  auto ret = allocator.alloc<RefCast>();
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
+  auto ret = allocator.alloc<BrOnCast>();
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
+  auto ret = allocator.alloc<RttCanon>();
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
+  auto ret = allocator.alloc<RttSub>();
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
+  auto ret = allocator.alloc<StructNew>();
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeStructGet(Element& s) {
+  auto ret = allocator.alloc<StructGet>();
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
+  auto ret = allocator.alloc<StructGet>();
+  WASM_UNREACHABLE("TODO (gc): struct.get_s/u");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
+  auto ret = allocator.alloc<StructSet>();
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
+  auto ret = allocator.alloc<ArrayNew>();
+  WASM_UNREACHABLE("TODO (gc): array.new");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeArrayGet(Element& s) {
+  auto ret = allocator.alloc<ArrayGet>();
+  WASM_UNREACHABLE("TODO (gc): array.get");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
+  auto ret = allocator.alloc<ArrayGet>();
+  WASM_UNREACHABLE("TODO (gc): array.get_s/u");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
+  auto ret = allocator.alloc<ArraySet>();
+  WASM_UNREACHABLE("TODO (gc): array.set");
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
+  auto ret = allocator.alloc<ArrayLen>();
+  WASM_UNREACHABLE("TODO (gc): array.len");
+  ret->finalize();
+  return ret;
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
