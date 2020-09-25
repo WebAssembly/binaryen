@@ -1735,8 +1735,7 @@ private:
           // (z * y) op (x * y)
           // (x * z) op (y * x)
           bool eqLRRL = ExpressionAnalyzer::equal(lr, rl);
-          bool eqLRRR = ExpressionAnalyzer::equal(lr, rr);
-          if (eqLRRL || eqLRRR) {
+          if (eqLRRL || ExpressionAnalyzer::equal(lr, rr)) {
             if (eqLRRL) {
               // swap y and z
               std::swap(rl, rr);
