@@ -930,9 +930,6 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
@@ -964,9 +961,6 @@ void FunctionValidator::visitStore(Store* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
@@ -993,9 +987,6 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1016,9 +1007,6 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1052,9 +1040,6 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1081,9 +1066,6 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1104,9 +1086,6 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeTrue(curr->order == 0,
                curr,
                "Currently only sequentially consistent atomics are supported, "
