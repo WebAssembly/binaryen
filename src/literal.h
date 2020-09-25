@@ -563,6 +563,26 @@ namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
     auto digest = wasm::hash(a.type.getID());
+    auto hashRef = [&]() {
+      assert(a.type.isRef());
+      if (a.isNull()) {
+        return digest;
+      }
+      if (a.type.isFunction()) {
+        wasm::rehash(digest, a.getFunc());
+        return digest;
+      }
+      if (a.type.isException()) {
+        auto exn = a.getExceptionPackage();
+        wasm::rehash(digest, exn.event);
+        wasm::rehash(digest, exn.values);
+        return digest;
+      }
+      // other non-null reference type literals cannot represent concrete
+      // values, i.e. there is no concrete externref, anyref or eqref other than
+      // null.
+      WASM_UNREACHABLE("unexpected type");
+    };
     if (a.type.isBasic()) {
       switch (a.type.getBasic()) {
         case wasm::Type::i32:
@@ -588,7 +608,7 @@ template<> struct hash<wasm::Literal> {
         case wasm::Type::exnref:
         case wasm::Type::anyref:
         case wasm::Type::eqref:
-          goto is_ref;
+          return hashRef();
         case wasm::Type::i31ref:
           wasm::rehash(digest, a.geti31(true));
           return digest;
@@ -597,23 +617,7 @@ template<> struct hash<wasm::Literal> {
           break;
       }
     } else if (a.type.isRef()) {
-    is_ref:
-      if (a.isNull()) {
-        return digest;
-      }
-      if (a.type.isFunction()) {
-        wasm::rehash(digest, a.getFunc());
-        return digest;
-      }
-      if (a.type.isException()) {
-        auto exn = a.getExceptionPackage();
-        wasm::rehash(digest, exn.event);
-        wasm::rehash(digest, exn.values);
-        return digest;
-      }
-      // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete externref, anyref or eqref other than
-      // null.
+      return hashRef();
     } else if (a.type.isRtt()) {
       WASM_UNREACHABLE("TODO: rtt literals");
     }

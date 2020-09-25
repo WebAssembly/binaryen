@@ -221,7 +221,14 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    default:
+    case Type::none:
+    case Type::unreachable:
+    case Type::funcref:
+    case Type::externref:
+    case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -230,6 +237,23 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
+  auto compareRef = [&]() {
+    assert(type.isRef());
+    if (isNull() || other.isNull()) {
+      return isNull() == other.isNull();
+    }
+    if (type.isFunction()) {
+      assert(func.is() && other.func.is());
+      return func == other.func;
+    }
+    if (type.isException()) {
+      assert(exn != nullptr && other.exn != nullptr);
+      return *exn == *other.exn;
+    }
+    // other non-null reference type literals cannot represent concrete values,
+    // i.e. there is no concrete externref, anyref or eqref other than null.
+    WASM_UNREACHABLE("unexpected type");
+  };
   if (type.isBasic()) {
     switch (type.getBasic()) {
       case Type::none:
@@ -248,25 +272,12 @@ bool Literal::operator==(const Literal& other) const {
       case Type::exnref:
       case Type::anyref:
       case Type::eqref:
-        goto is_ref;
+        return compareRef();
       case Type::unreachable:
         break;
     }
   } else if (type.isRef()) {
-  is_ref:
-    if (isNull() || other.isNull()) {
-      return isNull() == other.isNull();
-    }
-    if (type.isFunction()) {
-      assert(func.is() && other.func.is());
-      return func == other.func;
-    }
-    if (type.isException()) {
-      assert(exn != nullptr && other.exn != nullptr);
-      return *exn == *other.exn;
-    }
-    // other non-null reference type literals cannot represent concrete values,
-    // i.e. there is no concrete externref, anyref or eqref other than null.
+    return compareRef();
   } else if (type.isRtt()) {
     WASM_UNREACHABLE("TODO: rtt literals");
   }
