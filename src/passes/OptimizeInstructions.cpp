@@ -1277,13 +1277,8 @@ private:
         matches(curr, binary(Abstract::And, pure(&left), ival(0)))) {
       return right;
     }
-    // (signed)x % C_pot == 0   ==>  x & (C_pot - 1) == 0
     // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
     if (matches(curr,
-                binary(Abstract::Eq,
-                       binary(&inner, Abstract::RemS, any(&left), constant(&c)),
-                       ival(0))) ||
-        matches(curr,
                 binary(Abstract::Ne,
                        binary(&inner, Abstract::RemS, any(&left), constant(&c)),
                        ival(0)))) {
