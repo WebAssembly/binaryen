@@ -233,6 +233,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);
     }
+    Expression* visitRefEq(RefEq* curr) {
+      return builder.makeRefEq(copy(curr->left), copy(curr->right));
+    }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(
         copy(curr->body), copy(curr->catchBody), curr->type);
@@ -265,6 +268,12 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitTupleExtract(TupleExtract* curr) {
       return builder.makeTupleExtract(copy(curr->tuple), curr->index);
+    }
+    Expression* visitI31New(I31New* curr) {
+      return builder.makeI31New(copy(curr->value));
+    }
+    Expression* visitI31Get(I31Get* curr) {
+      return builder.makeI31Get(copy(curr->i31), curr->signed_);
     }
   };
 

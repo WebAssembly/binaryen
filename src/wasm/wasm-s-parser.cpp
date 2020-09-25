@@ -1850,6 +1850,14 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
+  auto ret = allocator.alloc<RefEq>();
+  ret->left = parseExpression(s[1]);
+  ret->right = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
 // try-catch-end is written in the folded wast format as
 // (try
 //   ...
@@ -1967,6 +1975,21 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
   ret->index = atoi(s[1]->str().c_str());
   ret->tuple = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
+  auto ret = allocator.alloc<I31New>();
+  ret->value = parseExpression(s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
+  auto ret = allocator.alloc<I31Get>();
+  ret->i31 = parseExpression(s[1]);
+  ret->signed_ = signed_;
   ret->finalize();
   return ret;
 }

@@ -220,6 +220,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitRefNull(RefNull* curr) { visitor.visitType(curr->type); }
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
+    void visitRefEq(RefEq* curr) {}
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
     void visitRethrow(Rethrow* curr) {}
@@ -234,6 +235,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitTupleExtract(TupleExtract* curr) {
       visitor.visitIndex(curr->index);
     }
+    void visitI31New(I31New* curr) {}
+    void visitI31Get(I31Get* curr) { visitor.visitInt(curr->signed_); }
   } singleton(curr, visitor);
 }
 
@@ -479,9 +482,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
                     "wasm64 will need changes here");
       rehash(digest, curr);
     }
-    void visitAddress(Address curr) {
-      rehash(digest, curr.addr);
-    }
+    void visitAddress(Address curr) { rehash(digest, curr.addr); }
   };
 
   return Hasher(curr).digest;

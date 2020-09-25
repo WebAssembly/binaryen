@@ -1441,6 +1441,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->type.isConcrete()) {
@@ -1472,6 +1473,10 @@ struct PrintExpressionContents
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
     o << curr->index;
+  }
+  void visitI31New(I31New* curr) { printMedium(o, "i31.new"); }
+  void visitI31Get(I31Get* curr) {
+    printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
 };
 
@@ -1968,6 +1973,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
+  void visitRefEq(RefEq* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
+  }
   // try-catch-end is written in the folded wat format as
   // (try
   //  (do
@@ -2052,6 +2065,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->tuple);
+    decIndent();
+  }
+  void visitI31New(I31New* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitI31Get(I31Get* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->i31);
     decIndent();
   }
   // Module-level visitors

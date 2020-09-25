@@ -757,8 +757,11 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitMemorySize(MemorySize* curr) { return 1; }
   Index visitMemoryGrow(MemoryGrow* curr) { return 100; }
   Index visitRefNull(RefNull* curr) { return 1; }
-  Index visitRefIsNull(RefIsNull* curr) { return 1; }
+  Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
+  Index visitRefEq(RefEq* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
+  }
   Index visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);

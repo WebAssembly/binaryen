@@ -113,6 +113,7 @@ function test_features() {
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
   console.log("Features.GC: " + binaryen.Features.GC);
+  console.log("Features.Memory64: " + binaryen.Features.Memory64);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -155,11 +156,19 @@ function test_ids() {
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
+  console.log("PopId: " + binaryen.PopId);
+  console.log("RefNullId: " + binaryen.RefNullId);
+  console.log("RefIsNullId: " + binaryen.RefIsNullId);
+  console.log("RefFuncId: " + binaryen.RefFuncId);
+  console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
-  console.log("PopId: " + binaryen.PopId);
+  console.log("TupleMakeId: " + binaryen.TupleMakeId);
+  console.log("TupleExtractId: " + binaryen.TupleExtractId);
+  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("I31GetId: " + binaryen.I31GetId);
 }
 
 function test_core() {
@@ -521,6 +530,9 @@ function test_core() {
     module.ref.is_null(module.ref.func("kitchen()sinker")),
     module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
 
+    // GC
+    module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
+
     // Exception handling
     module.try(
       module.throw("a-event", [module.i32.const(0)]),
@@ -586,6 +598,21 @@ function test_core() {
     // Memory
     module.memory.size(),
     module.memory.grow(makeInt32(0)),
+
+    // GC
+    module.i31.new(
+      module.i32.const(0)
+    ),
+    module.i31.get_s(
+      module.i31.new(
+        module.i32.const(1)
+      )
+    ),
+    module.i31.get_u(
+      module.i31.new(
+        module.i32.const(2)
+      )
+    ),
 
     // Other
     module.nop(),

@@ -1,6 +1,17 @@
 import { memoryBase } from 'env';
 import { tableBase } from 'env';
 
+function Table(ret) {
+  // grow method not included; table is not growable
+  ret.set = function(i, func) {
+    this[i] = func;
+  };
+  ret.get = function(i) {
+    return this[i];
+  };
+  return ret;
+}
+
 function asmFunc(global, env, buffer) {
  var memory = env.memory;
  var HEAP8 = new global.Int8Array(buffer);
@@ -37,7 +48,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
- var FUNCTION_TABLE = [];
+ var FUNCTION_TABLE = new Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  function __wasm_memory_size() {
@@ -45,7 +56,8 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "baz": baz
+  "baz": baz, 
+  "tab": FUNCTION_TABLE
  };
 }
 
@@ -71,5 +83,21 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     return uint8Array; 
   }
   base64DecodeToExistingUint8Array(bufferView, memoryBase, "ZHluYW1pYyBkYXRh");
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); }
+  },
+  memasmFunc
+);
 export var baz = retasmFunc.baz;

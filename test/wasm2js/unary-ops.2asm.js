@@ -1,13 +1,5 @@
 
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
+function asmFunc(global, env) {
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
@@ -511,7 +503,6 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$5 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i32_popcnt": $1, 
   "check_popcnt_i64": legalstub$2, 
@@ -525,8 +516,21 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); }
+  });
 export var i32_popcnt = retasmFunc.i32_popcnt;
 export var check_popcnt_i64 = retasmFunc.check_popcnt_i64;
 export var check_extend_ui32 = retasmFunc.check_extend_ui32;

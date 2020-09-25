@@ -192,6 +192,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -204,6 +206,10 @@ const char* getExpressionName(Expression* curr) {
       return "tuple.make";
     case Expression::Id::TupleExtractId:
       return "tuple.extract";
+    case Expression::Id::I31NewId:
+      return "i31.new";
+    case Expression::Id::I31GetId:
+      return "i31.get";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
@@ -915,6 +921,14 @@ void RefIsNull::finalize() {
 
 void RefFunc::finalize() { type = Type::funcref; }
 
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);
 }
@@ -956,6 +970,22 @@ void TupleExtract::finalize() {
     type = Type::unreachable;
   } else {
     type = tuple->type[index];
+  }
+}
+
+void I31New::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i31ref;
+  }
+}
+
+void I31Get::finalize() {
+  if (i31->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
   }
 }
 

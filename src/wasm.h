@@ -553,12 +553,15 @@ public:
     RefNullId,
     RefIsNullId,
     RefFuncId,
+    RefEqId,
     TryId,
     ThrowId,
     RethrowId,
     BrOnExnId,
     TupleMakeId,
     TupleExtractId,
+    I31NewId,
+    I31GetId,
     NumExpressionIds
   };
   Id _id;
@@ -1128,6 +1131,16 @@ public:
   void finalize();
 };
 
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) {}
@@ -1188,6 +1201,25 @@ public:
 
   Expression* tuple;
   Index index;
+
+  void finalize();
+};
+
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_;
 
   void finalize();
 };
