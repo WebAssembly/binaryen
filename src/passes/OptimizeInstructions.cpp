@@ -1696,13 +1696,14 @@ private:
 
     if (curr->op == Abstract::getBinary(curr->type, Abstract::Add) ||
         curr->op == Abstract::getBinary(curr->type, Abstract::Sub)) {
-      // canonicalize
-      // (x << C1) op (x << C2)
-      // to
-      // (x * (1 << C1)) op (x * (1 << C2))
       if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
           matches(curr->right, binary(&right, any(&rl), any(&rr)))) {
-        if (ExpressionAnalyzer::equal(ll, rl)) {
+        // canonicalize
+        // (x << C1) op (x << C2)
+        // to
+        // (x * (1 << C1)) op (x * (1 << C2))
+        bool eqLLRL = ExpressionAnalyzer::equal(ll, rl);
+        if (eqLLRL) {
           auto type = left->type;
           if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
             left->op = Abstract::getBinary(type, Abstract::Mul);
@@ -1718,9 +1719,9 @@ private:
         if (left->op == right->op &&
             left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
             !effects(right).hasSideEffects()) {
-          bool mirrored = ExpressionAnalyzer::equal(ll, rr);
-          if (mirrored || ExpressionAnalyzer::equal(ll, rl)) {
-            if (mirrored) {
+          bool eqLLRR = ExpressionAnalyzer::equal(ll, rr);
+          if (eqLLRR || eqLLRL) {
+            if (eqLLRR) {
               // swap z and x
               std::swap(rl, rr);
             }
@@ -1733,9 +1734,10 @@ private:
           }
           // (z * y) op (x * y)
           // (x * z) op (y * x)
-          mirrored = ExpressionAnalyzer::equal(lr, rl);
-          if (mirrored || ExpressionAnalyzer::equal(lr, rr)) {
-            if (mirrored) {
+          bool eqLRRL = ExpressionAnalyzer::equal(lr, rl);
+          bool eqLRRR = ExpressionAnalyzer::equal(lr, rr);
+          if (eqLRRL || eqLRRR) {
+            if (eqLRRL) {
               // swap y and z
               std::swap(rl, rr);
             }
