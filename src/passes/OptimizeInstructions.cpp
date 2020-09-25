@@ -1716,36 +1716,35 @@ private:
         // (x * y) op (x * z)
         // (x * y) op (z * x)
         if (left->op == right->op &&
-            left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
-          if (!effects(right).hasSideEffects()) {
-            bool mirrored = ExpressionAnalyzer::equal(ll, rr);
-            if (mirrored || ExpressionAnalyzer::equal(ll, rl)) {
-              if (mirrored) {
-                // swap z and x
-                std::swap(rl, rr);
-              }
-              // => (y op z) * x
-              Builder builder(*getModule());
-              return builder.makeBinary(
-                Abstract::getBinary(curr->type, Abstract::Mul),
-                ll,
-                builder.makeBinary(curr->op, lr, rr));
+            left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
+            !effects(right).hasSideEffects()) {
+          bool mirrored = ExpressionAnalyzer::equal(ll, rr);
+          if (mirrored || ExpressionAnalyzer::equal(ll, rl)) {
+            if (mirrored) {
+              // swap z and x
+              std::swap(rl, rr);
             }
-            // (z * y) op (x * y)
-            // (x * z) op (y * x)
-            mirrored = ExpressionAnalyzer::equal(lr, rl);
-            if (mirrored || ExpressionAnalyzer::equal(lr, rr)) {
-              if (mirrored) {
-                // swap y and z
-                std::swap(rl, rr);
-              }
-              // => (x op z) * y
-              Builder builder(*getModule());
-              return builder.makeBinary(
-                Abstract::getBinary(curr->type, Abstract::Mul),
-                lr,
-                builder.makeBinary(curr->op, ll, rl));
+            // => (y op z) * x
+            Builder builder(*getModule());
+            return builder.makeBinary(
+              Abstract::getBinary(curr->type, Abstract::Mul),
+              ll,
+              builder.makeBinary(curr->op, lr, rr));
+          }
+          // (z * y) op (x * y)
+          // (x * z) op (y * x)
+          mirrored = ExpressionAnalyzer::equal(lr, rl);
+          if (mirrored || ExpressionAnalyzer::equal(lr, rr)) {
+            if (mirrored) {
+              // swap y and z
+              std::swap(rl, rr);
             }
+            // => (x op z) * y
+            Builder builder(*getModule());
+            return builder.makeBinary(
+              Abstract::getBinary(curr->type, Abstract::Mul),
+              lr,
+              builder.makeBinary(curr->op, ll, rl));
           }
         }
       }
