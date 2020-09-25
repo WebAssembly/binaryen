@@ -501,38 +501,42 @@ struct OptimizeInstructions
         }
         // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
-          uint32_t c = right->value.geti32();
-          if (!(c >> 31) && isSignedBinaryOp(binary->op) &&
+          BinaryOp op;
+          int32_t c = right->value.geti32();
+          if (c >= 0 &&
+              (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
-            binary->op = makeUnsignedBinaryOp(binary->op);
+            binary->op = op;
           }
-          if (IsPowerOf2(c)) {
+          if (IsPowerOf2((uint32_t)c)) {
             switch (binary->op) {
               case MulInt32:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint32_t)c);
               case RemUInt32:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint32_t)c);
               case DivUInt32:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint32_t)c);
               default:
                 break;
             }
           }
         }
         if (right->type == Type::i64) {
-          uint64_t c = right->value.geti64();
-          if (!(c >> 63) && isSignedBinaryOp(binary->op) &&
+          BinaryOp op;
+          int64_t c = right->value.geti64();
+          if (c >= 0 &&
+              (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
-            binary->op = makeUnsignedBinaryOp(binary->op);
+            binary->op = op;
           }
-          if (IsPowerOf2(c)) {
+          if (IsPowerOf2((uint64_t)c)) {
             switch (binary->op) {
               case MulInt64:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint64_t)c);
               case RemUInt64:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint64_t)c);
               case DivUInt64:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint64_t)c);
               default:
                 break;
             }
@@ -1782,12 +1786,6 @@ private:
   }
 
   BinaryOp makeUnsignedBinaryOp(BinaryOp op) {
-    // This procedure is based on the facts that we know for sure that
-    // the operation is signed and that signed and unsigned values ​​differ
-    // by one and have proper ordering.
-    assert(isSignedBinaryOp(op));
-    return BinaryOp(op + 1);
-    /*
     switch (op) {
       case DivSInt32:
         return DivUInt32;
@@ -1820,8 +1818,8 @@ private:
         return GeUInt64;
 
       default:
-        return op;
-    }*/
+        return InvalidBinary;
+    }
   }
 
   bool isSignedBinaryOp(BinaryOp op) {
