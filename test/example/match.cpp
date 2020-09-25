@@ -324,20 +324,44 @@ void test_internal_unary() {
   std::cout << "Testing Internal::UnaryMatcher\n";
 
   Unary* out = nullptr;
+  UnaryOp op;
 
-  auto eqz32Matcher =
-    Internal::UnaryMatcher(&out, EqZInt32, Internal::Any<Expression*>(nullptr));
+  auto unMatcher = Internal::UnaryMatcher(
+    &out, Internal::Any<UnaryOp>(&op), Internal::Any<Expression*>(nullptr));
+  assert(unMatcher.matches(eqz32));
+  assert(out == eqz32);
+  assert(op == EqZInt32);
+  assert(unMatcher.matches(eqz64));
+  assert(out == eqz64);
+  assert(op == EqZInt64);
+  assert(unMatcher.matches(clz));
+  assert(out == clz);
+  assert(op == ClzInt32);
+  assert(!unMatcher.matches(nop));
+
+  assert(matches(clz, unary(any())));
+  assert(matches(eqz64, unary(&out, any())));
+  assert(out == eqz64);
+  assert(matches(eqz32, unary(&op, any())));
+  assert(op == EqZInt32);
+
+  std::cout << "Testing Internal::UnaryOpMatcher\n";
+
+  out = nullptr;
+
+  auto eqz32Matcher = Internal::UnaryOpMatcher(
+    &out, EqZInt32, Internal::Any<Expression*>(nullptr));
   assert(eqz32Matcher.matches(eqz32));
   assert(out == eqz32);
   assert(!eqz32Matcher.matches(eqz64));
   assert(!eqz32Matcher.matches(clz));
   assert(!eqz32Matcher.matches(nop));
 
-  std::cout << "Testing Internal::AbstractUnaryMatcher\n";
+  std::cout << "Testing Internal::AbstractUnaryOpMatcher\n";
 
   out = nullptr;
 
-  auto eqzMatcher = Internal::AbstractUnaryMatcher(
+  auto eqzMatcher = Internal::AbstractUnaryOpMatcher(
     &out, Abstract::EqZ, Internal::Any<Expression*>(nullptr));
   assert(eqzMatcher.matches(eqz32));
   assert(out == eqz32);
@@ -362,27 +386,54 @@ void test_internal_binary() {
   std::cout << "Testing Internal::BinaryMatcher\n";
 
   Binary* out = nullptr;
+  BinaryOp op;
 
-  auto eq32Matcher =
+  auto binMatcher =
     Internal::BinaryMatcher(&out,
-                            EqInt32,
+                            Internal::Any<BinaryOp>(&op),
                             Internal::Any<Expression*>(nullptr),
                             Internal::Any<Expression*>(nullptr));
+  assert(binMatcher.matches(eq32));
+  assert(out == eq32);
+  assert(op == EqInt32);
+  assert(binMatcher.matches(eq64));
+  assert(out == eq64);
+  assert(op == EqInt64);
+  assert(binMatcher.matches(add));
+  assert(out == add);
+  assert(op == AddInt32);
+  assert(!binMatcher.matches(nop));
+
+  assert(matches(add, binary(any(), any())));
+  assert(matches(eq64, binary(&out, any(), any())));
+  assert(out == eq64);
+  assert(matches(eq32, binary(&op, any(), any())));
+  assert(op == EqInt32);
+
+  std::cout << "Testing Internal::BinaryOpMatcher\n";
+
+  out = nullptr;
+
+  auto eq32Matcher =
+    Internal::BinaryOpMatcher(&out,
+                              EqInt32,
+                              Internal::Any<Expression*>(nullptr),
+                              Internal::Any<Expression*>(nullptr));
   assert(eq32Matcher.matches(eq32));
   assert(out == eq32);
   assert(!eq32Matcher.matches(eq64));
   assert(!eq32Matcher.matches(add));
   assert(!eq32Matcher.matches(nop));
 
-  std::cout << "Testing Internal::AbstractBinaryMatcher\n";
+  std::cout << "Testing Internal::AbstractBinaryOpMatcher\n";
 
   out = nullptr;
 
   auto eqMatcher =
-    Internal::AbstractBinaryMatcher(&out,
-                                    Abstract::Eq,
-                                    Internal::Any<Expression*>(nullptr),
-                                    Internal::Any<Expression*>(nullptr));
+    Internal::AbstractBinaryOpMatcher(&out,
+                                      Abstract::Eq,
+                                      Internal::Any<Expression*>(nullptr),
+                                      Internal::Any<Expression*>(nullptr));
   assert(eqMatcher.matches(eq32));
   assert(out == eq32);
   assert(eqMatcher.matches(eq64));
