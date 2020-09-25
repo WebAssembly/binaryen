@@ -574,14 +574,13 @@ struct OptimizeInstructions
         using namespace Match;
         Const* c;
         Binary* inner;
-        Expression* left;
         // eqz((signed)x % C_pot)   ==>   eqz(x & (C_pot - 1))
         if (matches(unary->value,
                     Match::binary(
-                      &inner, Abstract::RemS, any(&left), constant(&c)))) {
+                      &inner, Abstract::RemS, any(), constant(&c)))) {
           if (IsPowerOf2((uint64_t)c->value.getInteger())) {
-            inner->op = Abstract::getBinary(left->type, Abstract::And);
-            c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+            inner->op = Abstract::getBinary(c->type, Abstract::And);
+            c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
             return unary;
           }
         }
