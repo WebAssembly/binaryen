@@ -1822,30 +1822,6 @@ private:
     }
   }
 
-  bool isSignedBinaryOp(BinaryOp op) {
-    switch (op) {
-      case DivSInt32:
-      case RemSInt32:
-      case ShrSInt32:
-      case LtSInt32:
-      case LeSInt32:
-      case GtSInt32:
-      case GeSInt32:
-
-      case DivSInt64:
-      case RemSInt64:
-      case ShrSInt64:
-      case LtSInt64:
-      case LeSInt64:
-      case GtSInt64:
-      case GeSInt64:
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
   bool isSymmetric(Binary* binary) {
     if (Properties::isSymmetric(binary)) {
       return true;
