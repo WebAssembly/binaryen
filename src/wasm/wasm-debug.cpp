@@ -355,7 +355,7 @@ struct AddrExprMap {
   std::unordered_map<BinaryLocation, Expression*> startMap;
   std::unordered_map<BinaryLocation, Expression*> endMap;
 
-  // Some instructions have delimiter binary locations, like the else and end in
+  // Some instructions have  binary locations, like the else and end in
   // and if. Track those separately, including their expression and their id
   // ("else", "end", etc.), as they are rare, and we don't want to
   // bloat the common case which is represented in the earlier maps.
@@ -787,7 +787,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
-          newValue = locationUpdater.getNewExprStart(oldValue);
+          newValue = locationUpdater.getNewStart(oldValue);
         } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
           // Per the DWARF spec, "The base address of a compile unit is
