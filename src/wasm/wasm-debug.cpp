@@ -355,7 +355,7 @@ struct AddrExprMap {
   std::unordered_map<BinaryLocation, Expression*> startMap;
   std::unordered_map<BinaryLocation, Expression*> endMap;
 
-  // Some instructions have  binary locations, like the else and end in
+  // Some instructions have delimiter binary locations, like the else and end in
   // and if. Track those separately, including their expression and their id
   // ("else", "end", etc.), as they are rare, and we don't want to
   // bloat the common case which is represented in the earlier maps.
