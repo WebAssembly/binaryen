@@ -2286,11 +2286,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        rawName = escape(rawName);
-        auto name = rawName;
+        auto name = escape(rawName);
         // De-duplicate names by appending .1, .2, etc.
         for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = rawName.str + std::string(".") + std::to_string(i);
+          name = std::string(escape(rawName).str) + std::string(".") +
+                 std::to_string(i);
         }
         auto numFunctionImports = functionImports.size();
         if (index < numFunctionImports) {
@@ -2300,7 +2300,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
-                    << std::string(name.str) << " at index "
+                    << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
       }
@@ -2321,18 +2321,25 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             << std::to_string(funcIndex) << std::endl;
         }
         auto numLocals = getU32LEB();
+        std::set<Name> usedNames;
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
-          auto localName = getInlineString();
+          auto rawLocalName = getInlineString();
           if (!func) {
             continue; // read and discard in case of prior error
+          }
+          auto localName = escape(rawLocalName);
+          // De-duplicate names by appending .1, .2, etc.
+          for (int i = 1; !usedNames.insert(localName).second; ++i) {
+            localName = std::string(escape(rawLocalName).str) +
+                        std::string(".") + std::to_string(i);
           }
           if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
             std::cerr << "warning: local index out of bounds in name "
                          "section, local subsection: "
-                      << std::string(localName.str) << " at index "
+                      << std::string(rawLocalName.str) << " at index "
                       << std::to_string(localIndex) << " in function "
                       << std::string(func->name.str) << std::endl;
           }
@@ -2343,14 +2350,12 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        rawName = escape(rawName);
-        auto name = rawName;
         if (index == 0) {
-          wasm.table.name = name;
+          wasm.table.name = escape(rawName);
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
-                    << std::string(name.str) << " at index "
+                    << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
       }
@@ -2359,14 +2364,12 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        rawName = escape(rawName);
-        auto name = rawName;
         if (index == 0) {
-          wasm.memory.name = name;
+          wasm.memory.name = escape(rawName);
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
-                    << std::string(name.str) << " at index "
+                    << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
       }
@@ -2376,11 +2379,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        rawName = escape(rawName);
-        auto name = rawName;
+        auto name = escape(rawName);
         // De-duplicate names by appending .1, .2, etc.
         for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = rawName.str + std::string(".") + std::to_string(i);
+          name = std::string(escape(rawName).str) + std::string(".") +
+                 std::to_string(i);
         }
         auto numGlobalImports = globalImports.size();
         if (index < numGlobalImports) {
@@ -2390,7 +2393,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         } else {
           std::cerr << "warning: global index out of bounds in name section, "
                        "global subsection: "
-                    << std::string(name.str) << " at index "
+                    << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
       }
