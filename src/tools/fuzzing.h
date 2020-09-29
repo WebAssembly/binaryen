@@ -2671,7 +2671,7 @@ private:
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
     auto* i31 = make(Type::i31ref);
-    return builder.makeI31Get(i31, oneIn(2));
+    return builder.makeI31Get(i31, bool(oneIn(2)));
   }
 
   Expression* makeMemoryInit() {
