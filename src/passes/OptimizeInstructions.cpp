@@ -295,6 +295,23 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz((signed)x % C_pot)   =>   eqz(x & (C_pot - 1))
+        Const* c;
+        Unary* eqz;
+        Binary* inner;
+        if (matches(
+              curr,
+              unary(&eqz,
+                    Abstract::EqZ,
+                    binary(&inner, Abstract::RemS, any(), constant(&c))))) {
+          if (IsPowerOf2((uint64_t)c->value.getInteger())) {
+            inner->op = Abstract::getBinary(c->type, Abstract::And);
+            c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+            return eqz;
+          }
+        }
+      }
+      {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
@@ -575,21 +592,6 @@ struct OptimizeInstructions
         return ret;
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
-      if (unary->op == EqZInt32 || unary->op == EqZInt64) {
-        using namespace Match;
-        Const* c;
-        Binary* inner;
-        // eqz((signed)x % C_pot)   ==>   eqz(x & (C_pot - 1))
-        if (matches(
-              unary->value,
-              Match::binary(&inner, Abstract::RemS, any(), constant(&c)))) {
-          if (IsPowerOf2((uint64_t)c->value.getInteger())) {
-            inner->op = Abstract::getBinary(c->type, Abstract::And);
-            c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
-            return unary;
-          }
-        }
-      }
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           // Try to invert a relational operation using De Morgan's law
