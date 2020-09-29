@@ -25,7 +25,6 @@
  (export "ptr_local_func" (global $global$1))
  (export "__data_end" (global $global))
  (export "dynCall_i" (func $dynCall_i))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
@@ -78,11 +77,6 @@
    (local.get $fptr)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -107,7 +101,6 @@
     "__wasm_call_ctors",
     "_Z13print_messagev",
     "dynCall_i",
-    "__growWasmMemory",
     "__assign_got_enties"
   ],
   "namedGlobals": {
