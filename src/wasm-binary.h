@@ -607,6 +607,7 @@ enum ASTNodes {
 
   // prefixes
 
+  GCPrefix = 0xfb,
   MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
   AtomicPrefix = 0xfe,
@@ -945,7 +946,13 @@ enum ASTNodes {
   Catch = 0x07,
   Throw = 0x08,
   Rethrow = 0x09,
-  BrOnExn = 0x0a
+  BrOnExn = 0x0a,
+
+  // gc opcodes
+
+  I31New = 0x20,
+  I31GetS = 0x21,
+  I31GetU = 0x22
 };
 
 enum MemoryAccess {
@@ -1468,6 +1475,8 @@ public:
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitI31New(Expression*& out, uint32_t code);
+  bool maybeVisitI31Get(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

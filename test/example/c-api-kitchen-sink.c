@@ -312,6 +312,7 @@ void test_core() {
   BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
   funcrefExpr = BinaryenRefFunc(module, "kitchen()sinker");
   BinaryenExpressionRef exnrefExpr = BinaryenRefNull(module, BinaryenTypeExnref());
+  BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
   // Events
   BinaryenAddEvent(
@@ -776,6 +777,10 @@ void test_core() {
     // Memory
     BinaryenMemorySize(module),
     BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    // GC
+    BinaryenI31New(module, makeInt32(module, 0)),
+    BinaryenI31Get(module, i31refExpr, 1),
+    BinaryenI31Get(module, BinaryenI31New(module, makeInt32(module, 2)), 0),
     // Other
     BinaryenNop(module),
     BinaryenUnreachable(module),

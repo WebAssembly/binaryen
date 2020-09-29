@@ -30,11 +30,16 @@ namespace wasm {
 template<int N> using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(Type type) : type(type) {
-  assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-  if (type.isException()) {
-    new (&exn) std::unique_ptr<ExceptionPackage>();
+  if (type == Type::i31ref) {
+    // i31ref is special in that it is non-nullable, so we construct with zero
+    i32 = 0;
   } else {
-    memset(&v128, 0, 16);
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    if (type.isException()) {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else {
+      memset(&v128, 0, 16);
+    }
   }
 }
 
@@ -57,6 +62,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     switch (type.getBasic()) {
       case Type::i32:
       case Type::f32:
+      case Type::i31ref:
         i32 = other.i32;
         break;
       case Type::i64:
@@ -72,8 +78,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::anyref:
       case Type::eqref:
         break; // null
-      case Type::i31ref:
-        WASM_UNREACHABLE("TODO: i31ref");
       case Type::funcref:
       case Type::exnref:
       case Type::unreachable:
@@ -192,6 +196,17 @@ int64_t Literal::getInteger() const {
   }
 }
 
+uint64_t Literal::getUnsigned() const {
+  switch (type.getBasic()) {
+    case Type::i32:
+      return static_cast<uint32_t>(i32);
+    case Type::i64:
+      return i64;
+    default:
+      abort();
+  }
+}
+
 double Literal::getFloat() const {
   switch (type.getBasic()) {
     case Type::f32:
@@ -209,6 +224,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
+    case Type::i31ref:
       memcpy(buf, &i32, sizeof(i32));
       break;
     case Type::i64:
@@ -229,8 +245,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::eqref:
       assert(isNull() && "unexpected non-null reference type literal");
       break;
-    case Type::i31ref:
-      WASM_UNREACHABLE("TODO: i31ref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -403,7 +417,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "eqref(null)";
       break;
     case Type::i31ref:
-      WASM_UNREACHABLE("TODO: i31ref");
+      o << "i31ref(" << literal.geti31(false) << ")";
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }

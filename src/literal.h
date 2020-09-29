@@ -143,6 +143,11 @@ public:
   static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
   }
+  static Literal makeI31(int32_t value) {
+    auto lit = Literal(Type::i31ref);
+    lit.i32 = value & 0x7fffffff;
+    return lit;
+  }
 
   Literal castToF32();
   Literal castToF64();
@@ -152,6 +157,10 @@ public:
   int32_t geti32() const {
     assert(type == Type::i32);
     return i32;
+  }
+  int32_t geti31(bool signed_) const {
+    assert(type == Type::i31ref);
+    return signed_ ? (i32 << 1) >> 1 : i32;
   }
   int64_t geti64() const {
     assert(type == Type::i64);
@@ -204,6 +213,7 @@ public:
   }
 
   int64_t getInteger() const;
+  uint64_t getUnsigned() const;
   double getFloat() const;
   void getBits(uint8_t (&buf)[16]) const;
   // Equality checks for the type and the bits, so a nan float would
