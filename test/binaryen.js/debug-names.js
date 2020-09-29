@@ -33,4 +33,10 @@ module.dispose();
 
 console.log("=== roundtripped ===\n" + module2.emitText());
 
+var module3 = binaryen.readBinary(module2.emitBinary());
+
 module2.dispose();
+
+console.log("=== roundtripped again ===\n" + module3.emitText());
+
+module3.dispose();
