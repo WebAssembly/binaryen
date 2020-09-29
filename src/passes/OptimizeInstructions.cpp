@@ -1290,7 +1290,7 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
-    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    // (signed)x % C_pot != 0   ==>   x & (C_pot - 1) != 0
     {
       Binary* inner;
       if (matches(curr,
