@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (type $i32_f64_=>_i32 (func (param i32 f64) (result i32)))
- (import "env" "table" (table $0 9 9 funcref))
+ (import "env" "table" (table $timport$0 9 9 funcref))
  (export "call_indirect" (func $0))
  (func $0
   (drop
