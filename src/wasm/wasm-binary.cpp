@@ -2969,7 +2969,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   if (rawAlignment > 4) {
     throwError("Alignment must be of a reasonable size");
   }
-  alignment = Pow2(rawAlignment);
+  alignment = Bits::pow2(rawAlignment);
   offset = getU32LEB();
 }
 

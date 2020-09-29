@@ -386,7 +386,7 @@ struct OptimizeInstructions
             //    forcing them to zero like we do in the zero-extend.
             int32_t constValue = c->value.geti32();
             auto upperConstValue = constValue & ~Bits::lowBitMask(bits);
-            uint32_t count = PopCount(upperConstValue);
+            uint32_t count = Bits::popCount(upperConstValue);
             auto constSignBit = constValue & (1 << (bits - 1));
             if ((count > 0 && count < 32 - bits) ||
                 (constSignBit && count == 0)) {
@@ -508,7 +508,7 @@ struct OptimizeInstructions
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
           }
-          if (IsPowerOf2((uint32_t)c)) {
+          if (Bits::isPowerOf2((uint32_t)c)) {
             switch (binary->op) {
               case MulInt32:
                 return optimizePowerOf2Mul(binary, (uint32_t)c);
@@ -529,7 +529,7 @@ struct OptimizeInstructions
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
           }
-          if (IsPowerOf2((uint64_t)c)) {
+          if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
               case MulInt64:
                 return optimizePowerOf2Mul(binary, (uint64_t)c);
@@ -955,8 +955,8 @@ private:
           continue;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seekStack.emplace_back(binary->left,
-                                   mul * Pow2(Bits::getEffectiveShifts(c)));
+            seekStack.emplace_back(
+              binary->left, mul * Bits::pow2(Bits::getEffectiveShifts(c)));
             continue;
           }
         } else if (binary->op == MulInt32) {
@@ -1185,7 +1185,7 @@ private:
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
                   "type mismatch");
-    auto shifts = CountTrailingZeroes<T>(c);
+    auto shifts = Bits::countTrailingZeroes(c);
     binary->op = std::is_same<T, uint32_t>::value ? ShlInt32 : ShlInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
@@ -1200,7 +1200,7 @@ private:
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
                   "type mismatch");
-    auto shifts = CountTrailingZeroes<T>(c);
+    auto shifts = Bits::countTrailingZeroes(c);
     binary->op = std::is_same<T, uint32_t>::value ? ShrUInt32 : ShrUInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;

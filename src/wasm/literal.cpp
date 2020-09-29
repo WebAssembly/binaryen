@@ -447,30 +447,30 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn) {
 
 Literal Literal::countLeadingZeroes() const {
   if (type == Type::i32) {
-    return Literal((int32_t)CountLeadingZeroes(i32));
+    return Literal((int32_t)Bits::countLeadingZeroes(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)CountLeadingZeroes(i64));
+    return Literal((int64_t)Bits::countLeadingZeroes(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 Literal Literal::countTrailingZeroes() const {
   if (type == Type::i32) {
-    return Literal((int32_t)CountTrailingZeroes(i32));
+    return Literal((int32_t)Bits::countTrailingZeroes(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)CountTrailingZeroes(i64));
+    return Literal((int64_t)Bits::countTrailingZeroes(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 Literal Literal::popCount() const {
   if (type == Type::i32) {
-    return Literal((int32_t)PopCount(i32));
+    return Literal((int32_t)Bits::popCount(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)PopCount(i64));
+    return Literal((int64_t)Bits::popCount(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
@@ -1157,9 +1157,9 @@ Literal Literal::shrU(const Literal& other) const {
 Literal Literal::rotL(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
-      return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
+      return Literal(Bits::rotateLeft(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
-      return Literal(RotateLeft(uint64_t(i64), uint64_t(other.i64)));
+      return Literal(Bits::rotateLeft(uint64_t(i64), uint64_t(other.i64)));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1168,9 +1168,9 @@ Literal Literal::rotL(const Literal& other) const {
 Literal Literal::rotR(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
-      return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
+      return Literal(Bits::rotateRight(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
-      return Literal(RotateRight(uint64_t(i64), uint64_t(other.i64)));
+      return Literal(Bits::rotateRight(uint64_t(i64), uint64_t(other.i64)));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
