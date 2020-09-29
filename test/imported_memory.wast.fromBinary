@@ -1,5 +1,5 @@
 (module
  (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table $0 256 256 funcref))
+ (import "env" "table" (table $timport$0 256 256 funcref))
 )
 

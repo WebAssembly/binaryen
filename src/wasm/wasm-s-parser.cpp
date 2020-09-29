@@ -2360,17 +2360,17 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   }
   if (!name.is()) {
     if (kind == ExternalKind::Function) {
-      name = Name("import$function$" + std::to_string(functionCounter++));
+      name = Name("fimport$" + std::to_string(functionCounter++));
       functionNames.push_back(name);
     } else if (kind == ExternalKind::Global) {
-      name = Name("import$global" + std::to_string(globalCounter++));
+      name = Name("gimport$" + std::to_string(globalCounter++));
       globalNames.push_back(name);
     } else if (kind == ExternalKind::Memory) {
-      name = Name("import$memory$" + std::to_string(0));
+      name = Name("mimport$" + std::to_string(0));
     } else if (kind == ExternalKind::Table) {
-      name = Name("import$table$" + std::to_string(0));
+      name = Name("timport$" + std::to_string(0));
     } else if (kind == ExternalKind::Event) {
-      name = Name("import$event" + std::to_string(eventCounter++));
+      name = Name("eimport$" + std::to_string(eventCounter++));
       eventNames.push_back(name);
     } else {
       throw ParseException("invalid import", s[3]->line, s[3]->col);
@@ -2422,6 +2422,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     global->mutable_ = mutable_;
     wasm.addGlobal(global.release());
   } else if (kind == ExternalKind::Table) {
+    wasm.table.name = name;
     wasm.table.module = module;
     wasm.table.base = base;
     if (j < inner.size() - 1) {
@@ -2439,6 +2440,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     j++; // funcref
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
+    wasm.memory.name = name;
     wasm.memory.module = module;
     wasm.memory.base = base;
     if (inner[j]->isList()) {
