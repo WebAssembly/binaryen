@@ -3419,14 +3419,6 @@
    )
   )
   (drop
-   (i32.wrap_i64
-    (i64.shr_u
-     (local.get $y)
-     (i64.const 63)
-    )
-   )
-  )
-  (drop
    (i32.and
     (local.get $x)
     (i32.const 1)
@@ -3437,6 +3429,14 @@
     (i32.and
      (local.get $x)
      (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $y)
+     (i64.const 63)
     )
    )
   )
