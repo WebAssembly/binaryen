@@ -1294,11 +1294,10 @@ private:
     {
       Const* c;
       Binary* inner;
-      if (matches(
-            curr,
-            binary(Abstract::Ne,
-                   binary(&inner, Abstract::RemS, any(&left), constant(&c)),
-                   ival(0)))) {
+      if (matches(curr,
+                  binary(Abstract::Ne,
+                         binary(&inner, Abstract::RemS, any(&left), ival(&c)),
+                         ival(0)))) {
         if (IsPowerOf2((uint64_t)c->value.getInteger())) {
           inner->op = Abstract::getBinary(left->type, Abstract::And);
           c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
