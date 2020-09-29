@@ -3972,6 +3972,14 @@
         )
       )
     )
+    ;; x >>> 63 != 0   ==>   i32(x >>> 63)
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
     ;; i32(bool(expr)) == 1 -> bool(expr)
     (drop (i32.eq
       (i32.and
@@ -4336,7 +4344,7 @@
       (ref.null func)
     )
   )
-  (func $optimize-boolean-context (param $x i32) (param $y i32) (param $z i64)
+  (func $optimize-boolean-context (param $x i32) (param $y i32)
     ;; 0 - x   ==>   x
     (if
       (i32.sub
@@ -4352,14 +4360,6 @@
         (i32.const 0)
         (local.get $x)
       )
-    ))
-    ;; x >>> 63 != 0   ==>   i32.wrap_64(x >>> 63)
-    (drop (i64.ne
-      (i64.shr_u
-        (local.get $z)
-        (i64.const 63)
-      )
-      (i64.const 0)
     ))
   )
   (func $unsigned-context (param $x i32) (param $y i64)

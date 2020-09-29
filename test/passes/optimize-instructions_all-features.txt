@@ -13,7 +13,6 @@
  (type $none_=>_anyref (func (result anyref)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
- (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
@@ -3420,6 +3419,14 @@
    )
   )
   (drop
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $y)
+     (i64.const 63)
+    )
+   )
+  )
+  (drop
    (i32.and
     (local.get $x)
     (i32.const 1)
@@ -3814,7 +3821,7 @@
    (ref.null func)
   )
  )
- (func $optimize-boolean-context (param $x i32) (param $y i32) (param $z i64)
+ (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if
    (local.get $x)
    (unreachable)
@@ -3824,14 +3831,6 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
-   )
-  )
-  (drop
-   (i32.wrap_i64
-    (i64.shr_u
-     (local.get $z)
-     (i64.const 63)
-    )
    )
   )
  )
