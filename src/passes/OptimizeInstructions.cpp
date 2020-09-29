@@ -303,12 +303,11 @@ struct OptimizeInstructions
               curr,
               unary(&eqz,
                     Abstract::EqZ,
-                    binary(&inner, Abstract::RemS, any(), constant(&c))))) {
-          if (IsPowerOf2((uint64_t)c->value.getInteger())) {
-            inner->op = Abstract::getBinary(c->type, Abstract::And);
-            c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
-            return eqz;
-          }
+                    binary(&inner, Abstract::RemS, any(), constant(&c)))) &&
+            IsPowerOf2((uint64_t)c->value.getInteger())) {
+          inner->op = Abstract::getBinary(c->type, Abstract::And);
+          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          return eqz;
         }
       }
       {
@@ -1285,8 +1284,7 @@ private:
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ),
-                               left);
+      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
     }
     // Operations on one
     // (signed)x % 1   ==>   0
