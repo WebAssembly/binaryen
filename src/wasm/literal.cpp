@@ -200,6 +200,17 @@ int64_t Literal::getInteger() const {
   }
 }
 
+uint64_t Literal::getUnsigned() const {
+  switch (type.getBasic()) {
+    case Type::i32:
+      return static_cast<uint32_t>(i32);
+    case Type::i64:
+      return i64;
+    default:
+      abort();
+  }
+}
+
 double Literal::getFloat() const {
   switch (type.getBasic()) {
     case Type::f32:

@@ -30,15 +30,7 @@
        return (actual_lo | 0) == (expected_lo | 0) && (actual_hi | 0) == (expected_hi | 0);
     }
   
-function asmFunc0(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
+function asmFunc0(global, env) {
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
@@ -74,8 +66,21 @@ function asmFunc0(global, env, buffer) {
  };
 }
 
-var memasmFunc0 = new ArrayBuffer(65536);
-var retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc0);
+var retasmFunc0 = asmFunc0({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); }
+  });
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;
