@@ -213,6 +213,7 @@ public:
   }
 
   int64_t getInteger() const;
+  uint64_t getUnsigned() const;
   double getFloat() const;
   void getBits(uint8_t (&buf)[16]) const;
   // Equality checks for the type and the bits, so a nan float would
