@@ -1285,7 +1285,7 @@ private:
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
-      return builder.makeUnary(Abstract::getUnary(left->type, Abstract::EqZ),
+      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ),
                                left);
     }
     // Operations on one
