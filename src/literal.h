@@ -213,6 +213,7 @@ public:
   }
 
   int64_t getInteger() const;
+  uint64_t getUnsigned() const;
   double getFloat() const;
   // Obtains the bits of a basic value typed literal.
   void getBits(uint8_t (&buf)[16]) const;

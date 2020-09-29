@@ -2,15 +2,16 @@
 
 set -e
 
+mkdir -p emcc-build
 echo "emcc-tests: build:wasm"
-emcmake cmake -DCMAKE_BUILD_TYPE=Release
-emmake make -j4 binaryen_wasm
+emcmake cmake -B emcc-build -DCMAKE_BUILD_TYPE=Release -G Ninja
+ninja -C emcc-build binaryen_wasm
 echo "emcc-tests: test:wasm"
-./check.py binaryenjs_wasm
+./check.py --binaryen-bin=emcc-build/bin binaryenjs_wasm
 echo "emcc-tests: done:wasm"
 
 echo "emcc-tests: build:js"
-emmake make -j4 binaryen_js
+ninja -C emcc-build  binaryen_js
 echo "emcc-tests: test:js"
-./check.py binaryenjs
+./check.py --binaryen-bin=emcc-build/bin binaryenjs
 echo "emcc-tests: done:js"

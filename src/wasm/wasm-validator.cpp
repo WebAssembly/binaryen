@@ -328,6 +328,7 @@ public:
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
+  void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
@@ -930,9 +931,6 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
@@ -964,9 +962,6 @@ void FunctionValidator::visitStore(Store* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
@@ -993,9 +988,6 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1016,9 +1008,6 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1052,9 +1041,6 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1081,9 +1067,6 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1104,9 +1087,6 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeTrue(curr->order == 0,
                curr,
                "Currently only sequentially consistent atomics are supported, "
@@ -1948,7 +1928,16 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
                                     "memory.grow must match memory index type");
 }
 
+void FunctionValidator::visitRefNull(RefNull* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.null requires reference-types to be enabled");
+}
+
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.is_null requires reference-types to be enabled");
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
                curr->value,
@@ -1956,6 +1945,9 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.func requires reference-types to be enabled");
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
 }
@@ -1976,6 +1968,9 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
 }
 
 void FunctionValidator::visitTry(Try* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "try requires exception-handling to be enabled");
   if (curr->type != Type::unreachable) {
     shouldBeSubTypeOrFirstIsUnreachable(
       curr->body->type,
@@ -2000,6 +1995,9 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "throw requires exception-handling to be enabled");
   if (!info.validateGlobally) {
     return;
   }
@@ -2030,6 +2028,9 @@ void FunctionValidator::visitThrow(Throw* curr) {
 }
 
 void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "rethrow requires exception-handling to be enabled");
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
@@ -2042,6 +2043,9 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "br_on_exn requires exception-handling to be enabled");
   Event* event = getModule()->getEventOrNull(curr->event);
   shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
   shouldBeTrue(event->sig.params == curr->sent,
