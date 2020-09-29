@@ -414,7 +414,7 @@ file_names[  1]:
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 1024) "\00\00\00\00")
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 5243920))

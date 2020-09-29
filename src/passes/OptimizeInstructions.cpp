@@ -1320,7 +1320,9 @@ private:
       return left;
     }
     // i64(bool(x)) == 1  ==>  i32(bool(x))
-    if (matches(curr, binary(EqInt64, any(&left), i64(1))) &&
+    // i64(bool(x)) != 0  ==>  i32(bool(x))
+    if ((matches(curr, binary(EqInt64, any(&left), i64(1))) ||
+         matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
     }

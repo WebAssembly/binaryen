@@ -393,6 +393,14 @@ enum Subsection {
   NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
+  // see: https://github.com/WebAssembly/extended-name-section
+  NameLabel = 3,
+  NameType = 4,
+  NameTable = 5,
+  NameMemory = 6,
+  NameGlobal = 7,
+  NameElem = 8,
+  NameData = 9
 };
 
 } // namespace UserSections
@@ -928,10 +936,6 @@ enum ASTNodes {
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
 
-  // GC opcodes
-
-  RefEq = 0xd5,
-
   // exception handling opcodes
 
   Try = 0x06,
@@ -942,9 +946,28 @@ enum ASTNodes {
 
   // gc opcodes
 
+  RefEq = 0xd5,
+  StructNewWithRtt = 0x01,
+  StructNewDefaultWithRtt = 0x02,
+  StructGet = 0x03,
+  StructGetS = 0x04,
+  StructGetU = 0x05,
+  StructSet = 0x06,
+  ArrayNewWithRtt = 0x11,
+  ArrayNewDefaultWithRtt = 0x12,
+  ArrayGet = 0x13,
+  ArrayGetS = 0x14,
+  ArrayGetU = 0x15,
+  ArraySet = 0x16,
+  ArrayLen = 0x17,
   I31New = 0x20,
   I31GetS = 0x21,
-  I31GetU = 0x22
+  I31GetU = 0x22,
+  RttCanon = 0x30,
+  RttSub = 0x31,
+  RefTest = 0x40,
+  RefCast = 0x41,
+  BrOnCast = 0x42
 };
 
 enum MemoryAccess {
@@ -1299,8 +1322,8 @@ public:
 
   Name getNextLabel();
 
-  // We read functions before we know their names, so we need to backpatch the
-  // names later
+  // We read functions and globals before we know their names, so we need to
+  // backpatch the names later
 
   // we store functions here before wasm.addFunction after we know their names
   std::vector<Function*> functions;
@@ -1313,6 +1336,14 @@ public:
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
+
+  // we store globals here before wasm.addGlobal after we know their names
+  std::vector<Global*> globals;
+  // we store global imports here before wasm.addGlobalImport after we know
+  // their names
+  std::vector<Global*> globalImports;
+  // at index i we have all refs to the global i
+  std::map<Index, std::vector<Expression*>> globalRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1382,7 +1413,7 @@ public:
   Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
-  void processFunctions();
+  void processNames();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
@@ -1461,6 +1492,18 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   bool maybeVisitI31New(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
+  bool maybeVisitRefTest(Expression*& out, uint32_t code);
+  bool maybeVisitRefCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOnCast(Expression*& out, uint32_t code);
+  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
+  bool maybeVisitRttSub(Expression*& out, uint32_t code);
+  bool maybeVisitStructNew(Expression*& out, uint32_t code);
+  bool maybeVisitStructGet(Expression*& out, uint32_t code);
+  bool maybeVisitStructSet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayGet(Expression*& out, uint32_t code);
+  bool maybeVisitArraySet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

@@ -79,13 +79,18 @@ inline bool isNamedControlFlow(Expression* curr) {
   return false;
 }
 
+inline bool isSingleConstantExpression(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
+         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+}
+
 inline bool isConstantExpression(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+  if (isSingleConstantExpression(curr)) {
     return true;
   }
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+      if (!isSingleConstantExpression(op)) {
         return false;
       }
     }
@@ -101,13 +106,16 @@ inline Literal getSingleLiteral(const Expression* curr) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
     return Literal(r->func);
-  } else {
-    WASM_UNREACHABLE("non-constant expression");
+  } else if (auto* i = curr->dynCast<I31New>()) {
+    if (auto* c = i->value->dynCast<Const>()) {
+      return Literal::makeI31(c->value.geti32());
+    }
   }
+  WASM_UNREACHABLE("non-constant expression");
 }
 
 inline Literals getLiterals(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+  if (isSingleConstantExpression(curr)) {
     return {getSingleLiteral(curr)};
   } else if (auto* tuple = curr->dynCast<TupleMake>()) {
     Literals literals;

@@ -340,6 +340,18 @@ public:
   void visitTupleExtract(TupleExtract* curr);
   void visitI31New(I31New* curr);
   void visitI31Get(I31Get* curr);
+  void visitRefTest(RefTest* curr);
+  void visitRefCast(RefCast* curr);
+  void visitBrOnCast(BrOnCast* curr);
+  void visitRttCanon(RttCanon* curr);
+  void visitRttSub(RttSub* curr);
+  void visitStructNew(StructNew* curr);
+  void visitStructGet(StructGet* curr);
+  void visitStructSet(StructSet* curr);
+  void visitArrayNew(ArrayNew* curr);
+  void visitArrayGet(ArrayGet* curr);
+  void visitArraySet(ArraySet* curr);
+  void visitArrayLen(ArrayLen* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2133,6 +2145,82 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
     Type::i31ref,
     curr->i31,
     "i31.get_s/u's argument should be i31ref");
+}
+
+void FunctionValidator::visitRefTest(RefTest* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.test requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+}
+
+void FunctionValidator::visitRefCast(RefCast* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.cast requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+}
+
+void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "br_on_cast requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+}
+
+void FunctionValidator::visitRttCanon(RttCanon* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+}
+
+void FunctionValidator::visitRttSub(RttSub* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+}
+
+void FunctionValidator::visitStructNew(StructNew* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.new requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+}
+
+void FunctionValidator::visitStructGet(StructGet* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.get requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+}
+
+void FunctionValidator::visitStructSet(StructSet* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.set requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+}
+
+void FunctionValidator::visitArrayNew(ArrayNew* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.new requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.new");
+}
+
+void FunctionValidator::visitArrayGet(ArrayGet* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.get requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.get");
+}
+
+void FunctionValidator::visitArraySet(ArraySet* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.set requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.set");
+}
+
+void FunctionValidator::visitArrayLen(ArrayLen* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.len requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.len");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

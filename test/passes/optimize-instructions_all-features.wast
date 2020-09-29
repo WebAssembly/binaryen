@@ -4055,7 +4055,15 @@
       )
       (i32.const 1)
     ))
-    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+    ;; i64(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
+    ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and
         (local.get $y)
