@@ -1290,16 +1290,19 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
-    Const* c;
-    Binary* inner;
-    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
-    if (matches(curr,
-                binary(Abstract::Ne,
-                       binary(&inner, Abstract::RemS, any(&left), constant(&c)),
-                       ival(0)))) {
-      if (IsPowerOf2((uint64_t)c->value.getInteger())) {
-        inner->op = Abstract::getBinary(left->type, Abstract::And);
-        c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+    {
+      Const* c;
+      Binary* inner;
+      // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+      if (matches(
+            curr,
+            binary(Abstract::Ne,
+                   binary(&inner, Abstract::RemS, any(&left), constant(&c)),
+                   ival(0)))) {
+        if (IsPowerOf2((uint64_t)c->value.getInteger())) {
+          inner->op = Abstract::getBinary(left->type, Abstract::And);
+          c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+        }
       }
     }
     // bool(x) | 1  ==>  1
