@@ -1862,12 +1862,11 @@ void WasmBinaryBuilder::readGlobals() {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    auto* glob = new Global;
-    glob->name = "global$" + std::to_string(i);
-    glob->type = type;
-    glob->init = init;
-    glob->mutable_ = mutable_;
-    globals.push_back(glob);
+    globals.push_back(
+      Builder::makeGlobal("global$" + std::to_string(i),
+                          type,
+                          init,
+                          mutable_ ? Builder::Mutable : Builder::Immutable));
   }
 }
 
