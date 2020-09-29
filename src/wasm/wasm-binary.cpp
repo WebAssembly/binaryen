@@ -3068,9 +3068,9 @@ void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
     if (adjustedIndex >= globals.size()) {
       throwError("invalid global index");
     }
-    auto* glo = globals[adjustedIndex];
-    curr->name = glo->name;
-    curr->type = glo->type;
+    auto* glob = globals[adjustedIndex];
+    curr->name = glob->name;
+    curr->type = glob->type;
   }
   globalRefs[index].push_back(curr); // we don't know the final name yet
 }
