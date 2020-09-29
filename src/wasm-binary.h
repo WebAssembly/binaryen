@@ -936,10 +936,6 @@ enum ASTNodes {
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
 
-  // GC opcodes
-
-  RefEq = 0xd5,
-
   // exception handling opcodes
 
   Try = 0x06,
@@ -950,9 +946,28 @@ enum ASTNodes {
 
   // gc opcodes
 
+  RefEq = 0xd5,
+  StructNewWithRtt = 0x01,
+  StructNewDefaultWithRtt = 0x02,
+  StructGet = 0x03,
+  StructGetS = 0x04,
+  StructGetU = 0x05,
+  StructSet = 0x06,
+  ArrayNewWithRtt = 0x11,
+  ArrayNewDefaultWithRtt = 0x12,
+  ArrayGet = 0x13,
+  ArrayGetS = 0x14,
+  ArrayGetU = 0x15,
+  ArraySet = 0x16,
+  ArrayLen = 0x17,
   I31New = 0x20,
   I31GetS = 0x21,
-  I31GetU = 0x22
+  I31GetU = 0x22,
+  RttCanon = 0x30,
+  RttSub = 0x31,
+  RefTest = 0x40,
+  RefCast = 0x41,
+  BrOnCast = 0x42
 };
 
 enum MemoryAccess {
@@ -1477,6 +1492,18 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   bool maybeVisitI31New(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
+  bool maybeVisitRefTest(Expression*& out, uint32_t code);
+  bool maybeVisitRefCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOnCast(Expression*& out, uint32_t code);
+  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
+  bool maybeVisitRttSub(Expression*& out, uint32_t code);
+  bool maybeVisitStructNew(Expression*& out, uint32_t code);
+  bool maybeVisitStructGet(Expression*& out, uint32_t code);
+  bool maybeVisitStructSet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayGet(Expression*& out, uint32_t code);
+  bool maybeVisitArraySet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

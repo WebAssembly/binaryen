@@ -150,6 +150,18 @@ public:
   void visitTupleExtract(TupleExtract* curr);
   void visitI31New(I31New* curr);
   void visitI31Get(I31Get* curr);
+  void visitRefTest(RefTest* curr);
+  void visitRefCast(RefCast* curr);
+  void visitBrOnCast(BrOnCast* curr);
+  void visitRttCanon(RttCanon* curr);
+  void visitRttSub(RttSub* curr);
+  void visitStructNew(StructNew* curr);
+  void visitStructGet(StructGet* curr);
+  void visitStructSet(StructSet* curr);
+  void visitArrayNew(ArrayNew* curr);
+  void visitArrayGet(ArrayGet* curr);
+  void visitArraySet(ArraySet* curr);
+  void visitArrayLen(ArrayLen* curr);
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);

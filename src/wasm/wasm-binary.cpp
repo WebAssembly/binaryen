@@ -2715,6 +2715,42 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitI31Get(curr, opcode)) {
         break;
       }
+      if (maybeVisitRefTest(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRefCast(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitBrOnCast(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRttCanon(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRttSub(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructGet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructSet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayGet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArraySet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayLen(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after GC prefix: " + std::to_string(opcode));
       break;
     }
@@ -5185,6 +5221,182 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
       return false;
   }
   curr->i31 = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefTest) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RefTest>();
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefCast) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RefCast>();
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::BrOnCast) {
+    return false;
+  }
+  auto* curr = allocator.alloc<BrOnCast>();
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RttCanon) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RttCanon>();
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RttSub) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RttSub>();
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
+  StructNew* curr;
+  switch (code) {
+    case BinaryConsts::StructNewWithRtt:
+      curr = allocator.alloc<StructNew>();
+      // ...
+      break;
+    case BinaryConsts::StructNewDefaultWithRtt:
+      curr = allocator.alloc<StructNew>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
+  StructGet* curr;
+  switch (code) {
+    case BinaryConsts::StructGet:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    case BinaryConsts::StructGetS:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    case BinaryConsts::StructGetU:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::StructSet) {
+    return false;
+  }
+  auto* curr = allocator.alloc<StructSet>();
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
+  ArrayNew* curr;
+  switch (code) {
+    case BinaryConsts::ArrayNewWithRtt:
+      curr = allocator.alloc<ArrayNew>();
+      // ...
+      break;
+    case BinaryConsts::ArrayNewDefaultWithRtt:
+      curr = allocator.alloc<ArrayNew>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): array.new");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
+  ArrayGet* curr;
+  switch (code) {
+    case BinaryConsts::ArrayGet:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    case BinaryConsts::ArrayGetS:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    case BinaryConsts::ArrayGetU:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): array.get");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArraySet) {
+    return false;
+  }
+  auto* curr = allocator.alloc<ArraySet>();
+  WASM_UNREACHABLE("TODO (gc): array.set");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArrayLen) {
+    return false;
+  }
+  auto* curr = allocator.alloc<ArrayLen>();
+  WASM_UNREACHABLE("TODO (gc): array.len");
   curr->finalize();
   out = curr;
   return true;
