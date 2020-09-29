@@ -139,7 +139,11 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNull(type);
+    if (type == Type::i31ref) {
+      return makeI31(0);
+    } else {
+      return makeNull(type);
+    }
   } else {
     return makeFromInt32(0, type);
   }
@@ -196,6 +200,17 @@ int64_t Literal::getInteger() const {
   }
 }
 
+uint64_t Literal::getUnsigned() const {
+  switch (type.getBasic()) {
+    case Type::i32:
+      return static_cast<uint32_t>(i32);
+    case Type::i64:
+      return i64;
+    default:
+      abort();
+  }
+}
+
 double Literal::getFloat() const {
   switch (type.getBasic()) {
     case Type::f32:
@@ -209,11 +224,9 @@ double Literal::getFloat() const {
 
 void Literal::getBits(uint8_t (&buf)[16]) const {
   memset(buf, 0, 16);
-  TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
-    case Type::i31ref:
       memcpy(buf, &i32, sizeof(i32));
       break;
     case Type::i64:
@@ -223,19 +236,14 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    // TODO: investigate changing bits returned for reference types. currently,
-    // `null` values and even non-`null` functions return all zeroes, but only
-    // to avoid introducing a functional change.
+    case Type::none:
+    case Type::unreachable:
     case Type::funcref:
-      break;
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
     case Type::eqref:
-      assert(isNull() && "unexpected non-null reference type literal");
-      break;
-    case Type::none:
-    case Type::unreachable:
+    case Type::i31ref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -244,23 +252,51 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
-  if (type == Type::none) {
-    return true;
+  auto compareRef = [&]() {
+    assert(type.isRef());
+    if (isNull() || other.isNull()) {
+      return isNull() == other.isNull();
+    }
+    if (type.isFunction()) {
+      assert(func.is() && other.func.is());
+      return func == other.func;
+    }
+    if (type.isException()) {
+      assert(exn != nullptr && other.exn != nullptr);
+      return *exn == *other.exn;
+    }
+    // other non-null reference type literals cannot represent concrete values,
+    // i.e. there is no concrete externref, anyref or eqref other than null.
+    WASM_UNREACHABLE("unexpected type");
+  };
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return true; // special voided literal
+      case Type::i32:
+      case Type::f32:
+      case Type::i31ref:
+        return i32 == other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 == other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) == 0;
+      case Type::funcref:
+      case Type::externref:
+      case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+        return compareRef();
+      case Type::unreachable:
+        break;
+    }
+  } else if (type.isRef()) {
+    return compareRef();
+  } else if (type.isRtt()) {
+    WASM_UNREACHABLE("TODO: rtt literals");
   }
-  if (isNull() || other.isNull()) {
-    return isNull() == other.isNull();
-  }
-  if (type.isFunction()) {
-    return func == other.func;
-  }
-  if (type.isException()) {
-    assert(exn != nullptr && other.exn != nullptr);
-    return *exn == *other.exn;
-  }
-  uint8_t bits[16], other_bits[16];
-  getBits(bits);
-  other.getBits(other_bits);
-  return memcmp(bits, other_bits, 16) == 0;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 bool Literal::operator!=(const Literal& other) const {
@@ -406,7 +442,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "eqref(null)";
       break;
     case Type::i31ref:
-      o << "i31ref(" << literal.geti31(false) << ")";
+      o << "i31ref(" << literal.geti31() << ")";
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");

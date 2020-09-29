@@ -3988,7 +3988,15 @@
       )
       (i32.const 1)
     ))
-    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+    ;; i64(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
+    ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and
         (local.get $y)
@@ -4352,6 +4360,71 @@
         (i32.const 0)
         (local.get $x)
       )
+    ))
+  )
+  (func $unsigned-context (param $x i32) (param $y i64)
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -3) ;; skip
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 0x80000000) ;; skip
+    ))
+    (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const 2)
+    ))
+     (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const -1) ;; skip
+    ))
+    (drop (i32.rem_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.shr_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -7) ;; skip
     ))
   )
   (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)

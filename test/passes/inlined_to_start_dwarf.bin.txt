@@ -1,0 +1,505 @@
+DWARF debug info
+================
+
+Contains section .debug_info (321 bytes)
+Contains section .debug_loc (104 bytes)
+Contains section .debug_ranges (32 bytes)
+Contains section .debug_abbrev (206 bytes)
+Contains section .debug_line (151 bytes)
+Contains section .debug_str (217 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_ranges	DW_FORM_sec_offset
+
+[2] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_abstract_origin	DW_FORM_ref4
+
+[3] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_abstract_origin	DW_FORM_ref4
+
+[4] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_abstract_origin	DW_FORM_ref4
+
+[5] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_linkage_name	DW_FORM_strp
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+	DW_AT_inline	DW_FORM_data1
+
+[6] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[7] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[8] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+[9] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_linkage_name	DW_FORM_strp
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[10] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[11] DW_TAG_inlined_subroutine	DW_CHILDREN_yes
+	DW_AT_abstract_origin	DW_FORM_ref4
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_call_file	DW_FORM_data1
+	DW_AT_call_line	DW_FORM_data1
+	DW_AT_call_column	DW_FORM_data1
+
+[12] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[13] DW_TAG_GNU_call_site	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+
+[14] DW_TAG_pointer_type	DW_CHILDREN_no
+	DW_AT_type	DW_FORM_ref4
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x0000013d version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x00000141)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 12.0.0 (https://github.com/llvm/llvm-project.git 132f29ce0611754e0ffb2b534c34b2ffe27b40a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus_14)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "a.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000006f] = "/home/azakai/Dev/emscripten")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
+                 [0x00000000, 0x00000007)
+                 [0x00000005, 0x00000012)
+                 [0x00000013, 0x0000001b))
+
+0x00000026:   DW_TAG_subprogram [2] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x3 +0, <decoding error> 00 00 9f)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x004a => {0x0000004a} "_Z6squarei")
+
+0x0000003b:     DW_TAG_formal_parameter [3]  
+                  DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x005a => {0x0000005a} "x")
+
+0x00000040:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0xffffffff,  0x00000006): 
+                     [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value)
+                  DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0065 => {0x00000065} "result")
+
+0x00000049:     NULL
+
+0x0000004a:   DW_TAG_subprogram [5] *
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x0000008b] = "_Z6squarei")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000096] = "square")
+                DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+                DW_AT_inline [DW_FORM_data1]	(DW_INL_inlined)
+
+0x0000005a:     DW_TAG_formal_parameter [6]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "x")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(1)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x00000065:     DW_TAG_variable [7]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a3] = "result")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x00000070:     NULL
+
+0x00000071:   DW_TAG_base_type [8]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009d] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000078:   DW_TAG_subprogram [9] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000d)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x3 +0, <decoding error> 00 00 9f)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000aa] = "_Z7dsquareii")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b7] = "dsquare")
+                DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(6)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000097:     DW_TAG_formal_parameter [6]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "x")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(6)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x000000a2:     DW_TAG_formal_parameter [6]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c4] = "y")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(6)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x000000ad:     DW_TAG_variable [10]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000001e: 
+                     [0xffffffff,  0x00000010): 
+                     [0x00000000,  0x00000001): DW_OP_WASM_location 0x2 +1, DW_OP_stack_value
+                     [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c6] = "dsq")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(7)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x000000bc:     DW_TAG_inlined_subroutine [11] *
+                  DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x004a => {0x0000004a} "_Z6squarei")
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                  DW_AT_high_pc [DW_FORM_data4]	(0x00000006)
+                  DW_AT_call_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_call_line [DW_FORM_data1]	(8)
+                  DW_AT_call_column [DW_FORM_data1]	(0x0a)
+
+0x000000cc:       DW_TAG_formal_parameter [3]  
+                    DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x005a => {0x0000005a} "x")
+
+0x000000d1:       NULL
+
+0x000000d2:     DW_TAG_inlined_subroutine [11] *
+                  DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x004a => {0x0000004a} "_Z6squarei")
+                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000b)
+                  DW_AT_high_pc [DW_FORM_data4]	(0x00000005)
+                  DW_AT_call_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_call_line [DW_FORM_data1]	(7)
+                  DW_AT_call_column [DW_FORM_data1]	(0x0d)
+
+0x000000e2:       DW_TAG_formal_parameter [3]  
+                    DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x005a => {0x0000005a} "x")
+
+0x000000e7:       NULL
+
+0x000000e8:     NULL
+
+0x000000e9:   DW_TAG_subprogram [12] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000013)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000008)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x3 +0, <decoding error> 00 00 9f)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000bf] = "main")
+                DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(12)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000104:     DW_TAG_formal_parameter [6]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ca] = "argc")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(12)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x0000010f:     DW_TAG_formal_parameter [6]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cf] = "argv")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(12)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x012f => {0x0000012f} "char**")
+
+0x0000011a:     DW_TAG_variable [10]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000004a: 
+                     [0xffffffff,  0x00000000): 
+                     [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a3] = "result")
+                  DW_AT_decl_file [DW_FORM_data1]	("/home/azakai/Dev/emscripten/a.cpp")
+                  DW_AT_decl_line [DW_FORM_data1]	(13)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
+
+0x00000129:     DW_TAG_GNU_call_site [13]  
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+
+0x0000012e:     NULL
+
+0x0000012f:   DW_TAG_pointer_type [14]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0134 => {0x00000134} "char*")
+
+0x00000134:   DW_TAG_pointer_type [14]  
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0139 => {0x00000139} "char")
+
+0x00000139:   DW_TAG_base_type [8]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d4] = "char")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed_char)
+                DW_AT_byte_size [DW_FORM_data1]	(0x01)
+
+0x00000140:   NULL
+
+.debug_loc contents:
+0x00000000: 
+            [0xffffffff,  0x00000006): 
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value
+
+0x0000001e: 
+            [0xffffffff,  0x00000010): 
+            [0x00000000,  0x00000001): DW_OP_WASM_location 0x2 +1, DW_OP_stack_value
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value
+
+0x0000004a: 
+            [0xffffffff,  0x00000000): 
+            [0x00000001,  0x00000001): DW_OP_WASM_location 0x2 +0, DW_OP_stack_value
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000093
+         version: 4
+ prologue_length: 0x0000001d
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "a.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000027: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002e: 03 DW_LNS_advance_line (6)
+0x00000030: 01 DW_LNS_copy
+            0x0000000000000005      6      0      1   0             0  is_stmt
+
+
+0x00000031: 00 DW_LNE_set_address (0x0000000000000006)
+0x00000038: 03 DW_LNS_advance_line (2)
+0x0000003a: 05 DW_LNS_set_column (18)
+0x0000003c: 0a DW_LNS_set_prologue_end
+0x0000003d: 01 DW_LNS_copy
+            0x0000000000000006      2     18      1   0             0  is_stmt prologue_end
+
+
+0x0000003e: 00 DW_LNE_set_address (0x000000000000000b)
+0x00000045: 06 DW_LNS_negate_stmt
+0x00000046: 01 DW_LNS_copy
+            0x000000000000000b      2     18      1   0             0 
+
+
+0x00000047: 00 DW_LNE_set_address (0x0000000000000010)
+0x0000004e: 03 DW_LNS_advance_line (8)
+0x00000050: 05 DW_LNS_set_column (7)
+0x00000052: 06 DW_LNS_negate_stmt
+0x00000053: 01 DW_LNS_copy
+            0x0000000000000010      8      7      1   0             0  is_stmt
+
+
+0x00000054: 00 DW_LNE_set_address (0x0000000000000011)
+0x0000005b: 03 DW_LNS_advance_line (9)
+0x0000005d: 05 DW_LNS_set_column (3)
+0x0000005f: 01 DW_LNS_copy
+            0x0000000000000011      9      3      1   0             0  is_stmt
+
+
+0x00000060: 00 DW_LNE_set_address (0x0000000000000012)
+0x00000067: 00 DW_LNE_end_sequence
+            0x0000000000000012      9      3      1   0             0  is_stmt end_sequence
+
+0x0000006a: 00 DW_LNE_set_address (0x0000000000000013)
+0x00000071: 03 DW_LNS_advance_line (12)
+0x00000073: 01 DW_LNS_copy
+            0x0000000000000013     12      0      1   0             0  is_stmt
+
+
+0x00000074: 00 DW_LNE_set_address (0x0000000000000018)
+0x0000007b: 03 DW_LNS_advance_line (13)
+0x0000007d: 05 DW_LNS_set_column (16)
+0x0000007f: 0a DW_LNS_set_prologue_end
+0x00000080: 01 DW_LNS_copy
+            0x0000000000000018     13     16      1   0             0  is_stmt prologue_end
+
+
+0x00000081: 00 DW_LNE_set_address (0x000000000000001a)
+0x00000088: 03 DW_LNS_advance_line (14)
+0x0000008a: 05 DW_LNS_set_column (3)
+0x0000008c: 01 DW_LNS_copy
+            0x000000000000001a     14      3      1   0             0  is_stmt
+
+
+0x0000008d: 00 DW_LNE_set_address (0x000000000000001b)
+0x00000094: 00 DW_LNE_end_sequence
+            0x000000000000001b     14      3      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 12.0.0 (https://github.com/llvm/llvm-project.git 132f29ce0611754e0ffb2b534c34b2ffe27b40a8)"
+0x00000069: "a.cpp"
+0x0000006f: "/home/azakai/Dev/emscripten"
+0x0000008b: "_Z6squarei"
+0x00000096: "square"
+0x0000009d: "int"
+0x000000a1: "x"
+0x000000a3: "result"
+0x000000aa: "_Z7dsquareii"
+0x000000b7: "dsquare"
+0x000000bf: "main"
+0x000000c4: "y"
+0x000000c6: "dsq"
+0x000000ca: "argc"
+0x000000cf: "argv"
+0x000000d4: "char"
+
+.debug_ranges contents:
+00000000 00000000 00000007
+00000000 00000005 00000012
+00000000 00000013 0000001b
+00000000 <End of list>
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "memory" (memory $mimport$0 256 256))
+ (data (i32.const 1024) "\00\00\00\00")
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (i32.const 5243920))
+ (global $global$1 i32 (i32.const 1028))
+ (export "__indirect_function_table" (table $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (export "__errno_location" (func $__errno_location))
+ (export "stackSave" (func $stackSave))
+ (export "stackRestore" (func $stackRestore))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "__data_end" (global $global$1))
+ (func $__wasm_call_ctors
+ )
+ (func $dsquare\28int\2c\20int\29 (param $0 i32) (param $1 i32) (result i32)
+  ;; code offset: 0x10
+  (i32.add
+   ;; code offset: 0xa
+   (i32.mul
+    ;; code offset: 0x6
+    (local.get $1)
+    ;; code offset: 0x8
+    (local.get $1)
+   )
+   ;; code offset: 0xf
+   (i32.mul
+    ;; code offset: 0xb
+    (local.get $0)
+    ;; code offset: 0xd
+    (local.get $0)
+   )
+  )
+ )
+ (func $main (param $0 i32) (param $1 i32) (result i32)
+  ;; code offset: 0x18
+  (call $dsquare\28int\2c\20int\29
+   ;; code offset: 0x14
+   (i32.const 6)
+   ;; code offset: 0x16
+   (i32.const 8)
+  )
+ )
+ (func $stackSave (result i32)
+  ;; code offset: 0x1d
+  (global.get $global$0)
+ )
+ (func $stackRestore (param $0 i32)
+  ;; code offset: 0x24
+  (global.set $global$0
+   ;; code offset: 0x22
+   (local.get $0)
+  )
+ )
+ (func $stackAlloc (param $0 i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  ;; code offset: 0x37
+  (global.set $global$0
+   ;; code offset: 0x35
+   (local.tee $1
+    ;; code offset: 0x34
+    (i32.and
+     ;; code offset: 0x31
+     (i32.sub
+      ;; code offset: 0x2d
+      (global.get $global$0)
+      ;; code offset: 0x2f
+      (local.get $0)
+     )
+     ;; code offset: 0x32
+     (i32.const -16)
+    )
+   )
+  )
+  ;; code offset: 0x39
+  (local.get $1)
+ )
+ (func $__errno_location (result i32)
+  ;; code offset: 0x3e
+  (i32.const 1024)
+ )
+ ;; custom section ".debug_info", size 321
+ ;; custom section ".debug_loc", size 104
+ ;; custom section ".debug_ranges", size 32
+ ;; custom section ".debug_abbrev", size 206
+ ;; custom section ".debug_line", size 151
+ ;; custom section ".debug_str", size 217
+)

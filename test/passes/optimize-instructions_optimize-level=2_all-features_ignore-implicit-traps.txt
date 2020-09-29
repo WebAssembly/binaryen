@@ -257,7 +257,7 @@
   (if
    (i32.eqz
     (i32.and
-     (i32.lt_s
+     (i32.lt_u
       (i32.and
        (i32.shr_s
         (i32.shl
@@ -296,7 +296,7 @@
      (local.tee $1
       (i32.const 0)
      )
-     (i32.lt_s
+     (i32.lt_u
       (i32.and
        (i32.shr_s
         (i32.shl

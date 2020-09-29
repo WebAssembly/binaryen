@@ -1,12 +1,17 @@
 (module
  (type $none_=>_none (func))
- (import "env" "trivial_i31ref" (global $gimport$0 i31ref))
  (global $global$0 (mut anyref) (ref.null any))
  (global $global$1 (mut eqref) (ref.null eq))
- (global $global$2 (mut i31ref) (global.get $gimport$0))
+ (global $global$2 (mut i31ref) (i31.new
+  (i32.const 0)
+ ))
  (global $global$3 (mut anyref) (ref.null eq))
- (global $global$4 (mut anyref) (global.get $gimport$0))
- (global $global$5 (mut eqref) (global.get $gimport$0))
+ (global $global$4 (mut anyref) (i31.new
+  (i32.const 0)
+ ))
+ (global $global$5 (mut eqref) (i31.new
+  (i32.const 0)
+ ))
  (func $0
   (local $0 i32)
   (local $1 anyref)
@@ -37,7 +42,9 @@
    (global.get $global$2)
   )
   (local.set $3
-   (global.get $gimport$0)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (local.set $1
    (local.get $2)
@@ -55,7 +62,9 @@
    (global.get $global$2)
   )
   (local.set $1
-   (global.get $gimport$0)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (local.set $2
    (local.get $3)
@@ -64,7 +73,9 @@
    (global.get $global$2)
   )
   (local.set $2
-   (global.get $gimport$0)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (global.set $global$0
    (local.get $1)
@@ -91,7 +102,9 @@
    (global.get $global$2)
   )
   (global.set $global$2
-   (global.get $gimport$0)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (global.set $global$0
    (local.get $2)
@@ -109,7 +122,9 @@
    (global.get $global$2)
   )
   (global.set $global$0
-   (global.get $gimport$0)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (global.set $global$1
    (local.get $3)
@@ -118,19 +133,6 @@
    (global.get $global$2)
   )
   (global.set $global$1
-   (global.get $gimport$0)
-  )
-  (local.set $3
-   (i31.new
-    (i32.const 0)
-   )
-  )
-  (local.set $1
-   (i31.new
-    (i32.const 0)
-   )
-  )
-  (local.set $2
    (i31.new
     (i32.const 0)
    )

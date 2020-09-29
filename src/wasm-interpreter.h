@@ -2394,7 +2394,7 @@ private:
         return flow;
       }
       Flow ret = Literal::makeFromUInt64(instance.memorySize, indexType);
-      uint64_t delta = flow.getSingleValue().getInteger();
+      uint64_t delta = flow.getSingleValue().getUnsigned();
       if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
         return fail;
       }
@@ -2432,7 +2432,7 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      Address destVal(dest.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
       Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
       Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
@@ -2476,9 +2476,9 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(source);
       NOTE_EVAL1(size);
-      Address destVal(dest.getSingleValue().getInteger());
-      Address sourceVal(source.getSingleValue().getInteger());
-      Address sizeVal(size.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sourceVal(source.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
       if (sourceVal + sizeVal > instance.memorySize * Memory::kPageSize ||
           destVal + sizeVal > instance.memorySize * Memory::kPageSize ||
@@ -2522,10 +2522,13 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(value);
       NOTE_EVAL1(size);
-      Address destVal(dest.getSingleValue().getInteger());
-      Address sizeVal(size.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
-      if (destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
+      // FIXME: cheaper wrapping detection?
+      if (destVal > instance.memorySize * Memory::kPageSize ||
+          sizeVal > instance.memorySize * Memory::kPageSize ||
+          destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
       uint8_t val(value.getSingleValue().geti32());
