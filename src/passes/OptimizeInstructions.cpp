@@ -295,7 +295,7 @@ struct OptimizeInstructions
         }
       }
       {
-        // eqz((signed)x % C_pot)   =>   eqz(x & (C_pot - 1))
+        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
         Const* c;
         Unary* eqz;
         Binary* inner;
