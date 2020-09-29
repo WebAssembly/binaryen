@@ -1264,8 +1264,6 @@ private:
   Expression* optimizeWithConstantOnRight(Binary* curr) {
     using namespace Match;
     Builder builder(*getModule());
-    Const* c;
-    Binary* inner;
     Expression* left;
     auto* right = curr->right->cast<Const>();
     auto type = curr->right->type;
@@ -1292,6 +1290,8 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
+    Const* c;
+    Binary* inner;
     // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
     if (matches(curr,
                 binary(Abstract::Ne,
