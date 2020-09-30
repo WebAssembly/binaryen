@@ -626,6 +626,91 @@ public:
     ret->finalize();
     return ret;
   }
+  I31New* makeI31New(Expression* value) {
+    auto* ret = wasm.allocator.alloc<I31New>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  I31Get* makeI31Get(Expression* i31, bool signed_) {
+    auto* ret = wasm.allocator.alloc<I31Get>();
+    ret->i31 = i31;
+    ret->signed_ = signed_;
+    ret->finalize();
+    return ret;
+  }
+  RefTest* makeRefTest() {
+    auto* ret = wasm.allocator.alloc<RefTest>();
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+    ret->finalize();
+    return ret;
+  }
+  RefCast* makeRefCast() {
+    auto* ret = wasm.allocator.alloc<RefCast>();
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    ret->finalize();
+    return ret;
+  }
+  BrOnCast* makeBrOnCast() {
+    auto* ret = wasm.allocator.alloc<BrOnCast>();
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    ret->finalize();
+    return ret;
+  }
+  RttCanon* makeRttCanon() {
+    auto* ret = wasm.allocator.alloc<RttCanon>();
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    ret->finalize();
+    return ret;
+  }
+  RttSub* makeRttSub() {
+    auto* ret = wasm.allocator.alloc<RttSub>();
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    ret->finalize();
+    return ret;
+  }
+  StructNew* makeStructNew() {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+    ret->finalize();
+    return ret;
+  }
+  StructGet* makeStructGet() {
+    auto* ret = wasm.allocator.alloc<StructGet>();
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+    ret->finalize();
+    return ret;
+  }
+  StructSet* makeStructSet() {
+    auto* ret = wasm.allocator.alloc<StructSet>();
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+    ret->finalize();
+    return ret;
+  }
+  ArrayNew* makeArrayNew() {
+    auto* ret = wasm.allocator.alloc<ArrayNew>();
+    WASM_UNREACHABLE("TODO (gc): array.new");
+    ret->finalize();
+    return ret;
+  }
+  ArrayGet* makeArrayGet() {
+    auto* ret = wasm.allocator.alloc<ArrayGet>();
+    WASM_UNREACHABLE("TODO (gc): array.get");
+    ret->finalize();
+    return ret;
+  }
+  ArraySet* makeArraySet() {
+    auto* ret = wasm.allocator.alloc<ArraySet>();
+    WASM_UNREACHABLE("TODO (gc): array.set");
+    ret->finalize();
+    return ret;
+  }
+  ArrayLen* makeArrayLen() {
+    auto* ret = wasm.allocator.alloc<ArrayLen>();
+    WASM_UNREACHABLE("TODO (gc): array.len");
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 
@@ -653,7 +738,7 @@ public:
         assert(value.isNull() && "unexpected non-null reference type literal");
         return makeRefNull(value.type);
       case Type::i31ref:
-        WASM_UNREACHABLE("TODO: i31ref");
+        return makeI31New(makeConst(value.geti31()));
       default:
         assert(value.type.isNumber());
         return makeConst(value);
@@ -850,7 +935,7 @@ public:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
       case Type::i31ref:
-        WASM_UNREACHABLE("TODO: i31ref");
+        return makeI31New(makeConst(0));
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

@@ -3104,6 +3104,73 @@
       (i64.const 1)
     ))
   )
+  (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+    ;; eqz((signed)x % 4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 4)
+      )
+    ))
+    ;; (signed)x % 4 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; ;; (signed)x % 2 != 0
+    (drop (i32.ne
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 2)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; ;;
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 3) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 3) ;; skip
+      )
+      (i64.const 0)
+    ))
+  )
   (func $orZero (param $0 i32) (result i32)
     (i32.or
       (local.get $0)
@@ -3988,7 +4055,15 @@
       )
       (i32.const 1)
     ))
-    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+    ;; i64(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
+    ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and
         (local.get $y)
@@ -4352,6 +4427,71 @@
         (i32.const 0)
         (local.get $x)
       )
+    ))
+  )
+  (func $unsigned-context (param $x i32) (param $y i64)
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -3) ;; skip
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 0x80000000) ;; skip
+    ))
+    (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const 2)
+    ))
+     (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const -1) ;; skip
+    ))
+    (drop (i32.rem_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.shr_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -7) ;; skip
     ))
   )
   (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)

@@ -141,6 +141,23 @@ void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
+void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
+void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
+void ReFinalize::visitBrOnCast(BrOnCast* curr) {
+  curr->finalize();
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+}
+void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
+void ReFinalize::visitRttSub(RttSub* curr) { curr->finalize(); }
+void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
+void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
+void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
+void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
+void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

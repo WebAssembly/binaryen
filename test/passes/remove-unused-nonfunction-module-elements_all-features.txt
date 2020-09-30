@@ -100,7 +100,7 @@
 )
 (module
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table $0 1 funcref))
+ (import "env" "table" (table $timport$0 1 funcref))
  (export "mem" (memory $0))
  (export "tab" (table $0))
 )
@@ -108,7 +108,7 @@
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256))
  (data (i32.const 1) "hello, world!")
- (import "env" "table" (table $0 1 funcref))
+ (import "env" "table" (table $timport$0 1 funcref))
  (elem (i32.const 0) $waka)
  (func $waka
   (nop)
@@ -117,7 +117,7 @@
 (module
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table $0 0 funcref))
+ (import "env" "table" (table $timport$0 0 funcref))
  (export "user" (func $user))
  (func $user
   (drop
@@ -223,7 +223,7 @@
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256))
  (data (global.get $memoryBase) "hello, world!")
- (import "env" "table" (table $0 0 funcref))
+ (import "env" "table" (table $timport$0 0 funcref))
  (elem (global.get $tableBase) $waka)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
@@ -316,7 +316,7 @@
 )
 (module
  (type $f64_=>_f64 (func (param f64) (result f64)))
- (import "env" "table" (table $0 6 6 funcref))
+ (import "env" "table" (table $timport$0 6 6 funcref))
  (elem (i32.const 0) $0)
  (func $0 (param $var$0 f64) (result f64)
   (if (result f64)

@@ -57,5 +57,21 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(1507328);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); }
+  },
+  memasmFunc
+);
 export var atomic_fence = retasmFunc.atomic_fence;

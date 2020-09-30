@@ -96,7 +96,21 @@ function initializeConstants() {
     'BrOnExn',
     'TupleMake',
     'TupleExtract',
-    'Pop'
+    'Pop',
+    'I31New',
+    'I31Get',
+    'RefTest',
+    'RefCast',
+    'BrOnCast',
+    'RttCanon',
+    'RttSub',
+    'StructNew',
+    'StructGet',
+    'StructSet',
+    'ArrayNew',
+    'ArrayGet',
+    'ArraySet',
+    'ArrayLen'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -2148,6 +2162,18 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['i31'] = {
+    'new'(value) {
+      return Module['_BinaryenI31New'](module, value);
+    },
+    'get_s'(i31) {
+      return Module['_BinaryenI31Get'](module, i31, 1);
+    },
+    'get_u'(i31) {
+      return Module['_BinaryenI31Get'](module, i31, 0);
+    }
+  };
+
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
     return preserveStack(() =>
@@ -2855,6 +2881,19 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
         'index': Module['_BinaryenTupleExtractGetIndex'](expr)
+      };
+    case Module['I31NewId']:
+      return {
+        'id': id,
+        'type': type,
+        'value': Module['_BinaryenI31NewGetValue'](expr)
+      };
+    case Module['I31GetId']:
+      return {
+        'id': id,
+        'type': type,
+        'i31': Module['_BinaryenI31GetGetI31'](expr),
+        'isSigned': Boolean(Module['_BinaryenI31GetIsSigned'](expr))
       };
 
     default:
@@ -4282,6 +4321,30 @@ Module['TupleExtract'] = makeExpressionWrapper({
   },
   'setIndex'(expr, index) {
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
+  }
+});
+
+Module['I31New'] = makeExpressionWrapper({
+  'getValue'(expr) {
+    return Module['_BinaryenI31NewGetValue'](expr);
+  },
+  'setValue'(expr, valueExpr) {
+    Module['_BinaryenI31NewSetValue'](expr, valueExpr);
+  }
+});
+
+Module['I31Get'] = makeExpressionWrapper({
+  'getI31'(expr) {
+    return Module['_BinaryenI31GetGetI31'](expr);
+  },
+  'setI31'(expr, i31Expr) {
+    Module['_BinaryenI31GetSetI31'](expr, i31Expr);
+  },
+  'isSigned'(expr) {
+    return Boolean(Module['_BinaryenI31GetIsSigned'](expr));
+  },
+  'setSigned'(expr, isSigned) {
+    Module['_BinaryenI31GetSetSigned'](expr, isSigned);
   }
 });
 
