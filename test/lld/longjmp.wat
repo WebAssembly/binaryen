@@ -131,6 +131,6 @@
  (func $2 (param $0 i32) (param $1 i32) (result i32)
   (call $1)
  )
- ;; custom section "producers", size 157
+ ;; custom section "producers", size 112
 )
 
