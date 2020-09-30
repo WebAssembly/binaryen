@@ -5,7 +5,7 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$3) "")
- (import "env" "table" (table $0 0 funcref))
+ (import "env" "table" (table $timport$1 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$2_import i32))
  (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "__table_base" (global $gimport$4 i32))

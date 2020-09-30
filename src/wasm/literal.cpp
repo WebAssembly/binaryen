@@ -139,7 +139,11 @@ Literals Literal::makeZero(Type type) {
 Literal Literal::makeSingleZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNull(type);
+    if (type == Type::i31ref) {
+      return makeI31(0);
+    } else {
+      return makeNull(type);
+    }
   } else {
     return makeFromInt32(0, type);
   }
@@ -220,11 +224,9 @@ double Literal::getFloat() const {
 
 void Literal::getBits(uint8_t (&buf)[16]) const {
   memset(buf, 0, 16);
-  TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
-    case Type::i31ref:
       memcpy(buf, &i32, sizeof(i32));
       break;
     case Type::i64:
@@ -234,19 +236,14 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    // TODO: investigate changing bits returned for reference types. currently,
-    // `null` values and even non-`null` functions return all zeroes, but only
-    // to avoid introducing a functional change.
+    case Type::none:
+    case Type::unreachable:
     case Type::funcref:
-      break;
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
     case Type::eqref:
-      assert(isNull() && "unexpected non-null reference type literal");
-      break;
-    case Type::none:
-    case Type::unreachable:
+    case Type::i31ref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -255,23 +252,51 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
-  if (type == Type::none) {
-    return true;
+  auto compareRef = [&]() {
+    assert(type.isRef());
+    if (isNull() || other.isNull()) {
+      return isNull() == other.isNull();
+    }
+    if (type.isFunction()) {
+      assert(func.is() && other.func.is());
+      return func == other.func;
+    }
+    if (type.isException()) {
+      assert(exn != nullptr && other.exn != nullptr);
+      return *exn == *other.exn;
+    }
+    // other non-null reference type literals cannot represent concrete values,
+    // i.e. there is no concrete externref, anyref or eqref other than null.
+    WASM_UNREACHABLE("unexpected type");
+  };
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return true; // special voided literal
+      case Type::i32:
+      case Type::f32:
+      case Type::i31ref:
+        return i32 == other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 == other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) == 0;
+      case Type::funcref:
+      case Type::externref:
+      case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+        return compareRef();
+      case Type::unreachable:
+        break;
+    }
+  } else if (type.isRef()) {
+    return compareRef();
+  } else if (type.isRtt()) {
+    WASM_UNREACHABLE("TODO: rtt literals");
   }
-  if (isNull() || other.isNull()) {
-    return isNull() == other.isNull();
-  }
-  if (type.isFunction()) {
-    return func == other.func;
-  }
-  if (type.isException()) {
-    assert(exn != nullptr && other.exn != nullptr);
-    return *exn == *other.exn;
-  }
-  uint8_t bits[16], other_bits[16];
-  getBits(bits);
-  other.getBits(other_bits);
-  return memcmp(bits, other_bits, 16) == 0;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 bool Literal::operator!=(const Literal& other) const {
@@ -417,7 +442,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "eqref(null)";
       break;
     case Type::i31ref:
-      o << "i31ref(" << literal.geti31(false) << ")";
+      o << "i31ref(" << literal.geti31() << ")";
       break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -909,35 +934,10 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(uint32_t(i32) * uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
-    case Type::f32: {
-      // Special-case multiplication by 1. nan * 1 can change nan bits per the
-      // wasm spec, but it is ok to just return that original nan, and we
-      // do that here so that we are consistent with the optimization of
-      // removing the * 1 and leaving just the nan. That is, if we just
-      // do a normal multiply and the CPU decides to change the bits, we'd
-      // give a different result on optimized code, which would look like
-      // it was a bad optimization. So out of all the valid results to
-      // return here, return the simplest one that is consistent with
-      // our optimization for the case of 1.
-      float lhs = getf32(), rhs = other.getf32();
-      if (rhs == 1) {
-        return Literal(lhs);
-      }
-      if (lhs == 1) {
-        return Literal(rhs);
-      }
-      return Literal(lhs * rhs);
-    }
-    case Type::f64: {
-      double lhs = getf64(), rhs = other.getf64();
-      if (rhs == 1) {
-        return Literal(lhs);
-      }
-      if (lhs == 1) {
-        return Literal(rhs);
-      }
-      return Literal(lhs * rhs);
-    }
+    case Type::f32:
+      return Literal(getf32() * other.getf32());
+    case Type::f64:
+      return Literal(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -977,10 +977,6 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // Special-case division by 1, similar to multiply from earlier.
-          if (rhs == 1) {
-            return Literal(lhs);
-          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
@@ -1009,10 +1005,6 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // See above comment on f32.
-          if (rhs == 1) {
-            return Literal(lhs);
-          }
           return Literal(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");

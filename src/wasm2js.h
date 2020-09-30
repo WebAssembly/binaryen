@@ -598,8 +598,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
 
-    Ref table =
-      ValueBuilder::makeNew(ValueBuilder::makeCall(IString("Table"), theArray));
+    Ref table = ValueBuilder::makeCall(IString("Table"), theArray);
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
     // Otherwise if the table is internal (neither imported not exported).
@@ -2123,6 +2122,54 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitI31Get(I31Get* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefTest(RefTest* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefCast(RefCast* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitBrOnCast(BrOnCast* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRttCanon(RttCanon* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRttSub(RttSub* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStructNew(StructNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStructGet(StructGet* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStructSet(StructSet* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayNew(ArrayNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayGet(ArrayGet* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArraySet(ArraySet* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayLen(ArrayLen* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

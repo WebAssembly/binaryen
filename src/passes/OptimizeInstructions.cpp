@@ -161,7 +161,10 @@ struct OptimizeInstructions
 #endif
   }
 
+  bool fastMath;
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
     // first, scan locals
     {
       LocalScanner scanner(localInfo, getPassOptions());
@@ -243,13 +246,6 @@ struct OptimizeInstructions
       using namespace Match;
       Builder builder(*getModule());
       {
-        // X == 0 => eqz X
-        Expression* x;
-        if (matches(curr, binary(EqInt32, any(&x), i32(0)))) {
-          return Builder(*getModule()).makeUnary(EqZInt32, x);
-        }
-      }
-      {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
         //   (i32.add
@@ -302,6 +298,19 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
+        Const* c;
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
+            IsPowerOf2((uint64_t)c->value.getInteger())) {
+          inner->op = Abstract::getBinary(c->type, Abstract::And);
+          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          return curr;
+        }
+      }
+      {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
@@ -322,6 +331,18 @@ struct OptimizeInstructions
           bin->right = y;
           un->value = bin;
           return un;
+        }
+      }
+      {
+        // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
+        //   where maxBits(x) <= 32
+        Unary* inner;
+        Expression* x;
+        if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
+            Bits::getMaxBits(x, this) <= 32) {
+          inner->op = EqZInt64;
+          inner->value = x;
+          return inner;
         }
       }
     }
@@ -1272,15 +1293,28 @@ private:
       return right;
     }
     // x == 0   ==>   eqz x
-    if ((matches(curr, binary(Abstract::Eq, any(&left), ival(0))))) {
-      return builder.makeUnary(EqZInt64, left);
+    if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
+      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
     }
-
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
       right->value = Literal::makeSingleZero(type);
       return right;
+    }
+    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    {
+      Const* c;
+      Binary* inner;
+      if (matches(curr,
+                  binary(Abstract::Ne,
+                         binary(&inner, Abstract::RemS, any(), ival(&c)),
+                         ival(0))) &&
+          IsPowerOf2((uint64_t)c->value.getInteger())) {
+        inner->op = Abstract::getBinary(c->type, Abstract::And);
+        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+        return curr;
+      }
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
@@ -1298,7 +1332,9 @@ private:
       return left;
     }
     // i64(bool(x)) == 1  ==>  i32(bool(x))
-    if (matches(curr, binary(EqInt64, any(&left), i64(1))) &&
+    // i64(bool(x)) != 0  ==>  i32(bool(x))
+    if ((matches(curr, binary(EqInt64, any(&left), i64(1))) ||
+         matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
     }
@@ -1381,14 +1417,15 @@ private:
     }
     {
       double value;
-      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
           value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
           curr->op = Abstract::getBinary(type, Abstract::Add);
           right->value = right->value.neg();
           return curr;
-        } else {
+        } else if (fastMath) {
           // x - 0.0   ==>   x
           return curr->left;
         }
@@ -1397,19 +1434,18 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
     }
-    // Note that this is correct even on floats with a NaN on the left,
-    // as a NaN would skip the computation and just return the NaN,
-    // and that is precisely what we do here. but, the same with -1
-    // (change to a negation) would be incorrect for that reason.
     if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
-      return left;
+      if (curr->type.isInteger() || fastMath) {
+        return left;
+      }
     }
     return nullptr;
   }

@@ -3104,6 +3104,73 @@
       (i64.const 1)
     ))
   )
+  (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+    ;; eqz((signed)x % 4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 4)
+      )
+    ))
+    ;; (signed)x % 4 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; ;; (signed)x % 2 != 0
+    (drop (i32.ne
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 2)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; ;;
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 3) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 3) ;; skip
+      )
+      (i64.const 0)
+    ))
+  )
   (func $orZero (param $0 i32) (result i32)
     (i32.or
       (local.get $0)
@@ -3988,7 +4055,66 @@
       )
       (i32.const 1)
     ))
-    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+    ;; i64(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
+    ;; eqz((i32(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i32.ne
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 31)
+          )
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; i32.eqz(wrap(i64(x)))
+    (drop (i32.eqz
+      (i32.wrap_i64
+        (i64.shr_u
+          (local.get $y)
+          (i64.const 63)
+        )
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (i64.shr_u
+            (local.get $y)
+            (i64.const 63)
+          )
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (local.get $y)
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; i32.eqz(wrap(i64(x))) -> skip
+    (drop (i32.eqz
+      (i32.wrap_i64
+        (local.get $y)
+      )
+    ))
+    ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and
         (local.get $y)
@@ -4157,6 +4283,10 @@
     (drop (f64.add
       (local.get $fy) ;; skip
       (f64.const 0)
+    ))
+    (drop (f32.sub
+      (f32.const -nan:0x34546d) ;; skip
+      (f32.const 0)
     ))
   )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)

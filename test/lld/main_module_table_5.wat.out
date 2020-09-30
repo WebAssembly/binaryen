@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "table" (table $0 2 funcref))
+ (import "env" "table" (table $timport$9 2 funcref))
  (elem (global.get $tb) $other $stuff $__stdio_write)
  (import "env" "__stack_pointer" (global $sp_import i32))
  (import "env" "__table_base" (global $tb i32))
