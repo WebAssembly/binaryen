@@ -1616,8 +1616,7 @@ export var no_dce_i64_trunc_f32_u = retasmFunc.no_dce_i64_trunc_f32_u;
 export var no_dce_i64_trunc_f64_s = retasmFunc.no_dce_i64_trunc_f64_s;
 export var no_dce_i64_trunc_f64_u = retasmFunc.no_dce_i64_trunc_f64_u;
 
-function asmFunc(global, env, memoryIn) {
- var buffer = memoryIn.buffer;
+function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1758,8 +1757,8 @@ function asmFunc(global, env, memoryIn) {
  };
 }
 
-var memasmFunc = { buffer: new ArrayBuffer(65536) };
-var bufferView = new Uint8Array(memasmFunc.buffer);
+var memasmFunc = new ArrayBuffer(65536);
+var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc({
     Math,
     Int8Array,

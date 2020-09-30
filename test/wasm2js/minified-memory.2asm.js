@@ -1,7 +1,7 @@
 
-function asmFunc(global, env, memoryIn) {
- var buffer = memoryIn.buffer;
+function asmFunc(global, env) {
  var memory = env.a;
+ var buffer = memory.buffer;
  memory.grow = __wasm_memory_grow;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
@@ -59,8 +59,8 @@ function asmFunc(global, env, memoryIn) {
  };
 }
 
-var memasmFunc = { buffer: new ArrayBuffer(65536) };
-var bufferView = new Uint8Array(memasmFunc.buffer);
+var memasmFunc = new ArrayBuffer(65536);
+var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc({
     Math,
     Int8Array,
@@ -74,8 +74,7 @@ var retasmFunc = asmFunc({
     NaN,
     Infinity
   }, {
-    abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+    abort: function() { throw new Error('abort'); },
+    a: { buffer : memasmFunc }
+  });
 export var foo = retasmFunc.foo;

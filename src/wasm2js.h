@@ -385,17 +385,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
 
   if (wasm->memory.exists) {
-    ValueBuilder::appendArgumentToFunction(asmFunc, "memoryIn");
-    Ref buf = ValueBuilder::makeVar();
-    asmFunc[3]->push_back(buf);
-    ValueBuilder::appendToVar(
-      buf,
-      BUFFER,
-      ValueBuilder::makeDot(ValueBuilder::makeName("memoryIn"),
-                            ValueBuilder::makeName("buffer")));
-
-    // add memory import
     if (wasm->memory.imported()) {
+      // find memory and buffer in imports
       Ref theVar = ValueBuilder::makeVar();
       asmFunc[3]->push_back(theVar);
       ValueBuilder::appendToVar(
@@ -403,6 +394,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         "memory",
         ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                               ValueBuilder::makeName(wasm->memory.base)));
+
+      // Assign `buffer = memory.buffer`
+      Ref buf = ValueBuilder::makeVar();
+      asmFunc[3]->push_back(buf);
+      ValueBuilder::appendToVar(
+        buf,
+        BUFFER,
+        ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
+                              ValueBuilder::makeName("buffer")));
 
       // If memory is growable, override the imported memory's grow method to
       // ensure so that when grow is called from the output it works as expected
@@ -414,6 +414,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
             SET,
             ValueBuilder::makeName(WASM_MEMORY_GROW))));
       }
+    } else {
+      // find memory as third argument
+      ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
     }
   }
 
@@ -2477,7 +2480,7 @@ void Wasm2JSGlue::emitPostEmscripten() {
       << "    'Math': Math\n"
       << "  },\n"
       << "  asmLibraryArg,\n"
-      << "  wasmMemory\n"
+      << "  wasmMemory.buffer\n"
       << ")"
       << "\n"
       << "\n"
@@ -2491,13 +2494,11 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  Name memoryName(std::string("mem") + moduleName.str);
-
   if (wasm.memory.exists) {
-    out << "var " << memoryName.str << " = { buffer: new ArrayBuffer("
-        << wasm.memory.initial.addr * Memory::kPageSize << ") };\n";
+    out << "var mem" << moduleName.str << " = new ArrayBuffer("
+        << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
 
-    emitMemory(std::string(memoryName.str) + ".buffer",
+    emitMemory(std::string("mem") + moduleName.str,
                std::string("assign") + moduleName.str,
                [](std::string globalName) { return globalName; });
   }
@@ -2529,6 +2530,16 @@ void Wasm2JSGlue::emitPostES6() {
     out << ",\n    " << asmangle(import->base.str);
   });
 
+  ModuleUtils::iterImportedMemories(wasm, [&](Memory* import) {
+    // The special helpers are emitted in the glue, see code and comments
+    // below.
+    if (ABI::wasm2js::isHelper(import->base)) {
+      return;
+    }
+    out << ",\n    " << asmangle(import->base.str) << ": { buffer : mem"
+        << moduleName.str << " }";
+  });
+
   ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
     // The special helpers are emitted in the glue, see code and comments
     // below.
@@ -2538,8 +2549,8 @@ void Wasm2JSGlue::emitPostES6() {
     out << ",\n    " << asmangle(import->base.str);
   });
 
-  if (wasm.memory.exists) {
-    out << "\n  },\n  " << memoryName.str << "\n);\n";
+  if (wasm.memory.exists && !wasm.memory.imported()) {
+    out << "\n  },\n  mem" << moduleName.str << "\n);\n";
   } else {
     out << "\n  });\n";
   }
