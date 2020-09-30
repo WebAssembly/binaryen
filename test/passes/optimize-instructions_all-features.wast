@@ -4284,6 +4284,10 @@
       (local.get $fy) ;; skip
       (f64.const 0)
     ))
+    (drop (f32.sub
+      (f32.const -nan:0x34546d) ;; skip
+      (f32.const 0)
+    ))
   )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub

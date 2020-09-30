@@ -161,7 +161,10 @@ struct OptimizeInstructions
 #endif
   }
 
+  bool fastMath;
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
     // first, scan locals
     {
       LocalScanner scanner(localInfo, getPassOptions());
@@ -1414,14 +1417,15 @@ private:
     }
     {
       double value;
-      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
           value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
           curr->op = Abstract::getBinary(type, Abstract::Add);
           right->value = right->value.neg();
           return curr;
-        } else {
+        } else if (fastMath) {
           // x - 0.0   ==>   x
           return curr->left;
         }
@@ -1430,19 +1434,18 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
     }
-    // Note that this is correct even on floats with a NaN on the left,
-    // as a NaN would skip the computation and just return the NaN,
-    // and that is precisely what we do here. but, the same with -1
-    // (change to a negation) would be incorrect for that reason.
     if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
-      return left;
+      if (curr->type.isInteger() || fastMath) {
+        return left;
+      }
     }
     return nullptr;
   }

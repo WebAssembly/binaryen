@@ -2886,10 +2886,16 @@
    (local.get $x64)
   )
   (drop
-   (local.get $y32)
+   (f32.mul
+    (local.get $y32)
+    (f32.const 1)
+   )
   )
   (drop
-   (local.get $y64)
+   (f64.mul
+    (local.get $y64)
+    (f64.const 1)
+   )
   )
   (drop
    (i32.const 0)
@@ -2922,10 +2928,16 @@
    (local.get $x64)
   )
   (drop
-   (local.get $y32)
+   (f32.div
+    (local.get $y32)
+    (f32.const 1)
+   )
   )
   (drop
-   (local.get $y64)
+   (f64.div
+    (local.get $y64)
+    (f64.const 1)
+   )
   )
   (drop
    (f32.div
@@ -3703,27 +3715,39 @@
  )
  (func $const-float-zero (param $fx f32) (param $fy f64)
   (drop
-   (local.get $fx)
-  )
-  (drop
-   (local.get $fy)
-  )
-  (drop
-   (local.get $fx)
-  )
-  (drop
-   (local.get $fy)
-  )
-  (drop
-   (f32.add
+   (f32.sub
     (local.get $fx)
     (f32.const 0)
    )
   )
   (drop
-   (f64.add
+   (f64.sub
     (local.get $fy)
     (f64.const 0)
+   )
+  )
+  (drop
+   (f32.add
+    (local.get $fx)
+    (f32.const -0)
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $fy)
+    (f64.const -0)
+   )
+  )
+  (drop
+   (f32.sub
+    (local.get $fx)
+    (f32.const -0)
+   )
+  )
+  (drop
+   (f64.sub
+    (local.get $fy)
+    (f64.const -0)
    )
   )
   (drop
@@ -3748,6 +3772,12 @@
    (f64.add
     (local.get $fy)
     (f64.const 0)
+   )
+  )
+  (drop
+   (f32.sub
+    (f32.const -nan:0x34546d)
+    (f32.const 0)
    )
   )
  )
