@@ -1413,7 +1413,7 @@ private:
           curr->op = Abstract::getBinary(type, Abstract::Add);
           right->value = right->value.neg();
           return curr;
-        } else {
+        } else if (fastMath) {
           // x - 0.0   ==>   x
           return curr->left;
         }
