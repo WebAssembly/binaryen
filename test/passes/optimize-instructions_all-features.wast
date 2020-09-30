@@ -4063,6 +4063,42 @@
       )
       (i64.const 0)
     ))
+    ;; eqz((i32(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i32.ne
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 31)
+          )
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (i64.shr_u
+            (local.get $y)
+            (i64.const 63)
+          )
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (local.get $y)
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
     ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and

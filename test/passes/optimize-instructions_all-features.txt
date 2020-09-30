@@ -3516,6 +3516,27 @@
    )
   )
   (drop
+   (i32.eqz
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 31)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.shr_u
+     (local.get $y)
+     (i64.const 63)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (local.get $y)
+   )
+  )
+  (drop
    (i32.wrap_i64
     (i64.and
      (local.get $y)
