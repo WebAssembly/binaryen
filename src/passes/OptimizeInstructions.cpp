@@ -1393,7 +1393,7 @@ private:
     }
     {
       Expression* x;
-      // ~(1 << x)   ==>   (1 << x) ^ -1  ==>  rotl(-2, x)
+      // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
       if (matches(curr,
                   binary(Abstract::Xor,
                          binary(&curr, Abstract::Shl, ival(1), any(&x)),
