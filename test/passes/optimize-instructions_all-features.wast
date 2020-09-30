@@ -4076,6 +4076,12 @@
         (i32.const 0)
       )
     ))
+    ;; i32.eqz(wrap(i64(x))) -> i64.eqz(x)
+    (drop (i32.eqz
+      (i32.wrap_i64
+        (local.get $y)
+      )
+    ))
     ;; eqz((i64(bool(expr)) != 0) != 0)
     (drop (i32.eqz
       (i32.ne
