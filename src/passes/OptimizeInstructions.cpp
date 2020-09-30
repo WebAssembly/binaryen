@@ -1392,6 +1392,20 @@ private:
       return right;
     }
     {
+      Binary* inner;
+      Expression* right;
+      // ~(1 << x)   ==>   (1 << x) ^ -1  ==>  rotl(-2, x)
+      if (matches(curr,
+                  binary(Abstract::Xor,
+                         binary(&inner, Abstract::Shl, ival(1), any(&right)),
+                         ival(-1)))) {
+        inner->op = Abstract::getBinary(type, Abstract::RotL);
+        inner->left = LiteralUtils::makeFromInt32(-2, type, *getModule());
+        inner->right = right;
+        return inner;
+      }
+    }
+    {
       // Wasm binary encoding uses signed LEBs, which slightly favor negative
       // numbers: -64 is more efficient than +64 etc., as well as other powers
       // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
