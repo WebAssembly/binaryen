@@ -330,6 +330,18 @@ struct OptimizeInstructions
           return un;
         }
       }
+      {
+        // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
+        //   where maxBits(x) <= 32
+        Unary* inner;
+        Expression* x;
+        if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
+            Bits::getMaxBits(x, this) <= 32) {
+          inner->op = EqZInt64;
+          inner->value = x;
+          return inner;
+        }
+      }
     }
 
     if (auto* select = curr->dynCast<Select>()) {
