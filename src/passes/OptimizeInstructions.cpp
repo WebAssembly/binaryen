@@ -299,11 +299,10 @@ struct OptimizeInstructions
         Const* c;
         Unary* eqz;
         Binary* inner;
-        if (matches(
-              curr,
-              unary(&eqz,
-                    Abstract::EqZ,
-                    binary(&inner, Abstract::RemS, any(), constant(&c)))) &&
+        if (matches(curr,
+                    unary(&eqz,
+                          Abstract::EqZ,
+                          binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
             IsPowerOf2((uint64_t)c->value.getInteger())) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
           c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
