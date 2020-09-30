@@ -1295,11 +1295,11 @@ private:
       Binary* inner;
       if (matches(curr,
                   binary(Abstract::Ne,
-                         binary(&inner, Abstract::RemS, any(&left), ival(&c)),
+                         binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
           IsPowerOf2((uint64_t)c->value.getInteger())) {
-        inner->op = Abstract::getBinary(left->type, Abstract::And);
-        c->value = c->value.sub(Literal::makeFromInt32(1, left->type));
+        inner->op = Abstract::getBinary(c->type, Abstract::And);
+        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
         return curr;
       }
     }
