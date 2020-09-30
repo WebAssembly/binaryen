@@ -90,6 +90,6 @@
   )
   (local.get $3)
  )
- ;; custom section "producers", size 157
+ ;; custom section "producers", size 112
 )
 
