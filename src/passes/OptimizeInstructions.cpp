@@ -1400,7 +1400,7 @@ private:
                          binary(&inner, Abstract::Shl, ival(1), any(&right)),
                          ival(-1)))) {
         inner->op = Abstract::getBinary(type, Abstract::RotL);
-        inner->left = LiteralUtils::makeFromInt32(-2, type, *getModule());
+        inner->left->cast<Const>()->value = Literal::makeFromInt32(-2, type);
         inner->right = right;
         return inner;
       }
