@@ -48,7 +48,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
- var FUNCTION_TABLE = new Table(new Array(10));
+ var FUNCTION_TABLE = Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  function __wasm_memory_size() {

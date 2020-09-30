@@ -598,8 +598,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
 
-    Ref table =
-      ValueBuilder::makeNew(ValueBuilder::makeCall(IString("Table"), theArray));
+    Ref table = ValueBuilder::makeCall(IString("Table"), theArray);
     ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, table);
   } else if (!wasm->table.imported()) {
     // Otherwise if the table is internal (neither imported not exported).
