@@ -2,8 +2,8 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
  (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $none_=>_none (func))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i64 (func (result i64)))
@@ -49,25 +49,25 @@
    )
   )
   (drop
-   (i32.le_s
+   (i32.le_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.lt_s
+   (i32.lt_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.ge_s
+   (i32.ge_u
     (i32.const 1)
     (i32.const 2)
    )
   )
   (drop
-   (i32.gt_s
+   (i32.gt_u
     (i32.const 1)
     (i32.const 2)
    )
@@ -375,7 +375,7 @@
    )
   )
   (drop
-   (i32.lt_s
+   (i32.lt_u
     (i32.const 2000)
     (i32.const 3000)
    )
@@ -544,7 +544,7 @@
   )
   (drop
    (i32.and
-    (i32.gt_s
+    (i32.gt_u
      (i32.const 16)
      (i32.const 17)
     )
@@ -556,13 +556,13 @@
   )
   (drop
    (i32.and
-    (i32.gt_s
-     (i32.const 22)
-     (i32.const 23)
-    )
     (i32.gt_u
      (i32.const 20)
      (i32.const 21)
+    )
+    (i32.gt_u
+     (i32.const 22)
+     (i32.const 23)
     )
    )
   )
@@ -887,9 +887,9 @@
    )
   )
   (drop
-   (i32.div_s
+   (i32.shr_u
     (i32.const 1)
-    (i32.const 2)
+    (i32.const 1)
    )
   )
   (drop
@@ -997,7 +997,7 @@
   (drop
    (i32.shr_s
     (i32.shl
-     (i32.shr_s
+     (i32.shr_u
       (i32.const 256)
       (i32.const 1)
      )
@@ -1007,13 +1007,13 @@
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.const 256)
     (i32.const 2)
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.const 128)
     (i32.const 35)
    )
@@ -1031,7 +1031,7 @@
    )
   )
   (drop
-   (i32.shr_s
+   (i32.shr_u
     (i32.and
      (i32.const -1)
      (i32.const 2147483647)
@@ -2325,7 +2325,7 @@
   )
  )
  (func $mix-shifts (result i32)
-  (i32.shr_s
+  (i32.shr_u
    (i32.shl
     (i32.const 23)
     (i32.const -61)
@@ -2742,6 +2742,81 @@
   )
   (drop
    (i64.const 0)
+  )
+ )
+ (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+  (drop
+   (i32.eqz
+    (i32.and
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.and
+     (local.get $y)
+     (i64.const 3)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.and
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.ne
+    (i32.and
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.wrap_i64
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const -4)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.rem_s
+     (local.get $y)
+     (i64.const 3)
+    )
+   )
   )
  )
  (func $orZero (param $0 i32) (result i32)
@@ -3446,6 +3521,14 @@
   )
   (drop
    (i32.wrap_i64
+    (i64.shr_u
+     (local.get $y)
+     (i64.const 63)
+    )
+   )
+  )
+  (drop
+   (i32.wrap_i64
     (i64.and
      (local.get $y)
      (i64.const 1)
@@ -3847,6 +3930,89 @@
     (local.get $x)
     (local.get $y)
     (local.get $x)
+   )
+  )
+ )
+ (func $unsigned-context (param $x i32) (param $y i64)
+  (drop
+   (i32.div_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const -3)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i64.shr_u
+    (i64.and
+     (local.get $y)
+     (i64.const 9223372036854775807)
+    )
+    (i64.const 1)
+   )
+  )
+  (drop
+   (i64.div_s
+    (i64.and
+     (local.get $y)
+     (i64.const 9223372036854775807)
+    )
+    (i64.const -1)
+   )
+  )
+  (drop
+   (i32.rem_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.shr_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (i32.ge_u
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (i32.and
+     (local.get $x)
+     (i32.const 2147483647)
+    )
+    (i32.const -7)
    )
   )
  )

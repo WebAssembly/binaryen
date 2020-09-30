@@ -40,6 +40,7 @@ Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
+Features.Memory64: 2048
 Features.All: 4095
 InvalidId: 0
 BlockId: 1
@@ -88,6 +89,22 @@ TryId: 44
 ThrowId: 45
 RethrowId: 46
 BrOnExnId: 47
+TupleMakeId: 48
+TupleExtractId: 49
+I31NewId: 50
+I31GetId: 51
+RefTestId: 52
+RefCastId: 53
+BrOnCastId: 54
+RttCanonId: 55
+RttSubId: 56
+StructNewId: 57
+StructGetId: 58
+StructSetId: 59
+ArrayNewId: 60
+ArrayGetId: 61
+ArraySetId: 62
+ArrayLenId: 63
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1951,6 +1968,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -3814,6 +3850,25 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -4301,7 +4356,7 @@ module loaded from binary form:
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (global $global$0 i32 (i32.const 3))
+ (global $a-global i32 (i32.const 3))
  (event $event$0 (attr 0) (param i32 i32))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add

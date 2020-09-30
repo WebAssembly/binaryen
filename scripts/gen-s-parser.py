@@ -496,8 +496,29 @@ instructions = [
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
     ("pop",                  "makePop(s)"),
-    # GC instructions
-    ("ref.eq",               "makeRefEq(s)")
+    # GC
+    ("ref.eq",               "makeRefEq(s)"),
+    ("i31.new",              "makeI31New(s)"),
+    ("i31.get_s",            "makeI31Get(s, true)"),
+    ("i31.get_u",            "makeI31Get(s, false)"),
+    ("ref.test",             "makeRefTest(s)"),
+    ("ref.cast",             "makeRefCast(s)"),
+    ("br_on_cast",           "makeBrOnCast(s)"),
+    ("rtt.canon",            "makeRttCanon(s)"),
+    ("rtt.sub",              "makeRttSub(s)"),
+    ("struct.new_with_rtt",  "makeStructNew(s, false)"),
+    ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
+    ("struct.get",           "makeStructGet(s)"),
+    ("struct.get_s",         "makeStructGet(s, true)"),
+    ("struct.get_u",         "makeStructGet(s, false)"),
+    ("struct.set",           "makeStructSet(s)"),
+    ("array.new_with_rtt",   "makeArrayNew(s, false)"),
+    ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
+    ("array.get",           "makeArrayGet(s)"),
+    ("array.get_s",         "makeArrayGet(s, true)"),
+    ("array.get_u",         "makeArrayGet(s, false)"),
+    ("array.set",           "makeArraySet(s)"),
+    ("array.len",           "makeArrayLen(s)")
 ]
 
 

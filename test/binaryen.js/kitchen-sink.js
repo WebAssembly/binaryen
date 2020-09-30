@@ -113,6 +113,7 @@ function test_features() {
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
   console.log("Features.GC: " + binaryen.Features.GC);
+  console.log("Features.Memory64: " + binaryen.Features.Memory64);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -164,6 +165,22 @@ function test_ids() {
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
+  console.log("TupleMakeId: " + binaryen.TupleMakeId);
+  console.log("TupleExtractId: " + binaryen.TupleExtractId);
+  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("I31GetId: " + binaryen.I31GetId);
+  console.log("RefTestId: " + binaryen.RefTestId);
+  console.log("RefCastId: " + binaryen.RefCastId);
+  console.log("BrOnCastId: " + binaryen.BrOnCastId);
+  console.log("RttCanonId: " + binaryen.RttCanonId);
+  console.log("RttSubId: " + binaryen.RttSubId);
+  console.log("StructNewId: " + binaryen.StructNewId);
+  console.log("StructGetId: " + binaryen.StructGetId);
+  console.log("StructSetId: " + binaryen.StructSetId);
+  console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayGetId: " + binaryen.ArrayGetId);
+  console.log("ArraySetId: " + binaryen.ArraySetId);
+  console.log("ArrayLenId: " + binaryen.ArrayLenId);
 }
 
 function test_core() {
@@ -593,6 +610,21 @@ function test_core() {
     // Memory
     module.memory.size(),
     module.memory.grow(makeInt32(0)),
+
+    // GC
+    module.i31.new(
+      module.i32.const(0)
+    ),
+    module.i31.get_s(
+      module.i31.new(
+        module.i32.const(1)
+      )
+    ),
+    module.i31.get_u(
+      module.i31.new(
+        module.i32.const(2)
+      )
+    ),
 
     // Other
     module.nop(),
