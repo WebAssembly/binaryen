@@ -1935,7 +1935,7 @@ void BinaryInstWriter::setScratchLocals() {
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
                                         uint32_t offset) {
-  o << U32LEB(Log2(alignment ? alignment : bytes));
+  o << U32LEB(Bits::log2(alignment ? alignment : bytes));
   o << U32LEB(offset);
 }
 
