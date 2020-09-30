@@ -280,7 +280,7 @@ private:
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
   void addMemoryFuncs(Ref ast, Module* wasm);
-  void addMemoryGrowthFuncs(Ref ast, Module* wasm);
+  void addMemoryGrowFunc(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
   Wasm2JSBuilder(const Wasm2JSBuilder&) = delete;
@@ -383,8 +383,17 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
+
   if (wasm->memory.exists) {
-    ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
+    ValueBuilder::appendArgumentToFunction(asmFunc, "memoryIn");
+    Ref buf = ValueBuilder::makeVar();
+    asmFunc[3]->push_back(buf);
+    ValueBuilder::appendToVar(
+      buf,
+      BUFFER,
+      ValueBuilder::makeDot(ValueBuilder::makeName("memoryIn"),
+                            ValueBuilder::makeName("buffer")));
+
     // add memory import
     if (wasm->memory.imported()) {
       Ref theVar = ValueBuilder::makeVar();
@@ -394,8 +403,20 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         "memory",
         ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                               ValueBuilder::makeName(wasm->memory.base)));
+
+      // If memory is growable, override the imported memory's grow method to
+      // ensure so that when grow is called from the output it works as expected
+      if (wasm->memory.max > wasm->memory.initial) {
+        asmFunc[3]->push_back(
+          ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+            ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
+                                  ValueBuilder::makeName("grow")),
+            SET,
+            ValueBuilder::makeName(WASM_MEMORY_GROW))));
+      }
     }
   }
+
   // add table import
   if (wasm->table.exists && wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
@@ -2205,11 +2226,11 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
   ast->push_back(memorySizeFunc);
 
   if (wasm->memory.max > wasm->memory.initial) {
-    addMemoryGrowthFuncs(ast, wasm);
+    addMemoryGrowFunc(ast, wasm);
   }
 }
 
-void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
+void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
   ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
 
@@ -2456,7 +2477,7 @@ void Wasm2JSGlue::emitPostEmscripten() {
       << "    'Math': Math\n"
       << "  },\n"
       << "  asmLibraryArg,\n"
-      << "  wasmMemory.buffer\n"
+      << "  wasmMemory\n"
       << ")"
       << "\n"
       << "\n"
@@ -2470,11 +2491,13 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  if (wasm.memory.exists) {
-    out << "var mem" << moduleName.str << " = new ArrayBuffer("
-        << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
+  Name memoryName(std::string("mem") + moduleName.str);
 
-    emitMemory(std::string("mem") + moduleName.str,
+  if (wasm.memory.exists) {
+    out << "var " << memoryName.str << " = { buffer: new ArrayBuffer("
+        << wasm.memory.initial.addr * Memory::kPageSize << ") };\n";
+
+    emitMemory(std::string(memoryName.str) + ".buffer",
                std::string("assign") + moduleName.str,
                [](std::string globalName) { return globalName; });
   }
@@ -2516,7 +2539,7 @@ void Wasm2JSGlue::emitPostES6() {
   });
 
   if (wasm.memory.exists) {
-    out << "\n  },\n  mem" << moduleName.str << "\n);\n";
+    out << "\n  },\n  " << memoryName.str << "\n);\n";
   } else {
     out << "\n  });\n";
   }

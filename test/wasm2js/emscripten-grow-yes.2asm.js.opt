@@ -1,6 +1,8 @@
 function instantiate(asmLibraryArg, wasmMemory) {
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var memory = env.memory;
+ memory.grow = __wasm_memory_grow;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -102,7 +104,7 @@ return asmFunc({
     'Math': Math
   },
   asmLibraryArg,
-  wasmMemory.buffer
+  wasmMemory
 )
 
 }

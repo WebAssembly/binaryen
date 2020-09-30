@@ -17,7 +17,8 @@
     f32ScratchView[2] = value;
   }
       
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -57,8 +58,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var memasmFunc = { buffer: new ArrayBuffer(65536) };
+var bufferView = new Uint8Array(memasmFunc.buffer);
 var retasmFunc = asmFunc({
     Math,
     Int8Array,

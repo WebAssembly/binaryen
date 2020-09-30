@@ -46,7 +46,8 @@ var retasmFunc = asmFunc({
     bufferView.fill(value, dest, dest + size);
   }
       
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -111,8 +112,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var memasmFunc = { buffer: new ArrayBuffer(65536) };
+var bufferView = new Uint8Array(memasmFunc.buffer);
 var retasmFunc = asmFunc({
     Math,
     Int8Array,
@@ -144,7 +145,8 @@ export var load8_u = retasmFunc.load8_u;
     bufferView.copyWithin(dest, source, source + size);
   }
       
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -187,8 +189,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var memasmFunc = { buffer: new ArrayBuffer(65536) };
+var bufferView = new Uint8Array(memasmFunc.buffer);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -242,7 +244,8 @@ export var load8_u = retasmFunc.load8_u;
       
   var memorySegments = {};
     
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -307,8 +310,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var memasmFunc = { buffer: new ArrayBuffer(65536) };
+var bufferView = new Uint8Array(memasmFunc.buffer);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -367,7 +370,8 @@ export var load8_u = retasmFunc.load8_u;
       
   var memorySegments = {};
     
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env, memoryIn) {
+ var buffer = memoryIn.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -438,8 +442,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var memasmFunc = { buffer: new ArrayBuffer(65536) };
+var bufferView = new Uint8Array(memasmFunc.buffer);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
