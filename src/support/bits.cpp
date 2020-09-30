@@ -159,7 +159,7 @@ int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
 uint32_t log2(uint32_t v) {
   if (!isPowerOf2(v)) {
-    WASM_UNREACHABLE("invalid value");
+    WASM_UNREACHABLE("value should be power of two");
   }
   return 31 - countLeadingZeroes(v);
 }
