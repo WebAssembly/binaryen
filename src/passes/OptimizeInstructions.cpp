@@ -1398,7 +1398,7 @@ private:
     if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
-      if (!curr->type.isFloat() || fastMath) {
+      if (curr->type.isInteger() || fastMath) {
         return left;
       }
     }
