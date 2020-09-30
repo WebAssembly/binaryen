@@ -27,7 +27,7 @@
 #include "ir/import-utils.h"
 #include "pass.h"
 #include "support/debug.h"
-#include "wasm-emscripten.h"
+#include "wasm-builder.h"
 
 #define DEBUG_TYPE "generate-dyncalls"
 
@@ -36,20 +36,100 @@ namespace wasm {
 struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
   GenerateDynCalls(bool onlyI64) : onlyI64(onlyI64) {}
 
+  void doWalkModule(Module* wasm) {
+    PostWalker<GenerateDynCalls>::doWalkModule(wasm);
+    for (auto& sig : invokeSigs) {
+      generateDynCallThunk(sig);
+    }
+  }
+
   void visitTable(Table* table) {
+    // Generate dynCalls for functions in the table
     if (table->segments.size() > 0) {
-      EmscriptenGlueGenerator generator(*getModule());
-      generator.onlyI64DynCalls = onlyI64;
       std::vector<Name> tableSegmentData;
       for (const auto& indirectFunc : table->segments[0].data) {
-        generator.generateDynCallThunk(
-          getModule()->getFunction(indirectFunc)->sig);
+        generateDynCallThunk(getModule()->getFunction(indirectFunc)->sig);
       }
     }
   }
 
+  void visitFunction(Function* func) {
+    // Generate dynCalls for invokes
+    if (func->imported() && func->base.startsWith("invoke_")) {
+      Signature sig = func->sig;
+      std::vector<Type> newParams(sig.params.begin() + 1, sig.params.end());
+      invokeSigs.insert(Signature(Type(newParams), sig.results));
+    }
+  }
+
+  void generateDynCallThunk(Signature sig);
+
   bool onlyI64;
+  // The set of all invokes' signatures
+  std::unordered_set<Signature> invokeSigs;
 };
+
+static bool hasI64(Signature sig) {
+  // We only generate dynCall functions for signatures that contain i64. This is
+  // because any other function can be called directly from JavaScript using the
+  // wasm table.
+  for (auto t : sig.results) {
+    if (t.getID() == Type::i64) {
+      return true;
+    }
+  }
+  for (auto t : sig.params) {
+    if (t.getID() == Type::i64) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static void exportFunction(Module& wasm, Name name, bool must_export) {
+  if (!wasm.getFunctionOrNull(name)) {
+    assert(!must_export);
+    return;
+  }
+  if (wasm.getExportOrNull(name)) {
+    return; // Already exported
+  }
+  auto exp = new Export;
+  exp->name = exp->value = name;
+  exp->kind = ExternalKind::Function;
+  wasm.addExport(exp);
+}
+
+void GenerateDynCalls::generateDynCallThunk(Signature sig) {
+  if (onlyI64 && !hasI64(sig)) {
+    return;
+  }
+
+  Module* wasm = getModule();
+  Builder builder(*wasm);
+  Name name = std::string("dynCall_") + getSig(sig.results, sig.params);
+  if (wasm->getFunctionOrNull(name) || wasm->getExportOrNull(name)) {
+    return; // module already contains this dyncall
+  }
+  std::vector<NameType> params;
+  params.emplace_back("fptr", Type::i32); // function pointer param
+  int p = 0;
+  for (const auto& param : sig.params) {
+    params.emplace_back(std::to_string(p++), param);
+  }
+  Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
+  Expression* fptr = builder.makeLocalGet(0, Type::i32);
+  std::vector<Expression*> args;
+  Index i = 0;
+  for (const auto& param : sig.params) {
+    args.push_back(builder.makeLocalGet(++i, param));
+  }
+  Expression* call = builder.makeCallIndirect(fptr, args, sig);
+  f->body = call;
+
+  wasm->addFunction(f);
+  exportFunction(*wasm, f->name, true);
+}
 
 Pass* createGenerateDynCallsPass() { return new GenerateDynCalls(false); }
 Pass* createGenerateI64DynCallsPass() { return new GenerateDynCalls(true); }

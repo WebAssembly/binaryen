@@ -58,8 +58,6 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
-  void generateDynCallThunk(Signature sig);
-
   bool standalone = false;
   bool sideModule = false;
   bool minimizeWasmChanges = false;
@@ -71,9 +69,6 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
-  // Used by generateDynCallThunk to track all the dynCall functions created
-  // so far.
-  std::unordered_set<Signature> sigs;
 };
 
 } // namespace wasm
