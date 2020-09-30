@@ -297,16 +297,14 @@ struct OptimizeInstructions
       {
         // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
         Const* c;
-        Unary* eqz;
         Binary* inner;
         if (matches(curr,
-                    unary(&eqz,
-                          Abstract::EqZ,
+                    unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
             IsPowerOf2((uint64_t)c->value.getInteger())) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
           c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
-          return eqz;
+          return curr;
         }
       }
       {
