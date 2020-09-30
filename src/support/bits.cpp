@@ -158,22 +158,10 @@ int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
 int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
 uint32_t log2(uint32_t v) {
-  switch (v) {
-    default:
-      WASM_UNREACHABLE("invalid value");
-    case 1:
-      return 0;
-    case 2:
-      return 1;
-    case 4:
-      return 2;
-    case 8:
-      return 3;
-    case 16:
-      return 4;
-    case 32:
-      return 5;
+  if (!isPowerOf2(v)) {
+    WASM_UNREACHABLE("invalid value");
   }
+  return 31 - countLeadingZeroes(v);
 }
 
 uint32_t pow2(uint32_t v) { return 1 << v; }
