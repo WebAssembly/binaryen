@@ -243,13 +243,6 @@ struct OptimizeInstructions
       using namespace Match;
       Builder builder(*getModule());
       {
-        // X == 0 => eqz X
-        Expression* x;
-        if (matches(curr, binary(EqInt32, any(&x), i32(0)))) {
-          return Builder(*getModule()).makeUnary(EqZInt32, x);
-        }
-      }
-      {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
         //   (i32.add
@@ -299,6 +292,19 @@ struct OptimizeInstructions
                            binary(&sub, SubInt32, i32(0), any())))) {
           sub->left = y;
           return sub;
+        }
+      }
+      {
+        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
+        Const* c;
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
+            IsPowerOf2((uint64_t)c->value.getInteger())) {
+          inner->op = Abstract::getBinary(c->type, Abstract::And);
+          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          return curr;
         }
       }
       {
@@ -1272,14 +1278,28 @@ private:
       return right;
     }
     // x == 0   ==>   eqz x
-    if ((matches(curr, binary(Abstract::Eq, any(&left), ival(0))))) {
-      return builder.makeUnary(EqZInt64, left);
+    if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
+      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
     }
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
       right->value = Literal::makeSingleZero(type);
       return right;
+    }
+    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    {
+      Const* c;
+      Binary* inner;
+      if (matches(curr,
+                  binary(Abstract::Ne,
+                         binary(&inner, Abstract::RemS, any(), ival(&c)),
+                         ival(0))) &&
+          IsPowerOf2((uint64_t)c->value.getInteger())) {
+        inner->op = Abstract::getBinary(c->type, Abstract::And);
+        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+        return curr;
+      }
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&

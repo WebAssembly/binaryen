@@ -2,8 +2,8 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
  (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $none_=>_none (func))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i64 (func (result i64)))
@@ -2742,6 +2742,81 @@
   )
   (drop
    (i64.const 0)
+  )
+ )
+ (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+  (drop
+   (i32.eqz
+    (i32.and
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.and
+     (local.get $y)
+     (i64.const 3)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.and
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.ne
+    (i32.and
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.wrap_i64
+    (i64.and
+     (local.get $y)
+     (i64.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i32.eqz
+    (i32.rem_s
+     (local.get $x)
+     (i32.const -4)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i64.rem_s
+     (local.get $y)
+     (i64.const 3)
+    )
+   )
   )
  )
  (func $orZero (param $0 i32) (result i32)
