@@ -1393,13 +1393,15 @@ private:
     }
     {
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
+      Expression* x;
       if (matches(curr,
                   binary(Abstract::Xor,
-                         binary(&curr, Abstract::Shl, ival(1), any()),
+                         binary(Abstract::Shl, ival(1), any(&x)),
                          ival(-1)))) {
         curr->op = Abstract::getBinary(type, Abstract::RotL);
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;
+        curr->right = x;
         return curr;
       }
     }
