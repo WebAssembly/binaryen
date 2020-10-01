@@ -2134,6 +2134,12 @@ BINARYEN_API int BinaryenGetLowMemoryUnused(void);
 // when optimizing. Applies to all modules, globally.
 BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
 
+// Gets optimize floats without handling corner cases of NaNs.
+BINARYEN_API int BinaryenGetFastMath(void);
+
+// Enables or disables float optimization without handling corner cases of NaNs.
+BINARYEN_API void BinaryenSetFastMath(int value);
+
 // Gets the value of the specified arbitrary pass argument.
 // Applies to all modules, globally.
 BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
