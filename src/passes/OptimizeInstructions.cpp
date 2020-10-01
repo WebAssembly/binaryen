@@ -1417,8 +1417,7 @@ private:
     }
     {
       double value;
-      if (fastMath &&
-          matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
           value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
@@ -1440,10 +1439,16 @@ private:
         return curr->left;
       }
     }
+    {
+      // x * -1.0   ==>   -x
+      if (fastMath && matches(curr, binary(Abstract::Mul, any(), fval(-1.0)))) {
+        return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), left);
+      }
+    }
     if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
-      if (curr->type.isInteger() || fastMath) {
+      if (fastMath || curr->type.isInteger()) {
         return left;
       }
     }

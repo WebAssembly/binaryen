@@ -3739,15 +3739,15 @@
    )
   )
   (drop
-   (f32.sub
+   (f32.add
     (local.get $fx)
-    (f32.const -0)
+    (f32.const 0)
    )
   )
   (drop
-   (f64.sub
+   (f64.add
     (local.get $fy)
-    (f64.const -0)
+    (f64.const 0)
    )
   )
   (drop
