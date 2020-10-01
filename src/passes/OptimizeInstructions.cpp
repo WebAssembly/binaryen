@@ -1397,7 +1397,6 @@ private:
                   binary(Abstract::Xor,
                          binary(&curr, Abstract::Shl, ival(1), any()),
                          ival(-1)))) {
-        // reuse "curr" and "right" expressions
         curr->op = Abstract::getBinary(type, Abstract::RotL);
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;
