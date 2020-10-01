@@ -30,6 +30,9 @@ wasm2js_blacklist = ['empty_imported_table.wast']
 
 
 def check_for_stale_files():
+    if shared.options.test_name_filter:
+        return
+
     # TODO(sbc): Generalize and apply other test suites
     all_tests = []
     for t in tests + spec_tests + wasm2js_tests:

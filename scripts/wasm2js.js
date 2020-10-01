@@ -6,12 +6,6 @@ var WebAssembly = {
   Memory: function(opts) {
     return {
       buffer: new ArrayBuffer(opts['initial'] * 64 * 1024),
-      grow: function(amount) {
-        var oldBuffer = this.buffer;
-        var ret = __growWasmMemory(amount);
-        assert(this.buffer !== oldBuffer); // the call should have updated us
-        return ret;
-      }
     };
   },
 
