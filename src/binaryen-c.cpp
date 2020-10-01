@@ -3570,13 +3570,9 @@ void BinaryenSetLowMemoryUnused(int on) {
   globalPassOptions.lowMemoryUnused = on != 0;
 }
 
-int BinaryenGetFastMath(void) {
-  return globalPassOptions.fastMath;
-}
+int BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
 
-void BinaryenSetFastMath(int value) {
-  globalPassOptions.fastMath = value != 0;
-}
+void BinaryenSetFastMath(int value) { globalPassOptions.fastMath = value != 0; }
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);
