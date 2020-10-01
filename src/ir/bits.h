@@ -51,7 +51,7 @@ inline uint32_t getMaskedBits(uint32_t mask) {
     return 0;
   }
   // this is indeed a mask
-  return 32 - CountLeadingZeroes(mask);
+  return 32 - countLeadingZeroes(mask);
 }
 
 // gets the number of effective shifts a shift operation does. In
@@ -180,7 +180,7 @@ Index getMaxBits(Expression* curr,
           if (maxBitsLeft == 32) {
             return 32;
           }
-          auto bitsRight = Index(CeilLog2(c->value.geti32()));
+          auto bitsRight = Index(ceilLog2(c->value.geti32()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -188,7 +188,7 @@ Index getMaxBits(Expression* curr,
       case RemUInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          auto bitsRight = Index(CeilLog2(c->value.geti32()));
+          auto bitsRight = Index(ceilLog2(c->value.geti32()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -275,7 +275,7 @@ Index getMaxBits(Expression* curr,
           if (maxBitsLeft == 64) {
             return 64;
           }
-          auto bitsRight = Index(CeilLog2(c->value.geti64()));
+          auto bitsRight = Index(ceilLog2(c->value.geti64()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 64;
@@ -283,7 +283,7 @@ Index getMaxBits(Expression* curr,
       case RemUInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          auto bitsRight = Index(CeilLog2(c->value.geti64()));
+          auto bitsRight = Index(ceilLog2(c->value.geti64()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 64;

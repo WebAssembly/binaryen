@@ -3046,6 +3046,18 @@ Module['setLowMemoryUnused'] = function(on) {
   Module['_BinaryenSetLowMemoryUnused'](on);
 };
 
+// Gets whether fast math optimizations are enabled, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['getFastMath'] = function() {
+  return Boolean(Module['_BinaryenGetFastMath']());
+};
+
+// Enables or disables fast math optimizations, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['setFastMath'] = function(value) {
+  Module['_BinaryenSetFastMath'](value);
+};
+
 // Gets the value of the specified arbitrary pass argument.
 Module['getPassArgument'] = function(key) {
   return preserveStack(() => {

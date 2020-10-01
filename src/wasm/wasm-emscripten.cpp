@@ -116,19 +116,6 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
   wasm.addExport(ex);
 }
 
-Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
-  Name name(GROW_WASM_MEMORY);
-  std::vector<NameType> params{{NEW_SIZE, Type::i32}};
-  Function* growFunction =
-    builder.makeFunction(name, std::move(params), Type::i32, {});
-  growFunction->body =
-    builder.makeMemoryGrow(builder.makeLocalGet(0, Type::i32));
-
-  addExportedFunction(wasm, growFunction);
-
-  return growFunction;
-}
-
 inline void exportFunction(Module& wasm, Name name, bool must_export) {
   if (!wasm.getFunctionOrNull(name)) {
     assert(!must_export);

@@ -3,7 +3,6 @@
  (type $none_=>_none (func))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow))
  (memory $0 2)
@@ -20,7 +19,6 @@
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
  (export "__set_stack_limits" (func $__set_stack_limits))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -173,11 +171,6 @@
    (local.get $1)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -196,8 +189,7 @@
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "__set_stack_limits",
-    "__growWasmMemory"
+    "__set_stack_limits"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",

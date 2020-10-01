@@ -335,7 +335,6 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("finalizing as regular module\n");
     generator.internalizeStackPointerGlobal();
-    generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
     if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
       auto* ex = new Export();
