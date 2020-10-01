@@ -55,7 +55,8 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   void visitFunction(Function* func) {
     // Generate dynCalls for invokes
-    if (func->imported() && func->base.startsWith("invoke_")) {
+    if (func->imported() && func->module == ENV &&
+        func->base.startsWith("invoke_")) {
       Signature sig = func->sig;
       // The first parameter is a pointer to the original function that's called
       // by the invoke, so skip it
