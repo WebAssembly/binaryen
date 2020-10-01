@@ -524,6 +524,10 @@ struct OptimizeInstructions
         if (right->type == Type::i32) {
           BinaryOp op;
           int32_t c = right->value.geti32();
+          // First, let's try to lower signed operations to unsigned if this possible.
+          // Some unsigned operations like div_u or mod_u usually faster on VMs.
+          // Also it open more possibilities to father simplifications over unsigned
+          // operations.
           if (c >= 0 &&
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
@@ -545,6 +549,7 @@ struct OptimizeInstructions
         if (right->type == Type::i64) {
           BinaryOp op;
           int64_t c = right->value.geti64();
+          // See description above for Type::i32
           if (c >= 0 &&
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
