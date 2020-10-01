@@ -525,7 +525,7 @@ struct OptimizeInstructions
           BinaryOp op;
           int32_t c = right->value.geti32();
           // First, try to lower signed operations to unsigned if that is
-          // possible. Some unsigned operations like div_u or mod_u are usually
+          // possible. Some unsigned operations like div_u or rem_u are usually
           // faster on VMs. Also this opens more possibilities for further
           // simplifications afterwards.
           if (c >= 0 &&
