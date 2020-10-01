@@ -1392,15 +1392,15 @@ private:
       return right;
     }
     {
-      Expression* x;
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
       if (matches(curr,
                   binary(Abstract::Xor,
-                         binary(&curr, Abstract::Shl, ival(1), any(&x)),
+                         binary(&curr, Abstract::Shl, ival(1), any()),
                          ival(-1)))) {
+        // reuse "curr" and "right" expressions
         curr->op = Abstract::getBinary(type, Abstract::RotL);
-        curr->left->cast<Const>()->value = Literal::makeFromInt32(-2, type);
-        curr->right = x;
+        right->value = Literal::makeFromInt32(-2, type);
+        curr->left = right;
         return curr;
       }
     }
