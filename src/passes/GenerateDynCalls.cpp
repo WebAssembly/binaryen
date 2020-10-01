@@ -57,6 +57,8 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
     // Generate dynCalls for invokes
     if (func->imported() && func->base.startsWith("invoke_")) {
       Signature sig = func->sig;
+      // The first parameter is a pointer to the original function that's called
+      // by the invoke, so skip it
       std::vector<Type> newParams(sig.params.begin() + 1, sig.params.end());
       invokeSigs.insert(Signature(Type(newParams), sig.results));
     }
