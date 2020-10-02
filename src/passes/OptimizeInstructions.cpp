@@ -1760,29 +1760,34 @@ private:
     Binary* right = nullptr;
     BinaryOp op;
 
+    // canonicalize
+    // (x << C1) op (x << C2)
+    // to
+    // (x * (1 << C1)) op (x * (1 << C2))
+    if (matches(curr,
+                binary(&op,
+                       binary(&left, any(&ll), any(&lr)),
+                       binary(&right, pure(&rl), pure(&rr)))) &&
+        (op == Abstract::getBinary(curr->type, Abstract::Add) ||
+         op == Abstract::getBinary(curr->type, Abstract::Sub)) &&
+        ExpressionAnalyzer::equal(ll, rl)) {
+      Const *c1, *c2;
+      if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
+        left->op = Abstract::getBinary(left->type, Abstract::Mul);
+        c1->value = Literal::makeFromInt32(1, left->type).shl(c1->value);
+      }
+      if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
+        right->op = Abstract::getBinary(right->type, Abstract::Mul);
+        c2->value = Literal::makeFromInt32(1, right->type).shl(c2->value);
+      }
+    }
+
     if (matches(curr,
                 binary(&op,
                        binary(&left, any(&ll), any(&lr)),
                        binary(&right, pure(&rl), pure(&rr)))) &&
         (op == Abstract::getBinary(curr->type, Abstract::Add) ||
          op == Abstract::getBinary(curr->type, Abstract::Sub))) {
-      // canonicalize
-      // (x << C1) op (x << C2)
-      // to
-      // (x * (1 << C1)) op (x * (1 << C2))
-      bool eqLLRL = ExpressionAnalyzer::equal(ll, rl);
-      if (eqLLRL) {
-        Const *c1, *c2;
-        auto type = left->type;
-        if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
-          left->op = Abstract::getBinary(type, Abstract::Mul);
-          c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
-        }
-        if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
-          right->op = Abstract::getBinary(type, Abstract::Mul);
-          c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
-        }
-      }
       // (x * y) op (x * z)
       // (x * y) op (z * x)
       if (left->op == right->op &&
