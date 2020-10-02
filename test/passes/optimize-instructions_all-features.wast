@@ -3118,6 +3118,19 @@
         (i64.const 4)
       )
     ))
+    ;; eqz((signed)x % -4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const -4)
+      )
+    ))
     ;; (signed)x % 4 == 0
     (drop (i32.eq
       (i32.rem_s
@@ -3133,7 +3146,22 @@
       )
       (i64.const 0)
     ))
-    ;; ;; (signed)x % 2 != 0
+    ;; (signed)x % -4 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const -4)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % 2 != 0
     (drop (i32.ne
       (i32.rem_s
         (local.get $x)
@@ -3148,7 +3176,15 @@
       )
       (i64.const 0)
     ))
-    ;; ;;
+    ;; (signed)x % 0x80000000
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;;
     (drop (i32.eq
       (i32.rem_s
         (local.get $x)
