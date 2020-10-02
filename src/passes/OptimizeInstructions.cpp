@@ -1752,17 +1752,15 @@ private:
     using namespace Match;
     assert(curr->type.isInteger());
 
-    Expression* ll = nullptr;
-    Expression* rl = nullptr;
-    Expression* lr = nullptr;
-    Expression* rr = nullptr;
-    Binary* left = nullptr;
-    Binary* right = nullptr;
-    Const* c1 = nullptr;
-    Const* c2 = nullptr;
-
     if (curr->op == Abstract::getBinary(curr->type, Abstract::Add) ||
         curr->op == Abstract::getBinary(curr->type, Abstract::Sub)) {
+      Expression* ll = nullptr;
+      Expression* rl = nullptr;
+      Expression* lr = nullptr;
+      Expression* rr = nullptr;
+      Binary* left = nullptr;
+      Binary* right = nullptr;
+
       if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
           matches(curr->right, binary(&right, any(&rl), any(&rr))) &&
           !effects(curr->right).hasSideEffects()) {
@@ -1772,6 +1770,7 @@ private:
         // (x * (1 << C1)) op (x * (1 << C2))
         bool eqLLRL = ExpressionAnalyzer::equal(ll, rl);
         if (eqLLRL) {
+          Const *c1, *c2;
           auto type = left->type;
           if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
             left->op = Abstract::getBinary(type, Abstract::Mul);
