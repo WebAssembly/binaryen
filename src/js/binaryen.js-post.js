@@ -98,7 +98,19 @@ function initializeConstants() {
     'TupleExtract',
     'Pop',
     'I31New',
-    'I31Get'
+    'I31Get',
+    'RefTest',
+    'RefCast',
+    'BrOnCast',
+    'RttCanon',
+    'RttSub',
+    'StructNew',
+    'StructGet',
+    'StructSet',
+    'ArrayNew',
+    'ArrayGet',
+    'ArraySet',
+    'ArrayLen'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -3032,6 +3044,18 @@ Module['getLowMemoryUnused'] = function() {
 // when optimizing.
 Module['setLowMemoryUnused'] = function(on) {
   Module['_BinaryenSetLowMemoryUnused'](on);
+};
+
+// Gets whether fast math optimizations are enabled, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['getFastMath'] = function() {
+  return Boolean(Module['_BinaryenGetFastMath']());
+};
+
+// Enables or disables fast math optimizations, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['setFastMath'] = function(value) {
+  Module['_BinaryenSetFastMath'](value);
 };
 
 // Gets the value of the specified arbitrary pass argument.

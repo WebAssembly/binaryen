@@ -1784,6 +1784,62 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
     << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
+void BinaryInstWriter::visitRefTest(RefTest* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+}
+
+void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+}
+
+void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+}
+
+void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+}
+
+void BinaryInstWriter::visitRttSub(RttSub* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+}
+
+void BinaryInstWriter::visitStructNew(StructNew* curr) {
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+}
+
+void BinaryInstWriter::visitStructGet(StructGet* curr) {
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+}
+
+void BinaryInstWriter::visitStructSet(StructSet* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+}
+
+void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
+  WASM_UNREACHABLE("TODO (gc): array.new");
+}
+
+void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
+  WASM_UNREACHABLE("TODO (gc): array.get");
+}
+
+void BinaryInstWriter::visitArraySet(ArraySet* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
+  WASM_UNREACHABLE("TODO (gc): array.set");
+}
+
+void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
+  WASM_UNREACHABLE("TODO (gc): array.len");
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
@@ -1879,7 +1935,7 @@ void BinaryInstWriter::setScratchLocals() {
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
                                         uint32_t offset) {
-  o << U32LEB(Log2(alignment ? alignment : bytes));
+  o << U32LEB(Bits::log2(alignment ? alignment : bytes));
   o << U32LEB(offset);
 }
 

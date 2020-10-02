@@ -169,6 +169,18 @@ function test_ids() {
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
   console.log("I31NewId: " + binaryen.I31NewId);
   console.log("I31GetId: " + binaryen.I31GetId);
+  console.log("RefTestId: " + binaryen.RefTestId);
+  console.log("RefCastId: " + binaryen.RefCastId);
+  console.log("BrOnCastId: " + binaryen.BrOnCastId);
+  console.log("RttCanonId: " + binaryen.RttCanonId);
+  console.log("RttSubId: " + binaryen.RttSubId);
+  console.log("StructNewId: " + binaryen.StructNewId);
+  console.log("StructGetId: " + binaryen.StructGetId);
+  console.log("StructSetId: " + binaryen.StructSetId);
+  console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayGetId: " + binaryen.ArrayGetId);
+  console.log("ArraySetId: " + binaryen.ArraySetId);
+  console.log("ArrayLenId: " + binaryen.ArrayLenId);
 }
 
 function test_core() {

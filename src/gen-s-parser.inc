@@ -4,17 +4,63 @@
 
 #ifdef INSTRUCTION_PARSER
 #undef INSTRUCTION_PARSER
-char op[27] = {'\0'};
-strncpy(op, s[0]->c_str(), 26);
+char op[28] = {'\0'};
+strncpy(op, s[0]->c_str(), 27);
 switch (op[0]) {
   case 'a': {
-    switch (op[7]) {
-      case 'f':
-        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-        goto parse_error;
-      case 'n':
-        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
-        goto parse_error;
+    switch (op[1]) {
+      case 'r': {
+        switch (op[6]) {
+          case 'g': {
+            switch (op[9]) {
+              case '\0':
+                if (strcmp(op, "array.get") == 0) { return makeArrayGet(s); }
+                goto parse_error;
+              case '_': {
+                switch (op[10]) {
+                  case 's':
+                    if (strcmp(op, "array.get_s") == 0) { return makeArrayGet(s, true); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "array.get_u") == 0) { return makeArrayGet(s, false); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
+            }
+          }
+          case 'l':
+            if (strcmp(op, "array.len") == 0) { return makeArrayLen(s); }
+            goto parse_error;
+          case 'n': {
+            switch (op[10]) {
+              case 'd':
+                if (strcmp(op, "array.new_default_with_rtt") == 0) { return makeArrayNew(s, true); }
+                goto parse_error;
+              case 'w':
+                if (strcmp(op, "array.new_with_rtt") == 0) { return makeArrayNew(s, false); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 's':
+            if (strcmp(op, "array.set") == 0) { return makeArraySet(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 't': {
+        switch (op[7]) {
+          case 'f':
+            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
+            goto parse_error;
+          case 'n':
+            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
@@ -33,9 +79,17 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
-              case 'o':
-                if (strcmp(op, "br_on_exn") == 0) { return makeBrOnExn(s); }
-                goto parse_error;
+              case 'o': {
+                switch (op[6]) {
+                  case 'c':
+                    if (strcmp(op, "br_on_cast") == 0) { return makeBrOnCast(s); }
+                    goto parse_error;
+                  case 'e':
+                    if (strcmp(op, "br_on_exn") == 0) { return makeBrOnExn(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;
@@ -2545,42 +2599,53 @@ switch (op[0]) {
     if (strcmp(op, "pop") == 0) { return makePop(s); }
     goto parse_error;
   case 'r': {
-    switch (op[2]) {
-      case 'f': {
-        switch (op[4]) {
-          case 'e':
-            if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
-            goto parse_error;
-          case 'f':
-            if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
-            goto parse_error;
-          case 'i':
-            if (strcmp(op, "ref.is_null") == 0) { return makeRefIsNull(s); }
-            goto parse_error;
-          case 'n':
-            if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
-      case 't': {
-        switch (op[3]) {
-          case 'h':
-            if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
-            goto parse_error;
-          case 'u': {
-            switch (op[6]) {
-              case '\0':
-                if (strcmp(op, "return") == 0) { return makeReturn(s); }
+    switch (op[1]) {
+      case 'e': {
+        switch (op[2]) {
+          case 'f': {
+            switch (op[4]) {
+              case 'c':
+                if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
                 goto parse_error;
-              case '_': {
-                switch (op[11]) {
+              case 'e':
+                if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
+                goto parse_error;
+              case 'f':
+                if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
+                goto parse_error;
+              case 'i':
+                if (strcmp(op, "ref.is_null") == 0) { return makeRefIsNull(s); }
+                goto parse_error;
+              case 'n':
+                if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
+                goto parse_error;
+              case 't':
+                if (strcmp(op, "ref.test") == 0) { return makeRefTest(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 't': {
+            switch (op[3]) {
+              case 'h':
+                if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
+                goto parse_error;
+              case 'u': {
+                switch (op[6]) {
                   case '\0':
-                    if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                    if (strcmp(op, "return") == 0) { return makeReturn(s); }
                     goto parse_error;
-                  case '_':
-                    if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-                    goto parse_error;
+                  case '_': {
+                    switch (op[11]) {
+                      case '\0':
+                        if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                        goto parse_error;
+                      case '_':
+                        if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -2590,12 +2655,66 @@ switch (op[0]) {
           default: goto parse_error;
         }
       }
+      case 't': {
+        switch (op[4]) {
+          case 'c':
+            if (strcmp(op, "rtt.canon") == 0) { return makeRttCanon(s); }
+            goto parse_error;
+          case 's':
+            if (strcmp(op, "rtt.sub") == 0) { return makeRttSub(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
-  case 's':
-    if (strcmp(op, "select") == 0) { return makeSelect(s); }
-    goto parse_error;
+  case 's': {
+    switch (op[1]) {
+      case 'e':
+        if (strcmp(op, "select") == 0) { return makeSelect(s); }
+        goto parse_error;
+      case 't': {
+        switch (op[7]) {
+          case 'g': {
+            switch (op[10]) {
+              case '\0':
+                if (strcmp(op, "struct.get") == 0) { return makeStructGet(s); }
+                goto parse_error;
+              case '_': {
+                switch (op[11]) {
+                  case 's':
+                    if (strcmp(op, "struct.get_s") == 0) { return makeStructGet(s, true); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "struct.get_u") == 0) { return makeStructGet(s, false); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
+            }
+          }
+          case 'n': {
+            switch (op[11]) {
+              case 'd':
+                if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
+                goto parse_error;
+              case 'w':
+                if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 's':
+            if (strcmp(op, "struct.set") == 0) { return makeStructSet(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      default: goto parse_error;
+    }
+  }
   case 't': {
     switch (op[1]) {
       case 'h': {

@@ -12,8 +12,9 @@ function Table(ret) {
   return ret;
 }
 
-function asmFunc(global, env, buffer) {
+function asmFunc(global, env) {
  var memory = env.memory;
+ var buffer = memory.buffer;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -48,7 +49,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
- var FUNCTION_TABLE = new Table(new Array(10));
+ var FUNCTION_TABLE = Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  function __wasm_memory_size() {
@@ -96,8 +97,7 @@ var retasmFunc = asmFunc({
     NaN,
     Infinity
   }, {
-    abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+    abort: function() { throw new Error('abort'); },
+    memory: { buffer : memasmFunc }
+  });
 export var baz = retasmFunc.baz;

@@ -289,6 +289,40 @@ BinaryenExpressionId BinaryenTupleExtractId(void) {
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
 BinaryenExpressionId BinaryenI31NewId(void) { return Expression::Id::I31NewId; }
 BinaryenExpressionId BinaryenI31GetId(void) { return Expression::Id::I31GetId; }
+BinaryenExpressionId BinaryenRefTestId(void) {
+  return Expression::Id::RefTestId;
+}
+BinaryenExpressionId BinaryenRefCastId(void) {
+  return Expression::Id::RefCastId;
+}
+BinaryenExpressionId BinaryenBrOnCastId(void) {
+  return Expression::Id::BrOnCastId;
+}
+BinaryenExpressionId BinaryenRttCanonId(void) {
+  return Expression::Id::RttCanonId;
+}
+BinaryenExpressionId BinaryenRttSubId(void) { return Expression::Id::RttSubId; }
+BinaryenExpressionId BinaryenStructNewId(void) {
+  return Expression::Id::StructNewId;
+}
+BinaryenExpressionId BinaryenStructGetId(void) {
+  return Expression::Id::StructGetId;
+}
+BinaryenExpressionId BinaryenStructSetId(void) {
+  return Expression::Id::StructSetId;
+}
+BinaryenExpressionId BinaryenArrayNewId(void) {
+  return Expression::Id::ArrayNewId;
+}
+BinaryenExpressionId BinaryenArrayGetId(void) {
+  return Expression::Id::ArrayGetId;
+}
+BinaryenExpressionId BinaryenArraySetId(void) {
+  return Expression::Id::ArraySetId;
+}
+BinaryenExpressionId BinaryenArrayLenId(void) {
+  return Expression::Id::ArrayLenId;
+}
 
 // External kinds
 
@@ -1352,6 +1386,19 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
+
+// TODO (gc): ref.test
+// TODO (gc): ref.cast
+// TODO (gc): br_on_cast
+// TODO (gc): rtt.canon
+// TODO (gc): rtt.sub
+// TODO (gc): struct.new
+// TODO (gc): struct.get
+// TODO (gc): struct.set
+// TODO (gc): array.new
+// TODO (gc): array.get
+// TODO (gc): array.set
+// TODO (gc): array.len
 
 // Expression utility
 
@@ -3522,6 +3569,10 @@ int BinaryenGetLowMemoryUnused(void) {
 void BinaryenSetLowMemoryUnused(int on) {
   globalPassOptions.lowMemoryUnused = on != 0;
 }
+
+int BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
+
+void BinaryenSetFastMath(int value) { globalPassOptions.fastMath = value != 0; }
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);

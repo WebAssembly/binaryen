@@ -161,7 +161,10 @@ struct OptimizeInstructions
 #endif
   }
 
+  bool fastMath;
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
     // first, scan locals
     {
       LocalScanner scanner(localInfo, getPassOptions());
@@ -243,13 +246,6 @@ struct OptimizeInstructions
       using namespace Match;
       Builder builder(*getModule());
       {
-        // X == 0 => eqz X
-        Expression* x;
-        if (matches(curr, binary(EqInt32, any(&x), i32(0)))) {
-          return Builder(*getModule()).makeUnary(EqZInt32, x);
-        }
-      }
-      {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
         //   (i32.add
@@ -302,6 +298,19 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
+        Const* c;
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
+            Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+          inner->op = Abstract::getBinary(c->type, Abstract::And);
+          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          return curr;
+        }
+      }
+      {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
@@ -322,6 +331,18 @@ struct OptimizeInstructions
           bin->right = y;
           un->value = bin;
           return un;
+        }
+      }
+      {
+        // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
+        //   where maxBits(x) <= 32
+        Unary* inner;
+        Expression* x;
+        if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
+            Bits::getMaxBits(x, this) <= 32) {
+          inner->op = EqZInt64;
+          inner->value = x;
+          return inner;
         }
       }
     }
@@ -386,7 +407,7 @@ struct OptimizeInstructions
             //    forcing them to zero like we do in the zero-extend.
             int32_t constValue = c->value.geti32();
             auto upperConstValue = constValue & ~Bits::lowBitMask(bits);
-            uint32_t count = PopCount(upperConstValue);
+            uint32_t count = Bits::popCount(upperConstValue);
             auto constSignBit = constValue & (1 << (bits - 1));
             if ((count > 0 && count < 32 - bits) ||
                 (constSignBit && count == 0)) {
@@ -501,30 +522,47 @@ struct OptimizeInstructions
         }
         // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
-          uint32_t c = right->value.geti32();
-          if (IsPowerOf2(c)) {
+          BinaryOp op;
+          int32_t c = right->value.geti32();
+          // First, try to lower signed operations to unsigned if that is
+          // possible. Some unsigned operations like div_u or rem_u are usually
+          // faster on VMs. Also this opens more possibilities for further
+          // simplifications afterwards.
+          if (c >= 0 &&
+              (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
+              Bits::getMaxBits(binary->left, this) <= 31) {
+            binary->op = op;
+          }
+          if (Bits::isPowerOf2((uint32_t)c)) {
             switch (binary->op) {
               case MulInt32:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint32_t)c);
               case RemUInt32:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint32_t)c);
               case DivUInt32:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint32_t)c);
               default:
                 break;
             }
           }
         }
         if (right->type == Type::i64) {
-          uint64_t c = right->value.geti64();
-          if (IsPowerOf2(c)) {
+          BinaryOp op;
+          int64_t c = right->value.geti64();
+          // See description above for Type::i32
+          if (c >= 0 &&
+              (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
+              Bits::getMaxBits(binary->left, this) <= 63) {
+            binary->op = op;
+          }
+          if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
               case MulInt64:
-                return optimizePowerOf2Mul(binary, c);
+                return optimizePowerOf2Mul(binary, (uint64_t)c);
               case RemUInt64:
-                return optimizePowerOf2URem(binary, c);
+                return optimizePowerOf2URem(binary, (uint64_t)c);
               case DivUInt64:
-                return optimizePowerOf2UDiv(binary, c);
+                return optimizePowerOf2UDiv(binary, (uint64_t)c);
               default:
                 break;
             }
@@ -948,8 +986,8 @@ private:
           continue;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seekStack.emplace_back(binary->left,
-                                   mul * Pow2(Bits::getEffectiveShifts(c)));
+            seekStack.emplace_back(
+              binary->left, mul * Bits::pow2(Bits::getEffectiveShifts(c)));
             continue;
           }
         } else if (binary->op == MulInt32) {
@@ -1178,7 +1216,7 @@ private:
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
                   "type mismatch");
-    auto shifts = CountTrailingZeroes<T>(c);
+    auto shifts = Bits::countTrailingZeroes(c);
     binary->op = std::is_same<T, uint32_t>::value ? ShlInt32 : ShlInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
@@ -1193,7 +1231,7 @@ private:
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
                   "type mismatch");
-    auto shifts = CountTrailingZeroes<T>(c);
+    auto shifts = Bits::countTrailingZeroes(c);
     binary->op = std::is_same<T, uint32_t>::value ? ShrUInt32 : ShrUInt64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(shifts));
     return binary;
@@ -1265,15 +1303,28 @@ private:
       return right;
     }
     // x == 0   ==>   eqz x
-    if ((matches(curr, binary(Abstract::Eq, any(&left), ival(0))))) {
-      return builder.makeUnary(EqZInt64, left);
+    if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
+      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
     }
-
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
       right->value = Literal::makeSingleZero(type);
       return right;
+    }
+    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    {
+      Const* c;
+      Binary* inner;
+      if (matches(curr,
+                  binary(Abstract::Ne,
+                         binary(&inner, Abstract::RemS, any(), ival(&c)),
+                         ival(0))) &&
+          Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+        inner->op = Abstract::getBinary(c->type, Abstract::And);
+        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+        return curr;
+      }
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
@@ -1291,7 +1342,9 @@ private:
       return left;
     }
     // i64(bool(x)) == 1  ==>  i32(bool(x))
-    if (matches(curr, binary(EqInt64, any(&left), i64(1))) &&
+    // i64(bool(x)) != 0  ==>  i32(bool(x))
+    if ((matches(curr, binary(EqInt64, any(&left), i64(1))) ||
+         matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
     }
@@ -1349,6 +1402,20 @@ private:
       return right;
     }
     {
+      // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
+      Expression* x;
+      if (matches(curr,
+                  binary(Abstract::Xor,
+                         binary(Abstract::Shl, ival(1), any(&x)),
+                         ival(-1)))) {
+        curr->op = Abstract::getBinary(type, Abstract::RotL);
+        right->value = Literal::makeFromInt32(-2, type);
+        curr->left = right;
+        curr->right = x;
+        return curr;
+      }
+    }
+    {
       // Wasm binary encoding uses signed LEBs, which slightly favor negative
       // numbers: -64 is more efficient than +64 etc., as well as other powers
       // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
@@ -1374,14 +1441,15 @@ private:
     }
     {
       double value;
-      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
           value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
           curr->op = Abstract::getBinary(type, Abstract::Add);
           right->value = right->value.neg();
           return curr;
-        } else {
+        } else if (fastMath) {
           // x - 0.0   ==>   x
           return curr->left;
         }
@@ -1390,19 +1458,18 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+      if (fastMath &&
+          matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
     }
-    // Note that this is correct even on floats with a NaN on the left,
-    // as a NaN would skip the computation and just return the NaN,
-    // and that is precisely what we do here. but, the same with -1
-    // (change to a negation) would be incorrect for that reason.
     if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
         matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
-      return left;
+      if (curr->type.isInteger() || fastMath) {
+        return left;
+      }
     }
     return nullptr;
   }
@@ -1856,6 +1923,43 @@ private:
         return NeFloat64;
       case NeFloat64:
         return EqFloat64;
+
+      default:
+        return InvalidBinary;
+    }
+  }
+
+  BinaryOp makeUnsignedBinaryOp(BinaryOp op) {
+    switch (op) {
+      case DivSInt32:
+        return DivUInt32;
+      case RemSInt32:
+        return RemUInt32;
+      case ShrSInt32:
+        return ShrUInt32;
+      case LtSInt32:
+        return LtUInt32;
+      case LeSInt32:
+        return LeUInt32;
+      case GtSInt32:
+        return GtUInt32;
+      case GeSInt32:
+        return GeUInt32;
+
+      case DivSInt64:
+        return DivUInt64;
+      case RemSInt64:
+        return RemUInt64;
+      case ShrSInt64:
+        return ShrUInt64;
+      case LtSInt64:
+        return LtUInt64;
+      case LeSInt64:
+        return LeUInt64;
+      case GtSInt64:
+        return GtUInt64;
+      case GeSInt64:
+        return GeUInt64;
 
       default:
         return InvalidBinary;
