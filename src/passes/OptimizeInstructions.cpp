@@ -1767,7 +1767,7 @@ private:
     if (matches(curr,
                 binary(&op,
                        binary(&left, any(&ll), any(&lr)),
-                       binary(&right, pure(&rl), pure(&rr)))) &&
+                       binary(&right, pure(&rl), any(&rr)))) &&
         (op == Abstract::getBinary(curr->type, Abstract::Add) ||
          op == Abstract::getBinary(curr->type, Abstract::Sub)) &&
         ExpressionAnalyzer::equal(ll, rl)) {
