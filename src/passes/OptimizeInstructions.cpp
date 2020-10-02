@@ -1752,66 +1752,68 @@ private:
     using namespace Match;
     assert(curr->type.isInteger());
 
-    if (curr->op == Abstract::getBinary(curr->type, Abstract::Add) ||
-        curr->op == Abstract::getBinary(curr->type, Abstract::Sub)) {
-      Expression* ll = nullptr;
-      Expression* rl = nullptr;
-      Expression* lr = nullptr;
-      Expression* rr = nullptr;
-      Binary* left = nullptr;
-      Binary* right = nullptr;
+    Expression* ll = nullptr;
+    Expression* rl = nullptr;
+    Expression* lr = nullptr;
+    Expression* rr = nullptr;
+    Binary* left = nullptr;
+    Binary* right = nullptr;
+    BinaryOp op;
 
-      if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
-          matches(curr->right, binary(&right, pure(&rl), pure(&rr)))) {
-        // canonicalize
-        // (x << C1) op (x << C2)
-        // to
-        // (x * (1 << C1)) op (x * (1 << C2))
-        bool eqLLRL = ExpressionAnalyzer::equal(ll, rl);
-        if (eqLLRL) {
-          Const *c1, *c2;
-          auto type = left->type;
-          if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
-            left->op = Abstract::getBinary(type, Abstract::Mul);
-            c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
-          }
-          if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
-            right->op = Abstract::getBinary(type, Abstract::Mul);
-            c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
-          }
+    if (matches(curr,
+                binary(&op,
+                       binary(&left, any(&ll), any(&lr)),
+                       binary(&right, pure(&rl), pure(&rr)))) &&
+        (op == Abstract::getBinary(curr->type, Abstract::Add) ||
+         op == Abstract::getBinary(curr->type, Abstract::Sub))) {
+      // canonicalize
+      // (x << C1) op (x << C2)
+      // to
+      // (x * (1 << C1)) op (x * (1 << C2))
+      bool eqLLRL = ExpressionAnalyzer::equal(ll, rl);
+      if (eqLLRL) {
+        Const *c1, *c2;
+        auto type = left->type;
+        if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
+          left->op = Abstract::getBinary(type, Abstract::Mul);
+          c1->value = Literal::makeFromInt32(1, type).shl(c1->value);
         }
-        // (x * y) op (x * z)
-        // (x * y) op (z * x)
-        if (left->op == right->op &&
-            left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
-          bool eqLLRR = ExpressionAnalyzer::equal(ll, rr);
-          if (eqLLRR || eqLLRL) {
-            if (eqLLRR) {
-              // swap z and x
-              std::swap(rl, rr);
-            }
-            // => (y op z) * x
-            Builder builder(*getModule());
-            return builder.makeBinary(
-              Abstract::getBinary(curr->type, Abstract::Mul),
-              ll,
-              builder.makeBinary(curr->op, lr, rr));
+        if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
+          right->op = Abstract::getBinary(type, Abstract::Mul);
+          c2->value = Literal::makeFromInt32(1, type).shl(c2->value);
+        }
+      }
+      // (x * y) op (x * z)
+      // (x * y) op (z * x)
+      if (left->op == right->op &&
+          left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
+        bool eqLLRR = ExpressionAnalyzer::equal(ll, rr);
+        if (eqLLRR || ExpressionAnalyzer::equal(ll, rl)) {
+          if (eqLLRR) {
+            // swap z and x
+            std::swap(rl, rr);
           }
-          // (z * y) op (x * y)
-          // (x * z) op (y * x)
-          bool eqLRRL = ExpressionAnalyzer::equal(lr, rl);
-          if (eqLRRL || ExpressionAnalyzer::equal(lr, rr)) {
-            if (eqLRRL) {
-              // swap y and z
-              std::swap(rl, rr);
-            }
-            // => (x op z) * y
-            Builder builder(*getModule());
-            return builder.makeBinary(
-              Abstract::getBinary(curr->type, Abstract::Mul),
-              lr,
-              builder.makeBinary(curr->op, ll, rl));
+          // => (y op z) * x
+          Builder builder(*getModule());
+          return builder.makeBinary(
+            Abstract::getBinary(curr->type, Abstract::Mul),
+            ll,
+            builder.makeBinary(curr->op, lr, rr));
+        }
+        // (z * y) op (x * y)
+        // (x * z) op (y * x)
+        bool eqLRRL = ExpressionAnalyzer::equal(lr, rl);
+        if (eqLRRL || ExpressionAnalyzer::equal(lr, rr)) {
+          if (eqLRRL) {
+            // swap y and z
+            std::swap(rl, rr);
           }
+          // => (x op z) * y
+          Builder builder(*getModule());
+          return builder.makeBinary(
+            Abstract::getBinary(curr->type, Abstract::Mul),
+            lr,
+            builder.makeBinary(curr->op, ll, rl));
         }
       }
     }
