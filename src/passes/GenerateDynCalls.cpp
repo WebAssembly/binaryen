@@ -69,7 +69,7 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   bool onlyI64;
   // The set of all invokes' signatures
-  std::unordered_set<Signature> invokeSigs;
+  std::set<Signature> invokeSigs;
 };
 
 static bool hasI64(Signature sig) {

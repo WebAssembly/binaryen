@@ -524,6 +524,10 @@ struct OptimizeInstructions
         if (right->type == Type::i32) {
           BinaryOp op;
           int32_t c = right->value.geti32();
+          // First, try to lower signed operations to unsigned if that is
+          // possible. Some unsigned operations like div_u or rem_u are usually
+          // faster on VMs. Also this opens more possibilities for further
+          // simplifications afterwards.
           if (c >= 0 &&
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
@@ -545,6 +549,7 @@ struct OptimizeInstructions
         if (right->type == Type::i64) {
           BinaryOp op;
           int64_t c = right->value.geti64();
+          // See description above for Type::i32
           if (c >= 0 &&
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
@@ -1390,6 +1395,20 @@ private:
       right->value = Literal::makeFromInt32(1, Type::i32);
       right->type = Type::i32;
       return right;
+    }
+    {
+      // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
+      Expression* x;
+      if (matches(curr,
+                  binary(Abstract::Xor,
+                         binary(Abstract::Shl, ival(1), any(&x)),
+                         ival(-1)))) {
+        curr->op = Abstract::getBinary(type, Abstract::RotL);
+        right->value = Literal::makeFromInt32(-2, type);
+        curr->left = right;
+        curr->right = x;
+        return curr;
+      }
     }
     {
       // Wasm binary encoding uses signed LEBs, which slightly favor negative

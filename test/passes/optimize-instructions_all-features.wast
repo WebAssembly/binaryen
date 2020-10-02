@@ -4163,6 +4163,23 @@
       (i64.const 1)
     ))
   )
+  (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; ~(1 << x)  ->  rotl(-2, x)
+    (drop (i32.xor
+      (i32.shl
+        (i32.const 1)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.shl
+        (i64.const 1)
+        (local.get $z)
+      )
+      (i64.const -1)
+    ))
+  )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
     (local $x0 i32)
     (local $x1 i32)
