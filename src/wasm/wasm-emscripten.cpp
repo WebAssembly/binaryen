@@ -116,68 +116,6 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
   wasm.addExport(ex);
 }
 
-inline void exportFunction(Module& wasm, Name name, bool must_export) {
-  if (!wasm.getFunctionOrNull(name)) {
-    assert(!must_export);
-    return;
-  }
-  if (wasm.getExportOrNull(name)) {
-    return; // Already exported
-  }
-  auto exp = new Export;
-  exp->name = exp->value = name;
-  exp->kind = ExternalKind::Function;
-  wasm.addExport(exp);
-}
-
-static bool hasI64(Signature sig) {
-  // We only generate dynCall functions for signatures that contain
-  // i64.  This is because any other function can be called directly
-  // from JavaScript using the wasm table.
-  for (auto t : sig.results) {
-    if (t.getID() == Type::i64) {
-      return true;
-    }
-  }
-  for (auto t : sig.params) {
-    if (t.getID() == Type::i64) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
-  if (noDynCalls || (onlyI64DynCalls && !hasI64(sig))) {
-    return;
-  }
-  if (!sigs.insert(sig).second) {
-    return; // sig is already in the set
-  }
-  Name name = std::string("dynCall_") + getSig(sig.results, sig.params);
-  if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
-    return; // module already contains this dyncall
-  }
-  std::vector<NameType> params;
-  params.emplace_back("fptr", Type::i32); // function pointer param
-  int p = 0;
-  for (const auto& param : sig.params) {
-    params.emplace_back(std::to_string(p++), param);
-  }
-  Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
-  Expression* fptr = builder.makeLocalGet(0, Type::i32);
-  std::vector<Expression*> args;
-  Index i = 0;
-  for (const auto& param : sig.params) {
-    args.push_back(builder.makeLocalGet(++i, param));
-  }
-  Expression* call = builder.makeCallIndirect(fptr, args, sig);
-  f->body = call;
-
-  wasm.addFunction(f);
-  exportFunction(wasm, f->name, true);
-}
-
 // lld can sometimes produce a build with an imported mutable __stack_pointer
 // (i.e.  when linking with -fpie).  This method internalizes the
 // __stack_pointer and initializes it from an immutable global instead.
@@ -675,10 +613,6 @@ void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   BYN_TRACE("fixInvokeFunctionNames\n");
   FixInvokeFunctionNamesWalker walker(wasm);
   walker.walkModule(&wasm);
-  BYN_TRACE("generating dyncall thunks\n");
-  for (auto sig : walker.invokeSigs) {
-    generateDynCallThunk(sig);
-  }
 }
 
 void printSignatures(std::ostream& o, const std::set<Signature>& c) {

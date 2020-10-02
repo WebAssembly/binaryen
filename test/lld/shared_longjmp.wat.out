@@ -143,13 +143,6 @@
   )
   (unreachable)
  )
- (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
-  (call_indirect (type $i32_i32_=>_none)
-   (local.get $0)
-   (local.get $1)
-   (local.get $fptr)
-  )
- )
  (func $__assign_got_enties
   (global.set $gimport$13
    (call $g$__THREW__)
@@ -159,6 +152,13 @@
   )
   (global.set $gimport$14
    (call $fp$emscripten_longjmp_jmpbuf$vii)
+  )
+ )
+ (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
+  (call_indirect (type $i32_i32_=>_none)
+   (local.get $0)
+   (local.get $1)
+   (local.get $fptr)
   )
  )
  (func $__post_instantiate
