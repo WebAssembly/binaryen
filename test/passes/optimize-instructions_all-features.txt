@@ -13,6 +13,7 @@
  (type $none_=>_anyref (func (result anyref)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
+ (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
@@ -3596,6 +3597,20 @@
   )
   (drop
    (i64.const 1)
+  )
+ )
+ (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+  (drop
+   (i32.rotl
+    (i32.const -2)
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.rotl
+    (i64.const -2)
+    (local.get $z)
+   )
   )
  )
  (func $getFallthrough

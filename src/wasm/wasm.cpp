@@ -50,7 +50,6 @@ const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name GROW_WASM_MEMORY("__growWasmMemory");
 Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");

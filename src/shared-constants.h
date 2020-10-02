@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern Name GROW_WASM_MEMORY;
 extern Name WASM_CALL_CTORS;
 extern Name MEMORY_BASE;
 extern Name TABLE_BASE;
