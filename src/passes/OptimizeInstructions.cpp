@@ -1764,7 +1764,8 @@ private:
     if (curr->op == Abstract::getBinary(curr->type, Abstract::Add) ||
         curr->op == Abstract::getBinary(curr->type, Abstract::Sub)) {
       if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
-          matches(curr->right, binary(&right, any(&rl), any(&rr)))) {
+          matches(curr->right, binary(&right, any(&rl), any(&rr))) &&
+          !effects(curr->right).hasSideEffects()) {
         // canonicalize
         // (x << C1) op (x << C2)
         // to
@@ -1784,8 +1785,7 @@ private:
         // (x * y) op (x * z)
         // (x * y) op (z * x)
         if (left->op == right->op &&
-            left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
-            !effects(right).hasSideEffects()) {
+            left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
           bool eqLLRR = ExpressionAnalyzer::equal(ll, rr);
           if (eqLLRR || eqLLRL) {
             if (eqLLRR) {
