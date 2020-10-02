@@ -1762,8 +1762,7 @@ private:
       Binary* right = nullptr;
 
       if (matches(curr->left, binary(&left, any(&ll), any(&lr))) &&
-          matches(curr->right, binary(&right, any(&rl), any(&rr))) &&
-          !effects(curr->right).hasSideEffects()) {
+          matches(curr->right, binary(&right, pure(&rl), pure(&rr)))) {
         // canonicalize
         // (x << C1) op (x << C2)
         // to
