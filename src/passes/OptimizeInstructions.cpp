@@ -298,15 +298,18 @@ struct OptimizeInstructions
         }
       }
       {
-        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
+        // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
+        // eqz((signed)x % (i32|i64).min_s)  =>  eqz(x & (i32|i64).max_s)
         Const* c;
         Binary* inner;
         if (matches(curr,
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
-            Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+            (Bits::isPowerOf2(c->value.abs().getInteger()) ||
+             c->value.getUnsigned() ==
+               (1ULL << (c->type.getByteSize() * 8 - 1)))) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
           return curr;
         }
       }
@@ -1307,7 +1310,8 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
-    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
+    // (signed)x % (i32|i64).min_s != 0   ==>  (x & (i32|i64).max_s) != 0
     {
       Const* c;
       Binary* inner;
@@ -1315,9 +1319,11 @@ private:
                   binary(Abstract::Ne,
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
-          Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+          (Bits::isPowerOf2(c->value.abs().getInteger()) ||
+           c->value.getUnsigned() ==
+             (1ULL << (c->type.getByteSize() * 8 - 1)))) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
         return curr;
       }
     }
