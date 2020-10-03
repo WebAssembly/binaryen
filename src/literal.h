@@ -96,6 +96,46 @@ public:
     }
     return false;
   }
+  bool isSignedMin() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return i32 == std::numeric_limits<int32_t>::min();
+      case Type::i64:
+        return i64 == std::numeric_limits<int64_t>::min();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isSignedMax() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return i32 == std::numeric_limits<int32_t>::max();
+      case Type::i64:
+        return i64 == std::numeric_limits<int64_t>::max();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isUnsignedMin() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return uint32_t(i32) == std::numeric_limits<uint32_t>::min();
+      case Type::i64:
+        return uint64_t(i64) == std::numeric_limits<uint64_t>::min();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isUnsignedMax() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return uint32_t(i32) == std::numeric_limits<uint32_t>::max();
+      case Type::i64:
+        return uint64_t(i64) == std::numeric_limits<uint64_t>::max();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
@@ -134,6 +174,26 @@ public:
 
   static Literals makeZero(Type type);
   static Literal makeSingleZero(Type type);
+  static Literal makeSignedMin(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<int32_t>::min());
+      case Type::i64:
+        return Literal(std::numeric_limits<int64_t>::min());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  static Literal makeSignedMax(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<int32_t>::max());
+      case Type::i64:
+        return Literal(std::numeric_limits<int64_t>::max());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
 
   static Literal makeNull(Type type) {
     assert(type.isNullable());

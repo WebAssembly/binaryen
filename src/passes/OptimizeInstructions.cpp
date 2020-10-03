@@ -306,10 +306,13 @@ struct OptimizeInstructions
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
             (Bits::isPowerOf2(c->value.abs().getInteger()) ||
-             c->value.getUnsigned() ==
-               (1ULL << (c->type.getByteSize() * 8 - 1)))) {
+             c->value.isSignedMin())) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          if (c->value.isSignedMin()) {
+            c->value = Literal::makeSignedMax(c->type);
+          } else {
+            c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          }
           return curr;
         }
       }
@@ -1320,10 +1323,13 @@ private:
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
           (Bits::isPowerOf2(c->value.abs().getInteger()) ||
-           c->value.getUnsigned() ==
-             (1ULL << (c->type.getByteSize() * 8 - 1)))) {
+           c->value.isSignedMin())) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        if (c->value.isSignedMin()) {
+          c->value = Literal::makeSignedMax(c->type);
+        } else {
+          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        }
         return curr;
       }
     }
