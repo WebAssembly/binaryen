@@ -3093,7 +3093,7 @@
     )
     (unreachable)
   )
-  (func $srem-by-1 (param $x i32) (param $y i64)
+  (func $srem-by-const (param $x i32) (param $y i64)
     ;; (signed)x % 1
     (drop (i32.rem_s
       (local.get $x)
@@ -3102,6 +3102,16 @@
     (drop (i64.rem_s
       (local.get $y)
       (i64.const 1)
+    ))
+    ;; (signed)x % 0x80000000 -> x & 0x7FFFFFFF
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; (signed)x % 0x8000000000000000 -> x & 0x7FFFFFFFFFFFFFFF
+    (drop (i64.rem_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
     ))
   )
   (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
