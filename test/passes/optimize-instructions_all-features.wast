@@ -3200,6 +3200,22 @@
       )
       (i32.const 0)
     ))
+    ;; (signed)x % 0x8000000000000000 == 0
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 0x8000000000000000)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % 0x8000000000000000 != 0
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 0x8000000000000000)
+      )
+      (i64.const 0)
+    ))
     ;;
     (drop (i32.eq
       (i32.rem_s
