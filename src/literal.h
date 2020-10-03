@@ -155,6 +155,8 @@ public:
     }
   }
 
+  static Literals makeZero(Type type);
+  static Literal makeSingleZero(Type type);
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
@@ -174,7 +176,6 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-
   static Literal makeFromUInt64(uint64_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
@@ -189,9 +190,6 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-
-  static Literals makeZero(Type type);
-  static Literal makeSingleZero(Type type);
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
       case Type::i32:
@@ -212,7 +210,17 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-
+  static Literal makeUnsignedMin(Type type) { return makeSingleZero(type); }
+  static Literal makeUnsignedMax(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<uint32_t>::max());
+      case Type::i64:
+        return Literal(std::numeric_limits<uint64_t>::max());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
   static Literal makeNull(Type type) {
     assert(type.isNullable());
     return Literal(type);
