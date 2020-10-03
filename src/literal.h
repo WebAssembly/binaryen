@@ -97,6 +97,13 @@ public:
     return false;
   }
   bool isZero() const {
+    if (type.isVector()) {
+      uint8_t zeros[16] = {0};
+      return memcmp(&v128, zeros, 16) == 0;
+    }
+    return isSignleZero();
+  }
+  bool isSignleZero() const {
     switch (type.getBasic()) {
       case Type::i32:
         return i32 == 0;
@@ -106,10 +113,6 @@ public:
         return bit_cast<float>(i32) == 0.0f;
       case Type::f64:
         return bit_cast<double>(i64) == 0.0;
-      case Type::v128: {
-        uint8_t zeros[16] = {0};
-        return memcmp(&v128, zeros, 16) == 0;
-      }
       default:
         WASM_UNREACHABLE("unexpected type");
     }
