@@ -2858,14 +2858,6 @@
    )
   )
   (drop
-   (i32.eqz
-    (i32.and
-     (local.get $x)
-     (i32.const 3)
-    )
-   )
-  )
-  (drop
    (i64.eqz
     (i64.rem_s
      (local.get $y)
