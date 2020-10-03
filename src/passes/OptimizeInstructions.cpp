@@ -305,8 +305,8 @@ struct OptimizeInstructions
         if (matches(curr,
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
-            (Bits::isPowerOf2(c->value.abs().getInteger()) ||
-             c->value.isSignedMin())) {
+            (c->value.isSignedMin() ||
+             Bits::isPowerOf2(c->value.abs().getInteger()))) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
@@ -1322,8 +1322,8 @@ private:
                   binary(Abstract::Ne,
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
-          (Bits::isPowerOf2(c->value.abs().getInteger()) ||
-           c->value.isSignedMin())) {
+          (c->value.isSignedMin() ||
+           Bits::isPowerOf2(c->value.abs().getInteger()))) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
