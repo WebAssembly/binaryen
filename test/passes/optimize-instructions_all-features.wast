@@ -4805,7 +4805,19 @@
         (local.get $x)
         (local.get $y)
       )
-    ))
+     ))
+    ;; x | (y | x)   where x and y cannot be reordered  -  skip
+    (drop
+      (i32.or
+        (local.get $0)
+        (i32.or
+          (local.tee $0
+            (i32.const 1)
+          )
+          (local.get $0)
+        )
+      )
+    )
   )
   (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
     (memory.copy  ;; skip
