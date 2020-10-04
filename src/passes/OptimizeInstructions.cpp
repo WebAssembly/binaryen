@@ -1310,9 +1310,8 @@ private:
     }
     {
       // (signed)x % (i32|i64).min_s   ==>  (x & (i32|i64).max_s)
-      Const* c;
-      if (matches(curr, binary(Abstract::RemS, any(&left), ival(&c))) &&
-          c->value.isSignedMin()) {
+      if (matches(curr, binary(Abstract::RemS, any(&left), ival())) &&
+          right->value.isSignedMin()) {
         curr->op = Abstract::getBinary(type, Abstract::And);
         right->value = Literal::makeSignedMax(type);
         return curr;
