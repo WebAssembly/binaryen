@@ -137,16 +137,6 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  bool isUnsignedMin() const {
-    switch (type.getBasic()) {
-      case Type::i32:
-        return uint32_t(i32) == std::numeric_limits<uint32_t>::min();
-      case Type::i64:
-        return uint64_t(i64) == std::numeric_limits<uint64_t>::min();
-      default:
-        WASM_UNREACHABLE("unexpected type");
-    }
-  }
   bool isUnsignedMax() const {
     switch (type.getBasic()) {
       case Type::i32:
@@ -213,7 +203,6 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  static Literal makeUnsignedMin(Type type) { return makeSingleZero(type); }
   static Literal makeUnsignedMax(Type type) {
     switch (type.getBasic()) {
       case Type::i32:
