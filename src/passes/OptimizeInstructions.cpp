@@ -1605,8 +1605,8 @@ private:
               // x | (y | x)  ==>   y | x
               // (here we need the check for reordering for the more obvious
               // reason that previously x appeared before y, and now y appears
-              // first; or, if we tried to emit x * y here, reversing the order,
-              // we'd be in the same situation as the previous comment)
+              // first; or, if we tried to emit x [&|] y here, reversing the
+              // order, we'd be in the same situation as the previous comment)
               if (outer->op == Abstract::getBinary(type, Abstract::And) ||
                   outer->op == Abstract::getBinary(type, Abstract::Or)) {
                 return inner;
