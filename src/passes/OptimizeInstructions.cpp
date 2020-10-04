@@ -1591,17 +1591,24 @@ private:
                 return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(inner->right, outer->left)) {
+            if (ExpressionAnalyzer::equal(inner->right, outer->left) &&
+                canReorder(outer->left, inner->left)) {
               // x ^ (y ^ x)  ==>   y
+              // (note that we need the check for reordering here because if
+              // e.g. y writes to a local that x reads, the second appearance
+              // of x would be different from the first)
               if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
                 return inner->left;
               }
 
               // x & (y & x)  ==>   y & x
               // x | (y | x)  ==>   y | x
-              if (canReorder(outer->left, inner->left) &&
-                  (outer->op == Abstract::getBinary(type, Abstract::And) ||
-                   outer->op == Abstract::getBinary(type, Abstract::Or))) {
+              // (here we need the check for reordering for the more obvious
+              // reason that previously x appeared before y, and now y appears
+              // first; or, if we tried to emit x * y here, reversing the order,
+              // we'd be in the same situation as the previous comment)
+              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
+                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
                 return inner;
               }
             }
