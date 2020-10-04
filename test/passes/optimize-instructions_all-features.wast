@@ -4809,12 +4809,12 @@
     ;; x | (y | x)   where x and y cannot be reordered  -  skip
     (drop
       (i32.or
-        (local.get $0)
+        (local.get $x)
         (i32.or
-          (local.tee $0
+          (local.tee $x
             (i32.const 1)
           )
-          (local.get $0)
+          (local.get $x)
         )
       )
     )

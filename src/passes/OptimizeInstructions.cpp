@@ -1599,8 +1599,8 @@ private:
 
               // x & (y & x)  ==>   y & x
               // x | (y | x)  ==>   y | x
-              if (canReorder(outer->left, inner->left) && (
-                   outer->op == Abstract::getBinary(type, Abstract::And) ||
+              if (canReorder(outer->left, inner->left) &&
+                  (outer->op == Abstract::getBinary(type, Abstract::And) ||
                    outer->op == Abstract::getBinary(type, Abstract::Or))) {
                 return inner;
               }
