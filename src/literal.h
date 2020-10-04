@@ -101,9 +101,9 @@ public:
       uint8_t zeros[16] = {0};
       return memcmp(&v128, zeros, 16) == 0;
     }
-    return isSignleZero();
+    return isSingleZero();
   }
-  bool isSignleZero() const {
+  bool isSingleZero() const {
     switch (type.getBasic()) {
       case Type::i32:
         return i32 == 0;
