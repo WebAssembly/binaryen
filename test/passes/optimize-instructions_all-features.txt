@@ -4331,6 +4331,14 @@
    )
   )
   (drop
+   (i32.or
+    (local.get $x)
+    (local.tee $x
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
    (i32.xor
     (local.get $x)
     (i32.xor
@@ -4339,6 +4347,11 @@
      )
      (local.get $x)
     )
+   )
+  )
+  (drop
+   (local.tee $x
+    (i32.const 1)
    )
   )
  )

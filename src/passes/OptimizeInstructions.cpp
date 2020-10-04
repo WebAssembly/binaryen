@@ -1635,7 +1635,9 @@ private:
                 return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(inner->left, outer->right)) {
+            // See comments in the parallel code earlier about ordering here.
+            if (ExpressionAnalyzer::equal(inner->left, outer->right) &&
+                canReorder(inner->left, inner->right)) {
               // (x ^ y) ^ x  ==>   y
               if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
                 return inner->right;

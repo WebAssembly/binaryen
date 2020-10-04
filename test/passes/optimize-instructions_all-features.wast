@@ -4818,6 +4818,17 @@
         )
       )
     )
+    (drop
+      (i32.or
+        (i32.or
+          (local.get $x)
+          (local.tee $x
+            (i32.const 1)
+          )
+        )
+        (local.get $x)
+      )
+    )
     ;; x ^ (y ^ x)   where x and y cannot be reordered  -  skip
     (drop
       (i32.xor
@@ -4828,6 +4839,17 @@
           )
           (local.get $x)
         )
+      )
+    )
+    (drop
+      (i32.xor
+        (i32.xor
+          (local.get $x)
+          (local.tee $x
+            (i32.const 1)
+          )
+        )
+        (local.get $x)
       )
     )
   )
