@@ -307,7 +307,7 @@ struct OptimizeInstructions
             !c->value.isSignedMin() &&
             Bits::isPowerOf2(c->value.abs().getInteger())) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeUnit(c->type));
           return curr;
         }
       }
@@ -1305,7 +1305,7 @@ private:
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     {
@@ -1328,7 +1328,7 @@ private:
           !c->value.isSignedMin() &&
           Bits::isPowerOf2(c->value.abs().getInteger())) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        c->value = c->value.abs().sub(Literal::makeUnit(c->type));
         return curr;
       }
     }
@@ -1371,12 +1371,12 @@ private:
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(Type::i32);
+      right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1395,7 +1395,7 @@ private:
     }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = right;
       curr->right = left;
@@ -1403,7 +1403,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->value = Literal::makeUnit(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1795,7 +1795,7 @@ private:
       case LeUInt64:
       case GeSInt64:
       case GeUInt64:
-        return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
+        return LiteralUtils::makeUnit(Type::i32, *getModule());
       default:
         return nullptr;
     }

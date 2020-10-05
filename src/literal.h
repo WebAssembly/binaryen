@@ -145,8 +145,12 @@ public:
     }
   }
 
-  static Literals makeZero(Type type);
-  static Literal makeSingleZero(Type type);
+  static Literals makeZeros(Type type);
+  static Literals makeUnits(Type type);
+  static Literals makeNegUnits(Type type);
+  static Literal makeZero(Type type);
+  static Literal makeUnit(Type type);
+  static Literal makeNegUnit(Type type);
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:

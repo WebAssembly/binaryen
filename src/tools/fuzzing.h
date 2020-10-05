@@ -1574,7 +1574,7 @@ private:
           value = value.add(Literal::makeFromInt32(-1, type));
           break;
         case 1:
-          value = value.add(Literal::makeFromInt32(1, type));
+          value = value.add(Literal::makeUnit(type));
           break;
         default: {
         }

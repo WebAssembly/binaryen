@@ -127,16 +127,34 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
   extractBytes<uint64_t, 2>(v128, lanes);
 }
 
-Literals Literal::makeZero(Type type) {
+Literals Literal::makeZeros(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
   for (const auto& t : type) {
-    zeroes.push_back(makeSingleZero(t));
+    zeroes.push_back(makeZero(t));
   }
   return zeroes;
 }
 
-Literal Literal::makeSingleZero(Type type) {
+Literals Literal::makeUnits(Type type) {
+  assert(type.isConcrete());
+  Literals units;
+  for (const auto& t : type) {
+    units.push_back(makeUnit(t));
+  }
+  return units;
+}
+
+Literals Literal::makeNegUnits(Type type) {
+  assert(type.isConcrete());
+  Literals units;
+  for (const auto& t : type) {
+    units.push_back(makeNegUnit(t));
+  }
+  return units;
+}
+
+Literal Literal::makeZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
     if (type == Type::i31ref) {
@@ -147,6 +165,16 @@ Literal Literal::makeSingleZero(Type type) {
   } else {
     return makeFromInt32(0, type);
   }
+}
+
+Literal Literal::makeUnit(Type type) {
+  assert(type.isNumber());
+  return makeFromInt32(1, type);
+}
+
+Literal Literal::makeNegUnit(Type type) {
+  assert(type.isNumber());
+  return makeFromInt32(-1, type);
 }
 
 std::array<uint8_t, 16> Literal::getv128() const {
@@ -1705,7 +1733,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal any_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] != Literal::makeSingleZero(lanes[i].type)) {
+    if (lanes[i] != Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(1));
     }
   }
@@ -1716,7 +1744,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal all_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] == Literal::makeSingleZero(lanes[i].type)) {
+    if (lanes[i] == Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(0));
     }
   }
