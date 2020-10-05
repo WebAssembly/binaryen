@@ -298,15 +298,16 @@ struct OptimizeInstructions
         }
       }
       {
-        // eqz((signed)x % C_pot)  =>  eqz(x & (C_pot - 1))
+        // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
         Const* c;
         Binary* inner;
         if (matches(curr,
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
-            Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+            !c->value.isSignedMin() &&
+            Bits::isPowerOf2(c->value.abs().getInteger())) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
           return curr;
         }
       }
@@ -1307,7 +1308,16 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
-    // (signed)x % C_pot != 0   ==>  x & (C_pot - 1) != 0
+    {
+      // (signed)x % (i32|i64).min_s   ==>  (x & (i32|i64).max_s)
+      if (matches(curr, binary(Abstract::RemS, any(&left), ival())) &&
+          right->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Abstract::And);
+        right->value = Literal::makeSignedMax(type);
+        return curr;
+      }
+    }
+    // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
     {
       Const* c;
       Binary* inner;
@@ -1315,9 +1325,10 @@ private:
                   binary(Abstract::Ne,
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
-          Bits::isPowerOf2((uint64_t)c->value.getInteger())) {
+          !c->value.isSignedMin() &&
+          Bits::isPowerOf2(c->value.abs().getInteger())) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.sub(Literal::makeFromInt32(1, c->type));
+        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
         return curr;
       }
     }
@@ -1591,14 +1602,22 @@ private:
                 return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(inner->right, outer->left)) {
+            if (ExpressionAnalyzer::equal(inner->right, outer->left) &&
+                canReorder(outer->left, inner->left)) {
               // x ^ (y ^ x)  ==>   y
+              // (note that we need the check for reordering here because if
+              // e.g. y writes to a local that x reads, the second appearance
+              // of x would be different from the first)
               if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
                 return inner->left;
               }
 
               // x & (y & x)  ==>   y & x
               // x | (y | x)  ==>   y | x
+              // (here we need the check for reordering for the more obvious
+              // reason that previously x appeared before y, and now y appears
+              // first; or, if we tried to emit x [&|] y here, reversing the
+              // order, we'd be in the same situation as the previous comment)
               if (outer->op == Abstract::getBinary(type, Abstract::And) ||
                   outer->op == Abstract::getBinary(type, Abstract::Or)) {
                 return inner;
@@ -1627,7 +1646,9 @@ private:
                 return inner;
               }
             }
-            if (ExpressionAnalyzer::equal(inner->left, outer->right)) {
+            // See comments in the parallel code earlier about ordering here.
+            if (ExpressionAnalyzer::equal(inner->left, outer->right) &&
+                canReorder(inner->left, inner->right)) {
               // (x ^ y) ^ x  ==>   y
               if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
                 return inner->right;
