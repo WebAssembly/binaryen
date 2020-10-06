@@ -51,12 +51,16 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
+  bool legacyPIC = true;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
+  // TODO: remove after https://github.com/WebAssembly/binaryen/issues/3043
   bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
 
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -105,6 +109,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
+         })
+    .add("--new-pic-abi",
+         "",
+         "Use new/llvm PIC abi",
+         Options::Arguments::Zero,
+         [&legacyPIC](Options* o, const std::string& argument) {
+           legacyPIC = false;
          })
     .add("--input-source-map",
          "-ism",
@@ -173,6 +184,18 @@ int main(int argc, const char* argv[]) {
          [&minimizeWasmChanges](Options* o, const std::string&) {
            minimizeWasmChanges = true;
          })
+    .add("--no-dyncalls",
+         "",
+         "",
+         Options::Arguments::Zero,
+         [&noDynCalls](Options* o, const std::string&) { noDynCalls = true; })
+    .add("--dyncalls-i64",
+         "",
+         "",
+         Options::Arguments::Zero,
+         [&onlyI64DynCalls](Options* o, const std::string&) {
+           onlyI64DynCalls = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
@@ -230,23 +253,20 @@ int main(int argc, const char* argv[]) {
   }
 
   EmscriptenGlueGenerator generator(wasm);
-  generator.setStandalone(standaloneWasm);
-  generator.setSideModule(sideModule);
-  generator.setMinimizeWasmChanges(minimizeWasmChanges);
+  generator.standalone = standaloneWasm;
+  generator.sideModule = sideModule;
+  generator.minimizeWasmChanges = minimizeWasmChanges;
+  generator.onlyI64DynCalls = onlyI64DynCalls;
+  generator.noDynCalls = noDynCalls;
 
   generator.fixInvokeFunctionNames();
 
   std::vector<Name> initializerFunctions;
 
-  if (wasm.table.imported()) {
-    if (wasm.table.base != "table") {
-      wasm.table.base = Name("table");
-    }
-  }
-  if (wasm.memory.imported()) {
-    if (wasm.table.base != "memory") {
-      wasm.memory.base = Name("memory");
-    }
+  // The wasm backend emits "__indirect_function_table" as the import name for
+  // the table, while older emscripten expects "table"
+  if (wasm.table.imported() && !minimizeWasmChanges) {
+    wasm.table.base = Name("table");
   }
   wasm.updateMaps();
 
@@ -272,14 +292,23 @@ int main(int argc, const char* argv[]) {
 
   if (sideModule) {
     passRunner.add("replace-stack-pointer");
-    passRunner.add("emscripten-pic");
-  } else {
-    passRunner.add("emscripten-pic-main-module");
   }
 
-  if (!standaloneWasm) {
+  if (legacyPIC) {
+    if (sideModule) {
+      passRunner.add("emscripten-pic");
+    } else {
+      passRunner.add("emscripten-pic-main-module");
+    }
+  }
+
+  if (!noDynCalls && !standaloneWasm) {
     // If not standalone wasm then JS is relevant and we need dynCalls.
-    passRunner.add("generate-dyncalls");
+    if (onlyI64DynCalls) {
+      passRunner.add("generate-i64-dyncalls");
+    } else {
+      passRunner.add("generate-dyncalls");
+    }
   }
 
   // Legalize the wasm, if BigInts don't make that moot.
@@ -306,7 +335,6 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("finalizing as regular module\n");
     generator.internalizeStackPointerGlobal();
-    generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
     if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
       auto* ex = new Export();

@@ -9,3 +9,7 @@ assert(binaryen.getFlexibleInlineMaxSize() == 22);
 console.log("// oneCallerInlineMaxSize=" + binaryen.getOneCallerInlineMaxSize());
 binaryen.setOneCallerInlineMaxSize(33);
 assert(binaryen.getOneCallerInlineMaxSize() == 33);
+
+console.log("// allowInliningFunctionsWithLoops=" + binaryen.getAllowInliningFunctionsWithLoops());
+binaryen.setAllowInliningFunctionsWithLoops(true);
+assert(binaryen.getAllowInliningFunctionsWithLoops() == true);

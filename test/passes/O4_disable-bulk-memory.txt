@@ -13,7 +13,7 @@
  (type $f64_f64_f64_f64_f64_f64_f64_=>_i32 (func (param f64 f64 f64 f64 f64 f64 f64) (result i32)))
  (type $none_=>_f64 (func (result f64)))
  (type $i32_=>_f64 (func (param i32) (result f64)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $1 1))
  (data (i32.const 8) "\0d\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s")
  (data (i32.const 40) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s")
  (table $0 1 funcref)
@@ -968,8 +968,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $4)
+        (f64.const 0.01)
        )
       )
      )
@@ -980,8 +980,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $5)
+        (f64.const 0.01)
        )
       )
      )
@@ -992,8 +992,8 @@
         (local.get $0)
        )
        (f64.mul
-        (f64.const 0.01)
         (local.get $6)
+        (f64.const 0.01)
        )
       )
      )
@@ -1067,12 +1067,12 @@
        (local.get $1)
        (f64.mul
         (f64.mul
-         (f64.const 0.5)
          (local.tee $10
           (f64.load offset=48
            (local.get $0)
           )
          )
+         (f64.const 0.5)
         )
         (f64.add
          (f64.add

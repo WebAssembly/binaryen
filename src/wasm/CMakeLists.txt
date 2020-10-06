@@ -1,4 +1,4 @@
-FILE(GLOB wasm_HEADERS *.h)
+file(GLOB wasm_HEADERS ../*.h)
 set(wasm_SOURCES
   literal.cpp
   wasm.cpp

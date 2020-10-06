@@ -56,7 +56,7 @@
 )
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
- (import "env" "table" (table $0 5 5 funcref))
+ (import "env" "table" (table $table 5 5 funcref))
  (elem (i32.const 1) $foo)
  (func $foo (param $0 i32) (param $1 i32)
   (unreachable)

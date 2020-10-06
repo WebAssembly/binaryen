@@ -16,11 +16,16 @@ from __future__ import print_function
 
 import argparse
 import difflib
+import fnmatch
 import glob
 import os
 import shutil
 import subprocess
 import sys
+
+# The C++ standard whose features are required to build Binaryen.
+# Keep in sync with CMakeLists.txt CXX_STANDARD
+cxx_standard = 14
 
 
 def parse_args(args):
@@ -150,7 +155,13 @@ def which(program):
         if is_exe(program):
             return program
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
+        paths = [
+            # Prefer tools installed using third_party/setup.py
+            os.path.join(options.binaryen_root, 'third_party', 'mozjs'),
+            os.path.join(options.binaryen_root, 'third_party', 'v8'),
+            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin')
+        ] + os.environ['PATH'].split(os.pathsep)
+        for path in paths:
             path = path.strip('"')
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
@@ -367,7 +378,7 @@ def get_tests(test_dir, extensions=[]):
     for ext in extensions:
         tests += glob.glob(os.path.join(test_dir, '*' + ext))
     if options.test_name_filter:
-        tests = list(filter(lambda n: n.find(options.test_name_filter) >= 0, tests))
+        tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
 
 

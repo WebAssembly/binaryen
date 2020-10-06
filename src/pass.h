@@ -77,6 +77,9 @@ struct InliningOptions {
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
+  // Loops usually mean the function does heavy work, so the call overhead
+  // is not significant and we do not inline such functions by default.
+  bool allowFunctionsWithLoops = false;
 };
 
 struct PassOptions {
@@ -99,6 +102,11 @@ struct PassOptions {
   // many cases.
   bool lowMemoryUnused = false;
   enum { LowMemoryBound = 1024 };
+  // Whether to allow "loose" math semantics, ignoring corner cases with NaNs
+  // and assuming math follows the algebraic rules for associativity and so
+  // forth (which IEEE floats do not, strictly speaking). This is inspired by
+  // gcc/clang's -ffast-math flag.
+  bool fastMath = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to

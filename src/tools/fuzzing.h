@@ -306,7 +306,7 @@ private:
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
   Type getSubType(Type type) {
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Type> types;
       for (const auto& t : type) {
         types.push_back(getSubType(t));
@@ -317,15 +317,23 @@ private:
     options.push_back(type); // includes itself
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
-      case Type::externref:
-        if (wasm.features.hasExceptionHandling()) {
-          options.push_back(Type::exnref);
+      case Type::anyref:
+        if (wasm.features.hasReferenceTypes()) {
+          options.push_back(Type::funcref);
+          options.push_back(Type::externref);
+          if (wasm.features.hasExceptionHandling()) {
+            options.push_back(Type::exnref);
+          }
+          if (wasm.features.hasGC()) {
+            options.push_back(Type::eqref);
+            options.push_back(Type::i31ref);
+          }
         }
-        options.push_back(Type::funcref);
-        // falls through
-      case Type::funcref:
-      case Type::exnref:
-        options.push_back(Type::nullref);
+        break;
+      case Type::eqref:
+        if (wasm.features.hasGC()) {
+          options.push_back(Type::i31ref);
+        }
         break;
       default:
         break;
@@ -849,8 +857,7 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    bool canMakeControlFlow =
-      !type.isMulti() || wasm.features.has(FeatureSet::Multivalue);
+    bool canMakeControlFlow = !type.isTuple() || wasm.features.hasMultivalue();
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -885,9 +892,16 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq,
+                  &Self::makeI31Get);
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
+    if (type == Type::i31ref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
     return (this->*pick(options))(type);
   }
@@ -1265,7 +1279,7 @@ private:
 
   Expression* makeTupleMake(Type type) {
     assert(wasm.features.hasMultivalue());
-    assert(type.isMulti());
+    assert(type.isTuple());
     std::vector<Expression*> elements;
     for (const auto& t : type) {
       elements.push_back(make(t));
@@ -1362,8 +1376,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1466,8 +1482,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1595,8 +1613,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1640,8 +1660,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1682,7 +1704,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1693,7 +1716,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),
@@ -1708,8 +1732,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1735,8 +1761,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1763,9 +1791,12 @@ private:
         }
         return builder.makeRefFunc(target->name);
       }
-      return builder.makeRefNull();
+      if (type == Type::i31ref) {
+        return builder.makeI31New(makeConst(Type::i32));
+      }
+      return builder.makeRefNull(type);
     }
-    if (type.isMulti()) {
+    if (type.isTuple()) {
       std::vector<Expression*> operands;
       for (const auto& t : type) {
         operands.push_back(makeConst(t));
@@ -1783,7 +1814,7 @@ private:
   }
 
   Expression* makeUnary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
         return builder.makeUnary(unary->op, make(Type::unreachable));
@@ -1845,8 +1876,10 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -1990,8 +2023,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2004,7 +2039,7 @@ private:
   }
 
   Expression* makeBinary(Type type) {
-    assert(!type.isMulti());
+    assert(!type.isTuple());
     if (type == Type::unreachable) {
       if (auto* binary =
             makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
@@ -2227,8 +2262,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2434,8 +2471,10 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2610,14 +2649,29 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    Type refType;
-    if (wasm.features.hasExceptionHandling()) {
-      refType =
-        pick(Type::funcref, Type::externref, Type::nullref, Type::exnref);
-    } else {
-      refType = pick(Type::funcref, Type::externref, Type::nullref);
-    }
-    return builder.makeRefIsNull(make(refType));
+    return builder.makeRefIsNull(make(getReferenceType()));
+  }
+
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
+  }
+
+  Expression* makeI31New(Type type) {
+    assert(type == Type::i31ref);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* value = make(Type::i32);
+    return builder.makeI31New(value);
+  }
+
+  Expression* makeI31Get(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* i31 = make(Type::i31ref);
+    return builder.makeI31Get(i31, bool(oneIn(2)));
   }
 
   Expression* makeMemoryInit() {
@@ -2680,15 +2734,37 @@ private:
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes,
-             Type::funcref,
-             Type::externref,
-             Type::nullref)
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  std::vector<Type> getReferenceTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
+  }
+
+  Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(FeatureOptions<Type>().add(
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;
@@ -2725,14 +2801,13 @@ private:
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref because it is opaque
+  // - there's no point in logging externref or anyref because these are opaque
   // - don't bother logging tuples
   std::vector<Type> getLoggableTypes() {
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes, Type::nullref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }

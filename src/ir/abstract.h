@@ -40,6 +40,8 @@ enum Op {
   Shl,
   ShrU,
   ShrS,
+  RotL,
+  RotR,
   And,
   Or,
   Xor,
@@ -98,13 +100,13 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      WASM_UNREACHABLE("v128 not implemented yet");
-    }
+    case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -137,6 +139,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt32;
         case ShrS:
           return ShrSInt32;
+        case RotL:
+          return RotLInt32;
+        case RotR:
+          return RotRInt32;
         case And:
           return AndInt32;
         case Or:
@@ -190,6 +196,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt64;
         case ShrS:
           return ShrSInt64;
+        case RotL:
+          return RotLInt64;
+        case RotR:
+          return RotRInt64;
         case And:
           return AndInt64;
         case Or:
@@ -263,13 +273,13 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      WASM_UNREACHABLE("v128 not implemented yet");
-    }
+    case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;

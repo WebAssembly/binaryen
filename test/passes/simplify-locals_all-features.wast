@@ -1656,10 +1656,10 @@
  )
 )
 (module
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
+ (func $subtype-test (result anyref)
+  (local $0 externref)
+  (local $1 anyref)
+  (local $2 anyref)
   (block
    (local.set $1
     (local.get $0)
@@ -1678,7 +1678,7 @@
       (local.set $0
         ;; br_on_exn's target block cannot be optimized to have a return value
         (br_on_exn $label$0 $event$0
-          (ref.null)
+          (ref.null exn)
         )
       )
     )
@@ -1692,7 +1692,7 @@
     (local.set $0
       (block $label$1 (result exnref)
         (br_on_exn $label$1 $event$1
-          (ref.null)
+          (ref.null exn)
         )
       )
     )
@@ -1704,7 +1704,7 @@
     (local.set $0
       (block $label$1 (result i32)
         (try
-          (do (rethrow (ref.null)))
+          (do (rethrow (ref.null exn)))
           (catch)
         )
         (i32.const 0)
@@ -1717,10 +1717,10 @@
     (try
       (do)
       (catch
-        ;; This (local.set $0) of (exnref.pop) cannot be sinked to
-        ;; (local.get $0) below, because exnref.pop should follow right after
+        ;; This (local.set $0) of (pop exnref) cannot be sinked to
+        ;; (local.get $0) below, because pop exnref should follow right after
         ;; 'catch'.
-        (local.set $0 (exnref.pop))
+        (local.set $0 (pop exnref))
         (call $foo
           (i32.const 3)
           (local.get $0)
@@ -1738,8 +1738,8 @@
         ;; try-catch, so it is OK.
         (local.set $0
           (try (result exnref)
-            (do (ref.null))
-            (catch (exnref.pop))
+            (do (ref.null exn))
+            (catch (pop exnref))
           )
         )
         (call $foo
@@ -1762,7 +1762,7 @@
         (drop (local.get $0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )
@@ -1777,7 +1777,7 @@
         (drop (local.get $0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
   )

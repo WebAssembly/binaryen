@@ -229,6 +229,14 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
   }
 }
 
+template<typename T> inline void iterImports(Module& wasm, T visitor) {
+  iterImportedMemories(wasm, visitor);
+  iterImportedTables(wasm, visitor);
+  iterImportedGlobals(wasm, visitor);
+  iterImportedFunctions(wasm, visitor);
+  iterImportedEvents(wasm, visitor);
+}
+
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
@@ -409,7 +417,7 @@ collectSignatures(Module& wasm,
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
-          if (curr->type.isMulti()) {
+          if (curr->type.isTuple()) {
             counts[Signature(Type::none, curr->type)]++;
           }
         }
