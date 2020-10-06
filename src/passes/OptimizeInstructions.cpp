@@ -538,7 +538,7 @@ struct OptimizeInstructions
             binary->op = op;
           } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
                      binary->op == DivUInt32) {
-            // (uint32_t)x / -C   ==>   u32(x) >= -C
+            // u32(x) / -C   ==>   u32(x) >= -C
             binary->op = GeUInt32;
             return binary;
           }
@@ -566,7 +566,7 @@ struct OptimizeInstructions
           } else if (getPassOptions().shrinkLevel == 0 && c < 0 &&
                      c > std::numeric_limits<int64_t>::min() &&
                      binary->op == DivUInt64) {
-            // u64(x) / -C   ==>   i64.extend_i32_u(x >= -C)
+            // u64(x) / -C   ==>   u64(u64(x) >= -C)
             // Apply this only for shrinkLevel == 0
             // due to it increase size by one byte.
             binary->op = GeUInt64;
