@@ -1,5 +1,5 @@
 (module
- (import "env" "__invoke_v_ii" (func $__invoke_v_ii (param i32 i32 i32)))
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (func $f1 (result i32)
   (i32.const 1024)
  )

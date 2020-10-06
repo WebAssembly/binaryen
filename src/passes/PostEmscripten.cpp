@@ -38,7 +38,7 @@ namespace wasm {
 namespace {
 
 static bool isInvoke(Function* F) {
-  return F->imported() && F->module == ENV && F->base.startsWith("__invoke_");
+  return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
 }
 
 struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
@@ -85,7 +85,7 @@ struct PostEmscripten : public Pass {
     optimizeExceptions(runner, module);
   }
 
-  // Optimize exceptions (and setjmp) by removing unnecessary __invoke* calls.
+  // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.
   // An invoke is a call to JS with a function pointer; JS does a try-catch
   // and calls the pointer, catching and reporting any error. If we know no
   // exception will be thrown, we can simply skip the invoke.

@@ -12,7 +12,7 @@
  (import "env" "saveSetjmp" (func $fimport$1 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$2 (result i32)))
  (import "env" "emscripten_longjmp" (func $fimport$3 (param i32 i32)))
- (import "env" "__invoke_v_ii" (func $fimport$4 (param i32 i32 i32)))
+ (import "env" "invoke_vii" (func $fimport$4 (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$5 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$6 (param i32)))
  (import "env" "free" (func $fimport$7 (param i32)))

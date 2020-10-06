@@ -6,14 +6,14 @@
  (type $none_=>_i32 (func (result i32)))
  (import "env" "imported" (func $imported (result i64)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
- (import "env" "__invoke_v_j" (func $legalimport$__invoke_v_j (param i32 i32)))
+ (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
  (export "func" (func $func))
  (export "dynCall_foo" (func $legalstub$dyn))
  (func $func (result i64)
   (drop
    (call $imported)
   )
-  (call $legalfunc$__invoke_v_j
+  (call $legalfunc$invoke_vj
    (i64.const 0)
   )
   (unreachable)
@@ -41,8 +41,8 @@
    (local.get $0)
   )
  )
- (func $legalfunc$__invoke_v_j (param $0 i64)
-  (call $legalimport$__invoke_v_j
+ (func $legalfunc$invoke_vj (param $0 i64)
+  (call $legalimport$invoke_vj
    (i32.wrap_i64
     (local.get $0)
    )
