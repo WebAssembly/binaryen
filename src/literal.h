@@ -166,7 +166,7 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  static Literal makeFromUInt64(uint64_t x, Type type) {
+  static Literal makeFromInt64(int64_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
         return Literal(int32_t(x));
@@ -176,6 +176,9 @@ public:
         return Literal(float(x));
       case Type::f64:
         return Literal(double(x));
+      case Type::v128:
+        return Literal(
+          std::array<Literal, 2>{{Literal(x), Literal(int64_t(0))}});
       default:
         WASM_UNREACHABLE("unexpected type");
     }
