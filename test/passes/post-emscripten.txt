@@ -4,7 +4,7 @@
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
- (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
+ (import "env" "__invoke_v_if" (func $__invoke_v_if (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
  (elem (i32.const 0) $pow2 $pow.2 $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
@@ -77,7 +77,7 @@
    (i32.const 42)
    (f32.const 3.141590118408203)
   )
-  (call $invoke_vif
+  (call $__invoke_v_if
    (i32.const 4)
    (i32.const 55)
    (f32.const 2.1828181743621826)
@@ -86,12 +86,12 @@
    (i32.const 100)
    (f32.const 1.1109999418258667)
   )
-  (call $invoke_vif
+  (call $__invoke_v_if
    (i32.const 6)
    (i32.const 999)
    (f32.const 1.4140000343322754)
   )
-  (call $invoke_vif
+  (call $__invoke_v_if
    (i32.add
     (i32.const 1)
     (i32.const 1)
@@ -137,12 +137,12 @@
  (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "env" "glob" (global $glob i32))
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
- (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
+ (import "env" "__invoke_v_if" (func $__invoke_v_if (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
  (elem (global.get $glob) $other_safe)
  (func $exc
-  (call $invoke_vif
+  (call $__invoke_v_if
    (i32.const 3)
    (i32.const 42)
    (f32.const 3.141590118408203)
@@ -159,12 +159,12 @@
  (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "env" "glob" (global $glob i32))
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
- (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
+ (import "env" "__invoke_v_if" (func $__invoke_v_if (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
  (elem (i32.const 0) $other_safe)
  (func $exc
-  (call $invoke_vif
+  (call $__invoke_v_if
    (i32.const 0)
    (i32.const 42)
    (f32.const 3.141590118408203)

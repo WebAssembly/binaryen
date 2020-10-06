@@ -573,7 +573,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
-        !import->base.startsWith("invoke_")) {
+        !import->base.startsWith("__invoke_")) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
@@ -618,7 +618,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (import->base.startsWith("invoke_")) {
+    if (import->base.startsWith("__invoke_")) {
       if (invokeFuncs.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }

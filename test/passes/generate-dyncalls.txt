@@ -5,7 +5,7 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
- (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "__invoke_v_ii" (func $__invoke_v_ii (param i32 i32 i32)))
  (table $0 2 2 funcref)
  (elem (i32.const 0) $f1 $f2)
  (export "dynCall_i" (func $dynCall_i))

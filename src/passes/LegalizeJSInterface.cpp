@@ -208,7 +208,7 @@ private:
       return true;
     }
     // We are doing minimal legalization - just what JS needs.
-    return im->module == ENV && im->base.startsWith("invoke_");
+    return im->module == ENV && im->base.startsWith("__invoke_");
   }
 
   // JS calls the export, so it must call a legal stub that calls the actual
