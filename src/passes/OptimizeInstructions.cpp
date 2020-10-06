@@ -304,10 +304,14 @@ struct OptimizeInstructions
         if (matches(curr,
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
-            !c->value.isSignedMin() &&
-            Bits::isPowerOf2(c->value.abs().getInteger())) {
+            (c->value.isSignedMin() ||
+             Bits::isPowerOf2(c->value.abs().getInteger()))) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          if (c->value.isSignedMin()) {
+            c->value = Literal::makeSignedMax(c->type);
+          } else {
+            c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          }
           return curr;
         }
       }
@@ -1308,15 +1312,6 @@ private:
       right->value = Literal::makeSingleZero(type);
       return right;
     }
-    {
-      // (signed)x % (i32|i64).min_s   ==>  (x & (i32|i64).max_s)
-      if (matches(curr, binary(Abstract::RemS, any(&left), ival())) &&
-          right->value.isSignedMin()) {
-        curr->op = Abstract::getBinary(type, Abstract::And);
-        right->value = Literal::makeSignedMax(type);
-        return curr;
-      }
-    }
     // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
     {
       Const* c;
@@ -1325,10 +1320,14 @@ private:
                   binary(Abstract::Ne,
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
-          !c->value.isSignedMin() &&
-          Bits::isPowerOf2(c->value.abs().getInteger())) {
+          (c->value.isSignedMin() ||
+           Bits::isPowerOf2(c->value.abs().getInteger()))) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        if (c->value.isSignedMin()) {
+          c->value = Literal::makeSignedMax(c->type);
+        } else {
+          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        }
         return curr;
       }
     }
