@@ -2382,18 +2382,18 @@ private:
     }
     Flow visitMemorySize(MemorySize* curr) {
       NOTE_ENTER("MemorySize");
-      return Literal::makeFromUInt64(instance.memorySize,
-                                     instance.wasm.memory.indexType);
+      return Literal::makeFromInt64(instance.memorySize,
+                                    instance.wasm.memory.indexType);
     }
     Flow visitMemoryGrow(MemoryGrow* curr) {
       NOTE_ENTER("MemoryGrow");
       auto indexType = instance.wasm.memory.indexType;
-      auto fail = Literal::makeFromUInt64(-1, indexType);
+      auto fail = Literal::makeFromInt64(-1, indexType);
       Flow flow = this->visit(curr->delta);
       if (flow.breaking()) {
         return flow;
       }
-      Flow ret = Literal::makeFromUInt64(instance.memorySize, indexType);
+      Flow ret = Literal::makeFromInt64(instance.memorySize, indexType);
       uint64_t delta = flow.getSingleValue().getUnsigned();
       if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
         return fail;

@@ -486,7 +486,7 @@ public:
     return ret;
   }
   Const* makeConstPtr(uint64_t val) {
-    return makeConst(Literal::makeFromUInt64(val, wasm.memory.indexType));
+    return makeConst(Literal::makeFromInt64(val, wasm.memory.indexType));
   }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = wasm.allocator.alloc<Binary>();
