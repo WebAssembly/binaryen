@@ -532,11 +532,9 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
-          }
-          if (binary->op == DivUInt32 &&
-              c > uint32_t(std::numeric_limits<int32_t>::min()) &&
-              c < uint32_t(-1)) {
-            // (unsigned)x / -C   ==>   (unsigned)x >= -C, where min < C < -1
+          } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
+                     binary->op == DivUInt32) {
+            // (uint32_t)x / -C   ==>   u32(x) >= -C
             binary->op = GeUInt32;
             return binary;
           }
@@ -561,6 +559,15 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
+          } else if (getPassOptions().shrinkLevel == 0 && c < 0 &&
+                     c > std::numeric_limits<int64_t>::min() &&
+                     binary->op == DivUInt64) {
+            // u64(x) / -C   ==>   i64.extend_i32_u(x >= -C)
+            // Apply this only for shrinkLevel == 0
+            // due to it increase size by one byte.
+            binary->op = GeUInt64;
+            binary->type = Type::i32;
+            return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
           }
           if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
