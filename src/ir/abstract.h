@@ -60,13 +60,10 @@ enum Op {
 };
 
 inline bool hasAnyShift(Type type, BinaryOp op) {
-  if (type.isInteger()) {
-    return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
-           op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
-           op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
-           op == RotRInt64;
-  }
-  return false;
+  return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
+         op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
+         op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+         op == RotRInt64;
 }
 
 // Provide a wasm type and an abstract op and get the concrete one. For example,

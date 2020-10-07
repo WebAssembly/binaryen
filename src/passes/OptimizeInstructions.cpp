@@ -371,18 +371,15 @@ struct OptimizeInstructions
           if (c->value.isZero()) {
             return x;
           }
-        } else if (matches(curr,
-                           binary(&op,
-                                  any(&x),
-                                  binary(Abstract::And, any(&y), ival(&c)))) &&
-                   Abstract::hasAnyShift(c->type, op)) {
+        }
+        if (matches(
+              curr,
+              binary(&op, any(&x), binary(Abstract::And, any(&y), ival(&c)))) &&
+            Abstract::hasAnyShift(c->type, op)) {
           // i32(x) <<>> (y & 31)   ==>   x <<>> y
           // i64(x) <<>> (y & 63)   ==>   x <<>> y
-          if (c->type == Type::i32 && (c->value.geti32() & 31) == 31) {
-            curr->cast<Binary>()->right = y;
-            return curr;
-          } else if (c->type == Type::i64 &&
-                     (c->value.geti64() & 63LL) == 63LL) {
+          if ((c->type == Type::i32 && (c->value.geti32() & 31) == 31) ||
+              (c->type == Type::i64 && (c->value.geti64() & 63LL) == 63LL)) {
             curr->cast<Binary>()->right = y;
             return curr;
           }
