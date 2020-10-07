@@ -4,7 +4,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "env" "memory" (memory $9 256 256))
+ (import "env" "memory" (memory $mimport$9 256 256))
  (import "env" "table" (table $timport$10 0 0 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $gimport$0 i32))
  (import "env" "tempDoublePtr" (global $gimport$1 i32))

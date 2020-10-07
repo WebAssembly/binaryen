@@ -361,6 +361,8 @@ struct DeadCodeElimination
           DELEGATE(RefIsNull);
         case Expression::Id::RefFuncId:
           DELEGATE(RefFunc);
+        case Expression::Id::RefEqId:
+          DELEGATE(RefEq);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:
@@ -373,6 +375,34 @@ struct DeadCodeElimination
           DELEGATE(TupleMake);
         case Expression::Id::TupleExtractId:
           DELEGATE(TupleExtract);
+        case Expression::Id::I31NewId:
+          DELEGATE(I31New);
+        case Expression::Id::I31GetId:
+          DELEGATE(I31Get);
+        case Expression::Id::RefTestId:
+          DELEGATE(RefTest);
+        case Expression::Id::RefCastId:
+          DELEGATE(RefCast);
+        case Expression::Id::BrOnCastId:
+          DELEGATE(BrOnCast);
+        case Expression::Id::RttCanonId:
+          DELEGATE(RttCanon);
+        case Expression::Id::RttSubId:
+          DELEGATE(RttSub);
+        case Expression::Id::StructNewId:
+          DELEGATE(StructNew);
+        case Expression::Id::StructGetId:
+          DELEGATE(StructGet);
+        case Expression::Id::StructSetId:
+          DELEGATE(StructSet);
+        case Expression::Id::ArrayNewId:
+          DELEGATE(ArrayNew);
+        case Expression::Id::ArrayGetId:
+          DELEGATE(ArrayGet);
+        case Expression::Id::ArraySetId:
+          DELEGATE(ArraySet);
+        case Expression::Id::ArrayLenId:
+          DELEGATE(ArrayLen);
         case Expression::Id::InvalidId:
           WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:
@@ -525,6 +555,14 @@ struct DeadCodeElimination
 
   void visitMemoryGrow(MemoryGrow* curr) {
     blockifyReachableOperands({curr->delta}, curr->type);
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    blockifyReachableOperands({curr->value}, curr->type);
+  }
+
+  void visitRefEq(RefEq* curr) {
+    blockifyReachableOperands({curr->left, curr->right}, curr->type);
   }
 
   void visitFunction(Function* curr) { assert(reachableBreaks.size() == 0); }

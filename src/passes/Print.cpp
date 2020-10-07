@@ -1441,6 +1441,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->type.isConcrete()) {
@@ -1472,6 +1473,54 @@ struct PrintExpressionContents
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
     o << curr->index;
+  }
+  void visitI31New(I31New* curr) { printMedium(o, "i31.new"); }
+  void visitI31Get(I31Get* curr) {
+    printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
+  }
+  void visitRefTest(RefTest* curr) {
+    printMedium(o, "ref.test");
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+  }
+  void visitRefCast(RefCast* curr) {
+    printMedium(o, "ref.cast");
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+  }
+  void visitBrOnCast(BrOnCast* curr) {
+    printMedium(o, "br_on_cast");
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  }
+  void visitRttCanon(RttCanon* curr) {
+    printMedium(o, "rtt.canon");
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  }
+  void visitRttSub(RttSub* curr) {
+    printMedium(o, "rtt.sub");
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  }
+  void visitStructNew(StructNew* curr) {
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+  }
+  void visitStructGet(StructGet* curr) {
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+  }
+  void visitStructSet(StructSet* curr) {
+    printMedium(o, "struct.set");
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    WASM_UNREACHABLE("TODO (gc): array.new");
+  }
+  void visitArrayGet(ArrayGet* curr) {
+    WASM_UNREACHABLE("TODO (gc): array.get");
+  }
+  void visitArraySet(ArraySet* curr) {
+    printMedium(o, "array.set");
+    WASM_UNREACHABLE("TODO (gc): array.set");
+  }
+  void visitArrayLen(ArrayLen* curr) {
+    printMedium(o, "array.len");
+    WASM_UNREACHABLE("TODO (gc): array.len");
   }
 };
 
@@ -1968,6 +2017,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
+  void visitRefEq(RefEq* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
+  }
   // try-catch-end is written in the folded wat format as
   // (try
   //  (do
@@ -2053,6 +2110,80 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->tuple);
     decIndent();
+  }
+  void visitI31New(I31New* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitI31Get(I31Get* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->i31);
+    decIndent();
+  }
+  void visitRefTest(RefTest* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+  }
+  void visitRefCast(RefCast* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+  }
+  void visitBrOnCast(BrOnCast* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  }
+  void visitRttCanon(RttCanon* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  }
+  void visitRttSub(RttSub* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  }
+  void visitStructNew(StructNew* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+  }
+  void visitStructGet(StructGet* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+  }
+  void visitStructSet(StructSet* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): array.new");
+  }
+  void visitArrayGet(ArrayGet* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): array.get");
+  }
+  void visitArraySet(ArraySet* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): array.set");
+  }
+  void visitArrayLen(ArrayLen* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    WASM_UNREACHABLE("TODO (gc): array.len");
   }
   // Module-level visitors
   void handleSignature(Signature curr, Name* funcName = nullptr) {
@@ -2298,6 +2429,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "shared ");
     }
+    if (curr->is64()) {
+      o << "i64 ";
+    }
     o << curr->initial;
     if (curr->hasMax()) {
       o << ' ' << curr->max;
@@ -2446,7 +2580,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         << section.data.size();
       bool isPrintable = true;
       for (auto c : section.data) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
           isPrintable = false;
           break;
         }

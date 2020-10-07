@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add `--fast-math` mode. (#3155)
+
 v97
 ---
 

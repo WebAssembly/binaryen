@@ -11,8 +11,8 @@
 
 using namespace wasm;
 
-MixedArena allocator;
-Builder builder(allocator);
+Module module;
+Builder builder(module);
 
 void test_remove_nops() {
   std::cout << ";; Test removeNops\n";

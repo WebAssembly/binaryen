@@ -36,7 +36,6 @@ function asmFunc(global, env, buffer) {
   return __wasm_memory_grow(1 | 0) | 0;
  }
  
- var FUNCTION_TABLE = [];
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -82,7 +81,23 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); }
+  },
+  memasmFunc
+);
 export var memory = retasmFunc.memory;
 export var f1 = retasmFunc.f1;
 export var f2 = retasmFunc.f2;

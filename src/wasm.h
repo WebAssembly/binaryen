@@ -42,20 +42,18 @@ namespace wasm {
 // An index in a wasm module
 typedef uint32_t Index;
 
-// An address in linear memory. For now only wasm32
+// An address in linear memory.
 struct Address {
-  typedef uint32_t address_t;
-  address_t addr;
+  typedef uint32_t address32_t;
+  typedef uint64_t address64_t;
+  address64_t addr;
   Address() : addr(0) {}
-  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
-    assert(a <= std::numeric_limits<address_t>::max());
-  }
+  Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
-    assert(a <= std::numeric_limits<address_t>::max());
-    addr = static_cast<address_t>(a);
+    addr = a;
     return *this;
   }
-  operator address_t() const { return addr; }
+  operator address64_t() const { return addr; }
   Address& operator++() {
     ++addr;
     return *this;
@@ -227,8 +225,8 @@ enum BinaryOp {
   OrInt32,
   XorInt32,
   ShlInt32,
-  ShrUInt32,
   ShrSInt32,
+  ShrUInt32,
   RotLInt32,
   RotRInt32,
 
@@ -260,8 +258,8 @@ enum BinaryOp {
   OrInt64,
   XorInt64,
   ShlInt64,
-  ShrUInt64,
   ShrSInt64,
+  ShrUInt64,
   RotLInt64,
   RotRInt64,
 
@@ -555,12 +553,27 @@ public:
     RefNullId,
     RefIsNullId,
     RefFuncId,
+    RefEqId,
     TryId,
     ThrowId,
     RethrowId,
     BrOnExnId,
     TupleMakeId,
     TupleExtractId,
+    I31NewId,
+    I31GetId,
+    RefTestId,
+    RefCastId,
+    BrOnCastId,
+    RttCanonId,
+    RttSubId,
+    StructNewId,
+    StructGetId,
+    StructSetId,
+    ArrayNewId,
+    ArrayGetId,
+    ArraySetId,
+    ArrayLenId,
     NumExpressionIds
   };
   Id _id;
@@ -1070,6 +1083,9 @@ public:
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
+  Type ptrType = Type::i32;
+
+  void make64();
   void finalize();
 };
 
@@ -1079,7 +1095,9 @@ public:
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
   Expression* delta = nullptr;
+  Type ptrType = Type::i32;
 
+  void make64();
   void finalize();
 };
 
@@ -1121,6 +1139,16 @@ public:
   RefFunc(MixedArena& allocator) {}
 
   Name func;
+
+  void finalize();
+};
+
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };
@@ -1187,6 +1215,109 @@ public:
   Index index;
 
   void finalize();
+};
+
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_;
+
+  void finalize();
+};
+
+class RefTest : public SpecificExpression<Expression::RefTestId> {
+public:
+  RefTest(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+};
+
+class RefCast : public SpecificExpression<Expression::RefCastId> {
+public:
+  RefCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+};
+
+class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+public:
+  BrOnCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+};
+
+class RttCanon : public SpecificExpression<Expression::RttCanonId> {
+public:
+  RttCanon(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+};
+
+class RttSub : public SpecificExpression<Expression::RttSubId> {
+public:
+  RttSub(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+};
+
+class StructNew : public SpecificExpression<Expression::StructNewId> {
+public:
+  StructNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+};
+
+class StructGet : public SpecificExpression<Expression::StructGetId> {
+public:
+  StructGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+};
+
+class StructSet : public SpecificExpression<Expression::StructSetId> {
+public:
+  StructSet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+};
+
+class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
+public:
+  ArrayNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+};
+
+class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
+public:
+  ArrayGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+};
+
+class ArraySet : public SpecificExpression<Expression::ArraySetId> {
+public:
+  ArraySet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+};
+
+class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
+public:
+  ArrayLen(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
 };
 
 // Globals
@@ -1361,9 +1492,9 @@ public:
 
 class Table : public Importable {
 public:
-  static const Address::address_t kPageSize = 1;
+  static const Address::address32_t kPageSize = 1;
   static const Index kUnlimitedSize = Index(-1);
-  // In wasm32, the maximum table size is limited by a 32-bit pointer: 4GB
+  // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
@@ -1398,12 +1529,11 @@ public:
 
 class Memory : public Importable {
 public:
-  static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kUnlimitedSize = Address::address_t(-1);
+  static const Address::address32_t kPageSize = 64 * 1024;
+  static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address_t kMaxSize =
+  static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
-  static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
     bool isPassive = false;
@@ -1429,21 +1559,24 @@ public:
   bool exists = false;
   Name name;
   Address initial = 0; // sizes are in pages
-  Address max = kMaxSize;
+  Address max = kMaxSize32;
   std::vector<Segment> segments;
 
   // See comment in Table.
   bool shared = false;
+  Type indexType = Type::i32;
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  bool is64() { return indexType == Type::i64; }
   void clear() {
     exists = false;
     name = "";
     initial = 0;
-    max = kMaxSize;
+    max = kMaxSize32;
     segments.clear();
     shared = false;
+    indexType = Type::i32;
   }
 };
 
@@ -1568,7 +1701,7 @@ public:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address_t>()(a.addr);
+    return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
 } // namespace std

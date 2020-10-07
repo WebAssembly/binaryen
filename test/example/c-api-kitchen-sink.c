@@ -217,6 +217,18 @@ void test_types() {
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
+  BinaryenType eqref = BinaryenTypeEqref();
+  printf("  // BinaryenTypeEqref: %d\n", eqref);
+  assert(BinaryenTypeArity(eqref) == 1);
+  BinaryenTypeExpand(eqref, &valueType);
+  assert(valueType == eqref);
+
+  BinaryenType i31ref = BinaryenTypeI31ref();
+  printf("  // BinaryenTypeI31ref: %d\n", i31ref);
+  assert(BinaryenTypeArity(i31ref) == 1);
+  BinaryenTypeExpand(i31ref, &valueType);
+  assert(valueType == i31ref);
+
   printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
@@ -248,6 +260,7 @@ void test_features() {
   printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
+  printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -299,6 +312,7 @@ void test_core() {
   BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
   funcrefExpr = BinaryenRefFunc(module, "kitchen()sinker");
   BinaryenExpressionRef exnrefExpr = BinaryenRefNull(module, BinaryenTypeExnref());
+  BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
   // Events
   BinaryenAddEvent(
@@ -728,6 +742,10 @@ void test_core() {
                    BinaryenRefNull(module, BinaryenTypeFuncref()),
                    BinaryenRefFunc(module, "kitchen()sinker"),
                    BinaryenTypeFuncref()),
+    // GC
+    BinaryenRefEq(module,
+      BinaryenRefNull(module, BinaryenTypeEqref()),
+      BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
@@ -759,6 +777,10 @@ void test_core() {
     // Memory
     BinaryenMemorySize(module),
     BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    // GC
+    BinaryenI31New(module, makeInt32(module, 0)),
+    BinaryenI31Get(module, i31refExpr, 1),
+    BinaryenI31Get(module, BinaryenI31New(module, makeInt32(module, 2)), 0),
     // Other
     BinaryenNop(module),
     BinaryenUnreachable(module),

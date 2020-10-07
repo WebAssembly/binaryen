@@ -46,10 +46,10 @@ const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
+const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name GROW_WASM_MEMORY("__growWasmMemory");
 Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
@@ -191,6 +191,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -203,6 +205,34 @@ const char* getExpressionName(Expression* curr) {
       return "tuple.make";
     case Expression::Id::TupleExtractId:
       return "tuple.extract";
+    case Expression::Id::I31NewId:
+      return "i31.new";
+    case Expression::Id::I31GetId:
+      return "i31.get";
+    case Expression::Id::RefTestId:
+      return "ref.test";
+    case Expression::Id::RefCastId:
+      return "ref.cast";
+    case Expression::Id::BrOnCastId:
+      return "br_on_cast";
+    case Expression::Id::RttCanonId:
+      return "rtt.canon";
+    case Expression::Id::RttSubId:
+      return "rtt.sub";
+    case Expression::Id::StructNewId:
+      return "struct.new";
+    case Expression::Id::StructGetId:
+      return "struct.get";
+    case Expression::Id::StructSetId:
+      return "struct.set";
+    case Expression::Id::ArrayNewId:
+      return "array.new";
+    case Expression::Id::ArrayGetId:
+      return "array.get";
+    case Expression::Id::ArraySetId:
+      return "array.set";
+    case Expression::Id::ArrayLenId:
+      return "array.len";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
@@ -210,18 +240,15 @@ const char* getExpressionName(Expression* curr) {
 }
 
 Literal getSingleLiteralFromConstExpression(Expression* curr) {
-  if (auto* c = curr->dynCast<Const>()) {
-    return c->value;
-  } else if (auto* n = curr->dynCast<RefNull>()) {
-    return Literal::makeNull(n->type);
-  } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal::makeFunc(r->func);
-  } else {
-    WASM_UNREACHABLE("Not a constant expression");
-  }
+  // TODO: Do we need this function given that Properties::getSingleLiteral
+  // (currently) does the same?
+  assert(Properties::isConstantExpression(curr));
+  return Properties::getSingleLiteral(curr);
 }
 
 Literals getLiteralsFromConstExpression(Expression* curr) {
+  // TODO: Do we need this function given that Properties::getLiterals
+  // (currently) does the same?
   if (auto* t = curr->dynCast<TupleMake>()) {
     Literals values;
     for (auto* operand : t->operands) {
@@ -881,13 +908,15 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::finalize() { type = Type::i32; }
+void MemorySize::make64() { type = ptrType = Type::i64; }
+void MemorySize::finalize() { type = ptrType; }
 
+void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::i32;
+    type = ptrType;
   }
 }
 
@@ -911,6 +940,14 @@ void RefIsNull::finalize() {
 }
 
 void RefFunc::finalize() { type = Type::funcref; }
+
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);
@@ -955,6 +992,35 @@ void TupleExtract::finalize() {
     type = tuple->type[index];
   }
 }
+
+void I31New::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i31ref;
+  }
+}
+
+void I31Get::finalize() {
+  if (i31->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+// TODO (gc): ref.test
+// TODO (gc): ref.cast
+// TODO (gc): br_on_cast
+// TODO (gc): rtt.canon
+// TODO (gc): rtt.sub
+// TODO (gc): struct.new
+// TODO (gc): struct.get
+// TODO (gc): struct.set
+// TODO (gc): array.new
+// TODO (gc): array.get
+// TODO (gc): array.set
+// TODO (gc): array.len
 
 size_t Function::getNumParams() { return sig.params.size(); }
 

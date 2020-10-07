@@ -51,7 +51,9 @@ public:
     externref,
     exnref,
     anyref,
-    _last_basic_id = anyref
+    eqref,
+    i31ref,
+    _last_basic_id = i31ref,
   };
 
   Type() = default;

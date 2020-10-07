@@ -331,10 +331,7 @@ enum Section {
   Event = 13
 };
 
-enum SegmentFlag {
-  IsPassive = 0x01,
-  HasMemIndex = 0x02,
-};
+enum SegmentFlag { IsPassive = 0x01, HasMemIndex = 0x02 };
 
 enum EncodedType {
   // value_type
@@ -349,6 +346,10 @@ enum EncodedType {
   externref = -0x11, // 0x6f
   // any reference type
   anyref = -0x12, // 0x6e
+  // comparable reference type
+  eqref = -0x13, // 0x6d
+  // integer reference type
+  i31ref = -0x16, // 0x6a
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -361,6 +362,8 @@ enum EncodedHeapType {
   func = -0x10,    // 0x70
   extern_ = -0x11, // 0x6f
   any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  i31 = -0x17,     // 0x69, != i31ref
   exn = -0x18,     // 0x68
 };
 
@@ -384,11 +387,20 @@ extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
+extern const char* Memory64Feature;
 
 enum Subsection {
   NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
+  // see: https://github.com/WebAssembly/extended-name-section
+  NameLabel = 3,
+  NameType = 4,
+  NameTable = 5,
+  NameMemory = 6,
+  NameGlobal = 7,
+  NameElem = 8,
+  NameData = 9
 };
 
 } // namespace UserSections
@@ -595,6 +607,7 @@ enum ASTNodes {
 
   // prefixes
 
+  GCPrefix = 0xfb,
   MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
   AtomicPrefix = 0xfe,
@@ -929,7 +942,32 @@ enum ASTNodes {
   Catch = 0x07,
   Throw = 0x08,
   Rethrow = 0x09,
-  BrOnExn = 0x0a
+  BrOnExn = 0x0a,
+
+  // gc opcodes
+
+  RefEq = 0xd5,
+  StructNewWithRtt = 0x01,
+  StructNewDefaultWithRtt = 0x02,
+  StructGet = 0x03,
+  StructGetS = 0x04,
+  StructGetU = 0x05,
+  StructSet = 0x06,
+  ArrayNewWithRtt = 0x11,
+  ArrayNewDefaultWithRtt = 0x12,
+  ArrayGet = 0x13,
+  ArrayGetS = 0x14,
+  ArrayGetU = 0x15,
+  ArraySet = 0x16,
+  ArrayLen = 0x17,
+  I31New = 0x20,
+  I31GetS = 0x21,
+  I31GetU = 0x22,
+  RttCanon = 0x30,
+  RttSub = 0x31,
+  RefTest = 0x40,
+  RefCast = 0x41,
+  BrOnCast = 0x42
 };
 
 enum MemoryAccess {
@@ -938,7 +976,7 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -983,6 +1021,12 @@ inline S32LEB binaryType(Type type) {
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
+    case Type::eqref:
+      ret = BinaryConsts::EncodedType::eqref;
+      break;
+    case Type::i31ref:
+      ret = BinaryConsts::EncodedType::i31ref;
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1005,11 +1049,15 @@ inline S32LEB binaryHeapType(HeapType type) {
       ret = BinaryConsts::EncodedHeapType::any;
       break;
     case HeapType::EqKind:
+      ret = BinaryConsts::EncodedHeapType::eq;
+      break;
     case HeapType::I31Kind:
+      ret = BinaryConsts::EncodedHeapType::i31;
+      break;
     case HeapType::SignatureKind:
     case HeapType::StructKind:
     case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: GC types");
+      WASM_UNREACHABLE("TODO: compound GC types");
   }
   return S32LEB(ret); // TODO: Actually encoded as s33
 }
@@ -1097,10 +1145,8 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial,
-                            Address maximum,
-                            bool hasMaximum,
-                            bool shared);
+  void writeResizableLimits(
+    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -1264,6 +1310,7 @@ public:
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
+                          Type& indexType,
                           Address defaultIfNoMax);
   void readImports();
 
@@ -1275,8 +1322,8 @@ public:
 
   Name getNextLabel();
 
-  // We read functions before we know their names, so we need to backpatch the
-  // names later
+  // We read functions and globals before we know their names, so we need to
+  // backpatch the names later
 
   // we store functions here before wasm.addFunction after we know their names
   std::vector<Function*> functions;
@@ -1289,6 +1336,14 @@ public:
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
+
+  // we store globals here before wasm.addGlobal after we know their names
+  std::vector<Global*> globals;
+  // we store global imports here before wasm.addGlobalImport after we know
+  // their names
+  std::vector<Global*> globalImports;
+  // at index i we have all refs to the global i
+  std::map<Index, std::vector<Expression*>> globalRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1358,7 +1413,7 @@ public:
   Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
-  void processFunctions();
+  void processNames();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
@@ -1435,6 +1490,20 @@ public:
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitI31New(Expression*& out, uint32_t code);
+  bool maybeVisitI31Get(Expression*& out, uint32_t code);
+  bool maybeVisitRefTest(Expression*& out, uint32_t code);
+  bool maybeVisitRefCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOnCast(Expression*& out, uint32_t code);
+  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
+  bool maybeVisitRttSub(Expression*& out, uint32_t code);
+  bool maybeVisitStructNew(Expression*& out, uint32_t code);
+  bool maybeVisitStructGet(Expression*& out, uint32_t code);
+  bool maybeVisitStructSet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayGet(Expression*& out, uint32_t code);
+  bool maybeVisitArraySet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
@@ -1445,6 +1514,7 @@ public:
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

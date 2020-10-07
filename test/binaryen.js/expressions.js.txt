@@ -210,6 +210,12 @@
 # RefFunc
 (ref.func $b)
 
+# RefEq
+(ref.eq
+ (local.get $2)
+ (local.get $3)
+)
+
 # Try
 (try (result i32)
  (do
@@ -248,5 +254,15 @@
   (f64.const 3)
   (f64.const 4)
  )
+)
+
+# I31New
+(i31.new
+ (local.get $2)
+)
+
+# I31Get
+(i31.get_u
+ (local.get $2)
 )
 
