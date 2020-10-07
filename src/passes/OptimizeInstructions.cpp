@@ -355,12 +355,13 @@ struct OptimizeInstructions
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
         // where '<<>>':
         //   '<<', '>>', '>>>'. 'rotl' or 'rotr'
-        BinaryOp op;
-        Expression *x, *y;
-        Const* c;
         Type type = curr->type;
 
         if (type.isInteger()) {
+          BinaryOp op;
+          Const* c;
+          Expression *x, *y;
+
           if (matches(curr, binary(&op, any(&x), constant(&c))) &&
               Abstract::hasAnyShift(type, op)) {
 
