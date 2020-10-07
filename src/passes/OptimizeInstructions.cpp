@@ -350,6 +350,44 @@ struct OptimizeInstructions
           return inner;
         }
       }
+      {
+        // x <<>> (C & (31 | 63))   ==>   x <<>> C'
+        // x <<>> (y & (31 | 63))   ==>   x <<>> y
+        // where '<<>>':
+        //   '<<', '>>', '>>>'. 'rotl' or 'rotr'
+        BinaryOp op;
+        Expression *x, *y;
+        Const* c;
+        Type type = curr->type;
+
+        if (type.isInteger()) {
+          if (matches(curr, binary(&op, any(&x), constant(&c))) &&
+              Abstract::hasAnyShift(type, op)) {
+
+            c->value = c->value.and_(
+              Literal::makeFromInt32(type.getByteSize() * 8 - 1, type));
+            // x <<>> 0   ==>   x
+            if (c->value.isZero()) {
+              return x;
+            }
+          } else if (matches(
+                       curr,
+                       binary(&op,
+                              any(&x),
+                              binary(Abstract::And, any(&y), constant(&c)))) &&
+                     Abstract::hasAnyShift(type, op)) {
+            // x <<>> (y & (31 | 63))   ==>   x <<>> y
+            if (y->type == Type::i32 && (c->value.geti32() & 31) == 31) {
+              curr->cast<Binary>()->right = y;
+              return curr;
+            } else if (y->type == Type::i64 &&
+                       (c->value.geti64() & 63LL) == 63LL) {
+              curr->cast<Binary>()->right = y;
+              return curr;
+            }
+          }
+        }
+      }
     }
 
     if (auto* select = curr->dynCast<Select>()) {
@@ -591,39 +629,6 @@ struct OptimizeInstructions
       if (binary->op == OrInt32) {
         if (auto* ret = combineOr(binary)) {
           return ret;
-        }
-      }
-      if (binary->op == ShlInt32 || binary->op == ShlInt64 ||
-          binary->op == ShrSInt32 || binary->op == ShrSInt64 ||
-          binary->op == ShrUInt32 || binary->op == ShrUInt64 ||
-          binary->op == RotLInt32 || binary->op == RotLInt64 ||
-          binary->op == RotRInt32 || binary->op == RotRInt64) {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          // truncate shift constants
-          // x <<>> (C & (31 | 63))
-          c->value = c->value.and_(Literal::makeFromInt32(
-            binary->type.getByteSize() * 8 - 1, binary->type));
-          // x <<>> 0   ==>   x
-          if (c->value.getInteger() == 0LL) {
-            return binary->left;
-          }
-        } else if (auto* right = binary->right->dynCast<Binary>()) {
-          if (right->op == Abstract::getBinary(binary->type, Abstract::And)) {
-            if (auto* c = right->right->dynCast<Const>()) {
-              // x <<>> (y & (31 | 63))   ==>   x <<>> y
-              if (binary->type == Type::i32) {
-                if ((c->value.geti32() & 31) == 31) {
-                  binary->right = right->left;
-                  return binary;
-                }
-              } else if (binary->type == Type::i64) {
-                if ((c->value.geti64() & 63LL) == 63LL) {
-                  binary->right = right->left;
-                  return binary;
-                }
-              }
-            }
-          }
         }
       }
       // relation/comparisons allow for math optimizations

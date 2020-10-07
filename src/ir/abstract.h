@@ -59,6 +59,33 @@ enum Op {
   GeU
 };
 
+inline bool hasAnyShift(Type type, BinaryOp op) {
+  switch (type.getBasic()) {
+    case Type::i32: {
+      return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
+             op == RotLInt32 || op == RotRInt32;
+    }
+    case Type::i64: {
+      return op == ShlInt64 || op == ShrSInt64 || op == ShrUInt64 ||
+             op == RotLInt64 || op == RotRInt64;
+    }
+    case Type::f32:
+    case Type::f64:
+    case Type::v128:
+    case Type::funcref:
+    case Type::externref:
+    case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
+    case Type::none:
+    case Type::unreachable: {
+      return false;
+    }
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
