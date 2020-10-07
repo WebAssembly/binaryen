@@ -59,7 +59,7 @@ enum Op {
   GeU
 };
 
-inline bool hasAnyShift(Type type, BinaryOp op) {
+inline bool hasAnyShift(BinaryOp op) {
   return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
          op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
          op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||

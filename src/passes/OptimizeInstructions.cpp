@@ -361,7 +361,7 @@ struct OptimizeInstructions
 
         // x <<>> C
         if (matches(curr, binary(&op, any(&x), ival(&c))) &&
-            Abstract::hasAnyShift(c->type, op)) {
+            Abstract::hasAnyShift(op)) {
           // truncate RHS constant to effective size as:
           // i32(x) <<>> const(C & 31))
           // i64(x) <<>> const(C & 63))
@@ -375,7 +375,7 @@ struct OptimizeInstructions
         if (matches(
               curr,
               binary(&op, any(&x), binary(Abstract::And, any(&y), ival(&c)))) &&
-            Abstract::hasAnyShift(c->type, op)) {
+            Abstract::hasAnyShift(op)) {
           // i32(x) <<>> (y & 31)   ==>   x <<>> y
           // i64(x) <<>> (y & 63)   ==>   x <<>> y
           if ((c->type == Type::i32 && (c->value.geti32() & 31) == 31) ||
