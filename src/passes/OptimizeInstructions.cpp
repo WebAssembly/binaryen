@@ -539,6 +539,9 @@ struct OptimizeInstructions
           } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
                      binary->op == DivUInt32) {
             // u32(x) / C   ==>   u32(x) >= C  iff C >= 2^31
+            // We avoid applying this for i32.min_s due to it conflicts
+            // with other rule which transform to more prefereble
+            // right shift operation.
             binary->op = GeUInt32;
             return binary;
           }
@@ -566,9 +569,12 @@ struct OptimizeInstructions
           } else if (getPassOptions().shrinkLevel == 0 && c < 0 &&
                      c > std::numeric_limits<int64_t>::min() &&
                      binary->op == DivUInt64) {
-            // u64(x) / -C   ==>   u64(u64(x) >= -C)
-            // Apply this only for shrinkLevel == 0
-            // due to it increase size by one byte.
+            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C >= 2^63
+            // We avoid applying this for i32.min_s due to it conflicts
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            // And apply this only for shrinkLevel == 0 due to it
+            // increasing size by one byte.
             binary->op = GeUInt64;
             binary->type = Type::i32;
             return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
