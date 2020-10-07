@@ -59,6 +59,13 @@ enum Op {
   GeU
 };
 
+inline bool hasAnyShift(BinaryOp op) {
+  return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
+         op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
+         op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+         op == RotRInt64;
+}
+
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
