@@ -355,38 +355,37 @@ struct OptimizeInstructions
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
         // where '<<>>':
         //   '<<', '>>', '>>>'. 'rotl' or 'rotr'
-        Type type = curr->type;
+        BinaryOp op;
+        Const* c;
+        Expression *x, *y;
 
-        if (type.isInteger()) {
-          BinaryOp op;
-          Const* c;
-          Expression *x, *y;
-
-          if (matches(curr, binary(&op, any(&x), constant(&c))) &&
-              Abstract::hasAnyShift(type, op)) {
-            // truncate RHS constant
-            // x <<>> (C & (31 | 63))   ==>   x <<>> C'
-            c->value = c->value.and_(
-              Literal::makeFromInt32(type.getByteSize() * 8 - 1, type));
-            // x <<>> 0   ==>   x
-            if (c->value.isZero()) {
-              return x;
-            }
-          } else if (matches(
-                       curr,
-                       binary(&op,
-                              any(&x),
-                              binary(Abstract::And, any(&y), constant(&c)))) &&
-                     Abstract::hasAnyShift(type, op)) {
-            // x <<>> (y & (31 | 63))   ==>   x <<>> y
-            if (y->type == Type::i32 && (c->value.geti32() & 31) == 31) {
-              curr->cast<Binary>()->right = y;
-              return curr;
-            } else if (y->type == Type::i64 &&
-                       (c->value.geti64() & 63LL) == 63LL) {
-              curr->cast<Binary>()->right = y;
-              return curr;
-            }
+        // x <<>> C
+        if (matches(curr, binary(&op, any(&x), constant(&c))) &&
+            Abstract::hasAnyShift(c->type, op)) {
+          // truncate RHS constant to effective size as:
+          // i32(x) <<>> const(C & 31))
+          // i64(x) <<>> const(C & 63))
+          c->value = c->value.and_(
+            Literal::makeFromInt32(c->type.getByteSize() * 8 - 1, c->type));
+          // x <<>> 0   ==>   x
+          if (c->value.isZero()) {
+            return x;
+          }
+        } else if (matches(
+                     curr,
+                     binary(&op,
+                            any(&x),
+                            binary(Abstract::And, any(&y), constant(&c)))) &&
+                   Abstract::hasAnyShift(c->type, op)) {
+          // i32(x) <<>> (y & 31)   ==>   x <<>> y
+          // i64(x) <<>> (y & 63)   ==>   x <<>> y
+          if (c->type == Type::i32 && (c->value.geti32() & 31) == 31) {
+            curr->cast<Binary>()->right = y;
+            return curr;
+          } else if (c->type == Type::i64 &&
+                     (c->value.geti64() & 63LL) == 63LL) {
+            curr->cast<Binary>()->right = y;
+            return curr;
           }
         }
       }

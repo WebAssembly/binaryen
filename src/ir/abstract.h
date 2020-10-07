@@ -60,30 +60,13 @@ enum Op {
 };
 
 inline bool hasAnyShift(Type type, BinaryOp op) {
-  switch (type.getBasic()) {
-    case Type::i32: {
-      return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
-             op == RotLInt32 || op == RotRInt32;
-    }
-    case Type::i64: {
-      return op == ShlInt64 || op == ShrSInt64 || op == ShrUInt64 ||
-             op == RotLInt64 || op == RotRInt64;
-    }
-    case Type::f32:
-    case Type::f64:
-    case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::exnref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::none:
-    case Type::unreachable: {
-      return false;
-    }
+  if (type.isInteger()) {
+    return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
+           op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
+           op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+           op == RotRInt64;
   }
-  WASM_UNREACHABLE("invalid type");
+  return false;
 }
 
 // Provide a wasm type and an abstract op and get the concrete one. For example,
