@@ -1406,11 +1406,9 @@ private:
       return curr;
     }
     // (unsigned)x / -1   ==>   x == -1
-    // TODO: i64 as well if sign-extension is enabled
-    if (matches(curr, binary(DivUInt32, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Abstract::Eq);
-      return curr;
-    }
+    // We handled earlier as part of (unsigned)x / C rule
+    // where `C > (2^31|2^63)`
+
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeSingleZero(type);
