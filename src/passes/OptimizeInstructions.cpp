@@ -310,7 +310,7 @@ struct OptimizeInstructions
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
-          c->value = c->value.abs().sub(Literal::makeUnit(c->type));
+            c->value = c->value.abs().sub(Literal::makeUnit(c->type));
           }
           return curr;
         }
@@ -1361,7 +1361,7 @@ private:
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
-        c->value = c->value.abs().sub(Literal::makeUnit(c->type));
+          c->value = c->value.abs().sub(Literal::makeUnit(c->type));
         }
         return curr;
       }
