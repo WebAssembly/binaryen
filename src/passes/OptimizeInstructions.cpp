@@ -539,7 +539,7 @@ struct OptimizeInstructions
           } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
                      binary->op == DivUInt32) {
             // u32(x) / C   ==>   u32(x) >= C  iff C >= 2^31
-            // We avoid applying this for i32.min_s due to it conflicts
+            // We avoid applying this for i32.min_s due to conflict
             // with other rule which transform to more prefereble
             // right shift operation.
             binary->op = GeUInt32;
@@ -570,7 +570,7 @@ struct OptimizeInstructions
                      c > std::numeric_limits<int64_t>::min() &&
                      binary->op == DivUInt64) {
             // u64(x) / C   ==>   u64(u64(x) >= C)  iff C >= 2^63
-            // We avoid applying this for i32.min_s due to it conflicts
+            // We avoid applying this for i32.min_s due to conflict
             // with other rule which transform to more prefereble
             // right shift operation.
             // And apply this only for shrinkLevel == 0 due to it
