@@ -538,7 +538,7 @@ struct OptimizeInstructions
             binary->op = op;
           } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
                      binary->op == DivUInt32) {
-            // u32(x) / -C   ==>   u32(x) >= -C
+            // u32(x) / C   ==>   u32(x) >= C  iff C >= 2^31
             binary->op = GeUInt32;
             return binary;
           }
