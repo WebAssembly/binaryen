@@ -360,7 +360,7 @@ struct OptimizeInstructions
         Expression *x, *y;
 
         // x <<>> C
-        if (matches(curr, binary(&op, any(&x), constant(&c))) &&
+        if (matches(curr, binary(&op, any(&x), ival(&c))) &&
             Abstract::hasAnyShift(c->type, op)) {
           // truncate RHS constant to effective size as:
           // i32(x) <<>> const(C & 31))
@@ -371,11 +371,10 @@ struct OptimizeInstructions
           if (c->value.isZero()) {
             return x;
           }
-        } else if (matches(
-                     curr,
-                     binary(&op,
-                            any(&x),
-                            binary(Abstract::And, any(&y), constant(&c)))) &&
+        } else if (matches(curr,
+                           binary(&op,
+                                  any(&x),
+                                  binary(Abstract::And, any(&y), ival(&c)))) &&
                    Abstract::hasAnyShift(c->type, op)) {
           // i32(x) <<>> (y & 31)   ==>   x <<>> y
           // i64(x) <<>> (y & 63)   ==>   x <<>> y
