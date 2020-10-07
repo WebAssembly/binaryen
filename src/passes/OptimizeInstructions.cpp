@@ -542,7 +542,7 @@ struct OptimizeInstructions
             // We avoid applying this for i32.min_s due to conflict
             // with other rule which transform to more prefereble
             // right shift operation.
-            binary->op = GeUInt32;
+            binary->op = c == -1 ? EqInt32 : GeUInt32;
             return binary;
           }
           if (Bits::isPowerOf2((uint32_t)c)) {
@@ -575,7 +575,7 @@ struct OptimizeInstructions
             // right shift operation.
             // And apply this only for shrinkLevel == 0 due to it
             // increasing size by one byte.
-            binary->op = GeUInt64;
+            binary->op = c == -1LL ? EqInt64 : GeUInt64;
             binary->type = Type::i32;
             return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
           }

@@ -4453,10 +4453,15 @@
     ))
   )
   (func $rhs-is-neg-const (param $x i32)
-    ;; (unsigned)x / -2
+    ;; (unsigned)x / -2   =>  x >= -2
     (drop (i32.div_u
       (local.get $x)
       (i32.const -2)
+    ))
+    ;; (unsigned)x / -1   =>  x != -1
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -1)
     ))
     ;; (unsigned)x / (i32.min + 1)
     (drop (i32.div_u
