@@ -538,8 +538,8 @@ struct OptimizeInstructions
             binary->op = op;
           } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
                      binary->op == DivUInt32) {
-            // u32(x) / C   ==>   u32(x) >= C  iff C >= 2^31
-            // We avoid applying this for i32.min_s due to conflict
+            // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
+            // We avoid applying this for C == 2^31 due to conflict
             // with other rule which transform to more prefereble
             // right shift operation.
             binary->op = c == -1 ? EqInt32 : GeUInt32;
@@ -569,8 +569,8 @@ struct OptimizeInstructions
           } else if (getPassOptions().shrinkLevel == 0 && c < 0 &&
                      c > std::numeric_limits<int64_t>::min() &&
                      binary->op == DivUInt64) {
-            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C >= 2^63
-            // We avoid applying this for i32.min_s due to conflict
+            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
+            // We avoid applying this for C == 2^31 due to conflict
             // with other rule which transform to more prefereble
             // right shift operation.
             // And apply this only for shrinkLevel == 0 due to it
