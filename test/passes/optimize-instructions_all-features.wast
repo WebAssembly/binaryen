@@ -4946,6 +4946,126 @@
       )
     )
   )
+  (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; i32
+    (drop (i32.shl
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_s
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_u
+      (local.get $x)
+      (i32.const 64)
+    ))
+    (drop (i32.rotl
+      (local.get $x)
+      (i32.const 64)
+    ))
+    (drop (i32.rotr
+      (local.get $x)
+      (i32.const 64)
+    ))
+    ;; i64
+    (drop (i64.shl
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_s
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotl
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotr
+      (local.get $z)
+      (i64.const 128)
+    ))
+
+    ;; i32
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 63)
+      )
+    ))
+    (drop (i32.shr_s
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    (drop (i32.shr_u
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    ;; i64
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 127)
+      )
+    ))
+    (drop (i64.shr_s
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+
+    ;; skip
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 32)
+      )
+    ))
+    ;; skip
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 31)
+      )
+    ))
+  )
   (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
     (memory.copy  ;; skip
       (local.get $dst)
