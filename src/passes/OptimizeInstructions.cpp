@@ -364,7 +364,8 @@ struct OptimizeInstructions
 
           if (matches(curr, binary(&op, any(&x), constant(&c))) &&
               Abstract::hasAnyShift(type, op)) {
-
+            // truncate RHS constant
+            // x <<>> (C & (31 | 63))   ==>   x <<>> C'
             c->value = c->value.and_(
               Literal::makeFromInt32(type.getByteSize() * 8 - 1, type));
             // x <<>> 0   ==>   x
