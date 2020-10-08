@@ -145,7 +145,7 @@ Literals Literal::makeOnes(Type type) {
   return units;
 }
 
-Literals Literal::makeNegUnits(Type type) {
+Literals Literal::makeNegOnes(Type type) {
   assert(type.isConcrete());
   Literals units;
   for (const auto& t : type) {

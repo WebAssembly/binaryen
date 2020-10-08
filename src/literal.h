@@ -147,7 +147,7 @@ public:
 
   static Literals makeZeros(Type type);
   static Literals makeOnes(Type type);
-  static Literals makeNegUnits(Type type);
+  static Literals makeNegOnes(Type type);
   static Literal makeZero(Type type);
   static Literal makeOne(Type type);
   static Literal makeNegOne(Type type);
