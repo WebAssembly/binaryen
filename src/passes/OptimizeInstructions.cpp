@@ -155,12 +155,6 @@ struct OptimizeInstructions
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  void prepareToRun(PassRunner* runner, Module* module) override {
-#if 0
-    static DatabaseEnsurer ensurer;
-#endif
-  }
-
   bool fastMath;
 
   void doWalkFunction(Function* func) {
@@ -185,24 +179,7 @@ struct OptimizeInstructions
         replaceCurrent(curr);
         continue;
       }
-#if 0
-      auto iter = database->patternMap.find(curr->_id);
-      if (iter == database->patternMap.end()) return;
-      auto& patterns = iter->second;
-      bool more = false;
-      for (auto& pattern : patterns) {
-        Match match(*getModule(), pattern);
-        if (match.check(curr)) {
-          curr = match.apply();
-          replaceCurrent(curr);
-          more = true;
-          break; // exit pattern for loop, return to main while loop
-        }
-      }
-      if (!more) break;
-#else
       break;
-#endif
     }
   }
 
