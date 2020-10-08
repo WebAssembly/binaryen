@@ -2519,7 +2519,11 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
   info.shouldBeFalse(
     curr.initial > curr.max, "memory", "memory max >= initial");
-  if (!curr.is64()) {
+  if (curr.is64()) {
+    info.shouldBeTrue(module.features.hasMemory64(),
+                      "memory",
+                      "memory is 64-bit, but memory64 is disabled");
+  } else {
     info.shouldBeTrue(curr.initial <= Memory::kMaxSize32,
                       "memory",
                       "initial memory must be <= 4GB");
