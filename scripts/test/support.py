@@ -146,7 +146,10 @@ def split_wast(wastFile):
         elif chunk.startswith('(assert_invalid'):
             continue
         elif chunk.startswith(('(assert', '(invoke')):
-            ret[-1][1].append(chunk)
+            # ret may be empty if there are some asserts before the first
+            # module
+            if ret:
+                ret[-1][1].append(chunk)
     return ret
 
 
