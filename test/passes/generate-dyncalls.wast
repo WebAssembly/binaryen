@@ -1,4 +1,5 @@
 (module
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (func $f1 (result i32)
   (i32.const 1024)
  )

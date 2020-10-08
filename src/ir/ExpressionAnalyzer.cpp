@@ -220,6 +220,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitRefNull(RefNull* curr) { visitor.visitType(curr->type); }
     void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
+    void visitRefEq(RefEq* curr) {}
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
     void visitRethrow(Rethrow* curr) {}
@@ -233,6 +234,42 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {
       visitor.visitIndex(curr->index);
+    }
+    void visitI31New(I31New* curr) {}
+    void visitI31Get(I31Get* curr) { visitor.visitInt(curr->signed_); }
+    void visitRefTest(RefTest* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.test");
+    }
+    void visitRefCast(RefCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.cast");
+    }
+    void visitBrOnCast(BrOnCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    }
+    void visitRttCanon(RttCanon* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    }
+    void visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+    void visitStructNew(StructNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.new");
+    }
+    void visitStructGet(StructGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.get");
+    }
+    void visitStructSet(StructSet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.set");
+    }
+    void visitArrayNew(ArrayNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.new");
+    }
+    void visitArrayGet(ArrayGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.get");
+    }
+    void visitArraySet(ArraySet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.set");
+    }
+    void visitArrayLen(ArrayLen* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.len");
     }
   } singleton(curr, visitor);
 }
@@ -479,9 +516,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
                     "wasm64 will need changes here");
       rehash(digest, curr);
     }
-    void visitAddress(Address curr) {
-      rehash(digest, curr.addr);
-    }
+    void visitAddress(Address curr) { rehash(digest, curr.addr); }
   };
 
   return Hasher(curr).digest;

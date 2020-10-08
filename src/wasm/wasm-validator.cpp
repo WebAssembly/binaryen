@@ -328,14 +328,30 @@ public:
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
+  void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
+  void visitRefTest(RefTest* curr);
+  void visitRefCast(RefCast* curr);
+  void visitBrOnCast(BrOnCast* curr);
+  void visitRttCanon(RttCanon* curr);
+  void visitRttSub(RttSub* curr);
+  void visitStructNew(StructNew* curr);
+  void visitStructGet(StructGet* curr);
+  void visitStructSet(StructSet* curr);
+  void visitArrayNew(ArrayNew* curr);
+  void visitArrayGet(ArrayGet* curr);
+  void visitArraySet(ArraySet* curr);
+  void visitArrayLen(ArrayLen* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -927,9 +943,6 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
@@ -961,9 +974,6 @@ void FunctionValidator::visitStore(Store* curr) {
                  curr,
                  "SIMD operation (SIMD is disabled)");
   }
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
@@ -990,9 +1000,6 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1013,9 +1020,6 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1049,9 +1053,6 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1078,9 +1079,6 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1101,9 +1099,6 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared,
-                curr,
-                "Atomic operation with non-shared memory");
   shouldBeTrue(curr->order == 0,
                curr,
                "Currently only sequentially consistent atomics are supported, "
@@ -1945,7 +1940,16 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
                                     "memory.grow must match memory index type");
 }
 
+void FunctionValidator::visitRefNull(RefNull* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.null requires reference-types to be enabled");
+}
+
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.is_null requires reference-types to be enabled");
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
                curr->value,
@@ -1953,11 +1957,32 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.func requires reference-types to be enabled");
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
 }
 
+void FunctionValidator::visitRefEq(RefEq* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->left->type,
+    Type::eqref,
+    curr->left,
+    "ref.eq's left argument should be a subtype of eqref");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->right->type,
+    Type::eqref,
+    curr->right,
+    "ref.eq's right argument should be a subtype of eqref");
+}
+
 void FunctionValidator::visitTry(Try* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "try requires exception-handling to be enabled");
   if (curr->type != Type::unreachable) {
     shouldBeSubTypeOrFirstIsUnreachable(
       curr->body->type,
@@ -1982,6 +2007,9 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "throw requires exception-handling to be enabled");
   if (!info.validateGlobally) {
     return;
   }
@@ -2012,6 +2040,9 @@ void FunctionValidator::visitThrow(Throw* curr) {
 }
 
 void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "rethrow requires exception-handling to be enabled");
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
@@ -2024,6 +2055,9 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  shouldBeTrue(getModule()->features.hasExceptionHandling(),
+               curr,
+               "br_on_exn requires exception-handling to be enabled");
   Event* event = getModule()->getEventOrNull(curr->event);
   shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
   shouldBeTrue(event->sig.params == curr->sent,
@@ -2091,6 +2125,102 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
         "tuple.extract type does not match the type of the extracted element");
     }
   }
+}
+
+void FunctionValidator::visitI31New(I31New* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "i31.new requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(curr->value->type,
+                                      Type::i32,
+                                      curr->value,
+                                      "i31.new's argument should be i32");
+}
+
+void FunctionValidator::visitI31Get(I31Get* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "i31.get_s/u requires gc to be enabled");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->i31->type,
+    Type::i31ref,
+    curr->i31,
+    "i31.get_s/u's argument should be i31ref");
+}
+
+void FunctionValidator::visitRefTest(RefTest* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.test requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+}
+
+void FunctionValidator::visitRefCast(RefCast* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "ref.cast requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+}
+
+void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "br_on_cast requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+}
+
+void FunctionValidator::visitRttCanon(RttCanon* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+}
+
+void FunctionValidator::visitRttSub(RttSub* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+}
+
+void FunctionValidator::visitStructNew(StructNew* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.new requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+}
+
+void FunctionValidator::visitStructGet(StructGet* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.get requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+}
+
+void FunctionValidator::visitStructSet(StructSet* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "struct.set requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+}
+
+void FunctionValidator::visitArrayNew(ArrayNew* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.new requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.new");
+}
+
+void FunctionValidator::visitArrayGet(ArrayGet* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.get requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.get");
+}
+
+void FunctionValidator::visitArraySet(ArraySet* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.set requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.set");
+}
+
+void FunctionValidator::visitArrayLen(ArrayLen* curr) {
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "array.len requires gc to be enabled");
+  WASM_UNREACHABLE("TODO (gc): array.len");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

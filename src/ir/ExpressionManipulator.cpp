@@ -233,6 +233,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);
     }
+    Expression* visitRefEq(RefEq* curr) {
+      return builder.makeRefEq(copy(curr->left), copy(curr->right));
+    }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(
         copy(curr->body), copy(curr->catchBody), curr->type);
@@ -265,6 +268,48 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitTupleExtract(TupleExtract* curr) {
       return builder.makeTupleExtract(copy(curr->tuple), curr->index);
+    }
+    Expression* visitI31New(I31New* curr) {
+      return builder.makeI31New(copy(curr->value));
+    }
+    Expression* visitI31Get(I31Get* curr) {
+      return builder.makeI31Get(copy(curr->i31), curr->signed_);
+    }
+    Expression* visitRefTest(RefTest* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.test");
+    }
+    Expression* visitRefCast(RefCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.cast");
+    }
+    Expression* visitBrOnCast(BrOnCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    }
+    Expression* visitRttCanon(RttCanon* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    }
+    Expression* visitRttSub(RttSub* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    }
+    Expression* visitStructNew(StructNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.new");
+    }
+    Expression* visitStructGet(StructGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.get");
+    }
+    Expression* visitStructSet(StructSet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.set");
+    }
+    Expression* visitArrayNew(ArrayNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.new");
+    }
+    Expression* visitArrayGet(ArrayGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.get");
+    }
+    Expression* visitArraySet(ArraySet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.set");
+    }
+    Expression* visitArrayLen(ArrayLen* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.len");
     }
   };
 

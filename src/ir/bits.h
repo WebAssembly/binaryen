@@ -51,7 +51,7 @@ inline uint32_t getMaskedBits(uint32_t mask) {
     return 0;
   }
   // this is indeed a mask
-  return 32 - CountLeadingZeroes(mask);
+  return 32 - countLeadingZeroes(mask);
 }
 
 // gets the number of effective shifts a shift operation does. In
@@ -113,8 +113,7 @@ struct DummyLocalInfoProvider {
   Index getMaxBitsForLocal(LocalGet* get) {
     if (get->type == Type::i32) {
       return 32;
-    }
-    if (get->type == Type::i32) {
+    } else if (get->type == Type::i64) {
       return 64;
     }
     WASM_UNREACHABLE("type has no integer bit size");
@@ -177,11 +176,11 @@ Index getMaxBits(Expression* curr,
       case RemSInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft is negative
+          // if left may be negative, the result may be negative
           if (maxBitsLeft == 32) {
             return 32;
           }
-          auto bitsRight = Index(CeilLog2(c->value.geti32()));
+          auto bitsRight = Index(ceilLog2(c->value.geti32()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -189,7 +188,7 @@ Index getMaxBits(Expression* curr,
       case RemUInt32: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          auto bitsRight = Index(CeilLog2(c->value.geti32()));
+          auto bitsRight = Index(ceilLog2(c->value.geti32()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -200,12 +199,8 @@ Index getMaxBits(Expression* curr,
       }
       case OrInt32:
       case XorInt32: {
-        auto maxBits = getMaxBits(binary->right, localInfoProvider);
-        // if maxBits is negative
-        if (maxBits == 32) {
-          return 32;
-        }
-        return std::max(getMaxBits(binary->left, localInfoProvider), maxBits);
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
@@ -228,7 +223,7 @@ Index getMaxBits(Expression* curr,
       case ShrSInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          // if maxBits is negative
+          // if left may be negative, the result may be negative
           if (maxBits == 32) {
             return 32;
           }
@@ -256,7 +251,7 @@ Index getMaxBits(Expression* curr,
       case DivSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft or right const value is negative
+          // if left or right const value is negative
           if (maxBitsLeft == 64 || c->value.geti64() < 0) {
             return 64;
           }
@@ -276,11 +271,11 @@ Index getMaxBits(Expression* curr,
       case RemSInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          // if maxBitsLeft is negative
+          // if left may be negative, the result may be negative
           if (maxBitsLeft == 64) {
             return 64;
           }
-          auto bitsRight = Index(CeilLog2(c->value.geti64()));
+          auto bitsRight = Index(ceilLog2(c->value.geti64()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 64;
@@ -288,23 +283,19 @@ Index getMaxBits(Expression* curr,
       case RemUInt64: {
         if (auto* c = binary->right->dynCast<Const>()) {
           auto maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
-          auto bitsRight = Index(CeilLog2(c->value.geti64()));
+          auto bitsRight = Index(ceilLog2(c->value.geti64()));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 64;
       }
       case AndInt64: {
-        auto maxBits = getMaxBits(binary->right, localInfoProvider);
-        return std::min(getMaxBits(binary->left, localInfoProvider), maxBits);
+        return std::min(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case OrInt64:
       case XorInt64: {
-        auto maxBits = getMaxBits(binary->right, localInfoProvider);
-        // if maxBits is negative
-        if (maxBits == 64) {
-          return 64;
-        }
-        return std::max(getMaxBits(binary->left, localInfoProvider), maxBits);
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+                        getMaxBits(binary->right, localInfoProvider));
       }
       case ShlInt64: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
@@ -327,7 +318,7 @@ Index getMaxBits(Expression* curr,
       case ShrSInt64: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          // if maxBits is negative
+          // if left may be negative, the result may be negative
           if (maxBits == 64) {
             return 64;
           }

@@ -89,13 +89,28 @@ function initializeConstants() {
     'RefNull',
     'RefIsNull',
     'RefFunc',
+    'RefEq',
     'Try',
     'Throw',
     'Rethrow',
     'BrOnExn',
     'TupleMake',
     'TupleExtract',
-    'Pop'
+    'Pop',
+    'I31New',
+    'I31Get',
+    'RefTest',
+    'RefCast',
+    'BrOnCast',
+    'RttCanon',
+    'RttSub',
+    'StructNew',
+    'StructGet',
+    'StructSet',
+    'ArrayNew',
+    'ArrayGet',
+    'ArraySet',
+    'ArrayLen'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -125,6 +140,7 @@ function initializeConstants() {
     'ReferenceTypes',
     'Multivalue',
     'GC',
+    'Memory64',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2093,6 +2109,9 @@ function wrapModule(module, self = {}) {
     },
     'func'(func) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func)));
+    },
+    'eq'(left, right) {
+      return Module['_BinaryenRefEq'](module, left, right);
     }
   };
 
@@ -2140,6 +2159,18 @@ function wrapModule(module, self = {}) {
     },
     'extract'(tuple, index) {
       return Module['_BinaryenTupleExtract'](module, tuple, index);
+    }
+  };
+
+  self['i31'] = {
+    'new'(value) {
+      return Module['_BinaryenI31New'](module, value);
+    },
+    'get_s'(i31) {
+      return Module['_BinaryenI31Get'](module, i31, 1);
+    },
+    'get_u'(i31) {
+      return Module['_BinaryenI31Get'](module, i31, 0);
     }
   };
 
@@ -2803,6 +2834,13 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
       };
+    case Module['RefEqId']:
+      return {
+        'id': id,
+        'type': type,
+        'left': Module['_BinaryenRefEqGetLeft'](expr),
+        'right': Module['_BinaryenRefEqGetRight'](expr)
+      };
     case Module['TryId']:
       return {
         'id': id,
@@ -2843,6 +2881,19 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
         'index': Module['_BinaryenTupleExtractGetIndex'](expr)
+      };
+    case Module['I31NewId']:
+      return {
+        'id': id,
+        'type': type,
+        'value': Module['_BinaryenI31NewGetValue'](expr)
+      };
+    case Module['I31GetId']:
+      return {
+        'id': id,
+        'type': type,
+        'i31': Module['_BinaryenI31GetGetI31'](expr),
+        'isSigned': Boolean(Module['_BinaryenI31GetIsSigned'](expr))
       };
 
     default:
@@ -2993,6 +3044,18 @@ Module['getLowMemoryUnused'] = function() {
 // when optimizing.
 Module['setLowMemoryUnused'] = function(on) {
   Module['_BinaryenSetLowMemoryUnused'](on);
+};
+
+// Gets whether fast math optimizations are enabled, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['getFastMath'] = function() {
+  return Boolean(Module['_BinaryenGetFastMath']());
+};
+
+// Enables or disables fast math optimizations, ignoring for example
+// corner cases of floating-point math like NaN changes.
+Module['setFastMath'] = function(value) {
+  Module['_BinaryenSetFastMath'](value);
 };
 
 // Gets the value of the specified arbitrary pass argument.
@@ -4100,6 +4163,21 @@ Module['RefFunc'] = makeExpressionWrapper({
   }
 });
 
+Module['RefEq'] = makeExpressionWrapper({
+  'getLeft'(expr) {
+    return Module['_BinaryenRefEqGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    return Module['_BinaryenRefEqSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenRefEqGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    return Module['_BinaryenRefEqSetRight'](expr, rightExpr);
+  }
+});
+
 Module['Try'] = makeExpressionWrapper({
   'getBody'(expr) {
     return Module['_BinaryenTryGetBody'](expr);
@@ -4255,6 +4333,30 @@ Module['TupleExtract'] = makeExpressionWrapper({
   },
   'setIndex'(expr, index) {
     Module['_BinaryenTupleExtractSetIndex'](expr, index);
+  }
+});
+
+Module['I31New'] = makeExpressionWrapper({
+  'getValue'(expr) {
+    return Module['_BinaryenI31NewGetValue'](expr);
+  },
+  'setValue'(expr, valueExpr) {
+    Module['_BinaryenI31NewSetValue'](expr, valueExpr);
+  }
+});
+
+Module['I31Get'] = makeExpressionWrapper({
+  'getI31'(expr) {
+    return Module['_BinaryenI31GetGetI31'](expr);
+  },
+  'setI31'(expr, i31Expr) {
+    Module['_BinaryenI31GetSetI31'](expr, i31Expr);
+  },
+  'isSigned'(expr) {
+    return Boolean(Module['_BinaryenI31GetIsSigned'](expr));
+  },
+  'setSigned'(expr, isSigned) {
+    Module['_BinaryenI31GetSetSigned'](expr, isSigned);
   }
 });
 

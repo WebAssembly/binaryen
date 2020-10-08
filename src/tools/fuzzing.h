@@ -326,13 +326,13 @@ private:
           }
           if (wasm.features.hasGC()) {
             options.push_back(Type::eqref);
-            // TODO: i31ref
+            options.push_back(Type::i31ref);
           }
         }
         break;
       case Type::eqref:
         if (wasm.features.hasGC()) {
-          // TODO: i31ref
+          options.push_back(Type::i31ref);
         }
         break;
       default:
@@ -892,9 +892,16 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq,
+                  &Self::makeI31Get);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
+    if (type == Type::i31ref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
     return (this->*pick(options))(type);
   }
@@ -1697,7 +1704,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1708,7 +1716,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),
@@ -1781,6 +1790,9 @@ private:
           target = pick(wasm.functions).get();
         }
         return builder.makeRefFunc(target->name);
+      }
+      if (type == Type::i31ref) {
+        return builder.makeI31New(makeConst(Type::i32));
       }
       return builder.makeRefNull(type);
     }
@@ -2640,6 +2652,28 @@ private:
     return builder.makeRefIsNull(make(getReferenceType()));
   }
 
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
+  }
+
+  Expression* makeI31New(Type type) {
+    assert(type == Type::i31ref);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* value = make(Type::i32);
+    return builder.makeI31New(value);
+  }
+
+  Expression* makeI31Get(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* i31 = make(Type::i31ref);
+    return builder.makeI31Get(i31, bool(oneIn(2)));
+  }
+
   Expression* makeMemoryInit() {
     if (!allowMemory) {
       return makeTrivial(Type::none);
@@ -2705,7 +2739,8 @@ private:
              Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref)); // TODO: i31ref
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -2718,10 +2753,18 @@ private:
              Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref)); // TODO: i31ref
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(FeatureOptions<Type>().add(
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;

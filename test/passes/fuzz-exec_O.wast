@@ -22,10 +22,10 @@
 )
 (module
  (func "div" (result f32)
-  (f32.div                   ;; div by 1 can be removed, leaving this nan
-   (f32.const -nan:0x23017a) ;; as it is. wasm semantics allow nan bits to
-   (f32.const 1)             ;; change, but the interpreter should not do so,
-  )                          ;; so that it does not fail on that opt.
+  (f32.div
+   (f32.const -nan:0x23017a)
+   (f32.const 1)
+  )
  )
  (func "mul1" (result f32)
   (f32.mul
@@ -39,5 +39,40 @@
    (f32.const -nan:0x34546d)
   )
  )
+ (func "add1" (result f32)
+  (f32.add
+   (f32.const -nan:0x34546d)
+   (f32.const -0)
+  )
+ )
+ (func "add2" (result f32)
+  (f32.add
+   (f32.const -0)
+   (f32.const -nan:0x34546d)
+  )
+ )
+ (func "add3" (result f32)
+  (f32.add
+   (f32.const -nan:0x34546d)
+   (f32.const 0)
+  )
+ )
+ (func "add4" (result f32)
+  (f32.add
+   (f32.const 0)
+   (f32.const -nan:0x34546d)
+  )
+ )
+ (func "sub1" (result f32)
+  (f32.sub
+   (f32.const -nan:0x34546d)
+   (f32.const 0)
+  )
+ )
+ (func "sub2" (result f32)
+  (f32.sub
+   (f32.const -nan:0x34546d)
+   (f32.const -0)
+  )
+ )
 )
-

@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (memory $0 2)
@@ -15,7 +15,6 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (call $__wasm_init_memory)
  )
@@ -37,11 +36,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -58,8 +52,7 @@
   ],
   "exports": [
     "__wasm_call_ctors",
-    "main",
-    "__growWasmMemory"
+    "main"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",

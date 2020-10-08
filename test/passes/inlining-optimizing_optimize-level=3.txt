@@ -13,7 +13,7 @@
  (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
  (import "env" "memory" (memory $0 256 256))
  (data (i32.const 1024) "emcc_hello_world.asm.js")
- (import "env" "table" (table $0 18 18 funcref))
+ (import "env" "table" (table $timport$0 18 18 funcref))
  (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))

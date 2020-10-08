@@ -189,7 +189,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     if (value < 0) {
       return ASM_SIGNED;
     }
-    if (value > uint32_t(-1) || fmod(value, 1) != 0) {
+    if (value > uint32_t(-1) || !wasm::isInteger(value)) {
       return ASM_NONSIGNED;
     }
     if (wasm::isSInteger32(value)) {
