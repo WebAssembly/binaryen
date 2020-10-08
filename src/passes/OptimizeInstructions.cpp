@@ -287,7 +287,7 @@ struct OptimizeInstructions
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
-            c->value = c->value.abs().sub(Literal::makeUnit(c->type));
+            c->value = c->value.abs().sub(Literal::makeOne(c->type));
           }
           return curr;
         }
@@ -1338,7 +1338,7 @@ private:
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
-          c->value = c->value.abs().sub(Literal::makeUnit(c->type));
+          c->value = c->value.abs().sub(Literal::makeOne(c->type));
         }
         return curr;
       }
@@ -1414,7 +1414,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeUnit(Type::i32);
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1809,7 +1809,7 @@ private:
       case LeUInt64:
       case GeSInt64:
       case GeUInt64:
-        return LiteralUtils::makeUnit(Type::i32, *getModule());
+        return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
     }

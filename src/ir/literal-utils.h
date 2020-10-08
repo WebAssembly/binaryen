@@ -41,16 +41,6 @@ inline Expression* makeZero(Type type, Module& wasm) {
   return builder.makeConstantExpression(Literal::makeZeros(type));
 }
 
-inline Expression* makeUnit(Type type, Module& wasm) {
-  // TODO: Remove this function once V8 supports v128.const
-  // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
-  Builder builder(wasm);
-  if (type == Type::v128) {
-    return builder.makeUnary(SplatVecI32x4, builder.makeConst(int32_t(1)));
-  }
-  return builder.makeConstantExpression(Literal::makeUnits(type));
-}
-
 } // namespace LiteralUtils
 
 } // namespace wasm

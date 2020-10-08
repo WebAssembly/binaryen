@@ -136,11 +136,11 @@ Literals Literal::makeZeros(Type type) {
   return zeroes;
 }
 
-Literals Literal::makeUnits(Type type) {
+Literals Literal::makeOnes(Type type) {
   assert(type.isConcrete());
   Literals units;
   for (const auto& t : type) {
-    units.push_back(makeUnit(t));
+    units.push_back(makeOne(t));
   }
   return units;
 }
@@ -149,7 +149,7 @@ Literals Literal::makeNegUnits(Type type) {
   assert(type.isConcrete());
   Literals units;
   for (const auto& t : type) {
-    units.push_back(makeNegUnit(t));
+    units.push_back(makeNegOne(t));
   }
   return units;
 }
@@ -167,12 +167,12 @@ Literal Literal::makeZero(Type type) {
   }
 }
 
-Literal Literal::makeUnit(Type type) {
+Literal Literal::makeOne(Type type) {
   assert(type.isNumber());
   return makeFromInt32(1, type);
 }
 
-Literal Literal::makeNegUnit(Type type) {
+Literal Literal::makeNegOne(Type type) {
   assert(type.isNumber());
   return makeFromInt32(-1, type);
 }

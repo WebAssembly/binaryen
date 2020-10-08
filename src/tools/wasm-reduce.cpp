@@ -1038,7 +1038,7 @@ struct Reducer
     if (tryToReplaceCurrent(c)) {
       return true;
     }
-    c->value = Literal::makeUnit(curr->type);
+    c->value = Literal::makeOne(curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
   }
