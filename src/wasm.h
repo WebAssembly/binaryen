@@ -585,22 +585,34 @@ public:
 
   void finalize() {}
 
-  template<class T> bool is() const { return int(_id) == int(T::SpecificId); }
+  template<class T> bool is() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
+    return int(_id) == int(T::SpecificId);
+  }
 
   template<class T> T* dynCast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
   template<class T> const T* dynCast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
   }
 
   template<class T> T* cast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
 
   template<class T> const T* cast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
