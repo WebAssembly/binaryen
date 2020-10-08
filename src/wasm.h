@@ -592,10 +592,14 @@ public:
   }
 
   template<class T> const T* dynCast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
   }
 
   template<class T> T* cast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
