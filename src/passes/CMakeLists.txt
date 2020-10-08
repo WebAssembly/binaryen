@@ -61,7 +61,6 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
