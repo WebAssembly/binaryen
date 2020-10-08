@@ -270,9 +270,6 @@ void PassRegistry::registerPasses() {
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
-  registerPass("relooper-jump-threading",
-               "thread relooper jumps (fastcomp output only)",
-               createRelooperJumpThreadingPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
