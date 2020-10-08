@@ -157,7 +157,7 @@ int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
 
 int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
-template<> bool IsPowerOf2Float<float>(float v) {
+bool isPowerOf2Float(float v) {
   const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
   const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
   const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
@@ -166,7 +166,7 @@ template<> bool IsPowerOf2Float<float>(float v) {
   return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
 }
 
-template<> bool IsPowerOf2Float<double>(double v) {
+bool isPowerOf2Float(double v) {
   const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
   const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
   const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent

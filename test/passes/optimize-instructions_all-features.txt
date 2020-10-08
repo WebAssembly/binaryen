@@ -2866,7 +2866,6 @@
    )
   )
  )
- (func $srem-by-1 (param $x i32) (param $y i64)
  (func $srem-by-const (param $x i32) (param $y i64)
   (drop
    (i32.const 0)
@@ -3134,13 +3133,13 @@
    (local.get $x64)
   )
   (drop
-   (f32.div
+   (f32.mul
     (local.get $y32)
     (f32.const 1)
    )
   )
   (drop
-   (f64.div
+   (f64.mul
     (local.get $y64)
     (f64.const 1)
    )

@@ -3185,7 +3185,6 @@
       (f64.const 0x1p+1023) ;; skip
     ))
   )
-  (func $srem-by-1 (param $x i32) (param $y i64)
   (func $srem-by-const (param $x i32) (param $y i64)
     ;; (signed)x % 1
     (drop (i32.rem_s
@@ -4969,7 +4968,7 @@
         (local.get $x)
         (local.get $y)
       )
-     ))
+    ))
     ;; x | (y | x)   where x and y cannot be reordered  -  skip
     (drop
       (i32.or
