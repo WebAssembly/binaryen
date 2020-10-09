@@ -179,9 +179,6 @@ to make WebAssembly smaller and faster. You can run the Binaryen optimizer by
 using ``wasm-opt``, but also they can be run while using other tools, like
 ``wasm2js`` and ``wasm-metadce``.
 
-The full list of passes is in the link above. This section summarizes some key
-points:
-
 * The default optimization pipeline is set up by functions like
   [`addDefaultFunctionOptimizationPasses`](https://github.com/WebAssembly/binaryen/blob/369b8bdd3d9d49e4d9e0edf62e14881c14d9e352/src/passes/pass.cpp#L396).
 * There are various
@@ -190,10 +187,8 @@ points:
   ignore unlikely traps, inlining heuristics, fast-math, and so forth. See
   ``wasm-opt --help`` for how to set them and other details.
 
-See each optimization passes for details of what it does, but here is a quick
-overview of some of the more important ones:
-
-Particularly important passes are in blue italics.
+See each optimization pass for details of what it does, but here is a quick
+overview of some of the relevant ones:
 
 * **CoalesceLocals** - Key “register allocation” pass. Does a live range
   analysis and then reuses locals in order to minimize their number, as well as
