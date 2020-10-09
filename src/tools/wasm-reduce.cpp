@@ -1024,6 +1024,9 @@ struct Reducer
     if (curr->is<Const>()) {
       return false;
     }
+    if (!curr->type.isNumber()) {
+      return false;
+    }
     // try to replace with a trivial value
     if (curr->type.isNullable()) {
       RefNull* n = builder->makeRefNull(curr->type);
