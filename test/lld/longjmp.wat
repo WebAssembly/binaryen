@@ -1,8 +1,8 @@
 (module
  (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -11,12 +11,11 @@
  (import "env" "malloc" (func $fimport$0 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$1 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$2 (result i32)))
- (import "env" "emscripten_longjmp_jmpbuf" (func $fimport$3 (param i32 i32)))
- (import "env" "__invoke_void_i32_i32" (func $fimport$4 (param i32 i32 i32)))
+ (import "env" "emscripten_longjmp" (func $fimport$3 (param i32 i32)))
+ (import "env" "invoke_vii" (func $fimport$4 (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$5 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$6 (param i32)))
  (import "env" "free" (func $fimport$7 (param i32)))
- (import "env" "emscripten_longjmp" (func $fimport$8 (param i32 i32)))
  (memory $0 2)
  (table $0 2 2 funcref)
  (elem (i32.const 1) $fimport$3)
@@ -122,7 +121,7 @@
     (i32.const 0)
    )
   )
-  (call $fimport$8
+  (call $fimport$3
    (local.get $0)
    (local.get $3)
   )
