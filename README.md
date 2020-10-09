@@ -16,15 +16,13 @@ effective**:
    cores. Binaryen's IR also compiles down to WebAssembly extremely easily and
    quickly because it is essentially a subset of WebAssembly.
 
- * **Effective**: Binaryen's optimizer has many [passes] that can improve code
-   very significantly (e.g. local coloring to coalesce local variables; dead
-   code elimination; precomputing expressions when possible at compile time;
-   etc.). These optimizations aim to make Binaryen powerful enough to be used as
-   a [compiler backend][backend] by itself.  One specific area of focus is on
-   WebAssembly-specific optimizations (that general-purpose compilers might not
-   do), which you can think of as wasm [minification] , similar to minification
-   for JavaScript, CSS, etc., all of which are language-specific (an example of
-   such an optimization is block return value generation in `SimplifyLocals`).
+ * **Effective**: Binaryen's optimizer has many passes (see an overview later
+   down) that can improve code size and speed. These optimizations aim to make
+   Binaryen powerful enough to be used as a [compiler backend][backend] by
+   itself.  One specific area of focus is on WebAssembly-specific optimizations
+   (that general-purpose compilers might not do), which you can think of as
+   wasm [minification] , similar to minification for JavaScript, CSS, etc., all
+   of which are language-specific.
 
 Compilers using Binaryen include:
 
@@ -496,7 +494,6 @@ would be appreciated on Windows and OS X as most of the core devs are on Linux.
 [control flow graph]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 [JS_API]: https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API
 [compile_to_wasm]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly
-[passes]: https://github.com/WebAssembly/binaryen/tree/master/src/passes
 [backend]: https://kripken.github.io/talks/binaryen.html#/9
 [minification]: https://kripken.github.io/talks/binaryen.html#/2
 [unreachable]: https://github.com/WebAssembly/binaryen/issues/903
