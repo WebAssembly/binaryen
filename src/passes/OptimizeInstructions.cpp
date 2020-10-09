@@ -602,9 +602,10 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
-          } else if (getPassOptions().shrinkLevel == 0 && c < 0 &&
-                     c > std::numeric_limits<int64_t>::min() &&
-                     binary->op == DivUInt64) {
+          }
+          if (getPassOptions().shrinkLevel == 0 && c < 0 &&
+              c > std::numeric_limits<int64_t>::min() &&
+              binary->op == DivUInt64) {
             // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
             // We avoid applying this for C == 2^31 due to conflict
             // with other rule which transform to more prefereble
@@ -1441,10 +1442,6 @@ private:
       curr->op = Abstract::getBinary(type, Abstract::Ne);
       return curr;
     }
-    // (unsigned)x / -1   ==>   x == -1
-    // We handled earlier as part of (unsigned)x / C rule
-    // where `C > (2^31|2^63)`
-
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeSingleZero(type);
