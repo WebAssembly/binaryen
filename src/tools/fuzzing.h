@@ -729,6 +729,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -747,17 +749,17 @@ private:
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
-          if (Block* block = curr->dynCast<Block>()) {
+          if (auto* block = curr->dynCast<Block>()) {
             if (name == block->name) {
               return true;
             }
-          } else if (Loop* loop = curr->dynCast<Loop>()) {
+          } else if (auto* loop = curr->dynCast<Loop>()) {
             if (name == loop->name) {
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or a try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
