@@ -124,13 +124,13 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_popcnt": $1, 
+  "i32.popcnt": $1, 
   "check_popcnt_i64": legalstub$2, 
   "check_extend_ui32": legalstub$3, 
   "check_extend_si32": legalstub$4, 
   "check_eqz_i64": legalstub$5, 
-  "i32_clz": $6, 
-  "i32_ctz": $7, 
+  "i32.clz": $6, 
+  "i32.ctz": $7, 
   "check_clz_i64": legalstub$8, 
   "check_ctz_i64": legalstub$9
  };

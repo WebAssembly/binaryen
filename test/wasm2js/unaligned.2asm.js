@@ -162,14 +162,14 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "i32_load": $0, 
-  "i64_load": legalstub$1, 
-  "f32_load": $2, 
-  "f64_load": $3, 
-  "i32_store": $4, 
-  "i64_store": $5, 
-  "f32_store": $6, 
-  "f64_store": $7
+  "i32.load": $0, 
+  "i64.load": legalstub$1, 
+  "f32.load": $2, 
+  "f64.load": $3, 
+  "i32.store": $4, 
+  "i64.store": $5, 
+  "f32.store": $6, 
+  "f64.store": $7
  };
 }
 

@@ -565,11 +565,11 @@ function asmFunc(global, env) {
  }
  
  return {
-  "fac_rec": legalstub$0, 
-  "fac_rec_named": legalstub$fac_rec_named, 
-  "fac_iter": legalstub$2, 
-  "fac_iter_named": legalstub$3, 
-  "fac_opt": legalstub$4
+  "fac-rec": legalstub$0, 
+  "fac-rec-named": legalstub$fac_rec_named, 
+  "fac-iter": legalstub$2, 
+  "fac-iter-named": legalstub$3, 
+  "fac-opt": legalstub$4
  };
 }
 

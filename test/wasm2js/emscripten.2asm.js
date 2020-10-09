@@ -198,7 +198,7 @@ function asmFunc(global, env) {
   "other": other, 
   "__growWasmMemory": __growWasmMemory, 
   "exported": exported, 
-  "sub_zero": sub_zero, 
+  "sub-zero": sub_zero, 
   "select": select, 
   "bools": bools
  };

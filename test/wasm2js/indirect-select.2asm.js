@@ -25,8 +25,8 @@ function asmFunc(global, env) {
  }
  
  return {
-  "foo_true": $0, 
-  "foo_false": $1
+  "foo-true": $0, 
+  "foo-false": $1
  };
 }
 

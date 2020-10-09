@@ -17,7 +17,7 @@ function asmFunc(global, env) {
  }
  
  return {
-  "$": foo
+  "": foo
  };
 }
 

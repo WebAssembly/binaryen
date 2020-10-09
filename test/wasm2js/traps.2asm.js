@@ -721,10 +721,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "no_dce_i32_div_s": $0, 
-  "no_dce_i32_div_u": $1, 
-  "no_dce_i64_div_s": legalstub$2, 
-  "no_dce_i64_div_u": legalstub$3
+  "no_dce.i32.div_s": $0, 
+  "no_dce.i32.div_u": $1, 
+  "no_dce.i64.div_s": legalstub$2, 
+  "no_dce.i64.div_u": legalstub$3
  };
 }
 
@@ -1452,10 +1452,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "no_dce_i32_rem_s": $0, 
-  "no_dce_i32_rem_u": $1, 
-  "no_dce_i64_rem_s": legalstub$2, 
-  "no_dce_i64_rem_u": legalstub$3
+  "no_dce.i32.rem_s": $0, 
+  "no_dce.i32.rem_u": $1, 
+  "no_dce.i64.rem_s": legalstub$2, 
+  "no_dce.i64.rem_u": legalstub$3
  };
 }
 
@@ -1581,14 +1581,14 @@ function asmFunc(global, env) {
  }
  
  return {
-  "no_dce_i32_trunc_f32_s": $0, 
-  "no_dce_i32_trunc_f32_u": $1, 
-  "no_dce_i32_trunc_f64_s": $2, 
-  "no_dce_i32_trunc_f64_u": $3, 
-  "no_dce_i64_trunc_f32_s": $4, 
-  "no_dce_i64_trunc_f32_u": $5, 
-  "no_dce_i64_trunc_f64_s": $6, 
-  "no_dce_i64_trunc_f64_u": $7
+  "no_dce.i32.trunc_f32_s": $0, 
+  "no_dce.i32.trunc_f32_u": $1, 
+  "no_dce.i32.trunc_f64_s": $2, 
+  "no_dce.i32.trunc_f64_u": $3, 
+  "no_dce.i64.trunc_f32_s": $4, 
+  "no_dce.i64.trunc_f32_u": $5, 
+  "no_dce.i64.trunc_f64_s": $6, 
+  "no_dce.i64.trunc_f64_u": $7
  };
 }
 
@@ -1740,20 +1740,20 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "no_dce_i32_load": $0, 
-  "no_dce_i32_load16_s": $1, 
-  "no_dce_i32_load16_u": $2, 
-  "no_dce_i32_load8_s": $3, 
-  "no_dce_i32_load8_u": $4, 
-  "no_dce_i64_load": $5, 
-  "no_dce_i64_load32_s": $6, 
-  "no_dce_i64_load32_u": $7, 
-  "no_dce_i64_load16_s": $8, 
-  "no_dce_i64_load16_u": $9, 
-  "no_dce_i64_load8_s": $10, 
-  "no_dce_i64_load8_u": $11, 
-  "no_dce_f32_load": $12, 
-  "no_dce_f64_load": $13
+  "no_dce.i32.load": $0, 
+  "no_dce.i32.load16_s": $1, 
+  "no_dce.i32.load16_u": $2, 
+  "no_dce.i32.load8_s": $3, 
+  "no_dce.i32.load8_u": $4, 
+  "no_dce.i64.load": $5, 
+  "no_dce.i64.load32_s": $6, 
+  "no_dce.i64.load32_u": $7, 
+  "no_dce.i64.load16_s": $8, 
+  "no_dce.i64.load16_u": $9, 
+  "no_dce.i64.load8_s": $10, 
+  "no_dce.i64.load8_u": $11, 
+  "no_dce.f32.load": $12, 
+  "no_dce.f64.load": $13
  };
 }
 

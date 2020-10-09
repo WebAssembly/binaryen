@@ -51,7 +51,7 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "atomic_fence": $0
+  "atomic-fence": $0
  };
 }
 

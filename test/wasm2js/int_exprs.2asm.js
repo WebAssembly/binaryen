@@ -222,10 +222,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_cmp_s_offset": $0, 
-  "i32_no_fold_cmp_u_offset": $1, 
-  "i64_no_fold_cmp_s_offset": legalstub$2, 
-  "i64_no_fold_cmp_u_offset": legalstub$3
+  "i32.no_fold_cmp_s_offset": $0, 
+  "i32.no_fold_cmp_u_offset": $1, 
+  "i64.no_fold_cmp_s_offset": legalstub$2, 
+  "i64.no_fold_cmp_u_offset": legalstub$3
  };
 }
 
@@ -322,7 +322,7 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i64_no_fold_wrap_extend_s": legalstub$0
+  "i64.no_fold_wrap_extend_s": legalstub$0
  };
 }
 
@@ -416,7 +416,7 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i64_no_fold_wrap_extend_u": legalstub$0
+  "i64.no_fold_wrap_extend_u": legalstub$0
  };
 }
 
@@ -619,10 +619,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_shl_shr_s": $0, 
-  "i32_no_fold_shl_shr_u": $1, 
-  "i64_no_fold_shl_shr_s": legalstub$2, 
-  "i64_no_fold_shl_shr_u": legalstub$3
+  "i32.no_fold_shl_shr_s": $0, 
+  "i32.no_fold_shl_shr_u": $1, 
+  "i64.no_fold_shl_shr_s": legalstub$2, 
+  "i64.no_fold_shl_shr_u": legalstub$3
  };
 }
 
@@ -828,10 +828,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_shr_s_shl": $0, 
-  "i32_no_fold_shr_u_shl": $1, 
-  "i64_no_fold_shr_s_shl": legalstub$2, 
-  "i64_no_fold_shr_u_shl": legalstub$3
+  "i32.no_fold_shr_s_shl": $0, 
+  "i32.no_fold_shr_u_shl": $1, 
+  "i64.no_fold_shr_s_shl": legalstub$2, 
+  "i64.no_fold_shr_u_shl": legalstub$3
  };
 }
 
@@ -1656,10 +1656,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_div_s_mul": $0, 
-  "i32_no_fold_div_u_mul": $1, 
-  "i64_no_fold_div_s_mul": legalstub$2, 
-  "i64_no_fold_div_u_mul": legalstub$3
+  "i32.no_fold_div_s_mul": $0, 
+  "i32.no_fold_div_u_mul": $1, 
+  "i64.no_fold_div_s_mul": legalstub$2, 
+  "i64.no_fold_div_u_mul": legalstub$3
  };
 }
 
@@ -2390,10 +2390,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_div_s_self": $0, 
-  "i32_no_fold_div_u_self": $1, 
-  "i64_no_fold_div_s_self": legalstub$2, 
-  "i64_no_fold_div_u_self": legalstub$3
+  "i32.no_fold_div_s_self": $0, 
+  "i32.no_fold_div_u_self": $1, 
+  "i64.no_fold_div_s_self": legalstub$2, 
+  "i64.no_fold_div_u_self": legalstub$3
  };
 }
 
@@ -3106,10 +3106,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_rem_s_self": $0, 
-  "i32_no_fold_rem_u_self": $1, 
-  "i64_no_fold_rem_s_self": legalstub$2, 
-  "i64_no_fold_rem_u_self": legalstub$3
+  "i32.no_fold_rem_s_self": $0, 
+  "i32.no_fold_rem_u_self": $1, 
+  "i64.no_fold_rem_s_self": legalstub$2, 
+  "i64.no_fold_rem_u_self": legalstub$3
  };
 }
 
@@ -3934,10 +3934,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_mul_div_s": $0, 
-  "i32_no_fold_mul_div_u": $1, 
-  "i64_no_fold_mul_div_s": legalstub$2, 
-  "i64_no_fold_mul_div_u": legalstub$3
+  "i32.no_fold_mul_div_s": $0, 
+  "i32.no_fold_mul_div_u": $1, 
+  "i64.no_fold_mul_div_s": legalstub$2, 
+  "i64.no_fold_mul_div_u": legalstub$3
  };
 }
 
@@ -4606,8 +4606,8 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_div_s_2": $0, 
-  "i64_no_fold_div_s_2": legalstub$1
+  "i32.no_fold_div_s_2": $0, 
+  "i64.no_fold_div_s_2": legalstub$1
  };
 }
 
@@ -5256,8 +5256,8 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_rem_s_2": $0, 
-  "i64_no_fold_rem_s_2": legalstub$1
+  "i32.no_fold_rem_s_2": $0, 
+  "i64.no_fold_rem_s_2": legalstub$1
  };
 }
 
@@ -5986,10 +5986,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_div_s_0": $0, 
-  "i32_div_u_0": $1, 
-  "i64_div_s_0": legalstub$2, 
-  "i64_div_u_0": legalstub$3
+  "i32.div_s_0": $0, 
+  "i32.div_u_0": $1, 
+  "i64.div_s_0": legalstub$2, 
+  "i64.div_u_0": legalstub$3
  };
 }
 
@@ -6720,10 +6720,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_div_s_3": $0, 
-  "i32_div_u_3": $1, 
-  "i64_div_s_3": legalstub$2, 
-  "i64_div_u_3": legalstub$3
+  "i32.div_s_3": $0, 
+  "i32.div_u_3": $1, 
+  "i64.div_s_3": legalstub$2, 
+  "i64.div_u_3": legalstub$3
  };
 }
 
@@ -7454,10 +7454,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_div_s_5": $0, 
-  "i32_div_u_5": $1, 
-  "i64_div_s_5": legalstub$2, 
-  "i64_div_u_5": legalstub$3
+  "i32.div_s_5": $0, 
+  "i32.div_u_5": $1, 
+  "i64.div_s_5": legalstub$2, 
+  "i64.div_u_5": legalstub$3
  };
 }
 
@@ -8188,10 +8188,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_div_s_7": $0, 
-  "i32_div_u_7": $1, 
-  "i64_div_s_7": legalstub$2, 
-  "i64_div_u_7": legalstub$3
+  "i32.div_s_7": $0, 
+  "i32.div_u_7": $1, 
+  "i64.div_s_7": legalstub$2, 
+  "i64.div_u_7": legalstub$3
  };
 }
 
@@ -8904,10 +8904,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_rem_s_3": $0, 
-  "i32_rem_u_3": $1, 
-  "i64_rem_s_3": legalstub$2, 
-  "i64_rem_u_3": legalstub$3
+  "i32.rem_s_3": $0, 
+  "i32.rem_u_3": $1, 
+  "i64.rem_s_3": legalstub$2, 
+  "i64.rem_u_3": legalstub$3
  };
 }
 
@@ -9620,10 +9620,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_rem_s_5": $0, 
-  "i32_rem_u_5": $1, 
-  "i64_rem_s_5": legalstub$2, 
-  "i64_rem_u_5": legalstub$3
+  "i32.rem_s_5": $0, 
+  "i32.rem_u_5": $1, 
+  "i64.rem_s_5": legalstub$2, 
+  "i64.rem_u_5": legalstub$3
  };
 }
 
@@ -10336,10 +10336,10 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_rem_s_7": $0, 
-  "i32_rem_u_7": $1, 
-  "i64_rem_s_7": legalstub$2, 
-  "i64_rem_u_7": legalstub$3
+  "i32.rem_s_7": $0, 
+  "i32.rem_u_7": $1, 
+  "i64.rem_s_7": legalstub$2, 
+  "i64.rem_u_7": legalstub$3
  };
 }
 
@@ -11008,8 +11008,8 @@ function asmFunc(global, env) {
  }
  
  return {
-  "i32_no_fold_div_neg1": $0, 
-  "i64_no_fold_div_neg1": legalstub$1
+  "i32.no_fold_div_neg1": $0, 
+  "i64.no_fold_div_neg1": legalstub$1
  };
 }
 
