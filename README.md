@@ -21,7 +21,7 @@ effective**:
    Binaryen powerful enough to be used as a [compiler backend][backend] by
    itself.  One specific area of focus is on WebAssembly-specific optimizations
    (that general-purpose compilers might not do), which you can think of as
-   wasm [minification] , similar to minification for JavaScript, CSS, etc., all
+   wasm [minification], similar to minification for JavaScript, CSS, etc., all
    of which are language-specific.
 
 Compilers using Binaryen include:
