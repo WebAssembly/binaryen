@@ -605,6 +605,10 @@ private:
       std::map<Type, std::vector<Expression*>> exprsByType;
 
       void visitExpression(Expression* curr) {
+        // Some things cannot be moved around easily, give up on them.
+        if (!FindAll<Pop>(curr).list.empty()) {
+          return;
+        }
         exprsByType[curr->type].push_back(curr);
       }
     };
