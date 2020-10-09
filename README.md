@@ -173,6 +173,106 @@ This repository contains code that builds the following tools in `bin/`:
 
 Usage instructions for each are below.
 
+## Binaryen Optimizations
+
+Binaryen contains
+[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/master/src/passes)
+to make WebAssembly smaller and faster. You can run the Binaryen optimizer by
+using ``wasm-opt``, but also they can be run while using other tools, like
+``wasm2js`` and ``wasm-metadce``.
+
+The full list of passes is in the link above. This section summarizes some key
+points:
+
+* The default optimization pipeline is set up by functions like
+  [`addDefaultFunctionOptimizationPasses`](https://github.com/WebAssembly/binaryen/blob/369b8bdd3d9d49e4d9e0edf62e14881c14d9e352/src/passes/pass.cpp#L396).
+* There are various
+  [pass options](https://github.com/WebAssembly/binaryen/blob/369b8bdd3d9d49e4d9e0edf62e14881c14d9e352/src/pass.h#L85)
+  that you can set, to adjust the optimization and shrink levels, whether to
+  ignore unlikely traps, inlining heuristics, fast-math, and so forth. See
+  ``wasm-opt --help`` for how to set them and other details.
+
+See each optimization passes for details of what it does, but here is a quick
+overview of some of the more important ones:
+
+Particularly important passes are in blue italics.
+
+* **CoalesceLocals** - Key “register allocation” pass. Does a live range
+  analysis and then reuses locals in order to minimize their number, as well as
+  to remove copies between them.
+* **CodeFolding** - Avoids duplicate code by merging it (e.g. if two `if` arms
+  have some shared instructions at their end).
+* **CodePushing** - “Pushes” code forward past branch operations, potentially
+  allowing the code to not be run if the branch is taken.
+* **DeadArgumentElimination** - LTO pass to remove arguments to a function if it
+  is always called with the same constants.
+* **DeadCodeElimination**
+* **Directize** - Turn an indirect call into a normal call, when the table index
+  is constant.
+* **DuplicateFunctionElimination** - LTO pass.
+* **Inlining** - LTO pass.
+* **LocalCSE** - Simple local common subexpression elimination.
+* **LoopInvariantCodeMotion**
+* **MemoryPacking** - Key "optimize data segments" pass that combines segments,
+  removes unneeded parts, etc.
+* **MergeBlocks** - Merge a `block` to an outer one where possible, reducing
+  their number.
+* **MergeLocals** - When two locals have the same value in part of their
+  overlap, pick in a way to help CoalesceLocals do better later (split off from
+  CoalesceLocals to keep the latter simple).
+* **MinifyImportsAndExports** - Minifies them to “a”, “b”, etc.
+* **OptimizeAddedConstants** - Optimize a load/store with an added constant into
+  a constant offset.
+* **OptimizeInstructions** - Key peephole optimization pass with a constantly
+  increasing list of patterns.
+* **PickLoadSigns** - Adjust whether a load is signed or unsigned in order to
+  avoid sign/unsign operations later.
+* **Precompute** - Calculates constant expressions at compile time, using the
+  built-in interpreter (which is guaranteed to be able to handle any constant
+  expression).
+* **ReReloop** - Transforms wasm structured control flow to a CFG and then goes
+  back to structured form using the Relooper algorithm, which may find more
+  optimal shapes.
+* **RedundantSetElimination** - Removes a `local.set` of a value that is already
+  present in a local. (Overlaps with CoalesceLocals; this achieves the specific
+  operation just mentioned without all the other work CoalesceLocals does, and
+  therefore is useful in other places in the optimization pipeline.)
+* **RemoveUnsedBrs** - Key “minor control flow optimizations” pass, including
+  jump threading and various transforms that can get rid of a `br` or `br_table`
+  (like turning a `block` with a `br` in the middle into an `if` when possible).
+* **RemoveUnusedModuleElements** - “Global DCE”, an LTO pass that removes
+  imports, functions, globals, etc., when they are not used.
+* **ReorderFunctions** - Put more-called functions first, potentially allowing
+  the LEB emitted to call them to be smaller (in a very large program).
+* **ReorderLocals** - Put more-used locals first, potentially allowing the LEB
+  emitted to use them to be smaller (in a very large function). After the
+  sorting, it also removes locals not used at all.
+* **SimplifyGlobals** - Optimizes globals in various ways, for example,
+  coalescing them, removing mutability from a global never modified, applying a
+  constant value from an immutable global, etc.
+* **SimplifyLocals** - Key “`local.get/set/tee`” optimization pass, doing things
+  like replacing a set and a get with moving the set’s value to the get (and
+  creating a tee) where possible. Also creates `block/if/loop` return values
+  instead of using a local to pass the value.
+* **Vacuum** - Key “remove silly unneeded code” pass, doing things like removing
+  an `if` arm that has no contents, a drop of a constant value with no side
+  effects, a `block` with a single child, etc.
+
+“LTO” in the above means an optimization is Link Time Optimization-like in that
+it works across multiple functions, but in a sense Binaryen is always “LTO” as
+it usually is run on the final linked wasm.
+
+Advanced optimization techniques in the Binaryen optimizer include
+[SSAification](https://github.com/WebAssembly/binaryen/blob/master/src/passes/SSAify.cpp),
+[Flat IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/flat.h), and
+[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/stack-utils.h).
+
+Binaryen also contains various passes that do other things than optimizations,
+like
+[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LegalizeJSInterface.cpp),
+[Asyncify](https://github.com/WebAssembly/binaryen/blob/master/src/passes/Asyncify.cpp),
+etc.
+
 ## Building
 
 ```
