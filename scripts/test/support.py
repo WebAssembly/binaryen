@@ -147,9 +147,12 @@ def split_wast(wastFile):
             continue
         elif chunk.startswith(('(assert', '(invoke')):
             # ret may be empty if there are some asserts before the first
-            # module
-            if ret:
-                ret[-1][1].append(chunk)
+            # module. in that case these are asserts *without* a module, which
+            # are valid (they may check something that doesn't refer to a module
+            # in any way).
+            if not ret:
+                ret += [(None, [])]
+            ret[-1][1].append(chunk)
     return ret
 
 
