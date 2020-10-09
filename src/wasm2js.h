@@ -204,7 +204,7 @@ public:
     if (it != map.end()) {
       return it->second;
     }
-    // The mangled names in our scope.
+    // The mangled name in our scope.
     auto& scopeMangledNames = mangledNames[(int)scope];
     // In some cases (see below) we need to also check the Top scope.
     auto& topMangledNames = mangledNames[int(NameScope::Top)];
@@ -223,7 +223,11 @@ public:
       if (i > 0) {
         out << "_" << i;
       }
-      auto mangled = asmangle(out.str());
+      auto mangled = out.str();
+      // The export namespace does not need any mangling at all.
+      if (scope != NameScope::Export) {
+        mangled = asmangle(mangled);
+      }
       ret = stringToIString(mangled);
       if (scopeMangledNames.count(ret)) {
         // When export names collide things may be confusing, as this is
