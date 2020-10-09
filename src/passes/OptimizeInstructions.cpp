@@ -330,6 +330,7 @@ struct OptimizeInstructions
       {
         // x <<>> (C & (31 | 63))   ==>   x <<>> C'
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
+        // x <<>> (y & (32 | 64))   ==>   x
         // where '<<>>':
         //   '<<', '>>', '>>>'. 'rotl' or 'rotr'
         BinaryOp op;
@@ -359,6 +360,13 @@ struct OptimizeInstructions
               (c->type == Type::i64 && (c->value.geti64() & 63LL) == 63LL)) {
             curr->cast<Binary>()->right = y;
             return curr;
+          }
+          // i32(x) <<>> (y & 32)   ==>   x
+          // i64(x) <<>> (y & 64)   ==>   x
+          if (((c->type == Type::i32 && (c->value.geti32() & 31) == 0) ||
+               (c->type == Type::i64 && (c->value.geti64() & 63LL) == 0LL)) &&
+              !effects(y).hasSideEffects()) {
+            return x;
           }
         }
       }
