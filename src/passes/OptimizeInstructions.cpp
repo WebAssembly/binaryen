@@ -571,8 +571,9 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
-          } else if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
-                     binary->op == DivUInt32) {
+          }
+          if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
+              binary->op == DivUInt32) {
             // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
             // We avoid applying this for C == 2^31 due to conflict
             // with other rule which transform to more prefereble
