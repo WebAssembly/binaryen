@@ -226,7 +226,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     throw TrapException();
   }
 
-  void throwException(Literal exn) override { throw WasmException(exn); }
+  void throwException(Literal exn) override {
+    std::cout << "[trap (exception) " << exn << "]\n";
+    throw WasmException(exn);
+  }
 };
 
 } // namespace wasm
