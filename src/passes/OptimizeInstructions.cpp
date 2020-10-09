@@ -287,7 +287,7 @@ struct OptimizeInstructions
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
-            c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+            c->value = c->value.abs().sub(Literal::makeOne(c->type));
           }
           return curr;
         }
@@ -1321,7 +1321,7 @@ private:
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
@@ -1338,7 +1338,7 @@ private:
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeOne(c->type));
         }
         return curr;
       }
@@ -1382,12 +1382,12 @@ private:
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(Type::i32);
+      right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1406,7 +1406,7 @@ private:
     }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = right;
       curr->right = left;
@@ -1414,7 +1414,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }

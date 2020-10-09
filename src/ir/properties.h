@@ -99,7 +99,7 @@ inline bool isConstantExpression(const Expression* curr) {
   return false;
 }
 
-inline Literal getSingleLiteral(const Expression* curr) {
+inline Literal getLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (auto* n = curr->dynCast<RefNull>()) {
@@ -116,11 +116,11 @@ inline Literal getSingleLiteral(const Expression* curr) {
 
 inline Literals getLiterals(const Expression* curr) {
   if (isSingleConstantExpression(curr)) {
-    return {getSingleLiteral(curr)};
+    return {getLiteral(curr)};
   } else if (auto* tuple = curr->dynCast<TupleMake>()) {
     Literals literals;
     for (auto* op : tuple->operands) {
-      literals.push_back(getSingleLiteral(op));
+      literals.push_back(getLiteral(op));
     }
     return literals;
   } else {
