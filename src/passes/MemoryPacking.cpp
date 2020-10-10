@@ -97,6 +97,7 @@ struct MemoryPacking : public Pass {
   uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
+  bool canOptimize(const std::vector<Memory::Segment>& segments);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
@@ -125,10 +126,15 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     return;
   }
 
+  auto& segments = module->memory.segments;
+
+  if (!canOptimize(segments)) {
+    return;
+  }
+
   maxSegments = module->features.hasBulkMemory()
                   ? 63
                   : uint32_t(WebLimitations::MaxDataSegments);
-  auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
   std::vector<Referrers> referrers(segments.size());
@@ -174,6 +180,57 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   if (module->features.hasBulkMemory()) {
     replaceBulkMemoryOps(runner, module, replacements);
   }
+}
+
+bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
+  // One segment is always ok to optimize, as it does not have the potential
+  // problems handled below.
+  if (segments.size() <= 1) {
+    return true;
+  }
+  // Check if it is ok for us to optimize.
+  for (auto& segment : segments) {
+    if (!segment.isPassive && !segment.offset->is<Const>()) {
+      // An active segment has a non-constant offset, so what gets written
+      // cannot be known until runtime. That is, the active segments are written
+      // out at startup, in order, and one may trample the data of another, like
+      //
+      //  (data (i32.const 100) "a")
+      //  (data (i32.const 100) "\00")
+      //
+      // It is *not* ok to optimize out the zero in the last segment, as it is
+      // actually needed, it will zero out the "a" that was written earlier. And
+      // if a segment has an imported offset,
+      //
+      //  (data (i32.const 100) "a")
+      //  (data (global.get $x) "\00")
+      //
+      // then we can't tell if that last segment will end up overwriting or not.
+      // The only case we can easily handle is if there is just a single
+      // segment, which we handled earlier. (Note that that includes the main
+      // case of having a non-constant offset, dynamic linking, in which we have
+      // a single segment.)
+      return false;
+    }
+  }
+  // All active segments have constant offsets, known at this time, so we may be
+  // able to optimize, but must still check for the trampling problem mentioned
+  // earlier.
+  // TODO: optimize in the trampling case
+  std::unordered_set<Address> writtenTo;
+  for (auto& segment : segments) {
+    if (!segment.isPassive) {
+      Address start = segment.offset->cast<Const>()->value.getInteger();
+      for (Index i = 0; i < segment.data.size(); i++) {
+        auto address = start + i;
+        if (writtenTo.count(address)) {
+          return false;
+        }
+        writtenTo.insert(address);
+      }
+    }
+  }
+  return true;
 }
 
 bool MemoryPacking::canSplit(const Memory::Segment& segment,

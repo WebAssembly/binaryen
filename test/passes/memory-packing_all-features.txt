@@ -9,7 +9,6 @@
 (module
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 2048 2048))
- (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
  (data (i32.const 1024) "waka this CAN be optimized")
  (data (i32.const 1107) "we DO know where it will go")
  (data (i32.const 2057) "zeros before")
@@ -1504,4 +1503,35 @@
    (data.drop 62)
   )
  )
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00")
+ (data (i32.const 4096) "\00")
+)
+(module
+ (import "env" "memory" (memory $0 1 1))
+ (data (i32.const 1024) "x")
+ (data (global.get $memoryBase) "\00")
+ (import "env" "memoryBase" (global $memoryBase i32))
+)
+(module
+ (import "env" "memory" (memory $0 1 1))
+ (data (i32.const 1024) "\00")
+ (data (global.get $memoryBase) "x")
+ (import "env" "memoryBase" (global $memoryBase i32))
 )
