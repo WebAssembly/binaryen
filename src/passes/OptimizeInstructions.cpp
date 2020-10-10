@@ -1391,7 +1391,6 @@ private:
                        any(&left),
                        i32(std::numeric_limits<int32_t>::min())))) {
       curr->op = EqInt32;
-      right->value = Literal::makeSignedMin(Type::i32);
       return curr;
     }
     // i64(x) / i64.min_s   ==>   x == i64.min_s
@@ -1402,7 +1401,6 @@ private:
                        i64(std::numeric_limits<int64_t>::min())))) {
       curr->op = EqInt64;
       curr->type = Type::i32;
-      right->value = Literal::makeSignedMin(Type::i64);
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x > -1   ==>   0
