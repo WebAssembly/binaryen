@@ -1392,7 +1392,8 @@ private:
       curr->op = EqInt32;
       return curr;
     }
-    // i64(x) / i64.min_s   ==>   x == i64.min_s
+    // i64(x) / i64.min_s   ==>   i64(x == i64.min_s)
+    // only for zero shrink level
     if (getPassOptions().shrinkLevel == 0 &&
         matches(
           curr,
