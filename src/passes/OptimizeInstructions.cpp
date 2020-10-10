@@ -1385,6 +1385,26 @@ private:
       right->value = Literal::makeZero(type);
       return right;
     }
+    // i32(x) / i32.min_s   ==>   x == i32.min_s
+    if (matches(curr,
+                binary(DivSInt32,
+                       any(&left),
+                       i32(std::numeric_limits<int32_t>::min())))) {
+      curr->op = EqInt32;
+      right->value = Literal::makeSignedMin(Type::i32);
+      return curr;
+    }
+    // i64(x) / i64.min_s   ==>   x == i64.min_s
+    if (getPassOptions().shrinkLevel == 0 &&
+        matches(curr,
+                binary(DivSInt64,
+                       any(&left),
+                       i64(std::numeric_limits<int64_t>::min())))) {
+      curr->op = EqInt64;
+      curr->type = Type::i32;
+      right->value = Literal::makeSignedMin(Type::i64);
+      return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
+    }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);

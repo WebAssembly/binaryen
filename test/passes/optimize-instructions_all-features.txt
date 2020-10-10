@@ -3953,6 +3953,28 @@
    )
   )
  )
+ (func $rhs-is-const (param $x i32) (param $y i64)
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i64.eq
+     (local.get $y)
+     (i64.const -9223372036854775808)
+    )
+   )
+  )
+  (drop
+   (i64.div_s
+    (local.get $y)
+    (i64.const -2147483648)
+   )
+  )
+ )
  (func $pre-combine-or (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
@@ -4076,7 +4098,7 @@
    )
   )
   (drop
-   (i32.div_s
+   (i32.eq
     (i32.and
      (local.get $x)
      (i32.const 2147483647)
