@@ -1386,19 +1386,17 @@ private:
       return right;
     }
     // i32(x) / i32.min_s   ==>   x == i32.min_s
-    if (matches(curr,
-                binary(DivSInt32,
-                       any(&left),
-                       i32(std::numeric_limits<int32_t>::min())))) {
+    if (matches(
+          curr,
+          binary(DivSInt32, any(), i32(std::numeric_limits<int32_t>::min())))) {
       curr->op = EqInt32;
       return curr;
     }
     // i64(x) / i64.min_s   ==>   x == i64.min_s
     if (getPassOptions().shrinkLevel == 0 &&
-        matches(curr,
-                binary(DivSInt64,
-                       any(&left),
-                       i64(std::numeric_limits<int64_t>::min())))) {
+        matches(
+          curr,
+          binary(DivSInt64, any(), i64(std::numeric_limits<int64_t>::min())))) {
       curr->op = EqInt64;
       curr->type = Type::i32;
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
