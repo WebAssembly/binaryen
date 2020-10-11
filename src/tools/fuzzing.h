@@ -729,6 +729,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -747,17 +749,17 @@ private:
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
-          if (Block* block = curr->dynCast<Block>()) {
+          if (auto* block = curr->dynCast<Block>()) {
             if (name == block->name) {
               return true;
             }
-          } else if (Loop* loop = curr->dynCast<Loop>()) {
+          } else if (auto* loop = curr->dynCast<Loop>()) {
             if (name == loop->name) {
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or a try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
@@ -1571,10 +1573,10 @@ private:
       // +- 1
       switch (upTo(5)) {
         case 0:
-          value = value.add(Literal::makeFromInt32(-1, type));
+          value = value.add(Literal::makeNegOne(type));
           break;
         case 1:
-          value = value.add(Literal::makeFromInt32(1, type));
+          value = value.add(Literal::makeOne(type));
           break;
         default: {
         }
@@ -1593,7 +1595,7 @@ private:
       }
       // Flip sign.
       if (oneIn(2)) {
-        value = value.mul(Literal::makeFromInt32(-1, type));
+        value = value.mul(Literal::makeNegOne(type));
       }
       return value;
     };
@@ -2803,16 +2805,26 @@ private:
   // removed during optimization
   // - there's no point in logging externref or anyref because these are opaque
   // - don't bother logging tuples
-  std::vector<Type> getLoggableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+  std::vector<Type> loggableTypes;
+
+  const std::vector<Type>& getLoggableTypes() {
+    if (loggableTypes.empty()) {
+      loggableTypes = items(
+        FeatureOptions<Type>()
+          .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+          .add(FeatureSet::SIMD, Type::v128)
+          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+               Type::exnref));
+    }
+    return loggableTypes;
   }
 
   Type getLoggableType() { return pick(getLoggableTypes()); }
+
+  bool isLoggableType(Type type) {
+    const auto& types = getLoggableTypes();
+    return std::find(types.begin(), types.end(), type) != types.end();
+  }
 
   // statistical distributions
 

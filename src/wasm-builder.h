@@ -486,7 +486,7 @@ public:
     return ret;
   }
   Const* makeConstPtr(uint64_t val) {
-    return makeConst(Literal::makeFromUInt64(val, wasm.memory.indexType));
+    return makeConst(Literal::makeFromInt64(val, wasm.memory.indexType));
   }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = wasm.allocator.alloc<Binary>();
@@ -904,7 +904,7 @@ public:
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     if (curr->type.isTuple()) {
-      return makeConstantExpression(Literal::makeZero(curr->type));
+      return makeConstantExpression(Literal::makeZeros(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals

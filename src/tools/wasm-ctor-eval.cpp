@@ -193,12 +193,12 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // fill in fake values for everything else, which is dangerous to use
     ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = Literal::makeZero(defined->type);
+        globals[defined->name] = Literal::makeZeros(defined->type);
       }
     });
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = Literal::makeZero(import->type);
+        globals[import->name] = Literal::makeZeros(import->type);
       }
     });
   }

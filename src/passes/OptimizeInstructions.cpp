@@ -155,12 +155,6 @@ struct OptimizeInstructions
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  void prepareToRun(PassRunner* runner, Module* module) override {
-#if 0
-    static DatabaseEnsurer ensurer;
-#endif
-  }
-
   bool fastMath;
 
   void doWalkFunction(Function* func) {
@@ -185,24 +179,7 @@ struct OptimizeInstructions
         replaceCurrent(curr);
         continue;
       }
-#if 0
-      auto iter = database->patternMap.find(curr->_id);
-      if (iter == database->patternMap.end()) return;
-      auto& patterns = iter->second;
-      bool more = false;
-      for (auto& pattern : patterns) {
-        Match match(*getModule(), pattern);
-        if (match.check(curr)) {
-          curr = match.apply();
-          replaceCurrent(curr);
-          more = true;
-          break; // exit pattern for loop, return to main while loop
-        }
-      }
-      if (!more) break;
-#else
       break;
-#endif
     }
   }
 
@@ -304,10 +281,14 @@ struct OptimizeInstructions
         if (matches(curr,
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
-            !c->value.isSignedMin() &&
-            Bits::isPowerOf2(c->value.abs().getInteger())) {
+            (c->value.isSignedMin() ||
+             Bits::isPowerOf2(c->value.abs().getInteger()))) {
           inner->op = Abstract::getBinary(c->type, Abstract::And);
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          if (c->value.isSignedMin()) {
+            c->value = Literal::makeSignedMax(c->type);
+          } else {
+            c->value = c->value.abs().sub(Literal::makeOne(c->type));
+          }
           return curr;
         }
       }
@@ -344,6 +325,41 @@ struct OptimizeInstructions
           inner->op = EqZInt64;
           inner->value = x;
           return inner;
+        }
+      }
+      {
+        // x <<>> (C & (31 | 63))   ==>   x <<>> C'
+        // x <<>> (y & (31 | 63))   ==>   x <<>> y
+        // where '<<>>':
+        //   '<<', '>>', '>>>'. 'rotl' or 'rotr'
+        BinaryOp op;
+        Const* c;
+        Expression *x, *y;
+
+        // x <<>> C
+        if (matches(curr, binary(&op, any(&x), ival(&c))) &&
+            Abstract::hasAnyShift(op)) {
+          // truncate RHS constant to effective size as:
+          // i32(x) <<>> const(C & 31))
+          // i64(x) <<>> const(C & 63))
+          c->value = c->value.and_(
+            Literal::makeFromInt32(c->type.getByteSize() * 8 - 1, c->type));
+          // x <<>> 0   ==>   x
+          if (c->value.isZero()) {
+            return x;
+          }
+        }
+        if (matches(
+              curr,
+              binary(&op, any(&x), binary(Abstract::And, any(&y), ival(&c)))) &&
+            Abstract::hasAnyShift(op)) {
+          // i32(x) <<>> (y & 31)   ==>   x <<>> y
+          // i64(x) <<>> (y & 63)   ==>   x <<>> y
+          if ((c->type == Type::i32 && (c->value.geti32() & 31) == 31) ||
+              (c->type == Type::i64 && (c->value.geti64() & 63LL) == 63LL)) {
+            curr->cast<Binary>()->right = y;
+            return curr;
+          }
         }
       }
     }
@@ -1305,17 +1321,8 @@ private:
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
-    }
-    {
-      // (signed)x % (i32|i64).min_s   ==>  (x & (i32|i64).max_s)
-      if (matches(curr, binary(Abstract::RemS, any(&left), ival())) &&
-          right->value.isSignedMin()) {
-        curr->op = Abstract::getBinary(type, Abstract::And);
-        right->value = Literal::makeSignedMax(type);
-        return curr;
-      }
     }
     // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
     {
@@ -1325,10 +1332,14 @@ private:
                   binary(Abstract::Ne,
                          binary(&inner, Abstract::RemS, any(), ival(&c)),
                          ival(0))) &&
-          !c->value.isSignedMin() &&
-          Bits::isPowerOf2(c->value.abs().getInteger())) {
+          (c->value.isSignedMin() ||
+           Bits::isPowerOf2(c->value.abs().getInteger()))) {
         inner->op = Abstract::getBinary(c->type, Abstract::And);
-        c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+        if (c->value.isSignedMin()) {
+          c->value = Literal::makeSignedMax(c->type);
+        } else {
+          c->value = c->value.abs().sub(Literal::makeOne(c->type));
+        }
         return curr;
       }
     }
@@ -1371,12 +1382,12 @@ private:
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(Type::i32);
+      right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1395,7 +1406,7 @@ private:
     }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = right;
       curr->right = left;
@@ -1403,7 +1414,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }

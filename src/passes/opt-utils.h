@@ -97,7 +97,9 @@ inline void replaceFunctions(PassRunner* runner,
   }
   // replace in exports
   for (auto& exp : module.exports) {
-    maybeReplace(exp->value);
+    if (exp->kind == ExternalKind::Function) {
+      maybeReplace(exp->value);
+    }
   }
 }
 
