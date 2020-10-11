@@ -2718,7 +2718,7 @@ private:
       return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
-    Expression* value = makePointer();
+    Expression* value = make(Type::i32);
     Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryFill(dest, value, size);
   }
