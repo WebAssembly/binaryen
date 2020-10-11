@@ -220,7 +220,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   bool growMemory(Address /*oldSize*/, Address newSize) override {
     // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
     // interpreter.
-    if (newSize * wasm::Memory::kPageSize > 1024 * 1024 * 1024) {
+    if (newSize > 1024 * 1024 * 1024) {
       return false;
     }
     memory.resize(newSize);
