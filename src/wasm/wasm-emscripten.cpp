@@ -618,7 +618,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (import->base.startsWith("invoke_")) {
+    if (import->module == ENV && import->base.startsWith("invoke_")) {
       if (invokeFuncs.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
