@@ -25,6 +25,27 @@
 
 namespace wasm {
 
+// Mangle a name in (hopefully) exactly the same way wasm2c does.
+static std::string wasm2cMangle(Name name) {
+  const char escapePrefix = 'Z';
+  std::string mangled;
+  const char* original = name.str;
+  unsigned char c;
+  while ((c = *original++)) {
+    if ((isalnum(c) && c != escapePrefix) || c == '_') {
+      // This character is ok to emit as it is.
+      mangled += c;
+    } else {
+      // This must be escaped, as prefix + hex character code.
+      mangled += escapePrefix;
+      std::stringstream ss;
+      ss << std::hex << std::uppercase << unsigned(c);
+      mangled += ss.str();
+    }
+  }
+  return std::string("(*Z_") + mangled + "Z_";
+}
+
 static std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
@@ -143,7 +164,7 @@ int main(int argc, char** argv) {
     }
 
     // Emit the callee's name with wasm2c name mangling.
-    ret += std::string("(*Z_") + exp->name.str + "Z_";
+    ret += wasm2cMangle(exp->name);
 
     auto wasm2cSignature = [](Type type) {
       TODO_SINGLE_COMPOUND(type);
