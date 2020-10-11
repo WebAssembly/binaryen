@@ -217,8 +217,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   void tableStore(Address addr, Name entry) override { table[addr] = entry; }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  bool growMemory(Address /*oldSize*/, Address newSize) override {
+    // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize * wasm::Memory::kPageSize > 1024 * 1024 * 1024) {
+      return false;
+    }
     memory.resize(newSize);
+    return true;
   }
 
   void trap(const char* why) override {
