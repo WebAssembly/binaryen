@@ -1261,12 +1261,21 @@ private:
     }
   }
 
+  // Some globals are for internal use, and should not be modified by random
+  // fuzz code.
+  bool isValidGlobal(Name name) { return name != HANG_LIMIT_GLOBAL; }
+
   Expression* makeGlobalGet(Type type) {
     auto it = globalsByType.find(type);
     if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(it->second), type);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalGet(name, type);
+    } else {
+      return makeTrivial(type);
+    }
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1276,8 +1285,12 @@ private:
     if (it == globalsByType.end() || it->second.empty()) {
       return makeTrivial(Type::none);
     }
-    auto* value = make(type);
-    return builder.makeGlobalSet(pick(it->second), value);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalSet(name, make(type));
+    } else {
+      return makeTrivial(Type::none);
+    }
   }
 
   Expression* makeTupleMake(Type type) {
