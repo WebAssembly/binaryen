@@ -39,6 +39,7 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
