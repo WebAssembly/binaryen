@@ -384,6 +384,7 @@ private:
     std::vector<Expression*> contents;
     contents.push_back(
       builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+    auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -396,7 +397,7 @@ private:
                                builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
           builder.makeLoad(
-            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
+            1, false, i, 1, builder.makeConst(zero), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -1319,13 +1320,18 @@ private:
   }
 
   Expression* makePointer() {
-    auto* ret = make(Type::i32);
+    auto* ret = make(wasm.memory.indexType);
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
-      ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      if (wasm.memory.is64()) {
+        ret = builder.makeBinary(
+          AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
+      } else {
+        ret = builder.makeBinary(
+          AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      }
     }
     return ret;
   }
@@ -2703,7 +2709,7 @@ private:
     }
     Expression* dest = makePointer();
     Expression* source = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
@@ -2712,8 +2718,8 @@ private:
       return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
-    Expression* value = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* value = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryFill(dest, value, size);
   }
 
