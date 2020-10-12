@@ -1024,9 +1024,6 @@ struct Reducer
     if (curr->is<Const>()) {
       return false;
     }
-    if (!curr->type.isNumber()) {
-      return false;
-    }
     // try to replace with a trivial value
     if (curr->type.isNullable()) {
       RefNull* n = builder->makeRefNull(curr->type);
@@ -1037,7 +1034,7 @@ struct Reducer
         builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
     }
-    Const* c = builder->makeConst(int32_t(0));
+    auto* c = builder->makeZero(curr->type)
     if (tryToReplaceCurrent(c)) {
       return true;
     }
