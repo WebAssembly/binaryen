@@ -38,6 +38,118 @@
 
 namespace wasm {
 
+namespace {
+
+// A one-dimensional Binary Space Partitioning Tree, that is, given a line,
+// we construct a nested tree structure on it, where we can place objects. An
+// object here is a span, a contiguous area [x, y) on the line. The structure
+// has the following property:
+//
+//  * The root is responsible for the entire line.
+//  * The root has a left child responsible for that half of the line, and
+//    likewise on the right.
+//  * That structure recurses.
+//  * When adding a span into the BSP, we look for the smallest node that can
+//    contain it. That is, if a span overlaps with both the left and right
+//    children of a node, it cannot be in one of them, and remains in the
+//    parent; otherwise, it goes in the corresponding child.
+//
+// The benefit of this structure is that typically memory segments so not have
+// large amounts of overlap between each other. In that case, checking for
+// possible overlaps is logarithmic.
+struct BSPNode {
+  struct Span {
+    // Left is included, right is not.
+    size_t left, right;
+
+    bool hasOverlap(const Span& other) {
+      return !(left >= other.right || right <= other.left);
+    }
+  };
+
+  // The area we are responsible for.
+  Span area;
+
+  // All the spans that belong to this node.
+  std::vector<Span> spans;
+
+  std::unique_ptr<BSPNode> leftChild, rightChild;
+
+  BSPNode(Span area) : area(area) {}
+
+  bool hasOverlap(Span span) {
+    // First compare with existing spans on this node itself, that is, that
+    // overlap both the left and right side.
+    for (auto& existing : spans) {
+      if (existing.hasOverlap(span)) {
+        return true;
+      }
+    }
+    // Finally, check the existing spans on either side, where relevant.
+    return getLeft()->hasOverlap(span) ||
+           getRight()->hasOverlap(span);
+  }
+
+  void add(Span span) {
+    if (entirelyInLeft(span)) {
+      return getLeft()->add(span);
+    }
+    if (entirelyInRight(span)) {
+      return getRight()->add(span);
+    }
+    spans.push_back(span);
+  }
+
+private:
+  // The middle of the area is the cutoff point. That location is part of the
+  // right child, that is,
+  //  * left child is responsible for [left, middle)
+  //  * right child is responsible for [middle, right)
+  size_t getMiddle() {
+    return (area.left + area.right) / 2;
+  }
+
+  std::unique_ptr<BSPNode>& getLeft() {
+    if (!leftChild) {
+      leftChild = make_unique<BSPNode>(Span{area.left, getMiddle()});
+    }
+    return leftChild;
+  }
+
+  std::unique_ptr<BSPNode>& getRight() {
+    if (!rightChild) {
+      rightChild = make_unique<BSPNode>(Span{getMiddle(), area.right});
+    }
+    return rightChild;
+  }
+
+  // Returns whether a position is in the left half. It may even be more to the
+  // left than the actual left limit; we just check if it's left of the middle.
+  bool inLeft(size_t x) {
+    return x < getMiddle();
+  }
+  bool inRight(size_t x) {
+    return x >= getMiddle();
+  }
+
+  // Check if a span is entirely on one side.
+  bool entirelyInLeft(Span span) {
+    return inLeft(span.right);
+  }
+  bool entirelyInRight(Span span) {
+    return inRight(span.left);
+  }
+
+  // Check if a span has some overlap with a side (it may have both).
+  bool overlapsWithLeft(Span span) {
+    return inLeft(span.left);
+  }
+  bool overlapsWithRight(Span span) {
+    return inRight(span.right);
+  }
+
+};
+
 // A subsection of an orginal memory segment. If `isZero` is true, memory.fill
 // will be used instead of memory.init for this range.
 struct Range {
@@ -73,8 +185,6 @@ const size_t MEMORY_FILL_SIZE = 9;
 
 // data.drop: 2 byte opcode + ~1 byte index immediate
 const size_t DATA_DROP_SIZE = 3;
-
-namespace {
 
 Expression*
 makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
