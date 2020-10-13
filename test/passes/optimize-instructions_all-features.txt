@@ -21,6 +21,12 @@
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
+  (drop
+   (i32.xor
+    (local.get $i1)
+    (i32.const 5)
+   )
+  )
   (if
    (i32.eqz
     (local.get $i1)
