@@ -637,7 +637,8 @@ void PassRunner::run() {
               // do the current task: run all passes on this function
               for (auto* pass : stack) {
                 if (isNested && passDebug >= 2) {
-                  std::cout << "[PassRunner] running nested pass " << pass->name << " on function " << func->name << '\n';
+                  std::cout << "[PassRunner] running nested pass " << pass->name
+                            << " on function " << func->name << '\n';
                 }
                 runPassOnFunction(pass, func);
                 if (isNested && passDebug >= 2) {
@@ -661,7 +662,8 @@ void PassRunner::run() {
       } else {
         flush();
         if (isNested && passDebug >= 2) {
-          std::cout << "[PassRunner] running nested pass: " << pass->name << '\n';
+          std::cout << "[PassRunner] running nested pass: " << pass->name
+                    << '\n';
         }
         runPass(pass.get());
         if (isNested && passDebug >= 2) {
