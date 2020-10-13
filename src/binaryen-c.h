@@ -2549,10 +2549,10 @@ BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
 // ========= Utilities =========
 //
 
-// Enable or disable coloring for the WASM printer
+// Enable or disable coloring for the Wasm printer
 BINARYEN_API void BinaryenSetColorsEnabled(int enabled);
 
-// Query whether color is enable for the WASM printer
+// Query whether color is enable for the Wasm printer
 BINARYEN_API int BinaryenAreColorsEnabled();
 #ifdef __cplusplus
 } // extern "C"
