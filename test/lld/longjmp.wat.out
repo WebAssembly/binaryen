@@ -1,22 +1,21 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "malloc" (func $fimport$0 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$1 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$2 (result i32)))
- (import "env" "emscripten_longjmp_jmpbuf" (func $fimport$3 (param i32 i32)))
- (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "emscripten_longjmp" (func $fimport$3 (param i32 i32)))
+ (import "env" "invoke_vii" (func $fimport$4 (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$5 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$6 (param i32)))
  (import "env" "free" (func $fimport$7 (param i32)))
- (import "env" "emscripten_longjmp" (func $fimport$8 (param i32 i32)))
  (memory $0 2)
  (table $0 2 2 funcref)
  (elem (i32.const 1) $fimport$3)
@@ -27,7 +26,6 @@
  (export "main" (func $2))
  (export "__data_end" (global $global$1))
  (export "dynCall_vii" (func $dynCall_vii))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $0
   (nop)
  )
@@ -68,7 +66,7 @@
       (i32.const 0)
       (i32.const 0)
      )
-     (call $invoke_vii
+     (call $fimport$4
       (i32.const 1)
       (local.get $0)
       (i32.const 1)
@@ -125,7 +123,7 @@
     (i32.const 0)
    )
   )
-  (call $fimport$8
+  (call $fimport$3
    (local.get $0)
    (local.get $3)
   )
@@ -141,11 +139,6 @@
    (local.get $fptr)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -159,19 +152,17 @@
     "malloc",
     "saveSetjmp",
     "getTempRet0",
-    "emscripten_longjmp_jmpbuf",
+    "emscripten_longjmp",
     "testSetjmp",
     "setTempRet0",
-    "free",
-    "emscripten_longjmp"
+    "free"
   ],
   "externs": [
   ],
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "dynCall_vii",
-    "__growWasmMemory"
+    "dynCall_vii"
   ],
   "namedGlobals": {
     "__data_end" : "576"

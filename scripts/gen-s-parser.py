@@ -66,8 +66,8 @@ instructions = [
     ("i64.store8",     "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store16",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
     ("i64.store32",    "makeStore(s, Type::i64, /*isAtomic=*/false)"),
-    ("memory.size",    "makeHost(s, HostOp::MemorySize)"),
-    ("memory.grow",    "makeHost(s, HostOp::MemoryGrow)"),
+    ("memory.size",    "makeMemorySize(s)"),
+    ("memory.grow",    "makeMemoryGrow(s)"),
     ("i32.const",      "makeConst(s, Type::i32)"),
     ("i64.const",      "makeConst(s, Type::i64)"),
     ("f32.const",      "makeConst(s, Type::f32)"),
@@ -495,7 +495,30 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
-    ("pop",                  "makePop(s)")
+    ("pop",                  "makePop(s)"),
+    # GC
+    ("ref.eq",               "makeRefEq(s)"),
+    ("i31.new",              "makeI31New(s)"),
+    ("i31.get_s",            "makeI31Get(s, true)"),
+    ("i31.get_u",            "makeI31Get(s, false)"),
+    ("ref.test",             "makeRefTest(s)"),
+    ("ref.cast",             "makeRefCast(s)"),
+    ("br_on_cast",           "makeBrOnCast(s)"),
+    ("rtt.canon",            "makeRttCanon(s)"),
+    ("rtt.sub",              "makeRttSub(s)"),
+    ("struct.new_with_rtt",  "makeStructNew(s, false)"),
+    ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
+    ("struct.get",           "makeStructGet(s)"),
+    ("struct.get_s",         "makeStructGet(s, true)"),
+    ("struct.get_u",         "makeStructGet(s, false)"),
+    ("struct.set",           "makeStructSet(s)"),
+    ("array.new_with_rtt",   "makeArrayNew(s, false)"),
+    ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
+    ("array.get",           "makeArrayGet(s)"),
+    ("array.get_s",         "makeArrayGet(s, true)"),
+    ("array.get_u",         "makeArrayGet(s, false)"),
+    ("array.set",           "makeArraySet(s)"),
+    ("array.len",           "makeArrayLen(s)")
 ]
 
 

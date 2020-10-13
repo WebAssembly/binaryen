@@ -155,7 +155,13 @@ def which(program):
         if is_exe(program):
             return program
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
+        paths = [
+            # Prefer tools installed using third_party/setup.py
+            os.path.join(options.binaryen_root, 'third_party', 'mozjs'),
+            os.path.join(options.binaryen_root, 'third_party', 'v8'),
+            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin')
+        ] + os.environ['PATH'].split(os.pathsep)
+        for path in paths:
             path = path.strip('"')
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):

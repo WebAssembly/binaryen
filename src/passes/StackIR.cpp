@@ -36,7 +36,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
-    StackIRGenerator stackIRGen(getModule()->allocator, func);
+    StackIRGenerator stackIRGen(*getModule(), func);
     stackIRGen.write();
     func->stackIR = make_unique<StackIR>();
     func->stackIR->swap(stackIRGen.getStackIR());

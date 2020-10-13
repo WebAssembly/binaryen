@@ -1,38 +1,20 @@
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "__stack_pointer" (global $sp_import i32))
- (import "env" "__table_base" (global $__table_base i32))
- (table $0 1 funcref)
- (elem (global.get $__table_base) $__stdio_write)
+ (import "env" "fp$__stdio_write$v" (func $fp$__stdio_write$v (result i32)))
  (global $gimport$9 (mut i32) (i32.const 0))
  (global $global i32 (i32.const 42))
  (global $sp (mut i32) (global.get $sp_import))
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
- (export "dynCall_v" (func $dynCall_v))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (export "__assign_got_enties" (func $__assign_got_enties))
  (func $__stdio_write
   (nop)
  )
  (func $__assign_got_enties
   (global.set $gimport$9
-   (i32.add
-    (global.get $__table_base)
-    (i32.const 0)
-   )
-  )
- )
- (func $dynCall_v (param $fptr i32)
-  (call_indirect (type $none_=>_none)
-   (local.get $fptr)
-  )
- )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
+   (call $fp$__stdio_write$v)
   )
  )
 )
@@ -40,20 +22,18 @@
 --BEGIN METADATA --
 {
   "staticBump": 4294966770,
-  "tableSize": 1,
+  "tableSize": 0,
   "initializers": [
     "__assign_got_enties"
   ],
   "declares": [
+    "fp$__stdio_write$v"
   ],
   "externs": [
-    "___stack_pointer",
-    "___table_base"
+    "___stack_pointer"
   ],
   "exports": [
     "__stdio_write",
-    "dynCall_v",
-    "__growWasmMemory",
     "__assign_got_enties"
   ],
   "namedGlobals": {

@@ -51,6 +51,11 @@ inline bool isSymmetric(Binary* binary) {
     case XorInt64:
     case EqInt64:
     case NeInt64:
+
+    case EqFloat32:
+    case NeFloat32:
+    case EqFloat64:
+    case NeFloat64:
       return true;
 
     default:
@@ -74,13 +79,18 @@ inline bool isNamedControlFlow(Expression* curr) {
   return false;
 }
 
+inline bool isSingleConstantExpression(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
+         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+}
+
 inline bool isConstantExpression(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+  if (isSingleConstantExpression(curr)) {
     return true;
   }
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+      if (!isSingleConstantExpression(op)) {
         return false;
       }
     }
@@ -89,25 +99,28 @@ inline bool isConstantExpression(const Expression* curr) {
   return false;
 }
 
-inline Literal getSingleLiteral(const Expression* curr) {
+inline Literal getLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
     return Literal(r->func);
-  } else {
-    WASM_UNREACHABLE("non-constant expression");
+  } else if (auto* i = curr->dynCast<I31New>()) {
+    if (auto* c = i->value->dynCast<Const>()) {
+      return Literal::makeI31(c->value.geti32());
+    }
   }
+  WASM_UNREACHABLE("non-constant expression");
 }
 
 inline Literals getLiterals(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
-    return {getSingleLiteral(curr)};
+  if (isSingleConstantExpression(curr)) {
+    return {getLiteral(curr)};
   } else if (auto* tuple = curr->dynCast<TupleMake>()) {
     Literals literals;
     for (auto* op : tuple->operands) {
-      literals.push_back(getSingleLiteral(op));
+      literals.push_back(getLiteral(op));
     }
     return literals;
   } else {

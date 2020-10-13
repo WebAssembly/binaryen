@@ -76,10 +76,14 @@ const size_t DATA_DROP_SIZE = 3;
 
 namespace {
 
-Expression* makeShiftedMemorySize(Builder& builder) {
-  return builder.makeBinary(ShlInt32,
-                            builder.makeHost(MemorySize, Name(), {}),
-                            builder.makeConst(int32_t(16)));
+Expression*
+makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
+  return builder.makeBinary(
+    module.memory.is64() ? GtUInt64 : GtUInt32,
+    curr->dest,
+    builder.makeBinary(module.memory.is64() ? ShlInt64 : ShlInt32,
+                       builder.makeMemorySize(),
+                       builder.makeConstPtr(16)));
 }
 
 } // anonymous namespace
@@ -318,10 +322,9 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       assert(!mustNop || !mustTrap);
       if (mustNop) {
         // Offset and size are 0, so just trap if dest > memory.size
-        replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
-          builder.makeUnreachable()));
+        replaceCurrent(
+          builder.makeIf(makeGtShiftedMemorySize(builder, *getModule(), curr),
+                         builder.makeUnreachable()));
       } else if (mustTrap) {
         // Drop dest, offset, and size then trap
         replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
@@ -334,8 +337,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
             OrInt32,
-            builder.makeBinary(
-              GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
+            makeGtShiftedMemorySize(builder, *getModule(), curr),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
       }
@@ -528,8 +530,7 @@ void MemoryPacking::createReplacements(Module* module,
       Expression* result = builder.makeIf(
         builder.makeBinary(
           OrInt32,
-          builder.makeBinary(
-            GtUInt32, init->dest, makeShiftedMemorySize(builder)),
+          makeGtShiftedMemorySize(builder, *module, init),
           builder.makeGlobalGet(getDropStateGlobal(), Type::i32)),
         builder.makeUnreachable());
       replacements[init] = [result](Function*) { return result; };
@@ -593,8 +594,7 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Create new memory.init or memory.fill
       if (range.isZero) {
-        Expression* value =
-          builder.makeConst(Literal::makeSingleZero(Type::i32));
+        Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
         appendResult(builder.makeMemoryFill(dest, value, size));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;

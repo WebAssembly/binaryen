@@ -259,8 +259,6 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  generator.fixInvokeFunctionNames();
-
   std::vector<Name> initializerFunctions;
 
   // The wasm backend emits "__indirect_function_table" as the import name for
@@ -335,7 +333,6 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("finalizing as regular module\n");
     generator.internalizeStackPointerGlobal();
-    generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
     if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
       auto* ex = new Export();

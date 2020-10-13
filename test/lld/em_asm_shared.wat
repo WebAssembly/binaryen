@@ -3,7 +3,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 0))
+ (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$2 (mut i32)))
@@ -94,6 +94,6 @@
  ;;   memoryalignment: 0
  ;;   tablesize: 0
  ;;   tablealignment: 0
- ;; custom section "producers", size 157
+ ;; custom section "producers", size 112
 )
 

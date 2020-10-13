@@ -9,7 +9,7 @@
  (type $f64_=>_i32 (func (param f64) (result i32)))
  (type $i32_=>_i64 (func (param i32) (result i64)))
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table $0 18 18 funcref))
+ (import "env" "table" (table $timport$0 18 18 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $import$0 i32))
  (import "env" "tempDoublePtr" (global $import$1 i32))
  (import "env" "ABORT" (global $import$2 i32))

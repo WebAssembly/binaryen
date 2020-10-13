@@ -1,10 +1,10 @@
 (module
  (type $none_=>_none (func))
- (import "env" "global-mut" (global $gimport$0 (mut i32)))
+ (import "env" "global-mut" (global $global-mut (mut i32)))
  (func $foo
-  (global.set $gimport$0
+  (global.set $global-mut
    (i32.add
-    (global.get $gimport$0)
+    (global.get $global-mut)
     (i32.const 1)
    )
   )
