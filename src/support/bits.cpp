@@ -158,6 +158,11 @@ int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
 int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
 bool isPowerOf2Float(float v) {
+  // Power of two float points should have zero significand part
+  // so here we just mask exponent range of "v" and compare it with
+  // unmasked input value and if both equal we our value is power of
+  // two. Also we reject all values which less of minmal possible
+  // power of two or maximum possible poser of two.
   const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
   const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
   const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
@@ -167,6 +172,7 @@ bool isPowerOf2Float(float v) {
 }
 
 bool isPowerOf2Float(double v) {
+  // See isPowerOf2Float(float)
   const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
   const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
   const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent
