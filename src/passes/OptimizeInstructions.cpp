@@ -1306,8 +1306,9 @@ private:
     // and for inverted power of two float point:
     //     1.0 / (2 ^ (exp - bias))   ->   2 ^ -(exp - bias)
     //
-    // So inversion of C_pot is valid due to it change only sign of exponent part
-    // and don't touch significand part which still remain the same (zeros).
+    // So inversion of C_pot is valid due to it change only sign of exponent
+    // part and don't touch significand part which still remain
+    // the same (zeros).
     static_assert(std::is_same<T, float>::value ||
                     std::is_same<T, double>::value,
                   "type mismatch");
