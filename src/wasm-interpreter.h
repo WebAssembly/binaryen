@@ -1685,7 +1685,7 @@ public:
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
-    virtual void growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void throwException(Literal exnref) = 0;
 
@@ -2406,8 +2406,13 @@ private:
       if (newSize > instance.wasm.memory.max) {
         return fail;
       }
-      instance.externalInterface->growMemory(
-        instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+      if (!instance.externalInterface->growMemory(
+            instance.memorySize * Memory::kPageSize,
+            newSize * Memory::kPageSize)) {
+        // We failed to grow the memory in practice, even though it was valid
+        // to try to do so.
+        return fail;
+      }
       instance.memorySize = newSize;
       return ret;
     }

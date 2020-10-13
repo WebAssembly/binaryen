@@ -259,8 +259,6 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  generator.fixInvokeFunctionNames();
-
   std::vector<Name> initializerFunctions;
 
   // The wasm backend emits "__indirect_function_table" as the import name for

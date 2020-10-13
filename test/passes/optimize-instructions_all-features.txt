@@ -3947,9 +3947,51 @@
    )
   )
   (drop
-   (i64.div_u
+   (i64.extend_i32_u
+    (i64.eq
+     (local.get $y)
+     (i64.const -1)
+    )
+   )
+  )
+ )
+ (func $rhs-is-neg-const (param $x i32) (param $y i64)
+  (drop
+   (i32.ge_u
+    (local.get $x)
+    (i32.const -2)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.ge_u
+    (local.get $x)
+    (i32.const -2147483647)
+   )
+  )
+  (drop
+   (i32.shr_u
+    (local.get $x)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i64.eq
+     (local.get $y)
+     (i64.const -1)
+    )
+   )
+  )
+  (drop
+   (i64.shr_u
     (local.get $y)
-    (i64.const -1)
+    (i64.const 63)
    )
   )
  )

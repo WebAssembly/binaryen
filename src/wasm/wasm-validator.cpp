@@ -2560,7 +2560,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                                            segment.data.size(),
                                            curr.initial * Memory::kPageSize),
                         segment.offset,
-                        "segment offset should be reasonable");
+                        "memory segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
         Index start = segment.offset->cast<Const>()->value.geti32();
         Index end = start + size;
@@ -2592,7 +2592,7 @@ static void validateTable(Module& module, ValidationInfo& info) {
                          segment.data.size(),
                          module.table.initial * Table::kPageSize),
       segment.offset,
-      "segment offset should be reasonable");
+      "table segment offset should be reasonable");
     for (auto name : segment.data) {
       info.shouldBeTrue(
         module.getFunctionOrNull(name), name, "segment name should be valid");
