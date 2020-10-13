@@ -190,6 +190,10 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("memory64-lowering",
+               "lower loads and stores to a 64-bit memory to instead use a "
+               "32-bit one",
+               createMemory64LoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);
@@ -270,9 +274,6 @@ void PassRegistry::registerPasses() {
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
-  registerPass("relooper-jump-threading",
-               "thread relooper jumps (fastcomp output only)",
-               createRelooperJumpThreadingPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);

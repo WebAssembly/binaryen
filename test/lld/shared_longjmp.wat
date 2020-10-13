@@ -12,18 +12,17 @@
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
- (import "GOT.mem" "__THREW__" (global $gimport$13 (mut i32)))
- (import "GOT.func" "emscripten_longjmp_jmpbuf" (global $gimport$14 (mut i32)))
- (import "GOT.mem" "__threwValue" (global $gimport$15 (mut i32)))
+ (import "GOT.mem" "__THREW__" (global $gimport$12 (mut i32)))
+ (import "GOT.func" "emscripten_longjmp" (global $gimport$13 (mut i32)))
+ (import "GOT.mem" "__threwValue" (global $gimport$14 (mut i32)))
  (import "env" "malloc" (func $fimport$4 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$5 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$6 (result i32)))
- (import "env" "emscripten_longjmp_jmpbuf" (func $fimport$7 (param i32 i32)))
- (import "env" "__invoke_void_i32_i32" (func $fimport$8 (param i32 i32 i32)))
+ (import "env" "emscripten_longjmp" (func $fimport$7 (param i32 i32)))
+ (import "env" "invoke_vii" (func $fimport$8 (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$9 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$10 (param i32)))
  (import "env" "free" (func $fimport$11 (param i32)))
- (import "env" "emscripten_longjmp" (func $fimport$12 (param i32 i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
  (export "__wasm_call_ctors" (func $0))
@@ -70,12 +69,12 @@
      )
      (i32.store
       (local.tee $0
-       (global.get $gimport$13)
+       (global.get $gimport$12)
       )
       (i32.const 0)
      )
      (call $fimport$8
-      (global.get $gimport$14)
+      (global.get $gimport$13)
       (local.get $0)
       (i32.const 1)
      )
@@ -89,7 +88,7 @@
       (i32.const 0)
      )
      (local.set $0
-      (global.get $gimport$15)
+      (global.get $gimport$14)
      )
      (block $label$4
       (br_if $label$4
@@ -132,7 +131,7 @@
    )
    (return)
   )
-  (call $fimport$12
+  (call $fimport$7
    (local.get $3)
    (local.get $0)
   )

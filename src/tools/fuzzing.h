@@ -384,6 +384,7 @@ private:
     std::vector<Expression*> contents;
     contents.push_back(
       builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+    auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -396,7 +397,7 @@ private:
                                builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
           builder.makeLoad(
-            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
+            1, false, i, 1, builder.makeConst(zero), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -729,6 +730,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -747,17 +750,17 @@ private:
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
-          if (Block* block = curr->dynCast<Block>()) {
+          if (auto* block = curr->dynCast<Block>()) {
             if (name == block->name) {
               return true;
             }
-          } else if (Loop* loop = curr->dynCast<Loop>()) {
+          } else if (auto* loop = curr->dynCast<Loop>()) {
             if (name == loop->name) {
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or a try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
@@ -1258,12 +1261,21 @@ private:
     }
   }
 
+  // Some globals are for internal use, and should not be modified by random
+  // fuzz code.
+  bool isValidGlobal(Name name) { return name != HANG_LIMIT_GLOBAL; }
+
   Expression* makeGlobalGet(Type type) {
     auto it = globalsByType.find(type);
     if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(it->second), type);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalGet(name, type);
+    } else {
+      return makeTrivial(type);
+    }
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1273,8 +1285,12 @@ private:
     if (it == globalsByType.end() || it->second.empty()) {
       return makeTrivial(Type::none);
     }
-    auto* value = make(type);
-    return builder.makeGlobalSet(pick(it->second), value);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalSet(name, make(type));
+    } else {
+      return makeTrivial(Type::none);
+    }
   }
 
   Expression* makeTupleMake(Type type) {
@@ -1317,13 +1333,18 @@ private:
   }
 
   Expression* makePointer() {
-    auto* ret = make(Type::i32);
+    auto* ret = make(wasm.memory.indexType);
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
-      ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      if (wasm.memory.is64()) {
+        ret = builder.makeBinary(
+          AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
+      } else {
+        ret = builder.makeBinary(
+          AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      }
     }
     return ret;
   }
@@ -1571,10 +1592,10 @@ private:
       // +- 1
       switch (upTo(5)) {
         case 0:
-          value = value.add(Literal::makeFromInt32(-1, type));
+          value = value.add(Literal::makeNegOne(type));
           break;
         case 1:
-          value = value.add(Literal::makeFromInt32(1, type));
+          value = value.add(Literal::makeOne(type));
           break;
         default: {
         }
@@ -1593,7 +1614,7 @@ private:
       }
       // Flip sign.
       if (oneIn(2)) {
-        value = value.mul(Literal::makeFromInt32(-1, type));
+        value = value.mul(Literal::makeNegOne(type));
       }
       return value;
     };
@@ -2701,7 +2722,7 @@ private:
     }
     Expression* dest = makePointer();
     Expression* source = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
@@ -2710,8 +2731,8 @@ private:
       return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
-    Expression* value = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* value = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryFill(dest, value, size);
   }
 
@@ -2803,16 +2824,26 @@ private:
   // removed during optimization
   // - there's no point in logging externref or anyref because these are opaque
   // - don't bother logging tuples
-  std::vector<Type> getLoggableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+  std::vector<Type> loggableTypes;
+
+  const std::vector<Type>& getLoggableTypes() {
+    if (loggableTypes.empty()) {
+      loggableTypes = items(
+        FeatureOptions<Type>()
+          .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+          .add(FeatureSet::SIMD, Type::v128)
+          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+               Type::exnref));
+    }
+    return loggableTypes;
   }
 
   Type getLoggableType() { return pick(getLoggableTypes()); }
+
+  bool isLoggableType(Type type) {
+    const auto& types = getLoggableTypes();
+    return std::find(types.begin(), types.end(), type) != types.end();
+  }
 
   // statistical distributions
 

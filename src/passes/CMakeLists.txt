@@ -39,6 +39,7 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
@@ -61,7 +62,6 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp

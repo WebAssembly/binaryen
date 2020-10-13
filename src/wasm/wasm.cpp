@@ -239,11 +239,11 @@ const char* getExpressionName(Expression* curr) {
   WASM_UNREACHABLE("invalid expr id");
 }
 
-Literal getSingleLiteralFromConstExpression(Expression* curr) {
-  // TODO: Do we need this function given that Properties::getSingleLiteral
+Literal getLiteralFromConstExpression(Expression* curr) {
+  // TODO: Do we need this function given that Properties::getLiteral
   // (currently) does the same?
   assert(Properties::isConstantExpression(curr));
-  return Properties::getSingleLiteral(curr);
+  return Properties::getLiteral(curr);
 }
 
 Literals getLiteralsFromConstExpression(Expression* curr) {
@@ -252,11 +252,11 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
   if (auto* t = curr->dynCast<TupleMake>()) {
     Literals values;
     for (auto* operand : t->operands) {
-      values.push_back(getSingleLiteralFromConstExpression(operand));
+      values.push_back(getLiteralFromConstExpression(operand));
     }
     return values;
   } else {
-    return {getSingleLiteralFromConstExpression(curr)};
+    return {getLiteralFromConstExpression(curr)};
   }
 }
 

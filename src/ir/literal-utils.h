@@ -38,7 +38,7 @@ inline Expression* makeZero(Type type, Module& wasm) {
   if (type == Type::v128) {
     return builder.makeUnary(SplatVecI32x4, builder.makeConst(int32_t(0)));
   }
-  return builder.makeConstantExpression(Literal::makeZero(type));
+  return builder.makeConstantExpression(Literal::makeZeros(type));
 }
 
 } // namespace LiteralUtils

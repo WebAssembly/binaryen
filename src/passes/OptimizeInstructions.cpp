@@ -155,12 +155,6 @@ struct OptimizeInstructions
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  void prepareToRun(PassRunner* runner, Module* module) override {
-#if 0
-    static DatabaseEnsurer ensurer;
-#endif
-  }
-
   bool fastMath;
 
   void doWalkFunction(Function* func) {
@@ -185,24 +179,7 @@ struct OptimizeInstructions
         replaceCurrent(curr);
         continue;
       }
-#if 0
-      auto iter = database->patternMap.find(curr->_id);
-      if (iter == database->patternMap.end()) return;
-      auto& patterns = iter->second;
-      bool more = false;
-      for (auto& pattern : patterns) {
-        Match match(*getModule(), pattern);
-        if (match.check(curr)) {
-          curr = match.apply();
-          replaceCurrent(curr);
-          more = true;
-          break; // exit pattern for loop, return to main while loop
-        }
-      }
-      if (!more) break;
-#else
       break;
-#endif
     }
   }
 
@@ -310,7 +287,7 @@ struct OptimizeInstructions
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
-            c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+            c->value = c->value.abs().sub(Literal::makeOne(c->type));
           }
           return curr;
         }
@@ -560,7 +537,6 @@ struct OptimizeInstructions
             }
           }
         }
-        // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           BinaryOp op;
           int32_t c = right->value.geti32();
@@ -572,6 +548,15 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
+          }
+          if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
+              binary->op == DivUInt32) {
+            // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            binary->op = c == -1 ? EqInt32 : GeUInt32;
+            return binary;
           }
           if (Bits::isPowerOf2((uint32_t)c)) {
             switch (binary->op) {
@@ -594,6 +579,19 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
+          }
+          if (getPassOptions().shrinkLevel == 0 && c < 0 &&
+              c > std::numeric_limits<int64_t>::min() &&
+              binary->op == DivUInt64) {
+            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            // And apply this only for shrinkLevel == 0 due to it
+            // increasing size by one byte.
+            binary->op = c == -1LL ? EqInt64 : GeUInt64;
+            binary->type = Type::i32;
+            return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
           }
           if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
@@ -1366,7 +1364,7 @@ private:
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
@@ -1383,7 +1381,7 @@ private:
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeOne(c->type));
         }
         return curr;
       }
@@ -1427,12 +1425,12 @@ private:
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(Type::i32);
+      right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1443,15 +1441,9 @@ private:
       curr->op = Abstract::getBinary(type, Abstract::Ne);
       return curr;
     }
-    // (unsigned)x / -1   ==>   x == -1
-    // TODO: i64 as well if sign-extension is enabled
-    if (matches(curr, binary(DivUInt32, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Abstract::Eq);
-      return curr;
-    }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = right;
       curr->right = left;
@@ -1459,7 +1451,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }

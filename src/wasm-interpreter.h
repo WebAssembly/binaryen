@@ -1685,7 +1685,7 @@ public:
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
-    virtual void growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void throwException(Literal exnref) = 0;
 
@@ -1995,7 +1995,7 @@ private:
           locals[i] = {arguments[i]};
         } else {
           assert(function->isVar(i));
-          locals[i] = Literal::makeZero(function->getLocalType(i));
+          locals[i] = Literal::makeZeros(function->getLocalType(i));
         }
       }
     }
@@ -2371,7 +2371,7 @@ private:
       Address src = instance.getFinalAddress(
         curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
       auto zero =
-        Literal::makeSingleZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
+        Literal::makeZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
       if (curr->op == Load32Zero) {
         auto val = Literal(instance.externalInterface->load32u(src));
         return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
@@ -2406,8 +2406,13 @@ private:
       if (newSize > instance.wasm.memory.max) {
         return fail;
       }
-      instance.externalInterface->growMemory(
-        instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+      if (!instance.externalInterface->growMemory(
+            instance.memorySize * Memory::kPageSize,
+            newSize * Memory::kPageSize)) {
+        // We failed to grow the memory in practice, even though it was valid
+        // to try to do so.
+        return fail;
+      }
       instance.memorySize = newSize;
       return ret;
     }

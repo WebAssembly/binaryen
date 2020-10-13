@@ -2519,7 +2519,11 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
   info.shouldBeFalse(
     curr.initial > curr.max, "memory", "memory max >= initial");
-  if (!curr.is64()) {
+  if (curr.is64()) {
+    info.shouldBeTrue(module.features.hasMemory64(),
+                      "memory",
+                      "memory is 64-bit, but memory64 is disabled");
+  } else {
     info.shouldBeTrue(curr.initial <= Memory::kMaxSize32,
                       "memory",
                       "initial memory must be <= 4GB");
@@ -2556,7 +2560,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                                            segment.data.size(),
                                            curr.initial * Memory::kPageSize),
                         segment.offset,
-                        "segment offset should be reasonable");
+                        "memory segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
         Index start = segment.offset->cast<Const>()->value.geti32();
         Index end = start + size;
@@ -2588,7 +2592,7 @@ static void validateTable(Module& module, ValidationInfo& info) {
                          segment.data.size(),
                          module.table.initial * Table::kPageSize),
       segment.offset,
-      "segment offset should be reasonable");
+      "table segment offset should be reasonable");
     for (auto name : segment.data) {
       info.shouldBeTrue(
         module.getFunctionOrNull(name), name, "segment name should be valid");
