@@ -86,8 +86,7 @@ struct BSPNode {
       }
     }
     // Finally, check the existing spans on either side, where relevant.
-    return getLeft()->hasOverlap(span) ||
-           getRight()->hasOverlap(span);
+    return getLeft()->hasOverlap(span) || getRight()->hasOverlap(span);
   }
 
   void add(Span span) {
@@ -105,9 +104,7 @@ private:
   // right child, that is,
   //  * left child is responsible for [left, middle)
   //  * right child is responsible for [middle, right)
-  Address getMiddle() {
-    return (area.left + area.right) / 2;
-  }
+  Address getMiddle() { return (area.left + area.right) / 2; }
 
   std::unique_ptr<BSPNode>& getLeft() {
     if (!leftChild) {
@@ -125,29 +122,16 @@ private:
 
   // Returns whether a position is in the left half. It may even be more to the
   // left than the actual left limit; we just check if it's left of the middle.
-  bool inLeft(Address x) {
-    return x < getMiddle();
-  }
-  bool inRight(Address x) {
-    return x >= getMiddle();
-  }
+  bool inLeft(Address x) { return x < getMiddle(); }
+  bool inRight(Address x) { return x >= getMiddle(); }
 
   // Check if a span is entirely on one side.
-  bool entirelyInLeft(Span span) {
-    return inLeft(span.right);
-  }
-  bool entirelyInRight(Span span) {
-    return inRight(span.left);
-  }
+  bool entirelyInLeft(Span span) { return inLeft(span.right); }
+  bool entirelyInRight(Span span) { return inRight(span.left); }
 
   // Check if a span has some overlap with a side (it may have both).
-  bool overlapsWithLeft(Span span) {
-    return inLeft(span.left);
-  }
-  bool overlapsWithRight(Span span) {
-    return inRight(span.right);
-  }
-
+  bool overlapsWithLeft(Span span) { return inLeft(span.left); }
+  bool overlapsWithRight(Span span) { return inRight(span.right); }
 };
 
 // A subsection of an orginal memory segment. If `isZero` is true, memory.fill
@@ -326,7 +310,8 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
         return false;
       }
       // Note the maximum address so far.
-      maxAddress = std::max(maxAddress, Address(c->value.getInteger() + segment.data.size()));
+      maxAddress = std::max(
+        maxAddress, Address(c->value.getInteger() + segment.data.size()));
     }
   }
   // All active segments have constant offsets, known at this time, so we may be
@@ -338,7 +323,7 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->cast<Const>();
       Address start = c->value.getInteger();
-      BSPNode::Span span = {start, start + segment.data.size() };
+      BSPNode::Span span = {start, start + segment.data.size()};
       if (space.hasOverlap(span)) {
         return false;
       }
