@@ -148,14 +148,3 @@
    )
   )
 )
-;; longjmp renaming
-(module
-  (import "env" "emscripten_longjmp" (func $a (param i32 i32)))
-  (import "env" "emscripten_longjmp_jmpbuf" (func $b (param i32 i32)))
-)
-(module
-  (import "env" "emscripten_longjmp_jmpbuf" (func $b (param i32 i32)))
-)
-(module
-  (import "env" "emscripten_longjmp" (func $a (param i32 i32)))
-)
