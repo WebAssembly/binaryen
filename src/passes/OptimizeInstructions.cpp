@@ -537,7 +537,6 @@ struct OptimizeInstructions
             }
           }
         }
-        // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           BinaryOp op;
           int32_t c = right->value.geti32();
@@ -549,6 +548,15 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
+          }
+          if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
+              binary->op == DivUInt32) {
+            // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            binary->op = c == -1 ? EqInt32 : GeUInt32;
+            return binary;
           }
           if (Bits::isPowerOf2((uint32_t)c)) {
             switch (binary->op) {
@@ -571,6 +579,19 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
+          }
+          if (getPassOptions().shrinkLevel == 0 && c < 0 &&
+              c > std::numeric_limits<int64_t>::min() &&
+              binary->op == DivUInt64) {
+            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            // And apply this only for shrinkLevel == 0 due to it
+            // increasing size by one byte.
+            binary->op = c == -1LL ? EqInt64 : GeUInt64;
+            binary->type = Type::i32;
+            return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
           }
           if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
@@ -1396,12 +1417,6 @@ private:
     // which is large.
     if (matches(curr, binary(Abstract::LtU, any(), ival(-1)))) {
       curr->op = Abstract::getBinary(type, Abstract::Ne);
-      return curr;
-    }
-    // (unsigned)x / -1   ==>   x == -1
-    // TODO: i64 as well if sign-extension is enabled
-    if (matches(curr, binary(DivUInt32, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Abstract::Eq);
       return curr;
     }
     // x * -1   ==>   0 - x
