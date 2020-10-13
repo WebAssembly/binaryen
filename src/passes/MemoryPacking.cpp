@@ -60,7 +60,7 @@ namespace {
 struct BSPNode {
   struct Span {
     // Left is included, right is not.
-    size_t left, right;
+    Address left, right;
 
     bool hasOverlap(const Span& other) {
       return !(left >= other.right || right <= other.left);
@@ -105,7 +105,7 @@ private:
   // right child, that is,
   //  * left child is responsible for [left, middle)
   //  * right child is responsible for [middle, right)
-  size_t getMiddle() {
+  Address getMiddle() {
     return (area.left + area.right) / 2;
   }
 
@@ -125,10 +125,10 @@ private:
 
   // Returns whether a position is in the left half. It may even be more to the
   // left than the actual left limit; we just check if it's left of the middle.
-  bool inLeft(size_t x) {
+  bool inLeft(Address x) {
     return x < getMiddle();
   }
-  bool inRight(size_t x) {
+  bool inRight(Address x) {
     return x >= getMiddle();
   }
 
@@ -299,9 +299,11 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
     return true;
   }
   // Check if it is ok for us to optimize.
+  Address maxAddress = 0;
   for (auto& segment : segments) {
-    if (!segment.isPassive && !segment.offset->is<Const>()) {
-      // An active segment has a non-constant offset, so what gets written
+    if (!segment.isPassive) {
+      auto* c = segment.offset->dynCast<Const>();
+      // If an active segment has a non-constant offset, then what gets written
       // cannot be known until runtime. That is, the active segments are written
       // out at startup, in order, and one may trample the data of another, like
       //
@@ -320,24 +322,27 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
       // segment, which we handled earlier. (Note that that includes the main
       // case of having a non-constant offset, dynamic linking, in which we have
       // a single segment.)
-      return false;
+      if (!c) {
+        return false;
+      }
+      // Note the maximum address so far.
+      maxAddress = std::max(maxAddress, Address(c->value.getInteger() + segment.data.size()));
     }
   }
   // All active segments have constant offsets, known at this time, so we may be
   // able to optimize, but must still check for the trampling problem mentioned
   // earlier.
   // TODO: optimize in the trampling case
-  std::unordered_set<Address> writtenTo;
+  BSPNode space(BSPNode::Span{0, maxAddress});
   for (auto& segment : segments) {
     if (!segment.isPassive) {
-      Address start = segment.offset->cast<Const>()->value.getInteger();
-      for (Index i = 0; i < segment.data.size(); i++) {
-        auto address = start + i;
-        if (writtenTo.count(address)) {
-          return false;
-        }
-        writtenTo.insert(address);
+      auto* c = segment.offset->cast<Const>();
+      Address start = c->value.getInteger();
+      BSPNode::Span span = {start, start + segment.data.size() };
+      if (space.hasOverlap(span)) {
+        return false;
       }
+      space.add(span);
     }
   }
   return true;
