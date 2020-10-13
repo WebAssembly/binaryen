@@ -58,6 +58,10 @@ namespace {
 // large amounts of overlap between each other. In that case, checking for
 // possible overlaps is logarithmic.
 struct BSPNode {
+  // The minimum width of a span (so that we don't end up emitting a span per
+  // single location or even close to that.
+  const Address MinWidth = 100;
+
   struct Span {
     // Left is included, right is not.
     Address left, right;
@@ -71,32 +75,56 @@ struct BSPNode {
   Span area;
 
   // All the spans that belong to this node.
-  std::vector<Span> spans;
+  std::vector<Span> mySpans;
 
   std::unique_ptr<BSPNode> leftChild, rightChild;
 
   BSPNode(Span area) : area(area) {}
 
   bool hasOverlap(Span span) {
-    // First compare with existing spans on this node itself, that is, that
-    // overlap both the left and right side.
-    for (auto& existing : spans) {
-      if (existing.hasOverlap(span)) {
-        return true;
+    std::vector<BSPNode*> stack;
+    stack.push_back(this);
+    while (!stack.empty()) {
+      auto* curr = stack.back();
+      stack.pop_back();
+      // First compare with existing spans on this node itself, that is, that
+      // overlap both the left and right side.
+      for (auto& existing : curr->mySpans) {
+        if (existing.hasOverlap(span)) {
+          return true;
+        }
+      }
+      // Scan the relevant children.
+      if (curr->overlapsWithLeft(span)) {
+        stack.push_back(getLeft());
+      }
+      if (curr->overlapsWithRight(span)) {
+        stack.push_back(getRight());
       }
     }
-    // Finally, check the existing spans on either side, where relevant.
-    return getLeft()->hasOverlap(span) || getRight()->hasOverlap(span);
+    return false;
   }
 
   void add(Span span) {
-    if (entirelyInLeft(span)) {
-      return getLeft()->add(span);
+    BSPNode* curr = this;
+    while (1) {
+      // If this is big enough, then recurse into a smaller child, possibly
+      // creating it.
+      if (curr->getWidth() > MinWidth) {
+        if (curr->entirelyInLeft(span)) {
+          curr = getLeft();
+          continue;
+        }
+        if (curr->entirelyInRight(span)) {
+          curr = getRight();
+          continue;
+        }
+      }
+      // It overlaps with both, or this is already so small we don't want to
+      // create any more children, so add it here.
+      curr->mySpans.push_back(span);
+      return;
     }
-    if (entirelyInRight(span)) {
-      return getRight()->add(span);
-    }
-    spans.push_back(span);
   }
 
 private:
@@ -106,18 +134,22 @@ private:
   //  * right child is responsible for [middle, right)
   Address getMiddle() { return (area.left + area.right) / 2; }
 
-  std::unique_ptr<BSPNode>& getLeft() {
+  Address getWidth() {
+    return area.right - area.left;
+  }
+
+  BSPNode* getLeft() {
     if (!leftChild) {
       leftChild = make_unique<BSPNode>(Span{area.left, getMiddle()});
     }
-    return leftChild;
+    return leftChild.get();
   }
 
-  std::unique_ptr<BSPNode>& getRight() {
+  BSPNode* getRight() {
     if (!rightChild) {
       rightChild = make_unique<BSPNode>(Span{getMiddle(), area.right});
     }
-    return rightChild;
+    return rightChild.get();
   }
 
   // Returns whether a position is in the left half. It may even be more to the
