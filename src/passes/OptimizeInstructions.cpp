@@ -684,27 +684,29 @@ struct OptimizeInstructions
           return unary;
         }
       } else if (unary->op == AbsFloat32 || unary->op == AbsFloat64) {
+        // abs(-x)   ==>   abs(x)
         if (auto* unaryInner = unary->value->dynCast<Unary>()) {
           if (unaryInner->op ==
               Abstract::getUnary(unaryInner->type, Abstract::Neg)) {
-            // abs(-x)   ==>   abs(x)
             unary->value = unaryInner->value;
             return unary;
           }
         }
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
         if (auto* binary = unary->value->dynCast<Binary>()) {
-          if (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
-              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) {
-            // abs(x * x)   ==>   x * x
-            // abs(x / x)   ==>   x / x
-            if (ExpressionAnalyzer::equal(binary->left, binary->right)) {
-              return binary;
-            }
+          if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+               binary->op ==
+                 Abstract::getBinary(binary->type, Abstract::DivS)) &&
+              ExpressionAnalyzer::equal(binary->left, binary->right)) {
+            return binary;
           }
-          if (binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
-            // abs(0 - x)   ==>   abs(x)
+          // abs(0 - x)   ==>   abs(x),
+          // only for fast math
+          if (getPassOptions().fastMath &&
+              binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
             if (auto* c = binary->left->dynCast<Const>()) {
-              if (c->value.getFloat() == 0.0) {
+              if (c->value.isZero()) {
                 unary->value = binary->right;
                 return unary;
               }

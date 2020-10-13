@@ -5204,7 +5204,7 @@
       (f32.neg (local.get $y0))
     ))
 
-    ;; abs(0 - x)   ==>   abs(x)
+    ;; abs(0 - x)   ==>   skip for non-fast math
     (drop (f64.abs
       (f64.sub
         (f64.const 0)
