@@ -63,6 +63,7 @@ Pass* createLogExecutionPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLoopInvariantCodeMotionPass();
+Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
 Pass* createMergeLocalsPass();
