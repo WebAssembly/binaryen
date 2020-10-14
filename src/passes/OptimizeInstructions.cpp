@@ -607,9 +607,9 @@ struct OptimizeInstructions
           }
         }
         if (binary->op == DivFloat32 || binary->op == DivFloat64) {
-          float c = right->value.getFloat();
+          auto c = right->value.getFloat();
           if (Bits::isPowerOf2Float(c)) {
-            return optimizePowerOf2FDiv(binary, c);
+            return optimizePowerOf2FDiv(binary, right);
           }
         }
       }
@@ -1285,7 +1285,7 @@ private:
     return binary;
   }
 
-  Expression* optimizePowerOf2FDiv(Binary* binary, double c) {
+  Expression* optimizePowerOf2FDiv(Binary* binary, Const* c) {
     //
     // x / C_pot    =>   x * (C_pot ^ -1)
     //
@@ -1303,14 +1303,8 @@ private:
     // So inversion of C_pot is valid because it changes only the sign
     // of the exponent part and doesn't touch the significand part,
     // which remains the same (zeros).
-    double invDivisor = 1.0 / c;
-    if (binary->type == Type::f32) {
-      binary->op = MulFloat32;
-      binary->right->cast<Const>()->value = Literal((float)invDivisor);
-    } else {
-      binary->op = MulFloat64;
-      binary->right->cast<Const>()->value = Literal(invDivisor);
-    }
+    binary->op = c->type == Type::f32 ? MulFloat32 : MulFloat64;
+    c->value = Literal::makeFromInt32(1, c->type).div(c->value); // invert C
     return binary;
   }
 

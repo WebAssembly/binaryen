@@ -2842,27 +2842,27 @@
    )
   )
   (drop
-   (f64.div
-    (local.get $x)
-    (f64.const 2.2250738585072014e-308)
-   )
-  )
-  (drop
-   (f64.div
+   (f64.mul
     (local.get $x)
     (f64.const 4494232837155789769323262e283)
    )
   )
   (drop
-   (f64.div
+   (f64.mul
     (local.get $x)
-    (f64.const -2.2250738585072014e-308)
+    (f64.const 2.2250738585072014e-308)
    )
   )
   (drop
-   (f64.div
+   (f64.mul
     (local.get $x)
     (f64.const -4494232837155789769323262e283)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -2.2250738585072014e-308)
    )
   )
   (drop
