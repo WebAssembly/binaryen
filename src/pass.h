@@ -228,9 +228,9 @@ struct PassRunner {
   // this method returns whether we are in passDebug mode, and which value:
   //  1: log out each pass that we run, and validate in between (can pass
   //     --no-validation to skip validation).
-  //  2: also save the last pass's output, so if breakage happens we can print
-  //     a useful error. also logs out names of nested passes.
-  //  3: also dump out byn-* files for each pass as it is run.
+  //  2: like 1, and also save the last pass's output, so if breakage happens we
+  //     can print a useful error. also logs out names of nested passes.
+  //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
 protected:
