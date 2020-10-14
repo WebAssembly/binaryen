@@ -78,10 +78,10 @@ struct BSPNode {
       }
       // Scan the relevant children.
       if (curr->hasLeft() && curr->overlapsWithLeft(span)) {
-        stack.push_back(getLeft());
+        stack.push_back(curr->getLeft());
       }
       if (curr->hasRight() && curr->overlapsWithRight(span)) {
-        stack.push_back(getRight());
+        stack.push_back(curr->getRight());
       }
     }
     return false;
@@ -94,11 +94,11 @@ struct BSPNode {
       // creating it.
       if (curr->getWidth() > MinWidth) {
         if (curr->entirelyInLeft(span)) {
-          curr = getLeft();
+          curr = curr->getLeft();
           continue;
         }
         if (curr->entirelyInRight(span)) {
-          curr = getRight();
+          curr = curr->getRight();
           continue;
         }
       }

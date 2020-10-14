@@ -99,5 +99,17 @@ int main() {
       assert(!root.hasOverlap(Span{N + 10, N + 20}));
     }
   }
+  // Large numbers.
+  {
+    BSPNode root(Span{0, 18766});
+    assert(!root.hasOverlap(Span{2948, 2949}));
+    root.add(Span{2948, 2949});
+    assert(root.hasOverlap(Span{2948, 2949}));
+    assert(root.hasOverlap(Span{2940, 2949}));
+    assert(root.hasOverlap(Span{2948, 2959}));
+    assert(root.hasOverlap(Span{0, 18766}));
+    assert(!root.hasOverlap(Span{2000, 2001}));
+    assert(!root.hasOverlap(Span{3000, 3001}));
+  }
   std::cout << "success.\n";
 }
