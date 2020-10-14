@@ -116,9 +116,7 @@ private:
   //  * right child is responsible for [middle, right)
   Address getMiddle() { return (area.left + area.right) / 2; }
 
-  Address getWidth() {
-    return area.right - area.left;
-  }
+  Address getWidth() { return area.right - area.left; }
 
   BSPNode* getLeft() {
     if (!leftChild) {
@@ -134,13 +132,9 @@ private:
     return rightChild.get();
   }
 
-  bool hasLeft() {
-    return leftChild.get();
-  }
+  bool hasLeft() { return leftChild.get(); }
 
-  bool hasRight() {
-    return rightChild.get();
-  }
+  bool hasRight() { return rightChild.get(); }
 
   // Returns whether a position is in the left half. It may even be more to the
   // left than the actual left limit; we just check if it's left of the middle.
@@ -159,4 +153,3 @@ private:
 } // namespace wasm
 
 #endif // wasm_support_space_h
-

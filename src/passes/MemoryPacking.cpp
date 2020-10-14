@@ -28,11 +28,11 @@
 // as necessary.
 //
 
-#include "support/space.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/space.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm.h"
