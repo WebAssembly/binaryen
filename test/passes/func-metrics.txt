@@ -247,7 +247,7 @@ func: 0
  [vars]         : 0       
  global.get     : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 70      
+ [removable-bytes-without-it]: 56      
  [total]        : 0       
 (module
  (type $none_=>_i32 (func (result i32)))
