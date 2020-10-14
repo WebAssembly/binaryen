@@ -524,6 +524,12 @@ struct OptimizeInstructions
               } else if (left->op == XorInt32 || left->op == XorInt64) {
                 leftRight->value = leftRight->value.xor_(right->value);
                 return left;
+              } else if (left->op == MulInt32 || left->op == MulInt64) {
+                leftRight->value = leftRight->value.mul(right->value);
+                return left;
+
+                // TODO:
+                // handle signed / unsigned divisions. They are more complex
               } else if (left->op == ShlInt32 || left->op == ShrUInt32 ||
                          left->op == ShrSInt32 || left->op == ShlInt64 ||
                          left->op == ShrUInt64 || left->op == ShrSInt64) {

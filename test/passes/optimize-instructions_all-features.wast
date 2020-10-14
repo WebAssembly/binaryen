@@ -29,6 +29,25 @@
         (i32.const -5)
       )
     )
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const -2)
+        )
+        (i32.const 5)
+      )
+    )
+    ;; overflow also valid
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0xfffff)
+        )
+        (i32.const 0x8000001)
+      )
+    )
     (if
       (i32.eqz
         (local.get $i1)

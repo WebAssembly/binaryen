@@ -39,6 +39,18 @@
     (i32.const 5)
    )
   )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -10)
+   )
+  )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -133169153)
+   )
+  )
   (if
    (i32.eqz
     (local.get $i1)
