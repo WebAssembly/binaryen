@@ -606,14 +606,8 @@ struct OptimizeInstructions
             }
           }
         }
-        if (binary->op == DivFloat32) {
-          float c = right->value.getf32();
-          if (Bits::isPowerOf2Float(c)) {
-            return optimizePowerOf2FDiv(binary, c);
-          }
-        }
-        if (binary->op == DivFloat64) {
-          double c = right->value.getf64();
+        if (binary->op == DivFloat32 || binary->op == DivFloat64) {
+          float c = right->value.getFloat();
           if (Bits::isPowerOf2Float(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
@@ -1291,7 +1285,7 @@ private:
     return binary;
   }
 
-  template<typename T> Expression* optimizePowerOf2FDiv(Binary* binary, T c) {
+  Expression* optimizePowerOf2FDiv(Binary* binary, double c) {
     //
     // x / C_pot    =>   x * (C_pot ^ -1)
     //
@@ -1309,12 +1303,14 @@ private:
     // So inversion of C_pot is valid because it changes only the sign
     // of the exponent part and doesn't touch the significand part,
     // which remains the same (zeros).
-    static_assert(std::is_same<T, float>::value ||
-                    std::is_same<T, double>::value,
-                  "type mismatch");
-    double invDivisor = 1.0 / (double)c;
-    binary->op = std::is_same<T, float>::value ? MulFloat32 : MulFloat64;
-    binary->right->cast<Const>()->value = Literal(static_cast<T>(invDivisor));
+    double invDivisor = 1.0 / c;
+    if (binary->type == Type::f32) {
+      binary->op = MulFloat32;
+      binary->right->cast<Const>()->value = Literal((float)invDivisor);
+    } else {
+      binary->op = MulFloat64;
+      binary->right->cast<Const>()->value = Literal(invDivisor);
+    }
     return binary;
   }
 

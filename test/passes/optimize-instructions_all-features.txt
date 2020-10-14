@@ -2780,15 +2780,15 @@
    )
   )
   (drop
-   (f32.div
+   (f32.mul
     (local.get $x)
-    (f32.const 5.877471754111438e-39)
+    (f32.const 1701411834604692317316873e14)
    )
   )
   (drop
-   (f32.div
+   (f32.mul
     (local.get $x)
-    (f32.const 5.877471754111438e-39)
+    (f32.const 1701411834604692317316873e14)
    )
   )
   (drop
@@ -2842,27 +2842,27 @@
    )
   )
   (drop
-   (f64.mul
-    (local.get $x)
-    (f64.const 4494232837155789769323262e283)
-   )
-  )
-  (drop
-   (f64.mul
+   (f64.div
     (local.get $x)
     (f64.const 2.2250738585072014e-308)
    )
   )
   (drop
-   (f64.mul
+   (f64.div
     (local.get $x)
-    (f64.const -4494232837155789769323262e283)
+    (f64.const 4494232837155789769323262e283)
    )
   )
   (drop
-   (f64.mul
+   (f64.div
     (local.get $x)
     (f64.const -2.2250738585072014e-308)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const -4494232837155789769323262e283)
    )
   )
   (drop
