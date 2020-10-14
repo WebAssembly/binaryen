@@ -287,7 +287,7 @@ struct OptimizeInstructions
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
-            c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+            c->value = c->value.abs().sub(Literal::makeOne(c->type));
           }
           return curr;
         }
@@ -515,12 +515,21 @@ struct OptimizeInstructions
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
             if (auto* leftRight = left->right->dynCast<Const>()) {
-              if (left->op == AndInt32) {
+              if (left->op == AndInt32 || left->op == AndInt64) {
                 leftRight->value = leftRight->value.and_(right->value);
                 return left;
-              } else if (left->op == OrInt32) {
+              } else if (left->op == OrInt32 || left->op == OrInt64) {
                 leftRight->value = leftRight->value.or_(right->value);
                 return left;
+              } else if (left->op == XorInt32 || left->op == XorInt64) {
+                leftRight->value = leftRight->value.xor_(right->value);
+                return left;
+              } else if (left->op == MulInt32 || left->op == MulInt64) {
+                leftRight->value = leftRight->value.mul(right->value);
+                return left;
+
+                // TODO:
+                // handle signed / unsigned divisions. They are more complex
               } else if (left->op == ShlInt32 || left->op == ShrUInt32 ||
                          left->op == ShrSInt32 || left->op == ShlInt64 ||
                          left->op == ShrUInt64 || left->op == ShrSInt64) {
@@ -537,7 +546,6 @@ struct OptimizeInstructions
             }
           }
         }
-        // math operations on a constant power of 2 right side can be optimized
         if (right->type == Type::i32) {
           BinaryOp op;
           int32_t c = right->value.geti32();
@@ -549,6 +557,15 @@ struct OptimizeInstructions
               (op = makeUnsignedBinaryOp(binary->op)) != InvalidBinary &&
               Bits::getMaxBits(binary->left, this) <= 31) {
             binary->op = op;
+          }
+          if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
+              binary->op == DivUInt32) {
+            // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            binary->op = c == -1 ? EqInt32 : GeUInt32;
+            return binary;
           }
           if (Bits::isPowerOf2((uint32_t)c)) {
             switch (binary->op) {
@@ -572,6 +589,19 @@ struct OptimizeInstructions
               Bits::getMaxBits(binary->left, this) <= 63) {
             binary->op = op;
           }
+          if (getPassOptions().shrinkLevel == 0 && c < 0 &&
+              c > std::numeric_limits<int64_t>::min() &&
+              binary->op == DivUInt64) {
+            // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
+            // We avoid applying this for C == 2^31 due to conflict
+            // with other rule which transform to more prefereble
+            // right shift operation.
+            // And apply this only for shrinkLevel == 0 due to it
+            // increasing size by one byte.
+            binary->op = c == -1LL ? EqInt64 : GeUInt64;
+            binary->type = Type::i32;
+            return Builder(*getModule()).makeUnary(ExtendUInt32, binary);
+          }
           if (Bits::isPowerOf2((uint64_t)c)) {
             switch (binary->op) {
               case MulInt64:
@@ -583,6 +613,18 @@ struct OptimizeInstructions
               default:
                 break;
             }
+          }
+        }
+        if (binary->op == DivFloat32) {
+          float c = right->value.getf32();
+          if (Bits::isPowerOf2Float(c)) {
+            return optimizePowerOf2FDiv(binary, c);
+          }
+        }
+        if (binary->op == DivFloat64) {
+          double c = right->value.getf64();
+          if (Bits::isPowerOf2Float(c)) {
+            return optimizePowerOf2FDiv(binary, c);
           }
         }
       }
@@ -1239,6 +1281,15 @@ private:
   // but it's still worth doing since
   //  * Usually ands are more common than urems.
   //  * The constant is slightly smaller.
+  template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
+    static_assert(std::is_same<T, uint32_t>::value ||
+                    std::is_same<T, uint64_t>::value,
+                  "type mismatch");
+    binary->op = std::is_same<T, uint32_t>::value ? AndInt32 : AndInt64;
+    binary->right->cast<Const>()->value = Literal(c - 1);
+    return binary;
+  }
+
   template<typename T> Expression* optimizePowerOf2UDiv(Binary* binary, T c) {
     static_assert(std::is_same<T, uint32_t>::value ||
                     std::is_same<T, uint64_t>::value,
@@ -1249,12 +1300,30 @@ private:
     return binary;
   }
 
-  template<typename T> Expression* optimizePowerOf2URem(Binary* binary, T c) {
-    static_assert(std::is_same<T, uint32_t>::value ||
-                    std::is_same<T, uint64_t>::value,
+  template<typename T> Expression* optimizePowerOf2FDiv(Binary* binary, T c) {
+    //
+    // x / C_pot    =>   x * (C_pot ^ -1)
+    //
+    // Explanation:
+    // Floating point numbers are represented as:
+    //    ((-1) ^ sign) * (2 ^ (exp - bias)) * (1 + significand)
+    //
+    // If we have power of two numbers, then the mantissa (significand)
+    // is all zeros. Let's focus on the exponent, ignoring the sign part:
+    //    (2 ^ (exp - bias))
+    //
+    // and for inverted power of two floating point:
+    //     1.0 / (2 ^ (exp - bias))   ->   2 ^ -(exp - bias)
+    //
+    // So inversion of C_pot is valid because it changes only the sign
+    // of the exponent part and doesn't touch the significand part,
+    // which remains the same (zeros).
+    static_assert(std::is_same<T, float>::value ||
+                    std::is_same<T, double>::value,
                   "type mismatch");
-    binary->op = std::is_same<T, uint32_t>::value ? AndInt32 : AndInt64;
-    binary->right->cast<Const>()->value = Literal(c - 1);
+    double invDivisor = 1.0 / (double)c;
+    binary->op = std::is_same<T, float>::value ? MulFloat32 : MulFloat64;
+    binary->right->cast<Const>()->value = Literal(static_cast<T>(invDivisor));
     return binary;
   }
 
@@ -1321,7 +1390,7 @@ private:
     // Operations on one
     // (signed)x % 1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
@@ -1338,7 +1407,7 @@ private:
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
-          c->value = c->value.abs().sub(Literal::makeFromInt32(1, c->type));
+          c->value = c->value.abs().sub(Literal::makeOne(c->type));
         }
         return curr;
       }
@@ -1382,12 +1451,12 @@ private:
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       return right;
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(Type::i32);
+      right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1398,15 +1467,9 @@ private:
       curr->op = Abstract::getBinary(type, Abstract::Ne);
       return curr;
     }
-    // (unsigned)x / -1   ==>   x == -1
-    // TODO: i64 as well if sign-extension is enabled
-    if (matches(curr, binary(DivUInt32, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Abstract::Eq);
-      return curr;
-    }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
-      right->value = Literal::makeSingleZero(type);
+      right->value = Literal::makeZero(type);
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = right;
       curr->right = left;
@@ -1414,7 +1477,7 @@ private:
     }
     // (unsigned)x <= -1   ==>   1
     if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeFromInt32(1, Type::i32);
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }

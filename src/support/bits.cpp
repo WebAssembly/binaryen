@@ -157,6 +157,30 @@ int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
 
 int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
+bool isPowerOf2Float(float v) {
+  // Power of two floating points should have zero as their significands,
+  // so here we just mask the exponent range of "v" and compare it with the
+  // unmasked input value. If they are equal, our value is a power of
+  // two. Also, we reject all values which are less than the minimal possible
+  // power of two or greater than the maximum possible power of two.
+  const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
+  const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
+  const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
+  const uint32_t SIGN_MASK = ~0U >> 1;   // mask everything except sign
+  auto u = bit_cast<uint32_t>(v) & SIGN_MASK;
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
+}
+
+bool isPowerOf2Float(double v) {
+  // See isPowerOf2Float(float)
+  const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
+  const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
+  const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent
+  const uint64_t SIGN_MASK = ~0ULL >> 1;    // mask everything except sign
+  auto u = bit_cast<uint64_t>(v) & SIGN_MASK;
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
+}
+
 uint32_t log2(uint32_t v) {
   if (!isPowerOf2(v)) {
     WASM_UNREACHABLE("value should be a power of two");

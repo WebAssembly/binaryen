@@ -904,7 +904,7 @@ public:
   // input node
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     if (curr->type.isTuple()) {
-      return makeConstantExpression(Literal::makeZero(curr->type));
+      return makeConstantExpression(Literal::makeZeros(curr->type));
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals

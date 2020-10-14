@@ -16,11 +16,43 @@
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
+ (type $f32_=>_none (func (param f32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
+ (type $f64_=>_none (func (param f64)))
  (type $none_=>_f64 (func (result f64)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
+  (drop
+   (i32.and
+    (local.get $i1)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.xor
+    (local.get $i1)
+    (i32.const 5)
+   )
+  )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -10)
+   )
+  )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -133169153)
+   )
+  )
   (if
    (i32.eqz
     (local.get $i1)
@@ -2728,6 +2760,178 @@
   )
   (unreachable)
  )
+ (func $fdiv-32-power-2 (param $x f32)
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 0.5)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -0.5)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 2.3283064365386963e-10)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 5.421010862427522e-20)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 8507059173023461586584365e13)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const 1.1754943508222875e-38)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -8507059173023461586584365e13)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $x)
+    (f32.const -1.1754943508222875e-38)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 5.877471754111438e-39)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 5.877471754111438e-39)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const nan:0x400000)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const inf)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $x)
+    (f32.const -inf)
+   )
+  )
+ )
+ (func $fdiv-64-power-2 (param $x f64)
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 0.5)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -0.5)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 2.3283064365386963e-10)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 5.421010862427522e-20)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 4494232837155789769323262e283)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const 2.2250738585072014e-308)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -4494232837155789769323262e283)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x)
+    (f64.const -2.2250738585072014e-308)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 1.1125369292536007e-308)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 8988465674311579538646525e283)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const nan:0x8000000000000)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const inf)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x)
+    (f64.const -inf)
+   )
+  )
+ )
  (func $srem-by-const (param $x i32) (param $y i64)
   (drop
    (i32.const 0)
@@ -2995,13 +3199,13 @@
    (local.get $x64)
   )
   (drop
-   (f32.div
+   (f32.mul
     (local.get $y32)
     (f32.const 1)
    )
   )
   (drop
-   (f64.div
+   (f64.mul
     (local.get $y64)
     (f64.const 1)
    )
@@ -3947,9 +4151,51 @@
    )
   )
   (drop
-   (i64.div_u
+   (i64.extend_i32_u
+    (i64.eq
+     (local.get $y)
+     (i64.const -1)
+    )
+   )
+  )
+ )
+ (func $rhs-is-neg-const (param $x i32) (param $y i64)
+  (drop
+   (i32.ge_u
+    (local.get $x)
+    (i32.const -2)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.ge_u
+    (local.get $x)
+    (i32.const -2147483647)
+   )
+  )
+  (drop
+   (i32.shr_u
+    (local.get $x)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i64.extend_i32_u
+    (i64.eq
+     (local.get $y)
+     (i64.const -1)
+    )
+   )
+  )
+  (drop
+   (i64.shr_u
     (local.get $y)
-    (i64.const -1)
+    (i64.const 63)
    )
   )
  )
