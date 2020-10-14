@@ -23,6 +23,36 @@
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (param $i1 i32) (param $i2 i64)
+  (drop
+   (i32.and
+    (local.get $i1)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.or
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.xor
+    (local.get $i1)
+    (i32.const 5)
+   )
+  )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -10)
+   )
+  )
+  (drop
+   (i32.mul
+    (local.get $i1)
+    (i32.const -133169153)
+   )
+  )
   (if
    (i32.eqz
     (local.get $i1)
