@@ -1428,7 +1428,7 @@ private:
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Abstract::Ne, any(&left), ival(1))) &&
-        Bits::getMaxBits(curr->left, this) == 1) {
+        Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
     }
     // bool(x) | 1  ==>  1
