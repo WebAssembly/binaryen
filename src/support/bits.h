@@ -77,6 +77,9 @@ template<typename T> bool isPowerOf2(T v) {
   return v != 0 && (v & (v - 1)) == 0;
 }
 
+bool isPowerOf2Float(float);
+bool isPowerOf2Float(double);
+
 template<typename T, typename U> inline static T rotateLeft(T val, U count) {
   auto value = typename std::make_unsigned<T>::type(val);
   U mask = sizeof(T) * CHAR_BIT - 1;

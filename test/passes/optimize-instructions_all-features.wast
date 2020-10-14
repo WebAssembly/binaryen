@@ -3093,6 +3093,122 @@
     )
     (unreachable)
   )
+  (func $fdiv-32-power-2 (param $x f32)
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 4294967296)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 18446744073709551616)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const nan) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const inf) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -inf) ;; skip
+    ))
+  )
+  (func $fdiv-64-power-2 (param $x f64)
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 4294967296)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 18446744073709551616)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const nan) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const inf) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -inf) ;; skip
+    ))
+  )
   (func $srem-by-const (param $x i32) (param $y i64)
     ;; (signed)x % 1
     (drop (i32.rem_s
@@ -4908,7 +5024,7 @@
         (local.get $x)
         (local.get $y)
       )
-     ))
+    ))
     ;; x | (y | x)   where x and y cannot be reordered  -  skip
     (drop
       (i32.or
