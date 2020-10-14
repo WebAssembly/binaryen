@@ -546,7 +546,7 @@ static void dumpWast(Name name, Module* wasm) {
 
 void PassRunner::run() {
   static const int passDebug = getPassDebug();
-  // Emit logging information when asked for. At passDebug level 1 we log only
+  // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
   // nested ones we can only emit their name - we can't validate, or save the
   // file, or print, as the wasm may be in an intermediate state that is not
