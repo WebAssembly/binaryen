@@ -1299,15 +1299,16 @@ private:
     // Floating point numbers are represented as:
     //    ((-1) ^ sign) * (2 ^ (exp - bias)) * (1 + significand)
     //
-    // If we have power of two numbers, then the mantissa (significand) is all zeros.
-    // Let's focus on the exponent, ignoring the sign part:
+    // If we have power of two numbers, then the mantissa (significand)
+    // is all zeros. Let's focus on the exponent, ignoring the sign part:
     //    (2 ^ (exp - bias))
     //
     // and for inverted power of two floating point:
     //     1.0 / (2 ^ (exp - bias))   ->   2 ^ -(exp - bias)
     //
-    // So inversion of C_pot is valid because it changes only the sign of the exponent
-    // part and doesn't touch the significand part, which remains the same (zeros).
+    // So inversion of C_pot is valid because it changes only the sign
+    // of the exponent part and doesn't touch the significand part,
+    // which remains the same (zeros).
     static_assert(std::is_same<T, float>::value ||
                     std::is_same<T, double>::value,
                   "type mismatch");
