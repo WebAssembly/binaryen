@@ -77,5 +77,27 @@ int main() {
     assert(root.hasOverlap(Span{35, 45}));
     assert(!root.hasOverlap(Span{45, 100}));
   }
+  // "Pixels"
+  {
+    const int N = 40;
+    for (int i = 0; i < N; i++) {
+      BSPNode root(Span{0, 100});
+      for (int j = 0; j < N; j++) {
+        // add all pixels but the i-th
+        if (j != i) {
+          root.add(Span{j, j + 1});
+        }
+      }
+      for (int j = 0; j < N; j++) {
+        if (j != i) {
+          assert(root.hasOverlap(Span{j, j + 1}));
+        } else {
+          assert(!root.hasOverlap(Span{j, j + 1}));
+        }
+      }
+      assert(root.hasOverlap(Span{10, N + 10}));
+      assert(!root.hasOverlap(Span{N + 10, N + 20}));
+    }
+  }
   std::cout << "success.\n";
 }
