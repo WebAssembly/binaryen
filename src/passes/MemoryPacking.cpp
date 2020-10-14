@@ -225,16 +225,15 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
   // able to optimize, but must still check for the trampling problem mentioned
   // earlier.
   // TODO: optimize in the trampling case
-  BSPNode space(BSPNode::Span{0, maxAddress});
+  DisjointSpans space;
   for (auto& segment : segments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->cast<Const>();
       Address start = c->value.getInteger();
-      BSPNode::Span span = {start, start + segment.data.size()};
-      if (space.hasOverlap(span)) {
+      DisjointSpans::Span span{start, start + segment.data.size()};
+      if (space.addAndCheckOverlap(span)) {
         return false;
       }
-      space.add(span);
     }
   }
   return true;
