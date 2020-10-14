@@ -613,8 +613,8 @@ void PassRunner::run() {
         dumpWast(pass->name, wasm);
       }
     }
-    std::cerr << "[PassRunner] " << what << " took " << totalTime.count() << " seconds."
-              << std::endl;
+    std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
+              << " seconds." << std::endl;
     if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
