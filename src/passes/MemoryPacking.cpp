@@ -514,10 +514,16 @@ void MemoryPacking::createReplacements(Module* module,
     size_t start = init->offset->cast<Const>()->value.geti32();
     size_t end = start + init->size->cast<Const>()->value.geti32();
 
+    // Segment index used in emitted memory.init instructions
+    size_t initIndex = segmentIndex;
+
     // Index of the range from which this memory.init starts reading
     size_t firstRangeIdx = 0;
     while (firstRangeIdx < ranges.size() &&
            ranges[firstRangeIdx].end <= start) {
+      if (!ranges[firstRangeIdx].isZero) {
+        ++initIndex;
+      }
       ++firstRangeIdx;
     }
 
@@ -568,7 +574,6 @@ void MemoryPacking::createReplacements(Module* module,
 
     size_t bytesWritten = 0;
 
-    size_t initIndex = segmentIndex;
     for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
          ++i) {
       auto& range = ranges[i];
