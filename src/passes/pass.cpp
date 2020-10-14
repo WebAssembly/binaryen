@@ -547,20 +547,21 @@ static void dumpWast(Name name, Module* wasm) {
 void PassRunner::run() {
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1 we log only
-  // the main passes, while in 2+ we also log nested ones. Note that for
+  // the main passes, while in 2 we also log nested ones. Note that for
   // nested ones we can only emit their name - we can't validate, or save the
   // file, or print, as the wasm may be in an intermediate state that is not
   // valid.
-  if (options.debug || (passDebug >= 2 || (passDebug == 1 && !isNested))) {
+  if (options.debug || (passDebug == 2 || (passDebug && !isNested))) {
     // for debug logging purposes, run each pass in full before running the
     // other
     auto totalTime = std::chrono::duration<double>(0);
-    size_t padding = 0;
     WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
-    std::cerr << "[PassRunner] running passes..." << std::endl;
+    auto what = isNested ? "nested passes" : "passes";
+    std::cerr << "[PassRunner] running " << what << std::endl;
+    size_t padding = 0;
     for (auto& pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
@@ -612,7 +613,7 @@ void PassRunner::run() {
         dumpWast(pass->name, wasm);
       }
     }
-    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds."
+    std::cerr << "[PassRunner] " << what << " took " << totalTime.count() << " seconds."
               << std::endl;
     if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
