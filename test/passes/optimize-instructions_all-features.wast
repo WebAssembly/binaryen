@@ -3096,10 +3096,6 @@
   (func $fdiv-32-power-2 (param $x f32)
     (drop (f32.div
       (local.get $x)
-      (f32.const 0) ;; skip
-    ))
-    (drop (f32.div
-      (local.get $x)
       (f32.const 2)
     ))
     (drop (f32.div
@@ -3138,12 +3134,24 @@
       (local.get $x)
       (f32.const 0x1p-127) ;; skip
     ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const nan) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const inf) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -inf) ;; skip
+    ))
   )
   (func $fdiv-64-power-2 (param $x f64)
-    (drop (f64.div
-      (local.get $x)
-      (f64.const 0) ;; skip
-    ))
     (drop (f64.div
       (local.get $x)
       (f64.const 2)
@@ -3183,6 +3191,22 @@
     (drop (f64.div
       (local.get $x)
       (f64.const 0x1p+1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const nan) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const inf) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -inf) ;; skip
     ))
   )
   (func $srem-by-const (param $x i32) (param $y i64)
