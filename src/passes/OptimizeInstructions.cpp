@@ -530,18 +530,24 @@ struct OptimizeInstructions
 
                 // TODO:
                 // handle signed / unsigned divisions. They are more complex
-              } else if (left->op == ShlInt32 || left->op == ShrUInt32 ||
-                         left->op == ShrSInt32 || left->op == ShlInt64 ||
-                         left->op == ShrUInt64 || left->op == ShrSInt64) {
+              } else if (Abstract::hasAnyShift(left->op)) {
                 // shifts only use an effective amount from the constant, so
                 // adding must be done carefully
                 auto total = Bits::getEffectiveShifts(leftRight) +
                              Bits::getEffectiveShifts(right);
-                if (total == Bits::getEffectiveShifts(total, right->type)) {
-                  // no overflow, we can do this
-                  leftRight->value = Literal::makeFromInt32(total, right->type);
+                if (left->op == RotLInt32 || left->op == RotLInt64 ||
+                    left->op == RotRInt32 || left->op == RotRInt64) {
+                  leftRight->value = Literal::makeFromInt32(
+                    Bits::getEffectiveShifts(total, right->type), right->type);
                   return left;
-                } // TODO: handle overflows
+                } else {
+                  if (total == Bits::getEffectiveShifts(total, right->type)) {
+                    // no overflow, we can do this
+                    leftRight->value =
+                      Literal::makeFromInt32(total, right->type);
+                    return left;
+                  } // TODO: handle overflows
+                }
               }
             }
           }

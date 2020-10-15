@@ -48,6 +48,43 @@
         (i32.const 0x8000001)
       )
     )
+    (drop
+      (i32.rotl
+        (i32.rotl
+          (local.get $i1)
+          (i32.const 5)
+        )
+        (i32.const 30)
+      )
+    )
+    (drop
+      (i64.rotl
+        (i64.rotl
+          (local.get $i2)
+          (i64.const 4)
+        )
+        (i64.const 6)
+      )
+    )
+    (drop
+      (i32.rotr
+        (i32.rotr
+          (local.get $i1)
+          (i32.const 16)
+        )
+        (i32.const 19)
+      )
+    )
+    ;; rotl(rotl(x, 16), 16) -> x
+    (drop
+      (i32.rotl
+        (i32.rotl
+          (local.get $i1)
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
     (if
       (i32.eqz
         (local.get $i1)

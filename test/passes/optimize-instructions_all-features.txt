@@ -53,6 +53,27 @@
     (i32.const -133169153)
    )
   )
+  (drop
+   (i32.rotl
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $i2)
+    (i64.const 10)
+   )
+  )
+  (drop
+   (i32.rotr
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (local.get $i1)
+  )
   (if
    (i32.eqz
     (local.get $i1)
