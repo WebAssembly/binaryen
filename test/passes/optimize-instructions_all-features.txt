@@ -54,6 +54,39 @@
    )
   )
   (drop
+   (i32.shl
+    (i32.shl
+     (local.get $i1)
+     (i32.const 31)
+    )
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.shl
+     (local.get $i1)
+     (i32.const 31)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.shl
+    (local.get $i1)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i32.shl
+    (i32.shl
+     (local.get $i1)
+     (i32.const 31)
+    )
+    (i32.const 31)
+   )
+  )
+  (drop
    (i32.rotl
     (local.get $i1)
     (i32.const 3)

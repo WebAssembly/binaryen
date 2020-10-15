@@ -531,48 +531,17 @@ struct OptimizeInstructions
               } else if (left->op == DivSInt32 || left->op == DivSInt64) {
                 // if any of constants is zero or product of them produce
                 // owerflow just fold final constant as zero
-                auto prod = leftRight->value.mul(right->value);
-                // auto hasMultiplyOwerflow = [&](Literal* x, Literal* y) {
-                //   // from hacker's delight
-                //   int32_t m = (int32_t)x->countLeadingZeroes().getInteger();
-                //   int32_t n = (int32_t)y->countLeadingZeroes().getInteger();
-                //   if (m + n <= 30) return true;
-                //   t = x * (y >> 1);
-                //   if ((int)t < 0) return true;
-                //   z = t * 2;
-                //   if (y & 1) {
-                //     z = z + x;
-                //     if (z < x) return true;
-                //   }
-                //   return false;
-                // };
-                auto hasMultiplyOwerflow = [&](Literal* a, Literal* b) {
-                  signed int result;
-                  if (si_a > 0) {  /* si_a is positive */
-                    if (si_b > 0) {  /* si_a and si_b are positive */
-                      if (si_a > (INT_MAX / si_b)) {
-                        return true;
-                      }
-                    } else { /* si_a positive, si_b nonpositive */
-                      if (si_b < (INT_MIN / si_a)) {
-                        return true;
-                      }
-                    } /* si_a positive, si_b nonpositive */
-                  } else { /* si_a is nonpositive */
-                    if (si_b > 0) { /* si_a is nonpositive, si_b is positive */
-                      if (si_a < (INT_MIN / si_b)) {
-                        return true;
-                      }
-                    } else { /* si_a and si_b are nonpositive */
-                      if ( (si_a != 0) && (si_b < (INT_MAX / si_a))) {
-                        return true;
-                      }
-                    }
-                  }
-                  return false;
+                auto willOverflow = [](auto a, auto b) {
+                  // detect overflow during multiplication
+	                return a != 0 && a * b / a != b;
                 };
                 if (leftRight->value.isZero() || right->value.isZero() ||
-                    hasMultiplyOwerflow(leftRight->value, right->value)) {
+                    (leftRight->value.type == Type::i32 &&
+                     willOverflow(leftRight->value.geti32(),
+                                  right->value.geti32())) ||
+                    (leftRight->value.type == Type::i64 &&
+                     willOverflow(leftRight->value.geti64(),
+                                  right->value.geti64()))) {
                   leftRight->value = Literal::makeZero(right->type);
                 } else {
                   auto prod = leftRight->value.mul(right->value);
@@ -582,11 +551,9 @@ struct OptimizeInstructions
                     leftRight->value = prod;
                   }
                 }
-                // TODO:
-                // handle signed / unsigned divisions. They are more complex
               } else if (left->op == DivUInt32 || left->op == DivUInt64) {
                 // TODO:
-                // handle signed / unsigned divisions. They are more complex
+                // handle unsigned divisions.
               } else if (Abstract::hasAnyShift(left->op)) {
                 // shifts only use an effective amount from the constant, so
                 // adding must be done carefully
