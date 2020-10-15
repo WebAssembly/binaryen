@@ -30,6 +30,10 @@ class Field(ExpressionChild):
 class Name(Field): pass
 class ExpressionList(Field): pass
 
+class Child(Field):
+    def render(self, name):
+        return f'Expression* {name};'
+
 class Method:
     def __init__(self, paramses, result):
         self.paramses = paramses
@@ -54,45 +58,47 @@ class Block(Expression):
     '''
         finalize has three overloads:
 
-        () set the type purely based on its contents. this
-           scans the block, so it is not fast.
+        void ();
 
-        (Type) sets the type given you know its type, which is the case when parsing
+        set the type purely based on its contents. this
+        scans the block, so it is not fast.
+
+        void (Type);
+
+        sets the type given you know its type, which is the case when parsing
         s-expression or binary, as explicit types are given. the only additional
         work this does is to set the type to unreachable in the cases that is
         needed (which may require scanning the block)
 
-        (Type type_, bool hasBreak) set the type given you know its type, and you know if there is a break to
+        void (Type type_, bool hasBreak);
+
+        set the type given you know its type, and you know if there is a break to
         this block. this avoids the need to scan the contents of the block in the
         case that it might be unreachable, so it is recommended if you already know
         the type and breakability anyhow.
     '''
     finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
+class If(Expression):
+  condition = Child()
+  ifTrue = Child()
+  ifFalse = Child()
 
+  '''
+    void finalize(Type type_);
+
+    set the type given you know its type, which is the case when parsing
+    s-expression or binary, as explicit types are given. the only additional
+    work this does is to set the type to unreachable in the cases that is
+    needed.
+
+    void finalize();
+
+    set the type purely based on its contents.
+  '''
+  finalize = Method(('Type type_', ''), 'void')
 
 '''
-};
-
-class If : public SpecificExpression<Expression::IfId> {
-public:
-  If() : ifFalse(nullptr) {}
-  If(MixedArena& allocator) : If() {}
-
-  Expression* condition;
-  Expression* ifTrue;
-  Expression* ifFalse;
-
-  set the type given you know its type, which is the case when parsing
-  s-expression or binary, as explicit types are given. the only additional
-  work this does is to set the type to unreachable in the cases that is
-  needed.
-  void finalize(Type type_);
-
-  set the type purely based on its contents.
-  void finalize();
-};
-
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
   Loop() = default;
