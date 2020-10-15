@@ -21,8 +21,23 @@ import test.shared as shared
 
 # Support definitions
 
-class Name: pass
-class ExpressionList: pass
+class ExpressionChild:
+    def is_field(self):
+        return False
+
+    def is_method(self):
+        return False
+
+    def render(self, name):
+        return f'{self.__class__.__name__} {name};'
+
+class Name(ExpressionChild):
+    def is_field(self):
+        return True
+
+class ExpressionList(ExpressionChild):
+    def is_field(self):
+        return True
 
 class Method:
     def __init__(self, signatures):
@@ -762,6 +777,11 @@ it in a PR, etc.
 
 # Processing
 
+
+def is_subclass_of(x, y):
+    return getattr(x, '__bases__', None) == (y,)
+
+
 def get_expressions():
     ret = []
 
@@ -769,7 +789,7 @@ def get_expressions():
 
     for key in all_globals:
         value = all_globals[key]
-        if getattr(value, '__bases__', None) == (Expression,):
+        if is_subclass_of(value, Expression):
             ret.append(value)
 
     return ret
@@ -796,16 +816,22 @@ def generate_defs():
     for expr in exprs:
         name = expr.__name__
         fields = []
-        fields = join_nested_lines(fields)
         methods = []
-        methods = join_nested_lines(fields)
+        for key, value in expr.__dict__.items():
+            if is_subclass_of(value.__class__, ExpressionChild):
+                if value.is_field():
+                    fields.append(value.render(key))
+                elif value.is_method():
+                    methods.append(value.render(key))
+        fields_text = join_nested_lines(fields)
+        methods_text = join_nested_lines(methods)
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
   %(name)s() = default;
   %(name)s(MixedArena& allocator) {}
-  %(fields)s
-  %(methods)s
+  %(fields_text)s
+  %(methods_text)s
 };
 ''' % locals()
         text = compact_text(text)
