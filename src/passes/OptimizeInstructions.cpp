@@ -532,17 +532,42 @@ struct OptimizeInstructions
                 // if any of constants is zero or product of them produce
                 // owerflow just fold final constant as zero
                 auto prod = leftRight->value.mul(right->value);
-                auto hasMultiplyOwerflow = [&](Literal* x, Literal* y) {
-                  // from hacker's delight
-                  int32_t m = (int32_t)x->countLeadingZeroes().getInteger();
-                  int32_t n = (int32_t)y->countLeadingZeroes().getInteger();
-                  if (m + n <= 30) return true;
-                  t = x * (y >> 1);
-                  if ((int)t < 0) return true;
-                  z = t * 2;
-                  if (y & 1) {
-                    z = z + x;
-                    if (z < x) return true;
+                // auto hasMultiplyOwerflow = [&](Literal* x, Literal* y) {
+                //   // from hacker's delight
+                //   int32_t m = (int32_t)x->countLeadingZeroes().getInteger();
+                //   int32_t n = (int32_t)y->countLeadingZeroes().getInteger();
+                //   if (m + n <= 30) return true;
+                //   t = x * (y >> 1);
+                //   if ((int)t < 0) return true;
+                //   z = t * 2;
+                //   if (y & 1) {
+                //     z = z + x;
+                //     if (z < x) return true;
+                //   }
+                //   return false;
+                // };
+                auto hasMultiplyOwerflow = [&](Literal* a, Literal* b) {
+                  signed int result;
+                  if (si_a > 0) {  /* si_a is positive */
+                    if (si_b > 0) {  /* si_a and si_b are positive */
+                      if (si_a > (INT_MAX / si_b)) {
+                        return true;
+                      }
+                    } else { /* si_a positive, si_b nonpositive */
+                      if (si_b < (INT_MIN / si_a)) {
+                        return true;
+                      }
+                    } /* si_a positive, si_b nonpositive */
+                  } else { /* si_a is nonpositive */
+                    if (si_b > 0) { /* si_a is nonpositive, si_b is positive */
+                      if (si_a < (INT_MIN / si_b)) {
+                        return true;
+                      }
+                    } else { /* si_a and si_b are nonpositive */
+                      if ( (si_a != 0) && (si_b < (INT_MAX / si_a))) {
+                        return true;
+                      }
+                    }
                   }
                   return false;
                 };
