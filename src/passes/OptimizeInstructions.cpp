@@ -512,6 +512,7 @@ struct OptimizeInstructions
           return ret;
         }
         // the square of some operations can be merged
+        // (x op C1) op C2  ==>  (x op (C1 op C2))
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
             if (auto* leftRight = left->right->dynCast<Const>()) {
@@ -527,7 +528,38 @@ struct OptimizeInstructions
               } else if (left->op == MulInt32 || left->op == MulInt64) {
                 leftRight->value = leftRight->value.mul(right->value);
                 return left;
-
+              } else if (left->op == DivSInt32 || left->op == DivSInt64) {
+                // if any of constants is zero or product of them produce
+                // owerflow just fold final constant as zero
+                auto prod = leftRight->value.mul(right->value);
+                auto hasMultiplyOwerflow = [&](Literal* x, Literal* y) {
+                  // from hacker's delight
+                  int32_t m = (int32_t)x->countLeadingZeroes().getInteger();
+                  int32_t n = (int32_t)y->countLeadingZeroes().getInteger();
+                  if (m + n <= 30) return true;
+                  t = x * (y >> 1);
+                  if ((int)t < 0) return true;
+                  z = t * 2;
+                  if (y & 1) {
+                    z = z + x;
+                    if (z < x) return true;
+                  }
+                  return false;
+                };
+                if (leftRight->value.isZero() || right->value.isZero() ||
+                    hasMultiplyOwerflow(leftRight->value, right->value)) {
+                  leftRight->value = Literal::makeZero(right->type);
+                } else {
+                  auto prod = leftRight->value.mul(right->value);
+                  // don't apply partially constant folding if product
+                  // produce signed minimum
+                  if (!prod.isSignedMin()) {
+                    leftRight->value = prod;
+                  }
+                }
+                // TODO:
+                // handle signed / unsigned divisions. They are more complex
+              } else if (left->op == DivUInt32 || left->op == DivUInt64) {
                 // TODO:
                 // handle signed / unsigned divisions. They are more complex
               } else if (Abstract::hasAnyShift(left->op)) {
