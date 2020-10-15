@@ -513,7 +513,7 @@ struct OptimizeInstructions
         }
         // the square of some operations can be merged
         // (x op C1) op C2  ==>  (x op (C1 op C2))
-        if (auto* ret = partinalEvaluation(binary)) {
+        if (auto* ret = partialEvaluation(binary)) {
           return ret;
         }
         if (right->type == Type::i32) {
@@ -1585,7 +1585,7 @@ private:
     return nullptr;
   }
 
-  Expression* partinalEvaluation(Binary* binary) {
+  Expression* partialEvaluation(Binary* binary) {
     assert(binary->right->is<Const>());
 
     // detect overflow during signed and unsigned multiplication
@@ -1616,11 +1616,11 @@ private:
             // owerflow just fold final constant as zero
             if (leftRight->value.isZero() || right->value.isZero() ||
                 (leftRight->value.type == Type::i32 &&
-                  willOverflowMul(leftRight->value.geti32(),
-                                  right->value.geti32())) ||
+                 willOverflowMul(leftRight->value.geti32(),
+                                 right->value.geti32())) ||
                 (leftRight->value.type == Type::i64 &&
-                  willOverflowMul(leftRight->value.geti64(),
-                                  right->value.geti64()))) {
+                 willOverflowMul(leftRight->value.geti64(),
+                                 right->value.geti64()))) {
               leftRight->value = Literal::makeZero(right->type);
               return left;
             } else {
@@ -1635,11 +1635,11 @@ private:
           } else if (left->op == DivUInt32 || left->op == DivUInt64) {
             if (leftRight->value.isZero() || right->value.isZero() ||
                 (leftRight->value.type == Type::i32 &&
-                  willOverflowMul((uint32_t)leftRight->value.geti32(),
-                                  (uint32_t)right->value.geti32())) ||
+                 willOverflowMul((uint32_t)leftRight->value.geti32(),
+                                 (uint32_t)right->value.geti32())) ||
                 (leftRight->value.type == Type::i64 &&
-                  willOverflowMul((uint64_t)leftRight->value.geti64(),
-                                  (uint64_t)right->value.geti64()))) {
+                 willOverflowMul((uint64_t)leftRight->value.geti64(),
+                                 (uint64_t)right->value.geti64()))) {
               leftRight->value = Literal::makeZero(right->type);
             } else {
               auto prod = leftRight->value.mul(right->value);
@@ -1650,19 +1650,17 @@ private:
             // shifts only use an effective amount from the constant, so
             // adding must be done carefully
             auto total = Bits::getEffectiveShifts(leftRight) +
-                          Bits::getEffectiveShifts(right);
+                         Bits::getEffectiveShifts(right);
             auto effective = Bits::getEffectiveShifts(total, right->type);
             if (left->op == RotLInt32 || left->op == RotLInt64 ||
                 left->op == RotRInt32 || left->op == RotRInt64) {
               // for cyclic shift rotations overflow is legit
-              leftRight->value =
-                Literal::makeFromInt32(effective, right->type);
+              leftRight->value = Literal::makeFromInt32(effective, right->type);
               return left;
             } else {
               if (total == effective) {
                 // no overflow, we can do this
-                leftRight->value =
-                  Literal::makeFromInt32(total, right->type);
+                leftRight->value = Literal::makeFromInt32(total, right->type);
                 return left;
               } // TODO: handle overflows
             }
