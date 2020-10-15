@@ -536,16 +536,15 @@ struct OptimizeInstructions
 
                   // TODO: resolve rule confilcts and uncomment code below:
 
-                  // (i32(x) * C1_odd) * i32.min_s   ==>   i32(x) << 31
-                  // (i32(x) * i32.min_s) * C2_odd   ==>   i32(x) << 31
-                  // (i64(x) * C1_odd) * i64.min_s   ==>   i64(x) << 63
-                  // (i64(x) * i64.min_s) * C2_odd   ==>   i64(x) << 63,
-                  // If both C1 and C2 are (i32|i64).min_s it will produce
-                  // zero so just fallback to general case.
+                  // (x * C_odd) * C_min_s   ==>   x * C_min_s
+                  // (x * C_min_s) * C_odd   ==>   x * C_min_s
 
-                  // left->op = Abstract::getBinary(left->type, Abstract::Shl);
-                  // leftRight->value = Literal::makeFromInt32(
-                  //   left->type.getByteSize() * 8 - 1, leftRight->type);
+                  // If both C1 and C2 are signed min or other constant is even
+                  // it will produce zero so just fallback to general case.
+
+                  // leftRight->value = leftRight->value.mul(
+                  //   Literal::makeSignedMin(leftRight->type)
+                  // );
                   // return left;
                 } else {
                   leftRight->value = leftRight->value.mul(right->value);
