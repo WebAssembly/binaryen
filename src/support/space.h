@@ -52,18 +52,14 @@ struct DisjointSpans {
     bool inserted;
     std::tie(iter, inserted) = spans.insert(span);
     if (!inserted) {
+      // This exact span was already there, so there is definite overlap.
       return true;
     }
-    if (iter != spans.begin()) {
-      auto before = iter;
-      before--;
-      if (before != spans.end() && before->checkOverlap(span)) {
-        return true;
-      }
+    // Check predecessor and successor, if they exist.
+    if (iter != spans.begin() && std::prev(iter)->checkOverlap(span)) {
+      return true;
     }
-    auto after = iter;
-    after++;
-    if (after != spans.end() && after->checkOverlap(span)) {
+    if (std::next(iter) != spans.end() && std::next(iter)->checkOverlap(span)) {
       return true;
     }
     return false;
