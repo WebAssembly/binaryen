@@ -52,6 +52,33 @@ class Method:
 class Expression:
     __constructor_body__ = ''
 
+    @classmethod
+    def render(self):
+        name = self.__name__
+        fields = []
+        methods = []
+        for key, value in self.__dict__.items():
+            if is_subclass_of(value.__class__, Field):
+                fields.append(value.render(key))
+            elif value.__class__ == Method:
+                methods.append(value.render(key))
+        fields_text = join_nested_lines(fields)
+        methods_text = join_nested_lines(methods)
+        constructor_body = self.__constructor_body__
+        if constructor_body:
+            constructor_body = ' ' + constructor_body + ' '
+        text = '''\
+class %(name)s : public SpecificExpression<Expression::%(name)sId> {
+public:
+  %(name)s() {%(constructor_body)s}
+  %(name)s(MixedArena& allocator) : %(name)s() {}
+  %(fields_text)s
+  %(methods_text)s
+};
+''' % locals()
+        text = compact_text(text)
+        return text
+
 
 # Specific expression definitions
 
@@ -760,29 +787,7 @@ def generate_defs():
 
     exprs = get_expressions()
     for expr in exprs:
-        name = expr.__name__
-        fields = []
-        methods = []
-        for key, value in expr.__dict__.items():
-            if is_subclass_of(value.__class__, Field):
-                fields.append(value.render(key))
-            elif value.__class__ == Method:
-                methods.append(value.render(key))
-        fields_text = join_nested_lines(fields)
-        methods_text = join_nested_lines(methods)
-        constructor_body = expr.__constructor_body__
-        if constructor_body:
-            constructor_body = ' ' + constructor_body + ' '
-        text = '''\
-class %(name)s : public SpecificExpression<Expression::%(name)sId> {
-public:
-  %(name)s() {%(constructor_body)s}
-  %(name)s(MixedArena& allocator) : %(name)s() {}
-  %(fields_text)s
-  %(methods_text)s
-};
-''' % locals()
-        text = compact_text(text)
+        text = expr.render()
         print(text)
     1/0
 
