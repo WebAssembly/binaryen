@@ -637,7 +637,7 @@ public:
   SpecificExpression() : Expression(SID) {}
 };
 
-#include "wasm-instructions.generated.h"
+#include "wasm-expressions.generated.h"
 
 // Globals
 
