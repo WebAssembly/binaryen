@@ -538,7 +538,7 @@ struct OptimizeInstructions
                 auto effective = Bits::getEffectiveShifts(total, right->type);
                 if (left->op == RotLInt32 || left->op == RotLInt64 ||
                     left->op == RotRInt32 || left->op == RotRInt64) {
-                  // for cyclic rotations overflowing is legit
+                  // for cyclic shift rotations overflow is legit
                   leftRight->value =
                     Literal::makeFromInt32(effective, right->type);
                   return left;
