@@ -1588,10 +1588,9 @@ private:
   Expression* partialEvaluation(Binary* binary) {
     assert(binary->right->is<Const>());
 
-    // detect overflow during signed and unsigned multiplication
-    auto willOverflowMul = [](auto a, auto b) {
+    // detect overflow during signed multiplication
+    auto willOverflowSignedMul = [](auto a, auto b) {
       using T = decltype(a);
-
       if (b == T(0)) {
         return false;
       }
@@ -1602,6 +1601,12 @@ private:
         return true;
       }
       return false;
+    };
+
+    // detect overflow during signed multiplication
+    auto willOverflowUnsignedMul = [](auto a, auto b) {
+      using T = decltype(a);
+      return a != T(0) && b != T(0) && a > std::numeric_limits<T>::max() / b;
     };
 
     Const* right = binary->right->cast<Const>();
@@ -1627,11 +1632,11 @@ private:
             // owerflow just fold final constant as zero
             if (leftRight->value.isZero() || right->value.isZero() ||
                 (leftRight->value.type == Type::i32 &&
-                 willOverflowMul(leftRight->value.geti32(),
-                                 right->value.geti32())) ||
+                 willOverflowSignedMul(leftRight->value.geti32(),
+                                       right->value.geti32())) ||
                 (leftRight->value.type == Type::i64 &&
-                 willOverflowMul(leftRight->value.geti64(),
-                                 right->value.geti64()))) {
+                 willOverflowSignedMul(leftRight->value.geti64(),
+                                       right->value.geti64()))) {
               leftRight->value = Literal::makeZero(right->type);
               return left;
             } else {
@@ -1646,11 +1651,11 @@ private:
           } else if (left->op == DivUInt32 || left->op == DivUInt64) {
             if (leftRight->value.isZero() || right->value.isZero() ||
                 (leftRight->value.type == Type::i32 &&
-                 willOverflowMul((uint32_t)leftRight->value.geti32(),
-                                 (uint32_t)right->value.geti32())) ||
+                 willOverflowUnsignedMul((uint32_t)leftRight->value.geti32(),
+                                         (uint32_t)right->value.geti32())) ||
                 (leftRight->value.type == Type::i64 &&
-                 willOverflowMul((uint64_t)leftRight->value.geti64(),
-                                 (uint64_t)right->value.geti64()))) {
+                 willOverflowUnsignedMul((uint64_t)leftRight->value.geti64(),
+                                         (uint64_t)right->value.geti64()))) {
               leftRight->value = Literal::makeZero(right->type);
             } else {
               auto prod = leftRight->value.mul(right->value);
