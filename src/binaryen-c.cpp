@@ -3131,7 +3131,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenIndex numVarTypes,
                                         BinaryenExpressionRef body) {
   auto* ret = new Function;
-  ret->name = name;
+  ret->setExplicitName(name);
   ret->sig = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
@@ -3174,7 +3174,7 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     int8_t mutable_,
                                     BinaryenExpressionRef init) {
   auto* ret = new Global();
-  ret->name = name;
+  ret->setExplicitName(name);
   ret->type = Type(type);
   ret->mutable_ = !!mutable_;
   ret->init = (Expression*)init;
@@ -3197,7 +3197,7 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   BinaryenType params,
                                   BinaryenType results) {
   auto* ret = new Event();
-  ret->name = name;
+  ret->setExplicitName(name);
   ret->attribute = attribute;
   ret->sig = Signature(Type(params), Type(results));
   ((Module*)module)->addEvent(ret);

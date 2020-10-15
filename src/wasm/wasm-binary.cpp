@@ -628,7 +628,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // table names
-  if (wasm->table.exists && wasm->table.name.is()) {
+  if (wasm->table.exists && wasm->table.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 table at index 0
@@ -637,7 +637,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (wasm->memory.exists && wasm->memory.name.is()) {
+  if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
@@ -650,7 +650,7 @@ void WasmBinaryWriter::writeNames() {
     std::vector<std::pair<Index, Global*>> globalsWithNames;
     Index checked = 0;
     auto check = [&](Global* curr) {
-      if (curr->name.is()) {
+      if (curr->hasExplicitName) {
         globalsWithNames.push_back({checked, curr});
       }
       checked++;
@@ -2301,9 +2301,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         }
         auto numFunctionImports = functionImports.size();
         if (index < numFunctionImports) {
-          functionImports[index]->name = name;
+          functionImports[index]->setExplicitName(name);
         } else if (index - numFunctionImports < functions.size()) {
-          functions[index - numFunctionImports]->name = name;
+          functions[index - numFunctionImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
@@ -2358,7 +2358,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         if (index == 0) {
-          wasm.table.name = escape(rawName);
+          wasm.table.setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
@@ -2372,7 +2372,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         if (index == 0) {
-          wasm.memory.name = escape(rawName);
+          wasm.memory.setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -2394,9 +2394,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         }
         auto numGlobalImports = globalImports.size();
         if (index < numGlobalImports) {
-          globalImports[index]->name = name;
+          globalImports[index]->setExplicitName(name);
         } else if (index - numGlobalImports < globals.size()) {
-          globals[index - numGlobalImports]->name = name;
+          globals[index - numGlobalImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: global index out of bounds in name section, "
                        "global subsection: "

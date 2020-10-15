@@ -1335,10 +1335,25 @@ public:
 // Globals
 
 struct Importable {
+  Name name;
+
+  // Explicit names are ones that we read from the input file and
+  // will be written the name section in the output file.
+  // Implicit names are names that binaryen generated for internal
+  // use only and will not be written the name section.
+  bool hasExplicitName = false;
+
   // If these are set, then this is an import, as module.base
   Name module, base;
 
   bool imported() { return module.is(); }
+
+  void setName(Name name_, bool hasExplicitName_) {
+    name = name_;
+    hasExplicitName = hasExplicitName_;
+  }
+
+  void setExplicitName(Name name_) { setName(name_, true); }
 };
 
 class Function;
@@ -1411,7 +1426,6 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Name name;
   Signature sig; // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
@@ -1523,7 +1537,6 @@ public:
   // been defined or imported. The table can exist but be empty and have no
   // defined initial or max size.
   bool exists = false;
-  Name name;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
@@ -1569,7 +1582,6 @@ public:
   };
 
   bool exists = false;
-  Name name;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
   std::vector<Segment> segments;
@@ -1594,7 +1606,6 @@ public:
 
 class Global : public Importable {
 public:
-  Name name;
   Type type;
   Expression* init = nullptr;
   bool mutable_ = false;
@@ -1605,7 +1616,6 @@ enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
 
 class Event : public Importable {
 public:
-  Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;
