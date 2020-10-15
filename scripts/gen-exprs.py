@@ -24,15 +24,21 @@ import test.shared as shared
 class ExpressionChild: pass
 
 class Field(ExpressionChild):
+    def __init__(self, init=None):
+        self.init = init
+
     def render(self, name):
-        return f'{self.__class__.__name__} {name};'
+        typename = self.__class__.__name__
+        if hasattr(self, 'typename'):
+            typename = self.typename
+        value = f' = {self.init}' if self.init else ''
+        return f'{typename} {name}{value};'
 
 class Name(Field): pass
 class ExpressionList(Field): pass
 
 class Child(Field):
-    def render(self, name):
-        return f'Expression* {name};'
+    typename = 'Expression*'
 
 class Method:
     def __init__(self, paramses, result):
@@ -82,7 +88,7 @@ class Block(Expression):
 class If(Expression):
     condition = Child()
     ifTrue = Child()
-    ifFalse = Child()
+    ifFalse = Child(init='nullptr')
 
     '''
         void finalize(Type type_);
@@ -115,7 +121,8 @@ class Loop(Expression):
 
 '''
 
-class Break : public SpecificExpression<Expression::BreakId> {
+class Break(Expression):
+ : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
   Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
