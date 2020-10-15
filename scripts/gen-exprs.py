@@ -80,42 +80,40 @@ class Block(Expression):
     finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
 class If(Expression):
-  condition = Child()
-  ifTrue = Child()
-  ifFalse = Child()
+    condition = Child()
+    ifTrue = Child()
+    ifFalse = Child()
 
-  '''
-    void finalize(Type type_);
+    '''
+        void finalize(Type type_);
 
-    set the type given you know its type, which is the case when parsing
-    s-expression or binary, as explicit types are given. the only additional
-    work this does is to set the type to unreachable in the cases that is
-    needed.
+        set the type given you know its type, which is the case when parsing
+        s-expression or binary, as explicit types are given. the only additional
+        work this does is to set the type to unreachable in the cases that is
+        needed.
 
-    void finalize();
+        void finalize();
 
-    set the type purely based on its contents.
-  '''
-  finalize = Method(('Type type_', ''), 'void')
+        set the type purely based on its contents.
+    '''
+    finalize = Method(('Type type_', ''), 'void')
+
+class Loop(Expression):
+    name = Name()
+    body = Child()
+
+    '''
+        set the type given you know its type, which is the case when parsing
+        s-expression or binary, as explicit types are given. the only additional
+        work this does is to set the type to unreachable in the cases that is
+        needed.
+        void finalize(Type type_);
+
+        set the type purely based on its contents.
+    '''
+    finalize = Method(('Type type_', ''), 'void')
 
 '''
-class Loop : public SpecificExpression<Expression::LoopId> {
-public:
-  Loop() = default;
-  Loop(MixedArena& allocator) {}
-
-  Name name;
-  Expression* body;
-
-  set the type given you know its type, which is the case when parsing
-  s-expression or binary, as explicit types are given. the only additional
-  work this does is to set the type to unreachable in the cases that is
-  needed.
-  void finalize(Type type_);
-
-  set the type purely based on its contents.
-  void finalize();
-};
 
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
