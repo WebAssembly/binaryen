@@ -1591,7 +1591,7 @@ private:
     // detect overflow during signed multiplication
     auto willOverflowSignedMul = [](auto a, auto b) {
       using T = decltype(a);
-      if (b == T(0)) {
+      if (a == T(0) || b == T(0)) {
         return false;
       }
       auto minDivB = std::numeric_limits<T>::min() / b;
