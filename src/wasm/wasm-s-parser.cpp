@@ -714,7 +714,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
 
   Name name, exportName;
   size_t i = parseFunctionNames(s, name, exportName);
-  bool explicitName = name.is();
+  bool hasExplicitName = name.is();
   if (!preParseImport) {
     if (!name.is()) {
       // unnamed, use an index
@@ -763,7 +763,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
       throw ParseException("!preParseImport in func", s.line, s.col);
     }
     auto im = make_unique<Function>();
-    im->setName(name, explicitName);
+    im->setName(name, hasExplicitName);
     im->module = importModule;
     im->base = importBase;
     im->sig = sig;
@@ -2359,8 +2359,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
              (*s[3])[newStyleInner]->dollared()) {
     name = (*s[3])[newStyleInner++]->str();
   }
-  bool explicitName = name.is();
-  if (!explicitName) {
+  bool hasExplicitName = name.is();
+  if (!hasExplicitName) {
     if (kind == ExternalKind::Function) {
       name = Name("fimport$" + std::to_string(functionCounter++));
       functionNames.push_back(name);
@@ -2398,7 +2398,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     auto func = make_unique<Function>();
 
     j = parseTypeUse(inner, j, func->sig);
-    func->setName(name, explicitName);
+    func->setName(name, hasExplicitName);
     func->module = module;
     func->base = base;
     functionTypes[name] = func->sig.results;
@@ -2417,14 +2417,14 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       mutable_ = true;
     }
     auto global = make_unique<Global>();
-    global->setName(name, explicitName);
+    global->setName(name, hasExplicitName);
     global->module = module;
     global->base = base;
     global->type = type;
     global->mutable_ = mutable_;
     wasm.addGlobal(global.release());
   } else if (kind == ExternalKind::Table) {
-    wasm.table.setName(name, explicitName);
+    wasm.table.setName(name, hasExplicitName);
     wasm.table.module = module;
     wasm.table.base = base;
     if (j < inner.size() - 1) {
@@ -2442,7 +2442,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     j++; // funcref
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
-    wasm.memory.setName(name, explicitName);
+    wasm.memory.setName(name, hasExplicitName);
     wasm.memory.module = module;
     wasm.memory.base = base;
     if (inner[j]->isList()) {
@@ -2467,7 +2467,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
     event->attribute = atoi(attrElem[1]->c_str());
     j = parseTypeUse(inner, j, event->sig);
-    event->setName(name, explicitName);
+    event->setName(name, hasExplicitName);
     event->module = module;
     event->base = base;
     wasm.addEvent(event.release());

@@ -628,7 +628,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // table names
-  if (wasm->table.exists && wasm->table.explicitName) {
+  if (wasm->table.exists && wasm->table.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 table at index 0
@@ -637,7 +637,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (wasm->memory.exists && wasm->memory.explicitName) {
+  if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
@@ -650,7 +650,7 @@ void WasmBinaryWriter::writeNames() {
     std::vector<std::pair<Index, Global*>> globalsWithNames;
     Index checked = 0;
     auto check = [&](Global* curr) {
-      if (curr->explicitName) {
+      if (curr->hasExplicitName) {
         globalsWithNames.push_back({checked, curr});
       }
       checked++;

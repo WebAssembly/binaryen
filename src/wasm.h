@@ -1332,30 +1332,28 @@ public:
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
 };
 
-// A named element whose name can end up in the name section.
-// Explicit names are ones that we read from the input file and
-// will be written the name section in the output file.
-// Implicit names are names that binaryen generated for internal
-// use only and will not be written the name section.
-struct Namable {
-  Name name;
-  bool explicitName = false;
-
-  void setName(Name name_, bool explicitName_) {
-    name = name_;
-    explicitName = explicitName_;
-  }
-
-  void setExplicitName(Name name_) { setName(name_, true); }
-};
-
 // Globals
 
-struct Importable : public Namable {
+struct Importable {
+  Name name;
+
+  // Explicit names are ones that we read from the input file and
+  // will be written the name section in the output file.
+  // Implicit names are names that binaryen generated for internal
+  // use only and will not be written the name section.
+  bool hasExplicitName = false;
+
   // If these are set, then this is an import, as module.base
   Name module, base;
 
   bool imported() { return module.is(); }
+
+  void setName(Name name_, bool hasExplicitName_) {
+    name = name_;
+    hasExplicitName = hasExplicitName_;
+  }
+
+  void setExplicitName(Name name_) { setName(name_, true); }
 };
 
 class Function;
