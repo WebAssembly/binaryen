@@ -49,7 +49,8 @@ class Method:
         ret = [f'{self.result} {name}({params});' for params in self.paramses]
         return join_nested_lines(ret)
 
-class Expression: pass
+class Expression:
+    __constructor_body__ = ''
 
 
 # Specific expression definitions
@@ -119,20 +120,17 @@ class Loop(Expression):
     '''
     finalize = Method(('Type type_', ''), 'void')
 
-'''
 
 class Break(Expression):
- : public SpecificExpression<Expression::BreakId> {
-public:
-  Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
+    __constructor_body__ = 'type = Type::unreachable;'
 
-  Name name;
-  Expression* value;
-  Expression* condition;
+    name = Name()
+    value = Child(init='nullptr')
+    condition = Child(init='nullptr')
 
-  void finalize();
-};
+    finalize = Method('', 'void')
+
+'''
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
@@ -146,7 +144,6 @@ public:
   Expression* value = nullptr;
 
   void finalize();
-};
 
 class Call : public SpecificExpression<Expression::CallId> {
 public:
@@ -157,7 +154,6 @@ public:
   bool isReturn = false;
 
   void finalize();
-};
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
@@ -168,7 +164,6 @@ public:
   bool isReturn = false;
 
   void finalize();
-};
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
 public:
@@ -176,7 +171,6 @@ public:
   LocalGet(MixedArena& allocator) {}
 
   Index index;
-};
 
 class LocalSet : public SpecificExpression<Expression::LocalSetId> {
 public:
@@ -191,7 +185,6 @@ public:
   bool isTee() const;
   void makeTee(Type type);
   void makeSet();
-};
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
 public:
@@ -199,7 +192,6 @@ public:
   GlobalGet(MixedArena& allocator) {}
 
   Name name;
-};
 
 class GlobalSet : public SpecificExpression<Expression::GlobalSetId> {
 public:
@@ -210,7 +202,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
@@ -227,7 +218,6 @@ public:
   type must be set during creation, cannot be inferred
 
   void finalize();
-};
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
@@ -243,7 +233,6 @@ public:
   Type valueType;
 
   void finalize();
-};
 
 class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
 public:
@@ -257,7 +246,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
 public:
@@ -271,7 +259,6 @@ public:
   Expression* replacement;
 
   void finalize();
-};
 
 class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
 public:
@@ -285,7 +272,6 @@ public:
   Type expectedType;
 
   void finalize();
-};
 
 class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
 public:
@@ -297,7 +283,6 @@ public:
   Expression* notifyCount;
 
   void finalize();
-};
 
 class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
 public:
@@ -310,7 +295,6 @@ public:
   uint8_t order = 0;
 
   void finalize();
-};
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 public:
@@ -322,7 +306,6 @@ public:
   uint8_t index;
 
   void finalize();
-};
 
 class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
 public:
@@ -335,7 +318,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
 public:
@@ -347,7 +329,6 @@ public:
   std::array<uint8_t, 16> mask;
 
   void finalize();
-};
 
 class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
 public:
@@ -360,7 +341,6 @@ public:
   Expression* c;
 
   void finalize();
-};
 
 class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
 public:
@@ -372,7 +352,6 @@ public:
   Expression* shift;
 
   void finalize();
-};
 
 class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
 public:
@@ -386,7 +365,6 @@ public:
 
   Index getMemBytes();
   void finalize();
-};
 
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
@@ -399,7 +377,6 @@ public:
   Expression* size;
 
   void finalize();
-};
 
 class DataDrop : public SpecificExpression<Expression::DataDropId> {
 public:
@@ -409,7 +386,6 @@ public:
   Index segment;
 
   void finalize();
-};
 
 class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
 public:
@@ -421,7 +397,6 @@ public:
   Expression* size;
 
   void finalize();
-};
 
 class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
 public:
@@ -433,7 +408,6 @@ public:
   Expression* size;
 
   void finalize();
-};
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
@@ -445,7 +419,6 @@ public:
   Const* set(Literal value_);
 
   void finalize();
-};
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
@@ -458,7 +431,6 @@ public:
   bool isRelational();
 
   void finalize();
-};
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
@@ -475,7 +447,6 @@ public:
   bool isRelational();
 
   void finalize();
-};
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
@@ -488,7 +459,6 @@ public:
 
   void finalize();
   void finalize(Type type_);
-};
 
 class Drop : public SpecificExpression<Expression::DropId> {
 public:
@@ -498,7 +468,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
@@ -506,7 +475,6 @@ public:
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
-};
 
 class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
 public:
@@ -517,7 +485,6 @@ public:
 
   void make64();
   void finalize();
-};
 
 class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
 public:
@@ -529,13 +496,11 @@ public:
 
   void make64();
   void finalize();
-};
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
   Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
-};
 
 Represents a pop of a value that arrives as an implicit argument to the
 current block. Currently used in exception handling.
@@ -543,7 +508,6 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
-};
 
 class RefNull : public SpecificExpression<Expression::RefNullId> {
 public:
@@ -553,7 +517,6 @@ public:
   void finalize();
   void finalize(HeapType heapType);
   void finalize(Type type);
-};
 
 class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
 public:
@@ -562,7 +525,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class RefFunc : public SpecificExpression<Expression::RefFuncId> {
 public:
@@ -571,7 +533,6 @@ public:
   Name func;
 
   void finalize();
-};
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
 public:
@@ -581,7 +542,6 @@ public:
   Expression* right;
 
   void finalize();
-};
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
@@ -592,7 +552,6 @@ public:
 
   void finalize();
   void finalize(Type type_);
-};
 
 class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
@@ -602,7 +561,6 @@ public:
   ExpressionList operands;
 
   void finalize();
-};
 
 class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
@@ -611,7 +569,6 @@ public:
   Expression* exnref;
 
   void finalize();
-};
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
@@ -626,7 +583,6 @@ public:
   Type sent;
 
   void finalize();
-};
 
 class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
 public:
@@ -635,7 +591,6 @@ public:
   ExpressionList operands;
 
   void finalize();
-};
 
 class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
 public:
@@ -645,7 +600,6 @@ public:
   Index index;
 
   void finalize();
-};
 
 class I31New : public SpecificExpression<Expression::I31NewId> {
 public:
@@ -654,7 +608,6 @@ public:
   Expression* value;
 
   void finalize();
-};
 
 class I31Get : public SpecificExpression<Expression::I31GetId> {
 public:
@@ -664,91 +617,78 @@ public:
   bool signed_;
 
   void finalize();
-};
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
   RefTest(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
-};
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
   RefCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
-};
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
 public:
   BrOnCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
-};
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
 public:
   RttCanon(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
-};
 
 class RttSub : public SpecificExpression<Expression::RttSubId> {
 public:
   RttSub(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
-};
 
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
-};
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
   StructGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
-};
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
   StructSet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
-};
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
-};
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
   ArrayGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
-};
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
   ArraySet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
-};
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
   ArrayLen(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
-};
 
 
 '''
@@ -830,11 +770,14 @@ def generate_defs():
                 methods.append(value.render(key))
         fields_text = join_nested_lines(fields)
         methods_text = join_nested_lines(methods)
+        constructor_body = expr.__constructor_body__
+        if constructor_body:
+            constructor_body = ' ' + constructor_body + ' '
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
-  %(name)s() = default;
-  %(name)s(MixedArena& allocator) {}
+  %(name)s() {%(constructor_body)s}
+  %(name)s(MixedArena& allocator) : %(name)s() {}
   %(fields_text)s
   %(methods_text)s
 };
