@@ -513,87 +513,8 @@ struct OptimizeInstructions
         }
         // the square of some operations can be merged
         // (x op C1) op C2  ==>  (x op (C1 op C2))
-        if (auto* left = binary->left->dynCast<Binary>()) {
-          if (left->op == binary->op) {
-            if (auto* leftRight = left->right->dynCast<Const>()) {
-              if (left->op == AndInt32 || left->op == AndInt64) {
-                leftRight->value = leftRight->value.and_(right->value);
-                return left;
-              } else if (left->op == OrInt32 || left->op == OrInt64) {
-                leftRight->value = leftRight->value.or_(right->value);
-                return left;
-              } else if (left->op == XorInt32 || left->op == XorInt64) {
-                leftRight->value = leftRight->value.xor_(right->value);
-                return left;
-              } else if (left->op == MulInt32 || left->op == MulInt64) {
-                leftRight->value = leftRight->value.mul(right->value);
-                return left;
-              } else if (left->op == DivSInt32 || left->op == DivSInt64) {
-                // if any of constants is zero or product of them produce
-                // owerflow just fold final constant as zero
-                // detect overflow during signed multiplication
-                auto willOverflowS = [](auto a, auto b) {
-	                return a != 0 && a * b / a != b;
-                };
-                if (leftRight->value.isZero() || right->value.isZero() ||
-                    (leftRight->value.type == Type::i32 &&
-                     willOverflowS(leftRight->value.geti32(),
-                                   right->value.geti32())) ||
-                    (leftRight->value.type == Type::i64 &&
-                     willOverflowS(leftRight->value.geti64(),
-                                   right->value.geti64()))) {
-                  leftRight->value = Literal::makeZero(right->type);
-                  return left;
-                } else {
-                  auto prod = leftRight->value.mul(right->value);
-                  // don't apply partially constant folding if product
-                  // produce signed minimum
-                  if (!prod.isSignedMin()) {
-                    leftRight->value = prod;
-                    return left;
-                  }
-                }
-              } else if (left->op == DivUInt32 || left->op == DivUInt64) {
-                // detect overflow during unsigned multiplication
-                auto willOverflowU = [](auto a, auto b) {
-	                return a != 0 && a * b / a != b;
-                };
-                if (leftRight->value.isZero() || right->value.isZero() ||
-                    (leftRight->value.type == Type::i32 &&
-                     willOverflowU((uint32_t)leftRight->value.geti32(),
-                                   (uint32_t)right->value.geti32())) ||
-                    (leftRight->value.type == Type::i64 &&
-                     willOverflowU((uint64_t)leftRight->value.geti64(),
-                                   (uint64_t)right->value.geti64()))) {
-                  leftRight->value = Literal::makeZero(right->type);
-                } else {
-                  auto prod = leftRight->value.mul(right->value);
-                  leftRight->value = prod;
-                }
-                return left;
-              } else if (Abstract::hasAnyShift(left->op)) {
-                // shifts only use an effective amount from the constant, so
-                // adding must be done carefully
-                auto total = Bits::getEffectiveShifts(leftRight) +
-                             Bits::getEffectiveShifts(right);
-                auto effective = Bits::getEffectiveShifts(total, right->type);
-                if (left->op == RotLInt32 || left->op == RotLInt64 ||
-                    left->op == RotRInt32 || left->op == RotRInt64) {
-                  // for cyclic shift rotations overflow is legit
-                  leftRight->value =
-                    Literal::makeFromInt32(effective, right->type);
-                  return left;
-                } else {
-                  if (total == effective) {
-                    // no overflow, we can do this
-                    leftRight->value =
-                      Literal::makeFromInt32(total, right->type);
-                    return left;
-                  } // TODO: handle overflows
-                }
-              }
-            }
-          }
+        if (auto* ret = partinalEvaluation(binary)) {
+          return ret;
         }
         if (right->type == Type::i32) {
           BinaryOp op;
@@ -1656,6 +1577,94 @@ private:
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* partinalEvaluation(Binary* binary) {
+    assert(binary->right->is<Const>());
+
+    // detect overflow during signed and unsigned multiplication
+    auto willOverflowMul = [](auto a, auto b) {
+      return a != 0 && a * b / a != b;
+    };
+
+    Const* right = binary->right->cast<Const>();
+    // the square of some operations can be merged
+    // (x op C1) op C2  ==>  (x op (C1 op C2))
+    if (auto* left = binary->left->dynCast<Binary>()) {
+      if (left->op == binary->op) {
+        if (auto* leftRight = left->right->dynCast<Const>()) {
+          if (left->op == AndInt32 || left->op == AndInt64) {
+            leftRight->value = leftRight->value.and_(right->value);
+            return left;
+          } else if (left->op == OrInt32 || left->op == OrInt64) {
+            leftRight->value = leftRight->value.or_(right->value);
+            return left;
+          } else if (left->op == XorInt32 || left->op == XorInt64) {
+            leftRight->value = leftRight->value.xor_(right->value);
+            return left;
+          } else if (left->op == MulInt32 || left->op == MulInt64) {
+            leftRight->value = leftRight->value.mul(right->value);
+            return left;
+          } else if (left->op == DivSInt32 || left->op == DivSInt64) {
+            // if any of constants is zero or product of them produce
+            // owerflow just fold final constant as zero
+            if (leftRight->value.isZero() || right->value.isZero() ||
+                (leftRight->value.type == Type::i32 &&
+                  willOverflowMul(leftRight->value.geti32(),
+                                  right->value.geti32())) ||
+                (leftRight->value.type == Type::i64 &&
+                  willOverflowMul(leftRight->value.geti64(),
+                                  right->value.geti64()))) {
+              leftRight->value = Literal::makeZero(right->type);
+              return left;
+            } else {
+              auto prod = leftRight->value.mul(right->value);
+              // don't apply partially constant folding if product
+              // produce signed minimum
+              if (!prod.isSignedMin()) {
+                leftRight->value = prod;
+                return left;
+              }
+            }
+          } else if (left->op == DivUInt32 || left->op == DivUInt64) {
+            if (leftRight->value.isZero() || right->value.isZero() ||
+                (leftRight->value.type == Type::i32 &&
+                  willOverflowMul((uint32_t)leftRight->value.geti32(),
+                                  (uint32_t)right->value.geti32())) ||
+                (leftRight->value.type == Type::i64 &&
+                  willOverflowMul((uint64_t)leftRight->value.geti64(),
+                                  (uint64_t)right->value.geti64()))) {
+              leftRight->value = Literal::makeZero(right->type);
+            } else {
+              auto prod = leftRight->value.mul(right->value);
+              leftRight->value = prod;
+            }
+            return left;
+          } else if (Abstract::hasAnyShift(left->op)) {
+            // shifts only use an effective amount from the constant, so
+            // adding must be done carefully
+            auto total = Bits::getEffectiveShifts(leftRight) +
+                          Bits::getEffectiveShifts(right);
+            auto effective = Bits::getEffectiveShifts(total, right->type);
+            if (left->op == RotLInt32 || left->op == RotLInt64 ||
+                left->op == RotRInt32 || left->op == RotRInt64) {
+              // for cyclic shift rotations overflow is legit
+              leftRight->value =
+                Literal::makeFromInt32(effective, right->type);
+              return left;
+            } else {
+              if (total == effective) {
+                // no overflow, we can do this
+                leftRight->value =
+                  Literal::makeFromInt32(total, right->type);
+                return left;
+              } // TODO: handle overflows
             }
           }
         }
