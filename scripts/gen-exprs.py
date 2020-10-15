@@ -775,6 +775,18 @@ def get_expressions():
     return ret
 
 
+def join_nested_lines(lines):
+  return '\n  '.join(lines)
+
+
+def compact_text(text):
+    while True:
+        compacted = text.replace('\n  \n', '\n')
+        if compacted == text:
+            return text
+        text = compacted
+
+
 def generate_defs():
     #target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
     #with open(target, 'w') as out:
@@ -783,13 +795,20 @@ def generate_defs():
     exprs = get_expressions()
     for expr in exprs:
         name = expr.__name__
+        fields = []
+        fields = join_nested_lines(fields)
+        methods = []
+        methods = join_nested_lines(fields)
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
   %(name)s() = default;
   %(name)s(MixedArena& allocator) {}
+  %(fields)s
+  %(methods)s
 };
-''' % { 'name': expr.__name__ }
+''' % locals()
+        text = compact_text(text)
         print(text)
     1/0
 
