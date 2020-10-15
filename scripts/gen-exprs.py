@@ -776,13 +776,21 @@ def get_expressions():
 
 
 def generate_defs():
-    #target = shared.in_binaryen('src', 'wasm-instructions.generated.h')
+    #target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
     #with open(target, 'w') as out:
     #    out.write(COPYRIGHT + '\n' + NOTICE)
 
     exprs = get_expressions()
     for expr in exprs:
-        print(expr.__name__)
+        name = expr.__name__
+        text = '''\
+class %(name)s : public SpecificExpression<Expression::%(name)sId> {
+public:
+  %(name)s() = default;
+  %(name)s(MixedArena& allocator) {}
+};
+''' % { 'name': expr.__name__ }
+        print(text)
     1/0
 
 
