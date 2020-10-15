@@ -525,8 +525,32 @@ struct OptimizeInstructions
                 leftRight->value = leftRight->value.xor_(right->value);
                 return left;
               } else if (left->op == MulInt32 || left->op == MulInt64) {
-                leftRight->value = leftRight->value.mul(right->value);
-                return left;
+                // if one of constant is signed minimum and others are
+                // odd numbers we have special case where we should
+                // propagate signed min constant.
+                if ((leftRight->value.isSignedMin() && right->value.isOdd()) ||
+                    (leftRight->value.isOdd() && right->value.isSignedMin())) {
+                  // OTE: currently this conflict with other rules
+                  // like x * 0x80000000  ==>  x << 31 so in general we never
+                  // enter in this special case.
+
+                  // TODO: resolve rule confilcts and uncomment code below:
+
+                  // (i32(x) * C1_odd) * i32.min_s   ==>   i32(x) << 31
+                  // (i32(x) * i32.min_s) * C2_odd   ==>   i32(x) << 31
+                  // (i64(x) * C1_odd) * i64.min_s   ==>   i64(x) << 63
+                  // (i64(x) * i64.min_s) * C2_odd   ==>   i64(x) << 63,
+                  // If both C1 and C2 are (i32|i64).min_s it will produce
+                  // zero so just fallback to general case.
+
+                  // left->op = Abstract::getBinary(left->type, Abstract::Shl);
+                  // leftRight->value = Literal::makeFromInt32(
+                  //   left->type.getByteSize() * 8 - 1, leftRight->type);
+                  // return left;
+                } else {
+                  leftRight->value = leftRight->value.mul(right->value);
+                  return left;
+                }
 
                 // TODO:
                 // handle signed / unsigned divisions. They are more complex

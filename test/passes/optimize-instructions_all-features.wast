@@ -48,6 +48,47 @@
         (i32.const 0x8000001)
       )
     )
+    ;; special cases
+    ;; (x * 0x80000000) * 2  -->  0
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 2)
+      )
+    )
+    ;; (x * 0x80000000) * 3  -->  x << 31
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; (x * -3) * 0x80000000  -->  x << 31
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const -3)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; (x * 0x80000000) * 0x80000000 -->  x * 0
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 0x80000000)
+      )
+    )
     (if
       (i32.eqz
         (local.get $i1)

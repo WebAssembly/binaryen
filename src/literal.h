@@ -144,6 +144,16 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+  bool isOdd() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return (uint32_t(i32) & 1U) == 1U;
+      case Type::i64:
+        return (uint64_t(i64) & 1ULL) == 1ULL;
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
 
   static Literals makeZeros(Type type);
   static Literals makeOnes(Type type);
