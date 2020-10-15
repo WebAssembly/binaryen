@@ -21,28 +21,23 @@ import test.shared as shared
 
 # Support definitions
 
-class ExpressionChild:
-    def is_field(self):
-        return False
+class ExpressionChild: pass
 
-    def is_method(self):
-        return False
-
+class Field(ExpressionChild):
     def render(self, name):
         return f'{self.__class__.__name__} {name};'
 
-class Name(ExpressionChild):
-    def is_field(self):
-        return True
-
-class ExpressionList(ExpressionChild):
-    def is_field(self):
-        return True
+class Name(Field): pass
+class ExpressionList(Field): pass
 
 class Method:
-    def __init__(self, signatures):
-        self.signatures = signatures
+    def __init__(self, paramses, result):
+        self.paramses = paramses
+        self.result = result
 
+    def render(self, name):
+        ret = [f'{self.result} {name}({params});' for params in self.paramses]
+        return join_nested_lines(ret)
 
 class Expression: pass
 
@@ -72,7 +67,7 @@ class Block(Expression):
         case that it might be unreachable, so it is recommended if you already know
         the type and breakability anyhow.
     '''
-    finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'))
+    finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
 
 
@@ -818,11 +813,10 @@ def generate_defs():
         fields = []
         methods = []
         for key, value in expr.__dict__.items():
-            if is_subclass_of(value.__class__, ExpressionChild):
-                if value.is_field():
-                    fields.append(value.render(key))
-                elif value.is_method():
-                    methods.append(value.render(key))
+            if is_subclass_of(value.__class__, Field):
+                fields.append(value.render(key))
+            elif value.__class__ == Method:
+                methods.append(value.render(key))
         fields_text = join_nested_lines(fields)
         methods_text = join_nested_lines(methods)
         text = '''\
