@@ -87,6 +87,33 @@
    )
   )
   (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const -2300)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const 65536)
+    )
+    (i32.const 32768)
+   )
+  )
+  (drop
    (i32.rotl
     (local.get $i1)
     (i32.const 3)

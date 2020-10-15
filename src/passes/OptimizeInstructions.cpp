@@ -531,29 +531,46 @@ struct OptimizeInstructions
               } else if (left->op == DivSInt32 || left->op == DivSInt64) {
                 // if any of constants is zero or product of them produce
                 // owerflow just fold final constant as zero
-                auto willOverflow = [](auto a, auto b) {
-                  // detect overflow during multiplication
+                // detect overflow during signed multiplication
+                auto willOverflowS = [](auto a, auto b) {
 	                return a != 0 && a * b / a != b;
                 };
                 if (leftRight->value.isZero() || right->value.isZero() ||
                     (leftRight->value.type == Type::i32 &&
-                     willOverflow(leftRight->value.geti32(),
-                                  right->value.geti32())) ||
+                     willOverflowS(leftRight->value.geti32(),
+                                   right->value.geti32())) ||
                     (leftRight->value.type == Type::i64 &&
-                     willOverflow(leftRight->value.geti64(),
-                                  right->value.geti64()))) {
+                     willOverflowS(leftRight->value.geti64(),
+                                   right->value.geti64()))) {
                   leftRight->value = Literal::makeZero(right->type);
+                  return left;
                 } else {
                   auto prod = leftRight->value.mul(right->value);
                   // don't apply partially constant folding if product
                   // produce signed minimum
                   if (!prod.isSignedMin()) {
                     leftRight->value = prod;
+                    return left;
                   }
                 }
               } else if (left->op == DivUInt32 || left->op == DivUInt64) {
-                // TODO:
-                // handle unsigned divisions.
+                // detect overflow during unsigned multiplication
+                auto willOverflowU = [](auto a, auto b) {
+	                return a != 0 && a * b / a != b;
+                };
+                if (leftRight->value.isZero() || right->value.isZero() ||
+                    (leftRight->value.type == Type::i32 &&
+                     willOverflowU((uint32_t)leftRight->value.geti32(),
+                                   (uint32_t)right->value.geti32())) ||
+                    (leftRight->value.type == Type::i64 &&
+                     willOverflowU((uint64_t)leftRight->value.geti64(),
+                                   (uint64_t)right->value.geti64()))) {
+                  leftRight->value = Literal::makeZero(right->type);
+                } else {
+                  auto prod = leftRight->value.mul(right->value);
+                  leftRight->value = prod;
+                }
+                return left;
               } else if (Abstract::hasAnyShift(left->op)) {
                 // shifts only use an effective amount from the constant, so
                 // adding must be done carefully

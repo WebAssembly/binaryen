@@ -89,6 +89,47 @@
         (i32.const 0x80000000)
       )
     )
+
+    ;; signed division
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -100)
+        )
+        (i32.const 23)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x10000)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; skip
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x10000)
+        )
+        (i32.const 0x8000)
+      )
+    )
     (drop
       (i32.rotl
         (i32.rotl
