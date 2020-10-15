@@ -535,13 +535,14 @@ struct OptimizeInstructions
                 // adding must be done carefully
                 auto total = Bits::getEffectiveShifts(leftRight) +
                              Bits::getEffectiveShifts(right);
+                auto actual = Bits::getEffectiveShifts(total, right->type);
                 if (left->op == RotLInt32 || left->op == RotLInt64 ||
                     left->op == RotRInt32 || left->op == RotRInt64) {
-                  leftRight->value = Literal::makeFromInt32(
-                    Bits::getEffectiveShifts(total, right->type), right->type);
+                  leftRight->value =
+                    Literal::makeFromInt32(actual, right->type);
                   return left;
                 } else {
-                  if (total == Bits::getEffectiveShifts(total, right->type)) {
+                  if (total == actual) {
                     // no overflow, we can do this
                     leftRight->value =
                       Literal::makeFromInt32(total, right->type);
