@@ -91,6 +91,7 @@
     )
 
     ;; signed division
+    ;; -> x / -2300
     (drop
       (i32.div_s
         (i32.div_s
@@ -98,6 +99,26 @@
           (i32.const -100)
         )
         (i32.const 23)
+      )
+    )
+    ;; -> x / -45
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 3)
+        )
+        (i32.const -15)
+      )
+    )
+    ;; -> x / 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -0xFFFF)
+        )
+        (i32.const -0xFFFF)
       )
     )
     ;; -> x / 0
@@ -120,7 +141,17 @@
         (i32.const 0x80000000)
       )
     )
-    ;; skip
+    ;; -> x / 0
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; skip due to C1 * C2 == 0x80000000
     (drop
       (i32.div_s
         (i32.div_s

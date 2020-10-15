@@ -1590,7 +1590,14 @@ private:
 
     // detect overflow during signed and unsigned multiplication
     auto willOverflowMul = [](auto a, auto b) {
-      return a != 0 && a * b / a != b;
+      if (b == 0) return false;
+      auto minDivB = std::numeric_limits<decltype(a)>::min() / b;
+      auto maxDivB = std::numeric_limits<decltype(a)>::max() / b;
+      if ((b > decltype(a)(0) && a > maxDivB) || (b < decltype(a)(0) && a < maxDivB) ||
+          (b > decltype(a)(0) && a < minDivB) || (b < decltype(a)(-1) && a > minDivB)) {
+        return true;
+      }
+      return false;
     };
 
     Const* right = binary->right->cast<Const>();
