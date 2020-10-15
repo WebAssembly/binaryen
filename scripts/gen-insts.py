@@ -43,9 +43,11 @@ NOTICE = '''\
 //=============================================================================
 '''
 
+
 def generate_defs(target):
     with open(target, 'w') as out:
         out.write(COPYRIGHT + '\n' + NOTICE)
+
 
 def main():
     if sys.version_info.major != 3:
@@ -57,7 +59,9 @@ def main():
     if what == 'defs':
         generate_defs(target)
     else:
-        raise Error('Unknown thing to generate: ' +  what)
+        print('Unknown thing to generate: ' + what)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
