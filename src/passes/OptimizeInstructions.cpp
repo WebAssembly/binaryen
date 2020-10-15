@@ -535,14 +535,15 @@ struct OptimizeInstructions
                 // adding must be done carefully
                 auto total = Bits::getEffectiveShifts(leftRight) +
                              Bits::getEffectiveShifts(right);
-                auto actual = Bits::getEffectiveShifts(total, right->type);
+                auto effective = Bits::getEffectiveShifts(total, right->type);
                 if (left->op == RotLInt32 || left->op == RotLInt64 ||
                     left->op == RotRInt32 || left->op == RotRInt64) {
+                  // for cyclic rotations overflowing is legit
                   leftRight->value =
-                    Literal::makeFromInt32(actual, right->type);
+                    Literal::makeFromInt32(effective, right->type);
                   return left;
                 } else {
-                  if (total == actual) {
+                  if (total == effective) {
                     // no overflow, we can do this
                     leftRight->value =
                       Literal::makeFromInt32(total, right->type);
