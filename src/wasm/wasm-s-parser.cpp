@@ -2366,9 +2366,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("gimport$" + std::to_string(globalCounter++));
       globalNames.push_back(name);
     } else if (kind == ExternalKind::Memory) {
-      name = Name("mimport$" + std::to_string(0));
+      name = Name("mimport$" + std::to_string(memoryCounter++));
     } else if (kind == ExternalKind::Table) {
-      name = Name("timport$" + std::to_string(0));
+      name = Name("timport$" + std::to_string(tableCounter++));
     } else if (kind == ExternalKind::Event) {
       name = Name("eimport$" + std::to_string(eventCounter++));
       eventNames.push_back(name);

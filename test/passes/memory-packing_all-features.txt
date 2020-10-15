@@ -1539,3 +1539,27 @@
  (data (global.get $memoryBase) "x")
  (import "env" "memoryBase" (global $memoryBase i32))
 )
+(module
+ (type $none_=>_none (func))
+ (import "env" "memory" (memory $mimport$0 1 1))
+ (data passive "skipped")
+ (data passive "included")
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (export "func_54" (func $0))
+ (func $0
+  (if
+   (global.get $__mem_segment_drop_state_0)
+   (unreachable)
+  )
+  (memory.fill
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 30)
+  )
+  (memory.init 1
+   (i32.const 30)
+   (i32.const 0)
+   (i32.const 8)
+  )
+ )
+)

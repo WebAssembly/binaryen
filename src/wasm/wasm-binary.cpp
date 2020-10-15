@@ -1450,6 +1450,11 @@ void WasmBinaryBuilder::readImports() {
   size_t num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
   Builder builder(wasm);
+  size_t tableCounter = 0;
+  size_t memoryCounter = 0;
+  size_t functionCounter = 0;
+  size_t globalCounter = 0;
+  size_t eventCounter = 0;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto module = getInlineString();
@@ -1460,7 +1465,7 @@ void WasmBinaryBuilder::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        auto name = Name(std::string("fimport$") + std::to_string(i));
+        Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         if (index >= signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
@@ -1474,9 +1479,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Table: {
+        Name name(std::string("timport$") + std::to_string(tableCounter++));
         wasm.table.module = module;
         wasm.table.base = base;
-        wasm.table.name = Name(std::string("timport$") + std::to_string(i));
+        wasm.table.name = name;
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::funcref) {
@@ -1499,9 +1505,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Memory: {
+        Name name(std::string("mimport$") + std::to_string(memoryCounter++));
         wasm.memory.module = module;
         wasm.memory.base = base;
-        wasm.memory.name = Name(std::string("mimport$") + std::to_string(i));
+        wasm.memory.name = name;
         wasm.memory.exists = true;
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
@@ -1511,7 +1518,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        auto name = Name(std::string("gimport$") + std::to_string(i));
+        Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         auto* curr =
@@ -1526,7 +1533,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Event: {
-        auto name = Name(std::string("eimport$") + std::to_string(i));
+        Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
         if (index >= signatures.size()) {

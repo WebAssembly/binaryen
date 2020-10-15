@@ -532,3 +532,15 @@
  (data (i32.const 1024) "\00") ;; this could trample, or not
  (data (global.get $memoryBase) "x")
 )
+(module
+ (import "env" "memory" (memory 1 1))
+ (data passive "skipped\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00included")
+ (export "func_54" (func $0))
+ (func $0
+  (memory.init 0
+   (i32.const 0)
+   (i32.const 7)
+   (i32.const 38)
+  )
+ )
+)
