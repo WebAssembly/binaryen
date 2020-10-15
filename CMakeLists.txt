@@ -292,11 +292,6 @@ ENDIF()
 
 # Sources.
 
-add_custom_command(
-  OUTPUT src/wasm-instructions.generated.h
-  COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/gen-insts.py defs ${PROJECT_SOURCE_DIR}/src/wasm-instructions.generated.h
-  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/gen-insts.py ${PROJECT_SOURCE_DIR}/src/wasm-instructions.generated.h)
-
 file(GLOB binaryen_HEADERS src/*.h)
 set(binaryen_SOURCES
   src/binaryen-c.cpp
