@@ -16,6 +16,9 @@
 
 import sys
 
+import test.shared as shared
+
+
 COPYRIGHT = '''\
 /*
  * Copyright 2020 WebAssembly Community Group participants
@@ -44,7 +47,8 @@ NOTICE = '''\
 '''
 
 
-def generate_defs(target):
+def generate_defs():
+    target = shared.in_binaryen('src', 'wasm-instructions.generated.h')
     with open(target, 'w') as out:
         out.write(COPYRIGHT + '\n' + NOTICE)
 
@@ -54,13 +58,7 @@ def main():
         import datetime
         print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
         sys.exit(1)
-    what = sys.argv[1]
-    target = sys.argv[2]
-    if what == 'defs':
-        generate_defs(target)
-    else:
-        print('Unknown thing to generate: ' + what)
-        sys.exit(1)
+    generate_defs()
 
 
 if __name__ == "__main__":
