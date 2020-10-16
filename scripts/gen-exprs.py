@@ -64,12 +64,18 @@ class Child(Field):
     typename = 'Expression*'
 
 class Method:
-    def __init__(self, paramses, result):
+    def __init__(self, paramses, result, const=False):
         self.paramses = paramses
+        if type(self.paramses) is str:
+            self.paramses = [self.paramses]
         self.result = result
+        self.const = const
 
     def render(self, name):
-        ret = [f'{self.result} {name}({params});' for params in self.paramses]
+        extra = ''
+        if self.const:
+            extra += ' const'
+        ret = [f'{self.result} {name}({params}){extra};' for params in self.paramses]
         return join_nested_lines(ret)
 
 class Expression:
@@ -226,26 +232,19 @@ class CallIndirect(Expression):
 
     finalize = Method('', 'void')
 
-'''
-
 class LocalGet(Expression):
-  LocalGet() = default;
-  LocalGet(MixedArena& allocator) {}
-
     index = Index()
 
 class LocalSet(Expression):
-  LocalSet() = default;
-  LocalSet(MixedArena& allocator) {}
-
-    finalize = Method('', 'void')
-
     index = Index()
     value = Child()
 
-  bool isTee() const;
-  void makeTee(Type type);
-  void makeSet();
+    finalize = Method('', 'void')
+    isTee = Method('', 'bool', const=True)
+    makeTee = Method('Type type', 'void');
+    makeSet = Method('', 'void');
+
+'''
 
 class GlobalGet(Expression):
   GlobalGet() = default;
@@ -316,7 +315,6 @@ class AtomicCmpxchg(Expression):
     finalize = Method('', 'void')
 
 class AtomicWait(Expression):
-<Expression::AtomicWaitId> {
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
@@ -329,7 +327,6 @@ class AtomicWait(Expression):
     finalize = Method('', 'void')
 
 class AtomicNotify(Expression):
-<Expression::AtomicNotifyId> {
   AtomicNotify() = default;
   AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
@@ -340,7 +337,6 @@ class AtomicNotify(Expression):
     finalize = Method('', 'void')
 
 class AtomicFence(Expression):
-<Expression::AtomicFenceId> {
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
@@ -352,7 +348,6 @@ class AtomicFence(Expression):
     finalize = Method('', 'void')
 
 class SIMDExtract(Expression):
-<Expression::SIMDExtractId> {
   SIMDExtract() = default;
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
 
@@ -363,7 +358,6 @@ class SIMDExtract(Expression):
     finalize = Method('', 'void')
 
 class SIMDReplace(Expression):
-<Expression::SIMDReplaceId> {
   SIMDReplace() = default;
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
 
@@ -375,7 +369,6 @@ class SIMDReplace(Expression):
     finalize = Method('', 'void')
 
 class SIMDShuffle(Expression):
-<Expression::SIMDShuffleId> {
   SIMDShuffle() = default;
   SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
 
@@ -386,7 +379,6 @@ class SIMDShuffle(Expression):
     finalize = Method('', 'void')
 
 class SIMDTernary(Expression):
-<Expression::SIMDTernaryId> {
   SIMDTernary() = default;
   SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
 
@@ -398,7 +390,6 @@ class SIMDTernary(Expression):
     finalize = Method('', 'void')
 
 class SIMDShift(Expression):
-<Expression::SIMDShiftId> {
   SIMDShift() = default;
   SIMDShift(MixedArena& allocator) : SIMDShift() {}
 
@@ -409,7 +400,6 @@ class SIMDShift(Expression):
     finalize = Method('', 'void')
 
 class SIMDLoad(Expression):
-<Expression::SIMDLoadId> {
   SIMDLoad() = default;
   SIMDLoad(MixedArena& allocator) {}
 
@@ -422,7 +412,6 @@ class SIMDLoad(Expression):
     finalize = Method('', 'void')
 
 class MemoryInit(Expression):
-<Expression::MemoryInitId> {
   MemoryInit() = default;
   MemoryInit(MixedArena& allocator) : MemoryInit() {}
 
@@ -434,7 +423,6 @@ class MemoryInit(Expression):
     finalize = Method('', 'void')
 
 class DataDrop(Expression):
-<Expression::DataDropId> {
   DataDrop() = default;
   DataDrop(MixedArena& allocator) : DataDrop() {}
 
@@ -443,7 +431,6 @@ class DataDrop(Expression):
     finalize = Method('', 'void')
 
 class MemoryCopy(Expression):
-<Expression::MemoryCopyId> {
   MemoryCopy() = default;
   MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
 
@@ -454,7 +441,6 @@ class MemoryCopy(Expression):
     finalize = Method('', 'void')
 
 class MemoryFill(Expression):
-<Expression::MemoryFillId> {
   MemoryFill() = default;
   MemoryFill(MixedArena& allocator) : MemoryFill() {}
 
@@ -465,7 +451,6 @@ class MemoryFill(Expression):
     finalize = Method('', 'void')
 
 class Const(Expression):
-<Expression::ConstId> {
   Const() = default;
   Const(MixedArena& allocator) {}
 
@@ -476,7 +461,6 @@ class Const(Expression):
     finalize = Method('', 'void')
 
 class Unary(Expression):
-<Expression::UnaryId> {
   Unary() = default;
   Unary(MixedArena& allocator) {}
 
@@ -488,7 +472,6 @@ class Unary(Expression):
     finalize = Method('', 'void')
 
 class Binary(Expression):
-<Expression::BinaryId> {
   Binary() = default;
   Binary(MixedArena& allocator) {}
 
@@ -504,7 +487,6 @@ class Binary(Expression):
     finalize = Method('', 'void')
 
 class Select(Expression):
-<Expression::SelectId> {
   Select() = default;
   Select(MixedArena& allocator) {}
 
@@ -516,7 +498,6 @@ class Select(Expression):
   void finalize(Type type_);
 
 class Drop(Expression):
-<Expression::DropId> {
   Drop() = default;
   Drop(MixedArena& allocator) {}
 
@@ -525,14 +506,12 @@ class Drop(Expression):
     finalize = Method('', 'void')
 
 class Return(Expression):
-<Expression::ReturnId> {
   Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
 
 class MemorySize(Expression):
-<Expression::MemorySizeId> {
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
@@ -542,7 +521,6 @@ class MemorySize(Expression):
     finalize = Method('', 'void')
 
 class MemoryGrow(Expression):
-<Expression::MemoryGrowId> {
   MemoryGrow() { type = Type::i32; }
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
@@ -553,19 +531,16 @@ class MemoryGrow(Expression):
     finalize = Method('', 'void')
 
 class Unreachable(Expression):
-<Expression::UnreachableId> {
   Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 
 Represents a pop of a value that arrives as an implicit argument to the
 current block. Currently used in exception handling.
 class Pop(Expression):
-<Expression::PopId> {
   Pop() = default;
   Pop(MixedArena& allocator) {}
 
 class RefNull(Expression):
-<Expression::RefNullId> {
   RefNull() = default;
   RefNull(MixedArena& allocator) {}
 
@@ -574,7 +549,6 @@ class RefNull(Expression):
   void finalize(Type type);
 
 class RefIsNull(Expression):
-<Expression::RefIsNullId> {
   RefIsNull(MixedArena& allocator) {}
 
     value = Child()
@@ -582,7 +556,6 @@ class RefIsNull(Expression):
     finalize = Method('', 'void')
 
 class RefFunc(Expression):
-<Expression::RefFuncId> {
   RefFunc(MixedArena& allocator) {}
 
   Name func;
@@ -590,7 +563,6 @@ class RefFunc(Expression):
     finalize = Method('', 'void')
 
 class RefEq(Expression):
-<Expression::RefEqId> {
   RefEq(MixedArena& allocator) {}
 
   Expression* left;
@@ -599,7 +571,6 @@ class RefEq(Expression):
     finalize = Method('', 'void')
 
 class Try(Expression):
-<Expression::TryId> {
   Try(MixedArena& allocator) {}
 
   Expression* body;
@@ -609,7 +580,6 @@ class Try(Expression):
   void finalize(Type type_);
 
 class Throw(Expression):
-<Expression::ThrowId> {
   Throw(MixedArena& allocator) : operands(allocator) {}
 
   Name event;
@@ -618,7 +588,6 @@ class Throw(Expression):
     finalize = Method('', 'void')
 
 class Rethrow(Expression):
-<Expression::RethrowId> {
   Rethrow(MixedArena& allocator) {}
 
   Expression* exnref;
@@ -626,7 +595,6 @@ class Rethrow(Expression):
     finalize = Method('', 'void')
 
 class BrOnExn(Expression):
-<Expression::BrOnExnId> {
   BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
@@ -640,7 +608,6 @@ class BrOnExn(Expression):
     finalize = Method('', 'void')
 
 class TupleMake(Expression):
-<Expression::TupleMakeId> {
   TupleMake(MixedArena& allocator) : operands(allocator) {}
 
     operands = ExpressionList()
@@ -648,7 +615,6 @@ class TupleMake(Expression):
     finalize = Method('', 'void')
 
 class TupleExtract(Expression):
-<Expression::TupleExtractId> {
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;
@@ -657,7 +623,6 @@ class TupleExtract(Expression):
     finalize = Method('', 'void')
 
 class I31New(Expression):
-<Expression::I31NewId> {
   I31New(MixedArena& allocator) {}
 
     value = Child()
@@ -665,7 +630,6 @@ class I31New(Expression):
     finalize = Method('', 'void')
 
 class I31Get(Expression):
-<Expression::I31GetId> {
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
@@ -674,73 +638,61 @@ class I31Get(Expression):
     finalize = Method('', 'void')
 
 class RefTest(Expression):
-<Expression::RefTestId> {
   RefTest(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
 
 class RefCast(Expression):
-<Expression::RefCastId> {
   RefCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
 
 class BrOnCast(Expression):
-<Expression::BrOnCastId> {
   BrOnCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
 
 class RttCanon(Expression):
-<Expression::RttCanonId> {
   RttCanon(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
 
 class RttSub(Expression):
-<Expression::RttSubId> {
   RttSub(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
 
 class StructNew(Expression):
-<Expression::StructNewId> {
   StructNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
 
 class StructGet(Expression):
-<Expression::StructGetId> {
   StructGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
 
 class StructSet(Expression):
-<Expression::StructSetId> {
   StructSet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
 
 class ArrayNew(Expression):
-<Expression::ArrayNewId> {
   ArrayNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
 
 class ArrayGet(Expression):
-<Expression::ArrayGetId> {
   ArrayGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
 
 class ArraySet(Expression):
-<Expression::ArraySetId> {
   ArraySet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
 
 class ArrayLen(Expression):
-<Expression::ArrayLenId> {
   ArrayLen(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
