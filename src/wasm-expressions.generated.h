@@ -70,7 +70,7 @@ class Call : public SpecificExpression<Expression::CallId> {
   Call(MixedArena& allocator) : operands(allocator) {}
   ExpressionList operands;
   Name target;
-  Bool isReturn = false;
+  bool isReturn;
   void finalize();
 };
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
@@ -78,7 +78,7 @@ class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
   Signature sig;
   ExpressionList operands;
   Expression* target;
-  Bool isReturn = false;
+  bool isReturn;
   void finalize();
 };
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
@@ -114,10 +114,10 @@ class Load : public SpecificExpression<Expression::LoadId> {
   Load() {}
   Load(MixedArena& allocator) : Load() {}
   uint8_t bytes;
-  Bool signed_;
+  bool signed_;
   Address offset;
   Address align;
-  Bool isAtomic;
+  bool isAtomic;
   Expression* ptr;
   void finalize();
 };
@@ -127,7 +127,7 @@ class Store : public SpecificExpression<Expression::StoreId> {
   uint8_t bytes;
   Address offset;
   Address align;
-  Bool isAtomic;
+  bool isAtomic;
   Expression* ptr;
   Expression* value;
   Type valueType;
@@ -398,7 +398,7 @@ class I31Get : public SpecificExpression<Expression::I31GetId> {
   I31Get() {}
   I31Get(MixedArena& allocator) : I31Get() {}
   Expression* i31;
-  Bool signed_;
+  bool signed_;
   void finalize();
 };
 class RefTest : public SpecificExpression<Expression::RefTestId> {

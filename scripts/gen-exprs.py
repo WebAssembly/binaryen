@@ -40,7 +40,8 @@ class Name(Field):
     pass
 
 class Bool(Field):
-    pass
+    def render(self, name):
+        return f'bool {name};'
 
 class Signature(Field):
     pass
