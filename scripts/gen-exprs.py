@@ -121,7 +121,7 @@ class Method:
 class Expression:
     __constructor_body__ = ''
 
-    finalize = Method('', 'void')
+    default_finalize = Method('', 'void')
 
     @classmethod
     def get_fields(self):
@@ -145,6 +145,9 @@ class Expression:
         rendered_fields = [field.render(key) for key, field in fields.items()]
         fields_text = join_nested_lines(rendered_fields)
         methods = self.get_methods()
+        # render a default finalize if none has been specified
+        if 'finalize' not in methods:
+            methods['finalize'] = self.default_finalize
         rendered_methods = [method.render(key) for key, method in methods.items()]
         methods_text = join_nested_lines(rendered_methods)
         constructor_body = self.__constructor_body__
@@ -601,15 +604,14 @@ def compact_text(text):
 
 
 def generate_defs():
-    #target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
-    #with open(target, 'w') as out:
-    #    out.write(COPYRIGHT + '\n' + NOTICE)
+    target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
 
-    exprs = get_expressions()
-    for expr in exprs:
-        text = expr.render()
-        print(text)
-    1/0
+    with open(target, 'w') as out:
+        out.write(COPYRIGHT + '\n' + NOTICE)
+
+        exprs = get_expressions()
+        for expr in exprs:
+            out.write(expr.render())
 
 
 def main():
