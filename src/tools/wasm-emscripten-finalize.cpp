@@ -269,13 +269,6 @@ int main(int argc, const char* argv[]) {
 
   std::vector<Name> initializerFunctions;
 
-  // The wasm backend emits "__indirect_function_table" as the import name for
-  // the table, while older emscripten expects "table"
-  if (wasm.table.imported() && !minimizeWasmChanges) {
-    wasm.table.base = Name("table");
-  }
-  wasm.updateMaps();
-
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
     // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
