@@ -29,6 +29,10 @@
         (i32.const -5)
       )
     )
+
+    ;; partial evaluation for
+    ;; multiplications
+
     (drop
       (i32.mul
         (i32.mul
@@ -91,6 +95,7 @@
     )
 
     ;; signed division
+
     ;; -> x / -2300
     (drop
       (i32.div_s
@@ -211,6 +216,9 @@
         (i32.const 0x8000)
       )
     )
+
+    ;; rotated shifts
+
     (drop
       (i32.rotl
         (i32.rotl
