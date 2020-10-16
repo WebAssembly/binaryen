@@ -48,8 +48,17 @@ class Signature(Field):
 class Index(Field):
     pass
 
+class Address(Field):
+    pass
+
+class Type(Field):
+    pass
+
 class ExpressionList(Field):
     allocator = True
+
+class uint8_t(Field):
+    pass
 
 class ArenaVector(Field):
     allocator = True
@@ -244,60 +253,46 @@ class LocalSet(Expression):
     makeTee = Method('Type type', 'void');
     makeSet = Method('', 'void');
 
-'''
-
 class GlobalGet(Expression):
-  GlobalGet() = default;
-  GlobalGet(MixedArena& allocator) {}
-
-  Name name;
+    name = Name()
 
 class GlobalSet(Expression):
-  GlobalSet() = default;
-  GlobalSet(MixedArena& allocator) {}
-
-  Name name;
+    name = Name()
     value = Child()
 
     finalize = Method('', 'void')
 
 class Load(Expression):
-  Load() = default;
-  Load(MixedArena& allocator) {}
+    bytes = uint8_t()
+    signed_ = Bool()
+    offset = Address()
+    align = Address()
+    isAtomic = Bool()
+    ptr = Child();
 
-  uint8_t bytes;
-  bool signed_;
-  Address offset;
-  Address align;
-  bool isAtomic;
-  Expression* ptr;
-
-  type must be set during creation, cannot be inferred
-
+    # type must be set during creation, cannot be inferred
     finalize = Method('', 'void')
 
 class Store(Expression):
-  Store() = default;
-  Store(MixedArena& allocator) : Store() {}
-
-  uint8_t bytes;
-  Address offset;
-  Address align;
-  bool isAtomic;
-  Expression* ptr;
+    bytes = uint8_t()
+    offset = Address()
+    align = Address()
+    isAtomic = Bool()
+    ptr = Child();
     value = Child()
-  Type valueType;
+    valueType = Type()
 
     finalize = Method('', 'void')
 
+'''
 class AtomicRMW(Expression):
   AtomicRMW() = default;
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
   AtomicRMWOp op;
-  uint8_t bytes;
-  Address offset;
-  Expression* ptr;
+    bytes = uint8_t()
+    offset = Address()
+    ptr = Child();
     value = Child()
 
     finalize = Method('', 'void')
@@ -306,9 +301,9 @@ class AtomicCmpxchg(Expression):
   AtomicCmpxchg() = default;
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
-  uint8_t bytes;
-  Address offset;
-  Expression* ptr;
+    bytes = uint8_t()
+    offset = Address()
+    ptr = Child();
   Expression* expected;
   Expression* replacement;
 
@@ -318,8 +313,8 @@ class AtomicWait(Expression):
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
-  Address offset;
-  Expression* ptr;
+    offset = Address()
+    ptr = Child();
   Expression* expected;
   Expression* timeout;
   Type expectedType;
@@ -330,8 +325,8 @@ class AtomicNotify(Expression):
   AtomicNotify() = default;
   AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
-  Address offset;
-  Expression* ptr;
+    offset = Address()
+    ptr = Child();
   Expression* notifyCount;
 
     finalize = Method('', 'void')
@@ -404,9 +399,9 @@ class SIMDLoad(Expression):
   SIMDLoad(MixedArena& allocator) {}
 
   SIMDLoadOp op;
-  Address offset;
-  Address align;
-  Expression* ptr;
+    offset = Address()
+    align = Address()
+    ptr = Child();
 
   Index getMemBytes();
     finalize = Method('', 'void')
@@ -598,7 +593,7 @@ class BrOnExn(Expression):
   BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
-  Name name;
+    name = Name()
   Name event;
   Expression* exnref;
   This is duplicate info of param types stored in Event, but this is required
@@ -633,7 +628,7 @@ class I31Get(Expression):
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
-  bool signed_;
+    signed_ = Bool()
 
     finalize = Method('', 'void')
 
