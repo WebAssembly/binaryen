@@ -113,7 +113,7 @@ int main(int argc, const char* argv[]) {
          })
     .add("--mutable-sp",
          "",
-         "Import SP as a mutable global",
+         "Allow the import of __stack_pointer as a mutable global",
          Options::Arguments::Zero,
          [&mutableSP](Options* o, const std::string& argument) {
            mutableSP = true;
