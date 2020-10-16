@@ -52,6 +52,7 @@ int main(int argc, const char* argv[]) {
   bool DWARF = false;
   bool sideModule = false;
   bool legacyPIC = true;
+  bool mutableSP = false;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -109,6 +110,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
+         })
+    .add("--mutable-sp",
+         "",
+         "Import SP as a mutable global",
+         Options::Arguments::Zero,
+         [&mutableSP](Options* o, const std::string& argument) {
+           mutableSP = true;
          })
     .add("--new-pic-abi",
          "",
@@ -278,7 +286,7 @@ int main(int argc, const char* argv[]) {
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
 
-  if (checkStackOverflow && !sideModule) {
+  if (checkStackOverflow) {
     if (!standaloneWasm) {
       // In standalone mode we don't set a handler at all.. which means
       // just trap on overflow.
@@ -288,7 +296,7 @@ int main(int argc, const char* argv[]) {
     passRunner.add("stack-check");
   }
 
-  if (sideModule) {
+  if (sideModule && !mutableSP) {
     passRunner.add("replace-stack-pointer");
   }
 
@@ -333,7 +341,9 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("finalizing as regular module\n");
     if (legacyPIC) {
-      generator.internalizeStackPointerGlobal();
+      if (!mutableSP) {
+        generator.internalizeStackPointerGlobal();
+      }
       // For side modules these gets called via __post_instantiate
       if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
         auto* ex = new Export();
