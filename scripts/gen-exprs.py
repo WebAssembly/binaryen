@@ -36,6 +36,15 @@ class Field(ExpressionChild):
 
 class Name(Field): pass
 class ExpressionList(Field): pass
+class ArenaVector(Field):
+    def __init__(self, of):
+        self.of = of
+
+    def render(self, name):
+        return f'ArenaVector<{self.of}> {name};'
+
+#    TODO also add constructor on class!
+###  Switch(MixedArena& allocator) : targets(allocator) {
 
 class Child(Field):
     typename = 'Expression*'
@@ -80,7 +89,9 @@ public:
         return text
 
 
+###################################
 # Specific expression definitions
+###################################
 
 class Nop(Expression):
     pass
@@ -126,7 +137,7 @@ class If(Expression):
         work this does is to set the type to unreachable in the cases that is
         needed.
 
-        void finalize();
+          finalize = Method('', 'void')
 
         set the type purely based on its contents.
     '''
@@ -157,20 +168,17 @@ class Break(Expression):
 
     finalize = Method('', 'void')
 
+class Switch(Expression):
+    __constructor_body__ = 'type = Type::unreachable;'
+
+    targets = ArenaVector('Name')
+    default_ = Name()
+    condition = Child()
+    value = Child(init='nullptr')
+
+    finalize = Method('', 'void')
+
 '''
-
-class Switch : public SpecificExpression<Expression::SwitchId> {
-public:
-  Switch(MixedArena& allocator) : targets(allocator) {
-    type = Type::unreachable;
-  }
-
-  ArenaVector<Name> targets;
-  Name default_;
-  Expression* condition = nullptr;
-  Expression* value = nullptr;
-
-  void finalize();
 
 class Call : public SpecificExpression<Expression::CallId> {
 public:
@@ -180,7 +188,7 @@ public:
   Name target;
   bool isReturn = false;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
@@ -190,7 +198,7 @@ public:
   Expression* target;
   bool isReturn = false;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
 public:
@@ -204,7 +212,7 @@ public:
   LocalSet() = default;
   LocalSet(MixedArena& allocator) {}
 
-  void finalize();
+    finalize = Method('', 'void')
 
   Index index;
   Expression* value;
@@ -228,7 +236,7 @@ public:
   Name name;
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
@@ -244,7 +252,7 @@ public:
 
   type must be set during creation, cannot be inferred
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
@@ -259,7 +267,7 @@ public:
   Expression* value;
   Type valueType;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
 public:
@@ -272,7 +280,7 @@ public:
   Expression* ptr;
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
 public:
@@ -285,7 +293,7 @@ public:
   Expression* expected;
   Expression* replacement;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
 public:
@@ -298,7 +306,7 @@ public:
   Expression* timeout;
   Type expectedType;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
 public:
@@ -309,7 +317,7 @@ public:
   Expression* ptr;
   Expression* notifyCount;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
 public:
@@ -321,7 +329,7 @@ public:
   that, and currently set to 0.
   uint8_t order = 0;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 public:
@@ -332,7 +340,7 @@ public:
   Expression* vec;
   uint8_t index;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
 public:
@@ -344,7 +352,7 @@ public:
   uint8_t index;
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
 public:
@@ -355,7 +363,7 @@ public:
   Expression* right;
   std::array<uint8_t, 16> mask;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
 public:
@@ -367,7 +375,7 @@ public:
   Expression* b;
   Expression* c;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
 public:
@@ -378,7 +386,7 @@ public:
   Expression* vec;
   Expression* shift;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
 public:
@@ -391,7 +399,7 @@ public:
   Expression* ptr;
 
   Index getMemBytes();
-  void finalize();
+    finalize = Method('', 'void')
 
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
@@ -403,7 +411,7 @@ public:
   Expression* offset;
   Expression* size;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class DataDrop : public SpecificExpression<Expression::DataDropId> {
 public:
@@ -412,7 +420,7 @@ public:
 
   Index segment;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
 public:
@@ -423,7 +431,7 @@ public:
   Expression* source;
   Expression* size;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
 public:
@@ -434,7 +442,7 @@ public:
   Expression* value;
   Expression* size;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
@@ -445,7 +453,7 @@ public:
 
   Const* set(Literal value_);
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
@@ -457,7 +465,7 @@ public:
 
   bool isRelational();
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
@@ -473,7 +481,7 @@ public:
 
   bool isRelational();
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
@@ -484,7 +492,7 @@ public:
   Expression* ifFalse;
   Expression* condition;
 
-  void finalize();
+    finalize = Method('', 'void')
   void finalize(Type type_);
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -494,7 +502,7 @@ public:
 
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
@@ -511,7 +519,7 @@ public:
   Type ptrType = Type::i32;
 
   void make64();
-  void finalize();
+    finalize = Method('', 'void')
 
 class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
 public:
@@ -522,7 +530,7 @@ public:
   Type ptrType = Type::i32;
 
   void make64();
-  void finalize();
+    finalize = Method('', 'void')
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
@@ -541,7 +549,7 @@ public:
   RefNull() = default;
   RefNull(MixedArena& allocator) {}
 
-  void finalize();
+    finalize = Method('', 'void')
   void finalize(HeapType heapType);
   void finalize(Type type);
 
@@ -551,7 +559,7 @@ public:
 
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class RefFunc : public SpecificExpression<Expression::RefFuncId> {
 public:
@@ -559,7 +567,7 @@ public:
 
   Name func;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
 public:
@@ -568,7 +576,7 @@ public:
   Expression* left;
   Expression* right;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
@@ -577,7 +585,7 @@ public:
   Expression* body;
   Expression* catchBody;
 
-  void finalize();
+    finalize = Method('', 'void')
   void finalize(Type type_);
 
 class Throw : public SpecificExpression<Expression::ThrowId> {
@@ -587,7 +595,7 @@ public:
   Name event;
   ExpressionList operands;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
@@ -595,7 +603,7 @@ public:
 
   Expression* exnref;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
@@ -609,7 +617,7 @@ public:
   for us to know the type of the value sent to the target block.
   Type sent;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
 public:
@@ -617,7 +625,7 @@ public:
 
   ExpressionList operands;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
 public:
@@ -626,7 +634,7 @@ public:
   Expression* tuple;
   Index index;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class I31New : public SpecificExpression<Expression::I31NewId> {
 public:
@@ -634,7 +642,7 @@ public:
 
   Expression* value;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class I31Get : public SpecificExpression<Expression::I31GetId> {
 public:
@@ -643,7 +651,7 @@ public:
   Expression* i31;
   bool signed_;
 
-  void finalize();
+    finalize = Method('', 'void')
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
