@@ -63,6 +63,34 @@ class uint8_t(Field):
 class AtomicRMWOp(Field):
     pass
 
+class SIMDExtractOp:
+    pass
+
+class SIMDReplaceOp:
+    pass
+
+class SIMDShuffleMask:
+    def render(self, name):
+        return f'std::array<uint8_t, 16> {name};'
+
+class SIMDTernaryOp:
+    pass
+
+class SIMDShiftOp:
+    pass
+
+class SIMDLoadOp:
+    pass
+
+class Literal:
+    pass
+
+class UnaryOp:
+    pass
+
+class BinaryOp:
+    pass
+
 class ArenaVector(Field):
     allocator = True
 
@@ -331,200 +359,148 @@ class AtomicFence(Expression):
 
     finalize = Method('', 'void')
 
-'''
 class SIMDExtract(Expression):
-  SIMDExtract() = default;
-  SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
-
-  SIMDExtractOp op;
-  Expression* vec;
-  uint8_t index;
+    op = SIMDExtractOp()
+    vec = Child()
+    index = uint8_t()
 
     finalize = Method('', 'void')
 
 class SIMDReplace(Expression):
-  SIMDReplace() = default;
-  SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
-
-  SIMDReplaceOp op;
-  Expression* vec;
-  uint8_t index;
+    op = SIMDReplaceOp()
+    vec = Child()
+    index = uint8_t()
     value = Child()
 
     finalize = Method('', 'void')
 
 class SIMDShuffle(Expression):
-  SIMDShuffle() = default;
-  SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
-
-  Expression* left;
-  Expression* right;
-  std::array<uint8_t, 16> mask;
-
+    left = Child()
+    right = Child()
+    mask = SIMDShuffleMask()
+ 
     finalize = Method('', 'void')
 
 class SIMDTernary(Expression):
-  SIMDTernary() = default;
-  SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
-
-  SIMDTernaryOp op;
-  Expression* a;
-  Expression* b;
-  Expression* c;
+    op = SIMDTernaryOp()
+    a = Child()
+    b = Child()
+    c = Child()
 
     finalize = Method('', 'void')
 
 class SIMDShift(Expression):
-  SIMDShift() = default;
-  SIMDShift(MixedArena& allocator) : SIMDShift() {}
-
-  SIMDShiftOp op;
-  Expression* vec;
-  Expression* shift;
+    op = SIMDShiftOp()
+    vec = Child()
+    shift = Child()
 
     finalize = Method('', 'void')
 
 class SIMDLoad(Expression):
-  SIMDLoad() = default;
-  SIMDLoad(MixedArena& allocator) {}
-
-  SIMDLoadOp op;
+    op = SIMDLoadOp()
     offset = Address()
     align = Address()
     ptr = Child()
 
-  Index getMemBytes();
+    getMemBytes = Method('', 'Index');
     finalize = Method('', 'void')
 
 class MemoryInit(Expression):
-  MemoryInit() = default;
-  MemoryInit(MixedArena& allocator) : MemoryInit() {}
-
-  Index segment;
-  Expression* dest;
-  Expression* offset;
-  Expression* size;
+    segment = Index()
+    dest = Child()
+    offset = Child()
+    size = Child()
 
     finalize = Method('', 'void')
 
 class DataDrop(Expression):
-  DataDrop() = default;
-  DataDrop(MixedArena& allocator) : DataDrop() {}
-
-  Index segment;
+    segment = Index()
 
     finalize = Method('', 'void')
 
 class MemoryCopy(Expression):
-  MemoryCopy() = default;
-  MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
-
-  Expression* dest;
-  Expression* source;
-  Expression* size;
+    dest = Child()
+    source = Child()
+    size = Child()
 
     finalize = Method('', 'void')
 
 class MemoryFill(Expression):
-  MemoryFill() = default;
-  MemoryFill(MixedArena& allocator) : MemoryFill() {}
-
-  Expression* dest;
+    dest = Child()
     value = Child()
-  Expression* size;
+    size = Child()
 
     finalize = Method('', 'void')
 
 class Const(Expression):
-  Const() = default;
-  Const(MixedArena& allocator) {}
+    value = Literal()
 
-  Literal value;
-
-  Const* set(Literal value_);
+    set = Method('Literal value_', 'Const*');
 
     finalize = Method('', 'void')
 
 class Unary(Expression):
-  Unary() = default;
-  Unary(MixedArena& allocator) {}
-
-  UnaryOp op;
+    op = UnaryOp()
     value = Child()
 
-  bool isRelational();
+    isRelational = Method('', 'bool')
 
     finalize = Method('', 'void')
 
 class Binary(Expression):
-  Binary() = default;
-  Binary(MixedArena& allocator) {}
+    op = BinaryOp()
+    left = Child()
+    right = Child()
 
-  BinaryOp op;
-  Expression* left;
-  Expression* right;
-
-  the type is always the type of the operands,
-  except for relationals
-
-  bool isRelational();
+    '''
+    the type is always the type of the operands,
+    except for relationals
+    '''
+    isRelational = Method('', 'bool')
 
     finalize = Method('', 'void')
 
 class Select(Expression):
-  Select() = default;
-  Select(MixedArena& allocator) {}
+    ifTrue = Child()
+    ifFalse = Child()
+    condition = Child()
 
-  Expression* ifTrue;
-  Expression* ifFalse;
-  Expression* condition;
-
-    finalize = Method('', 'void')
-  void finalize(Type type_);
+    finalize = Method(('', 'Type type_'), 'void')
 
 class Drop(Expression):
-  Drop() = default;
-  Drop(MixedArena& allocator) {}
-
     value = Child()
 
     finalize = Method('', 'void')
 
 class Return(Expression):
-  Return() { type = Type::unreachable; }
-  Return(MixedArena& allocator) : Return() {}
-
-  Expression* value = nullptr;
+    value = Child(init='nullptr')
 
 class MemorySize(Expression):
-  MemorySize() { type = Type::i32; }
-  MemorySize(MixedArena& allocator) : MemorySize() {}
+    __constructor_body__ = 'type = Type::i32;'
 
-  Type ptrType = Type::i32;
+    ptrType = Type(init='Type::i32')
 
-  void make64();
+    make64 = Method('', 'void');
     finalize = Method('', 'void')
 
 class MemoryGrow(Expression):
-  MemoryGrow() { type = Type::i32; }
-  MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
+    delta = Child(init='nullptr')
+    ptrType = Type(init='Type::i32')
 
-  Expression* delta = nullptr;
-  Type ptrType = Type::i32;
-
-  void make64();
+    make64 = Method('', 'void');
     finalize = Method('', 'void')
 
 class Unreachable(Expression):
-  Unreachable() { type = Type::unreachable; }
-  Unreachable(MixedArena& allocator) : Unreachable() {}
+    __constructor_body__ = 'type = Type::unreachable'
 
+'''
 Represents a pop of a value that arrives as an implicit argument to the
 current block. Currently used in exception handling.
+'''
 class Pop(Expression):
-  Pop() = default;
-  Pop(MixedArena& allocator) {}
+    pass
 
+'''
 class RefNull(Expression):
   RefNull() = default;
   RefNull(MixedArena& allocator) {}
@@ -550,16 +526,16 @@ class RefFunc(Expression):
 class RefEq(Expression):
   RefEq(MixedArena& allocator) {}
 
-  Expression* left;
-  Expression* right;
+    left = Child()
+    right = Child()
 
     finalize = Method('', 'void')
 
 class Try(Expression):
   Try(MixedArena& allocator) {}
 
-  Expression* body;
-  Expression* catchBody;
+    Child()body;
+    Child()catchBody;
 
     finalize = Method('', 'void')
   void finalize(Type type_);
@@ -575,7 +551,7 @@ class Throw(Expression):
 class Rethrow(Expression):
   Rethrow(MixedArena& allocator) {}
 
-  Expression* exnref;
+    Child()exnref;
 
     finalize = Method('', 'void')
 
@@ -585,7 +561,7 @@ class BrOnExn(Expression):
 
     name = Name()
   Name event;
-  Expression* exnref;
+    Child()exnref;
   This is duplicate info of param types stored in Event, but this is required
   for us to know the type of the value sent to the target block.
   Type sent;
@@ -602,7 +578,7 @@ class TupleMake(Expression):
 class TupleExtract(Expression):
   TupleExtract(MixedArena& allocator) {}
 
-  Expression* tuple;
+    Child()tuple;
     index = Index()
 
     finalize = Method('', 'void')
@@ -617,7 +593,7 @@ class I31New(Expression):
 class I31Get(Expression):
   I31Get(MixedArena& allocator) {}
 
-  Expression* i31;
+    Child()i31;
     signed_ = Bool()
 
     finalize = Method('', 'void')
