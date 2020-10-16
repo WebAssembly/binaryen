@@ -1009,18 +1009,77 @@ void I31Get::finalize() {
   }
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+void Pop::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void StructGet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void BrOnCast::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void Nop::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void ArrayGet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void LocalGet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void GlobalGet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void StructNew::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void Unreachable::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void RttSub::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void RefTest::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void ArrayNew::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void RefCast::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void StructSet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void ArraySet::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void ArrayLen::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void Return::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
+
+void RttCanon::finalize() {
+  WASM_UNREACHABLE("TODO GC finalize() methods");
+}
 
 size_t Function::getNumParams() { return sig.params.size(); }
 
