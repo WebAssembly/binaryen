@@ -60,6 +60,9 @@ class ExpressionList(Field):
 class uint8_t(Field):
     pass
 
+class AtomicRMWOp(Field):
+    pass
+
 class ArenaVector(Field):
     allocator = True
 
@@ -268,7 +271,7 @@ class Load(Expression):
     offset = Address()
     align = Address()
     isAtomic = Bool()
-    ptr = Child();
+    ptr = Child()
 
     # type must be set during creation, cannot be inferred
     finalize = Method('', 'void')
@@ -278,70 +281,57 @@ class Store(Expression):
     offset = Address()
     align = Address()
     isAtomic = Bool()
-    ptr = Child();
+    ptr = Child()
     value = Child()
     valueType = Type()
 
     finalize = Method('', 'void')
 
-'''
 class AtomicRMW(Expression):
-  AtomicRMW() = default;
-  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
-
-  AtomicRMWOp op;
+    op = AtomicRMWOp()
     bytes = uint8_t()
     offset = Address()
-    ptr = Child();
+    ptr = Child()
     value = Child()
 
     finalize = Method('', 'void')
 
 class AtomicCmpxchg(Expression):
-  AtomicCmpxchg() = default;
-  AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
-
     bytes = uint8_t()
     offset = Address()
-    ptr = Child();
-  Expression* expected;
-  Expression* replacement;
+    ptr = Child()
+    expected = Child()
+    replacement = Child()
 
     finalize = Method('', 'void')
 
 class AtomicWait(Expression):
-  AtomicWait() = default;
-  AtomicWait(MixedArena& allocator) : AtomicWait() {}
-
     offset = Address()
-    ptr = Child();
-  Expression* expected;
-  Expression* timeout;
-  Type expectedType;
+    ptr = Child()
+    expected = Child()
+    wait = Child()
+    expectedType = Type()
 
     finalize = Method('', 'void')
 
 class AtomicNotify(Expression):
-  AtomicNotify() = default;
-  AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
-
     offset = Address()
-    ptr = Child();
-  Expression* notifyCount;
+    ptr = Child()
+    notifyCount = Child()
 
     finalize = Method('', 'void')
 
 class AtomicFence(Expression):
-  AtomicFence() = default;
-  AtomicFence(MixedArena& allocator) : AtomicFence() {}
-
-  Current wasm threads only supports sequentialy consistent atomics, but
-  other orderings may be added in the future. This field is reserved for
-  that, and currently set to 0.
-  uint8_t order = 0;
+    '''
+    Current wasm threads only supports sequentialy consistent atomics, but
+    other orderings may be added in the future. This field is reserved for
+    that, and currently set to 0.
+    '''
+    order = uint8_t()
 
     finalize = Method('', 'void')
 
+'''
 class SIMDExtract(Expression):
   SIMDExtract() = default;
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
@@ -401,7 +391,7 @@ class SIMDLoad(Expression):
   SIMDLoadOp op;
     offset = Address()
     align = Address()
-    ptr = Child();
+    ptr = Child()
 
   Index getMemBytes();
     finalize = Method('', 'void')
