@@ -24,6 +24,8 @@ import test.shared as shared
 class ExpressionChild: pass
 
 class Field(ExpressionChild):
+    allocator = False
+
     def __init__(self, init=None):
         self.init = init
 
@@ -34,17 +36,20 @@ class Field(ExpressionChild):
         value = f' = {self.init}' if self.init else ''
         return f'{typename} {name}{value};'
 
-class Name(Field): pass
-class ExpressionList(Field): pass
+class Name(Field):
+    pass
+
+class ExpressionList(Field):
+    pass
+
 class ArenaVector(Field):
+    allocator = True
+
     def __init__(self, of):
         self.of = of
 
     def render(self, name):
         return f'ArenaVector<{self.of}> {name};'
-
-#    TODO also add constructor on class!
-###  Switch(MixedArena& allocator) : targets(allocator) {
 
 class Child(Field):
     typename = 'Expression*'
@@ -62,25 +67,45 @@ class Expression:
     __constructor_body__ = ''
 
     @classmethod
-    def render(self):
-        name = self.__name__
-        fields = []
-        methods = []
+    def get_fields(self):
+        fields = {}
         for key, value in self.__dict__.items():
             if is_subclass_of(value.__class__, Field):
-                fields.append(value.render(key))
-            elif value.__class__ == Method:
-                methods.append(value.render(key))
-        fields_text = join_nested_lines(fields)
-        methods_text = join_nested_lines(methods)
+                fields[key] = value
+        return fields
+
+    @classmethod
+    def get_methods(self):
+        methods = {}
+        for key, value in self.__dict__.items():
+            if value.__class__ == Method:
+                methods[key] = value
+        return methods
+
+    @classmethod
+    def render(self):
+        fields = self.get_fields()
+        rendered_fields = [field.render(key) for key, field in fields.items()]
+        fields_text = join_nested_lines(rendered_fields)
+        methods = self.get_methods()
+        rendered_methods = [method.render(key) for key, method in methods.items()]
+        methods_text = join_nested_lines(rendered_methods)
         constructor_body = self.__constructor_body__
         if constructor_body:
             constructor_body = ' ' + constructor_body + ' '
+        # call other constructors - of the non-allocator version, and also
+        name = self.__name__
+        sub_ctors = [name + '()']
+        # fields that allocate need to receive the allocator as a parameter
+        for key, field in fields.items():
+            if field.allocator:
+                sub_ctors.append(f'{key}(allocator)')
+        sub_ctors_text = ', '.join(sub_ctors)
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
   %(name)s() {%(constructor_body)s}
-  %(name)s(MixedArena& allocator) : %(name)s() {}
+  %(name)s(MixedArena& allocator) : %(sub_ctors_text)s {}
   %(fields_text)s
   %(methods_text)s
 };
