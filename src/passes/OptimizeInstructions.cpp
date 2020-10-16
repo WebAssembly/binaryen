@@ -1620,9 +1620,9 @@ private:
             // C1  ==>  1 << C1
             leftRight->value = Literal::makeOne(type).shl(leftRight->value);
 
-          // (a * C1) << C2  ==>  (a * C1) * (1 << C2)
+            // (a * C1) << C2  ==>  (a * C1) * (1 << C2)
           } else if (left->op == Abstract::getBinary(type, Abstract::Mul) &&
-              binary->op == Abstract::getBinary(type, Abstract::Shl)) {
+                     binary->op == Abstract::getBinary(type, Abstract::Shl)) {
             binary->op = Abstract::getBinary(type, Abstract::Mul);
             // C2  ==>  1 << C2
             right->value = Literal::makeOne(type).shl(right->value);
