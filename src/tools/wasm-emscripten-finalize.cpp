@@ -332,15 +332,17 @@ int main(int argc, const char* argv[]) {
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    generator.internalizeStackPointerGlobal();
-    // For side modules these gets called via __post_instantiate
-    if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
-      auto* ex = new Export();
-      ex->value = F->name;
-      ex->name = F->name;
-      ex->kind = ExternalKind::Function;
-      wasm.addExport(ex);
-      initializerFunctions.push_back(F->name);
+    if (legacyPIC) {
+      generator.internalizeStackPointerGlobal();
+      // For side modules these gets called via __post_instantiate
+      if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
+        auto* ex = new Export();
+        ex->value = F->name;
+        ex->name = F->name;
+        ex->kind = ExternalKind::Function;
+        wasm.addExport(ex);
+        initializerFunctions.push_back(F->name);
+      }
     }
     // Costructors get called from crt1 in wasm standalone mode.
     // Unless there is no entry point.
