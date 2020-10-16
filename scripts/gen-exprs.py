@@ -42,6 +42,12 @@ class Name(Field):
 class Bool(Field):
     pass
 
+class Signature(Field):
+    pass
+
+class Index(Field):
+    pass
+
 class ExpressionList(Field):
     allocator = True
 
@@ -212,58 +218,51 @@ class Call(Expression):
 
     finalize = Method('', 'void')
 
-'''
-
 class CallIndirect(Expression):
-<Expression::CallIndirectId> {
-  CallIndirect(MixedArena& allocator) : operands(allocator) {}
-  Signature sig;
+    sig = Signature()
     operands = ExpressionList()
-  Expression* target;
+    target = Child()
     isReturn = Bool(init='false');
 
     finalize = Method('', 'void')
 
+'''
+
 class LocalGet(Expression):
-<Expression::LocalGetId> {
   LocalGet() = default;
   LocalGet(MixedArena& allocator) {}
 
-  Index index;
+    index = Index()
 
 class LocalSet(Expression):
-<Expression::LocalSetId> {
   LocalSet() = default;
   LocalSet(MixedArena& allocator) {}
 
     finalize = Method('', 'void')
 
-  Index index;
-  Expression* value;
+    index = Index()
+    value = Child()
 
   bool isTee() const;
   void makeTee(Type type);
   void makeSet();
 
 class GlobalGet(Expression):
-<Expression::GlobalGetId> {
   GlobalGet() = default;
   GlobalGet(MixedArena& allocator) {}
 
   Name name;
 
 class GlobalSet(Expression):
-<Expression::GlobalSetId> {
   GlobalSet() = default;
   GlobalSet(MixedArena& allocator) {}
 
   Name name;
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
 class Load(Expression):
-<Expression::LoadId> {
   Load() = default;
   Load(MixedArena& allocator) {}
 
@@ -279,7 +278,6 @@ class Load(Expression):
     finalize = Method('', 'void')
 
 class Store(Expression):
-<Expression::StoreId> {
   Store() = default;
   Store(MixedArena& allocator) : Store() {}
 
@@ -288,13 +286,12 @@ class Store(Expression):
   Address align;
   bool isAtomic;
   Expression* ptr;
-  Expression* value;
+    value = Child()
   Type valueType;
 
     finalize = Method('', 'void')
 
 class AtomicRMW(Expression):
-<Expression::AtomicRMWId> {
   AtomicRMW() = default;
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
@@ -302,12 +299,11 @@ class AtomicRMW(Expression):
   uint8_t bytes;
   Address offset;
   Expression* ptr;
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
 class AtomicCmpxchg(Expression):
-<Expression::AtomicCmpxchgId> {
   AtomicCmpxchg() = default;
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
@@ -374,7 +370,7 @@ class SIMDReplace(Expression):
   SIMDReplaceOp op;
   Expression* vec;
   uint8_t index;
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
@@ -463,7 +459,7 @@ class MemoryFill(Expression):
   MemoryFill(MixedArena& allocator) : MemoryFill() {}
 
   Expression* dest;
-  Expression* value;
+    value = Child()
   Expression* size;
 
     finalize = Method('', 'void')
@@ -485,7 +481,7 @@ class Unary(Expression):
   Unary(MixedArena& allocator) {}
 
   UnaryOp op;
-  Expression* value;
+    value = Child()
 
   bool isRelational();
 
@@ -524,7 +520,7 @@ class Drop(Expression):
   Drop() = default;
   Drop(MixedArena& allocator) {}
 
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
@@ -581,7 +577,7 @@ class RefIsNull(Expression):
 <Expression::RefIsNullId> {
   RefIsNull(MixedArena& allocator) {}
 
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
@@ -656,7 +652,7 @@ class TupleExtract(Expression):
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;
-  Index index;
+    index = Index()
 
     finalize = Method('', 'void')
 
@@ -664,7 +660,7 @@ class I31New(Expression):
 <Expression::I31NewId> {
   I31New(MixedArena& allocator) {}
 
-  Expression* value;
+    value = Child()
 
     finalize = Method('', 'void')
 
