@@ -1608,8 +1608,28 @@ private:
     // the square of some operations can be merged
     // (x op C1) op C2  ==>  (x op (C1 op C2))
     if (auto* left = binary->left->dynCast<Binary>()) {
-      if (left->op == binary->op) {
-        if (auto* leftRight = left->right->dynCast<Const>()) {
+      if (auto* leftRight = left->right->dynCast<Const>()) {
+
+        // canonicalize mul and shl to mul only
+        if (left->type == binary->type && left->type.isInteger()) {
+          auto type = left->type;
+          // (a << C1) * C2  ==>  (a * (1 << C1)) * C2
+          if (left->op == Abstract::getBinary(type, Abstract::Shl) &&
+              binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+            left->op = Abstract::getBinary(type, Abstract::Mul);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+          // (a * C1) << C2  ==>  (a * C1) * (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::Mul) &&
+              binary->op == Abstract::getBinary(type, Abstract::Shl)) {
+            binary->op = Abstract::getBinary(type, Abstract::Mul);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+          }
+        }
+
+        if (left->op == binary->op) {
           if (left->op == AndInt32 || left->op == AndInt64) {
             leftRight->value = leftRight->value.and_(right->value);
             return left;
