@@ -181,6 +181,7 @@ class Expression:
 
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
+public:
   %(constructors_text)s
   %(fields_text)s
   %(methods_text)s
@@ -339,7 +340,7 @@ class AtomicWait(Expression):
     offset = Address()
     ptr = Child()
     expected = Child()
-    wait = Child()
+    timeout = Child()
     expectedType = Type()
 
 class AtomicNotify(Expression):
@@ -459,7 +460,7 @@ class MemoryGrow(Expression):
     make64 = Method('', 'void');
 
 class Unreachable(Expression):
-    __constructor_body__ = 'type = Type::unreachable'
+    __constructor_body__ = 'type = Type::unreachable;'
 
 '''
 Represents a pop of a value that arrives as an implicit argument to the
