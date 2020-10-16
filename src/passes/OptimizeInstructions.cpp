@@ -1587,6 +1587,7 @@ private:
 
   Expression* partialEvaluation(Binary* binary) {
     assert(binary->right->is<Const>());
+    Const* right = binary->right->cast<Const>();
 
     // detect overflow or zero during signed multiplication
     auto hasSignedMulOverflow = [](auto a, auto b) {
@@ -1604,7 +1605,6 @@ private:
       return a != T(0) && b != T(0) && a > std::numeric_limits<T>::max() / b;
     };
 
-    Const* right = binary->right->cast<Const>();
     // the square of some operations can be merged
     // (x op C1) op C2  ==>  (x op (C1 op C2))
     if (auto* left = binary->left->dynCast<Binary>()) {
