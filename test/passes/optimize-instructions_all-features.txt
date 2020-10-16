@@ -180,6 +180,15 @@
    )
   )
   (drop
+   (i32.eq
+    (i32.eq
+     (local.get $i1)
+     (i32.const -1)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
    (i32.div_u
     (local.get $i1)
     (i32.const 15)

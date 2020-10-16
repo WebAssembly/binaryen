@@ -279,6 +279,16 @@
         (i32.const 3)
       )
     )
+    ;; -> 0 (overflow) ;; skipped now
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const -1)
+        )
+        (i32.const -1)
+      )
+    )
     ;; -> 0 (overflow)
     (drop
       (i32.div_u
