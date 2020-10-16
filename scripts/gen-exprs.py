@@ -39,8 +39,11 @@ class Field(ExpressionChild):
 class Name(Field):
     pass
 
-class ExpressionList(Field):
+class Bool(Field):
     pass
+
+class ExpressionList(Field):
+    allocator = True
 
 class ArenaVector(Field):
     allocator = True
@@ -103,7 +106,6 @@ class Expression:
         sub_ctors_text = ', '.join(sub_ctors)
         text = '''\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
-public:
   %(name)s() {%(constructor_body)s}
   %(name)s(MixedArena& allocator) : %(sub_ctors_text)s {}
   %(fields_text)s
@@ -203,37 +205,34 @@ class Switch(Expression):
 
     finalize = Method('', 'void')
 
+class Call(Expression):
+    operands = ExpressionList()
+    target = Name()
+    isReturn = Bool(init='false');
+
+    finalize = Method('', 'void')
+
 '''
 
-class Call : public SpecificExpression<Expression::CallId> {
-public:
-  Call(MixedArena& allocator) : operands(allocator) {}
-
-  ExpressionList operands;
-  Name target;
-  bool isReturn = false;
-
-    finalize = Method('', 'void')
-
-class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
-public:
+class CallIndirect(Expression):
+<Expression::CallIndirectId> {
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
   Signature sig;
-  ExpressionList operands;
+    operands = ExpressionList()
   Expression* target;
-  bool isReturn = false;
+    isReturn = Bool(init='false');
 
     finalize = Method('', 'void')
 
-class LocalGet : public SpecificExpression<Expression::LocalGetId> {
-public:
+class LocalGet(Expression):
+<Expression::LocalGetId> {
   LocalGet() = default;
   LocalGet(MixedArena& allocator) {}
 
   Index index;
 
-class LocalSet : public SpecificExpression<Expression::LocalSetId> {
-public:
+class LocalSet(Expression):
+<Expression::LocalSetId> {
   LocalSet() = default;
   LocalSet(MixedArena& allocator) {}
 
@@ -246,15 +245,15 @@ public:
   void makeTee(Type type);
   void makeSet();
 
-class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
-public:
+class GlobalGet(Expression):
+<Expression::GlobalGetId> {
   GlobalGet() = default;
   GlobalGet(MixedArena& allocator) {}
 
   Name name;
 
-class GlobalSet : public SpecificExpression<Expression::GlobalSetId> {
-public:
+class GlobalSet(Expression):
+<Expression::GlobalSetId> {
   GlobalSet() = default;
   GlobalSet(MixedArena& allocator) {}
 
@@ -263,8 +262,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Load : public SpecificExpression<Expression::LoadId> {
-public:
+class Load(Expression):
+<Expression::LoadId> {
   Load() = default;
   Load(MixedArena& allocator) {}
 
@@ -279,8 +278,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Store : public SpecificExpression<Expression::StoreId> {
-public:
+class Store(Expression):
+<Expression::StoreId> {
   Store() = default;
   Store(MixedArena& allocator) : Store() {}
 
@@ -294,8 +293,8 @@ public:
 
     finalize = Method('', 'void')
 
-class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
-public:
+class AtomicRMW(Expression):
+<Expression::AtomicRMWId> {
   AtomicRMW() = default;
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
@@ -307,8 +306,8 @@ public:
 
     finalize = Method('', 'void')
 
-class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
-public:
+class AtomicCmpxchg(Expression):
+<Expression::AtomicCmpxchgId> {
   AtomicCmpxchg() = default;
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
@@ -320,8 +319,8 @@ public:
 
     finalize = Method('', 'void')
 
-class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
-public:
+class AtomicWait(Expression):
+<Expression::AtomicWaitId> {
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
@@ -333,8 +332,8 @@ public:
 
     finalize = Method('', 'void')
 
-class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
-public:
+class AtomicNotify(Expression):
+<Expression::AtomicNotifyId> {
   AtomicNotify() = default;
   AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
@@ -344,8 +343,8 @@ public:
 
     finalize = Method('', 'void')
 
-class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
-public:
+class AtomicFence(Expression):
+<Expression::AtomicFenceId> {
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
@@ -356,8 +355,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
-public:
+class SIMDExtract(Expression):
+<Expression::SIMDExtractId> {
   SIMDExtract() = default;
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
 
@@ -367,8 +366,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
-public:
+class SIMDReplace(Expression):
+<Expression::SIMDReplaceId> {
   SIMDReplace() = default;
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
 
@@ -379,8 +378,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
-public:
+class SIMDShuffle(Expression):
+<Expression::SIMDShuffleId> {
   SIMDShuffle() = default;
   SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
 
@@ -390,8 +389,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
-public:
+class SIMDTernary(Expression):
+<Expression::SIMDTernaryId> {
   SIMDTernary() = default;
   SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
 
@@ -402,8 +401,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
-public:
+class SIMDShift(Expression):
+<Expression::SIMDShiftId> {
   SIMDShift() = default;
   SIMDShift(MixedArena& allocator) : SIMDShift() {}
 
@@ -413,8 +412,8 @@ public:
 
     finalize = Method('', 'void')
 
-class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
-public:
+class SIMDLoad(Expression):
+<Expression::SIMDLoadId> {
   SIMDLoad() = default;
   SIMDLoad(MixedArena& allocator) {}
 
@@ -426,8 +425,8 @@ public:
   Index getMemBytes();
     finalize = Method('', 'void')
 
-class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
-public:
+class MemoryInit(Expression):
+<Expression::MemoryInitId> {
   MemoryInit() = default;
   MemoryInit(MixedArena& allocator) : MemoryInit() {}
 
@@ -438,8 +437,8 @@ public:
 
     finalize = Method('', 'void')
 
-class DataDrop : public SpecificExpression<Expression::DataDropId> {
-public:
+class DataDrop(Expression):
+<Expression::DataDropId> {
   DataDrop() = default;
   DataDrop(MixedArena& allocator) : DataDrop() {}
 
@@ -447,8 +446,8 @@ public:
 
     finalize = Method('', 'void')
 
-class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
-public:
+class MemoryCopy(Expression):
+<Expression::MemoryCopyId> {
   MemoryCopy() = default;
   MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
 
@@ -458,8 +457,8 @@ public:
 
     finalize = Method('', 'void')
 
-class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
-public:
+class MemoryFill(Expression):
+<Expression::MemoryFillId> {
   MemoryFill() = default;
   MemoryFill(MixedArena& allocator) : MemoryFill() {}
 
@@ -469,8 +468,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Const : public SpecificExpression<Expression::ConstId> {
-public:
+class Const(Expression):
+<Expression::ConstId> {
   Const() = default;
   Const(MixedArena& allocator) {}
 
@@ -480,8 +479,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Unary : public SpecificExpression<Expression::UnaryId> {
-public:
+class Unary(Expression):
+<Expression::UnaryId> {
   Unary() = default;
   Unary(MixedArena& allocator) {}
 
@@ -492,8 +491,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Binary : public SpecificExpression<Expression::BinaryId> {
-public:
+class Binary(Expression):
+<Expression::BinaryId> {
   Binary() = default;
   Binary(MixedArena& allocator) {}
 
@@ -508,8 +507,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Select : public SpecificExpression<Expression::SelectId> {
-public:
+class Select(Expression):
+<Expression::SelectId> {
   Select() = default;
   Select(MixedArena& allocator) {}
 
@@ -520,8 +519,8 @@ public:
     finalize = Method('', 'void')
   void finalize(Type type_);
 
-class Drop : public SpecificExpression<Expression::DropId> {
-public:
+class Drop(Expression):
+<Expression::DropId> {
   Drop() = default;
   Drop(MixedArena& allocator) {}
 
@@ -529,15 +528,15 @@ public:
 
     finalize = Method('', 'void')
 
-class Return : public SpecificExpression<Expression::ReturnId> {
-public:
+class Return(Expression):
+<Expression::ReturnId> {
   Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
 
-class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
-public:
+class MemorySize(Expression):
+<Expression::MemorySizeId> {
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
@@ -546,8 +545,8 @@ public:
   void make64();
     finalize = Method('', 'void')
 
-class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
-public:
+class MemoryGrow(Expression):
+<Expression::MemoryGrowId> {
   MemoryGrow() { type = Type::i32; }
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
@@ -557,20 +556,20 @@ public:
   void make64();
     finalize = Method('', 'void')
 
-class Unreachable : public SpecificExpression<Expression::UnreachableId> {
-public:
+class Unreachable(Expression):
+<Expression::UnreachableId> {
   Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 
 Represents a pop of a value that arrives as an implicit argument to the
 current block. Currently used in exception handling.
-class Pop : public SpecificExpression<Expression::PopId> {
-public:
+class Pop(Expression):
+<Expression::PopId> {
   Pop() = default;
   Pop(MixedArena& allocator) {}
 
-class RefNull : public SpecificExpression<Expression::RefNullId> {
-public:
+class RefNull(Expression):
+<Expression::RefNullId> {
   RefNull() = default;
   RefNull(MixedArena& allocator) {}
 
@@ -578,24 +577,24 @@ public:
   void finalize(HeapType heapType);
   void finalize(Type type);
 
-class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
-public:
+class RefIsNull(Expression):
+<Expression::RefIsNullId> {
   RefIsNull(MixedArena& allocator) {}
 
   Expression* value;
 
     finalize = Method('', 'void')
 
-class RefFunc : public SpecificExpression<Expression::RefFuncId> {
-public:
+class RefFunc(Expression):
+<Expression::RefFuncId> {
   RefFunc(MixedArena& allocator) {}
 
   Name func;
 
     finalize = Method('', 'void')
 
-class RefEq : public SpecificExpression<Expression::RefEqId> {
-public:
+class RefEq(Expression):
+<Expression::RefEqId> {
   RefEq(MixedArena& allocator) {}
 
   Expression* left;
@@ -603,8 +602,8 @@ public:
 
     finalize = Method('', 'void')
 
-class Try : public SpecificExpression<Expression::TryId> {
-public:
+class Try(Expression):
+<Expression::TryId> {
   Try(MixedArena& allocator) {}
 
   Expression* body;
@@ -613,25 +612,25 @@ public:
     finalize = Method('', 'void')
   void finalize(Type type_);
 
-class Throw : public SpecificExpression<Expression::ThrowId> {
-public:
+class Throw(Expression):
+<Expression::ThrowId> {
   Throw(MixedArena& allocator) : operands(allocator) {}
 
   Name event;
-  ExpressionList operands;
+    operands = ExpressionList()
 
     finalize = Method('', 'void')
 
-class Rethrow : public SpecificExpression<Expression::RethrowId> {
-public:
+class Rethrow(Expression):
+<Expression::RethrowId> {
   Rethrow(MixedArena& allocator) {}
 
   Expression* exnref;
 
     finalize = Method('', 'void')
 
-class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
-public:
+class BrOnExn(Expression):
+<Expression::BrOnExnId> {
   BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
@@ -644,16 +643,16 @@ public:
 
     finalize = Method('', 'void')
 
-class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
-public:
+class TupleMake(Expression):
+<Expression::TupleMakeId> {
   TupleMake(MixedArena& allocator) : operands(allocator) {}
 
-  ExpressionList operands;
+    operands = ExpressionList()
 
     finalize = Method('', 'void')
 
-class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
-public:
+class TupleExtract(Expression):
+<Expression::TupleExtractId> {
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;
@@ -661,16 +660,16 @@ public:
 
     finalize = Method('', 'void')
 
-class I31New : public SpecificExpression<Expression::I31NewId> {
-public:
+class I31New(Expression):
+<Expression::I31NewId> {
   I31New(MixedArena& allocator) {}
 
   Expression* value;
 
     finalize = Method('', 'void')
 
-class I31Get : public SpecificExpression<Expression::I31GetId> {
-public:
+class I31Get(Expression):
+<Expression::I31GetId> {
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
@@ -678,74 +677,74 @@ public:
 
     finalize = Method('', 'void')
 
-class RefTest : public SpecificExpression<Expression::RefTestId> {
-public:
+class RefTest(Expression):
+<Expression::RefTestId> {
   RefTest(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
 
-class RefCast : public SpecificExpression<Expression::RefCastId> {
-public:
+class RefCast(Expression):
+<Expression::RefCastId> {
   RefCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
 
-class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
-public:
+class BrOnCast(Expression):
+<Expression::BrOnCastId> {
   BrOnCast(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
 
-class RttCanon : public SpecificExpression<Expression::RttCanonId> {
-public:
+class RttCanon(Expression):
+<Expression::RttCanonId> {
   RttCanon(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
 
-class RttSub : public SpecificExpression<Expression::RttSubId> {
-public:
+class RttSub(Expression):
+<Expression::RttSubId> {
   RttSub(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
 
-class StructNew : public SpecificExpression<Expression::StructNewId> {
-public:
+class StructNew(Expression):
+<Expression::StructNewId> {
   StructNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
 
-class StructGet : public SpecificExpression<Expression::StructGetId> {
-public:
+class StructGet(Expression):
+<Expression::StructGetId> {
   StructGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
 
-class StructSet : public SpecificExpression<Expression::StructSetId> {
-public:
+class StructSet(Expression):
+<Expression::StructSetId> {
   StructSet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
 
-class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
-public:
+class ArrayNew(Expression):
+<Expression::ArrayNewId> {
   ArrayNew(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
 
-class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
-public:
+class ArrayGet(Expression):
+<Expression::ArrayGetId> {
   ArrayGet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
 
-class ArraySet : public SpecificExpression<Expression::ArraySetId> {
-public:
+class ArraySet(Expression):
+<Expression::ArraySetId> {
   ArraySet(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
 
-class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
-public:
+class ArrayLen(Expression):
+<Expression::ArrayLenId> {
   ArrayLen(MixedArena& allocator) {}
 
   void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
