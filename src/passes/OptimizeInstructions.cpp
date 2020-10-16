@@ -1642,8 +1642,8 @@ private:
               leftRight->value = Literal::makeZero(right->type);
               return left;
             }
-            // if any of constants is zero or product of them produce
-            // owerflow just fold final result to zero
+            // if constant's product produce overflow we can fold
+            // final result to zero
             if ((leftRight->value.type == Type::i32 &&
                  hasSignedMulOverflow(leftRight->value.geti32(),
                                       right->value.geti32())) ||
@@ -1652,11 +1652,18 @@ private:
                                       right->value.geti64()))) {
               right->value = Literal::makeZero(right->type);
               return right;
-            } else {
-              leftRight->value = prod;
+            }
+            leftRight->value = prod;
+            return left;
+          } else if (left->op == DivUInt32 || left->op == DivUInt64) {
+            auto prod = leftRight->value.mul(right->value);
+            // return x / 0 if any of constant is zero
+            if (prod.isZero()) {
+              leftRight->value = Literal::makeZero(right->type);
               return left;
             }
-          } else if (left->op == DivUInt32 || left->op == DivUInt64) {
+            // if constant's product produce overflow we can fold
+            // final result to zero
             if ((leftRight->value.type == Type::i32 &&
                  hasUnsignedMulOverflow((uint32_t)leftRight->value.geti32(),
                                         (uint32_t)right->value.geti32())) ||
@@ -1664,10 +1671,9 @@ private:
                  hasUnsignedMulOverflow((uint64_t)leftRight->value.geti64(),
                                         (uint64_t)right->value.geti64()))) {
               leftRight->value = Literal::makeZero(right->type);
-            } else {
-              auto prod = leftRight->value.mul(right->value);
-              leftRight->value = prod;
+              return right;
             }
+            leftRight->value = prod;
             return left;
           } else if (Abstract::hasAnyShift(left->op)) {
             // shifts only use an effective amount from the constant, so
