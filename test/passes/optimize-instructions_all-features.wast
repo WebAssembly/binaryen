@@ -121,7 +121,7 @@
         (i32.const -1)
       )
     )
-    ;; -> x / 0 (overflow)
+    ;; -> 0 (overflow)
     (drop
       (i32.div_s
         (i32.div_s
@@ -171,7 +171,7 @@
         (i32.const 0x80000000)
       )
     )
-    ;; -> x / 0
+    ;; -> 0
     (drop
       (i32.div_s
         (i32.div_s
