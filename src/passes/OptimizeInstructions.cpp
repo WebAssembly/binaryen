@@ -1594,16 +1594,10 @@ private:
       if (a == T(0) || b == T(0)) {
         return false;
       }
-      if (b == T(-1)) {
-        return false;
-      }
-      auto minDivB = std::numeric_limits<T>::min() / b;
-      auto maxDivB = std::numeric_limits<T>::max() / b;
-      if ((b > T(0) && a > maxDivB) || (b < T(0) && a < maxDivB) ||
-          (b > T(0) && a < minDivB) || (b < T(-1) && a > minDivB)) {
-        return true;
-      }
-      return false;
+      auto min = std::numeric_limits<T>::min();
+      auto max = std::numeric_limits<T>::max();
+      return ((b > T(0) && a > max / b) || (b < T(0) && a < max / b) ||
+              (b > T(0) && a < min / b) || (b < T(-1) && a > min / b));
     };
 
     // detect overflow or zero during signed multiplication
