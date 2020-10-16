@@ -239,6 +239,36 @@
         (i32.const 5)
       )
     )
+    ;; -> x / -8255
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x1FFF)
+        )
+        (i32.const 0x8003F)
+      )
+    )
+    ;; -> x / -1 -> x == -1
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x10001)
+        )
+        (i32.const 0xFFFF)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x10001)
+        )
+        (i32.const 0x10001)
+      )
+    )
     ;; -> 0 (overflow) ;; skipped now
     (drop
       (i32.div_u
@@ -249,12 +279,42 @@
         (i32.const 3)
       )
     )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 3)
+        )
+        (i32.const 5)
+      )
+    )
     ;; -> 0 (overflow) ;; skipped now
     (drop
       (i32.div_u
         (i32.div_u
           (local.get $i1)
           (i32.const 0x7FFFFFFF)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x7FFFFFFF)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0)
         )
         (i32.const 3)
       )

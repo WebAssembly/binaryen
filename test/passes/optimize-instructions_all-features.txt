@@ -156,6 +156,21 @@
    )
   )
   (drop
+   (i32.ge_u
+    (local.get $i1)
+    (i32.const -8255)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $i1)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
    (i32.div_u
     (i32.eq
      (local.get $i1)
@@ -165,7 +180,25 @@
    )
   )
   (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 15)
+   )
+  )
+  (drop
    (i32.const 0)
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 0)
+   )
   )
   (drop
    (i32.rotl
