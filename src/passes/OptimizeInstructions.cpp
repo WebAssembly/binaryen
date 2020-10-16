@@ -1682,7 +1682,7 @@ private:
                 (leftRight->value.type == Type::i64 &&
                  hasUnsignedMulOverflow((uint64_t)leftRight->value.geti64(),
                                         (uint64_t)right->value.geti64()))) {
-              leftRight->value = Literal::makeZero(right->type);
+              right->value = Literal::makeZero(right->type);
               return right;
             }
             leftRight->value = prod;
