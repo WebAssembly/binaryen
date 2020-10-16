@@ -1009,8 +1009,22 @@ void I31Get::finalize() {
   }
 }
 
+void Nop::finalize() {
+}
+
+void LocalGet::finalize() {
+}
+
+void GlobalGet::finalize() {
+}
+
+void Unreachable::finalize() {
+}
+
+void Return::finalize() {
+}
+
 void Pop::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
 }
 
 void StructGet::finalize() {
@@ -1021,27 +1035,11 @@ void BrOnCast::finalize() {
   WASM_UNREACHABLE("TODO GC finalize() methods");
 }
 
-void Nop::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
-
 void ArrayGet::finalize() {
   WASM_UNREACHABLE("TODO GC finalize() methods");
 }
 
-void LocalGet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
-
-void GlobalGet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
-
 void StructNew::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
-
-void Unreachable::finalize() {
   WASM_UNREACHABLE("TODO GC finalize() methods");
 }
 
@@ -1070,10 +1068,6 @@ void ArraySet::finalize() {
 }
 
 void ArrayLen::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
-
-void Return::finalize() {
   WASM_UNREACHABLE("TODO GC finalize() methods");
 }
 
