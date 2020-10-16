@@ -64,33 +64,26 @@ class uint8_t(Field):
 class AtomicRMWOp(Field):
     pass
 
-class SIMDExtractOp:
+class SIMDExtractOp(Field):
     pass
 
-class SIMDReplaceOp:
-    pass
+class SIMDReplaceOp(Field):    pass
 
-class SIMDShuffleMask:
+class SIMDShuffleMask(Field):
     def render(self, name):
         return f'std::array<uint8_t, 16> {name};'
 
-class SIMDTernaryOp:
-    pass
+class SIMDTernaryOp(Field):    pass
 
-class SIMDShiftOp:
-    pass
+class SIMDShiftOp(Field):    pass
 
-class SIMDLoadOp:
-    pass
+class SIMDLoadOp(Field):    pass
 
-class Literal:
-    pass
+class Literal(Field):    pass
 
-class UnaryOp:
-    pass
+class UnaryOp(Field):    pass
 
-class BinaryOp:
-    pass
+class BinaryOp(Field):    pass
 
 class ArenaVector(Field):
     allocator = True
@@ -505,7 +498,7 @@ class BrOnExn(Expression):
     This is duplicate info of param types stored in Event, but this is required
     for us to know the type of the value sent to the target block.
     '''
-    send = Type()
+    sent = Type()
 
 class TupleMake(Expression):
     operands = ExpressionList()

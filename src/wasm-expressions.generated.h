@@ -200,6 +200,7 @@ class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 public:
   SIMDExtract() {}
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
+  SIMDExtractOp op;
   Expression* vec;
   uint8_t index;
   void finalize();
@@ -208,6 +209,7 @@ class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
 public:
   SIMDReplace() {}
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
+  SIMDReplaceOp op;
   Expression* vec;
   uint8_t index;
   Expression* value;
@@ -219,12 +221,14 @@ public:
   SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
   Expression* left;
   Expression* right;
+  std::array<uint8_t, 16> mask;
   void finalize();
 };
 class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
 public:
   SIMDTernary() {}
   SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
+  SIMDTernaryOp op;
   Expression* a;
   Expression* b;
   Expression* c;
@@ -234,6 +238,7 @@ class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
 public:
   SIMDShift() {}
   SIMDShift(MixedArena& allocator) : SIMDShift() {}
+  SIMDShiftOp op;
   Expression* vec;
   Expression* shift;
   void finalize();
@@ -242,6 +247,7 @@ class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
 public:
   SIMDLoad() {}
   SIMDLoad(MixedArena& allocator) : SIMDLoad() {}
+  SIMDLoadOp op;
   Address offset;
   Address align;
   Expression* ptr;
@@ -287,6 +293,7 @@ class Const : public SpecificExpression<Expression::ConstId> {
 public:
   Const() {}
   Const(MixedArena& allocator) : Const() {}
+  Literal value;
   Const* set(Literal value_);
   void finalize();
 };
@@ -294,6 +301,7 @@ class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
   Unary() {}
   Unary(MixedArena& allocator) : Unary() {}
+  UnaryOp op;
   Expression* value;
   bool isRelational();
   void finalize();
@@ -302,6 +310,7 @@ class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
   Binary() {}
   Binary(MixedArena& allocator) : Binary() {}
+  BinaryOp op;
   Expression* left;
   Expression* right;
   bool isRelational();
@@ -420,7 +429,7 @@ public:
   Name name;
   Name event;
   Expression* exnref;
-  Type send;
+  Type sent;
   void finalize();
 };
 class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
