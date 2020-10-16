@@ -99,9 +99,30 @@
    )
   )
   (drop
+   (local.get $i1)
+  )
+  (drop
    (i32.div_s
     (local.get $i1)
     (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const -2147483648)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const -1)
+    )
+    (i32.const -2147483648)
    )
   )
   (drop
@@ -124,8 +145,11 @@
   )
   (drop
    (i32.div_s
-    (local.get $i1)
-    (i32.const 0)
+    (i32.div_s
+     (local.get $i1)
+     (i32.const 65536)
+    )
+    (i32.const 32768)
    )
   )
   (drop

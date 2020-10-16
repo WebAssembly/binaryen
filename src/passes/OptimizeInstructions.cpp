@@ -1594,6 +1594,9 @@ private:
       if (a == T(0) || b == T(0)) {
         return true;
       }
+      if (b == T(-1)) {
+        return false;
+      }
       auto minDivB = std::numeric_limits<T>::min() / b;
       auto maxDivB = std::numeric_limits<T>::max() / b;
       if ((b > T(0) && a > maxDivB) || (b < T(0) && a < maxDivB) ||
@@ -1628,6 +1631,12 @@ private:
             leftRight->value = leftRight->value.mul(right->value);
             return left;
           } else if (left->op == DivSInt32 || left->op == DivSInt64) {
+            auto prod = leftRight->value.mul(right->value);
+            // don't apply partially constant folding if product
+            // produce signed minimum
+            if (prod.isSignedMin()) {
+              return nullptr;
+            }
             // if any of constants is zero or product of them produce
             // owerflow just fold final constant as zero
             if ((leftRight->value.type == Type::i32 &&
@@ -1640,12 +1649,8 @@ private:
               return left;
             } else {
               auto prod = leftRight->value.mul(right->value);
-              // don't apply partially constant folding if product
-              // produce signed minimum
-              if (!prod.isSignedMin()) {
-                leftRight->value = prod;
-                return left;
-              }
+              leftRight->value = prod;
+              return left;
             }
           } else if (left->op == DivUInt32 || left->op == DivUInt64) {
             if ((leftRight->value.type == Type::i32 &&
