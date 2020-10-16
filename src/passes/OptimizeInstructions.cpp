@@ -1591,13 +1591,11 @@ private:
     // detect overflow or zero during signed multiplication
     auto hasSignedMulOverflow = [](auto a, auto b) {
       using T = decltype(a);
-      if (a == T(0) || b == T(0)) {
-        return false;
-      }
       auto min = std::numeric_limits<T>::min();
       auto max = std::numeric_limits<T>::max();
-      return ((b > T(0) && a > max / b) || (b < T(0) && a < max / b) ||
-              (b > T(0) && a < min / b) || (b < T(-1) && a > min / b));
+      return (a != T(0) && b != T(0) &&
+              ((b > T(0) && a > max / b) || (b < T(0) && a < max / b) ||
+               (b > T(0) && a < min / b) || (b < T(-1) && a > min / b)));
     };
 
     // detect overflow or zero during signed multiplication
