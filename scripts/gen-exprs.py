@@ -121,6 +121,8 @@ class Method:
 class Expression:
     __constructor_body__ = ''
 
+    finalize = Method('', 'void')
+
     @classmethod
     def get_fields(self):
         fields = {}
@@ -216,8 +218,7 @@ class If(Expression):
         work this does is to set the type to unreachable in the cases that is
         needed.
 
-          finalize = Method('', 'void')
-
+      
         set the type purely based on its contents.
     '''
     finalize = Method(('Type type_', ''), 'void')
@@ -237,15 +238,12 @@ class Loop(Expression):
     '''
     finalize = Method(('Type type_', ''), 'void')
 
-
 class Break(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
     name = Name()
     value = Child(init='nullptr')
     condition = Child(init='nullptr')
-
-    finalize = Method('', 'void')
 
 class Switch(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
@@ -255,22 +253,16 @@ class Switch(Expression):
     condition = Child()
     value = Child(init='nullptr')
 
-    finalize = Method('', 'void')
-
 class Call(Expression):
     operands = ExpressionList()
     target = Name()
     isReturn = Bool(init='false');
-
-    finalize = Method('', 'void')
 
 class CallIndirect(Expression):
     sig = Signature()
     operands = ExpressionList()
     target = Child()
     isReturn = Bool(init='false');
-
-    finalize = Method('', 'void')
 
 class LocalGet(Expression):
     index = Index()
@@ -279,7 +271,6 @@ class LocalSet(Expression):
     index = Index()
     value = Child()
 
-    finalize = Method('', 'void')
     isTee = Method('', 'bool', const=True)
     makeTee = Method('Type type', 'void');
     makeSet = Method('', 'void');
@@ -291,8 +282,6 @@ class GlobalSet(Expression):
     name = Name()
     value = Child()
 
-    finalize = Method('', 'void')
-
 class Load(Expression):
     bytes = uint8_t()
     signed_ = Bool()
@@ -302,7 +291,6 @@ class Load(Expression):
     ptr = Child()
 
     # type must be set during creation, cannot be inferred
-    finalize = Method('', 'void')
 
 class Store(Expression):
     bytes = uint8_t()
@@ -313,16 +301,12 @@ class Store(Expression):
     value = Child()
     valueType = Type()
 
-    finalize = Method('', 'void')
-
 class AtomicRMW(Expression):
     op = AtomicRMWOp()
     bytes = uint8_t()
     offset = Address()
     ptr = Child()
     value = Child()
-
-    finalize = Method('', 'void')
 
 class AtomicCmpxchg(Expression):
     bytes = uint8_t()
@@ -331,8 +315,6 @@ class AtomicCmpxchg(Expression):
     expected = Child()
     replacement = Child()
 
-    finalize = Method('', 'void')
-
 class AtomicWait(Expression):
     offset = Address()
     ptr = Child()
@@ -340,14 +322,10 @@ class AtomicWait(Expression):
     wait = Child()
     expectedType = Type()
 
-    finalize = Method('', 'void')
-
 class AtomicNotify(Expression):
     offset = Address()
     ptr = Child()
     notifyCount = Child()
-
-    finalize = Method('', 'void')
 
 class AtomicFence(Expression):
     '''
@@ -357,14 +335,10 @@ class AtomicFence(Expression):
     '''
     order = uint8_t()
 
-    finalize = Method('', 'void')
-
 class SIMDExtract(Expression):
     op = SIMDExtractOp()
     vec = Child()
     index = uint8_t()
-
-    finalize = Method('', 'void')
 
 class SIMDReplace(Expression):
     op = SIMDReplaceOp()
@@ -372,14 +346,11 @@ class SIMDReplace(Expression):
     index = uint8_t()
     value = Child()
 
-    finalize = Method('', 'void')
-
 class SIMDShuffle(Expression):
     left = Child()
     right = Child()
     mask = SIMDShuffleMask()
  
-    finalize = Method('', 'void')
 
 class SIMDTernary(Expression):
     op = SIMDTernaryOp()
@@ -387,14 +358,10 @@ class SIMDTernary(Expression):
     b = Child()
     c = Child()
 
-    finalize = Method('', 'void')
-
 class SIMDShift(Expression):
     op = SIMDShiftOp()
     vec = Child()
     shift = Child()
-
-    finalize = Method('', 'void')
 
 class SIMDLoad(Expression):
     op = SIMDLoadOp()
@@ -403,7 +370,6 @@ class SIMDLoad(Expression):
     ptr = Child()
 
     getMemBytes = Method('', 'Index');
-    finalize = Method('', 'void')
 
 class MemoryInit(Expression):
     segment = Index()
@@ -411,41 +377,29 @@ class MemoryInit(Expression):
     offset = Child()
     size = Child()
 
-    finalize = Method('', 'void')
-
 class DataDrop(Expression):
     segment = Index()
-
-    finalize = Method('', 'void')
 
 class MemoryCopy(Expression):
     dest = Child()
     source = Child()
     size = Child()
 
-    finalize = Method('', 'void')
-
 class MemoryFill(Expression):
     dest = Child()
     value = Child()
     size = Child()
-
-    finalize = Method('', 'void')
 
 class Const(Expression):
     value = Literal()
 
     set = Method('Literal value_', 'Const*');
 
-    finalize = Method('', 'void')
-
 class Unary(Expression):
     op = UnaryOp()
     value = Child()
 
     isRelational = Method('', 'bool')
-
-    finalize = Method('', 'void')
 
 class Binary(Expression):
     op = BinaryOp()
@@ -458,8 +412,6 @@ class Binary(Expression):
     '''
     isRelational = Method('', 'bool')
 
-    finalize = Method('', 'void')
-
 class Select(Expression):
     ifTrue = Child()
     ifFalse = Child()
@@ -470,8 +422,6 @@ class Select(Expression):
 class Drop(Expression):
     value = Child()
 
-    finalize = Method('', 'void')
-
 class Return(Expression):
     value = Child(init='nullptr')
 
@@ -481,14 +431,12 @@ class MemorySize(Expression):
     ptrType = Type(init='Type::i32')
 
     make64 = Method('', 'void');
-    finalize = Method('', 'void')
 
 class MemoryGrow(Expression):
     delta = Child(init='nullptr')
     ptrType = Type(init='Type::i32')
 
     make64 = Method('', 'void');
-    finalize = Method('', 'void')
 
 class Unreachable(Expression):
     __constructor_body__ = 'type = Type::unreachable'
@@ -500,166 +448,97 @@ current block. Currently used in exception handling.
 class Pop(Expression):
     pass
 
-'''
 class RefNull(Expression):
-  RefNull() = default;
-  RefNull(MixedArena& allocator) {}
-
-    finalize = Method('', 'void')
-  void finalize(HeapType heapType);
-  void finalize(Type type);
+    finalize = Method(('', 'HeapType heapType', 'Type type'), 'void')
 
 class RefIsNull(Expression):
-  RefIsNull(MixedArena& allocator) {}
-
     value = Child()
 
-    finalize = Method('', 'void')
-
 class RefFunc(Expression):
-  RefFunc(MixedArena& allocator) {}
-
-  Name func;
-
-    finalize = Method('', 'void')
+    func = Name()
 
 class RefEq(Expression):
-  RefEq(MixedArena& allocator) {}
-
     left = Child()
     right = Child()
 
-    finalize = Method('', 'void')
-
 class Try(Expression):
-  Try(MixedArena& allocator) {}
+    body = Child()
+    catchBody = Child()
 
-    Child()body;
-    Child()catchBody;
-
-    finalize = Method('', 'void')
-  void finalize(Type type_);
+    finalize = Method(('', 'Type type_'), 'void')
 
 class Throw(Expression):
-  Throw(MixedArena& allocator) : operands(allocator) {}
-
-  Name event;
+    event = Name()
     operands = ExpressionList()
-
-    finalize = Method('', 'void')
 
 class Rethrow(Expression):
-  Rethrow(MixedArena& allocator) {}
-
-    Child()exnref;
-
-    finalize = Method('', 'void')
+    exnref = Child()
 
 class BrOnExn(Expression):
-  BrOnExn() { type = Type::unreachable; }
-  BrOnExn(MixedArena& allocator) : BrOnExn() {}
+    __constructor_body__ = 'type = Type::unreachable;'
 
     name = Name()
-  Name event;
-    Child()exnref;
-  This is duplicate info of param types stored in Event, but this is required
-  for us to know the type of the value sent to the target block.
-  Type sent;
-
-    finalize = Method('', 'void')
+    event = Name()
+    exnref = Child()
+    '''
+    This is duplicate info of param types stored in Event, but this is required
+    for us to know the type of the value sent to the target block.
+    '''
+    send = Type()
 
 class TupleMake(Expression):
-  TupleMake(MixedArena& allocator) : operands(allocator) {}
-
     operands = ExpressionList()
 
-    finalize = Method('', 'void')
-
 class TupleExtract(Expression):
-  TupleExtract(MixedArena& allocator) {}
-
-    Child()tuple;
+    tuple = Child()
     index = Index()
 
-    finalize = Method('', 'void')
-
 class I31New(Expression):
-  I31New(MixedArena& allocator) {}
-
     value = Child()
 
-    finalize = Method('', 'void')
-
 class I31Get(Expression):
-  I31Get(MixedArena& allocator) {}
-
-    Child()i31;
+    i31 = Child()
     signed_ = Bool()
 
-    finalize = Method('', 'void')
-
 class RefTest(Expression):
-  RefTest(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+    pass
 
 class RefCast(Expression):
-  RefCast(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+    pass
 
 class BrOnCast(Expression):
-  BrOnCast(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+    pass
 
 class RttCanon(Expression):
-  RttCanon(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+    pass
 
 class RttSub(Expression):
-  RttSub(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+    pass
 
 class StructNew(Expression):
-  StructNew(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+    pass
 
 class StructGet(Expression):
-  StructGet(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+    pass
 
 class StructSet(Expression):
-  StructSet(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+    pass
 
 class ArrayNew(Expression):
-  ArrayNew(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+    pass
 
 class ArrayGet(Expression):
-  ArrayGet(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+    pass
 
 class ArraySet(Expression):
-  ArraySet(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+    pass
 
 class ArrayLen(Expression):
-  ArrayLen(MixedArena& allocator) {}
-
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+    pass
 
 
-'''
+# Boilerplate
+
 
 COPYRIGHT = '''\
 /*
