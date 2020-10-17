@@ -1610,20 +1610,47 @@ private:
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* leftRight = left->right->dynCast<Const>()) {
 
-        // canonicalize mul and shl to mul only
+        // canonicalize mul/div and shl/shr to mul/div only
         if (left->type == binary->type && left->type.isInteger()) {
           auto type = left->type;
-          // (a << C1) * C2  ==>  (a * (1 << C1)) * C2
+          // (x << C1) * C2  ==>  (x * (1 << C1)) * C2
           if (left->op == Abstract::getBinary(type, Abstract::Shl) &&
               binary->op == Abstract::getBinary(type, Abstract::Mul)) {
             left->op = Abstract::getBinary(type, Abstract::Mul);
             // C1  ==>  1 << C1
             leftRight->value = Literal::makeOne(type).shl(leftRight->value);
 
-            // (a * C1) << C2  ==>  (a * C1) * (1 << C2)
+            // (x * C1) << C2  ==>  (x * C1) * (1 << C2)
           } else if (left->op == Abstract::getBinary(type, Abstract::Mul) &&
                      binary->op == Abstract::getBinary(type, Abstract::Shl)) {
             binary->op = Abstract::getBinary(type, Abstract::Mul);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+
+            // ((signed)x >> C1) / C2  ==>  (x / (1 << C1)) / C2
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrS) &&
+                     binary->op == Abstract::getBinary(type, Abstract::DivS)) {
+            left->op = Abstract::getBinary(type, Abstract::DivS);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+            // ((signed)x / C1) >> C2  ==>  (x / C1) / (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::DivS) &&
+                     binary->op == Abstract::getBinary(type, Abstract::ShrS)) {
+            binary->op = Abstract::getBinary(type, Abstract::DivS);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+            // ((unsigned)x >>> C1) / C2  ==>  (x / (1 << C1)) / C2
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrU) &&
+                     binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+            left->op = Abstract::getBinary(type, Abstract::DivU);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+            // ((unsigned)x / C1) >>> C2  ==>  (x / C1) / (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::DivU) &&
+                     binary->op == Abstract::getBinary(type, Abstract::ShrU)) {
+            binary->op = Abstract::getBinary(type, Abstract::DivU);
             // C2  ==>  1 << C2
             right->value = Literal::makeOne(type).shl(right->value);
           }
