@@ -335,7 +335,7 @@ public:
 };
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() {}
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
   Expression* value = nullptr;
   void finalize();

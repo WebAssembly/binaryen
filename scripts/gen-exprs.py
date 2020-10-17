@@ -438,6 +438,8 @@ class Drop(Expression):
     value = Child()
 
 class Return(Expression):
+    __constructor_body__ = 'type = Type::unreachable;'
+
     value = Child(init='nullptr')
 
 class MemorySize(Expression):
@@ -630,7 +632,10 @@ def generate_defs():
 
     if rendered != existing:
         with open(target, 'w') as f:
+            print('writing updated expression definitions')
             f.write(rendered)
+    else:
+        print('expression definitions did not change')
 
 def main():
     if sys.version_info.major != 3:
