@@ -1630,19 +1630,20 @@ private:
         }
 
         if (left->op == binary->op) {
-          if (left->op == AndInt32 || left->op == AndInt64) {
+          BinaryOp op = left->op;
+          if (op == AndInt32 || op == AndInt64) {
             leftRight->value = leftRight->value.and_(right->value);
             return left;
-          } else if (left->op == OrInt32 || left->op == OrInt64) {
+          } else if (op == OrInt32 || op == OrInt64) {
             leftRight->value = leftRight->value.or_(right->value);
             return left;
-          } else if (left->op == XorInt32 || left->op == XorInt64) {
+          } else if (op == XorInt32 || op == XorInt64) {
             leftRight->value = leftRight->value.xor_(right->value);
             return left;
-          } else if (left->op == MulInt32 || left->op == MulInt64) {
+          } else if (op == MulInt32 || op == MulInt64) {
             leftRight->value = leftRight->value.mul(right->value);
             return left;
-          } else if (left->op == DivSInt32 || left->op == DivSInt64) {
+          } else if (op == DivSInt32 || op == DivSInt64) {
             auto prod = leftRight->value.mul(right->value);
             // don't apply partially constant folding if product
             // produce signed minimum
@@ -1667,7 +1668,7 @@ private:
             }
             leftRight->value = prod;
             return left;
-          } else if (left->op == DivUInt32 || left->op == DivUInt64) {
+          } else if (op == DivUInt32 || op == DivUInt64) {
             auto prod = leftRight->value.mul(right->value);
             // return x / 0 if any of constant is zero
             if (prod.isZero()) {
@@ -1687,14 +1688,14 @@ private:
             }
             leftRight->value = prod;
             return left;
-          } else if (Abstract::hasAnyShift(left->op)) {
+          } else if (Abstract::hasAnyShift(op)) {
             // shifts only use an effective amount from the constant, so
             // adding must be done carefully
             auto total = Bits::getEffectiveShifts(leftRight) +
                          Bits::getEffectiveShifts(right);
             auto effective = Bits::getEffectiveShifts(total, right->type);
-            if (left->op == RotLInt32 || left->op == RotLInt64 ||
-                left->op == RotRInt32 || left->op == RotRInt64) {
+            if (op == RotLInt32 || op == RotLInt64 || op == RotRInt32 ||
+                op == RotRInt64) {
               // for cyclic shift rotations overflow is legit
               leftRight->value = Literal::makeFromInt32(effective, right->type);
               return left;
@@ -1703,7 +1704,21 @@ private:
                 // no overflow, we can do this
                 leftRight->value = Literal::makeFromInt32(total, right->type);
                 return left;
-              } // TODO: handle overflows
+              } else {
+                // owerflow, so we do this
+                // for shl and shr_u just return zero,
+                // for shr_s return x >> (31|63)
+                if (op == ShlInt32 || op == ShlInt64 || op == ShrUInt32 ||
+                    op == ShrUInt64) {
+                  right->value = Literal::makeZero(right->type);
+                  return right;
+                }
+                if (op == ShrSInt32 || op == ShrSInt64) {
+                  leftRight->value = Literal::makeFromInt32(
+                    right->type.getByteSize() * CHAR_BIT - 1, right->type);
+                  return left;
+                }
+              }
             }
           }
         }

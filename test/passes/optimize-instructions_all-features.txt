@@ -2487,13 +2487,7 @@
   )
  )
  (func $shifts-square-overflow (param $x i32) (result i32)
-  (i32.shr_u
-   (i32.shr_u
-    (local.get $x)
-    (i32.const 31)
-   )
-   (i32.const 31)
-  )
+  (i32.const 0)
  )
  (func $shifts-square-no-overflow-small (param $x i32) (result i32)
   (i32.shr_u
@@ -2502,13 +2496,7 @@
   )
  )
  (func $shifts-square-overflow-64 (param $x i64) (result i64)
-  (i64.shr_u
-   (i64.shr_u
-    (local.get $x)
-    (i64.const 63)
-   )
-   (i64.const 63)
-  )
+  (i64.const 0)
  )
  (func $shifts-square-no-overflow-small-64 (param $x i64) (result i64)
   (i64.shr_u
