@@ -618,13 +618,19 @@ def compact_text(text):
 def generate_defs():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
 
-    with open(target, 'w') as out:
-        out.write(COPYRIGHT + '\n' + NOTICE)
+    rendered = COPYRIGHT + '\n' + NOTICE
+    exprs = get_expressions()
+    for expr in exprs:
+        rendered += expr.render()
 
-        exprs = get_expressions()
-        for expr in exprs:
-            out.write(expr.render())
+    # only write the file if something changed, so that we don't cause any
+    # unnecessary build system rebuilding
+    with open(target) as f:
+        existing = f.read()
 
+    if rendered != existing:
+        with open(target, 'w') as f:
+            f.write(rendered)
 
 def main():
     if sys.version_info.major != 3:
