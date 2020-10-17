@@ -747,22 +747,27 @@ class ExpressionDefinitionRenderer:
 
     def render(self, cls):
         name = cls.__name__
+
+        # Render the fields.
         fields = cls.get_fields()
         rendered_fields = [self.render_field(key, field) for key, field in fields.items()]
         fields_text = join_nested_lines(rendered_fields)
+
+        # Render the methods.
         methods = cls.get_methods()
         # render a default finalize if none has been specified
         if 'finalize' not in methods:
             methods['finalize'] = cls.default_finalize
         rendered_methods = [self.render_method(key, method) for key, method in methods.items()]
         methods_text = join_nested_lines(rendered_methods)
+
+        # Render the constructor(s).
         constructor_body = cls.__constructor_body__
         if constructor_body:
             constructor_body = ' ' + constructor_body + ' '
-
-        # if one of the fields allocates, then we can only emit one constructor,
-        # that uses the MixedArena. otherwise we emit one without as well (and
-        # the one with the MixedArena doesn't use it)
+        # If one of the fields allocates, then we can only emit one constructor,
+        # that uses the MixedArena. Otherwise we emit one without as well (and
+        # the one with the MixedArena doesn't use it).
         has_allocator = False
         for field in fields.values():
             if field.allocator:
@@ -783,6 +788,7 @@ class ExpressionDefinitionRenderer:
             ]
         constructors_text = join_nested_lines(constructors)
 
+        # Combine it all to emit the final rendered definition.
         text = """\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
