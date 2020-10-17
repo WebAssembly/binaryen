@@ -77,7 +77,7 @@ public:
   Call(MixedArena& allocator) : operands(allocator) {}
   ExpressionList operands;
   Name target;
-  bool isReturn;
+  bool isReturn = false;
   void finalize();
 };
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
@@ -86,7 +86,7 @@ public:
   Signature sig;
   ExpressionList operands;
   Expression* target;
-  bool isReturn;
+  bool isReturn = false;
   void finalize();
 };
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {

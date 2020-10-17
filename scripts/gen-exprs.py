@@ -25,24 +25,22 @@ import test.shared as shared
 class ExpressionChild: pass
 
 class Field(ExpressionChild):
+    type_name = None
     allocator = False
 
     def __init__(self, init=None):
         self.init = init
 
     def render(self, name):
-        typename = self.__class__.__name__
-        if hasattr(self, 'typename'):
-            typename = self.typename
+        type_name = self.type_name or self.__class__.__name__
         value = f' = {self.init}' if self.init else ''
-        return f'{typename} {name}{value};'
+        return f'{type_name} {name}{value};'
 
 class Name(Field):
     pass
 
 class Bool(Field):
-    def render(self, name):
-        return f'bool {name};'
+    type_name = 'bool'
 
 class Signature(Field):
     pass
@@ -68,35 +66,39 @@ class AtomicRMWOp(Field):
 class SIMDExtractOp(Field):
     pass
 
-class SIMDReplaceOp(Field):    pass
+class SIMDReplaceOp(Field):
+    pass
 
 class SIMDShuffleMask(Field):
-    def render(self, name):
-        return f'std::array<uint8_t, 16> {name};'
+    type_name = 'std::array<uint8_t, 16>'
 
-class SIMDTernaryOp(Field):    pass
+class SIMDTernaryOp(Field):
+    pass
 
-class SIMDShiftOp(Field):    pass
+class SIMDShiftOp(Field):
+    pass
 
-class SIMDLoadOp(Field):    pass
+class SIMDLoadOp(Field):
+    pass
 
-class Literal(Field):    pass
+class Literal(Field):
+    pass
 
-class UnaryOp(Field):    pass
+class UnaryOp(Field):
+    pass
 
-class BinaryOp(Field):    pass
+class BinaryOp(Field):
+    pass
 
 class ArenaVector(Field):
     allocator = True
 
-    def __init__(self, of):
-        self.of = of
-
-    def render(self, name):
-        return f'ArenaVector<{self.of}> {name};'
+    def __init__(self, of, *kwargs):
+        self.type_name = f'ArenaVector<{of}>'
+        super(ArenaVector, self).__init__(*kwargs)
 
 class Child(Field):
-    typename = 'Expression*'
+    type_name = 'Expression*'
 
 class Method:
     def __init__(self, paramses, result, const=False):
