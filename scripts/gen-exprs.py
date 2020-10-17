@@ -752,11 +752,14 @@ def compact_text(text):
         text = compacted
 
 
+clang_format_exe = shared.which('clang-format-9') or shared.which('clang-format')
+
+
 def clang_format(text):
     read, write = os.pipe()
     os.write(write, bytes(text, 'ascii'))
     os.close(write)
-    return subprocess.check_output(['clang-format'], stdin=read, universal_newlines=True)
+    return subprocess.check_output([clang_format_exe], stdin=read, universal_newlines=True)
 
 
 def write_if_changed(text, target, what):
