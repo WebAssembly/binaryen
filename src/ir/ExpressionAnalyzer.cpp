@@ -285,80 +285,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     std::vector<Expression*> leftStack;
     std::vector<Expression*> rightStack;
 
-    struct Immediates {
-      Comparer& parent;
-
-      Immediates(Comparer& parent) : parent(parent) {}
-
-      SmallVector<Name, 1> scopeNames;
-      SmallVector<Name, 1> nonScopeNames;
-      SmallVector<int32_t, 3> ints;
-      SmallVector<Literal, 1> literals;
-      SmallVector<Type, 1> types;
-      SmallVector<Index, 1> indexes;
-      SmallVector<Address, 2> addresses;
-
-      void visitScopeName(Name curr) { scopeNames.push_back(curr); }
-      void visitNonScopeName(Name curr) { nonScopeNames.push_back(curr); }
-      void visitInt(int32_t curr) { ints.push_back(curr); }
-      void visitLiteral(Literal curr) { literals.push_back(curr); }
-      void visitType(Type curr) { types.push_back(curr); }
-      void visitIndex(Index curr) { indexes.push_back(curr); }
-      void visitAddress(Address curr) { addresses.push_back(curr); }
-
-      // Comparison is by value, except for names, which must match.
-      bool operator==(const Immediates& other) {
-        if (scopeNames.size() != other.scopeNames.size()) {
-          return false;
-        }
-        for (Index i = 0; i < scopeNames.size(); i++) {
-          auto leftName = scopeNames[i];
-          auto rightName = other.scopeNames[i];
-          auto iter = parent.rightNames.find(leftName);
-          // If it's not found, that means it was defined out of the expression
-          // being compared, in which case we can just treat it literally - it
-          // must be exactly identical.
-          if (iter != parent.rightNames.end()) {
-            leftName = iter->second;
-          }
-          if (leftName != rightName) {
-            return false;
-          }
-        }
-        if (nonScopeNames != other.nonScopeNames) {
-          return false;
-        }
-        if (ints != other.ints) {
-          return false;
-        }
-        if (literals != other.literals) {
-          return false;
-        }
-        if (types != other.types) {
-          return false;
-        }
-        if (indexes != other.indexes) {
-          return false;
-        }
-        if (addresses != other.addresses) {
-          return false;
-        }
-        return true;
-      }
-
-      bool operator!=(const Immediates& other) { return !(*this == other); }
-
-      void clear() {
-        scopeNames.clear();
-        nonScopeNames.clear();
-        ints.clear();
-        literals.clear();
-        types.clear();
-        indexes.clear();
-        addresses.clear();
-      }
-    };
-
     bool noteNames(Name left, Name right) {
       if (left.is() != right.is()) {
         return false;
@@ -371,8 +297,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     }
 
     bool compare(Expression* left, Expression* right, ExprComparer comparer) {
-      Immediates leftImmediates(*this), rightImmediates(*this);
-
       // The empty name is the same on both sides.
       rightNames[Name()] = Name();
 
@@ -393,49 +317,26 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
         if (comparer(left, right)) {
           continue; // comparison hook, before all the rest
         }
-        // continue with normal structural comparison
-        if (left->_id != right->_id) {
+        // Do the actual comparison, updating the names and stacks accordingly.
+        if (!compareNodes(left, right)) {
           return false;
         }
-        // Blocks and loops introduce scoping.
-        if (auto* block = left->dynCast<Block>()) {
-          if (!noteNames(block->name, right->cast<Block>()->name)) {
-            return false;
-          }
-        } else if (auto* loop = left->dynCast<Loop>()) {
-          if (!noteNames(loop->name, right->cast<Loop>()->name)) {
-            return false;
-          }
-        } else {
-          // For all other nodes, compare their immediate values
-          visitImmediates(left, leftImmediates);
-          visitImmediates(right, rightImmediates);
-          if (leftImmediates != rightImmediates) {
-            return false;
-          }
-          leftImmediates.clear();
-          rightImmediates.clear();
-        }
-        // Add child nodes.
-        Index counter = 0;
-        for (auto* child : ChildIterator(left)) {
-          leftStack.push_back(child);
-          counter++;
-        }
-        for (auto* child : ChildIterator(right)) {
-          rightStack.push_back(child);
-          counter--;
-        }
-        // The number of child nodes must match (e.g. return has an optional
-        // one).
-        if (counter != 0) {
-          return false;
-        }
+// TODO make sure return's optinal node is ok handled
       }
       if (leftStack.size() > 0 || rightStack.size() > 0) {
         return false;
       }
       return true;
+    }
+
+    bool compareNodes(Expression* left, Expression* right) {
+      if (left->_id != right->_id) {
+        return false;
+      }
+      switch (left->_id) {
+        #include "compare-expressions.generated.h"
+        default: WASM_UNREACHABLE("unknown expression");
+      }
     }
   };
 

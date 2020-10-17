@@ -66,9 +66,13 @@ class Field(ExpressionChild):
     # the case for fields that allocate.
     allocator = False
 
-    def __init__(self, init=None):
+    def __init__(self, init=None, relevant_if=None):
+        # An initial value.
         self.init = init
-
+        # If set, a function to call to check if this property is in use (for
+        # example, a load's sign does not matter if it is a floating-point
+        # operation).
+        self.relevant_if = relevant_if
 
 class Name(Field):
     """A string name. Interned in Binaryen, so very efficient."""
@@ -122,6 +126,7 @@ class ArenaVector(Field):
     allocator = True
 
     def __init__(self, of, *kwargs):
+        self.of = of
         self.type_name = f'ArenaVector<{of}>'
         super(ArenaVector, self).__init__(*kwargs)
 
@@ -335,7 +340,7 @@ class GlobalSet(Expression):
 
 class Load(Expression):
     bytes = uint8_t()
-    signed_ = Bool()
+    signed_ = Bool(relevant_if='LoadUtils::isSignRelevant')
     offset = Address()
     align = Address()
     isAtomic = Bool()
@@ -671,6 +676,8 @@ NOTICE = """\
 //=============================================================================
 """
 
+BOILERPLATE = COPYRIGHT + '\n' + NOTICE
+
 
 ##############
 # Processing
@@ -716,11 +723,15 @@ def clang_format(text):
     return subprocess.check_output([clang_format_exe], stdin=read, universal_newlines=True)
 
 
-def write_if_changed(text, target, what):
+def write_result(text, target, what):
+    text = clang_format(text)
+
     # only write the file if something changed, so that we don't cause any
     # unnecessary build system rebuilding
-    with open(target) as f:
-        existing = f.read()
+    existing = None
+    if os.path.exists(target):
+        with open(target) as f:
+            existing = f.read()
 
     if text != existing:
         with open(target, 'w') as f:
@@ -806,6 +817,64 @@ public:
         return text
 
 
+class ExpressionComparisonRenderer:
+    """Renders code to compare expressions."""
+
+    def render(self, cls):
+        name = cls.__name__
+        operations = []
+
+        # Compare the fields.
+        fields = cls.get_fields()
+        for key, field in fields.items():
+            # Note that for children we don't need to compare here, or even to
+            # check if they are null for optional ones - all those are handled
+            # by the main logic. TODO perhaps we could be a little faster though
+            # if we don't even push, by checking first?
+            if field == Child:
+                operations.append(f'leftStack.push_back(left->{key});')
+                operations.append(f'rightStack.push_back(right->{key});')
+            elif field == ChildList:
+                operations.append('for (auto* child : left->%(key)s) { leftStack.push_back(child); }')
+                operations.append('for (auto* child : right->%(key)s) { rightStack.push_back(child); }')
+            elif field == Name:
+                if cls in (Block, Loop):
+                    # Blocks and Loops define names, so mark the names as equal
+                    # on both sides.
+                    operations.append(f'rightNames[left->{key}] = right->{key};')
+                else:
+                    # Anything else consumes a name: compare them, taking into
+                    # account the mapping.
+                    operations.append('if (rightNames[left->%(key)s] != right->%(key)s) { return false; }' % locals())
+            elif field == ArenaVector and field.of == 'Name':
+                operations.append('''\
+if (left->%(key)s.size() != right->%(key)s.size()) {
+  return false;
+}
+for (Index i = 0; i < left->%(key)s.size(); i++) {
+  if (rightNames[left->%(key)s[i]] != right->%(key)s[i]) {
+    return false;
+  }
+}''' % locals())
+            else:
+                check = 'if (left->%(key)s != right->%(key)s) { return false; }' % locals()
+                if field.relevant_if:
+                    relevant_if = field.relevant_if
+                    check = 'if (%(relevant_if)s(left)) { %(check)s }' % locals()
+                operations.append(check)
+
+        operations_text = join_nested_lines(operations)
+
+        # Combine it all to emit the final rendered definition.
+        text = """\
+case Expression::%(name)sId: {
+  %(operations_text)s
+  break;
+}
+""" % locals()
+        return text
+
+
 ########
 # Main
 ########
@@ -813,17 +882,25 @@ public:
 
 def generate_expression_definitions():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
-    rendered = COPYRIGHT + '\n' + NOTICE
+    rendered = BOILERPLATE
     exprs = get_expressions()
     for expr in exprs:
         rendered += ExpressionDefinitionRenderer().render(expr)
-    rendered = clang_format(rendered)
-    write_if_changed(rendered, target, 'expression definitions')
+    write_result(rendered, target, 'expression definitions')
+
+
+def generate_comparisons():
+    target = shared.in_binaryen('src', 'ir', 'compare-expressions.generated.h')
+    rendered = BOILERPLATE
+    exprs = get_expressions()
+    for expr in exprs:
+        rendered += ExpressionComparisonRenderer().render(expr)
+    write_result(rendered, target, 'expression comparisons')
 
 
 def main():
     generate_expression_definitions()
-
+    generate_comparisons()
 
 if __name__ == "__main__":
     main()
