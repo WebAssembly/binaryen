@@ -178,11 +178,6 @@ class Method:
         self.const = const
 
 
-##########################
-# Expression definitions
-##########################
-
-
 class Expression:
     """Core class from which all expressions inherit."""
 
@@ -214,6 +209,7 @@ class Expression:
 ###################################
 # Specific expression definitions
 ###################################
+
 
 class Nop(Expression):
     pass
@@ -640,7 +636,9 @@ class ArrayLen(Expression):
     pass
 
 
+###############
 # Boilerplate
+###############
 
 
 COPYRIGHT = f"""\
