@@ -178,13 +178,6 @@ class Method:
         self.result = result
         self.const = const
 
-    def render(self, name):
-        extra = ''
-        if self.const:
-            extra += ' const'
-        ret = [f'{self.result} {name}({params}){extra};' for params in self.paramses]
-        return join_nested_lines(ret)
-
 
 ##########################
 # Expression definitions
@@ -746,6 +739,13 @@ class ExpressionRenderer:
         value = f' = {field.init}' if field.init else ''
         return f'{type_name} {name}{value};'
 
+    def render_method(self, name, method):
+        extra = ''
+        if method.const:
+            extra += ' const'
+        ret = [f'{method.result} {name}({params}){extra};' for params in method.paramses]
+        return join_nested_lines(ret)
+
     def render(self, cls):
         """Generate the definition of an expression class."""
         name = cls.__name__
@@ -756,7 +756,7 @@ class ExpressionRenderer:
         # render a default finalize if none has been specified
         if 'finalize' not in methods:
             methods['finalize'] = cls.default_finalize
-        rendered_methods = [method.render(key) for key, method in methods.items()]
+        rendered_methods = [self.render_method(key, method) for key, method in methods.items()]
         methods_text = join_nested_lines(rendered_methods)
         constructor_body = cls.__constructor_body__
         if constructor_body:
