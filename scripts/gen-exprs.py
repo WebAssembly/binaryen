@@ -30,6 +30,9 @@ The output files are all in the source tree, with ".generated." in their name.
 Note that if there are no changes to be made, this script will not write
 anything to the output files, to avoid build systems doing extra work based on
 timestamp changes.
+
+If you are adding a new expression class to Binaryen, you probably need to just
+add to the "Specific expression definitions" section below.
 """
 
 import datetime
@@ -669,7 +672,9 @@ NOTICE = """\
 """
 
 
+##############
 # Processing
+##############
 
 
 def is_subclass_of(x, y):
