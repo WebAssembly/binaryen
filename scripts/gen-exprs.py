@@ -24,7 +24,9 @@ import test.shared as shared
 
 # Support definitions
 
-class ExpressionChild: pass
+class ExpressionChild:
+    pass
+
 
 class Field(ExpressionChild):
     type_name = None
@@ -38,59 +40,78 @@ class Field(ExpressionChild):
         value = f' = {self.init}' if self.init else ''
         return f'{type_name} {name}{value};'
 
+
 class Name(Field):
     pass
+
 
 class Bool(Field):
     type_name = 'bool'
 
+
 class Signature(Field):
     pass
+
 
 class Index(Field):
     pass
 
+
 class Address(Field):
     pass
+
 
 class Type(Field):
     pass
 
+
 class ExpressionList(Field):
     allocator = True
+
 
 class uint8_t(Field):
     pass
 
+
 class AtomicRMWOp(Field):
     pass
+
 
 class SIMDExtractOp(Field):
     pass
 
+
 class SIMDReplaceOp(Field):
     pass
+
 
 class SIMDShuffleMask(Field):
     type_name = 'std::array<uint8_t, 16>'
 
+
 class SIMDTernaryOp(Field):
     pass
+
 
 class SIMDShiftOp(Field):
     pass
 
+
 class SIMDLoadOp(Field):
     pass
+
 
 class Literal(Field):
     pass
 
+
 class UnaryOp(Field):
     pass
 
+
 class BinaryOp(Field):
     pass
+
 
 class ArenaVector(Field):
     allocator = True
@@ -99,8 +120,10 @@ class ArenaVector(Field):
         self.type_name = f'ArenaVector<{of}>'
         super(ArenaVector, self).__init__(*kwargs)
 
+
 class Child(Field):
     type_name = 'Expression*'
+
 
 class Method:
     def __init__(self, paramses, result, const=False):
@@ -116,6 +139,7 @@ class Method:
             extra += ' const'
         ret = [f'{self.result} {name}({params}){extra};' for params in self.paramses]
         return join_nested_lines(ret)
+
 
 class Expression:
     __constructor_body__ = ''
@@ -196,6 +220,7 @@ public:
 class Nop(Expression):
     pass
 
+
 class Block(Expression):
     name = Name()
     list = ExpressionList()
@@ -224,6 +249,7 @@ class Block(Expression):
     '''
     finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
+
 class If(Expression):
     condition = Child()
     ifTrue = Child()
@@ -237,10 +263,10 @@ class If(Expression):
         work this does is to set the type to unreachable in the cases that is
         needed.
 
-      
         set the type purely based on its contents.
     '''
     finalize = Method(('Type type_', ''), 'void')
+
 
 class Loop(Expression):
     name = Name()
@@ -257,12 +283,14 @@ class Loop(Expression):
     '''
     finalize = Method(('Type type_', ''), 'void')
 
+
 class Break(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
     name = Name()
     value = Child(init='nullptr')
     condition = Child(init='nullptr')
+
 
 class Switch(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
@@ -272,34 +300,41 @@ class Switch(Expression):
     condition = Child()
     value = Child(init='nullptr')
 
+
 class Call(Expression):
     operands = ExpressionList()
     target = Name()
-    isReturn = Bool(init='false');
+    isReturn = Bool(init='false')
+
 
 class CallIndirect(Expression):
     sig = Signature()
     operands = ExpressionList()
     target = Child()
-    isReturn = Bool(init='false');
+    isReturn = Bool(init='false')
+
 
 class LocalGet(Expression):
     index = Index()
+
 
 class LocalSet(Expression):
     index = Index()
     value = Child()
 
     isTee = Method('', 'bool', const=True)
-    makeTee = Method('Type type', 'void');
-    makeSet = Method('', 'void');
+    makeTee = Method('Type type', 'void')
+    makeSet = Method('', 'void')
+
 
 class GlobalGet(Expression):
     name = Name()
 
+
 class GlobalSet(Expression):
     name = Name()
     value = Child()
+
 
 class Load(Expression):
     bytes = uint8_t()
@@ -311,6 +346,7 @@ class Load(Expression):
 
     # type must be set during creation, cannot be inferred
 
+
 class Store(Expression):
     bytes = uint8_t()
     offset = Address()
@@ -320,12 +356,14 @@ class Store(Expression):
     value = Child()
     valueType = Type()
 
+
 class AtomicRMW(Expression):
     op = AtomicRMWOp()
     bytes = uint8_t()
     offset = Address()
     ptr = Child()
     value = Child()
+
 
 class AtomicCmpxchg(Expression):
     bytes = uint8_t()
@@ -334,6 +372,7 @@ class AtomicCmpxchg(Expression):
     expected = Child()
     replacement = Child()
 
+
 class AtomicWait(Expression):
     offset = Address()
     ptr = Child()
@@ -341,10 +380,12 @@ class AtomicWait(Expression):
     timeout = Child()
     expectedType = Type()
 
+
 class AtomicNotify(Expression):
     offset = Address()
     ptr = Child()
     notifyCount = Child()
+
 
 class AtomicFence(Expression):
     '''
@@ -354,10 +395,12 @@ class AtomicFence(Expression):
     '''
     order = uint8_t()
 
+
 class SIMDExtract(Expression):
     op = SIMDExtractOp()
     vec = Child()
     index = uint8_t()
+
 
 class SIMDReplace(Expression):
     op = SIMDReplaceOp()
@@ -365,11 +408,12 @@ class SIMDReplace(Expression):
     index = uint8_t()
     value = Child()
 
+
 class SIMDShuffle(Expression):
     left = Child()
     right = Child()
     mask = SIMDShuffleMask()
- 
+
 
 class SIMDTernary(Expression):
     op = SIMDTernaryOp()
@@ -377,10 +421,12 @@ class SIMDTernary(Expression):
     b = Child()
     c = Child()
 
+
 class SIMDShift(Expression):
     op = SIMDShiftOp()
     vec = Child()
     shift = Child()
+
 
 class SIMDLoad(Expression):
     op = SIMDLoadOp()
@@ -388,7 +434,8 @@ class SIMDLoad(Expression):
     align = Address()
     ptr = Child()
 
-    getMemBytes = Method('', 'Index');
+    getMemBytes = Method('', 'Index')
+
 
 class MemoryInit(Expression):
     segment = Index()
@@ -396,29 +443,35 @@ class MemoryInit(Expression):
     offset = Child()
     size = Child()
 
+
 class DataDrop(Expression):
     segment = Index()
+
 
 class MemoryCopy(Expression):
     dest = Child()
     source = Child()
     size = Child()
 
+
 class MemoryFill(Expression):
     dest = Child()
     value = Child()
     size = Child()
 
+
 class Const(Expression):
     value = Literal()
 
-    set = Method('Literal value_', 'Const*');
+    set = Method('Literal value_', 'Const*')
+
 
 class Unary(Expression):
     op = UnaryOp()
     value = Child()
 
     isRelational = Method('', 'bool')
+
 
 class Binary(Expression):
     op = BinaryOp()
@@ -431,6 +484,7 @@ class Binary(Expression):
     '''
     isRelational = Method('', 'bool')
 
+
 class Select(Expression):
     ifTrue = Child()
     ifFalse = Child()
@@ -438,49 +492,60 @@ class Select(Expression):
 
     finalize = Method(('', 'Type type_'), 'void')
 
+
 class Drop(Expression):
     value = Child()
+
 
 class Return(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
     value = Child(init='nullptr')
 
+
 class MemorySize(Expression):
     __constructor_body__ = 'type = Type::i32;'
 
     ptrType = Type(init='Type::i32')
 
-    make64 = Method('', 'void');
+    make64 = Method('', 'void')
+
 
 class MemoryGrow(Expression):
     delta = Child(init='nullptr')
     ptrType = Type(init='Type::i32')
 
-    make64 = Method('', 'void');
+    make64 = Method('', 'void')
+
 
 class Unreachable(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
-'''
-Represents a pop of a value that arrives as an implicit argument to the
-current block. Currently used in exception handling.
-'''
+
 class Pop(Expression):
+    '''
+    Represents a pop of a value that arrives as an implicit argument to the
+    current block. Currently used in exception handling.
+    '''
     pass
+
 
 class RefNull(Expression):
     finalize = Method(('', 'HeapType heapType', 'Type type'), 'void')
 
+
 class RefIsNull(Expression):
     value = Child()
+
 
 class RefFunc(Expression):
     func = Name()
 
+
 class RefEq(Expression):
     left = Child()
     right = Child()
+
 
 class Try(Expression):
     body = Child()
@@ -488,12 +553,15 @@ class Try(Expression):
 
     finalize = Method(('', 'Type type_'), 'void')
 
+
 class Throw(Expression):
     event = Name()
     operands = ExpressionList()
 
+
 class Rethrow(Expression):
     exnref = Child()
+
 
 class BrOnExn(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
@@ -507,52 +575,68 @@ class BrOnExn(Expression):
     '''
     sent = Type()
 
+
 class TupleMake(Expression):
     operands = ExpressionList()
+
 
 class TupleExtract(Expression):
     tuple = Child()
     index = Index()
 
+
 class I31New(Expression):
     value = Child()
+
 
 class I31Get(Expression):
     i31 = Child()
     signed_ = Bool()
 
+
 class RefTest(Expression):
     pass
+
 
 class RefCast(Expression):
     pass
 
+
 class BrOnCast(Expression):
     pass
+
 
 class RttCanon(Expression):
     pass
 
+
 class RttSub(Expression):
     pass
+
 
 class StructNew(Expression):
     pass
 
+
 class StructGet(Expression):
     pass
+
 
 class StructSet(Expression):
     pass
 
+
 class ArrayNew(Expression):
     pass
+
 
 class ArrayGet(Expression):
     pass
 
+
 class ArraySet(Expression):
     pass
+
 
 class ArrayLen(Expression):
     pass
@@ -640,6 +724,7 @@ def write_if_changed(text, target, what):
             f.write(text)
     else:
         print(f'{what} did not change')
+
 
 def generate_defs():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
