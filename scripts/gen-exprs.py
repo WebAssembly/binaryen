@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import sys
 
 import test.shared as shared
@@ -554,9 +555,9 @@ class ArrayLen(Expression):
 # Boilerplate
 
 
-COPYRIGHT = '''\
+COPYRIGHT = f'''\
 /*
- * Copyright 2020 WebAssembly Community Group participants
+ * Copyright {datetime.datetime.now().year} WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
