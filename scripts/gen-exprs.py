@@ -209,7 +209,7 @@ class Expression:
         """Get a map of method name => method."""
         methods = {}
         for key, value in self.__dict__.items():
-            if value.__class__ == Method:
+            if is_a(value, Method):
                 methods[key] = value
         return methods
 
@@ -685,8 +685,11 @@ BOILERPLATE = COPYRIGHT + '\n' + NOTICE
 
 
 def is_subclass_of(x, y):
-    return getattr(x, '__bases__', None) == (y,)
+    return y in getattr(x, '__bases__', {})
 
+
+def is_a(x, cls):
+    return x.__class__ == cls
 
 def get_expressions():
     ret = []
@@ -724,6 +727,7 @@ def clang_format(text):
 
 
 def write_result(text, target, what):
+    text = BOILERPLATE + '\n' + text
     text = clang_format(text)
 
     # only write the file if something changed, so that we don't cause any
@@ -829,24 +833,26 @@ class ExpressionComparisonRenderer:
         for key, field in fields.items():
             # Note that for children we don't need to compare here, or even to
             # check if they are null for optional ones - all those are handled
-            # by the main logic. TODO perhaps we could be a little faster though
-            # if we don't even push, by checking first?
-            if field == Child:
+            # by the main logic.
+            # TODO perhaps we could be a little faster if we check first?
+            if is_a(field, Child):
                 operations.append(f'leftStack.push_back(left->{key});')
                 operations.append(f'rightStack.push_back(right->{key});')
-            elif field == ChildList:
-                operations.append('for (auto* child : left->%(key)s) { leftStack.push_back(child); }')
-                operations.append('for (auto* child : right->%(key)s) { rightStack.push_back(child); }')
-            elif field == Name:
+            elif is_a(field, ChildList):
+                operations.append('if (left->%(key)s.size() != right.%(key)s.size()) { return false; }' % locals())
+                operations.append('for (auto* child : left->%(key)s) { leftStack.push_back(child); }' % locals())
+                operations.append('for (auto* child : right->%(key)s) { rightStack.push_back(child); }' % locals())
+            elif is_a(field, Name):
                 if cls in (Block, Loop):
                     # Blocks and Loops define names, so mark the names as equal
                     # on both sides.
+                    operations.append('if (left->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
                     operations.append(f'rightNames[left->{key}] = right->{key};')
                 else:
                     # Anything else consumes a name: compare them, taking into
                     # account the mapping.
                     operations.append('if (rightNames[left->%(key)s] != right->%(key)s) { return false; }' % locals())
-            elif field == ArenaVector and field.of == 'Name':
+            elif is_a(field, ArenaVector) and field.of == 'Name':
                 operations.append('''\
 if (left->%(key)s.size() != right->%(key)s.size()) {
   return false;
@@ -872,6 +878,7 @@ case Expression::%(name)sId: {
   break;
 }
 """ % locals()
+        text = compact_text(text)
         return text
 
 
@@ -882,18 +889,16 @@ case Expression::%(name)sId: {
 
 def generate_expression_definitions():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
-    rendered = BOILERPLATE
-    exprs = get_expressions()
-    for expr in exprs:
+    rendered = ''
+    for expr in get_expressions():
         rendered += ExpressionDefinitionRenderer().render(expr)
     write_result(rendered, target, 'expression definitions')
 
 
 def generate_comparisons():
     target = shared.in_binaryen('src', 'ir', 'compare-expressions.generated.h')
-    rendered = BOILERPLATE
-    exprs = get_expressions()
-    for expr in exprs:
+    rendered = ''
+    for expr in get_expressions():
         rendered += ExpressionComparisonRenderer().render(expr)
     write_result(rendered, target, 'expression comparisons')
 

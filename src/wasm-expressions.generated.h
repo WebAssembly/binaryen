@@ -20,6 +20,7 @@
 // treat it like human-written code in all other ways, though, like reviewing
 // it in a PR, etc.
 //=============================================================================
+
 class Nop : public SpecificExpression<Expression::NopId> {
 public:
   Nop() {}
