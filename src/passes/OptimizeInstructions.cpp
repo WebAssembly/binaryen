@@ -1695,29 +1695,22 @@ private:
                          Bits::getEffectiveShifts(right);
             auto effective = Bits::getEffectiveShifts(total, right->type);
             if (op == RotLInt32 || op == RotLInt64 || op == RotRInt32 ||
-                op == RotRInt64) {
-              // for cyclic shift rotations overflow is legit
+                op == RotRInt64 || total == effective) {
               leftRight->value = Literal::makeFromInt32(effective, right->type);
               return left;
             } else {
-              if (total == effective) {
-                // no overflow, we can do this
-                leftRight->value = Literal::makeFromInt32(total, right->type);
+              // owerflow, so we we make the following:
+              // - for shl and shr_u just return zero;
+              // - for shr_s return x >> (31|63).
+              if (op == ShlInt32 || op == ShlInt64 || op == ShrUInt32 ||
+                  op == ShrUInt64) {
+                right->value = Literal::makeZero(right->type);
+                return right;
+              }
+              if (op == ShrSInt32 || op == ShrSInt64) {
+                leftRight->value = Literal::makeFromInt32(
+                  right->type.getByteSize() * CHAR_BIT - 1, right->type);
                 return left;
-              } else {
-                // owerflow, so we do this
-                // for shl and shr_u just return zero,
-                // for shr_s return x >> (31|63)
-                if (op == ShlInt32 || op == ShlInt64 || op == ShrUInt32 ||
-                    op == ShrUInt64) {
-                  right->value = Literal::makeZero(right->type);
-                  return right;
-                }
-                if (op == ShrSInt32 || op == ShrSInt64) {
-                  leftRight->value = Literal::makeFromInt32(
-                    right->type.getByteSize() * CHAR_BIT - 1, right->type);
-                  return left;
-                }
               }
             }
           }
