@@ -40,7 +40,10 @@ import sys
 import test.shared as shared
 
 
+#######################
 # Support definitions
+#######################
+
 
 class ExpressionChild:
     """Something that resides on an Expression."""
@@ -54,7 +57,7 @@ class Field(ExpressionChild):
     """
 
     # A possible override for the name. This is necessary if the name is not a
-    # valid Python name, for example
+    # valid Python name, for example.
     type_name = None
 
     # Whether this needs to receive an allocator in its constructor, which is
@@ -188,13 +191,23 @@ class Method:
         return join_nested_lines(ret)
 
 
+##########################
+# Expression definitions
+##########################
+
+
 class Expression:
+    """Core class from which all expressions inherit."""
+
+    # Optional content to place in the constructor body.
     __constructor_body__ = ''
 
+    # If no finalize() method is defined, a default one is emitted.
     default_finalize = Method('', 'void')
 
     @classmethod
     def get_fields(self):
+        """Get a map of field name => field."""
         fields = {}
         for key, value in self.__dict__.items():
             if is_subclass_of(value.__class__, Field):
@@ -203,61 +216,12 @@ class Expression:
 
     @classmethod
     def get_methods(self):
+        """Get a map of method name => method."""
         methods = {}
         for key, value in self.__dict__.items():
             if value.__class__ == Method:
                 methods[key] = value
         return methods
-
-    @classmethod
-    def render(self):
-        name = self.__name__
-        fields = self.get_fields()
-        rendered_fields = [field.render(key) for key, field in fields.items()]
-        fields_text = join_nested_lines(rendered_fields)
-        methods = self.get_methods()
-        # render a default finalize if none has been specified
-        if 'finalize' not in methods:
-            methods['finalize'] = self.default_finalize
-        rendered_methods = [method.render(key) for key, method in methods.items()]
-        methods_text = join_nested_lines(rendered_methods)
-        constructor_body = self.__constructor_body__
-        if constructor_body:
-            constructor_body = ' ' + constructor_body + ' '
-
-        # if one of the fields allocates, then we can only emit one constructor,
-        # that uses the MixedArena. otherwise we emit one without as well (and
-        # the one with the MixedArena doesn't use it)
-        has_allocator = False
-        for field in fields.values():
-            if field.allocator:
-                has_allocator = True
-        if not has_allocator:
-            constructors = [
-                '%(name)s() {%(constructor_body)s}' % locals(),
-                '%(name)s(MixedArena& allocator) : %(name)s() {}' % locals()
-            ]
-        else:
-            field_constructors = []
-            for key, field in fields.items():
-                if field.allocator:
-                    field_constructors.append(f'{key}(allocator)')
-            field_constructors_text = ', '.join(field_constructors)
-            constructors = [
-                '%(name)s(MixedArena& allocator) : %(field_constructors_text)s {%(constructor_body)s}' % locals()
-            ]
-        constructors_text = join_nested_lines(constructors)
-
-        text = """\
-class %(name)s : public SpecificExpression<Expression::%(name)sId> {
-public:
-  %(constructors_text)s
-  %(fields_text)s
-  %(methods_text)s
-};
-""" % locals()
-        text = compact_text(text)
-        return text
 
 
 ###################################
@@ -776,12 +740,68 @@ def write_if_changed(text, target, what):
         print(f'{what} did not change')
 
 
+##############################################################################
+# Generate the main wasm-expressions header file with expression definitions.
+##############################################################################
+
+
+def generate_def(cls):
+    """Generate the definition of an expression class."""
+    name = cls.__name__
+    fields = cls.get_fields()
+    rendered_fields = [field.render(key) for key, field in fields.items()]
+    fields_text = join_nested_lines(rendered_fields)
+    methods = cls.get_methods()
+    # render a default finalize if none has been specified
+    if 'finalize' not in methods:
+        methods['finalize'] = cls.default_finalize
+    rendered_methods = [method.render(key) for key, method in methods.items()]
+    methods_text = join_nested_lines(rendered_methods)
+    constructor_body = cls.__constructor_body__
+    if constructor_body:
+        constructor_body = ' ' + constructor_body + ' '
+
+    # if one of the fields allocates, then we can only emit one constructor,
+    # that uses the MixedArena. otherwise we emit one without as well (and
+    # the one with the MixedArena doesn't use it)
+    has_allocator = False
+    for field in fields.values():
+        if field.allocator:
+            has_allocator = True
+    if not has_allocator:
+        constructors = [
+            '%(name)s() {%(constructor_body)s}' % locals(),
+            '%(name)s(MixedArena& allocator) : %(name)s() {}' % locals()
+        ]
+    else:
+        field_constructors = []
+        for key, field in fields.items():
+            if field.allocator:
+                field_constructors.append(f'{key}(allocator)')
+        field_constructors_text = ', '.join(field_constructors)
+        constructors = [
+            '%(name)s(MixedArena& allocator) : %(field_constructors_text)s {%(constructor_body)s}' % locals()
+        ]
+    constructors_text = join_nested_lines(constructors)
+
+    text = """\
+class %(name)s : public SpecificExpression<Expression::%(name)sId> {
+public:
+  %(constructors_text)s
+  %(fields_text)s
+  %(methods_text)s
+};
+""" % locals()
+    text = compact_text(text)
+    return text
+
+
 def generate_defs():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
     rendered = COPYRIGHT + '\n' + NOTICE
     exprs = get_expressions()
     for expr in exprs:
-        rendered += expr.render()
+        rendered += generate_def(expr)
     rendered = clang_format(rendered)
     write_if_changed(rendered, target, 'expression definitions')
 
