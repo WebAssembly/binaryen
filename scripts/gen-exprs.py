@@ -728,12 +728,14 @@ def write_if_changed(text, target, what):
         print(f'{what} did not change')
 
 
-##############################################################################
-# Generate the main wasm-expressions header file with expression definitions.
-##############################################################################
+#############
+# Renderers
+#############
 
 
-class ExpressionRenderer:
+class ExpressionDefinitionRenderer:
+    """Renders the header definition of an expression."""
+
     def render_field(self, name, field):
         type_name = field.type_name or field.__class__.__name__
         value = f' = {field.init}' if field.init else ''
@@ -747,7 +749,6 @@ class ExpressionRenderer:
         return join_nested_lines(ret)
 
     def render(self, cls):
-        """Generate the definition of an expression class."""
         name = cls.__name__
         fields = cls.get_fields()
         rendered_fields = [self.render_field(key, field) for key, field in fields.items()]
@@ -797,19 +798,19 @@ public:
         return text
 
 
-def generate_expressions():
+########
+# Main
+########
+
+
+def generate_expression_definitions():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
     rendered = COPYRIGHT + '\n' + NOTICE
     exprs = get_expressions()
     for expr in exprs:
-        rendered += ExpressionRenderer().render(expr)
+        rendered += ExpressionDefinitionRenderer().render(expr)
     rendered = clang_format(rendered)
     write_if_changed(rendered, target, 'expression definitions')
-
-
-########
-# Main
-########
 
 
 def main():
@@ -817,7 +818,7 @@ def main():
         import datetime
         print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
         sys.exit(1)
-    generate_expressions()
+    generate_expression_definitions()
 
 
 if __name__ == "__main__":
