@@ -15,6 +15,8 @@
 # limitations under the License.
 
 import datetime
+import os
+import subprocess
 import sys
 
 import test.shared as shared
@@ -608,7 +610,7 @@ def get_expressions():
 
 
 def join_nested_lines(lines):
-  return '\n  '.join(lines)
+    return '\n  '.join(lines)
 
 
 def compact_text(text):
@@ -619,6 +621,13 @@ def compact_text(text):
         text = compacted
 
 
+def clang_format(text):
+    read, write = os.pipe()
+    os.write(write, bytes(text, 'ascii'))
+    os.close(write)
+    return subprocess.check_output(['clang-format'], stdin=read, universal_newlines=True)
+
+
 def generate_defs():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
 
@@ -626,6 +635,7 @@ def generate_defs():
     exprs = get_expressions()
     for expr in exprs:
         rendered += expr.render()
+    rendered = clang_format(rendered)
 
     # only write the file if something changed, so that we don't cause any
     # unnecessary build system rebuilding

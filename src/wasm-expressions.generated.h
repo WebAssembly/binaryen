@@ -65,7 +65,9 @@ public:
 };
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) { type = Type::unreachable; }
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
+  }
   ArenaVector<Name> targets;
   Name default_;
   Expression* condition;
