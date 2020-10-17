@@ -1696,6 +1696,8 @@ private:
             auto effective = Bits::getEffectiveShifts(total, right->type);
             if (op == RotLInt32 || op == RotLInt64 || op == RotRInt32 ||
                 op == RotRInt64 || total == effective) {
+              // no owerflow (total == effective) or rotational shifts which
+              // owerflow-agnostic
               leftRight->value = Literal::makeFromInt32(effective, right->type);
               return left;
             } else {
