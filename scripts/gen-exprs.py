@@ -14,6 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Define wasm expressions, and autogenerate code for them.
+
+The goal is to define expression structure in a single place, and emit all the
+necessary boilerplate code here, instead of doing so manually.
+
+In theory templates, macros, or some other method could be used in the
+language itself. However, we want more power than those things allow.
+
+This emits "reasonably" formatted code, and runs clang-format to polish it.
+
+The output files are all in the source tree, with ".generated." in their name.
+
+Note that if there are no changes to be made, this script will not write
+anything to the output files, to avoid build systems doing extra work based on
+timestamp changes.
+"""
+
 import datetime
 import os
 import subprocess
@@ -25,11 +43,22 @@ import test.shared as shared
 # Support definitions
 
 class ExpressionChild:
-    pass
+    """Something that resides on an Expression."""
 
 
 class Field(ExpressionChild):
+    """A field on an expression, such as an immediate or a child.
+
+    These are rendered using the class name as the type, in most cases,
+    allowing you to just define a class and use it.
+    """
+
+    # A possible override for the name. This is necessary if the name is not a
+    # valid Python name, for example
     type_name = None
+
+    # Whether this needs to receive an allocator in its constructor, which is
+    # the case for fields that allocate.
     allocator = False
 
     def __init__(self, init=None):
@@ -42,78 +71,54 @@ class Field(ExpressionChild):
 
 
 class Name(Field):
-    pass
+    """A string name. Interned in Binaryen, so very efficient."""
 
 
 class Bool(Field):
+    """A boolean."""
     type_name = 'bool'
 
 
 class Signature(Field):
-    pass
+    """A function signature consisting of input and output types."""
 
 
 class Index(Field):
-    pass
+    """A number representing an index (e.g. function) in the wasm file."""
 
 
 class Address(Field):
-    pass
+    """A number representing an address or an offset in linear memory."""
 
 
 class Type(Field):
-    pass
-
-
-class ExpressionList(Field):
-    allocator = True
+    """An IR type."""
 
 
 class uint8_t(Field):
-    pass
-
-
-class AtomicRMWOp(Field):
-    pass
-
-
-class SIMDExtractOp(Field):
-    pass
-
-
-class SIMDReplaceOp(Field):
-    pass
-
-
-class SIMDShuffleMask(Field):
-    type_name = 'std::array<uint8_t, 16>'
-
-
-class SIMDTernaryOp(Field):
-    pass
-
-
-class SIMDShiftOp(Field):
-    pass
-
-
-class SIMDLoadOp(Field):
-    pass
+    """A uint_8 immediate."""
 
 
 class Literal(Field):
-    pass
+    """A constant literal value."""
 
 
 class UnaryOp(Field):
-    pass
+    """A unary opcode."""
 
 
 class BinaryOp(Field):
-    pass
+    """A binary opcode."""
 
 
 class ArenaVector(Field):
+    """A vector of items stored in the expression arena.
+
+    Expressions are stored in arenas, and should not allocate storage using
+    malloc/free normally; instead they should only allocate in the arena they
+    are in. Binaryen uses arena allocation for both speed and safety.
+    """
+
     allocator = True
 
     def __init__(self, of, *kwargs):
@@ -122,10 +127,52 @@ class ArenaVector(Field):
 
 
 class Child(Field):
+    """A child expression."""
+
     type_name = 'Expression*'
 
 
+class ChildList(Field):
+    """A list of child expressions."""
+
+    type_name = 'ExpressionList'
+
+    allocator = True
+
+
+class AtomicRMWOp(Field):
+    """An atomic RMW opcode."""
+
+
+class SIMDExtractOp(Field):
+    """A SIMD Extract opcode."""
+
+
+class SIMDReplaceOp(Field):
+    """A SIMD Replace opcode."""
+
+
+class SIMDShuffleMask(Field):
+    """An SIMD shuffle mask."""
+
+    type_name = 'std::array<uint8_t, 16>'
+
+
+class SIMDTernaryOp(Field):
+    """A SIMD ternary opcode."""
+
+
+class SIMDShiftOp(Field):
+    """A SIMD shift opcode."""
+
+
+class SIMDLoadOp(Field):
+    """A SIMD load opcode."""
+
+
 class Method:
+    """A function method on an expression class."""
+
     def __init__(self, paramses, result, const=False):
         self.paramses = paramses
         if type(self.paramses) is str:
@@ -201,14 +248,14 @@ class Expression:
             ]
         constructors_text = join_nested_lines(constructors)
 
-        text = '''\
+        text = """\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
   %(constructors_text)s
   %(fields_text)s
   %(methods_text)s
 };
-''' % locals()
+""" % locals()
         text = compact_text(text)
         return text
 
@@ -223,9 +270,9 @@ class Nop(Expression):
 
 class Block(Expression):
     name = Name()
-    list = ExpressionList()
+    list = ChildList()
 
-    '''
+    """
         finalize has three overloads:
 
         void ();
@@ -246,7 +293,7 @@ class Block(Expression):
         this block. this avoids the need to scan the contents of the block in the
         case that it might be unreachable, so it is recommended if you already know
         the type and breakability anyhow.
-    '''
+    """
     finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
 
@@ -255,7 +302,7 @@ class If(Expression):
     ifTrue = Child()
     ifFalse = Child(init='nullptr')
 
-    '''
+    """
         void finalize(Type type_);
 
         set the type given you know its type, which is the case when parsing
@@ -264,7 +311,7 @@ class If(Expression):
         needed.
 
         set the type purely based on its contents.
-    '''
+    """
     finalize = Method(('Type type_', ''), 'void')
 
 
@@ -272,7 +319,7 @@ class Loop(Expression):
     name = Name()
     body = Child()
 
-    '''
+    """
         set the type given you know its type, which is the case when parsing
         s-expression or binary, as explicit types are given. the only additional
         work this does is to set the type to unreachable in the cases that is
@@ -280,7 +327,7 @@ class Loop(Expression):
         void finalize(Type type_);
 
         set the type purely based on its contents.
-    '''
+    """
     finalize = Method(('Type type_', ''), 'void')
 
 
@@ -302,14 +349,14 @@ class Switch(Expression):
 
 
 class Call(Expression):
-    operands = ExpressionList()
+    operands = ChildList()
     target = Name()
     isReturn = Bool(init='false')
 
 
 class CallIndirect(Expression):
     sig = Signature()
-    operands = ExpressionList()
+    operands = ChildList()
     target = Child()
     isReturn = Bool(init='false')
 
@@ -388,11 +435,11 @@ class AtomicNotify(Expression):
 
 
 class AtomicFence(Expression):
-    '''
+    """
     Current wasm threads only supports sequentialy consistent atomics, but
     other orderings may be added in the future. This field is reserved for
     that, and currently set to 0.
-    '''
+    """
     order = uint8_t()
 
 
@@ -478,10 +525,10 @@ class Binary(Expression):
     left = Child()
     right = Child()
 
-    '''
+    """
     the type is always the type of the operands,
     except for relationals
-    '''
+    """
     isRelational = Method('', 'bool')
 
 
@@ -523,10 +570,10 @@ class Unreachable(Expression):
 
 
 class Pop(Expression):
-    '''
+    """
     Represents a pop of a value that arrives as an implicit argument to the
     current block. Currently used in exception handling.
-    '''
+    """
     pass
 
 
@@ -556,7 +603,7 @@ class Try(Expression):
 
 class Throw(Expression):
     event = Name()
-    operands = ExpressionList()
+    operands = ChildList()
 
 
 class Rethrow(Expression):
@@ -569,15 +616,15 @@ class BrOnExn(Expression):
     name = Name()
     event = Name()
     exnref = Child()
-    '''
+    """
     This is duplicate info of param types stored in Event, but this is required
     for us to know the type of the value sent to the target block.
-    '''
+    """
     sent = Type()
 
 
 class TupleMake(Expression):
-    operands = ExpressionList()
+    operands = ChildList()
 
 
 class TupleExtract(Expression):
@@ -645,7 +692,7 @@ class ArrayLen(Expression):
 # Boilerplate
 
 
-COPYRIGHT = f'''\
+COPYRIGHT = f"""\
 /*
  * Copyright {datetime.datetime.now().year} WebAssembly Community Group participants
  *
@@ -661,16 +708,16 @@ COPYRIGHT = f'''\
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'''
+"""
 
-NOTICE = '''\
+NOTICE = """\
 //=============================================================================
 // This is an AUTOGENERATED file, even though it looks human-readable! Do not
 // edit it by hand, instead edit what it is generated from. You can and should
 // treat it like human-written code in all other ways, though, like reviewing
 // it in a PR, etc.
 //=============================================================================
-'''
+"""
 
 
 # Processing
