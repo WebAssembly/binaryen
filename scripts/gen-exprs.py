@@ -67,11 +67,6 @@ class Field(ExpressionChild):
     def __init__(self, init=None):
         self.init = init
 
-    def render(self, name):
-        type_name = self.type_name or self.__class__.__name__
-        value = f' = {self.init}' if self.init else ''
-        return f'{type_name} {name}{value};'
-
 
 class Name(Field):
     """A string name. Interned in Binaryen, so very efficient."""
@@ -745,46 +740,52 @@ def write_if_changed(text, target, what):
 ##############################################################################
 
 
-def render_expression(cls):
-    """Generate the definition of an expression class."""
-    name = cls.__name__
-    fields = cls.get_fields()
-    rendered_fields = [field.render(key) for key, field in fields.items()]
-    fields_text = join_nested_lines(rendered_fields)
-    methods = cls.get_methods()
-    # render a default finalize if none has been specified
-    if 'finalize' not in methods:
-        methods['finalize'] = cls.default_finalize
-    rendered_methods = [method.render(key) for key, method in methods.items()]
-    methods_text = join_nested_lines(rendered_methods)
-    constructor_body = cls.__constructor_body__
-    if constructor_body:
-        constructor_body = ' ' + constructor_body + ' '
+class ExpressionRenderer:
+    def render_field(self, name, field):
+        type_name = field.type_name or field.__class__.__name__
+        value = f' = {field.init}' if field.init else ''
+        return f'{type_name} {name}{value};'
 
-    # if one of the fields allocates, then we can only emit one constructor,
-    # that uses the MixedArena. otherwise we emit one without as well (and
-    # the one with the MixedArena doesn't use it)
-    has_allocator = False
-    for field in fields.values():
-        if field.allocator:
-            has_allocator = True
-    if not has_allocator:
-        constructors = [
-            '%(name)s() {%(constructor_body)s}' % locals(),
-            '%(name)s(MixedArena& allocator) : %(name)s() {}' % locals()
-        ]
-    else:
-        field_constructors = []
-        for key, field in fields.items():
+    def render(self, cls):
+        """Generate the definition of an expression class."""
+        name = cls.__name__
+        fields = cls.get_fields()
+        rendered_fields = [self.render_field(key, field) for key, field in fields.items()]
+        fields_text = join_nested_lines(rendered_fields)
+        methods = cls.get_methods()
+        # render a default finalize if none has been specified
+        if 'finalize' not in methods:
+            methods['finalize'] = cls.default_finalize
+        rendered_methods = [method.render(key) for key, method in methods.items()]
+        methods_text = join_nested_lines(rendered_methods)
+        constructor_body = cls.__constructor_body__
+        if constructor_body:
+            constructor_body = ' ' + constructor_body + ' '
+
+        # if one of the fields allocates, then we can only emit one constructor,
+        # that uses the MixedArena. otherwise we emit one without as well (and
+        # the one with the MixedArena doesn't use it)
+        has_allocator = False
+        for field in fields.values():
             if field.allocator:
-                field_constructors.append(f'{key}(allocator)')
-        field_constructors_text = ', '.join(field_constructors)
-        constructors = [
-            '%(name)s(MixedArena& allocator) : %(field_constructors_text)s {%(constructor_body)s}' % locals()
-        ]
-    constructors_text = join_nested_lines(constructors)
+                has_allocator = True
+        if not has_allocator:
+            constructors = [
+                '%(name)s() {%(constructor_body)s}' % locals(),
+                '%(name)s(MixedArena& allocator) : %(name)s() {}' % locals()
+            ]
+        else:
+            field_constructors = []
+            for key, field in fields.items():
+                if field.allocator:
+                    field_constructors.append(f'{key}(allocator)')
+            field_constructors_text = ', '.join(field_constructors)
+            constructors = [
+                '%(name)s(MixedArena& allocator) : %(field_constructors_text)s {%(constructor_body)s}' % locals()
+            ]
+        constructors_text = join_nested_lines(constructors)
 
-    text = """\
+        text = """\
 class %(name)s : public SpecificExpression<Expression::%(name)sId> {
 public:
   %(constructors_text)s
@@ -792,8 +793,8 @@ public:
   %(methods_text)s
 };
 """ % locals()
-    text = compact_text(text)
-    return text
+        text = compact_text(text)
+        return text
 
 
 def generate_expressions():
@@ -801,9 +802,14 @@ def generate_expressions():
     rendered = COPYRIGHT + '\n' + NOTICE
     exprs = get_expressions()
     for expr in exprs:
-        rendered += render_expression(expr)
+        rendered += ExpressionRenderer().render(expr)
     rendered = clang_format(rendered)
     write_if_changed(rendered, target, 'expression definitions')
+
+
+########
+# Main
+########
 
 
 def main():
