@@ -4,7 +4,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
- (import "env" "table" (table $timport$1 0 funcref))
+ (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
  (import "env" "puts" (func $puts (param i32) (result i32)))
