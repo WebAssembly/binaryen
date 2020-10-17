@@ -628,26 +628,28 @@ def clang_format(text):
     return subprocess.check_output(['clang-format'], stdin=read, universal_newlines=True)
 
 
-def generate_defs():
-    target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
-
-    rendered = COPYRIGHT + '\n' + NOTICE
-    exprs = get_expressions()
-    for expr in exprs:
-        rendered += expr.render()
-    rendered = clang_format(rendered)
-
+def write_if_changed(text, target, what):
     # only write the file if something changed, so that we don't cause any
     # unnecessary build system rebuilding
     with open(target) as f:
         existing = f.read()
 
-    if rendered != existing:
+    if text != existing:
         with open(target, 'w') as f:
-            print('writing updated expression definitions')
-            f.write(rendered)
+            print(f'writing updated {what}')
+            f.write(text)
     else:
-        print('expression definitions did not change')
+        print(f'{what} did not change')
+
+def generate_defs():
+    target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
+    rendered = COPYRIGHT + '\n' + NOTICE
+    exprs = get_expressions()
+    for expr in exprs:
+        rendered += expr.render()
+    rendered = clang_format(rendered)
+    write_if_changed(rendered, target, 'expression definitions')
+
 
 def main():
     if sys.version_info.major != 3:
