@@ -1708,8 +1708,8 @@ private:
                   op == ShrUInt64) {
                 right->value = Literal::makeZero(right->type);
                 return right;
-              }
-              if (op == ShrSInt32 || op == ShrSInt64) {
+              } else {
+                // op == ShrSInt32 || op == ShrSInt64
                 leftRight->value = Literal::makeFromInt32(
                   right->type.getByteSize() * CHAR_BIT - 1, right->type);
                 return left;
