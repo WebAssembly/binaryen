@@ -35,7 +35,6 @@ timestamp changes.
 import datetime
 import os
 import subprocess
-import sys
 
 import test.shared as shared
 
@@ -814,10 +813,6 @@ def generate_expression_definitions():
 
 
 def main():
-    if sys.version_info.major != 3:
-        import datetime
-        print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
-        sys.exit(1)
     generate_expression_definitions()
 
 
