@@ -745,7 +745,7 @@ def write_if_changed(text, target, what):
 ##############################################################################
 
 
-def generate_def(cls):
+def render_expression(cls):
     """Generate the definition of an expression class."""
     name = cls.__name__
     fields = cls.get_fields()
@@ -796,12 +796,12 @@ public:
     return text
 
 
-def generate_defs():
+def generate_expressions():
     target = shared.in_binaryen('src', 'wasm-expressions.generated.h')
     rendered = COPYRIGHT + '\n' + NOTICE
     exprs = get_expressions()
     for expr in exprs:
-        rendered += generate_def(expr)
+        rendered += render_expression(expr)
     rendered = clang_format(rendered)
     write_if_changed(rendered, target, 'expression definitions')
 
@@ -811,7 +811,7 @@ def main():
         import datetime
         print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
         sys.exit(1)
-    generate_defs()
+    generate_expressions()
 
 
 if __name__ == "__main__":
