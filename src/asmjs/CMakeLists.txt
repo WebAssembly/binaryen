@@ -6,4 +6,3 @@ set(asmjs_SOURCES
   ${asmjs_HEADERS}
 )
 add_library(asmjs OBJECT ${asmjs_SOURCES})
-add_dependencies(asmjs gen_exprs)

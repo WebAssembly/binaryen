@@ -86,4 +86,3 @@ set(passes_SOURCES
   ${passes_HEADERS}
 )
 add_library(passes OBJECT ${passes_SOURCES})
-add_dependencies(passes gen_exprs)

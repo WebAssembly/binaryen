@@ -13,4 +13,3 @@ set(support_SOURCES
   ${support_HEADERS}
 )
 add_library(support OBJECT ${support_SOURCES})
-add_dependencies(support gen_exprs)

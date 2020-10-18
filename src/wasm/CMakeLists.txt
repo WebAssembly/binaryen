@@ -15,4 +15,3 @@ set(wasm_SOURCES
   ${wasm_HEADERS}
 )
 add_library(wasm OBJECT ${wasm_SOURCES})
-add_dependencies(wasm gen_exprs)
