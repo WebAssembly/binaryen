@@ -699,14 +699,20 @@ BOILERPLATE = COPYRIGHT + '\n' + NOTICE
 
 
 def is_subclass_of(x, y):
+    """Whether x is a subclass of y."""
+
     return y in getattr(x, '__bases__', {})
 
 
 def is_a(x, cls):
+    """Whether x is an instance of cls."""
+
     return x.__class__ == cls
 
 
 def get_expressions():
+    """Get all the expression classes defined in this file."""
+
     ret = []
 
     all_globals = dict(globals())
@@ -720,10 +726,14 @@ def get_expressions():
 
 
 def join_nested_lines(lines):
+    """Join some lines with the default nesting indentation."""
+
     return '\n  '.join(lines)
 
 
 def compact_text(text):
+    """Remove unnecessary whitespace noise."""
+
     while True:
         compacted = text.replace('\n  \n', '\n')
         if compacted == text:
@@ -742,6 +752,8 @@ def clang_format(text):
 
 
 def write_result(text, target, what):
+    """Add boilerplate and emit the result, if it changed or didn't exist."""
+
     text = BOILERPLATE + '\n' + text
     text = clang_format(text)
 
@@ -850,7 +862,8 @@ class ExpressionComparisonRenderer:
                 # Push the children to be checked later. Note that it is ok to
                 # do this even if they are null (valid for an optional child,
                 # like a Return's value), as the main logic will check that.
-                # TODO: would a check for null here be faster?
+                # TODO: would a check for null here be faster, avoiding even
+                #       pushing such children?
                 operations.append(f'leftStack.push_back(castLeft->{key});')
                 operations.append(f'rightStack.push_back(castRight->{key});')
             elif is_a(field, ChildList):
@@ -889,7 +902,7 @@ for (Index i = 0; i < castLeft->%(key)s.size(); i++) {
 
         operations_text = join_nested_lines(operations)
 
-        # Combine it all to emit the final rendered definition.
+        # Combine it all to emit the final rendered code.
         text = """\
 case Expression::%(name)sId: {
   %(operations_text)s
