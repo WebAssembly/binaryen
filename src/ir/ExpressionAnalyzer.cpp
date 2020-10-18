@@ -321,7 +321,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
         if (!compareNodes(left, right)) {
           return false;
         }
-// TODO make sure return's optinal node is ok handled
       }
       if (leftStack.size() > 0 || rightStack.size() > 0) {
         return false;

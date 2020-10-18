@@ -196,7 +196,7 @@ class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
 public:
   AtomicFence() {}
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
-  uint8_t order;
+  uint8_t order = 0;
   void finalize();
 };
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {

@@ -399,7 +399,7 @@ class AtomicFence(Expression):
     other orderings may be added in the future. This field is reserved for
     that, and currently set to 0.
     """
-    order = uint8_t()
+    order = uint8_t(init='0')
 
 
 class SIMDExtract(Expression):
