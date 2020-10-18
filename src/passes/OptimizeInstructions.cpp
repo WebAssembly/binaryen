@@ -617,13 +617,13 @@ struct OptimizeInstructions
         }
         if (binary->op == DivFloat32) {
           float c = right->value.getf32();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
         if (binary->op == DivFloat64) {
           double c = right->value.getf64();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
@@ -1412,18 +1412,13 @@ private:
         return curr;
       }
     }
-    // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
-      return right;
-    }
-    // bool(x) & 1  ==>  bool(x)
-    if (matches(curr, binary(Abstract::And, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
-      return left;
-    }
-    // bool(x) == 1  ==>  bool(x)
-    if (matches(curr, binary(EqInt32, any(&left), i32(1))) &&
+    // i32(bool(x)) == 1  ==>  i32(bool(x))
+    // i32(bool(x)) != 0  ==>  i32(bool(x))
+    // i32(bool(x)) & 1   ==>  i32(bool(x))
+    // i64(bool(x)) & 1   ==>  i64(bool(x))
+    if ((matches(curr, binary(EqInt32, any(&left), i32(1))) ||
+         matches(curr, binary(NeInt32, any(&left), i32(0))) ||
+         matches(curr, binary(Abstract::And, any(&left), ival(1)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return left;
     }
@@ -1436,8 +1431,13 @@ private:
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Abstract::Ne, any(&left), ival(1))) &&
-        Bits::getMaxBits(curr->left, this) == 1) {
+        Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
+    }
+    // bool(x) | 1  ==>  1
+    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
+        Bits::getMaxBits(left, this) == 1) {
+      return right;
     }
 
     // Operations on all 1s
