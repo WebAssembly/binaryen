@@ -289,10 +289,6 @@ int main(int argc, const char* argv[]) {
     passRunner.add("stack-check");
   }
 
-  if (sideModule && !mutableSP) {
-    passRunner.add("replace-stack-pointer");
-  }
-
   if (legacyPIC) {
     if (sideModule) {
       passRunner.add("emscripten-pic");
@@ -334,9 +330,6 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("finalizing as regular module\n");
     if (legacyPIC) {
-      if (!mutableSP) {
-        generator.internalizeStackPointerGlobal();
-      }
       // For side modules these gets called via __post_instantiate
       if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
         auto* ex = new Export();

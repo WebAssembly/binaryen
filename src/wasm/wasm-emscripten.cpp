@@ -116,32 +116,6 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
   wasm.addExport(ex);
 }
 
-// lld can sometimes produce a build with an imported mutable __stack_pointer
-// (i.e.  when linking with -fpie).  This method internalizes the
-// __stack_pointer and initializes it from an immutable global instead.
-// For -shared builds we instead call replaceStackPointerGlobal.
-void EmscriptenGlueGenerator::internalizeStackPointerGlobal() {
-  Global* stackPointer = getStackPointerGlobal(wasm);
-  if (!stackPointer || !stackPointer->imported() || !stackPointer->mutable_) {
-    return;
-  }
-
-  Name internalName = stackPointer->name;
-  Name externalName = internalName.c_str() + std::string("_import");
-
-  // Rename the imported global, and make it immutable
-  stackPointer->name = externalName;
-  stackPointer->mutable_ = false;
-  wasm.updateMaps();
-
-  // Create a new global with the old name that is not imported.
-  Builder builder(wasm);
-  auto* init = builder.makeGlobalGet(externalName, stackPointer->type);
-  auto* sp = builder.makeGlobal(
-    internalName, stackPointer->type, init, Builder::Mutable);
-  wasm.addGlobal(sp);
-}
-
 const Address UNKNOWN_OFFSET(uint32_t(-1));
 
 std::vector<Address> getSegmentOffsets(Module& wasm) {
