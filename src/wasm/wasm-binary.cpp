@@ -628,7 +628,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // table names
-  if (wasm->table.exists && wasm->table.name.is()) {
+  if (wasm->table.exists && wasm->table.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 table at index 0
@@ -637,7 +637,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (wasm->memory.exists && wasm->memory.name.is()) {
+  if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
@@ -650,7 +650,7 @@ void WasmBinaryWriter::writeNames() {
     std::vector<std::pair<Index, Global*>> globalsWithNames;
     Index checked = 0;
     auto check = [&](Global* curr) {
-      if (curr->name.is()) {
+      if (curr->hasExplicitName) {
         globalsWithNames.push_back({checked, curr});
       }
       checked++;
@@ -1450,6 +1450,11 @@ void WasmBinaryBuilder::readImports() {
   size_t num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
   Builder builder(wasm);
+  size_t tableCounter = 0;
+  size_t memoryCounter = 0;
+  size_t functionCounter = 0;
+  size_t globalCounter = 0;
+  size_t eventCounter = 0;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto module = getInlineString();
@@ -1460,7 +1465,7 @@ void WasmBinaryBuilder::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        auto name = Name(std::string("fimport$") + std::to_string(i));
+        Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         if (index >= signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
@@ -1474,9 +1479,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Table: {
+        Name name(std::string("timport$") + std::to_string(tableCounter++));
         wasm.table.module = module;
         wasm.table.base = base;
-        wasm.table.name = Name(std::string("timport$") + std::to_string(i));
+        wasm.table.name = name;
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::funcref) {
@@ -1499,9 +1505,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Memory: {
+        Name name(std::string("mimport$") + std::to_string(memoryCounter++));
         wasm.memory.module = module;
         wasm.memory.base = base;
-        wasm.memory.name = Name(std::string("mimport$") + std::to_string(i));
+        wasm.memory.name = name;
         wasm.memory.exists = true;
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
@@ -1511,7 +1518,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        auto name = Name(std::string("gimport$") + std::to_string(i));
+        Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         auto* curr =
@@ -1526,7 +1533,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Event: {
-        auto name = Name(std::string("eimport$") + std::to_string(i));
+        Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
         if (index >= signatures.size()) {
@@ -2294,9 +2301,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         }
         auto numFunctionImports = functionImports.size();
         if (index < numFunctionImports) {
-          functionImports[index]->name = name;
+          functionImports[index]->setExplicitName(name);
         } else if (index - numFunctionImports < functions.size()) {
-          functions[index - numFunctionImports]->name = name;
+          functions[index - numFunctionImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
@@ -2351,7 +2358,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         if (index == 0) {
-          wasm.table.name = escape(rawName);
+          wasm.table.setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
@@ -2365,7 +2372,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         if (index == 0) {
-          wasm.memory.name = escape(rawName);
+          wasm.memory.setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -2387,9 +2394,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         }
         auto numGlobalImports = globalImports.size();
         if (index < numGlobalImports) {
-          globalImports[index]->name = name;
+          globalImports[index]->setExplicitName(name);
         } else if (index - numGlobalImports < globals.size()) {
-          globals[index - numGlobalImports]->name = name;
+          globals[index - numGlobalImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: global index out of bounds in name section, "
                        "global subsection: "

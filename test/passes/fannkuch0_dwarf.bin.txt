@@ -5197,7 +5197,7 @@ file_names[  3]:
  (type $i32_=>_none (func (param i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 1024) "Wrong argument.\n\00Pfannkuchen(%d) = %d.\n\00%d\00\n\00")
- (import "env" "__indirect_function_table" (table $timport$1 1 funcref))
+ (import "env" "__indirect_function_table" (table $timport$0 1 funcref))
  (import "env" "malloc" (func $malloc (param i32) (result i32)))
  (import "env" "free" (func $free (param i32)))
  (import "env" "atoi" (func $atoi (param i32) (result i32)))

@@ -303,10 +303,6 @@ void PassRegistry::registerPasses() {
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
-  registerPass("replace-stack-pointer",
-               "Replace llvm-generated stack pointer global with calls with "
-               "imported functions.",
-               createReplaceStackPointerPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("roundtrip",
@@ -546,27 +542,33 @@ static void dumpWast(Name name, Module* wasm) {
 
 void PassRunner::run() {
   static const int passDebug = getPassDebug();
-  if (!isNested && (options.debug || passDebug)) {
+  // Emit logging information when asked for. At passDebug level 1+ we log
+  // the main passes, while in 2 we also log nested ones. Note that for
+  // nested ones we can only emit their name - we can't validate, or save the
+  // file, or print, as the wasm may be in an intermediate state that is not
+  // valid.
+  if (options.debug || (passDebug == 2 || (passDebug && !isNested))) {
     // for debug logging purposes, run each pass in full before running the
     // other
     auto totalTime = std::chrono::duration<double>(0);
-    size_t padding = 0;
     WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
-    std::cerr << "[PassRunner] running passes..." << std::endl;
+    auto what = isNested ? "nested passes" : "passes";
+    std::cerr << "[PassRunner] running " << what << std::endl;
+    size_t padding = 0;
     for (auto& pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
-    if (passDebug >= 3) {
+    if (passDebug >= 3 && !isNested) {
       dumpWast("before", wasm);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
       // pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      if (passDebug == 2) {
+      if (passDebug == 2 && !isNested) {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
@@ -586,7 +588,7 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-      if (options.validate) {
+      if (options.validate && !isNested) {
         // validate, ignoring the time
         std::cerr << "[PassRunner]   (validating)\n";
         if (!WasmValidator().validate(*wasm, validationFlags)) {
@@ -607,9 +609,9 @@ void PassRunner::run() {
         dumpWast(pass->name, wasm);
       }
     }
-    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds."
-              << std::endl;
-    if (options.validate) {
+    std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
+              << " seconds." << std::endl;
+    if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
         WasmPrinter::printModule(wasm);
