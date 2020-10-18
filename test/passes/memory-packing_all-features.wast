@@ -15,6 +15,10 @@
   (import "env" "memoryBase" (global $memoryBase i32))
 
   (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don't know where it will go")
+)
+
+(module
+  (memory 1 1)
 
   (data (i32.const 1024) "waka this CAN be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we DO know where it will go")
 
@@ -494,4 +498,49 @@
     )
     (data.drop 0)
   )
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00") ;; this tramples the "x", and so must be kept.
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1025) "\00")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1023) "\00")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00") ;; when we see one bad thing, we give up
+ (data (i32.const 4096) "\00")
+)
+(module
+ (import "env" "memory" (memory $0 1 1))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (data (i32.const 1024) "x")
+ (data (global.get $memoryBase) "\00") ;; this could trample, or not
+)
+(module
+ (import "env" "memory" (memory $0 1 1))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (data (i32.const 1024) "\00") ;; this could trample, or not
+ (data (global.get $memoryBase) "x")
+)
+(module
+ (import "env" "memory" (memory 1 1))
+ (data passive "skipped\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00included")
+ (export "func_54" (func $0))
+ (func $0
+  (memory.init 0
+   (i32.const 0)
+   (i32.const 7)
+   (i32.const 38)
+  )
+ )
 )

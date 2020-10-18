@@ -120,6 +120,8 @@ class SExpressionWasmBuilder {
   int functionCounter = 0;
   int globalCounter = 0;
   int eventCounter = 0;
+  int tableCounter = 0;
+  int memoryCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, Type> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
