@@ -165,7 +165,12 @@ bool isPowerOf2Float(float v) {
   // power of two or greater than the maximum possible power of two.
   // We check values only with exponent in more limited ranges
   // [-126..+126] for floats and [-1022..+1022] for doubles for avoiding
-  // overflows and reject NaNs, infinity and denormals.
+  // overflows and reject NaNs, infinity and denormals. We also reject
+  // "asymmetric exponents", like +1023, because the range of
+  // (non-NaN, non-infinity) values is -1022..+1023, and it is convenient in
+  // optimizations to depend on being able to invert a power of two without
+  // losing precision.
+  // This function used in OptimizeInstruction pass.
   const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
   const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
   const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
