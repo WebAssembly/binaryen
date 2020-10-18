@@ -1728,7 +1728,7 @@ private:
               leftRight->value = Literal::makeFromInt32(effective, right->type);
               return left;
             } else {
-              // owerflow, so we we make the following:
+              // overflow, so we make the following:
               // - for shl and shr_u just return zero;
               // - for shr_s return x >> (31|63).
               if (op == ShlInt32 || op == ShlInt64 || op == ShrUInt32 ||
