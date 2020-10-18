@@ -840,35 +840,41 @@ class ExpressionComparisonRenderer:
             # by the main logic.
             # TODO perhaps we could be a little faster if we check first?
             if is_a(field, Child):
-                operations.append(f'leftStack.push_back(left->{key});')
-                operations.append(f'rightStack.push_back(right->{key});')
+                operations.append(f'leftStack.push_back(castLeft->{key});')
+                operations.append(f'rightStack.push_back(castRight->{key});')
             elif is_a(field, ChildList):
-                operations.append('if (left->%(key)s.size() != right.%(key)s.size()) { return false; }' % locals())
-                operations.append('for (auto* child : left->%(key)s) { leftStack.push_back(child); }' % locals())
-                operations.append('for (auto* child : right->%(key)s) { rightStack.push_back(child); }' % locals())
+                operations.append('if (castLeft->%(key)s.size() != right.%(key)s.size()) { return false; }' % locals())
+                operations.append('for (auto* child : castLeft->%(key)s) { leftStack.push_back(child); }' % locals())
+                operations.append('for (auto* child : castRight->%(key)s) { rightStack.push_back(child); }' % locals())
             elif is_a(field, ScopeNameDef):
                 # Blocks and Loops define names, so mark the names as equal
                 # on both sides.
-                operations.append('if (left->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
-                operations.append(f'rightNames[left->{key}] = right->{key};')
+                operations.append('if (castLeft->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
+                operations.append(f'rightNames[castLeft->{key}] = castRight->{key};')
             elif is_a(field, ScopeNameUse):
-                operations.append('if (rightNames[left->%(key)s] != right->%(key)s) { return false; }' % locals())
+                operations.append('if (rightNames[castLeft->%(key)s] != castRight->%(key)s) { return false; }' % locals())
             elif is_a(field, ScopeNameUseVector):
                 operations.append('''\
-if (left->%(key)s.size() != right->%(key)s.size()) {
+if (castLeft->%(key)s.size() != castRight->%(key)s.size()) {
   return false;
 }
-for (Index i = 0; i < left->%(key)s.size(); i++) {
-  if (rightNames[left->%(key)s[i]] != right->%(key)s[i]) {
+for (Index i = 0; i < castLeft->%(key)s.size(); i++) {
+  if (rightNames[castLeft->%(key)s[i]] != castRight->%(key)s[i]) {
     return false;
   }
 }''' % locals())
             else:
-                check = 'if (left->%(key)s != right->%(key)s) { return false; }' % locals()
+                check = 'if (castLeft->%(key)s != castRight->%(key)s) { return false; }' % locals()
                 if field.relevant_if:
                     relevant_if = field.relevant_if
                     check = 'if (%(relevant_if)s(left)) { %(check)s }' % locals()
                 operations.append(check)
+
+        if len(operations) > 0:
+            operations = [
+                f'auto* castLeft = left->cast<{name}>();',
+                f'auto* castRight = castRight->cast<{name}>();'
+            ] + operations
 
         operations_text = join_nested_lines(operations)
 
