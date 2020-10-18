@@ -83,7 +83,7 @@ case Expression::SwitchId: {
     return false;
   }
   for (Index i = 0; i < castLeft->targets.size(); i++) {
-    if (compareNames(castLeft->targets[i], castRight->targets[i])) {
+    if (!compareNames(castLeft->targets[i], castRight->targets[i])) {
       return false;
     }
   }

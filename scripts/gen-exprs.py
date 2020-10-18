@@ -859,7 +859,7 @@ if (castLeft->%(key)s.size() != castRight->%(key)s.size()) {
   return false;
 }
 for (Index i = 0; i < castLeft->%(key)s.size(); i++) {
-  if (compareNames(castLeft->%(key)s[i], castRight->%(key)s[i])) {
+  if (!compareNames(castLeft->%(key)s[i], castRight->%(key)s[i])) {
     return false;
   }
 }''' % locals())
