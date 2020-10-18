@@ -18,12 +18,12 @@
 Define wasm expressions, and autogenerate code for them.
 
 The goal is to define expression structure in a single place, and emit all the
-necessary boilerplate code here, instead of doing so manually.
+necessary boilerplate code using a tool, instead of doing so manually.
 
 In theory templates, macros, or some other method could be used in the
 language itself. However, we want more power than those things allow.
 
-This emits "reasonably" formatted code, and runs clang-format to polish it.
+This emits partially-formatted code, and runs clang-format to polish it.
 
 The output files are all in the source tree, with ".generated." in their name.
 
@@ -746,7 +746,7 @@ def write_result(text, target, what):
             print(f'writing updated {what}')
             f.write(text)
     else:
-        print(f'{what} did not change')
+        print(f'[gen-exprs] {what} did not change')
 
 
 #############
