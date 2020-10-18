@@ -345,6 +345,17 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
       }
       return true;
     }
+
+    bool compareNames(Name left, Name right) {
+      auto iter = rightNames.find(left);
+      // If it's not found, that means it was defined out of the expression
+      // being compared, in which case we can just treat it literally - it
+      // must be exactly identical.
+      if (iter != parent.rightNames.end()) {
+        leftName = iter->second;
+      }
+      return leftName == rightName;
+    }
   };
 
   return Comparer().compare(left, right, comparer);

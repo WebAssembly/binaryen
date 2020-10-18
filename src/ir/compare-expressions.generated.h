@@ -67,7 +67,7 @@ case Expression::LoopId: {
 case Expression::BreakId: {
   auto* castLeft = left->cast<Break>();
   auto* castRight = right->cast<Break>();
-  if (rightNames[castLeft->name] != castRight->name) {
+  if (!compareNames(castLeft->name, castRight->name)) {
     return false;
   }
   leftStack.push_back(castLeft->value);
@@ -83,11 +83,11 @@ case Expression::SwitchId: {
     return false;
   }
   for (Index i = 0; i < castLeft->targets.size(); i++) {
-    if (rightNames[castLeft->targets[i]] != castRight->targets[i]) {
+    if (compareNames(castLeft->targets[i], castRight->targets[i])) {
       return false;
     }
   }
-  if (rightNames[castLeft->default_] != castRight->default_) {
+  if (!compareNames(castLeft->default_, castRight->default_)) {
     return false;
   }
   leftStack.push_back(castLeft->condition);
@@ -562,7 +562,7 @@ case Expression::RethrowId: {
 case Expression::BrOnExnId: {
   auto* castLeft = left->cast<BrOnExn>();
   auto* castRight = right->cast<BrOnExn>();
-  if (rightNames[castLeft->name] != castRight->name) {
+  if (!compareNames(castLeft->name, castRight->name)) {
     return false;
   }
   if (castLeft->event != castRight->event) {

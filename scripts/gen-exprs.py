@@ -852,14 +852,14 @@ class ExpressionComparisonRenderer:
                 operations.append('if (castLeft->%(key)s.is() != castRight->%(key)s.is()) { return false; }' % locals())
                 operations.append(f'rightNames[castLeft->{key}] = castRight->{key};')
             elif is_a(field, ScopeNameUse):
-                operations.append('if (rightNames[castLeft->%(key)s] != castRight->%(key)s) { return false; }' % locals())
+                operations.append('if (!compareNames(castLeft->%(key)s, castRight->%(key)s)) { return false; }' % locals())
             elif is_a(field, ScopeNameUseVector):
                 operations.append('''\
 if (castLeft->%(key)s.size() != castRight->%(key)s.size()) {
   return false;
 }
 for (Index i = 0; i < castLeft->%(key)s.size(); i++) {
-  if (rightNames[castLeft->%(key)s[i]] != castRight->%(key)s[i]) {
+  if (compareNames(castLeft->%(key)s[i], castRight->%(key)s[i])) {
     return false;
   }
 }''' % locals())
