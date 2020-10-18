@@ -835,11 +835,11 @@ class ExpressionComparisonRenderer:
         # Compare the fields.
         fields = cls.get_fields()
         for key, field in fields.items():
-            # Note that for children we don't need to compare here, or even to
-            # check if they are null for optional ones - all those are handled
-            # by the main logic.
-            # TODO perhaps we could be a little faster if we check first?
             if is_a(field, Child):
+                # Push the children to be checked later. Note that it is ok to
+                # do this even if they are null (valid for an optional child,
+                # like a Return's value), as the main logic will check that.
+                # TODO: would a check for null here be faster?
                 operations.append(f'leftStack.push_back(castLeft->{key});')
                 operations.append(f'rightStack.push_back(castRight->{key});')
             elif is_a(field, ChildList):
