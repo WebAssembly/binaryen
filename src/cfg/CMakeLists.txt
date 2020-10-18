@@ -4,3 +4,4 @@ set(cfg_SOURCES
   ${cfg_HEADERS}
 )
 add_library(cfg OBJECT ${cfg_SOURCES})
+add_dependencies(cfg gen_exprs)
