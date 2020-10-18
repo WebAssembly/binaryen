@@ -335,8 +335,11 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
       }
       switch (left->_id) {
         #include "compare-expressions.generated.h"
-        default: WASM_UNREACHABLE("unknown expression");
+        default: {
+          WASM_UNREACHABLE("unknown expression");
+        }
       }
+      return true;
     }
   };
 

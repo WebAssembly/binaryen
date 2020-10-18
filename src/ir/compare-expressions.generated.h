@@ -26,12 +26,12 @@ case Expression::NopId: {
 }
 case Expression::BlockId: {
   auto* castLeft = left->cast<Block>();
-  auto* castRight = castRight->cast<Block>();
-  if (castLeft->name.is() != right.name.is()) {
+  auto* castRight = right->cast<Block>();
+  if (castLeft->name.is() != castRight->name.is()) {
     return false;
   }
   rightNames[castLeft->name] = castRight->name;
-  if (castLeft->list.size() != right.list.size()) {
+  if (castLeft->list.size() != castRight->list.size()) {
     return false;
   }
   for (auto* child : castLeft->list) {
@@ -44,7 +44,7 @@ case Expression::BlockId: {
 }
 case Expression::IfId: {
   auto* castLeft = left->cast<If>();
-  auto* castRight = castRight->cast<If>();
+  auto* castRight = right->cast<If>();
   leftStack.push_back(castLeft->condition);
   rightStack.push_back(castRight->condition);
   leftStack.push_back(castLeft->ifTrue);
@@ -55,8 +55,8 @@ case Expression::IfId: {
 }
 case Expression::LoopId: {
   auto* castLeft = left->cast<Loop>();
-  auto* castRight = castRight->cast<Loop>();
-  if (castLeft->name.is() != right.name.is()) {
+  auto* castRight = right->cast<Loop>();
+  if (castLeft->name.is() != castRight->name.is()) {
     return false;
   }
   rightNames[castLeft->name] = castRight->name;
@@ -66,7 +66,7 @@ case Expression::LoopId: {
 }
 case Expression::BreakId: {
   auto* castLeft = left->cast<Break>();
-  auto* castRight = castRight->cast<Break>();
+  auto* castRight = right->cast<Break>();
   if (rightNames[castLeft->name] != castRight->name) {
     return false;
   }
@@ -78,7 +78,7 @@ case Expression::BreakId: {
 }
 case Expression::SwitchId: {
   auto* castLeft = left->cast<Switch>();
-  auto* castRight = castRight->cast<Switch>();
+  auto* castRight = right->cast<Switch>();
   if (castLeft->targets.size() != castRight->targets.size()) {
     return false;
   }
@@ -98,8 +98,8 @@ case Expression::SwitchId: {
 }
 case Expression::CallId: {
   auto* castLeft = left->cast<Call>();
-  auto* castRight = castRight->cast<Call>();
-  if (castLeft->operands.size() != right.operands.size()) {
+  auto* castRight = right->cast<Call>();
+  if (castLeft->operands.size() != castRight->operands.size()) {
     return false;
   }
   for (auto* child : castLeft->operands) {
@@ -118,11 +118,11 @@ case Expression::CallId: {
 }
 case Expression::CallIndirectId: {
   auto* castLeft = left->cast<CallIndirect>();
-  auto* castRight = castRight->cast<CallIndirect>();
+  auto* castRight = right->cast<CallIndirect>();
   if (castLeft->sig != castRight->sig) {
     return false;
   }
-  if (castLeft->operands.size() != right.operands.size()) {
+  if (castLeft->operands.size() != castRight->operands.size()) {
     return false;
   }
   for (auto* child : castLeft->operands) {
@@ -140,7 +140,7 @@ case Expression::CallIndirectId: {
 }
 case Expression::LocalGetId: {
   auto* castLeft = left->cast<LocalGet>();
-  auto* castRight = castRight->cast<LocalGet>();
+  auto* castRight = right->cast<LocalGet>();
   if (castLeft->index != castRight->index) {
     return false;
   }
@@ -148,7 +148,7 @@ case Expression::LocalGetId: {
 }
 case Expression::LocalSetId: {
   auto* castLeft = left->cast<LocalSet>();
-  auto* castRight = castRight->cast<LocalSet>();
+  auto* castRight = right->cast<LocalSet>();
   if (castLeft->index != castRight->index) {
     return false;
   }
@@ -158,7 +158,7 @@ case Expression::LocalSetId: {
 }
 case Expression::GlobalGetId: {
   auto* castLeft = left->cast<GlobalGet>();
-  auto* castRight = castRight->cast<GlobalGet>();
+  auto* castRight = right->cast<GlobalGet>();
   if (castLeft->name != castRight->name) {
     return false;
   }
@@ -166,7 +166,7 @@ case Expression::GlobalGetId: {
 }
 case Expression::GlobalSetId: {
   auto* castLeft = left->cast<GlobalSet>();
-  auto* castRight = castRight->cast<GlobalSet>();
+  auto* castRight = right->cast<GlobalSet>();
   if (castLeft->name != castRight->name) {
     return false;
   }
@@ -176,11 +176,11 @@ case Expression::GlobalSetId: {
 }
 case Expression::LoadId: {
   auto* castLeft = left->cast<Load>();
-  auto* castRight = castRight->cast<Load>();
+  auto* castRight = right->cast<Load>();
   if (castLeft->bytes != castRight->bytes) {
     return false;
   }
-  if (LoadUtils::isSignRelevant(left)) {
+  if (LoadUtils::isSignRelevant(castLeft)) {
     if (castLeft->signed_ != castRight->signed_) {
       return false;
     }
@@ -200,7 +200,7 @@ case Expression::LoadId: {
 }
 case Expression::StoreId: {
   auto* castLeft = left->cast<Store>();
-  auto* castRight = castRight->cast<Store>();
+  auto* castRight = right->cast<Store>();
   if (castLeft->bytes != castRight->bytes) {
     return false;
   }
@@ -224,7 +224,7 @@ case Expression::StoreId: {
 }
 case Expression::AtomicRMWId: {
   auto* castLeft = left->cast<AtomicRMW>();
-  auto* castRight = castRight->cast<AtomicRMW>();
+  auto* castRight = right->cast<AtomicRMW>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -242,7 +242,7 @@ case Expression::AtomicRMWId: {
 }
 case Expression::AtomicCmpxchgId: {
   auto* castLeft = left->cast<AtomicCmpxchg>();
-  auto* castRight = castRight->cast<AtomicCmpxchg>();
+  auto* castRight = right->cast<AtomicCmpxchg>();
   if (castLeft->bytes != castRight->bytes) {
     return false;
   }
@@ -259,7 +259,7 @@ case Expression::AtomicCmpxchgId: {
 }
 case Expression::AtomicWaitId: {
   auto* castLeft = left->cast<AtomicWait>();
-  auto* castRight = castRight->cast<AtomicWait>();
+  auto* castRight = right->cast<AtomicWait>();
   if (castLeft->offset != castRight->offset) {
     return false;
   }
@@ -276,7 +276,7 @@ case Expression::AtomicWaitId: {
 }
 case Expression::AtomicNotifyId: {
   auto* castLeft = left->cast<AtomicNotify>();
-  auto* castRight = castRight->cast<AtomicNotify>();
+  auto* castRight = right->cast<AtomicNotify>();
   if (castLeft->offset != castRight->offset) {
     return false;
   }
@@ -288,7 +288,7 @@ case Expression::AtomicNotifyId: {
 }
 case Expression::AtomicFenceId: {
   auto* castLeft = left->cast<AtomicFence>();
-  auto* castRight = castRight->cast<AtomicFence>();
+  auto* castRight = right->cast<AtomicFence>();
   if (castLeft->order != castRight->order) {
     return false;
   }
@@ -296,7 +296,7 @@ case Expression::AtomicFenceId: {
 }
 case Expression::SIMDExtractId: {
   auto* castLeft = left->cast<SIMDExtract>();
-  auto* castRight = castRight->cast<SIMDExtract>();
+  auto* castRight = right->cast<SIMDExtract>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -309,7 +309,7 @@ case Expression::SIMDExtractId: {
 }
 case Expression::SIMDReplaceId: {
   auto* castLeft = left->cast<SIMDReplace>();
-  auto* castRight = castRight->cast<SIMDReplace>();
+  auto* castRight = right->cast<SIMDReplace>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -324,7 +324,7 @@ case Expression::SIMDReplaceId: {
 }
 case Expression::SIMDShuffleId: {
   auto* castLeft = left->cast<SIMDShuffle>();
-  auto* castRight = castRight->cast<SIMDShuffle>();
+  auto* castRight = right->cast<SIMDShuffle>();
   leftStack.push_back(castLeft->left);
   rightStack.push_back(castRight->left);
   leftStack.push_back(castLeft->right);
@@ -336,7 +336,7 @@ case Expression::SIMDShuffleId: {
 }
 case Expression::SIMDTernaryId: {
   auto* castLeft = left->cast<SIMDTernary>();
-  auto* castRight = castRight->cast<SIMDTernary>();
+  auto* castRight = right->cast<SIMDTernary>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -350,7 +350,7 @@ case Expression::SIMDTernaryId: {
 }
 case Expression::SIMDShiftId: {
   auto* castLeft = left->cast<SIMDShift>();
-  auto* castRight = castRight->cast<SIMDShift>();
+  auto* castRight = right->cast<SIMDShift>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -362,7 +362,7 @@ case Expression::SIMDShiftId: {
 }
 case Expression::SIMDLoadId: {
   auto* castLeft = left->cast<SIMDLoad>();
-  auto* castRight = castRight->cast<SIMDLoad>();
+  auto* castRight = right->cast<SIMDLoad>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -378,7 +378,7 @@ case Expression::SIMDLoadId: {
 }
 case Expression::MemoryInitId: {
   auto* castLeft = left->cast<MemoryInit>();
-  auto* castRight = castRight->cast<MemoryInit>();
+  auto* castRight = right->cast<MemoryInit>();
   if (castLeft->segment != castRight->segment) {
     return false;
   }
@@ -392,7 +392,7 @@ case Expression::MemoryInitId: {
 }
 case Expression::DataDropId: {
   auto* castLeft = left->cast<DataDrop>();
-  auto* castRight = castRight->cast<DataDrop>();
+  auto* castRight = right->cast<DataDrop>();
   if (castLeft->segment != castRight->segment) {
     return false;
   }
@@ -400,7 +400,7 @@ case Expression::DataDropId: {
 }
 case Expression::MemoryCopyId: {
   auto* castLeft = left->cast<MemoryCopy>();
-  auto* castRight = castRight->cast<MemoryCopy>();
+  auto* castRight = right->cast<MemoryCopy>();
   leftStack.push_back(castLeft->dest);
   rightStack.push_back(castRight->dest);
   leftStack.push_back(castLeft->source);
@@ -411,7 +411,7 @@ case Expression::MemoryCopyId: {
 }
 case Expression::MemoryFillId: {
   auto* castLeft = left->cast<MemoryFill>();
-  auto* castRight = castRight->cast<MemoryFill>();
+  auto* castRight = right->cast<MemoryFill>();
   leftStack.push_back(castLeft->dest);
   rightStack.push_back(castRight->dest);
   leftStack.push_back(castLeft->value);
@@ -422,7 +422,7 @@ case Expression::MemoryFillId: {
 }
 case Expression::ConstId: {
   auto* castLeft = left->cast<Const>();
-  auto* castRight = castRight->cast<Const>();
+  auto* castRight = right->cast<Const>();
   if (castLeft->value != castRight->value) {
     return false;
   }
@@ -430,7 +430,7 @@ case Expression::ConstId: {
 }
 case Expression::UnaryId: {
   auto* castLeft = left->cast<Unary>();
-  auto* castRight = castRight->cast<Unary>();
+  auto* castRight = right->cast<Unary>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -440,7 +440,7 @@ case Expression::UnaryId: {
 }
 case Expression::BinaryId: {
   auto* castLeft = left->cast<Binary>();
-  auto* castRight = castRight->cast<Binary>();
+  auto* castRight = right->cast<Binary>();
   if (castLeft->op != castRight->op) {
     return false;
   }
@@ -452,7 +452,7 @@ case Expression::BinaryId: {
 }
 case Expression::SelectId: {
   auto* castLeft = left->cast<Select>();
-  auto* castRight = castRight->cast<Select>();
+  auto* castRight = right->cast<Select>();
   leftStack.push_back(castLeft->ifTrue);
   rightStack.push_back(castRight->ifTrue);
   leftStack.push_back(castLeft->ifFalse);
@@ -463,21 +463,21 @@ case Expression::SelectId: {
 }
 case Expression::DropId: {
   auto* castLeft = left->cast<Drop>();
-  auto* castRight = castRight->cast<Drop>();
+  auto* castRight = right->cast<Drop>();
   leftStack.push_back(castLeft->value);
   rightStack.push_back(castRight->value);
   break;
 }
 case Expression::ReturnId: {
   auto* castLeft = left->cast<Return>();
-  auto* castRight = castRight->cast<Return>();
+  auto* castRight = right->cast<Return>();
   leftStack.push_back(castLeft->value);
   rightStack.push_back(castRight->value);
   break;
 }
 case Expression::MemorySizeId: {
   auto* castLeft = left->cast<MemorySize>();
-  auto* castRight = castRight->cast<MemorySize>();
+  auto* castRight = right->cast<MemorySize>();
   if (castLeft->ptrType != castRight->ptrType) {
     return false;
   }
@@ -485,7 +485,7 @@ case Expression::MemorySizeId: {
 }
 case Expression::MemoryGrowId: {
   auto* castLeft = left->cast<MemoryGrow>();
-  auto* castRight = castRight->cast<MemoryGrow>();
+  auto* castRight = right->cast<MemoryGrow>();
   leftStack.push_back(castLeft->delta);
   rightStack.push_back(castRight->delta);
   if (castLeft->ptrType != castRight->ptrType) {
@@ -504,14 +504,14 @@ case Expression::RefNullId: {
 }
 case Expression::RefIsNullId: {
   auto* castLeft = left->cast<RefIsNull>();
-  auto* castRight = castRight->cast<RefIsNull>();
+  auto* castRight = right->cast<RefIsNull>();
   leftStack.push_back(castLeft->value);
   rightStack.push_back(castRight->value);
   break;
 }
 case Expression::RefFuncId: {
   auto* castLeft = left->cast<RefFunc>();
-  auto* castRight = castRight->cast<RefFunc>();
+  auto* castRight = right->cast<RefFunc>();
   if (castLeft->func != castRight->func) {
     return false;
   }
@@ -519,7 +519,7 @@ case Expression::RefFuncId: {
 }
 case Expression::RefEqId: {
   auto* castLeft = left->cast<RefEq>();
-  auto* castRight = castRight->cast<RefEq>();
+  auto* castRight = right->cast<RefEq>();
   leftStack.push_back(castLeft->left);
   rightStack.push_back(castRight->left);
   leftStack.push_back(castLeft->right);
@@ -528,7 +528,7 @@ case Expression::RefEqId: {
 }
 case Expression::TryId: {
   auto* castLeft = left->cast<Try>();
-  auto* castRight = castRight->cast<Try>();
+  auto* castRight = right->cast<Try>();
   leftStack.push_back(castLeft->body);
   rightStack.push_back(castRight->body);
   leftStack.push_back(castLeft->catchBody);
@@ -537,11 +537,11 @@ case Expression::TryId: {
 }
 case Expression::ThrowId: {
   auto* castLeft = left->cast<Throw>();
-  auto* castRight = castRight->cast<Throw>();
+  auto* castRight = right->cast<Throw>();
   if (castLeft->event != castRight->event) {
     return false;
   }
-  if (castLeft->operands.size() != right.operands.size()) {
+  if (castLeft->operands.size() != castRight->operands.size()) {
     return false;
   }
   for (auto* child : castLeft->operands) {
@@ -554,14 +554,14 @@ case Expression::ThrowId: {
 }
 case Expression::RethrowId: {
   auto* castLeft = left->cast<Rethrow>();
-  auto* castRight = castRight->cast<Rethrow>();
+  auto* castRight = right->cast<Rethrow>();
   leftStack.push_back(castLeft->exnref);
   rightStack.push_back(castRight->exnref);
   break;
 }
 case Expression::BrOnExnId: {
   auto* castLeft = left->cast<BrOnExn>();
-  auto* castRight = castRight->cast<BrOnExn>();
+  auto* castRight = right->cast<BrOnExn>();
   if (rightNames[castLeft->name] != castRight->name) {
     return false;
   }
@@ -577,8 +577,8 @@ case Expression::BrOnExnId: {
 }
 case Expression::TupleMakeId: {
   auto* castLeft = left->cast<TupleMake>();
-  auto* castRight = castRight->cast<TupleMake>();
-  if (castLeft->operands.size() != right.operands.size()) {
+  auto* castRight = right->cast<TupleMake>();
+  if (castLeft->operands.size() != castRight->operands.size()) {
     return false;
   }
   for (auto* child : castLeft->operands) {
@@ -591,7 +591,7 @@ case Expression::TupleMakeId: {
 }
 case Expression::TupleExtractId: {
   auto* castLeft = left->cast<TupleExtract>();
-  auto* castRight = castRight->cast<TupleExtract>();
+  auto* castRight = right->cast<TupleExtract>();
   leftStack.push_back(castLeft->tuple);
   rightStack.push_back(castRight->tuple);
   if (castLeft->index != castRight->index) {
@@ -601,14 +601,14 @@ case Expression::TupleExtractId: {
 }
 case Expression::I31NewId: {
   auto* castLeft = left->cast<I31New>();
-  auto* castRight = castRight->cast<I31New>();
+  auto* castRight = right->cast<I31New>();
   leftStack.push_back(castLeft->value);
   rightStack.push_back(castRight->value);
   break;
 }
 case Expression::I31GetId: {
   auto* castLeft = left->cast<I31Get>();
-  auto* castRight = castRight->cast<I31Get>();
+  auto* castRight = right->cast<I31Get>();
   leftStack.push_back(castLeft->i31);
   rightStack.push_back(castRight->i31);
   if (castLeft->signed_ != castRight->signed_) {

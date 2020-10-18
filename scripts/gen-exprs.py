@@ -843,13 +843,13 @@ class ExpressionComparisonRenderer:
                 operations.append(f'leftStack.push_back(castLeft->{key});')
                 operations.append(f'rightStack.push_back(castRight->{key});')
             elif is_a(field, ChildList):
-                operations.append('if (castLeft->%(key)s.size() != right.%(key)s.size()) { return false; }' % locals())
+                operations.append('if (castLeft->%(key)s.size() != castRight->%(key)s.size()) { return false; }' % locals())
                 operations.append('for (auto* child : castLeft->%(key)s) { leftStack.push_back(child); }' % locals())
                 operations.append('for (auto* child : castRight->%(key)s) { rightStack.push_back(child); }' % locals())
             elif is_a(field, ScopeNameDef):
                 # Blocks and Loops define names, so mark the names as equal
                 # on both sides.
-                operations.append('if (castLeft->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
+                operations.append('if (castLeft->%(key)s.is() != castRight->%(key)s.is()) { return false; }' % locals())
                 operations.append(f'rightNames[castLeft->{key}] = castRight->{key};')
             elif is_a(field, ScopeNameUse):
                 operations.append('if (rightNames[castLeft->%(key)s] != castRight->%(key)s) { return false; }' % locals())
@@ -867,13 +867,13 @@ for (Index i = 0; i < castLeft->%(key)s.size(); i++) {
                 check = 'if (castLeft->%(key)s != castRight->%(key)s) { return false; }' % locals()
                 if field.relevant_if:
                     relevant_if = field.relevant_if
-                    check = 'if (%(relevant_if)s(left)) { %(check)s }' % locals()
+                    check = 'if (%(relevant_if)s(castLeft)) { %(check)s }' % locals()
                 operations.append(check)
 
         if len(operations) > 0:
             operations = [
                 f'auto* castLeft = left->cast<{name}>();',
-                f'auto* castRight = castRight->cast<{name}>();'
+                f'auto* castRight = right->cast<{name}>();'
             ] + operations
 
         operations_text = join_nested_lines(operations)
