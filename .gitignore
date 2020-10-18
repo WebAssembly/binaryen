@@ -21,7 +21,7 @@ CMakeFiles
 /.ninja_log
 /bin/
 /lib/
-config.h
+/config.h
 *.o
 *.obj
 
