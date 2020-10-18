@@ -314,8 +314,13 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
         if (!left) {
           continue;
         }
+        // There are actual expressions to compare here. Start with the custom
+        // comparer function that was provided.
         if (comparer(left, right)) {
-          continue; // comparison hook, before all the rest
+          continue;
+        }
+        if (left->type != right->type) {
+          return false;
         }
         // Do the actual comparison, updating the names and stacks accordingly.
         if (!compareNodes(left, right)) {
