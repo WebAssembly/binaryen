@@ -290,6 +290,13 @@ IF(BUILD_LLVM_DWARF)
   SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
 ENDIF()
 
+# Code generation.
+
+add_custom_target(gen_exprs ALL
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/scripts/gen-exprs.py
+  BYPRODUCTS src/wasm-expressions.generated.h src/ir/compare-expressions.generated.h
+)
+
 # Sources.
 
 file(GLOB binaryen_HEADERS src/*.h)
@@ -309,6 +316,7 @@ install(TARGETS binaryen
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+add_dependencies(binaryen gen_exprs)
 
 install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -320,6 +328,7 @@ function(binaryen_add_executable name sources)
   set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_dependencies(${name} gen_exprs)
 endfunction()
 
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
@@ -362,6 +371,7 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_dependencies(binaryen_wasm gen_exprs)
 
   # binaryen.js JavaScript variant
   add_executable(binaryen_js
@@ -387,4 +397,5 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_dependencies(binaryen_js gen_exprs)
 endif()

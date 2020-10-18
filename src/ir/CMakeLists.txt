@@ -8,3 +8,4 @@ set(ir_SOURCES
   ${ir_HEADERS}
 )
 add_library(ir OBJECT ${ir_SOURCES})
+add_dependencies(ir gen_exprs)
