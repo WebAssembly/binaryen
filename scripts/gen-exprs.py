@@ -52,7 +52,7 @@ class ExpressionChild:
 
 
 class Field(ExpressionChild):
-    """A field on an expression, such as an immediate or a child.
+    """A field on an expression, such as an immediate or a child subexpression.
 
     These are rendered using the class name as the type, in most cases,
     allowing you to just define a class and use it.
@@ -73,6 +73,7 @@ class Field(ExpressionChild):
         # example, a load's sign does not matter if it is a floating-point
         # operation).
         self.relevant_if = relevant_if
+
 
 class Name(Field):
     """A string name. Interned in Binaryen, so very efficient.
@@ -232,26 +233,26 @@ class Block(Expression):
     list = ChildList()
 
     """
-        finalize has three overloads:
+    finalize has three overloads:
 
-        void ();
+    void ();
 
-        set the type purely based on its contents. this
-        scans the block, so it is not fast.
+    set the type purely based on its contents. this scans the block, so it is
+    not fast.
 
-        void (Type);
+    void (Type);
 
-        sets the type given you know its type, which is the case when parsing
-        s-expression or binary, as explicit types are given. the only additional
-        work this does is to set the type to unreachable in the cases that is
-        needed (which may require scanning the block)
+    sets the type given you know its type, which is the case when parsing
+    s-expression or binary, as explicit types are given. the only additional
+    work this does is to set the type to unreachable in the cases that is
+    needed (which may require scanning the block)
 
-        void (Type type_, bool hasBreak);
+    void (Type type_, bool hasBreak);
 
-        set the type given you know its type, and you know if there is a break to
-        this block. this avoids the need to scan the contents of the block in the
-        case that it might be unreachable, so it is recommended if you already know
-        the type and breakability anyhow.
+    set the type given you know its type, and you know if there is a break to
+    this block. this avoids the need to scan the contents of the block in the
+    case that it might be unreachable, so it is recommended if you already know
+    the type and breakability anyhow.
     """
     finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
 
@@ -262,16 +263,20 @@ class If(Expression):
     ifFalse = Child(init='nullptr')
 
     """
-        void finalize(Type type_);
+    finalize has two overloads:
 
-        set the type given you know its type, which is the case when parsing
-        s-expression or binary, as explicit types are given. the only additional
-        work this does is to set the type to unreachable in the cases that is
-        needed.
+    void ();
 
-        set the type purely based on its contents.
+    set the type purely based on its contents.
+
+    void finalize(Type type_);
+
+    set the type given you know its type, which is the case when parsing
+    s-expression or binary, as explicit types are given. the only additional
+    work this does is to set the type to unreachable in the cases that is
+    needed.
     """
-    finalize = Method(('Type type_', ''), 'void')
+    finalize = Method(('', 'Type type_'), 'void')
 
 
 class Loop(Expression):
@@ -279,15 +284,9 @@ class Loop(Expression):
     body = Child()
 
     """
-        set the type given you know its type, which is the case when parsing
-        s-expression or binary, as explicit types are given. the only additional
-        work this does is to set the type to unreachable in the cases that is
-        needed.
-        void finalize(Type type_);
-
-        set the type purely based on its contents.
+    Similar to If, see above.
     """
-    finalize = Method(('Type type_', ''), 'void')
+    finalize = Method(('', 'Type type_'), 'void')
 
 
 class Break(Expression):
@@ -343,14 +342,17 @@ class GlobalSet(Expression):
 
 
 class Load(Expression):
+    """
+    Note: the type must be set during creation, it cannot be inferred from the
+    immediates.
+    """
+
     bytes = uint8_t()
     signed_ = Bool(relevant_if='LoadUtils::isSignRelevant')
     offset = Address()
     align = Address()
     isAtomic = Bool()
     ptr = Child()
-
-    # type must be set during creation, cannot be inferred
 
 
 class Store(Expression):
@@ -485,8 +487,8 @@ class Binary(Expression):
     right = Child()
 
     """
-    the type is always the type of the operands,
-    except for relationals
+    The type is always the type of the operands, except for relational
+    operations, which return an i32.
     """
     isRelational = Method('', 'bool')
 
@@ -533,7 +535,6 @@ class Pop(Expression):
     Represents a pop of a value that arrives as an implicit argument to the
     current block. Currently used in exception handling.
     """
-    pass
 
 
 class RefNull(Expression):
@@ -575,6 +576,7 @@ class BrOnExn(Expression):
     name = ScopeNameUse()
     event = Name()
     exnref = Child()
+
     """
     This is duplicate info of param types stored in Event, but this is required
     for us to know the type of the value sent to the target block.
@@ -694,6 +696,7 @@ def is_subclass_of(x, y):
 
 def is_a(x, cls):
     return x.__class__ == cls
+
 
 def get_expressions():
     ret = []
@@ -913,6 +916,7 @@ def generate_comparisons():
 def main():
     generate_expression_definitions()
     generate_comparisons()
+
 
 if __name__ == "__main__":
     main()
