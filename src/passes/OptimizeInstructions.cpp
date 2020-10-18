@@ -617,13 +617,13 @@ struct OptimizeInstructions
         }
         if (binary->op == DivFloat32) {
           float c = right->value.getf32();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
         if (binary->op == DivFloat64) {
           double c = right->value.getf64();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
