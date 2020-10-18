@@ -75,7 +75,27 @@ class Field(ExpressionChild):
         self.relevant_if = relevant_if
 
 class Name(Field):
-    """A string name. Interned in Binaryen, so very efficient."""
+    """A string name. Interned in Binaryen, so very efficient.
+
+    For a scope name, see ScopeNameDef and ScopeNameUse.
+    """
+
+
+class ScopeNameDef(Field):
+    """A string name that defines a new scope (like in a Block or Loop)."""
+    type_name = 'Name'
+
+
+class ScopeNameUse(Field):
+    """A string name that refers to a scope (like in a Break)."""
+    type_name = 'Name'
+
+
+class ScopeNameUseVector(Field):
+    """A vector of ScopeNameUses."""
+    type_name = 'ArenaVector<Name>'
+
+    allocator = True
 
 
 class Bool(Field):
@@ -113,22 +133,6 @@ class UnaryOp(Field):
 
 class BinaryOp(Field):
     """A binary opcode."""
-
-
-class ArenaVector(Field):
-    """A vector of items stored in the expression arena.
-
-    Expressions are stored in arenas, and should not allocate storage using
-    malloc/free normally; instead they should only allocate in the arena they
-    are in. Binaryen uses arena allocation for both speed and safety.
-    """
-
-    allocator = True
-
-    def __init__(self, of, *kwargs):
-        self.of = of
-        self.type_name = f'ArenaVector<{of}>'
-        super(ArenaVector, self).__init__(*kwargs)
 
 
 class Child(Field):
@@ -224,7 +228,7 @@ class Nop(Expression):
 
 
 class Block(Expression):
-    name = Name()
+    name = ScopeNameDef()
     list = ChildList()
 
     """
@@ -271,7 +275,7 @@ class If(Expression):
 
 
 class Loop(Expression):
-    name = Name()
+    name = ScopeNameDef()
     body = Child()
 
     """
@@ -289,7 +293,7 @@ class Loop(Expression):
 class Break(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
-    name = Name()
+    name = ScopeNameUse()
     value = Child(init='nullptr')
     condition = Child(init='nullptr')
 
@@ -297,8 +301,8 @@ class Break(Expression):
 class Switch(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
-    targets = ArenaVector('Name')
-    default_ = Name()
+    targets = ScopeNameUseVector()
+    default_ = ScopeNameUse()
     condition = Child()
     value = Child(init='nullptr')
 
@@ -568,7 +572,7 @@ class Rethrow(Expression):
 class BrOnExn(Expression):
     __constructor_body__ = 'type = Type::unreachable;'
 
-    name = Name()
+    name = ScopeNameUse()
     event = Name()
     exnref = Child()
     """
@@ -842,17 +846,14 @@ class ExpressionComparisonRenderer:
                 operations.append('if (left->%(key)s.size() != right.%(key)s.size()) { return false; }' % locals())
                 operations.append('for (auto* child : left->%(key)s) { leftStack.push_back(child); }' % locals())
                 operations.append('for (auto* child : right->%(key)s) { rightStack.push_back(child); }' % locals())
-            elif is_a(field, Name):
-                if cls in (Block, Loop):
-                    # Blocks and Loops define names, so mark the names as equal
-                    # on both sides.
-                    operations.append('if (left->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
-                    operations.append(f'rightNames[left->{key}] = right->{key};')
-                else:
-                    # Anything else consumes a name: compare them, taking into
-                    # account the mapping.
-                    operations.append('if (rightNames[left->%(key)s] != right->%(key)s) { return false; }' % locals())
-            elif is_a(field, ArenaVector) and field.of == 'Name':
+            elif is_a(field, ScopeNameDef):
+                # Blocks and Loops define names, so mark the names as equal
+                # on both sides.
+                operations.append('if (left->%(key)s.is() != right.%(key)s.is()) { return false; }' % locals())
+                operations.append(f'rightNames[left->{key}] = right->{key};')
+            elif is_a(field, ScopeNameUse):
+                operations.append('if (rightNames[left->%(key)s] != right->%(key)s) { return false; }' % locals())
+            elif is_a(field, ScopeNameUseVector):
                 operations.append('''\
 if (left->%(key)s.size() != right->%(key)s.size()) {
   return false;

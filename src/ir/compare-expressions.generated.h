@@ -96,7 +96,7 @@ case Expression::CallId: {
   for (auto* child : right->operands) {
     rightStack.push_back(child);
   }
-  if (rightNames[left->target] != right->target) {
+  if (left->target != right->target) {
     return false;
   }
   if (left->isReturn != right->isReturn) {
@@ -139,13 +139,13 @@ case Expression::LocalSetId: {
   break;
 }
 case Expression::GlobalGetId: {
-  if (rightNames[left->name] != right->name) {
+  if (left->name != right->name) {
     return false;
   }
   break;
 }
 case Expression::GlobalSetId: {
-  if (rightNames[left->name] != right->name) {
+  if (left->name != right->name) {
     return false;
   }
   leftStack.push_back(left->value);
@@ -436,7 +436,7 @@ case Expression::RefIsNullId: {
   break;
 }
 case Expression::RefFuncId: {
-  if (rightNames[left->func] != right->func) {
+  if (left->func != right->func) {
     return false;
   }
   break;
@@ -456,7 +456,7 @@ case Expression::TryId: {
   break;
 }
 case Expression::ThrowId: {
-  if (rightNames[left->event] != right->event) {
+  if (left->event != right->event) {
     return false;
   }
   if (left->operands.size() != right.operands.size()) {
@@ -479,7 +479,7 @@ case Expression::BrOnExnId: {
   if (rightNames[left->name] != right->name) {
     return false;
   }
-  if (rightNames[left->event] != right->event) {
+  if (left->event != right->event) {
     return false;
   }
   leftStack.push_back(left->exnref);
