@@ -351,10 +351,10 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
       // If it's not found, that means it was defined out of the expression
       // being compared, in which case we can just treat it literally - it
       // must be exactly identical.
-      if (iter != parent.rightNames.end()) {
-        leftName = iter->second;
+      if (iter != rightNames.end()) {
+        left = iter->second;
       }
-      return leftName == rightName;
+      return left == right;
     }
   };
 
