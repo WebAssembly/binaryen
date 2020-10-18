@@ -1,7 +1,7 @@
 (module
  (type $none_=>_i32 (func (result i32)))
  (import "env" "__linear_memory" (memory $mimport$0 0))
- (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
+ (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (func $0 (result i32)
   (local $0 i32)
   (local.set $0

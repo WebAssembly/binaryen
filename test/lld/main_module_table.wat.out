@@ -1,11 +1,10 @@
 (module
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- (import "env" "__stack_pointer" (global $sp_import i32))
+ (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "env" "fp$__stdio_write$v" (func $fp$__stdio_write$v (result i32)))
  (global $gimport$9 (mut i32) (i32.const 0))
  (global $global i32 (i32.const 42))
- (global $sp (mut i32) (global.get $sp_import))
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
  (export "__assign_got_enties" (func $__assign_got_enties))

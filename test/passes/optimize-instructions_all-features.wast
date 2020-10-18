@@ -4716,6 +4716,30 @@
       )
       (i64.const 1)
     ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i64.ne
+        (local.get $y)
+        (i64.const 0)
+      )
+      (i32.const 0)
+    ))
+    ;; (i32(expr) != 0) != 0 -> (expr != 0)
+    (drop (i32.ne
+      (i32.ne
+        (local.get $x)
+        (i32.const 0)
+      )
+      (i32.const 0)
+    ))
   )
   (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
     ;; ~(1 << x)  ->  rotl(-2, x)
