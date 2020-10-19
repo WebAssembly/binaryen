@@ -939,10 +939,7 @@ struct Reducer
       }
       void visitRefFunc(RefFunc* curr) {
         if (names.count(curr->func)) {
-          auto& functions = getModule()->functions;
-          if (!functions.empty()) {
-            curr->func = functions[0]->name;
-          }
+          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
       void visitExport(Export* curr) {
