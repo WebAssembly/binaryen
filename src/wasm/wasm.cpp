@@ -1009,71 +1009,41 @@ void I31Get::finalize() {
   }
 }
 
-void Nop::finalize() {
-}
+void Nop::finalize() {}
 
-void LocalGet::finalize() {
-}
+void LocalGet::finalize() {}
 
-void GlobalGet::finalize() {
-}
+void GlobalGet::finalize() {}
 
-void Unreachable::finalize() {
-}
+void Unreachable::finalize() {}
 
-void Return::finalize() {
-}
+void Return::finalize() {}
 
-void Pop::finalize() {
-}
+void Pop::finalize() {}
 
-void StructGet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void StructGet::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void BrOnCast::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void BrOnCast::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void ArrayGet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void ArrayGet::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void StructNew::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void StructNew::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void RttSub::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void RttSub::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void RefTest::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void RefTest::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void ArrayNew::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void ArrayNew::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void RefCast::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void RefCast::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void StructSet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void StructSet::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void ArraySet::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void ArraySet::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void ArrayLen::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void ArrayLen::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
-void RttCanon::finalize() {
-  WASM_UNREACHABLE("TODO GC finalize() methods");
-}
+void RttCanon::finalize() { WASM_UNREACHABLE("TODO GC finalize() methods"); }
 
 size_t Function::getNumParams() { return sig.params.size(); }
 
