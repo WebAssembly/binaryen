@@ -650,7 +650,6 @@ case Expression::ArrayGetId: {
 case Expression::ArraySetId: {
   break;
 }
-// fake change
 case Expression::ArrayLenId: {
   break;
 }

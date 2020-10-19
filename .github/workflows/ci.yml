@@ -34,7 +34,7 @@ jobs:
     - name: gen-s-parser
       run: ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
     - name: gen-exprs
-      run: ./scripts/gen-exprs.py | git diff --exit-code src/
+      run: ./scripts/gen-exprs.py && git diff --exit-code src/
 
   build:
     name: build
