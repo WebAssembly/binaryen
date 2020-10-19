@@ -770,7 +770,7 @@ def write_result(text, target, what):
 
     if text != existing:
         with open(target, 'w') as f:
-            print(f'writing updated {what}')
+            print(f'[gen-exprs] writing updated {what}')
             f.write(text)
     else:
         print(f'[gen-exprs] {what} did not change')
