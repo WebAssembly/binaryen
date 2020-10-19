@@ -187,25 +187,11 @@ class SIMDLoadOp(Field):
     """A SIMD load opcode."""
 
 
-class Method:
-    """A function method on an expression class."""
-
-    def __init__(self, paramses, result, const=False):
-        self.paramses = paramses
-        if type(self.paramses) is str:
-            self.paramses = [self.paramses]
-        self.result = result
-        self.const = const
-
-
 class Expression:
     """Core class from which all expressions inherit."""
 
     # Optional content to place in the constructor body.
     __constructor_body__ = ''
-
-    # If no finalize() method is defined, a default one is emitted.
-    default_finalize = Method('', 'void')
 
     @classmethod
     def get_fields(self):
@@ -219,11 +205,7 @@ class Expression:
     @classmethod
     def get_methods(self):
         """Get a map of method name => method."""
-        methods = {}
-        for key, value in self.__dict__.items():
-            if is_a(value, Method):
-                methods[key] = value
-        return methods
+        return getattr(self, 'methods', [])
 
 
 ###################################
@@ -261,7 +243,11 @@ class Block(Expression):
     case that it might be unreachable, so it is recommended if you already know
     the type and breakability anyhow.
     """
-    finalize = Method(('', 'Type type_', 'Type type_, bool hasBreak'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(Type type_);',
+        'void finalize(Type type_, bool hasBreak);',
+    ]
 
 
 class If(Expression):
@@ -283,7 +269,10 @@ class If(Expression):
     work this does is to set the type to unreachable in the cases that is
     needed.
     """
-    finalize = Method(('', 'Type type_'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(Type type_);',
+    ]
 
 
 class Loop(Expression):
@@ -293,7 +282,10 @@ class Loop(Expression):
     """
     Similar to If, see above.
     """
-    finalize = Method(('', 'Type type_'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(Type type_);',
+    ]
 
 
 class Break(Expression):
@@ -334,9 +326,11 @@ class LocalSet(Expression):
     index = Index()
     value = Child()
 
-    isTee = Method('', 'bool', const=True)
-    makeTee = Method('Type type', 'void')
-    makeSet = Method('', 'void')
+    methods = [
+        'bool isTee() const;',
+        'void makeTee(Type type);',
+        'void makeSet();',
+    ]
 
 
 class GlobalGet(Expression):
@@ -449,7 +443,7 @@ class SIMDLoad(Expression):
     align = Address()
     ptr = Child()
 
-    getMemBytes = Method('', 'Index')
+    methods = ['Index getMemBytes();']
 
 
 class MemoryInit(Expression):
@@ -478,14 +472,14 @@ class MemoryFill(Expression):
 class Const(Expression):
     value = Literal()
 
-    set = Method('Literal value_', 'Const*')
+    methods = ['Const* set(Literal value_);']
 
 
 class Unary(Expression):
     op = UnaryOp()
     value = Child()
 
-    isRelational = Method('', 'bool')
+    methods = ['bool isRelational();']
 
 
 class Binary(Expression):
@@ -497,7 +491,7 @@ class Binary(Expression):
     The type is always the type of the operands, except for relational
     operations, which return an i32.
     """
-    isRelational = Method('', 'bool')
+    methods = ['bool isRelational();']
 
 
 class Select(Expression):
@@ -505,7 +499,10 @@ class Select(Expression):
     ifFalse = Child()
     condition = Child()
 
-    finalize = Method(('', 'Type type_'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(Type type_);',
+    ]
 
 
 class Drop(Expression):
@@ -523,14 +520,14 @@ class MemorySize(Expression):
 
     ptrType = Type(init='Type::i32')
 
-    make64 = Method('', 'void')
+    methods = ['void make64();']
 
 
 class MemoryGrow(Expression):
     delta = Child(init='nullptr')
     ptrType = Type(init='Type::i32')
 
-    make64 = Method('', 'void')
+    methods = ['void make64();']
 
 
 class Unreachable(Expression):
@@ -545,7 +542,11 @@ class Pop(Expression):
 
 
 class RefNull(Expression):
-    finalize = Method(('', 'HeapType heapType', 'Type type'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(HeapType heapType);',
+        'void finalize(Type type);',
+    ]
 
 
 class RefIsNull(Expression):
@@ -565,7 +566,10 @@ class Try(Expression):
     body = Child()
     catchBody = Child()
 
-    finalize = Method(('', 'Type type_'), 'void')
+    methods = [
+        'void finalize();',
+        'void finalize(Type type_);',
+    ]
 
 
 class Throw(Expression):
@@ -785,13 +789,6 @@ class ExpressionDefinitionRenderer:
         value = f' = {field.init}' if field.init else ''
         return f'{type_name} {name}{value};'
 
-    def render_method(self, name, method):
-        extra = ''
-        if method.const:
-            extra += ' const'
-        ret = [f'{method.result} {name}({params}){extra};' for params in method.paramses]
-        return join_nested_lines(ret)
-
     def render(self, cls):
         name = cls.__name__
 
@@ -803,10 +800,10 @@ class ExpressionDefinitionRenderer:
         # Render the methods.
         methods = cls.get_methods()
         # render a default finalize if none has been specified
-        if 'finalize' not in methods:
-            methods['finalize'] = cls.default_finalize
-        rendered_methods = [self.render_method(key, method) for key, method in methods.items()]
-        methods_text = join_nested_lines(rendered_methods)
+        default_finalize = 'void finalize();'
+        if default_finalize not in methods:
+            methods.append(default_finalize)
+        methods_text = join_nested_lines(methods)
 
         # Render the constructor(s).
         constructor_body = cls.__constructor_body__
