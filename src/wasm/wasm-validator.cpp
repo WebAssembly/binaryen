@@ -806,9 +806,6 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
                curr,
                "return_call_indirect requires tail calls to be enabled");
-  if (!info.validateGlobally) {
-    return;
-  }
   shouldBeEqualOrFirstIsUnreachable(curr->target->type,
                                     Type(Type::i32),
                                     curr,
@@ -1960,6 +1957,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types to be enabled");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
 }
@@ -2010,13 +2010,13 @@ void FunctionValidator::visitThrow(Throw* curr) {
   shouldBeTrue(getModule()->features.hasExceptionHandling(),
                curr,
                "throw requires exception-handling to be enabled");
-  if (!info.validateGlobally) {
-    return;
-  }
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
                 "throw's type must be unreachable");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* event = getModule()->getEventOrNull(curr->event);
   if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
     return;

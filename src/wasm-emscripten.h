@@ -36,10 +36,6 @@ public:
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
 
-  // Remove the import of a mutable __stack_pointer and instead initialize the
-  // stack pointer from an immutable import.
-  void internalizeStackPointerGlobal();
-
   std::string
   generateEmscriptenMetadata(Address staticBump,
                              std::vector<Name> const& initializerFunctions);

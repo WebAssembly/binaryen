@@ -219,6 +219,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   // returns nullptr;
   template<typename T>
   T* visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+    if (handleUnreachable(curr)) {
+      return nullptr;
+    }
     bool fixed = false;
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {
