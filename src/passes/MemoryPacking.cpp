@@ -30,6 +30,7 @@
 
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/space.h"
