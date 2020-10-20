@@ -232,6 +232,8 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
       Address start = c->value.getInteger();
       DisjointSpans::Span span{start, start + segment.data.size()};
       if (space.addAndCheckOverlap(span)) {
+        std::cerr << "warning: active memory segments have overlap, which "
+                  << "prevents some optimizations.\n";
         return false;
       }
     }
