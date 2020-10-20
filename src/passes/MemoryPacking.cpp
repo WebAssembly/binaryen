@@ -90,8 +90,6 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 } // anonymous namespace
 
 struct MemoryPacking : public Pass {
-  size_t dropStateGlobalCount = 0;
-
   // FIXME: Chrome has a bug decoding section indices that prevents it from
   // using more than 63. Just use WebLimitations::MaxDataSegments once this is
   // fixed. See https://bugs.chromium.org/p/v8/issues/detail?id=10151.
@@ -557,8 +555,8 @@ void MemoryPacking::createReplacements(Module* module,
     if (dropStateGlobal != Name()) {
       return dropStateGlobal;
     }
-    dropStateGlobal = Name(std::string("__mem_segment_drop_state_") +
-                           std::to_string(dropStateGlobalCount++));
+    dropStateGlobal =
+      Names::getValidGlobalName(*module, "__mem_segment_drop_state_");
     module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
                                          builder.makeConst(int32_t(0)),
