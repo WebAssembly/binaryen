@@ -557,7 +557,7 @@ void MemoryPacking::createReplacements(Module* module,
       return dropStateGlobal;
     }
     dropStateGlobal =
-      Names::getValidGlobalName(*module, "__mem_segment_drop_state_");
+      Names::getValidGlobalName(*module, "__mem_segment_drop_state");
     module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
                                          builder.makeConst(int32_t(0)),
