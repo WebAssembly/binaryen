@@ -952,7 +952,9 @@ if __name__ == '__main__':
             # longer working on the original test case but modified one, which
             # is likely to be called within wasm-reduce script itself, so
             # original.wasm and reduce.sh should not be overwritten.
-            if not given_wasm:
+            # Note that we can't do this if a.wasm doesn't exist, which can be
+            # the case if we failed to even generate the wasm.
+            if not given_wasm and os.path.exists('a.wasm'):
                 # show some useful info about filing a bug and reducing the
                 # testcase (to make reduction simple, save "original.wasm" on
                 # the side, so that we can autoreduce using the name "a.wasm"
