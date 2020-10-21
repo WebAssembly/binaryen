@@ -106,7 +106,7 @@ def randomize_feature_opts():
     # coverage both ways, and 1/3 pick each one randomly
     if random.random() < 0.33333:
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
-    elif random.random() < 0.33333:
+    elif random.random() < 0.5:
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
