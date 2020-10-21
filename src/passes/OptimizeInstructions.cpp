@@ -1037,7 +1037,7 @@ private:
           // if the left is a zero, ignore it, it's how we negate ints
           auto* left = binary->left->dynCast<Const>();
           seekStack.emplace_back(binary->right, -mul);
-          if (!left || left->value.getInteger() != 0LL) {
+          if (!left || !left->value.isZero()) {
             seekStack.emplace_back(binary->left, mul);
           }
           continue;
@@ -1065,7 +1065,7 @@ private:
       // nothing much to do, except for the trivial case of adding/subbing a
       // zero
       if (auto* c = binary->right->dynCast<Const>()) {
-        if (c->value.getInteger() == 0LL) {
+        if (c->value.isZero()) {
           return binary->left;
         }
       }
@@ -1073,7 +1073,7 @@ private:
     }
     // wipe out all constants, we'll replace with a single added one
     for (auto* c : constants) {
-      c->value = Literal::makeFromInt32(0, c->type);
+      c->value = Literal::makeZero(c->type);
     }
     // remove added/subbed zeros
     struct ZeroRemover : public PostWalker<ZeroRemover> {
@@ -1088,43 +1088,44 @@ private:
           return;
         }
         FeatureSet features = getModule()->features;
+        auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
-        if (curr->op == Abstract::getBinary(curr->type, Abstract::Add)) {
-          if (left && left->value.getInteger() == 0LL) {
+        if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (left && left->value.isZero()) {
             replaceCurrent(curr->right);
             return;
           }
-          if (right && right->value.getInteger() == 0LL) {
+          if (right && right->value.isZero()) {
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(curr->type, Abstract::Sub)) {
+        } else if (curr->op == Abstract::getBinary(type, Abstract::Sub)) {
           // we must leave a left zero, as it is how we negate ints
-          if (right && right->value.getInteger() == 0LL) {
+          if (right && right->value.isZero()) {
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(curr->type, Abstract::Shl)) {
+        } else if (curr->op == Abstract::getBinary(type, Abstract::Shl)) {
           // shifting a 0 is a 0, or anything by 0 has no effect, all unless the
           // shift has side effects
-          if (((left && left->value.getInteger() == 0LL) ||
+          if (((left && left->value.isZero()) ||
                (right && Bits::getEffectiveShifts(right) == 0)) &&
               !EffectAnalyzer(passOptions, features, curr->right)
                  .hasSideEffects()) {
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(curr->type, Abstract::Mul)) {
+        } else if (curr->op == Abstract::getBinary(type, Abstract::Mul)) {
           // multiplying by zero is a zero, unless the other side has side
           // effects
-          if (left && left->value.getInteger() == 0LL &&
+          if (left && left->value.isZero() &&
               !EffectAnalyzer(passOptions, features, curr->right)
                  .hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
-          if (right && right->value.getInteger() == 0LL &&
+          if (right && right->value.isZero() &&
               !EffectAnalyzer(passOptions, features, curr->left)
                  .hasSideEffects()) {
             replaceCurrent(right);
@@ -1141,18 +1142,18 @@ private:
       return walked; // nothing more to do
     }
     if (auto* c = walked->dynCast<Const>()) {
-      assert(c->value.getInteger() == 0LL);
+      assert(c->value.isZero());
       // Accumulated 64-bit constant value in 32-bit context will be wrapped
       // during downcasting. So it's valid unification for 32-bit and 64-bit
       // values.
-      c->value = Literal::makeFromUInt64(constant, c->type);
+      c->value = Literal::makeFromInt64(constant, c->type);
       return c;
     }
     Builder builder(*getModule());
     return builder.makeBinary(
       Abstract::getBinary(walked->type, Abstract::Add),
       walked,
-      builder.makeConst(Literal::makeFromUInt64(constant, walked->type)));
+      builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,
