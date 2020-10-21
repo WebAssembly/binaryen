@@ -937,6 +937,11 @@ struct Reducer
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
+      void visitRefFunc(RefFunc* curr) {
+        if (names.count(curr->func)) {
+          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        }
+      }
       void visitExport(Export* curr) {
         if (names.count(curr->value)) {
           exportsToRemove.push_back(curr->name);
@@ -1031,14 +1036,14 @@ struct Reducer
     }
     if (curr->type.isTuple()) {
       Expression* n =
-        builder->makeConstantExpression(Literal::makeZero(curr->type));
+        builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
     }
     Const* c = builder->makeConst(int32_t(0));
     if (tryToReplaceCurrent(c)) {
       return true;
     }
-    c->value = Literal::makeFromInt32(1, curr->type);
+    c->value = Literal::makeOne(curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
   }

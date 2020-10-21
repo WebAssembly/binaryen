@@ -235,6 +235,42 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitTupleExtract(TupleExtract* curr) {
       visitor.visitIndex(curr->index);
     }
+    void visitI31New(I31New* curr) {}
+    void visitI31Get(I31Get* curr) { visitor.visitInt(curr->signed_); }
+    void visitRefTest(RefTest* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.test");
+    }
+    void visitRefCast(RefCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.cast");
+    }
+    void visitBrOnCast(BrOnCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    }
+    void visitRttCanon(RttCanon* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    }
+    void visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+    void visitStructNew(StructNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.new");
+    }
+    void visitStructGet(StructGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.get");
+    }
+    void visitStructSet(StructSet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.set");
+    }
+    void visitArrayNew(ArrayNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.new");
+    }
+    void visitArrayGet(ArrayGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.get");
+    }
+    void visitArraySet(ArraySet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.set");
+    }
+    void visitArrayLen(ArrayLen* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.len");
+    }
   } singleton(curr, visitor);
 }
 

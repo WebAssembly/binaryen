@@ -174,6 +174,20 @@ BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
 BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
 BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
+BINARYEN_API BinaryenExpressionId BinaryenI31NewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenI31GetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRefTestId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRefCastId(void);
+BINARYEN_API BinaryenExpressionId BinaryenBrOnCastId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRttCanonId(void);
+BINARYEN_API BinaryenExpressionId BinaryenRttSubId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructNewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructGetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenStructSetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayNewId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayGetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArraySetId(void);
+BINARYEN_API BinaryenExpressionId BinaryenArrayLenId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -202,6 +216,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -859,6 +874,23 @@ BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
   BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
+BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+                                                  BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
+                                                  BinaryenExpressionRef i31,
+                                                  int signed_);
+// TODO (gc): ref.test
+// TODO (gc): ref.cast
+// TODO (gc): br_on_cast
+// TODO (gc): rtt.canon
+// TODO (gc): rtt.sub
+// TODO (gc): struct.new
+// TODO (gc): struct.get
+// TODO (gc): struct.set
+// TODO (gc): array.new
+// TODO (gc): array.get
+// TODO (gc): array.set
+// TODO (gc): array.len
 
 // Expression
 
@@ -1851,6 +1883,29 @@ BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
                                                BinaryenIndex index);
 
+// I31New
+
+// Gets the value expression of an `i31.new` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenI31NewGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of an `i31.new` expression.
+BINARYEN_API void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef valueExpr);
+
+// I31Get
+
+// Gets the i31 expression of an `i31.get` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenI31GetGetI31(BinaryenExpressionRef expr);
+// Sets the i31 expression of an `i31.get` expression.
+BINARYEN_API void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef i31Expr);
+// Gets whether an `i31.get` expression returns a signed value (`_s`).
+BINARYEN_API int BinaryenI31GetIsSigned(BinaryenExpressionRef expr);
+// Sets whether an `i31.get` expression returns a signed value (`_s`).
+BINARYEN_API void BinaryenI31GetSetSigned(BinaryenExpressionRef expr,
+                                          int signed_);
+
 // Functions
 
 BINARYEN_REF(Function);
@@ -2078,6 +2133,16 @@ BINARYEN_API int BinaryenGetLowMemoryUnused(void);
 // Enables or disables whether the low 1K of memory can be considered unused
 // when optimizing. Applies to all modules, globally.
 BINARYEN_API void BinaryenSetLowMemoryUnused(int on);
+
+// Gets whether fast math optimizations are enabled, ignoring for example
+// corner cases of floating-point math like NaN changes.
+// Applies to all modules, globally.
+BINARYEN_API int BinaryenGetFastMath(void);
+
+// Enables or disables fast math optimizations, ignoring for example
+// corner cases of floating-point math like NaN changes.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetFastMath(int value);
 
 // Gets the value of the specified arbitrary pass argument.
 // Applies to all modules, globally.
@@ -2484,10 +2549,10 @@ BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
 // ========= Utilities =========
 //
 
-// Enable or disable coloring for the WASM printer
+// Enable or disable coloring for the Wasm printer
 BINARYEN_API void BinaryenSetColorsEnabled(int enabled);
 
-// Query whether color is enable for the WASM printer
+// Query whether color is enable for the Wasm printer
 BINARYEN_API int BinaryenAreColorsEnabled();
 #ifdef __cplusplus
 } // extern "C"

@@ -15,6 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Remove old/broken SpollPointers pass.  This pass: Spills values that might be
+  pointers to the C stack. This allows Boehm-style GC to see them properly.
+  This can be revived if needed from git history (#3261).
+
+v98
+---
+
+- Add `--fast-math` mode. (#3155)
+- Initial implementation of "Memory64" proposal (#3130)
+- Lots of changes in support of GC proposal
+
 v97
 ---
 

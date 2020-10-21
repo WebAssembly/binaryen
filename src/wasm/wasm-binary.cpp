@@ -551,10 +551,6 @@ void WasmBinaryWriter::writeEvents() {
 }
 
 void WasmBinaryWriter::writeNames() {
-  if (wasm->functions.empty()) {
-    return;
-  }
-
   BYN_TRACE("== writeNames\n");
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::Name);
@@ -630,6 +626,52 @@ void WasmBinaryWriter::writeNames() {
       finishSubsection(substart);
     }
   }
+
+  // table names
+  if (wasm->table.exists && wasm->table.hasExplicitName) {
+    auto substart =
+      startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
+    o << U32LEB(1) << U32LEB(0); // currently exactly 1 table at index 0
+    writeEscapedName(wasm->table.name.str);
+    finishSubsection(substart);
+  }
+
+  // memory names
+  if (wasm->memory.exists && wasm->memory.hasExplicitName) {
+    auto substart =
+      startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
+    o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
+    writeEscapedName(wasm->memory.name.str);
+    finishSubsection(substart);
+  }
+
+  // global names
+  {
+    std::vector<std::pair<Index, Global*>> globalsWithNames;
+    Index checked = 0;
+    auto check = [&](Global* curr) {
+      if (curr->hasExplicitName) {
+        globalsWithNames.push_back({checked, curr});
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedGlobals(*wasm, check);
+    ModuleUtils::iterDefinedGlobals(*wasm, check);
+    assert(checked == indexes.globalIndexes.size());
+    if (globalsWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameGlobal);
+      o << U32LEB(globalsWithNames.size());
+      for (auto& indexedGlobal : globalsWithNames) {
+        o << U32LEB(indexedGlobal.first);
+        writeEscapedName(indexedGlobal.second->name.str);
+      }
+      finishSubsection(substart);
+    }
+  }
+
+  // TODO: label, type, element and data names
+  // see: https://github.com/WebAssembly/extended-name-section
 
   finishSection(start);
 }
@@ -1035,7 +1077,7 @@ void WasmBinaryBuilder::read() {
   }
 
   validateBinary();
-  processFunctions();
+  processNames();
 }
 
 void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
@@ -1408,6 +1450,11 @@ void WasmBinaryBuilder::readImports() {
   size_t num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
   Builder builder(wasm);
+  size_t tableCounter = 0;
+  size_t memoryCounter = 0;
+  size_t functionCounter = 0;
+  size_t globalCounter = 0;
+  size_t eventCounter = 0;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto module = getInlineString();
@@ -1418,7 +1465,7 @@ void WasmBinaryBuilder::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        auto name = Name(std::string("fimport$") + std::to_string(i));
+        Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         if (index >= signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
@@ -1432,9 +1479,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Table: {
+        Name name(std::string("timport$") + std::to_string(tableCounter++));
         wasm.table.module = module;
         wasm.table.base = base;
-        wasm.table.name = Name(std::string("timport$") + std::to_string(i));
+        wasm.table.name = name;
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::funcref) {
@@ -1457,9 +1505,10 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Memory: {
+        Name name(std::string("mimport$") + std::to_string(memoryCounter++));
         wasm.memory.module = module;
         wasm.memory.base = base;
-        wasm.memory.name = Name(std::to_string(i));
+        wasm.memory.name = name;
         wasm.memory.exists = true;
         getResizableLimits(wasm.memory.initial,
                            wasm.memory.max,
@@ -1469,7 +1518,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        auto name = Name(std::string("gimport$") + std::to_string(i));
+        Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         auto* curr =
@@ -1480,10 +1529,11 @@ void WasmBinaryBuilder::readImports() {
         curr->module = module;
         curr->base = base;
         wasm.addGlobal(curr);
+        globalImports.push_back(curr);
         break;
       }
       case ExternalKind::Event: {
-        auto name = Name(std::string("eimport$") + std::to_string(i));
+        Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
         if (index >= signatures.size()) {
@@ -1819,7 +1869,7 @@ void WasmBinaryBuilder::readGlobals() {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    wasm.addGlobal(
+    globals.push_back(
       Builder::makeGlobal("global$" + std::to_string(i),
                           type,
                           init,
@@ -2008,12 +2058,15 @@ void WasmBinaryBuilder::validateBinary() {
   }
 }
 
-void WasmBinaryBuilder::processFunctions() {
+void WasmBinaryBuilder::processNames() {
   for (auto* func : functions) {
     wasm.addFunction(func);
   }
+  for (auto* global : globals) {
+    wasm.addGlobal(global);
+  }
 
-  // now that we have names for each function, apply things
+  // now that we have names, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
     wasm.start = getFunctionName(startIndex);
@@ -2027,10 +2080,10 @@ void WasmBinaryBuilder::processFunctions() {
         break;
       }
       case ExternalKind::Table:
-        curr->value = Name::fromInt(0);
+        curr->value = wasm.table.name;
         break;
       case ExternalKind::Memory:
-        curr->value = Name::fromInt(0);
+        curr->value = wasm.memory.name;
         break;
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
@@ -2063,6 +2116,20 @@ void WasmBinaryBuilder::processFunctions() {
     auto& indices = pair.second;
     for (auto j : indices) {
       wasm.table.segments[i].data.push_back(getFunctionName(j));
+    }
+  }
+
+  for (auto& iter : globalRefs) {
+    size_t index = iter.first;
+    auto& refs = iter.second;
+    for (auto* ref : refs) {
+      if (auto* get = ref->dynCast<GlobalGet>()) {
+        get->name = getGlobalName(index);
+      } else if (auto* set = ref->dynCast<GlobalSet>()) {
+        set->name = getGlobalName(index);
+      } else {
+        WASM_UNREACHABLE("Invalid type in global references");
+      }
     }
   }
 
@@ -2226,23 +2293,21 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        rawName = escape(rawName);
-        auto name = rawName;
+        auto name = escape(rawName);
         // De-duplicate names by appending .1, .2, etc.
         for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = rawName.str + std::string(".") + std::to_string(i);
+          name = std::string(escape(rawName).str) + std::string(".") +
+                 std::to_string(i);
         }
-        // note: we silently ignore errors here, as name section errors
-        //       are not fatal. should we warn?
         auto numFunctionImports = functionImports.size();
         if (index < numFunctionImports) {
-          functionImports[index]->name = name;
+          functionImports[index]->setExplicitName(name);
         } else if (index - numFunctionImports < functions.size()) {
-          functions[index - numFunctionImports]->name = name;
+          functions[index - numFunctionImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
-                    << std::string(name.str) << " at index "
+                    << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
       }
@@ -2263,25 +2328,85 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             << std::to_string(funcIndex) << std::endl;
         }
         auto numLocals = getU32LEB();
+        std::set<Name> usedNames;
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
-          auto localName = getInlineString();
+          auto rawLocalName = getInlineString();
           if (!func) {
             continue; // read and discard in case of prior error
+          }
+          auto localName = escape(rawLocalName);
+          // De-duplicate names by appending .1, .2, etc.
+          for (int i = 1; !usedNames.insert(localName).second; ++i) {
+            localName = std::string(escape(rawLocalName).str) +
+                        std::string(".") + std::to_string(i);
           }
           if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
             std::cerr << "warning: local index out of bounds in name "
                          "section, local subsection: "
-                      << std::string(localName.str) << " at index "
+                      << std::string(rawLocalName.str) << " at index "
                       << std::to_string(localIndex) << " in function "
                       << std::string(func->name.str) << std::endl;
           }
         }
       }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameTable) {
+      auto num = getU32LEB();
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        if (index == 0) {
+          wasm.table.setExplicitName(escape(rawName));
+        } else {
+          std::cerr << "warning: table index out of bounds in name section, "
+                       "table subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameMemory) {
+      auto num = getU32LEB();
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        if (index == 0) {
+          wasm.memory.setExplicitName(escape(rawName));
+        } else {
+          std::cerr << "warning: memory index out of bounds in name section, "
+                       "memory subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameGlobal) {
+      auto num = getU32LEB();
+      std::set<Name> usedNames;
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        auto name = escape(rawName);
+        // De-duplicate names by appending .1, .2, etc.
+        for (int i = 1; !usedNames.insert(name).second; ++i) {
+          name = std::string(escape(rawName).str) + std::string(".") +
+                 std::to_string(i);
+        }
+        auto numGlobalImports = globalImports.size();
+        if (index < numGlobalImports) {
+          globalImports[index]->setExplicitName(name);
+        } else if (index - numGlobalImports < globals.size()) {
+          globals[index - numGlobalImports]->setExplicitName(name);
+        } else {
+          std::cerr << "warning: global index out of bounds in name section, "
+                       "global subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
     } else {
-      std::cerr << "warning: unknown name subsection at " << pos << std::endl;
+      std::cerr << "warning: unknown name subsection with id "
+                << std::to_string(nameType) << " at " << pos << std::endl;
       pos = subsectionPos + subsectionSize;
     }
     if (pos != subsectionPos + subsectionSize) {
@@ -2587,6 +2712,53 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
+      break;
+    }
+    case BinaryConsts::GCPrefix: {
+      auto opcode = getU32LEB();
+      if (maybeVisitI31New(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitI31Get(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRefTest(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRefCast(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitBrOnCast(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRttCanon(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitRttSub(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructGet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStructSet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayGet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArraySet(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayLen(curr, opcode)) {
+        break;
+      }
+      throwError("invalid code after GC prefix: " + std::to_string(opcode));
       break;
     }
     default: {
@@ -2941,15 +3113,37 @@ void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
 void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
   BYN_TRACE("zz node: GlobalGet " << pos << std::endl);
   auto index = getU32LEB();
-  curr->name = getGlobalName(index);
-  curr->type = wasm.getGlobal(curr->name)->type;
+  if (index < globalImports.size()) {
+    auto* import = globalImports[index];
+    curr->name = import->name;
+    curr->type = import->type;
+  } else {
+    Index adjustedIndex = index - globalImports.size();
+    if (adjustedIndex >= globals.size()) {
+      throwError("invalid global index");
+    }
+    auto* glob = globals[adjustedIndex];
+    curr->name = glob->name;
+    curr->type = glob->type;
+  }
+  globalRefs[index].push_back(curr); // we don't know the final name yet
 }
 
 void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   BYN_TRACE("zz node: GlobalSet\n");
   auto index = getU32LEB();
-  curr->name = getGlobalName(index);
+  if (index < globalImports.size()) {
+    auto* import = globalImports[index];
+    curr->name = import->name;
+  } else {
+    Index adjustedIndex = index - globalImports.size();
+    if (adjustedIndex >= globals.size()) {
+      throwError("invalid global index");
+    }
+    curr->name = globals[adjustedIndex]->name;
+  }
   curr->value = popNonVoidExpression();
+  globalRefs[index].push_back(curr); // we don't know the final name yet
   curr->finalize();
 }
 
@@ -2958,7 +3152,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   if (rawAlignment > 4) {
     throwError("Alignment must be of a reasonable size");
   }
-  alignment = Pow2(rawAlignment);
+  alignment = Bits::pow2(rawAlignment);
   offset = getU32LEB();
 }
 
@@ -5006,6 +5200,213 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
   // refinalized without the module.
   curr->sent = event->sig.params;
   curr->finalize();
+}
+
+bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::I31New) {
+    return false;
+  }
+  auto* curr = allocator.alloc<I31New>();
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
+  I31Get* curr;
+  switch (code) {
+    case BinaryConsts::I31GetS:
+      curr = allocator.alloc<I31Get>();
+      curr->signed_ = true;
+      break;
+    case BinaryConsts::I31GetU:
+      curr = allocator.alloc<I31Get>();
+      curr->signed_ = false;
+      break;
+    default:
+      return false;
+  }
+  curr->i31 = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefTest) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RefTest>();
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefCast) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RefCast>();
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::BrOnCast) {
+    return false;
+  }
+  auto* curr = allocator.alloc<BrOnCast>();
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RttCanon) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RttCanon>();
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RttSub) {
+    return false;
+  }
+  auto* curr = allocator.alloc<RttSub>();
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
+  StructNew* curr;
+  switch (code) {
+    case BinaryConsts::StructNewWithRtt:
+      curr = allocator.alloc<StructNew>();
+      // ...
+      break;
+    case BinaryConsts::StructNewDefaultWithRtt:
+      curr = allocator.alloc<StructNew>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
+  StructGet* curr;
+  switch (code) {
+    case BinaryConsts::StructGet:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    case BinaryConsts::StructGetS:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    case BinaryConsts::StructGetU:
+      curr = allocator.alloc<StructGet>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::StructSet) {
+    return false;
+  }
+  auto* curr = allocator.alloc<StructSet>();
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
+  ArrayNew* curr;
+  switch (code) {
+    case BinaryConsts::ArrayNewWithRtt:
+      curr = allocator.alloc<ArrayNew>();
+      // ...
+      break;
+    case BinaryConsts::ArrayNewDefaultWithRtt:
+      curr = allocator.alloc<ArrayNew>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): array.new");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
+  ArrayGet* curr;
+  switch (code) {
+    case BinaryConsts::ArrayGet:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    case BinaryConsts::ArrayGetS:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    case BinaryConsts::ArrayGetU:
+      curr = allocator.alloc<ArrayGet>();
+      // ...
+      break;
+    default:
+      return false;
+  }
+  WASM_UNREACHABLE("TODO (gc): array.get");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArraySet) {
+    return false;
+  }
+  auto* curr = allocator.alloc<ArraySet>();
+  WASM_UNREACHABLE("TODO (gc): array.set");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArrayLen) {
+    return false;
+  }
+  auto* curr = allocator.alloc<ArrayLen>();
+  WASM_UNREACHABLE("TODO (gc): array.len");
+  curr->finalize();
+  out = curr;
+  return true;
 }
 
 void WasmBinaryBuilder::throwError(std::string text) {

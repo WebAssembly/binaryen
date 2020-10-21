@@ -52,6 +52,7 @@ int main(int argc, const char* argv[]) {
   bool DWARF = false;
   bool sideModule = false;
   bool legacyPIC = true;
+  bool mutableSP = false;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -109,6 +110,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
+         })
+    .add("--mutable-sp",
+         "",
+         "Allow the import of __stack_pointer as a mutable global",
+         Options::Arguments::Zero,
+         [&mutableSP](Options* o, const std::string& argument) {
+           mutableSP = true;
          })
     .add("--new-pic-abi",
          "",
@@ -259,16 +267,7 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  generator.fixInvokeFunctionNames();
-
   std::vector<Name> initializerFunctions;
-
-  // The wasm backend emits "__indirect_function_table" as the import name for
-  // the table, while older emscripten expects "table"
-  if (wasm.table.imported() && !minimizeWasmChanges) {
-    wasm.table.base = Name("table");
-  }
-  wasm.updateMaps();
 
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
@@ -280,7 +279,7 @@ int main(int argc, const char* argv[]) {
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
 
-  if (checkStackOverflow && !sideModule) {
+  if (checkStackOverflow) {
     if (!standaloneWasm) {
       // In standalone mode we don't set a handler at all.. which means
       // just trap on overflow.
@@ -288,10 +287,6 @@ int main(int argc, const char* argv[]) {
         "__handle_stack_overflow";
     }
     passRunner.add("stack-check");
-  }
-
-  if (sideModule) {
-    passRunner.add("replace-stack-pointer");
   }
 
   if (legacyPIC) {
@@ -334,16 +329,16 @@ int main(int argc, const char* argv[]) {
     generator.generatePostInstantiateFunction();
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    generator.internalizeStackPointerGlobal();
-    generator.generateMemoryGrowthFunction();
-    // For side modules these gets called via __post_instantiate
-    if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
-      auto* ex = new Export();
-      ex->value = F->name;
-      ex->name = F->name;
-      ex->kind = ExternalKind::Function;
-      wasm.addExport(ex);
-      initializerFunctions.push_back(F->name);
+    if (legacyPIC) {
+      // For side modules these gets called via __post_instantiate
+      if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
+        auto* ex = new Export();
+        ex->value = F->name;
+        ex->name = F->name;
+        ex->kind = ExternalKind::Function;
+        wasm.addExport(ex);
+        initializerFunctions.push_back(F->name);
+      }
     }
     // Costructors get called from crt1 in wasm standalone mode.
     // Unless there is no entry point.

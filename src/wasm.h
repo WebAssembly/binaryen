@@ -225,8 +225,8 @@ enum BinaryOp {
   OrInt32,
   XorInt32,
   ShlInt32,
-  ShrUInt32,
   ShrSInt32,
+  ShrUInt32,
   RotLInt32,
   RotRInt32,
 
@@ -258,8 +258,8 @@ enum BinaryOp {
   OrInt64,
   XorInt64,
   ShlInt64,
-  ShrUInt64,
   ShrSInt64,
+  ShrUInt64,
   RotLInt64,
   RotRInt64,
 
@@ -560,6 +560,20 @@ public:
     BrOnExnId,
     TupleMakeId,
     TupleExtractId,
+    I31NewId,
+    I31GetId,
+    RefTestId,
+    RefCastId,
+    BrOnCastId,
+    RttCanonId,
+    RttSubId,
+    StructNewId,
+    StructGetId,
+    StructSetId,
+    ArrayNewId,
+    ArrayGetId,
+    ArraySetId,
+    ArrayLenId,
     NumExpressionIds
   };
   Id _id;
@@ -571,22 +585,34 @@ public:
 
   void finalize() {}
 
-  template<class T> bool is() const { return int(_id) == int(T::SpecificId); }
+  template<class T> bool is() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
+    return int(_id) == int(T::SpecificId);
+  }
 
   template<class T> T* dynCast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
   template<class T> const T* dynCast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
   }
 
   template<class T> T* cast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
 
   template<class T> const T* cast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
@@ -597,7 +623,7 @@ public:
 
 const char* getExpressionName(Expression* curr);
 
-Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literal getLiteralFromConstExpression(Expression* curr);
 Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
@@ -1203,13 +1229,131 @@ public:
   void finalize();
 };
 
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_;
+
+  void finalize();
+};
+
+class RefTest : public SpecificExpression<Expression::RefTestId> {
+public:
+  RefTest(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+};
+
+class RefCast : public SpecificExpression<Expression::RefCastId> {
+public:
+  RefCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+};
+
+class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+public:
+  BrOnCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+};
+
+class RttCanon : public SpecificExpression<Expression::RttCanonId> {
+public:
+  RttCanon(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+};
+
+class RttSub : public SpecificExpression<Expression::RttSubId> {
+public:
+  RttSub(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+};
+
+class StructNew : public SpecificExpression<Expression::StructNewId> {
+public:
+  StructNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+};
+
+class StructGet : public SpecificExpression<Expression::StructGetId> {
+public:
+  StructGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+};
+
+class StructSet : public SpecificExpression<Expression::StructSetId> {
+public:
+  StructSet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+};
+
+class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
+public:
+  ArrayNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+};
+
+class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
+public:
+  ArrayGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+};
+
+class ArraySet : public SpecificExpression<Expression::ArraySetId> {
+public:
+  ArraySet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+};
+
+class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
+public:
+  ArrayLen(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+};
+
 // Globals
 
 struct Importable {
+  Name name;
+
+  // Explicit names are ones that we read from the input file and
+  // will be written the name section in the output file.
+  // Implicit names are names that binaryen generated for internal
+  // use only and will not be written the name section.
+  bool hasExplicitName = false;
+
   // If these are set, then this is an import, as module.base
   Name module, base;
 
   bool imported() { return module.is(); }
+
+  void setName(Name name_, bool hasExplicitName_) {
+    name = name_;
+    hasExplicitName = hasExplicitName_;
+  }
+
+  void setExplicitName(Name name_) { setName(name_, true); }
 };
 
 class Function;
@@ -1282,7 +1426,6 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Name name;
   Signature sig; // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
@@ -1394,7 +1537,6 @@ public:
   // been defined or imported. The table can exist but be empty and have no
   // defined initial or max size.
   bool exists = false;
-  Name name;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
@@ -1440,7 +1582,6 @@ public:
   };
 
   bool exists = false;
-  Name name;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
   std::vector<Segment> segments;
@@ -1465,7 +1606,6 @@ public:
 
 class Global : public Importable {
 public:
-  Name name;
   Type type;
   Expression* init = nullptr;
   bool mutable_ = false;
@@ -1476,7 +1616,6 @@ enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
 
 class Event : public Importable {
 public:
-  Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;

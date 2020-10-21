@@ -1324,6 +1324,74 @@ public:
     flow.breakTo = curr->name;
     return flow;
   }
+  Flow visitI31New(I31New* curr) {
+    NOTE_ENTER("I31New");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal::makeI31(value.geti32());
+  }
+  Flow visitI31Get(I31Get* curr) {
+    NOTE_ENTER("I31Get");
+    Flow flow = visit(curr->i31);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal(value.geti31(curr->signed_));
+  }
+  Flow visitRefTest(RefTest* curr) {
+    NOTE_ENTER("RefTest");
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+  }
+  Flow visitRefCast(RefCast* curr) {
+    NOTE_ENTER("RefCast");
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+  }
+  Flow visitBrOnCast(BrOnCast* curr) {
+    NOTE_ENTER("BrOnCast");
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  }
+  Flow visitRttCanon(RttCanon* curr) {
+    NOTE_ENTER("RttCanon");
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  }
+  Flow visitRttSub(RttSub* curr) {
+    NOTE_ENTER("RttSub");
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  }
+  Flow visitStructNew(StructNew* curr) {
+    NOTE_ENTER("StructNew");
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+  }
+  Flow visitStructGet(StructGet* curr) {
+    NOTE_ENTER("StructGet");
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+  }
+  Flow visitStructSet(StructSet* curr) {
+    NOTE_ENTER("StructSet");
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+  }
+  Flow visitArrayNew(ArrayNew* curr) {
+    NOTE_ENTER("ArrayNew");
+    WASM_UNREACHABLE("TODO (gc): array.new");
+  }
+  Flow visitArrayGet(ArrayGet* curr) {
+    NOTE_ENTER("ArrayGet");
+    WASM_UNREACHABLE("TODO (gc): array.get");
+  }
+  Flow visitArraySet(ArraySet* curr) {
+    NOTE_ENTER("ArraySet");
+    WASM_UNREACHABLE("TODO (gc): array.set");
+  }
+  Flow visitArrayLen(ArrayLen* curr) {
+    NOTE_ENTER("ArrayLen");
+    WASM_UNREACHABLE("TODO (gc): array.len");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
@@ -1617,7 +1685,7 @@ public:
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
-    virtual void growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void throwException(Literal exnref) = 0;
 
@@ -1927,7 +1995,7 @@ private:
           locals[i] = {arguments[i]};
         } else {
           assert(function->isVar(i));
-          locals[i] = Literal::makeZero(function->getLocalType(i));
+          locals[i] = Literal::makeZeros(function->getLocalType(i));
         }
       }
     }
@@ -2303,7 +2371,7 @@ private:
       Address src = instance.getFinalAddress(
         curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
       auto zero =
-        Literal::makeSingleZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
+        Literal::makeZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
       if (curr->op == Load32Zero) {
         auto val = Literal(instance.externalInterface->load32u(src));
         return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
@@ -2314,19 +2382,19 @@ private:
     }
     Flow visitMemorySize(MemorySize* curr) {
       NOTE_ENTER("MemorySize");
-      return Literal::makeFromUInt64(instance.memorySize,
-                                     instance.wasm.memory.indexType);
+      return Literal::makeFromInt64(instance.memorySize,
+                                    instance.wasm.memory.indexType);
     }
     Flow visitMemoryGrow(MemoryGrow* curr) {
       NOTE_ENTER("MemoryGrow");
       auto indexType = instance.wasm.memory.indexType;
-      auto fail = Literal::makeFromUInt64(-1, indexType);
+      auto fail = Literal::makeFromInt64(-1, indexType);
       Flow flow = this->visit(curr->delta);
       if (flow.breaking()) {
         return flow;
       }
-      Flow ret = Literal::makeFromUInt64(instance.memorySize, indexType);
-      uint64_t delta = flow.getSingleValue().getInteger();
+      Flow ret = Literal::makeFromInt64(instance.memorySize, indexType);
+      uint64_t delta = flow.getSingleValue().getUnsigned();
       if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
         return fail;
       }
@@ -2338,8 +2406,13 @@ private:
       if (newSize > instance.wasm.memory.max) {
         return fail;
       }
-      instance.externalInterface->growMemory(
-        instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+      if (!instance.externalInterface->growMemory(
+            instance.memorySize * Memory::kPageSize,
+            newSize * Memory::kPageSize)) {
+        // We failed to grow the memory in practice, even though it was valid
+        // to try to do so.
+        return fail;
+      }
       instance.memorySize = newSize;
       return ret;
     }
@@ -2364,7 +2437,7 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      Address destVal(dest.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
       Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
       Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
@@ -2408,9 +2481,9 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(source);
       NOTE_EVAL1(size);
-      Address destVal(dest.getSingleValue().getInteger());
-      Address sourceVal(source.getSingleValue().getInteger());
-      Address sizeVal(size.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sourceVal(source.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
       if (sourceVal + sizeVal > instance.memorySize * Memory::kPageSize ||
           destVal + sizeVal > instance.memorySize * Memory::kPageSize ||
@@ -2454,10 +2527,13 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(value);
       NOTE_EVAL1(size);
-      Address destVal(dest.getSingleValue().getInteger());
-      Address sizeVal(size.getSingleValue().getInteger());
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
-      if (destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
+      // FIXME: cheaper wrapping detection?
+      if (destVal > instance.memorySize * Memory::kPageSize ||
+          sizeVal > instance.memorySize * Memory::kPageSize ||
+          destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
       uint8_t val(value.getSingleValue().geti32());

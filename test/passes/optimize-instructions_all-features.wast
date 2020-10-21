@@ -2,6 +2,52 @@
   (memory 0)
   (type $0 (func (param i32 i64)))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
+    (drop
+      (i32.and
+        (i32.and
+          (local.get $i1)
+          (i32.const 5)
+        )
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.or
+        (i32.or
+          (local.get $i1)
+          (i32.const 1)
+        )
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.xor
+        (i32.xor
+          (local.get $i1)
+          (i32.const -2)
+        )
+        (i32.const -5)
+      )
+    )
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const -2)
+        )
+        (i32.const 5)
+      )
+    )
+    ;; overflow also valid
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0xfffff)
+        )
+        (i32.const 0x8000001)
+      )
+    )
     (if
       (i32.eqz
         (local.get $i1)
@@ -3127,7 +3173,123 @@
     )
     (unreachable)
   )
-  (func $srem-by-1 (param $x i32) (param $y i64)
+  (func $fdiv-32-power-2 (param $x f32)
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -2)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 4294967296)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 18446744073709551616)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p-126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -0x1p+126)
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0x1p-127) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const 0) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const nan) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const inf) ;; skip
+    ))
+    (drop (f32.div
+      (local.get $x)
+      (f32.const -inf) ;; skip
+    ))
+  )
+  (func $fdiv-64-power-2 (param $x f64)
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -2)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 4294967296)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 18446744073709551616)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p-1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -0x1p+1022)
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p-1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0x1p+1023) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const 0) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const nan) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const inf) ;; skip
+    ))
+    (drop (f64.div
+      (local.get $x)
+      (f64.const -inf) ;; skip
+    ))
+  )
+  (func $srem-by-const (param $x i32) (param $y i64)
     ;; (signed)x % 1
     (drop (i32.rem_s
       (local.get $x)
@@ -3136,6 +3298,144 @@
     (drop (i64.rem_s
       (local.get $y)
       (i64.const 1)
+    ))
+    ;; (signed)x % 0x80000000 -> x & 0x7FFFFFFF
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; (signed)x % 0x8000000000000000 -> x & 0x7FFFFFFFFFFFFFFF
+    (drop (i64.rem_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+  )
+  (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
+    ;; eqz((signed)x % 4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 4)
+      )
+    ))
+    ;; eqz((signed)x % -4)
+    (drop (i32.eqz
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.rem_s
+        (local.get $y)
+        (i64.const -4)
+      )
+    ))
+    ;; (signed)x % 4 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % -4 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -4)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const -4)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % 2 != 0
+    (drop (i32.ne
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 2)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 2)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % -1 == 0  ->  0 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const -1)
+      )
+      (i32.const 0)
+    ))
+    ;; (signed)x % 0x80000000 == 0
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; (signed)x % 0x80000000 != 0
+    (drop (i32.ne
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; (signed)x % 0x8000000000000000 == 0
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 0x8000000000000000)
+      )
+      (i64.const 0)
+    ))
+    ;; (signed)x % 0x8000000000000000 != 0
+    (drop (i64.ne
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 0x8000000000000000)
+      )
+      (i64.const 0)
+    ))
+    ;;
+    (drop (i32.eq
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 3) ;; skip
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.rem_s
+        (local.get $y)
+        (i64.const 3) ;; skip
+      )
+      (i64.const 0)
     ))
   )
   (func $orZero (param $0 i32) (result i32)
@@ -4022,7 +4322,66 @@
       )
       (i32.const 1)
     ))
-    ;; i64(bool(expr)) == 1 -> i64(bool(expr))
+    ;; i64(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i64.ne
+      (i64.shr_u
+        (local.get $y)
+        (i64.const 63)
+      )
+      (i64.const 0)
+    ))
+    ;; eqz((i32(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i32.ne
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 31)
+          )
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; i32.eqz(wrap(i64(x)))
+    (drop (i32.eqz
+      (i32.wrap_i64
+        (i64.shr_u
+          (local.get $y)
+          (i64.const 63)
+        )
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (i64.shr_u
+            (local.get $y)
+            (i64.const 63)
+          )
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; eqz((i64(bool(expr)) != 0) != 0)
+    (drop (i32.eqz
+      (i32.ne
+        (i64.ne
+          (local.get $y)
+          (i64.const 0)
+        )
+        (i32.const 0)
+      )
+    ))
+    ;; i32.eqz(wrap(i64(x))) -> skip
+    (drop (i32.eqz
+      (i32.wrap_i64
+        (local.get $y)
+      )
+    ))
+    ;; i64(bool(expr)) == 1 -> i32(bool(expr))
     (drop (i64.eq
       (i64.and
         (local.get $y)
@@ -4069,6 +4428,47 @@
         (i64.const 1)
       )
       (i64.const 1)
+    ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i64.ne
+        (local.get $y)
+        (i64.const 0)
+      )
+      (i32.const 0)
+    ))
+    ;; (i32(expr) != 0) != 0 -> (expr != 0)
+    (drop (i32.ne
+      (i32.ne
+        (local.get $x)
+        (i32.const 0)
+      )
+      (i32.const 0)
+    ))
+  )
+  (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; ~(1 << x)  ->  rotl(-2, x)
+    (drop (i32.xor
+      (i32.shl
+        (i32.const 1)
+        (local.get $x)
+      )
+      (i32.const -1)
+    ))
+    (drop (i64.xor
+      (i64.shl
+        (i64.const 1)
+        (local.get $z)
+      )
+      (i64.const -1)
     ))
   )
   (func $getFallthrough ;; unit tests for Properties::getFallthrough
@@ -4192,6 +4592,10 @@
       (local.get $fy) ;; skip
       (f64.const 0)
     ))
+    (drop (f32.sub
+      (f32.const -nan:0x34546d) ;; skip
+      (f32.const 0)
+    ))
   )
   (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     (drop (i32.sub
@@ -4266,6 +4670,56 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -1)
+    ))
+  )
+  (func $rhs-is-const (param $x i32) (param $y i64)
+    ;; signed divs
+    ;; i32(x) / -2147483648  ->  x == -2147483648
+    (drop (i32.div_s
+      (local.get $x)
+      (i32.const -2147483648)
+    ))
+    ;; i64(x) / -9223372036854775808  ->  x == -9223372036854775808
+    (drop (i64.div_s
+      (local.get $y)
+      (i64.const -9223372036854775808)
+    ))
+    ;; skip
+    (drop (i64.div_s
+      (local.get $y)
+      (i64.const -2147483648)
+    ))
+
+    ;; unsigned divs
+    ;; u32(x) / -2  =>  x >= -2
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2)
+    ))
+    ;; u32(x) / -1  =>  x == -1
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    ;; u32(x) / (i32.min + 1)
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2147483647)
+    ))
+    ;; u32(x) / i32.min  =>  x >>> 31
+    (drop (i32.div_u
+      (local.get $x)
+      (i32.const -2147483648)
+    ))
+    ;; u64(x) / -1  =>  u64(x == -1)
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; u64(x) / i64.min  =>  x >>> 63
+    (drop (i64.div_u
+      (local.get $y)
+      (i64.const -9223372036854775808)
     ))
   )
   (func $pre-combine-or (param $x i32) (param $y i32)
@@ -4386,6 +4840,71 @@
         (i32.const 0)
         (local.get $x)
       )
+    ))
+  )
+  (func $unsigned-context (param $x i32) (param $y i64)
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -3) ;; skip
+    ))
+    (drop (i32.div_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 0x80000000) ;; skip
+    ))
+    (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const 2)
+    ))
+     (drop (i64.div_s
+      (i64.and
+        (local.get $y)
+        (i64.const 0x7fffffffffffffff)
+      )
+      (i64.const -1) ;; skip
+    ))
+    (drop (i32.rem_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 3)
+    ))
+    (drop (i32.shr_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const 7)
+    ))
+    (drop (i32.ge_s
+      (i32.and
+        (local.get $x)
+        (i32.const 0x7fffffff)
+      )
+      (i32.const -7) ;; skip
     ))
   )
   (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
@@ -4626,6 +5145,172 @@
       (i32.rem_u
         (local.get $x)
         (local.get $y)
+      )
+    ))
+    ;; x | (y | x)   where x and y cannot be reordered  -  skip
+    (drop
+      (i32.or
+        (local.get $x)
+        (i32.or
+          (local.tee $x
+            (i32.const 1)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (i32.or
+        (i32.or
+          (local.get $x)
+          (local.tee $x
+            (i32.const 1)
+          )
+        )
+        (local.get $x)
+      )
+    )
+    ;; x ^ (y ^ x)   where x and y cannot be reordered  -  skip
+    (drop
+      (i32.xor
+        (local.get $x)
+        (i32.xor
+          (local.tee $x
+            (i32.const 1)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (i32.xor
+        (i32.xor
+          (local.get $x)
+          (local.tee $x
+            (i32.const 1)
+          )
+        )
+        (local.get $x)
+      )
+    )
+  )
+  (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
+    ;; i32
+    (drop (i32.shl
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_s
+      (local.get $x)
+      (i32.const 32)
+    ))
+    (drop (i32.shr_u
+      (local.get $x)
+      (i32.const 64)
+    ))
+    (drop (i32.rotl
+      (local.get $x)
+      (i32.const 64)
+    ))
+    (drop (i32.rotr
+      (local.get $x)
+      (i32.const 64)
+    ))
+    ;; i64
+    (drop (i64.shl
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_s
+      (local.get $z)
+      (i64.const 64)
+    ))
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotl
+      (local.get $z)
+      (i64.const 128)
+    ))
+    (drop (i64.rotr
+      (local.get $z)
+      (i64.const 128)
+    ))
+
+    ;; i32
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 63)
+      )
+    ))
+    (drop (i32.shr_s
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    (drop (i32.shr_u
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 31)
+      )
+    ))
+    ;; i64
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 127)
+      )
+    ))
+    (drop (i64.shr_s
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 63)
+      )
+    ))
+
+    ;; skip
+    (drop (i32.shl
+      (local.get $x)
+      (i32.and
+        (local.get $y)
+        (i32.const 32)
+      )
+    ))
+    ;; skip
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 31)
       )
     ))
   )

@@ -55,6 +55,7 @@ var Asyncify = {
         if (typeof imports[module][i] === 'function') {
           (function(module, i) {
             ret[module][i] = function() {
+              refreshView();
               if (!Asyncify.sleeping) {
                 // Sleep if asyncify support is present (which also requires
                 // that the memory be exported), and at a certain probability.
@@ -179,8 +180,14 @@ var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), imports)
 // Handle the exports.
 var exports = instance.exports;
 exports = Asyncify.instrumentExports(exports);
-if (exports.memory) {
-  var view = new Int32Array(exports.memory.buffer);
+
+var view;
+
+// Recreate the view. This is important both initially and after a growth.
+function refreshView() {
+  if (exports.memory) {
+    view = new Int32Array(exports.memory.buffer);
+  }
 }
 
 // Run the wasm.
