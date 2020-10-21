@@ -88,7 +88,11 @@ struct DeadCodeElimination
               remainingChildren.push_back(builder.makeDrop(child));
             }
           }
-          replaceCurrent(builder.makeBlock(remainingChildren));
+          if (remainingChildren.size() == 1) {
+            replaceCurrent(remainingChildren[0]);
+          } else {
+            replaceCurrent(builder.makeBlock(remainingChildren));
+          }
         }
       }
       return;
