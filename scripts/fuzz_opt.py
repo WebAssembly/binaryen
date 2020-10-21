@@ -348,9 +348,11 @@ class TestCaseHandler:
 # Run VMs and compare results
 
 class VM:
-    def __init__(self, name, run, can_compare_to_self, can_compare_to_others):
+    def __init__(self, name, run, can_run, can_compare_to_self,
+                 can_compare_to_others):
         self.name = name
         self.run = run
+        self.can_run = can_run
         self.can_compare_to_self = can_compare_to_self
         self.can_compare_to_others = can_compare_to_others
 
