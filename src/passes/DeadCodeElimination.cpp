@@ -131,6 +131,10 @@ struct DeadCodeElimination
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
+        typeUpdater.noteRecursiveRemoval(iff->ifTrue);
+        if (iff->ifFalse) {
+          typeUpdater.noteRecursiveRemoval(iff->ifFalse);
+        }
         replaceCurrent(iff->condition);
         return;
       }

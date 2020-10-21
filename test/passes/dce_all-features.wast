@@ -829,4 +829,18 @@
       (unreachable)
     )
   )
+  (func $note-loss-of-if-children
+    (block $label$1
+     (if ;; begins unreachable - type never changes - but after the condition
+         ;; becomes unreachable, it will lose the children, which means no more
+         ;; br to the outer block, changing that type.
+       (block $label$2 (result i32)
+         (nop)
+         (unreachable)
+       )
+       (unreachable)
+       (br $label$1)
+      )
+    )
+  )
 )

@@ -619,4 +619,12 @@
    (unreachable)
   )
  )
+ (func $note-loss-of-if-children
+  (block $label$1
+   (block $label$2
+    (nop)
+    (unreachable)
+   )
+  )
+ )
 )
