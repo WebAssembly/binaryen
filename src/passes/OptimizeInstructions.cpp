@@ -496,7 +496,6 @@ struct OptimizeInstructions
                   // abs(x) / abs(y)   ==>   abs(x / y)
                   binary->left = leftUnary->value;
                   binary->right = rightUnary->value;
-
                   leftUnary->value = binary;
                   return leftUnary;
                 }
