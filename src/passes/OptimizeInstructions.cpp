@@ -496,9 +496,9 @@ struct OptimizeInstructions
                   // abs(x) / abs(y)   ==>   abs(x / y)
                   binary->left = leftUnary->value;
                   binary->right = rightUnary->value;
-                  return Builder(*getModule())
-                    .makeUnary(Abstract::getUnary(binary->type, Abstract::Abs),
-                               binary);
+
+                  leftUnary->value = binary;
+                  return leftUnary;
                 }
               }
             }
