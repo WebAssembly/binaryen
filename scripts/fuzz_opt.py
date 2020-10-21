@@ -382,14 +382,17 @@ class CompareVMs(TestCaseHandler):
         def yes():
             return True
 
+        def can_run_d8():
+            # INITIAL_CONTENT is disallowed because some initial spec testcases
+            # have names that require mangling, see
+            # https://github.com/WebAssembly/binaryen/pull/3216
+            return not INITIAL_CONTENTS
+
         def can_compare_d8_to_others():
             # With nans, VM differences can confuse us, so only very simple VMs
             # can compare to themselves after opts in that case.
             # If not legalized, the JS will fail immediately, so no point to
             # compare to others.
-            # INITIAL_CONTENT is disallowed because some initial spec testcases
-            # have names that require mangling, see
-            # https://github.com/WebAssembly/binaryen/pull/3216
             return LEGALIZE and not NANS and not INITIAL_CONTENTS
 
         def if_no_nans():
@@ -491,8 +494,10 @@ class CompareVMs(TestCaseHandler):
                 return not NANS
 
         self.vms = [
-            VM('binaryen interpreter', byn_run,    can_compare_to_self=yes,        can_compare_to_others=yes),
-            VM('d8',                   v8_run,     can_compare_to_self=if_no_nans, can_compare_to_others=can_compare_d8_to_others),
+            VM('binaryen interpreter', byn_run, can_compare_to_self=yes,
+               can_compare_to_others=yes),
+            VM('d8', v8_run, can_run=can_run_d8, can_compare_to_self=if_no_nans,
+               can_compare_to_others=can_compare_d8_to_others),
             Wasm2C(),
             Wasm2C2Wasm(),
         ]
