@@ -102,12 +102,11 @@ def no_pass_debug():
 def randomize_feature_opts():
     global FEATURE_OPTS
     FEATURE_OPTS = CONSTANT_FEATURE_OPTS[:]
-    # half the time apply all the possible opts. this lets all test runners work at max
-    # capacity at least half the time, as otherwise if they need almost all the opts, the
-    # chance of getting them is exponentially small.
-    if random.random() < 0.5:
+    # 1/3 the time apply all the possible opts, 1/3 none of them, to maximize
+    # coverage both ways, and 1/3 pick each one randomly
+    if random.random() < 0.33333:
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
-    else:
+    elif random.random() < 0.5:
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
