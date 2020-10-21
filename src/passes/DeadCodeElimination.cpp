@@ -122,6 +122,15 @@ struct DeadCodeElimination
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
         replaceCurrent(iff->condition);
+        return;
+      }
+      // If both arms are unreachable, there is no need for a concrete type,
+      // which may allow more reduction.
+      if (iff->type != Type::unreachable && iff->ifFalse &&
+          iff->ifTrue->type == Type::unreachable &&
+          iff->ifFalse->type == Type::unreachable) {
+        iff->type = Type::unreachable;
+        typeUpdater.noteReplacement(iff, iff);
       }
     } else if (auto* loop = curr->dynCast<Loop>()) {
       // The loop body may have unreachable type if it branches back to the
