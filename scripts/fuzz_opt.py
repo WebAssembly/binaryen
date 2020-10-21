@@ -365,7 +365,7 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 return run_bynterp(wasm, ['--fuzz-exec-before'])
 
-            def can_run(self):
+            def can_run(self, wasm):
                 return True
 
             def can_compare_to_self(self):
@@ -381,7 +381,7 @@ class CompareVMs(TestCaseHandler):
                 run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
                 return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
 
-            def can_run(self):
+            def can_run(self, wasm):
                 # INITIAL_CONTENT is disallowed because some initial spec testcases
                 # have names that require mangling, see
                 # https://github.com/WebAssembly/binaryen/pull/3216
