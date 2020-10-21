@@ -927,6 +927,11 @@ if __name__ == '__main__':
         assert os.path.getsize(raw_input_data) == input_size
         opts = randomize_opt_flags()
         print('randomized opts:', ' '.join(opts))
+        # remove the generated wasm file, so that we can tell if the fuzzer
+        # fails to create one
+        if os.path.exists('a.wasm'):
+            os.remove('a.wasm')
+        # run an iteration of the fuzzer
         try:
             total_wasm_size += test_one(raw_input_data, opts, given_wasm)
         except KeyboardInterrupt:
@@ -952,9 +957,27 @@ if __name__ == '__main__':
             # longer working on the original test case but modified one, which
             # is likely to be called within wasm-reduce script itself, so
             # original.wasm and reduce.sh should not be overwritten.
-            # Note that we can't do this if a.wasm doesn't exist, which can be
-            # the case if we failed to even generate the wasm.
-            if not given_wasm and os.path.exists('a.wasm'):
+            if not given_wasm:
+                # We can't do this if a.wasm doesn't exist, which can be the
+                # case if we failed to even generate the wasm.
+                if not os.path.exists('a.wasm'):
+                    print('''\
+================================================================================
+You found a bug in the fuzzer itself! It failed to generate a valid wasm file
+from the random input. Please report it with
+
+  seed: %(seed)d
+
+and the exact version of Binaryen you found it on, plus the exact Python
+version (hopefully deterministic random numbers will be identical).
+
+You can run that testcase again with "fuzz_opt.py %(seed)d"
+
+(We can't automatically reduce this testcase since we can only run the reducer
+on valid wasm files.)
+================================================================================
+                ''' % {'seed': seed})
+                    break
                 # show some useful info about filing a bug and reducing the
                 # testcase (to make reduction simple, save "original.wasm" on
                 # the side, so that we can autoreduce using the name "a.wasm"
