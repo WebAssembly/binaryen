@@ -63,4 +63,15 @@
   (global.set $f (i64.const 0x1122334455667788))
  )
 )
-
+(module
+ (type $i64_f64_i32_=>_none (func (param i64 f64 i32)))
+ (table $0 37 funcref)
+ (func $0
+  (call_indirect (type $i64_f64_i32_=>_none)
+   (unreachable)
+   (f64.const 1)
+   (i32.const -32768)
+   (i32.const 20)
+  )
+ )
+)

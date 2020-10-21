@@ -675,7 +675,16 @@ private:
 
       void visitExpression(Expression* curr) {
         if (parent.oneIn(10)) {
-          // Replace it!
+          // For constants, perform only a small tweaking in some cases.
+          if (auto* c = curr->dynCast<Const>()) {
+            if (parent.oneIn(2)) {
+              c->value = parent.tweak(c->value);
+              return;
+            }
+          }
+          // TODO: more minor tweaks to immediates, like making a load atomic or
+          // not, changing an offset, etc.
+          // Perform a general replacement.
           // (This is not always valid due to nesting of labels, but
           // we'll fix that up later.)
           replaceCurrent(parent.make(curr->type));
@@ -1536,6 +1545,43 @@ private:
     return store;
   }
 
+  // Makes a small change to a constant value.
+  Literal tweak(Literal value) {
+    auto type = value.type;
+    if (type.isVector()) {
+      // TODO: tweak each lane?
+      return value;
+    }
+    // +- 1
+    switch (upTo(5)) {
+      case 0:
+        value = value.add(Literal::makeNegOne(type));
+        break;
+      case 1:
+        value = value.add(Literal::makeOne(type));
+        break;
+      default: {
+      }
+    }
+    // For floats, optionally add a non-integer adjustment in +- [-1, 1]
+    if (type.isFloat() && oneIn(2)) {
+      const int RANGE = 1000;
+      auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
+      // adjustment -> [0, 2 * RANGE]
+      auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
+      // adjustment -> [-RANGE, RANGE]
+      adjustment = adjustment.sub(RANGE_LITERAL);
+      // adjustment -> [-1, 1]
+      adjustment = adjustment.div(RANGE_LITERAL);
+      value = value.add(adjustment);
+    }
+    // Flip sign.
+    if (oneIn(2)) {
+      value = value.mul(Literal::makeNegOne(type));
+    }
+    return value;
+  }
+
   Literal makeLiteral(Type type) {
     if (type == Type::v128) {
       // generate each lane individually for random lane interpretation
@@ -1586,38 +1632,6 @@ private:
           WASM_UNREACHABLE("unexpected value");
       }
     }
-
-    // Optional tweaking of the value by a small adjustment.
-    auto tweak = [this, type](Literal value) {
-      // +- 1
-      switch (upTo(5)) {
-        case 0:
-          value = value.add(Literal::makeNegOne(type));
-          break;
-        case 1:
-          value = value.add(Literal::makeOne(type));
-          break;
-        default: {
-        }
-      }
-      // For floats, optionally add a non-integer adjustment in +- [-1, 1]
-      if (type.isFloat() && oneIn(2)) {
-        const int RANGE = 1000;
-        auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
-        // adjustment -> [0, 2 * RANGE]
-        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
-        // adjustment -> [-RANGE, RANGE]
-        adjustment = adjustment.sub(RANGE_LITERAL);
-        // adjustment -> [-1, 1]
-        adjustment = adjustment.div(RANGE_LITERAL);
-        value = value.add(adjustment);
-      }
-      // Flip sign.
-      if (oneIn(2)) {
-        value = value.mul(Literal::makeNegOne(type));
-      }
-      return value;
-    };
 
     switch (upTo(4)) {
       case 0: {

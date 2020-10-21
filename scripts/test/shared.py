@@ -49,9 +49,6 @@ def parse_args(args):
         help=('If set, the whole test suite will run to completion independent of'
               ' earlier errors.'))
     parser.add_argument(
-        '--interpreter', dest='interpreter', default='',
-        help='Specifies the wasm interpreter executable to run tests on.')
-    parser.add_argument(
         '--binaryen-bin', dest='binaryen_bin', default='',
         help=('Specifies a path to where the built Binaryen executables reside at.'
               ' Default: bin/ of current directory (i.e. assume an in-tree build).'
@@ -261,17 +258,6 @@ except (OSError, subprocess.CalledProcessError):
 if NODEJS is None:
     warn('no node found (did not check proper js form)')
 
-try:
-    if MOZJS is not None:
-        subprocess.check_call([MOZJS, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-except (OSError, subprocess.CalledProcessError):
-    MOZJS = None
-if MOZJS is None:
-    warn('no mozjs found (did not check native wasm support nor asm.js'
-         ' validation)')
-
 
 # utilities
 
@@ -380,10 +366,6 @@ def get_tests(test_dir, extensions=[]):
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
-
-
-if not options.interpreter:
-    warn('no interpreter provided (did not test spec interpreter validation)')
 
 
 if not options.spec_tests:

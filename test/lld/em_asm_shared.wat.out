@@ -1,17 +1,15 @@
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
- (import "env" "table" (table $timport$1 0 funcref))
+ (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
+ (import "env" "__stack_pointer" (global $gimport$2 (mut i32)))
  (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "__table_base" (global $gimport$4 i32))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
- (import "env" "stackSave" (func $stackSave (result i32)))
- (import "env" "stackRestore" (func $stackRestore (param i32)))
  (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE (result i32)))
  (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE (result i32)))
  (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE (result i32)))
@@ -36,10 +34,10 @@
  (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
-  (call $stackRestore
+  (global.set $gimport$2
    (local.tee $0
     (i32.sub
-     (call $stackSave)
+     (global.get $gimport$2)
      (i32.const 32)
     )
    )
@@ -84,7 +82,7 @@
     (local.get $0)
    )
   )
-  (call $stackRestore
+  (global.set $gimport$2
    (i32.add
     (local.get $0)
     (i32.const 32)
@@ -123,13 +121,12 @@
   "tableSize": 0,
   "declares": [
     "emscripten_asm_const_int",
-    "stackSave",
-    "stackRestore",
     "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
     "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
     "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
   ],
   "externs": [
+    "___stack_pointer",
     "___memory_base",
     "___table_base"
   ],

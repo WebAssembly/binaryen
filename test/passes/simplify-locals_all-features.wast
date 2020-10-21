@@ -1800,3 +1800,23 @@
   )
  )
 )
+;; do not be confused by subtyping: when an index is set, even to another type,
+;; it is no longer equivalent
+;; (see https://github.com/WebAssembly/binaryen/issues/3266)
+(module
+ (func "test" (param $0 eqref) (param $1 i31ref) (result i32)
+  (local $2 eqref)
+  (local $3 i31ref)
+  (local.set $2
+   (local.get $0) ;; $0 and $2 are equivalent
+  )
+  (local.set $0   ;; set $0 to something with another type
+   (local.get $3)
+  )
+  ;; compares a null eqref and a zero i31ref - should be false
+  (ref.eq
+   (local.get $2)
+   (local.get $1)
+  )
+ )
+)

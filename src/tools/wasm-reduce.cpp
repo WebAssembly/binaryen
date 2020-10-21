@@ -937,6 +937,11 @@ struct Reducer
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
+      void visitRefFunc(RefFunc* curr) {
+        if (names.count(curr->func)) {
+          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        }
+      }
       void visitExport(Export* curr) {
         if (names.count(curr->value)) {
           exportsToRemove.push_back(curr->name);
