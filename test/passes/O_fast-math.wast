@@ -66,4 +66,22 @@
    (f64.const -1)
   )
  )
+ (func "abs_sub_zero1" (param $x f32) (result f32)
+  ;; abs(0 - x)   ==>   abs(x)
+  (f32.abs
+   (f32.sub
+    (f32.const 0)
+    (local.get $x)
+   )
+  )
+ )
+ (func "abs_sub_zero2" (param $x f64) (result f64)
+  ;; abs(0 - x)   ==>   abs(x)
+  (f64.abs
+   (f64.sub
+    (f64.const 0)
+    (local.get $x)
+   )
+  )
+ )
 )
