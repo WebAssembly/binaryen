@@ -407,6 +407,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("local-cse");
   }
   add("dce");
+  add("remove-unused-names");
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");

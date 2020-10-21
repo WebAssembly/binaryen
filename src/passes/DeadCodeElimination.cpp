@@ -115,6 +115,9 @@ struct DeadCodeElimination
           typeUpdater.noteRecursiveRemoval(list[i]);
         }
         list.resize(removeFromHere);
+        if (list.size() == 1 && list[0]->is<Unreachable>()) {
+          replaceCurrent(list[0]);
+        }
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
