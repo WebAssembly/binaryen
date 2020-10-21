@@ -345,21 +345,6 @@ class TestCaseHandler:
         return self.num_runs
 
 
-# Run VMs and compare results
-
-class VM:
-    def __init__(self, name, run, can_run, can_compare_to_self,
-                 can_compare_to_others):
-        self.name = name
-        self.run = run
-        self.can_run = can_run
-        self.can_compare_to_self = can_compare_to_self
-        self.can_compare_to_others = can_compare_to_others
-
-    def can_run(self, wasm):
-        return True
-
-
 # Fuzz the interpreter with --fuzz-exec.
 class FuzzExec(TestCaseHandler):
     frequency = 1
@@ -374,33 +359,45 @@ class CompareVMs(TestCaseHandler):
     def __init__(self):
         super(CompareVMs, self).__init__()
 
-        def byn_run(wasm):
-            return run_bynterp(wasm, ['--fuzz-exec-before'])
+        class BinaryenInterpreter:
+            name = 'binaryen interpreter'
 
-        def v8_run(wasm):
-            run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
-            return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+            def run(self, wasm):
+                return run_bynterp(wasm, ['--fuzz-exec-before'])
 
-        def yes():
-            return True
+            def can_run(self):
+                return True
 
-        def can_run_d8():
-            # INITIAL_CONTENT is disallowed because some initial spec testcases
-            # have names that require mangling, see
-            # https://github.com/WebAssembly/binaryen/pull/3216
-            return not INITIAL_CONTENTS
+            def can_compare_to_self(self):
+                return True
 
-        def can_compare_d8_to_others():
-            # With nans, VM differences can confuse us, so only very simple VMs
-            # can compare to themselves after opts in that case.
-            # If not legalized, the JS will fail immediately, so no point to
-            # compare to others.
-            return LEGALIZE and not NANS and not INITIAL_CONTENTS
+            def can_compare_to_others(self):
+                return True
 
-        def if_no_nans():
-            return not NANS
+        class D8:
+            name = 'd8'
 
-        class Wasm2C(VM):
+            def run(self, wasm):
+                run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
+                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+
+            def can_run(self):
+                # INITIAL_CONTENT is disallowed because some initial spec testcases
+                # have names that require mangling, see
+                # https://github.com/WebAssembly/binaryen/pull/3216
+                return not INITIAL_CONTENTS
+
+            def can_compare_to_self(self):
+                # With nans, VM differences can confuse us, so only very simple VMs
+                # can compare to themselves after opts in that case.
+                return not NANS
+
+            def can_compare_to_others(self):
+                # If not legalized, the JS will fail immediately, so no point to
+                # compare to others.
+                return LEGALIZE and not NANS
+
+        class Wasm2C:
             name = 'wasm2c'
 
             def __init__(self):
@@ -495,14 +492,7 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [
-            VM('binaryen interpreter', byn_run, can_compare_to_self=yes,
-               can_compare_to_others=yes),
-            VM('d8', v8_run, can_run=can_run_d8, can_compare_to_self=if_no_nans,
-               can_compare_to_others=can_compare_d8_to_others),
-            Wasm2C(),
-            Wasm2C2Wasm(),
-        ]
+        self.vms = [BinaryenInterpreter(), D8(), Wasm2C(), Wasm2C2Wasm()]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
