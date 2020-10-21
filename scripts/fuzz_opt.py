@@ -390,7 +390,7 @@ class CompareVMs(TestCaseHandler):
             # INITIAL_CONTENT is disallowed because some initial spec testcases
             # have names that require mangling, see
             # https://github.com/WebAssembly/binaryen/pull/3216
-            return LEGALIZE and not NANS and not INITIAL_CONTENT
+            return LEGALIZE and not NANS and not INITIAL_CONTENTS
 
         def if_no_nans():
             return not NANS
