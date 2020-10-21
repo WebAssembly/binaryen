@@ -117,7 +117,17 @@ struct DeadCodeElimination
         list.resize(removeFromHere);
         if (list.size() == 1 && list[0]->is<Unreachable>()) {
           replaceCurrent(list[0]);
+          return;
         }
+      }
+      // Finally, if there is no need for a concrete type (which is when there
+      // is one marked, but nothing breaks to it, and also the block does not
+      // have a concrete value flowing out) then remove it, which may allow
+      // more reduction.
+      if (block->type.isConcrete() && block->name.is() &&
+          typeUpdater.blockInfos[block->name].numBreaks == 0 &&
+          list.back()->type == Type::unreachable) {
+        typeUpdater.doTypeChange(block, Type::unreachable);
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
@@ -129,8 +139,7 @@ struct DeadCodeElimination
       if (iff->type != Type::unreachable && iff->ifFalse &&
           iff->ifTrue->type == Type::unreachable &&
           iff->ifFalse->type == Type::unreachable) {
-        iff->type = Type::unreachable;
-        typeUpdater.noteReplacement(iff, iff);
+        typeUpdater.doTypeChange(iff, Type::unreachable);
       }
     } else if (auto* loop = curr->dynCast<Loop>()) {
       // The loop body may have unreachable type if it branches back to the

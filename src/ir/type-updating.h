@@ -147,6 +147,15 @@ struct TypeUpdater
     discoverBreaks(curr, parent ? +1 : -1);
   }
 
+  // Applies a type change to a node, and potentially to its parents.
+  void doTypeChange(Expression* curr, Type type) {
+    auto old = curr->type;
+    if (old != type) {
+      curr->type = type;
+      propagateTypesUp(curr);
+    }
+  }
+
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
     if (auto* br = curr->dynCast<Break>()) {

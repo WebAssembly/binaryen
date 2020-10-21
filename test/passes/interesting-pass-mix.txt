@@ -41,14 +41,16 @@
   )
   (loop $shape$4$continue
    (call $trivial)
-   (br_if $shape$4$continue
+   (if
     (local.get $0)
+    (br $shape$4$continue)
    )
   )
   (loop $shape$6$continue
    (call $trivial)
-   (br_if $shape$6$continue
+   (if
     (local.get $0)
+    (br $shape$6$continue)
    )
   )
  )
@@ -119,8 +121,9 @@
    (call $before-and-after
     (i32.const 9)
    )
-   (br_if $shape$4$continue
+   (if
     (local.get $0)
+    (br $shape$4$continue)
    )
   )
   (call $before-and-after
@@ -187,9 +190,12 @@
   )
   (block $block$7$break
    (block $switch$3$default
-    (br_table $block$7$break $block$7$break $block$7$break $switch$3$default
-     (local.get $0)
+    (block $switch$3$case$7
+     (br_table $switch$3$case$7 $switch$3$case$7 $switch$3$case$7 $switch$3$default
+      (local.get $0)
+     )
     )
+    (br $block$7$break)
    )
    (call $switch
     (i32.const 2)
@@ -212,8 +218,9 @@
     (call $if-br-wat
      (i32.const 1)
     )
-    (br_if $block$2$break
+    (if
      (local.get $0)
+     (br $block$2$break)
     )
    )
    (call $if-br-wat
