@@ -28,6 +28,8 @@ import time
 import traceback
 
 from test import shared
+from test import support
+
 
 assert sys.version_info.major == 3, 'requires Python 3!'
 
@@ -68,9 +70,10 @@ def random_size():
     return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
-def run(cmd):
-    print(' '.join(cmd))
-    return subprocess.check_output(cmd, text=True)
+def run(cmd, stderr=None, silent=False):
+    if not silent:
+        print(' '.join(cmd))
+    return subprocess.check_output(cmd, stderr=stderr, text=True)
 
 
 def run_unchecked(cmd):
@@ -115,10 +118,18 @@ def randomize_feature_opts():
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
+# the optimizations to run on the wasm
 FUZZ_OPTS = None
+# whether NaN values are allowed, or we de-NaN them
 NANS = None
+# whether out of bounds operations are allowed, or we bounds-enforce them
 OOB = None
+# whether we legalize the wasm for JS
 LEGALIZE = None
+# whether we use an initial wasm file's contents as the basis for the fuzzing,
+# or if we start entirely from scratch
+INITIAL_CONTENTS = None
+
 ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
 
 
@@ -638,6 +649,13 @@ class Wasm2JS(TestCaseHandler):
         return run_vm([shared.NODEJS, js_file, 'a.wasm'])
 
     def can_run_on_feature_opts(self, feature_opts):
+        # TODO: properly handle memory growth. right now the wasm2js handler
+        # uses --emscripten which assumes the Memory is created before, and
+        # wasm2js.js just starts with a size of 1 and no limit. We should switch
+        # to non-emscripten mode or adding memory information, or check
+        # specifically for growth here
+        if INITIAL_CONTENTS:
+            return False
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
 
@@ -705,11 +723,94 @@ testcase_handlers = [
 ]
 
 
+test_suffixes = ['*.wasm', '*.wast', '*.wat']
+core_tests = shared.get_tests(shared.get_test_dir('.'), test_suffixes)
+passes_tests = shared.get_tests(shared.get_test_dir('passes'), test_suffixes)
+spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
+wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), test_suffixes)
+lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
+unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
+all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests
+
+
+def pick_initial_contents():
+    global INITIAL_CONTENTS
+    INITIAL_CONTENTS = None
+    #  TODO 0.5 for None
+    test_name = random.choice(all_tests)
+    print('initial contents:', test_name)
+    assert os.path.exists(test_name)
+    # tests that check validation errors are not helpful for us
+    if '.fail.' in test_name:
+        print('initial contents is just a .fail test')
+        return
+    if os.path.basename(test_name) in [
+        # contains too many segments to run in a wasm VM
+        'limit-segments_disable-bulk-memory.wast',
+        # https://github.com/WebAssembly/binaryen/issues/3203
+        'simd.wast',
+        # corner cases of escaping of names is not interesting
+        'names.wast',
+        # huge amount of locals that make it extremely slow
+        'too_much_for_liveness.wasm',
+        # these contain illegal pops()
+        # https://github.com/WebAssembly/binaryen/issues/3213
+        'instrument-locals_all-features.wast',
+        'remove-unused-names_code-folding_all-features.wast',
+        'Os_print-stack-ir_all-features.wast'
+    ]:
+        print('initial contents is disallowed')
+        return
+
+    if test_name.endswith('.wast'):
+        # this can contain multiple modules, pick one
+        split_parts = support.split_wast(test_name)
+        if len(split_parts) > 1:
+            chosen = random.choice(split_parts)
+            module, asserts = chosen
+            if not module:
+                # there is no module in this choice (just asserts), ignore it
+                print('initial contents has no module')
+                return
+            test_name = 'initial.wat'
+            with open(test_name, 'w') as f:
+                f.write(module)
+            print('  picked submodule of wast, of size', len(module))
+
+    global FEATURE_OPTS
+    FEATURE_OPTS += [
+        # has not been enabled in the fuzzer yet
+        '--disable-exception-handling',
+        # has not been fuzzed in general yet
+        '--disable-memory64',
+        # DWARF is incompatible with multivalue atm; it's more important to
+        # fuzz multivalue since we aren't actually fuzzing DWARF here
+        '--strip-dwarf',
+    ]
+
+    # the given wasm may not work with the chosen feature opts. for example, if
+    # we pick atomics.wast but want to run with --disable-atomics, then we'd
+    # error. test the wasm.
+    try:
+        run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
+            stderr=subprocess.PIPE,
+            silent=True)
+    except Exception:
+        print('(initial contents not valid for features, ignoring)')
+        return
+
+    INITIAL_CONTENTS = test_name
+
+
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts, given_wasm):
+def test_one(random_input, given_wasm):
     randomize_pass_debug()
     randomize_feature_opts()
     randomize_fuzz_settings()
+    pick_initial_contents()
+
+    opts = randomize_opt_flags()
+    print('randomized opts:', ' '.join(opts))
     print()
 
     if given_wasm:
@@ -722,6 +823,8 @@ def test_one(random_input, opts, given_wasm):
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
         generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm', '--emit-target-features'] + FUZZ_OPTS + FEATURE_OPTS
+        if INITIAL_CONTENTS:
+            generate_command += ['--initial-fuzz=' + INITIAL_CONTENTS]
         if PRINT_WATS:
             printed = run(generate_command + ['--print'])
             with open('a.printed.wast', 'w') as f:
@@ -843,9 +946,15 @@ def randomize_opt_flags():
     # core opts
     while 1:
         choice = random.choice(opt_choices)
-        if '--flatten' in choice:
+        if '--flatten' in choice or '-O4' in choice:
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
+                continue
+            if '--disable-exception-handling' not in FEATURE_OPTS:
+                print('avoiding --flatten due to exception catching which does not support it yet')
+                continue
+            if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
+                print('avoiding --flatten due using a large amount of initial contents, which may blow up')
                 continue
             else:
                 has_flatten = True
@@ -928,15 +1037,13 @@ if __name__ == '__main__':
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
-        opts = randomize_opt_flags()
-        print('randomized opts:', ' '.join(opts))
         # remove the generated wasm file, so that we can tell if the fuzzer
         # fails to create one
         if os.path.exists('a.wasm'):
             os.remove('a.wasm')
         # run an iteration of the fuzzer
         try:
-            total_wasm_size += test_one(raw_input_data, opts, given_wasm)
+            total_wasm_size += test_one(raw_input_data, given_wasm)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
