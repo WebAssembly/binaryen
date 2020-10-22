@@ -32,7 +32,6 @@ struct LoggingExternalInterface : public ShellExternalInterface {
   struct State {
     uint32_t tempRet0 = 0;
   } state;
-  ;
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
