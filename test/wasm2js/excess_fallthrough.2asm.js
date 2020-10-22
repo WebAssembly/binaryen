@@ -18,20 +18,22 @@ function asmFunc(global, env) {
  
  function foo($0) {
   $0 = $0 | 0;
-  label$5 : {
-   bar();
-   block : {
-    switch (123 | 0) {
-    case 0:
-     bar();
-     break;
-    default:
-     break label$5;
-    };
+  label$4 : while (1) {
+   label$5 : {
+    bar();
+    block : {
+     switch (123 | 0) {
+     case 0:
+      bar();
+      break;
+     default:
+      break label$5;
+     };
+    }
+    return;
    }
-   return;
-  }
-  abort();
+   abort();
+  };
  }
  
  return {
