@@ -293,7 +293,7 @@ struct OptimizeInstructions
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::Add, any(), ival(&c))))) {
           c->value = c->value.neg();
-          inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+          inner->op = Abstract::getBinary(c->type, Abstract::Eq);
           inner->type = Type::i32;
           return inner;
         }
