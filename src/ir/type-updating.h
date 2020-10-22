@@ -149,8 +149,7 @@ struct TypeUpdater
 
   // Applies a type change to a node, and potentially to its parents.
   void doTypeChange(Expression* curr, Type type) {
-    auto old = curr->type;
-    if (old != type) {
+    if (curr->type != type) {
       curr->type = type;
       propagateTypesUp(curr);
     }
