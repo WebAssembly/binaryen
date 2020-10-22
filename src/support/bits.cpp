@@ -188,9 +188,7 @@ uint32_t log2(uint32_t v) {
   return 31 - countLeadingZeroes(v);
 }
 
-uint32_t pow2(uint32_t v) {
-  return 1 << (v & 31);
-}
+uint32_t pow2(uint32_t v) { return 1 << (v & 31); }
 
 } // namespace Bits
 
