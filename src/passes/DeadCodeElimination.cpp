@@ -39,7 +39,9 @@
 namespace wasm {
 
 struct DeadCodeElimination
-  : public WalkerPass<PostWalker<DeadCodeElimination, UnifiedExpressionVisitor<DeadCodeElimination>>> {
+  : public WalkerPass<
+      PostWalker<DeadCodeElimination,
+                 UnifiedExpressionVisitor<DeadCodeElimination>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DeadCodeElimination; }
