@@ -80,10 +80,15 @@ struct DeadCodeElimination
           // This is indeed unreachable code, made unreachable by that child.
           Builder builder(*getModule());
           std::vector<Expression*> remainingChildren;
+          bool afterUnreachable = false;
           for (auto* child : ChildIterator(curr)) {
+            if (afterUnreachable) {
+              typeUpdater.noteRecursiveRemoval(child);
+              continue;
+            }
             if (child->type == Type::unreachable) {
               remainingChildren.push_back(child);
-              break;
+              afterUnreachable = true;
             } else {
               remainingChildren.push_back(builder.makeDrop(child));
             }

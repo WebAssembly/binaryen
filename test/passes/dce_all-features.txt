@@ -627,4 +627,12 @@
    )
   )
  )
+ (func $note-loss-of-non-control-flow-children
+  (block $out
+   (block $block
+    (nop)
+    (unreachable)
+   )
+  )
+ )
 )

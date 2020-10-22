@@ -843,4 +843,17 @@
       )
     )
   )
+  (func $note-loss-of-non-control-flow-children
+    (block $out
+      (drop
+       (i32.add
+         (block (result i32)
+            (nop)
+            (unreachable)
+         )
+         (br $out) ;; when this is removed as dead, the block becomes unreachable
+       )
+     )
+    )
+  )
 )
