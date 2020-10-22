@@ -31,7 +31,8 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   struct State {
     uint32_t tempRet0 = 0;
-  } state;;
+  } state;
+  ;
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
@@ -57,7 +58,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
         state.tempRet0 = arguments[0].geti32();
         return {};
       } else if (import->base == "getTempRet0") {
-        return { Literal(state.tempRet0) };
+        return {Literal(state.tempRet0)};
       }
     }
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
