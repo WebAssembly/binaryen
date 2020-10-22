@@ -189,10 +189,7 @@ uint32_t log2(uint32_t v) {
 }
 
 uint32_t pow2(uint32_t v) {
-  if (v >= sizeof(uint32_t) * CHAR_BIT) {
-    WASM_UNREACHABLE("overflowed result");
-  }
-  return 1 << v;
+  return 1 << (v & 31);
 }
 
 } // namespace Bits
