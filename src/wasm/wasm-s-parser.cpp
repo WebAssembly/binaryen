@@ -1302,6 +1302,9 @@ static size_t parseMemAttributes(Element& s,
   align = fallbackAlign;
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
+    if (strncmp(str, "align", 5) != 0 && strncmp(str, "offset", 6) != 0) {
+      return i;
+    }
     const char* eq = strchr(str, '=');
     if (!eq) {
       throw ParseException(
@@ -1588,6 +1591,43 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   }
   size_t i = parseMemAttributes(s, ret->offset, ret->align, defaultAlign);
   ret->ptr = parseExpression(s[i]);
+  ret->finalize();
+  return ret;
+}
+
+Expression*
+SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
+                                              SIMDLoadStoreLaneOp op) {
+  auto* ret = allocator.alloc<SIMDLoadStoreLane>();
+  ret->op = op;
+  Address defaultAlign;
+  size_t lanes;
+  switch (op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      defaultAlign = 1;
+      lanes = 16;
+      break;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      defaultAlign = 2;
+      lanes = 8;
+      break;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      defaultAlign = 4;
+      lanes = 4;
+      break;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      defaultAlign = 8;
+      lanes = 2;
+      break;
+  }
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, defaultAlign);
+  ret->index = parseLaneIndex(s[i++], lanes);
+  ret->ptr = parseExpression(s[i++]);
+  ret->vec = parseExpression(s[i]);
   ret->finalize();
   return ret;
 }

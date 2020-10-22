@@ -317,6 +317,7 @@ public:
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -1262,6 +1263,57 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   }
   Index bytes = curr->getMemBytes();
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+}
+
+void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  if (curr->isLoad()) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::v128), curr, "loadX_lane must have type v128");
+  } else {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::none), curr, "storeX_lane must have type none");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "loadX_lane or storeX_lane address must match memory index type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type,
+    Type(Type::v128),
+    curr,
+    "loadX_lane or storeX_lane vector argument must have type v128");
+  size_t lanes;
+  Type memAlignType = Type::none;
+  switch (curr->op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      lanes = 16;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      lanes = 8;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      lanes = 4;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      lanes = 2;
+      memAlignType = Type::i64;
+      break;
+  }
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+  shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {

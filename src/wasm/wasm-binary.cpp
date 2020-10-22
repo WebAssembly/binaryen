@@ -2711,6 +2711,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoad(curr, opcode)) {
         break;
       }
+      if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
       break;
     }
@@ -4974,6 +4977,57 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       return false;
   }
   readMemoryAccess(curr->align, curr->offset);
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
+                                                    uint32_t code) {
+  SIMDLoadStoreLaneOp op;
+  size_t lanes;
+  switch (code) {
+    case BinaryConsts::V128Load8Lane:
+      op = LoadLaneVec8x16;
+      lanes = 16;
+      break;
+    case BinaryConsts::V128Load16Lane:
+      op = LoadLaneVec16x8;
+      lanes = 8;
+      break;
+    case BinaryConsts::V128Load32Lane:
+      op = LoadLaneVec32x4;
+      lanes = 4;
+      break;
+    case BinaryConsts::V128Load64Lane:
+      op = LoadLaneVec64x2;
+      lanes = 2;
+      break;
+    case BinaryConsts::V128Store8Lane:
+      op = StoreLaneVec8x16;
+      lanes = 16;
+      break;
+    case BinaryConsts::V128Store16Lane:
+      op = StoreLaneVec16x8;
+      lanes = 8;
+      break;
+    case BinaryConsts::V128Store32Lane:
+      op = StoreLaneVec32x4;
+      lanes = 4;
+      break;
+    case BinaryConsts::V128Store64Lane:
+      op = StoreLaneVec64x2;
+      lanes = 2;
+      break;
+    default:
+      return false;
+  }
+  auto* curr = allocator.alloc<SIMDLoadStoreLane>();
+  curr->op = op;
+  readMemoryAccess(curr->align, curr->offset);
+  curr->index = getLaneIndex(lanes);
+  curr->vec = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;

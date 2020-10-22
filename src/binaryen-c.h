@@ -159,6 +159,7 @@ BINARYEN_API BinaryenExpressionId BinaryenSIMDShuffleId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDTernaryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDShiftId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDLoadId(void);
+// TODO: Expose SIMDLoadStoreLane in C and JS APIs
 BINARYEN_API BinaryenExpressionId BinaryenMemoryInitId(void);
 BINARYEN_API BinaryenExpressionId BinaryenDataDropId(void);
 BINARYEN_API BinaryenExpressionId BinaryenMemoryCopyId(void);

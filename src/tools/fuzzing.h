@@ -2465,6 +2465,7 @@ private:
     if (type != Type::v128) {
       return makeSIMDExtract(type);
     }
+    // TODO: Add SIMDLoadStoreLane once it is generally available
     switch (upTo(7)) {
       case 0:
         return makeUnary(Type::v128);

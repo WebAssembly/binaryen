@@ -434,6 +434,21 @@ public:
     ret->finalize();
     return ret;
   }
+  SIMDLoadStoreLane* makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
+                                           Address offset,
+                                           Address align,
+                                           uint8_t index,
+                                           Expression* ptr,
+                                           Expression* vec) {
+    auto* ret = wasm.allocator.alloc<SIMDLoadStoreLane>();
+    ret->op = op;
+    ret->offset = offset;
+    ret->align = align;
+    ret->index = index;
+    ret->ptr = ptr;
+    ret->finalize();
+    return ret;
+  }
   MemoryInit* makeMemoryInit(uint32_t segment,
                              Expression* dest,
                              Expression* offset,
