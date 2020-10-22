@@ -1688,40 +1688,46 @@ private:
           }
         }
       }
-      // x - y <=> 0  =>  x <=> y
+      // signed(x - y) <=> 0  =>  x <=> y
+      //
+      // unsigned(x - y) > 0    =>   x != y
+      // unsigned(x - y) <= 0   =>   x == y
+      // unsigned(x - y) >= 0   =>   1
+      // unsigned(x - y) < 0    =>   0
       if (binary->isRelational()) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* c = binary->right->dynCast<Const>()) {
               if (c->value.isZero()) {
                 // signed or sign-agnostic relationals
+                // x - y <=> 0  =>  x <=> y
                 if (!isUnsignedBinaryOp(binary->op)) {
                   binary->right = left->right;
                   binary->left = left->left;
                   return binary;
                 } else {
                   // unsigned relationals should special handlings
-                  // u32(x - y) > 0    =>   x != y
+                  // unsigned(x - y) > 0    =>   x != y
                   if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
                     binary->op = Abstract::getBinary(type, Abstract::Ne);
                     binary->right = left->right;
                     binary->left = left->left;
                     return binary;
                   }
-                  // u32(x - y) <= 0   =>   x == y
+                  // unsigned(x - y) <= 0   =>   x == y
                   if (binary->op == Abstract::getBinary(type, Abstract::GeU)) {
                     binary->op = Abstract::getBinary(type, Abstract::Eq);
                     binary->right = left->right;
                     binary->left = left->left;
                     return binary;
                   }
-                  // u32(x - y) >= 0   =>   1
+                  // unsigned(x - y) >= 0   =>   1
                   if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
                       !effects(binary).hasSideEffects()) {
                     c->value = Literal::makeOne(Type::i32);
                     return binary->right;
                   }
-                  // u32(x - y) < 0    =>   0
+                  // unsigned(x - y) < 0    =>   0
                   if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
                       !effects(binary).hasSideEffects()) {
                     return binary->right;
