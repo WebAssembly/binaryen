@@ -708,7 +708,7 @@ def is_subclass_of(x, y):
     return y in getattr(x, '__bases__', {})
 
 
-def is_a(x, cls):
+def is_instance(x, cls):
     """Whether x is an instance of cls."""
 
     return x.__class__ == cls
@@ -855,7 +855,7 @@ class ExpressionComparisonRenderer:
         # Compare the fields.
         fields = cls.get_fields()
         for key, field in fields.items():
-            if is_a(field, Child):
+            if is_instance(field, Child):
                 # Push the children to be checked later. Note that it is ok to
                 # do this even if they are null (valid for an optional child,
                 # like a Return's value), as the main logic will check that.
@@ -863,18 +863,18 @@ class ExpressionComparisonRenderer:
                 #       pushing such children?
                 operations.append(f'leftStack.push_back(castLeft->{key});')
                 operations.append(f'rightStack.push_back(castRight->{key});')
-            elif is_a(field, ChildList):
+            elif is_instance(field, ChildList):
                 operations.append('if (castLeft->%(key)s.size() != castRight->%(key)s.size()) { return false; }' % locals())
                 operations.append('for (auto* child : castLeft->%(key)s) { leftStack.push_back(child); }' % locals())
                 operations.append('for (auto* child : castRight->%(key)s) { rightStack.push_back(child); }' % locals())
-            elif is_a(field, ScopeNameDef):
+            elif is_instance(field, ScopeNameDef):
                 # Blocks and Loops define names, so mark the names as equal
                 # on both sides.
                 operations.append('if (castLeft->%(key)s.is() != castRight->%(key)s.is()) { return false; }' % locals())
                 operations.append(f'rightNames[castLeft->{key}] = castRight->{key};')
-            elif is_a(field, ScopeNameUse):
+            elif is_instance(field, ScopeNameUse):
                 operations.append('if (!compareNames(castLeft->%(key)s, castRight->%(key)s)) { return false; }' % locals())
-            elif is_a(field, ScopeNameUseVector):
+            elif is_instance(field, ScopeNameUseVector):
                 operations.append('''\
 if (castLeft->%(key)s.size() != castRight->%(key)s.size()) {
   return false;
