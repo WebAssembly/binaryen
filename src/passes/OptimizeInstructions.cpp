@@ -1713,16 +1713,17 @@ private:
                   binary->right = left->right;
                   binary->left = left->left;
                   return binary;
-                  // unsigned(x - y) >= 0   =>   1
+                  // unsigned(x - y) >= 0   =>   i32(1)
                 } else if (binary->op ==
                              Abstract::getBinary(type, Abstract::LeU) &&
                            !effects(binary).hasSideEffects()) {
                   c->value = Literal::makeOne(Type::i32);
                   return binary->right;
-                  // unsigned(x - y) < 0    =>   0
+                  // unsigned(x - y) < 0    =>   i32(0)
                 } else if (binary->op ==
                              Abstract::getBinary(type, Abstract::GtU) &&
                            !effects(binary).hasSideEffects()) {
+                  c->type = Type::i32;
                   return binary->right;
                 } else {
                   // signed or sign-agnostic relationals
