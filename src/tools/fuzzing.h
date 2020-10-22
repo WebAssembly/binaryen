@@ -31,6 +31,7 @@ high chance for set at start of loop
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
+#include <ir/names.h>
 #include <ir/utils.h>
 #include <support/file.h>
 #include <tools/optimization-options.h>
@@ -438,10 +439,9 @@ private:
         if (global->init->is<GlobalGet>()) {
           global->init = makeConst(global->type);
         }
-      }
-    }
-    for (auto& global : wasm.globals) {
-      if (global->imported()) {
+      } else {
+        // Remove import info from imported globals, and give them a simple
+        // initializer.
         global->module = global->base = Name();
         global->init = makeConst(global->type);
       }
@@ -535,28 +535,11 @@ private:
     wasm.table.module = wasm.table.base = Name();
   }
 
-  // Given a root of a name, finds a valid name with perhaps a number appended
-  // to it, by calling a function to check if a name is valid.
-  Name getValidName(Name root, std::function<bool(Name)> check) {
-    if (check(root)) {
-      return root;
-    }
-    auto prefixed = std::string(root.str) + '_';
-    Index num = 0;
-    while (1) {
-      auto name = prefixed + std::to_string(num);
-      if (check(name)) {
-        return name;
-      }
-      num++;
-    }
-  }
-
   Name HANG_LIMIT_GLOBAL;
 
   void prepareHangLimitSupport() {
-    HANG_LIMIT_GLOBAL = getValidName(
-      "hangLimit", [&](Name name) { return !wasm.getGlobalOrNull(name); });
+    HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm,
+      "hangLimit");
   }
 
   void addHangLimitSupport() {
@@ -567,8 +550,8 @@ private:
     wasm.addGlobal(glob);
 
     Name exportName = "hangLimitInitializer";
-    auto funcName = getValidName(
-      exportName, [&](Name name) { return !wasm.getFunctionOrNull(name); });
+    auto funcName = Names::getValidFunctionName(wasm,
+      exportName);
     auto* func = new Function;
     func->name = funcName;
     func->sig = Signature(Type::none, Type::none);
@@ -647,8 +630,8 @@ private:
   Function* addFunction() {
     LOGGING_PERCENT = upToSquared(100);
     func = new Function;
-    func->name = getValidName(
-      "func", [&](Name name) { return !wasm.getFunctionOrNull(name); });
+    func->name = Names::getValidFunctionName(wasm,
+      "func");
     assert(typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
     std::vector<Type> params;

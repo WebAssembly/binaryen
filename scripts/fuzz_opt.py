@@ -743,7 +743,9 @@ all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests +
 def pick_initial_contents():
     global INITIAL_CONTENTS
     INITIAL_CONTENTS = None
-    #  TODO 0.5 for None
+    # half the time don't use any initial contents
+    if random.random() < 0.5:
+        return
     test_name = random.choice(all_tests)
     print('initial contents:', test_name)
     assert os.path.exists(test_name)
