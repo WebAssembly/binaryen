@@ -4809,6 +4809,27 @@
     ))
   )
   (func $optimize-relationals (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+    ;; eqz(x + 0x7FFFFFFF)  ->  x == -2147483647
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x7FFFFFFF)
+      )
+    ))
+    ;; eqz(x + 0x80000000)  ->  x == -2147483648
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+    ))
+    ;; eqz(x + 0x80000001)  ->  x == 2147483647
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x80000001)
+      )
+    ))
     ;; eqz(x - y)
     (drop (i32.eqz
       (i32.sub

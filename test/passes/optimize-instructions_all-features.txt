@@ -4342,6 +4342,24 @@
   (drop
    (i32.eq
     (local.get $x)
+    (i32.const -2147483647)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const 2147483647)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $x)
     (local.get $y)
    )
   )

@@ -286,6 +286,19 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz(x + C)  =>  x == -C
+        Const* c;
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::Add, any(), ival(&c))))) {
+          c->value = c->value.neg();
+          inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+          inner->type = Type::i32;
+          return inner;
+        }
+      }
+      {
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
         Const* c;
         Binary* inner;
