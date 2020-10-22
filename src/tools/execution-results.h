@@ -30,6 +30,10 @@ struct LoggingExternalInterface : public ShellExternalInterface {
   Loggings& loggings;
 
   struct State {
+    // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
+    // temporary return value of 32 bits; "0" is the only important value for
+    // 64-bit legalization, which needs one such 32-bit chunk in addition to
+    // the normal return value which can handle 32 bits).
     uint32_t tempRet0 = 0;
   } state;
 
