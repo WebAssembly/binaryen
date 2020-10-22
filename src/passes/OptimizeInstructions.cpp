@@ -1686,14 +1686,47 @@ private:
               }
             }
           }
-          // x - y == 0  =>  x == y
-          // x - y != 0  =>  x != y
+        }
+      }
+      // x - y <=> 0  =>  x <=> y
+      if (binary->isRelational()) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* c = binary->right->dynCast<Const>()) {
               if (c->value.isZero()) {
-                binary->right = left->right;
-                binary->left = left->left;
-                return binary;
+                // signed or sign-agnostic relationals
+                if (!isUnsignedBinaryOp(binary->op)) {
+                  binary->right = left->right;
+                  binary->left = left->left;
+                  return binary;
+                } else {
+                  // unsigned relationals should special handlings
+                  // u32(x - y) > 0    =>   x != y
+                  if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
+                    binary->op = Abstract::getBinary(type, Abstract::Ne);
+                    binary->right = left->right;
+                    binary->left = left->left;
+                    return binary;
+                  }
+                  // u32(x - y) <= 0   =>   x == y
+                  if (binary->op == Abstract::getBinary(type, Abstract::GeU)) {
+                    binary->op = Abstract::getBinary(type, Abstract::Eq);
+                    binary->right = left->right;
+                    binary->left = left->left;
+                    return binary;
+                  }
+                  // u32(x - y) >= 0   =>   1
+                  if (binary->op == Abstract::getBinary(type, Abstract::LeU) &&
+                      !effects(binary).hasSideEffects()) {
+                    c->value = Literal::makeOne(Type::i32);
+                    return binary->right;
+                  }
+                  // u32(x - y) < 0    =>   0
+                  if (binary->op == Abstract::getBinary(type, Abstract::GtU) &&
+                      !effects(binary).hasSideEffects()) {
+                    return binary->right;
+                  }
+                }
               }
             }
           }
@@ -2023,6 +2056,28 @@ private:
 
       default:
         return InvalidBinary;
+    }
+  }
+
+  bool isUnsignedBinaryOp(BinaryOp op) {
+    switch (op) {
+      case DivUInt32:
+      case RemUInt32:
+      case ShrUInt32:
+      case LtUInt32:
+      case LeUInt32:
+      case GtUInt32:
+      case GeUInt32:
+      case DivUInt64:
+      case RemUInt64:
+      case ShrUInt64:
+      case LtUInt64:
+      case LeUInt64:
+      case GtUInt64:
+      case GeUInt64:
+        return true;
+      default:
+        return false;
     }
   }
 

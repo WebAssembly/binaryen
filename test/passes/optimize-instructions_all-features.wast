@@ -4852,6 +4852,70 @@
       )
       (i64.const 0)
     ))
+    ;; i32(x - y) > 0  ->  x > y
+    (drop (i32.gt_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - y) >= 0  ->  x >= y
+    (drop (i32.ge_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) > 0  ->  x != y
+    (drop (i32.gt_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) >= 0  ->  1
+    (drop (i32.ge_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - y) < 0  ->  x < y
+    (drop (i32.lt_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - y) <= 0  ->  x <= y
+    (drop (i32.le_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) < 0  ->  0
+    (drop (i32.lt_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) <= 0  ->  x == y
+    (drop (i32.le_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
   )
   (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s
