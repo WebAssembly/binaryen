@@ -29,6 +29,10 @@ typedef std::vector<Literal> Loggings;
 struct LoggingExternalInterface : public ShellExternalInterface {
   Loggings& loggings;
 
+  struct State {
+    uint32_t tempRet0 = 0;
+  } state;;
+
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literals callImport(Function* import, LiteralList& arguments) override {
@@ -49,6 +53,11 @@ struct LoggingExternalInterface : public ShellExternalInterface {
         }
         std::cout << "]\n";
         return {};
+      } else if (import->base == "setTempRet0") {
+        state.tempRet0 = arguments[0].geti32();
+        return {};
+      } else if (import->base == "getTempRet0") {
+        return { Literal(state.tempRet0) };
       }
     }
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
