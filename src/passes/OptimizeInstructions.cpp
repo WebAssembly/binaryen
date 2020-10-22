@@ -1692,8 +1692,8 @@ private:
       //
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
-      // unsigned(x - y) >= 0   =>   1
-      // unsigned(x - y) < 0    =>   0
+      // unsigned(x - y) >= 0   =>   i32(1)
+      // unsigned(x - y) < 0    =>   i32(0)
       if (binary->isRelational()) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
@@ -1718,13 +1718,15 @@ private:
                              Abstract::getBinary(type, Abstract::GeU) &&
                            !effects(binary).hasSideEffects()) {
                   c->value = Literal::makeOne(Type::i32);
-                  return binary->right;
+                  c->type = Type::i32;
+                  return c;
                   // unsigned(x - y) < 0    =>   i32(0)
                 } else if (binary->op ==
                              Abstract::getBinary(type, Abstract::LtU) &&
                            !effects(binary).hasSideEffects()) {
+                  c->value = Literal::makeZero(Type::i32);
                   c->type = Type::i32;
-                  return binary->right;
+                  return c;
                 } else {
                   // signed or sign-agnostic relationals
                   // x - y <=> 0  =>  x <=> y
