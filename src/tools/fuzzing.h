@@ -538,8 +538,7 @@ private:
   Name HANG_LIMIT_GLOBAL;
 
   void prepareHangLimitSupport() {
-    HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm,
-      "hangLimit");
+    HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
   }
 
   void addHangLimitSupport() {
@@ -550,8 +549,7 @@ private:
     wasm.addGlobal(glob);
 
     Name exportName = "hangLimitInitializer";
-    auto funcName = Names::getValidFunctionName(wasm,
-      exportName);
+    auto funcName = Names::getValidFunctionName(wasm, exportName);
     auto* func = new Function;
     func->name = funcName;
     func->sig = Signature(Type::none, Type::none);
@@ -630,8 +628,7 @@ private:
   Function* addFunction() {
     LOGGING_PERCENT = upToSquared(100);
     func = new Function;
-    func->name = Names::getValidFunctionName(wasm,
-      "func");
+    func->name = Names::getValidFunctionName(wasm, "func");
     assert(typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
     std::vector<Type> params;
