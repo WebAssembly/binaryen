@@ -275,6 +275,16 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz(x - y)  =>  x == y
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::Sub, any(), any())))) {
+          inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+          return inner;
+        }
+      }
+      {
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
         Const* c;
         Binary* inner;
@@ -1646,16 +1656,16 @@ private:
 
   // TODO: templatize on type?
   Expression* optimizeRelational(Binary* binary) {
-    // TODO: inequalities can also work, if the constants do not overflow
     auto type = binary->right->type;
-    // integer math, even on 2s complement, allows stuff like
-    // x + 5 == 7
-    //   =>
-    //     x == 2
     if (binary->left->type.isInteger()) {
+      // TODO: inequalities can also work, if the constants do not overflow
+      // integer math, even on 2s complement, allows stuff like
       if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
           binary->op == Abstract::getBinary(type, Abstract::Ne)) {
         if (auto* left = binary->left->dynCast<Binary>()) {
+          // x + 5 == 7
+          //   =>
+          //     x == 2
           if (left->op == Abstract::getBinary(type, Abstract::Add) ||
               left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
@@ -1672,6 +1682,17 @@ private:
                       binary, left, leftConst, rightBinary, rightConst);
                   }
                 }
+              }
+            }
+          }
+          // x - y == 0  =>  x == y
+          // x - y != 0  =>  x != y
+          if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            if (auto* c = binary->right->dynCast<Const>()) {
+              if (c->value.isZero()) {
+                binary->right = left->right;
+                binary->left = left->left;
+                return binary;
               }
             }
           }

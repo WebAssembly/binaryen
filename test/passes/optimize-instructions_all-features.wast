@@ -4808,6 +4808,51 @@
       )
     ))
   )
+  (func $optimize-relationals (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+    ;; eqz(x - y)
+    (drop (i32.eqz
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+    ))
+    ;; x - y == 0
+    (drop (i32.eq
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+    ;; x - y != 0
+    (drop (i32.ne
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.ne
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+  )
   (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s
       (i32.and

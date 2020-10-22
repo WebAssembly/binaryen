@@ -12611,10 +12611,10 @@ function asmFunc(global, env) {
  
  function $63($0) {
   $0 = $0 | 0;
-  if ($0 - 1 | 0) {
-   $0 = 9
-  } else {
+  if (($0 | 0) == 1) {
    $0 = 8
+  } else {
+   $0 = 9
   }
   return $0 | 0;
  }
