@@ -281,6 +281,7 @@ struct OptimizeInstructions
                     unary(Abstract::EqZ,
                           binary(&inner, Abstract::Sub, any(), any())))) {
           inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+          inner->type = Type::i32;
           return inner;
         }
       }
