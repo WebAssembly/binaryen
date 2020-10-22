@@ -4388,13 +4388,16 @@
    )
   )
   (drop
-   (i32.const 0)
-  )
-  (drop
-   (i32.eq
+   (i32.ne
     (local.get $x)
     (local.get $y)
    )
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
   )
   (drop
    (i32.lt_s
@@ -4409,13 +4412,16 @@
    )
   )
   (drop
-   (i32.ne
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.eq
     (local.get $x)
     (local.get $y)
    )
-  )
-  (drop
-   (i32.const 1)
   )
  )
  (func $unsigned-context (param $x i32) (param $y i64)

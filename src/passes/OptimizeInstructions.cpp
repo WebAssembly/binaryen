@@ -1701,27 +1701,27 @@ private:
               if (c->value.isZero()) {
                 // unsigned relationals should special handlings
                 // unsigned(x - y) > 0    =>   x != y
-                if (binary->op == Abstract::getBinary(type, Abstract::LtU)) {
+                if (binary->op == Abstract::getBinary(type, Abstract::GtU)) {
                   binary->op = Abstract::getBinary(type, Abstract::Ne);
                   binary->right = left->right;
                   binary->left = left->left;
                   return binary;
                   // unsigned(x - y) <= 0   =>   x == y
                 } else if (binary->op ==
-                           Abstract::getBinary(type, Abstract::GeU)) {
+                           Abstract::getBinary(type, Abstract::LeU)) {
                   binary->op = Abstract::getBinary(type, Abstract::Eq);
                   binary->right = left->right;
                   binary->left = left->left;
                   return binary;
                   // unsigned(x - y) >= 0   =>   i32(1)
                 } else if (binary->op ==
-                             Abstract::getBinary(type, Abstract::LeU) &&
+                             Abstract::getBinary(type, Abstract::GeU) &&
                            !effects(binary).hasSideEffects()) {
                   c->value = Literal::makeOne(Type::i32);
                   return binary->right;
                   // unsigned(x - y) < 0    =>   i32(0)
                 } else if (binary->op ==
-                             Abstract::getBinary(type, Abstract::GtU) &&
+                             Abstract::getBinary(type, Abstract::LtU) &&
                            !effects(binary).hasSideEffects()) {
                   c->type = Type::i32;
                   return binary->right;

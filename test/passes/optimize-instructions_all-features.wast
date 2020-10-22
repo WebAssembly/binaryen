@@ -4884,6 +4884,14 @@
       )
       (i32.const 0)
     ))
+    ;; u64(x - y) >= 0  ->  i32(1)
+    (drop (i64.ge_u
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
     ;; i32(x - y) < 0  ->  x < y
     (drop (i32.lt_s
       (i32.sub
@@ -4907,6 +4915,14 @@
         (local.get $y)
       )
       (i32.const 0)
+    ))
+    ;; u64(x - y) < 0  ->  i32(0)
+    (drop (i64.lt_u
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
     ))
     ;; u32(x - y) <= 0  ->  x == y
     (drop (i32.le_u
