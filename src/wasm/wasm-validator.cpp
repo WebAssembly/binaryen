@@ -1310,6 +1310,8 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       lanes = 2;
       memAlignType = Type::i64;
       break;
+    default:
+      WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
   }
   Index bytes = curr->getMemBytes();
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
