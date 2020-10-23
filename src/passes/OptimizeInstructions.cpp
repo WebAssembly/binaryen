@@ -484,6 +484,25 @@ struct OptimizeInstructions
         if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
+      } else if (binary->op == MulFloat32 || binary->op == MulFloat64 ||
+                 binary->op == DivFloat32 || binary->op == DivFloat64) {
+        if (binary->left->type == binary->right->type) {
+          if (auto* leftUnary = binary->left->dynCast<Unary>()) {
+            if (leftUnary->op ==
+                Abstract::getUnary(binary->type, Abstract::Abs)) {
+              if (auto* rightUnary = binary->right->dynCast<Unary>()) {
+                if (leftUnary->op == rightUnary->op) { // both are abs ops
+                  // abs(x) * abs(y)   ==>   abs(x * y)
+                  // abs(x) / abs(y)   ==>   abs(x / y)
+                  binary->left = leftUnary->value;
+                  binary->right = rightUnary->value;
+                  leftUnary->value = binary;
+                  return leftUnary;
+                }
+              }
+            }
+          }
+        }
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -683,6 +702,36 @@ struct OptimizeInstructions
           auto bits = Properties::getSignExtBits(unary->value);
           unary->value = makeZeroExt(ext, bits);
           return unary;
+        }
+      } else if (unary->op == AbsFloat32 || unary->op == AbsFloat64) {
+        // abs(-x)   ==>   abs(x)
+        if (auto* unaryInner = unary->value->dynCast<Unary>()) {
+          if (unaryInner->op ==
+              Abstract::getUnary(unaryInner->type, Abstract::Neg)) {
+            unary->value = unaryInner->value;
+            return unary;
+          }
+        }
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
+        if (auto* binary = unary->value->dynCast<Binary>()) {
+          if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+               binary->op ==
+                 Abstract::getBinary(binary->type, Abstract::DivS)) &&
+              ExpressionAnalyzer::equal(binary->left, binary->right)) {
+            return binary;
+          }
+          // abs(0 - x)   ==>   abs(x),
+          // only for fast math
+          if (getPassOptions().fastMath &&
+              binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
+            if (auto* c = binary->left->dynCast<Const>()) {
+              if (c->value.isZero()) {
+                unary->value = binary->right;
+                return unary;
+              }
+            }
+          }
         }
       }
 

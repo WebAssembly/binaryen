@@ -964,16 +964,23 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
+            // Nothing more to do, ignore the copy.
+            return;
           } else if (func->getLocalType(curr->index) ==
                      func->getLocalType(get->index)) {
-            // There is a new equivalence now.
+            // There is a new equivalence now. Remove all the old ones, and add
+            // the new one.
+            // Note that we ignore the case of subtyping here, to keep this
+            // optimization simple by assuming all equivalent indexes also have
+            // the same type. TODO: consider optimizing this.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
+            return;
           }
-        } else {
-          // A new value is assigned here.
-          equivalences.reset(curr->index);
         }
+        // A new value of some kind is assigned here, and it's not something we
+        // could handle earlier, so remove all the old equivalent ones.
+        equivalences.reset(curr->index);
       }
 
       void visitLocalGet(LocalGet* curr) {

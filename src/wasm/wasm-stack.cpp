@@ -647,6 +647,39 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
 }
 
+void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case LoadLaneVec8x16:
+      o << U32LEB(BinaryConsts::V128Load8Lane);
+      break;
+    case LoadLaneVec16x8:
+      o << U32LEB(BinaryConsts::V128Load16Lane);
+      break;
+    case LoadLaneVec32x4:
+      o << U32LEB(BinaryConsts::V128Load32Lane);
+      break;
+    case LoadLaneVec64x2:
+      o << U32LEB(BinaryConsts::V128Load64Lane);
+      break;
+    case StoreLaneVec8x16:
+      o << U32LEB(BinaryConsts::V128Store8Lane);
+      break;
+    case StoreLaneVec16x8:
+      o << U32LEB(BinaryConsts::V128Store16Lane);
+      break;
+    case StoreLaneVec32x4:
+      o << U32LEB(BinaryConsts::V128Store32Lane);
+      break;
+    case StoreLaneVec64x2:
+      o << U32LEB(BinaryConsts::V128Store64Lane);
+      break;
+  }
+  assert(curr->align);
+  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+  o << curr->index;
+}
+
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);

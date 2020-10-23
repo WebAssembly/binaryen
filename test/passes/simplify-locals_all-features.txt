@@ -2040,3 +2040,21 @@
   )
  )
 )
+(module
+ (type $eqref_i31ref_=>_i32 (func (param eqref i31ref) (result i32)))
+ (export "test" (func $0))
+ (func $0 (param $0 eqref) (param $1 i31ref) (result i32)
+  (local $2 eqref)
+  (local $3 i31ref)
+  (local.set $2
+   (local.get $0)
+  )
+  (local.set $0
+   (local.get $3)
+  )
+  (ref.eq
+   (local.get $2)
+   (local.get $1)
+  )
+ )
+)
