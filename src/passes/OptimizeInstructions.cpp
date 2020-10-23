@@ -1687,12 +1687,12 @@ private:
   }
 
   // TODO: templatize on type?
-  Expression* optimizeRelational(Binary* binary) {
-    auto type = binary->right->type;
-    if (binary->left->type.isInteger()) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
-          binary->op == Abstract::getBinary(type, Abstract::Ne)) {
-        if (auto* left = binary->left->dynCast<Binary>()) {
+  Expression* optimizeRelational(Binary* curr) {
+    auto type = curr->right->type;
+    if (curr->left->type.isInteger()) {
+      if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
+          curr->op == Abstract::getBinary(type, Abstract::Ne)) {
+        if (auto* left = curr->left->dynCast<Binary>()) {
           // TODO: inequalities can also work, if the constants do not overflow
           // integer math, even on 2s complement, allows stuff like
           // x + 5 == 7
@@ -1701,17 +1701,17 @@ private:
           if (left->op == Abstract::getBinary(type, Abstract::Add) ||
               left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
-              if (auto* rightConst = binary->right->dynCast<Const>()) {
+              if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
-                  binary, left, leftConst, nullptr, rightConst);
-              } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+                  curr, left, leftConst, nullptr, rightConst);
+              } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
                       Abstract::getBinary(type, Abstract::Add) ||
                     rightBinary->op ==
                       Abstract::getBinary(type, Abstract::Sub)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
-                      binary, left, leftConst, rightBinary, rightConst);
+                      curr, left, leftConst, rightBinary, rightConst);
                   }
                 }
               }
@@ -1723,28 +1723,45 @@ private:
       //
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
-      if (binary->isRelational()) {
-        if (auto* left = binary->left->dynCast<Binary>()) {
-          if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
-            if (auto* c = binary->right->dynCast<Const>()) {
-              if (c->value.isZero()) {
-                // unsigned relationals should special handlings
-                // unsigned(x - y) > 0    =>   x != y
-                if (binary->op == Abstract::getBinary(type, Abstract::GtU)) {
-                  binary->op = Abstract::getBinary(type, Abstract::Ne);
-                }
-                // unsigned(x - y) <= 0   =>   x == y
-                if (binary->op == Abstract::getBinary(type, Abstract::LeU)) {
-                  binary->op = Abstract::getBinary(type, Abstract::Eq);
-                }
-                // for signed or sign-agnostic relationals we don't change op.
-                // x - y <=> 0  =>  x <=> y
-                binary->right = left->right;
-                binary->left = left->left;
-                return binary;
-              }
-            }
-          }
+      {
+        using namespace Match;
+
+        BinaryOp op;
+        Binary* inner;
+        // unsigned(x - y) > 0    =>   x != y
+        if (matches(curr,
+                    binary(Abstract::GtU,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0)))) {
+          curr->op = Abstract::getBinary(type, Abstract::Ne);
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
+        }
+        // unsigned(x - y) <= 0   =>   x == y
+        if (matches(curr,
+                    binary(Abstract::LeU,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0)))) {
+          curr->op = Abstract::getBinary(type, Abstract::Eq);
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
+        }
+        // signed(x - y) <=> 0  =>  x <=> y
+        if (matches(curr,
+                    binary(&op,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0))) &&
+            (op == Abstract::getBinary(type, Abstract::Eq) ||
+             op == Abstract::getBinary(type, Abstract::Ne) ||
+             op == Abstract::getBinary(type, Abstract::LeS) ||
+             op == Abstract::getBinary(type, Abstract::LtS) ||
+             op == Abstract::getBinary(type, Abstract::GeS) ||
+             op == Abstract::getBinary(type, Abstract::GtS))) {
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
         }
       }
     }
