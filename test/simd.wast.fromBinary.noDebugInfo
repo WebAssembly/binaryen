@@ -442,85 +442,85 @@
   )
  )
  (func $76 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load8_lane  
+  (v128.load8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $77 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load16_lane  
+  (v128.load16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $78 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load32_lane  
+  (v128.load32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $79 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane  
+  (v128.load64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $80 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane align=1  
+  (v128.load64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $81 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane offset=32  
+  (v128.load64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $82 (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane offset=32 align=1  
+  (v128.load64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $83 (param $0 i32) (param $1 v128)
-  (v128.store8_lane  
+  (v128.store8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $84 (param $0 i32) (param $1 v128)
-  (v128.store16_lane  
+  (v128.store16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $85 (param $0 i32) (param $1 v128)
-  (v128.store32_lane  
+  (v128.store32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $86 (param $0 i32) (param $1 v128)
-  (v128.store64_lane  
+  (v128.store64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $87 (param $0 i32) (param $1 v128)
-  (v128.store64_lane align=1  
+  (v128.store64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $88 (param $0 i32) (param $1 v128)
-  (v128.store64_lane offset=32  
+  (v128.store64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $89 (param $0 i32) (param $1 v128)
-  (v128.store64_lane offset=32 align=1  
+  (v128.store64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )

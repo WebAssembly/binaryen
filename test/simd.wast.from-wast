@@ -442,85 +442,85 @@
   )
  )
  (func $v128.load8_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load8_lane  
+  (v128.load8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load16_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load16_lane  
+  (v128.load16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load32_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load32_lane  
+  (v128.load32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane  
+  (v128.load64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_align (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane align=1  
+  (v128.load64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_offset (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane offset=32  
+  (v128.load64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_align_offset (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane offset=32 align=1  
+  (v128.load64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store8_lane (param $0 i32) (param $1 v128)
-  (v128.store8_lane  
+  (v128.store8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store16_lane (param $0 i32) (param $1 v128)
-  (v128.store16_lane  
+  (v128.store16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store32_lane (param $0 i32) (param $1 v128)
-  (v128.store32_lane  
+  (v128.store32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane (param $0 i32) (param $1 v128)
-  (v128.store64_lane  
+  (v128.store64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_align (param $0 i32) (param $1 v128)
-  (v128.store64_lane align=1  
+  (v128.store64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_offset (param $0 i32) (param $1 v128)
-  (v128.store64_lane offset=32  
+  (v128.store64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_align_offset (param $0 i32) (param $1 v128)
-  (v128.store64_lane offset=32 align=1  
+  (v128.store64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )

@@ -534,7 +534,7 @@ struct PrintExpressionContents
     if (curr->align != curr->getMemBytes()) {
       o << " align=" << curr->align;
     }
-    o << " " << curr->index;
+    o << " " << int(curr->index);
   }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);

@@ -446,6 +446,7 @@ public:
     ret->align = align;
     ret->index = index;
     ret->ptr = ptr;
+    ret->vec = vec;
     ret->finalize();
     return ret;
   }
