@@ -1300,6 +1300,7 @@ static size_t parseMemAttributes(Element& s,
   size_t i = 1;
   offset = 0;
   align = fallbackAlign;
+  // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
     if (strncmp(str, "align", 5) != 0 && strncmp(str, "offset", 6) != 0) {
@@ -1623,6 +1624,8 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
       defaultAlign = 8;
       lanes = 2;
       break;
+    default:
+      WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
   }
   size_t i = parseMemAttributes(s, ret->offset, ret->align, defaultAlign);
   ret->index = parseLaneIndex(s[i++], lanes);
