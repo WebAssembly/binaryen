@@ -118,23 +118,22 @@ def randomize_feature_opts():
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
-# the optimizations to run on the wasm
-FUZZ_OPTS = None
-# whether NaN values are allowed, or we de-NaN them
-NANS = None
-# whether out of bounds operations are allowed, or we bounds-enforce them
-OOB = None
-# whether we legalize the wasm for JS
-LEGALIZE = None
-# whether we use an initial wasm file's contents as the basis for the fuzzing,
-# or if we start entirely from scratch
-INITIAL_CONTENTS = None
-
 ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
 
 
 def randomize_fuzz_settings():
-    global FUZZ_OPTS, NANS, OOB, LEGALIZE
+    # the optimizations to run on the wasm
+    global FUZZ_OPTS
+
+    # whether NaN values are allowed, or we de-NaN them
+    global NANS
+
+    # whether out of bounds operations are allowed, or we bounds-enforce them
+    global OOB
+
+    # whether we legalize the wasm for JS
+    global LEGALIZE
+
     FUZZ_OPTS = []
     if random.random() < 0.5:
         NANS = True
@@ -168,6 +167,80 @@ def randomize_fuzz_settings():
             extra_v8_opts += ['--liftoff', '--no-wasm-tier-up']
     shared.V8_OPTS = ORIGINAL_V8_OPTS + extra_v8_opts
     print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
+
+
+def pick_initial_contents():
+    # whether we use an initial wasm file's contents as the basis for the
+    # fuzzing, or if we start entirely from scratch
+    global INITIAL_CONTENTS
+
+    INITIAL_CONTENTS = None
+    # half the time don't use any initial contents
+    if random.random() < 0.5:
+        return
+    test_name = random.choice(all_tests)
+    print('initial contents:', test_name)
+    assert os.path.exists(test_name)
+    # tests that check validation errors are not helpful for us
+    if '.fail.' in test_name:
+        print('initial contents is just a .fail test')
+        return
+    if os.path.basename(test_name) in [
+        # contains too many segments to run in a wasm VM
+        'limit-segments_disable-bulk-memory.wast',
+        # https://github.com/WebAssembly/binaryen/issues/3203
+        'simd.wast',
+        # corner cases of escaping of names is not interesting
+        'names.wast',
+        # huge amount of locals that make it extremely slow
+        'too_much_for_liveness.wasm',
+        # these contain illegal pops()
+        # https://github.com/WebAssembly/binaryen/issues/3213
+        'instrument-locals_all-features.wast',
+        'remove-unused-names_code-folding_all-features.wast',
+        'Os_print-stack-ir_all-features.wast'
+    ]:
+        print('initial contents is disallowed')
+        return
+
+    if test_name.endswith('.wast'):
+        # this can contain multiple modules, pick one
+        split_parts = support.split_wast(test_name)
+        if len(split_parts) > 1:
+            chosen = random.choice(split_parts)
+            module, asserts = chosen
+            if not module:
+                # there is no module in this choice (just asserts), ignore it
+                print('initial contents has no module')
+                return
+            test_name = 'initial.wat'
+            with open(test_name, 'w') as f:
+                f.write(module)
+            print('  picked submodule of wast, of size', len(module))
+
+    global FEATURE_OPTS
+    FEATURE_OPTS += [
+        # has not been enabled in the fuzzer yet
+        '--disable-exception-handling',
+        # has not been fuzzed in general yet
+        '--disable-memory64',
+        # DWARF is incompatible with multivalue atm; it's more important to
+        # fuzz multivalue since we aren't actually fuzzing DWARF here
+        '--strip-dwarf',
+    ]
+
+    # the given wasm may not work with the chosen feature opts. for example, if
+    # we pick atomics.wast but want to run with --disable-atomics, then we'd
+    # error. test the wasm.
+    try:
+        run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
+            stderr=subprocess.PIPE,
+            silent=True)
+    except Exception:
+        print('(initial contents not valid for features, ignoring)')
+        return
+
+    INITIAL_CONTENTS = test_name
 
 
 # Test outputs we want to ignore are marked this way.
@@ -738,77 +811,6 @@ wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), test_suffixes)
 lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
 unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
 all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests
-
-
-def pick_initial_contents():
-    global INITIAL_CONTENTS
-    INITIAL_CONTENTS = None
-    # half the time don't use any initial contents
-    if random.random() < 0.5:
-        return
-    test_name = random.choice(all_tests)
-    print('initial contents:', test_name)
-    assert os.path.exists(test_name)
-    # tests that check validation errors are not helpful for us
-    if '.fail.' in test_name:
-        print('initial contents is just a .fail test')
-        return
-    if os.path.basename(test_name) in [
-        # contains too many segments to run in a wasm VM
-        'limit-segments_disable-bulk-memory.wast',
-        # https://github.com/WebAssembly/binaryen/issues/3203
-        'simd.wast',
-        # corner cases of escaping of names is not interesting
-        'names.wast',
-        # huge amount of locals that make it extremely slow
-        'too_much_for_liveness.wasm',
-        # these contain illegal pops()
-        # https://github.com/WebAssembly/binaryen/issues/3213
-        'instrument-locals_all-features.wast',
-        'remove-unused-names_code-folding_all-features.wast',
-        'Os_print-stack-ir_all-features.wast'
-    ]:
-        print('initial contents is disallowed')
-        return
-
-    if test_name.endswith('.wast'):
-        # this can contain multiple modules, pick one
-        split_parts = support.split_wast(test_name)
-        if len(split_parts) > 1:
-            chosen = random.choice(split_parts)
-            module, asserts = chosen
-            if not module:
-                # there is no module in this choice (just asserts), ignore it
-                print('initial contents has no module')
-                return
-            test_name = 'initial.wat'
-            with open(test_name, 'w') as f:
-                f.write(module)
-            print('  picked submodule of wast, of size', len(module))
-
-    global FEATURE_OPTS
-    FEATURE_OPTS += [
-        # has not been enabled in the fuzzer yet
-        '--disable-exception-handling',
-        # has not been fuzzed in general yet
-        '--disable-memory64',
-        # DWARF is incompatible with multivalue atm; it's more important to
-        # fuzz multivalue since we aren't actually fuzzing DWARF here
-        '--strip-dwarf',
-    ]
-
-    # the given wasm may not work with the chosen feature opts. for example, if
-    # we pick atomics.wast but want to run with --disable-atomics, then we'd
-    # error. test the wasm.
-    try:
-        run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
-            stderr=subprocess.PIPE,
-            silent=True)
-    except Exception:
-        print('(initial contents not valid for features, ignoring)')
-        return
-
-    INITIAL_CONTENTS = test_name
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
