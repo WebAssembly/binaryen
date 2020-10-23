@@ -157,12 +157,20 @@ int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
 
 int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
 
-bool isPowerOf2Float(float v) {
+bool isPowerOf2InvertibleFloat(float v) {
   // Power of two floating points should have zero as their significands,
   // so here we just mask the exponent range of "v" and compare it with the
   // unmasked input value. If they are equal, our value is a power of
   // two. Also, we reject all values which are less than the minimal possible
   // power of two or greater than the maximum possible power of two.
+  // We check values only with exponent in more limited ranges
+  // [-126..+126] for floats and [-1022..+1022] for doubles for avoiding
+  // overflows and reject NaNs, infinity and denormals. We also reject
+  // "asymmetric exponents", like +1023, because the range of
+  // (non-NaN, non-infinity) values is -1022..+1023, and it is convenient in
+  // optimizations to depend on being able to invert a power of two without
+  // losing precision.
+  // This function used in OptimizeInstruction pass.
   const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
   const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
   const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
@@ -171,8 +179,8 @@ bool isPowerOf2Float(float v) {
   return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
 }
 
-bool isPowerOf2Float(double v) {
-  // See isPowerOf2Float(float)
+bool isPowerOf2InvertibleFloat(double v) {
+  // See isPowerOf2InvertibleFloat(float)
   const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
   const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
   const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent

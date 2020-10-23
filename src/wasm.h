@@ -481,7 +481,18 @@ enum SIMDLoadOp {
   LoadExtSVec32x2ToVecI64x2,
   LoadExtUVec32x2ToVecI64x2,
   Load32Zero,
-  Load64Zero
+  Load64Zero,
+};
+
+enum SIMDLoadStoreLaneOp {
+  LoadLaneVec8x16,
+  LoadLaneVec16x8,
+  LoadLaneVec32x4,
+  LoadLaneVec64x2,
+  StoreLaneVec8x16,
+  StoreLaneVec16x8,
+  StoreLaneVec32x4,
+  StoreLaneVec64x2,
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -545,6 +556,7 @@ public:
     SIMDTernaryId,
     SIMDShiftId,
     SIMDLoadId,
+    SIMDLoadStoreLaneId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,

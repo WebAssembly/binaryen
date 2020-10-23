@@ -6,6 +6,7 @@
  (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$1) "*\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
+ (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
  (import "env" "__memory_base" (global $gimport$1 i32))
  (import "env" "__table_base" (global $gimport$2 i32))
  (import "env" "_Z16waka_func_theirsi" (func $waka_func_theirs\28int\29 (param i32) (result i32)))
@@ -102,6 +103,7 @@
     "fp$_Z14waka_func_minei$ii"
   ],
   "externs": [
+    "___stack_pointer",
     "___memory_base",
     "___table_base"
   ],

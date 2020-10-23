@@ -203,6 +203,12 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitAddress(curr->offset);
       visitor.visitAddress(curr->align);
     }
+    void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitInt(curr->index);
+    }
     void visitMemoryInit(MemoryInit* curr) {
       visitor.visitIndex(curr->segment);
     }

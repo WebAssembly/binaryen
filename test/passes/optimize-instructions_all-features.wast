@@ -4395,6 +4395,30 @@
       )
       (i64.const 1)
     ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(bool(expr)) != 0 -> i32(bool(expr))
+    (drop (i32.ne
+      (i64.ne
+        (local.get $y)
+        (i64.const 0)
+      )
+      (i32.const 0)
+    ))
+    ;; (i32(expr) != 0) != 0 -> (expr != 0)
+    (drop (i32.ne
+      (i32.ne
+        (local.get $x)
+        (i32.const 0)
+      )
+      (i32.const 0)
+    ))
   )
   (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
     ;; ~(1 << x)  ->  rotl(-2, x)
@@ -4614,7 +4638,25 @@
       (i64.const -1)
     ))
   )
-  (func $rhs-is-neg-const (param $x i32) (param $y i64)
+  (func $rhs-is-const (param $x i32) (param $y i64)
+    ;; signed divs
+    ;; i32(x) / -2147483648  ->  x == -2147483648
+    (drop (i32.div_s
+      (local.get $x)
+      (i32.const -2147483648)
+    ))
+    ;; i64(x) / -9223372036854775808  ->  x == -9223372036854775808
+    (drop (i64.div_s
+      (local.get $y)
+      (i64.const -9223372036854775808)
+    ))
+    ;; skip
+    (drop (i64.div_s
+      (local.get $y)
+      (i64.const -2147483648)
+    ))
+
+    ;; unsigned divs
     ;; u32(x) / -2  =>  x >= -2
     (drop (i32.div_u
       (local.get $x)
@@ -5318,6 +5360,132 @@
         (i32.const 3) ;; side effect
       )
     )
+  )
+  (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
+    ;; abs(x) * abs(x)   ==>   x * x
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x0))
+    ))
+    (drop (f32.mul
+      (f32.abs (local.get $y0))
+      (f32.abs (local.get $y0))
+    ))
+    (drop (f64.mul
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+    ))
+
+    ;; abs(x) * abs(y)   ==>   abs(x * y)
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x1))
+    ))
+    (drop (f32.mul
+      (f32.abs (local.get $y1))
+      (f32.abs (local.get $y0))
+    ))
+
+    (drop (f64.mul
+      (f64.abs (local.get $x0))
+      (f64.abs (f64.const 0)) ;; skip
+    ))
+    (drop (f32.mul
+      (f32.abs (f32.const 0)) ;; skip
+      (f32.abs (local.get $y0))
+    ))
+    (drop (f64.mul
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x0)))
+    ))
+
+
+    ;; abs(-x)   ==>   abs(x)
+    (drop (f64.abs
+      (f64.neg (local.get $x0))
+    ))
+    (drop (f32.abs
+      (f32.neg (local.get $y0))
+    ))
+
+    ;; abs(0 - x)   ==>   skip for non-fast math
+    (drop (f64.abs
+      (f64.sub
+        (f64.const 0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.sub
+        (f32.const 0)
+        (local.get $y0)
+      )
+    ))
+
+    ;; abs(x) / abs(x)   ==>   x / x
+    (drop (f64.div
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x0))
+    ))
+    (drop (f32.div
+      (f32.abs (local.get $y0))
+      (f32.abs (local.get $y0))
+    ))
+    (drop (f64.div
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+    ))
+
+    ;; abs(x) / abs(y)   ==>   abs(x / y)
+    (drop (f64.div
+      (f64.abs (local.get $x0))
+      (f64.abs (local.get $x1))
+    ))
+    (drop (f32.div
+      (f32.abs (local.get $y1))
+      (f32.abs (local.get $y0))
+    ))
+
+    ;; abs(x * x)   ==>   x * x
+    (drop (f64.abs
+      (f64.mul
+        (local.get $x0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.mul
+        (local.get $y0)
+        (local.get $y0)
+      )
+    ))
+
+    ;; abs(x / x)   ==>   x / x
+    (drop (f64.abs
+      (f64.div
+        (local.get $x0)
+        (local.get $x0)
+      )
+    ))
+    (drop (f32.abs
+      (f32.div
+        (local.get $y0)
+        (local.get $y0)
+      )
+    ))
+
+    (drop (f64.div
+      (f64.abs (local.get $x0))
+      (f64.abs (f64.const 0)) ;; skip
+    ))
+    (drop (f32.div
+      (f32.abs (f32.const 0)) ;; skip
+      (f32.abs (local.get $y0))
+    ))
+    (drop (f64.div
+      (f64.abs (f64.add (local.get $x0) (local.get $x1)))
+      (f64.abs (f64.add (local.get $x0) (local.get $x0)))
+    ))
   )
 )
 (module

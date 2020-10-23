@@ -317,6 +317,7 @@ public:
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -806,9 +807,6 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
                curr,
                "return_call_indirect requires tail calls to be enabled");
-  if (!info.validateGlobally) {
-    return;
-  }
   shouldBeEqualOrFirstIsUnreachable(curr->target->type,
                                     Type(Type::i32),
                                     curr,
@@ -1265,6 +1263,59 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   }
   Index bytes = curr->getMemBytes();
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+}
+
+void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  if (curr->isLoad()) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::v128), curr, "loadX_lane must have type v128");
+  } else {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::none), curr, "storeX_lane must have type none");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "loadX_lane or storeX_lane address must match memory index type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type,
+    Type(Type::v128),
+    curr,
+    "loadX_lane or storeX_lane vector argument must have type v128");
+  size_t lanes;
+  Type memAlignType = Type::none;
+  switch (curr->op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      lanes = 16;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      lanes = 8;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      lanes = 4;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      lanes = 2;
+      memAlignType = Type::i64;
+      break;
+    default:
+      WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
+  }
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+  shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
@@ -1960,6 +2011,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types to be enabled");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
 }
@@ -2010,13 +2064,13 @@ void FunctionValidator::visitThrow(Throw* curr) {
   shouldBeTrue(getModule()->features.hasExceptionHandling(),
                curr,
                "throw requires exception-handling to be enabled");
-  if (!info.validateGlobally) {
-    return;
-  }
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
                 "throw's type must be unreachable");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* event = getModule()->getEventOrNull(curr->event);
   if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
     return;

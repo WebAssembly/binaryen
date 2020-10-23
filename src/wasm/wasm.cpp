@@ -175,6 +175,8 @@ const char* getExpressionName(Expression* curr) {
       return "simd_shift";
     case Expression::Id::SIMDLoadId:
       return "simd_load";
+    case Expression::Id::SIMDLoadStoreLaneId:
+      return "simd_load_store_lane";
     case Expression::Id::MemoryInitId:
       return "memory_init";
     case Expression::Id::DataDropId:
@@ -670,6 +672,48 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec32x2ToVecI64x2:
     case Load64Zero:
       return 8;
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
+void SIMDLoadStoreLane::finalize() {
+  assert(ptr && vec);
+  type = isLoad() ? Type::v128 : Type::none;
+  if (ptr->type == Type::unreachable || vec->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+Index SIMDLoadStoreLane::getMemBytes() {
+  switch (op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      return 1;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      return 2;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      return 4;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      return 8;
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
+bool SIMDLoadStoreLane::isStore() {
+  switch (op) {
+    case StoreLaneVec8x16:
+    case StoreLaneVec16x8:
+    case StoreLaneVec32x4:
+    case StoreLaneVec64x2:
+      return true;
+    case LoadLaneVec16x8:
+    case LoadLaneVec32x4:
+    case LoadLaneVec64x2:
+    case LoadLaneVec8x16:
+      return false;
   }
   WASM_UNREACHABLE("unexpected op");
 }

@@ -303,10 +303,6 @@ void PassRegistry::registerPasses() {
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
-  registerPass("replace-stack-pointer",
-               "Replace llvm-generated stack pointer global with calls with "
-               "imported functions.",
-               createReplaceStackPointerPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("roundtrip",
@@ -343,9 +339,6 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use",
                "emit Souper IR in text form (single-use nodes only)",
                createSouperifySingleUsePass);
-  registerPass("spill-pointers",
-               "spill pointers to the C stack (useful for Boehm-style GC)",
-               createSpillPointersPass);
   registerPass("stub-unsupported-js",
                "stub out unsupported JS operations",
                createStubUnsupportedJSOpsPass);

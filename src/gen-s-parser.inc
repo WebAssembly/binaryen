@@ -2776,11 +2776,33 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "v128.load") == 0) { return makeLoad(s, Type::v128, /*isAtomic=*/false); }
                     goto parse_error;
-                  case '3':
-                    if (strcmp(op, "v128.load32_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32Zero); }
+                  case '1':
+                    if (strcmp(op, "v128.load16_lane") == 0) { return makeSIMDLoadStoreLane(s, LoadLaneVec16x8); }
                     goto parse_error;
-                  case '6':
-                    if (strcmp(op, "v128.load64_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64Zero); }
+                  case '3': {
+                    switch (op[12]) {
+                      case 'l':
+                        if (strcmp(op, "v128.load32_lane") == 0) { return makeSIMDLoadStoreLane(s, LoadLaneVec32x4); }
+                        goto parse_error;
+                      case 'z':
+                        if (strcmp(op, "v128.load32_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32Zero); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case '6': {
+                    switch (op[12]) {
+                      case 'l':
+                        if (strcmp(op, "v128.load64_lane") == 0) { return makeSIMDLoadStoreLane(s, LoadLaneVec64x2); }
+                        goto parse_error;
+                      case 'z':
+                        if (strcmp(op, "v128.load64_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64Zero); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case '8':
+                    if (strcmp(op, "v128.load8_lane") == 0) { return makeSIMDLoadStoreLane(s, LoadLaneVec8x16); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -2791,9 +2813,26 @@ switch (op[0]) {
               case 'o':
                 if (strcmp(op, "v128.or") == 0) { return makeBinary(s, BinaryOp::OrVec128); }
                 goto parse_error;
-              case 's':
-                if (strcmp(op, "v128.store") == 0) { return makeStore(s, Type::v128, /*isAtomic=*/false); }
-                goto parse_error;
+              case 's': {
+                switch (op[10]) {
+                  case '\0':
+                    if (strcmp(op, "v128.store") == 0) { return makeStore(s, Type::v128, /*isAtomic=*/false); }
+                    goto parse_error;
+                  case '1':
+                    if (strcmp(op, "v128.store16_lane") == 0) { return makeSIMDLoadStoreLane(s, StoreLaneVec16x8); }
+                    goto parse_error;
+                  case '3':
+                    if (strcmp(op, "v128.store32_lane") == 0) { return makeSIMDLoadStoreLane(s, StoreLaneVec32x4); }
+                    goto parse_error;
+                  case '6':
+                    if (strcmp(op, "v128.store64_lane") == 0) { return makeSIMDLoadStoreLane(s, StoreLaneVec64x2); }
+                    goto parse_error;
+                  case '8':
+                    if (strcmp(op, "v128.store8_lane") == 0) { return makeSIMDLoadStoreLane(s, StoreLaneVec8x16); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'x':
                 if (strcmp(op, "v128.xor") == 0) { return makeBinary(s, BinaryOp::XorVec128); }
                 goto parse_error;

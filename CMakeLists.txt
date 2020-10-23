@@ -214,6 +214,7 @@ else()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-fno-omit-frame-pointer")
+  add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
   # flags once we resolve the issue.
   add_compile_flag("-Wno-implicit-int-float-conversion")

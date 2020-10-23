@@ -484,6 +484,25 @@ struct OptimizeInstructions
         if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
+      } else if (binary->op == MulFloat32 || binary->op == MulFloat64 ||
+                 binary->op == DivFloat32 || binary->op == DivFloat64) {
+        if (binary->left->type == binary->right->type) {
+          if (auto* leftUnary = binary->left->dynCast<Unary>()) {
+            if (leftUnary->op ==
+                Abstract::getUnary(binary->type, Abstract::Abs)) {
+              if (auto* rightUnary = binary->right->dynCast<Unary>()) {
+                if (leftUnary->op == rightUnary->op) { // both are abs ops
+                  // abs(x) * abs(y)   ==>   abs(x * y)
+                  // abs(x) / abs(y)   ==>   abs(x / y)
+                  binary->left = leftUnary->value;
+                  binary->right = rightUnary->value;
+                  leftUnary->value = binary;
+                  return leftUnary;
+                }
+              }
+            }
+          }
+        }
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -617,13 +636,13 @@ struct OptimizeInstructions
         }
         if (binary->op == DivFloat32) {
           float c = right->value.getf32();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
         if (binary->op == DivFloat64) {
           double c = right->value.getf64();
-          if (Bits::isPowerOf2Float(c)) {
+          if (Bits::isPowerOf2InvertibleFloat(c)) {
             return optimizePowerOf2FDiv(binary, c);
           }
         }
@@ -683,6 +702,36 @@ struct OptimizeInstructions
           auto bits = Properties::getSignExtBits(unary->value);
           unary->value = makeZeroExt(ext, bits);
           return unary;
+        }
+      } else if (unary->op == AbsFloat32 || unary->op == AbsFloat64) {
+        // abs(-x)   ==>   abs(x)
+        if (auto* unaryInner = unary->value->dynCast<Unary>()) {
+          if (unaryInner->op ==
+              Abstract::getUnary(unaryInner->type, Abstract::Neg)) {
+            unary->value = unaryInner->value;
+            return unary;
+          }
+        }
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
+        if (auto* binary = unary->value->dynCast<Binary>()) {
+          if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+               binary->op ==
+                 Abstract::getBinary(binary->type, Abstract::DivS)) &&
+              ExpressionAnalyzer::equal(binary->left, binary->right)) {
+            return binary;
+          }
+          // abs(0 - x)   ==>   abs(x),
+          // only for fast math
+          if (getPassOptions().fastMath &&
+              binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
+            if (auto* c = binary->left->dynCast<Const>()) {
+              if (c->value.isZero()) {
+                unary->value = binary->right;
+                return unary;
+              }
+            }
+          }
         }
       }
 
@@ -1412,18 +1461,13 @@ private:
         return curr;
       }
     }
-    // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
-      return right;
-    }
-    // bool(x) & 1  ==>  bool(x)
-    if (matches(curr, binary(Abstract::And, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
-      return left;
-    }
-    // bool(x) == 1  ==>  bool(x)
-    if (matches(curr, binary(EqInt32, any(&left), i32(1))) &&
+    // i32(bool(x)) == 1  ==>  i32(bool(x))
+    // i32(bool(x)) != 0  ==>  i32(bool(x))
+    // i32(bool(x)) & 1   ==>  i32(bool(x))
+    // i64(bool(x)) & 1   ==>  i64(bool(x))
+    if ((matches(curr, binary(EqInt32, any(&left), i32(1))) ||
+         matches(curr, binary(NeInt32, any(&left), i32(0))) ||
+         matches(curr, binary(Abstract::And, any(&left), ival(1)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return left;
     }
@@ -1436,8 +1480,13 @@ private:
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Abstract::Ne, any(&left), ival(1))) &&
-        Bits::getMaxBits(curr->left, this) == 1) {
+        Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
+    }
+    // bool(x) | 1  ==>  1
+    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
+        Bits::getMaxBits(left, this) == 1) {
+      return right;
     }
 
     // Operations on all 1s
@@ -1453,6 +1502,23 @@ private:
     if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
       return right;
+    }
+    // i32(x) / i32.min_s   ==>   x == i32.min_s
+    if (matches(
+          curr,
+          binary(DivSInt32, any(), i32(std::numeric_limits<int32_t>::min())))) {
+      curr->op = EqInt32;
+      return curr;
+    }
+    // i64(x) / i64.min_s   ==>   i64(x == i64.min_s)
+    // only for zero shrink level
+    if (getPassOptions().shrinkLevel == 0 &&
+        matches(
+          curr,
+          binary(DivSInt64, any(), i64(std::numeric_limits<int64_t>::min())))) {
+      curr->op = EqInt64;
+      curr->type = Type::i32;
+      return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x > -1   ==>   0
     if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {

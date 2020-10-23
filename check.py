@@ -29,11 +29,6 @@ from scripts.test import wasm2js
 from scripts.test import wasm_opt
 
 
-if shared.options.interpreter:
-    print('[ using wasm interpreter at "%s" ]' % shared.options.interpreter)
-    assert os.path.exists(shared.options.interpreter), 'interpreter not found'
-
-
 def get_changelog_version():
     with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
         lines = f.readlines()
