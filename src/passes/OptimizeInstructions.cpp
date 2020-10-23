@@ -386,6 +386,24 @@ struct OptimizeInstructions
           }
         }
       }
+      {
+        // unsigned(x) >= 0   =>   i32(1)
+        Const* c;
+        Expression* x;
+        if (matches(curr, binary(Abstract::GeU, pure(&x), ival(&c))) &&
+            c->value.isZero()) {
+          c->value = Literal::makeOne(Type::i32);
+          c->type = Type::i32;
+          return c;
+        }
+        // unsigned(x) < 0   =>   i32(0)
+        if (matches(curr, binary(Abstract::LtU, pure(&x), ival(&c))) &&
+            c->value.isZero()) {
+          c->value = Literal::makeZero(Type::i32);
+          c->type = Type::i32;
+          return c;
+        }
+      }
     }
 
     if (auto* select = curr->dynCast<Select>()) {
@@ -1672,11 +1690,11 @@ private:
   Expression* optimizeRelational(Binary* binary) {
     auto type = binary->right->type;
     if (binary->left->type.isInteger()) {
-      // TODO: inequalities can also work, if the constants do not overflow
-      // integer math, even on 2s complement, allows stuff like
       if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
           binary->op == Abstract::getBinary(type, Abstract::Ne)) {
         if (auto* left = binary->left->dynCast<Binary>()) {
+          // TODO: inequalities can also work, if the constants do not overflow
+          // integer math, even on 2s complement, allows stuff like
           // x + 5 == 7
           //   =>
           //     x == 2
@@ -1705,8 +1723,6 @@ private:
       //
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
-      // unsigned(x - y) >= 0   =>   i32(1)
-      // unsigned(x - y) < 0    =>   i32(0)
       if (binary->isRelational()) {
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
@@ -1716,37 +1732,17 @@ private:
                 // unsigned(x - y) > 0    =>   x != y
                 if (binary->op == Abstract::getBinary(type, Abstract::GtU)) {
                   binary->op = Abstract::getBinary(type, Abstract::Ne);
-                  binary->right = left->right;
-                  binary->left = left->left;
-                  return binary;
-                  // unsigned(x - y) <= 0   =>   x == y
-                } else if (binary->op ==
-                           Abstract::getBinary(type, Abstract::LeU)) {
-                  binary->op = Abstract::getBinary(type, Abstract::Eq);
-                  binary->right = left->right;
-                  binary->left = left->left;
-                  return binary;
-                  // unsigned(x - y) >= 0   =>   i32(1)
-                } else if (binary->op ==
-                             Abstract::getBinary(type, Abstract::GeU) &&
-                           !effects(binary).hasSideEffects()) {
-                  c->value = Literal::makeOne(Type::i32);
-                  c->type = Type::i32;
-                  return c;
-                  // unsigned(x - y) < 0    =>   i32(0)
-                } else if (binary->op ==
-                             Abstract::getBinary(type, Abstract::LtU) &&
-                           !effects(binary).hasSideEffects()) {
-                  c->value = Literal::makeZero(Type::i32);
-                  c->type = Type::i32;
-                  return c;
-                } else {
-                  // signed or sign-agnostic relationals
-                  // x - y <=> 0  =>  x <=> y
-                  binary->right = left->right;
-                  binary->left = left->left;
-                  return binary;
                 }
+                // unsigned(x - y) <= 0   =>   x == y
+                if (binary->op == Abstract::getBinary(type, Abstract::LeU)) {
+                  binary->op = Abstract::getBinary(type, Abstract::Eq);
+                }
+                // For signed or sign-agnostic relationals
+                // x - y <=> 0  =>  x <=> y
+                // do nothing
+                binary->right = left->right;
+                binary->left = left->left;
+                return binary;
               }
             }
           }
