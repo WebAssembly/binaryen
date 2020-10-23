@@ -221,6 +221,7 @@ struct OptimizeInstructions
       // `using namespace Match` can be hoisted to function scope and this extra
       // block scope can be removed.
       using namespace Match;
+      using namespace Abstract;
       Builder builder(*getModule());
       {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
@@ -278,12 +279,10 @@ struct OptimizeInstructions
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
         Const* c;
         Binary* inner;
-        if (matches(curr,
-                    unary(Abstract::EqZ,
-                          binary(&inner, Abstract::RemS, any(), ival(&c)))) &&
+        if (matches(curr, unary(EqZ, binary(&inner, RemS, any(), ival(&c)))) &&
             (c->value.isSignedMin() ||
              Bits::isPowerOf2(c->value.abs().getInteger()))) {
-          inner->op = Abstract::getBinary(c->type, Abstract::And);
+          inner->op = Abstract::getBinary(c->type, And);
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
@@ -349,9 +348,8 @@ struct OptimizeInstructions
             return x;
           }
         }
-        if (matches(
-              curr,
-              binary(&op, any(&x), binary(Abstract::And, any(&y), ival(&c)))) &&
+        if (matches(curr,
+                    binary(&op, any(&x), binary(And, any(&y), ival(&c)))) &&
             Abstract::hasAnyShift(op)) {
           // i32(x) <<>> (y & 31)   ==>   x <<>> y
           // i64(x) <<>> (y & 63)   ==>   x <<>> y
@@ -1415,30 +1413,31 @@ private:
   // is a constant
   Expression* optimizeWithConstantOnRight(Binary* curr) {
     using namespace Match;
+    using namespace Abstract;
     Builder builder(*getModule());
     Expression* left;
     auto* right = curr->right->cast<Const>();
     auto type = curr->right->type;
 
     // Operations on zero
-    if (matches(curr, binary(Abstract::Shl, any(&left), ival(0))) ||
-        matches(curr, binary(Abstract::ShrU, any(&left), ival(0))) ||
-        matches(curr, binary(Abstract::ShrS, any(&left), ival(0))) ||
-        matches(curr, binary(Abstract::Or, any(&left), ival(0))) ||
-        matches(curr, binary(Abstract::Xor, any(&left), ival(0)))) {
+    if (matches(curr, binary(Shl, any(&left), ival(0))) ||
+        matches(curr, binary(ShrU, any(&left), ival(0))) ||
+        matches(curr, binary(ShrS, any(&left), ival(0))) ||
+        matches(curr, binary(Or, any(&left), ival(0))) ||
+        matches(curr, binary(Xor, any(&left), ival(0)))) {
       return left;
     }
-    if (matches(curr, binary(Abstract::Mul, pure(&left), ival(0))) ||
-        matches(curr, binary(Abstract::And, pure(&left), ival(0)))) {
+    if (matches(curr, binary(Mul, pure(&left), ival(0))) ||
+        matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
     }
     // x == 0   ==>   eqz x
-    if (matches(curr, binary(Abstract::Eq, any(&left), ival(0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
+    if (matches(curr, binary(Eq, any(&left), ival(0)))) {
+      return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }
     // Operations on one
     // (signed)x % 1   ==>   0
-    if (matches(curr, binary(Abstract::RemS, pure(&left), ival(1)))) {
+    if (matches(curr, binary(RemS, pure(&left), ival(1)))) {
       right->value = Literal::makeZero(type);
       return right;
     }
@@ -1447,12 +1446,10 @@ private:
       Const* c;
       Binary* inner;
       if (matches(curr,
-                  binary(Abstract::Ne,
-                         binary(&inner, Abstract::RemS, any(), ival(&c)),
-                         ival(0))) &&
+                  binary(Ne, binary(&inner, RemS, any(), ival(&c)), ival(0))) &&
           (c->value.isSignedMin() ||
            Bits::isPowerOf2(c->value.abs().getInteger()))) {
-        inner->op = Abstract::getBinary(c->type, Abstract::And);
+        inner->op = Abstract::getBinary(c->type, And);
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
@@ -1467,7 +1464,7 @@ private:
     // i64(bool(x)) & 1   ==>  i64(bool(x))
     if ((matches(curr, binary(EqInt32, any(&left), i32(1))) ||
          matches(curr, binary(NeInt32, any(&left), i32(0))) ||
-         matches(curr, binary(Abstract::And, any(&left), ival(1)))) &&
+         matches(curr, binary(And, any(&left), ival(1)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return left;
     }
@@ -1479,27 +1476,27 @@ private:
       return builder.makeUnary(WrapInt64, left);
     }
     // bool(x) != 1  ==>  !bool(x)
-    if (matches(curr, binary(Abstract::Ne, any(&left), ival(1))) &&
+    if (matches(curr, binary(Ne, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
-      return builder.makeUnary(Abstract::getUnary(type, Abstract::EqZ), left);
+      return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }
     // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Abstract::Or, pure(&left), ival(1))) &&
+    if (matches(curr, binary(Or, pure(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
       return right;
     }
 
     // Operations on all 1s
     // x & -1   ==>   x
-    if (matches(curr, binary(Abstract::And, any(&left), ival(-1)))) {
+    if (matches(curr, binary(And, any(&left), ival(-1)))) {
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Abstract::Or, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(Or, pure(&left), ival(-1)))) {
       return right;
     }
     // (signed)x % -1   ==>   0
-    if (matches(curr, binary(Abstract::RemS, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(RemS, pure(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
       return right;
     }
@@ -1521,7 +1518,7 @@ private:
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x > -1   ==>   0
-    if (matches(curr, binary(Abstract::GtU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(GtU, pure(&left), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
@@ -1529,20 +1526,20 @@ private:
     // (unsigned)x < -1   ==>   x != -1
     // Friendlier to JS emitting as we don't need to write an unsigned -1 value
     // which is large.
-    if (matches(curr, binary(Abstract::LtU, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Abstract::Ne);
+    if (matches(curr, binary(LtU, any(), ival(-1)))) {
+      curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
     // x * -1   ==>   0 - x
-    if (matches(curr, binary(Abstract::Mul, any(&left), ival(-1)))) {
+    if (matches(curr, binary(Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
-      curr->op = Abstract::getBinary(type, Abstract::Sub);
+      curr->op = Abstract::getBinary(type, Sub);
       curr->left = right;
       curr->right = left;
       return curr;
     }
     // (unsigned)x <= -1   ==>   1
-    if (matches(curr, binary(Abstract::LeU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
@@ -1550,11 +1547,8 @@ private:
     {
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
       Expression* x;
-      if (matches(curr,
-                  binary(Abstract::Xor,
-                         binary(Abstract::Shl, ival(1), any(&x)),
-                         ival(-1)))) {
-        curr->op = Abstract::getBinary(type, Abstract::RotL);
+      if (matches(curr, binary(Xor, binary(Shl, ival(1), any(&x)), ival(-1)))) {
+        curr->op = Abstract::getBinary(type, RotL);
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;
         curr->right = x;
@@ -1570,28 +1564,27 @@ private:
       // subtractions than the more common additions). TODO: Simplify this by
       // adding an ival matcher than can bind int64_t vars.
       int64_t value;
-      if ((matches(curr, binary(Abstract::Add, any(), ival(&value))) ||
-           matches(curr, binary(Abstract::Sub, any(), ival(&value)))) &&
+      if ((matches(curr, binary(Add, any(), ival(&value))) ||
+           matches(curr, binary(Sub, any(), ival(&value)))) &&
           (value == 0x40 || value == 0x2000 || value == 0x100000 ||
            value == 0x8000000 || value == 0x400000000LL ||
            value == 0x20000000000LL || value == 0x1000000000000LL ||
            value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
         right->value = right->value.neg();
-        if (matches(curr, binary(Abstract::Add, any(), constant()))) {
-          curr->op = Abstract::getBinary(type, Abstract::Sub);
+        if (matches(curr, binary(Add, any(), constant()))) {
+          curr->op = Abstract::getBinary(type, Sub);
         } else {
-          curr->op = Abstract::getBinary(type, Abstract::Add);
+          curr->op = Abstract::getBinary(type, Add);
         }
         return curr;
       }
     }
     {
       double value;
-      if (matches(curr, binary(Abstract::Sub, any(), fval(&value))) &&
-          value == 0.0) {
+      if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Abstract::Add);
+          curr->op = Abstract::getBinary(type, Add);
           right->value = right->value.neg();
           return curr;
         } else if (fastMath) {
@@ -1603,19 +1596,18 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (fastMath &&
-          matches(curr, binary(Abstract::Add, any(), fval(&value))) &&
+      if (fastMath && matches(curr, binary(Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
     }
     // x * -1.0   ==>   -x
-    if (fastMath && matches(curr, binary(Abstract::Mul, any(), fval(-1.0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), left);
+    if (fastMath && matches(curr, binary(Mul, any(), fval(-1.0)))) {
+      return builder.makeUnary(Abstract::getUnary(type, Neg), left);
     }
-    if (matches(curr, binary(Abstract::Mul, any(&left), constant(1))) ||
-        matches(curr, binary(Abstract::DivS, any(&left), constant(1))) ||
-        matches(curr, binary(Abstract::DivU, any(&left), constant(1)))) {
+    if (matches(curr, binary(Mul, any(&left), constant(1))) ||
+        matches(curr, binary(DivS, any(&left), constant(1))) ||
+        matches(curr, binary(DivU, any(&left), constant(1)))) {
       if (curr->type.isInteger() || fastMath) {
         return left;
       }

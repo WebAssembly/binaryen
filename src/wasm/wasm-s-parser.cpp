@@ -1409,17 +1409,17 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   ret->type = type;
   ret->bytes = bytes;
   if (!strncmp(extra, "add", 3)) {
-    ret->op = Add;
+    ret->op = RMWAdd;
   } else if (!strncmp(extra, "and", 3)) {
-    ret->op = And;
+    ret->op = RMWAnd;
   } else if (!strncmp(extra, "or", 2)) {
-    ret->op = Or;
+    ret->op = RMWOr;
   } else if (!strncmp(extra, "sub", 3)) {
-    ret->op = Sub;
+    ret->op = RMWSub;
   } else if (!strncmp(extra, "xor", 3)) {
-    ret->op = Xor;
+    ret->op = RMWXor;
   } else if (!strncmp(extra, "xchg", 4)) {
-    ret->op = Xchg;
+    ret->op = RMWXchg;
   } else {
     throw ParseException("bad atomic rmw operator", s.line, s.col);
   }

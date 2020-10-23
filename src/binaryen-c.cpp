@@ -562,12 +562,12 @@ BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
 BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
-BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
-BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
-BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
-BinaryenOp BinaryenAtomicRMWOr(void) { return AtomicRMWOp::Or; }
-BinaryenOp BinaryenAtomicRMWXor(void) { return AtomicRMWOp::Xor; }
-BinaryenOp BinaryenAtomicRMWXchg(void) { return AtomicRMWOp::Xchg; }
+BinaryenOp BinaryenAtomicRMWAdd(void) { return RMWAdd; }
+BinaryenOp BinaryenAtomicRMWSub(void) { return RMWSub; }
+BinaryenOp BinaryenAtomicRMWAnd(void) { return RMWAnd; }
+BinaryenOp BinaryenAtomicRMWOr(void) { return RMWOr; }
+BinaryenOp BinaryenAtomicRMWXor(void) { return RMWXor; }
+BinaryenOp BinaryenAtomicRMWXchg(void) { return RMWXchg; }
 BinaryenOp BinaryenTruncSatSFloat32ToInt32(void) {
   return TruncSatSFloat32ToInt32;
 }

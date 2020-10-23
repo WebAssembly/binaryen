@@ -1979,22 +1979,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         getHeapAndAdjustedPointer(curr->bytes, curr->ptr, curr->offset);
       IString target;
       switch (curr->op) {
-        case AtomicRMWOp::Add:
+        case RMWAdd:
           target = IString("add");
           break;
-        case AtomicRMWOp::Sub:
+        case RMWSub:
           target = IString("sub");
           break;
-        case AtomicRMWOp::And:
+        case RMWAnd:
           target = IString("and");
           break;
-        case AtomicRMWOp::Or:
+        case RMWOr:
           target = IString("or");
           break;
-        case AtomicRMWOp::Xor:
+        case RMWXor:
           target = IString("xor");
           break;
-        case AtomicRMWOp::Xchg:
+        case RMWXchg:
           target = IString("exchange");
           break;
         default:
