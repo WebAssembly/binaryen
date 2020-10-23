@@ -494,17 +494,17 @@ private:
         Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
     }
     wasm.memory.initial = std::max(wasm.memory.initial, USABLE_MEMORY);
+    // Avoid an unlimited memory size, which would make fuzzing very difficult
+    // as different VMs will run out of system memory in different ways.
+    if (wasm.memory.max == Memory::kUnlimitedSize) {
+      wasm.memory.max = wasm.memory.initial;
+    }
     if (wasm.memory.max <= wasm.memory.initial) {
       // To allow growth to work (which a testcase may assume), try to make the
       // maximum larger than the initial.
       // TODO: scan the wasm for grow instructions?
       wasm.memory.max =
         std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
-    }
-    // Avoid an unlimited memory size, which would make fuzzing very difficult
-    // as different VMs will run out of system memory in different ways.
-    if (wasm.memory.max == Memory::kUnlimitedSize) {
-      wasm.memory.max = wasm.memory.initial;
     }
     // See above for globals.
     wasm.memory.module = wasm.memory.base = Name();
