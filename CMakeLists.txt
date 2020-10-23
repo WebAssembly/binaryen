@@ -294,7 +294,7 @@ ENDIF()
 # Code generation.
 
 add_custom_target(gen_exprs ALL
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/scripts/gen-exprs.py
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen-exprs
   BYPRODUCTS src/wasm-expressions.generated.h src/ir/compare-expressions.generated.h
 )
 
