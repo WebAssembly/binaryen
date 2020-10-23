@@ -449,14 +449,12 @@ private:
     for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
       auto type = getConcreteType();
       auto* global =
-        builder.makeGlobal(std::string("global$") + std::to_string(index),
+        builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
                            type,
                            makeConst(type),
                            Builder::Mutable);
-      if (!wasm.getGlobalOrNull(global->name)) {
-        wasm.addGlobal(global);
-        globalsByType[type].push_back(global->name);
-      }
+      wasm.addGlobal(global);
+      globalsByType[type].push_back(global->name);
     }
   }
 
