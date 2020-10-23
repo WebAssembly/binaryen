@@ -345,6 +345,8 @@ struct DeadCodeElimination
           DELEGATE(SIMDShift);
         case Expression::Id::SIMDLoadId:
           DELEGATE(SIMDLoad);
+        case Expression::Id::SIMDLoadStoreLaneId:
+          DELEGATE(SIMDLoadStoreLane);
         case Expression::Id::MemoryInitId:
           DELEGATE(MemoryInit);
         case Expression::Id::DataDropId:

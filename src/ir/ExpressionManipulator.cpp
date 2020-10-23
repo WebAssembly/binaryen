@@ -182,6 +182,14 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeSIMDLoad(
         curr->op, curr->offset, curr->align, copy(curr->ptr));
     }
+    Expression* visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      return builder.makeSIMDLoadStoreLane(curr->op,
+                                           curr->offset,
+                                           curr->align,
+                                           curr->index,
+                                           copy(curr->ptr),
+                                           copy(curr->vec));
+    }
     Expression* visitConst(Const* curr) {
       return builder.makeConst(curr->value);
     }
