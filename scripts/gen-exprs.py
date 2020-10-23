@@ -749,6 +749,9 @@ clang_format_exe = shared.which('clang-format-9') or shared.which('clang-format'
 
 
 def clang_format(text):
+    if not clang_format_exe:
+        print('warning: clang-format not found, so output is not formatted')
+        return
     read, write = os.pipe()
     os.write(write, bytes(text, 'ascii'))
     os.close(write)
