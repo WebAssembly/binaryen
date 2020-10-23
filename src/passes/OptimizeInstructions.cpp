@@ -1737,9 +1737,8 @@ private:
                 if (binary->op == Abstract::getBinary(type, Abstract::LeU)) {
                   binary->op = Abstract::getBinary(type, Abstract::Eq);
                 }
-                // For signed or sign-agnostic relationals
+                // for signed or sign-agnostic relationals we don't change op.
                 // x - y <=> 0  =>  x <=> y
-                // do nothing
                 binary->right = left->right;
                 binary->left = left->left;
                 return binary;
