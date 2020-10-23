@@ -52,7 +52,6 @@ int main(int argc, const char* argv[]) {
   bool DWARF = false;
   bool sideModule = false;
   bool legacyPIC = true;
-  bool mutableSP = false;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -110,13 +109,6 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
-         })
-    .add("--mutable-sp",
-         "",
-         "Allow the import of __stack_pointer as a mutable global",
-         Options::Arguments::Zero,
-         [&mutableSP](Options* o, const std::string& argument) {
-           mutableSP = true;
          })
     .add("--new-pic-abi",
          "",
