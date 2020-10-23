@@ -1822,9 +1822,6 @@
   (block $x
    (try
     (do
-     (local.set $exn
-      (pop exnref)
-     )
      (call $foo)
      (call $foo)
      (call $foo)
