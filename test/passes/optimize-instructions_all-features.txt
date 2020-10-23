@@ -19,6 +19,7 @@
  (type $f32_=>_none (func (param f32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
  (type $f64_=>_none (func (param f64)))
+ (type $f64_f64_f32_f32_=>_none (func (param f64 f64 f32 f32)))
  (type $none_=>_f64 (func (result f64)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
@@ -4880,6 +4881,198 @@
    (i32.const 0)
    (i32.load
     (i32.const 3)
+   )
+  )
+ )
+ (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
+  (drop
+   (f64.mul
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.mul
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.mul
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.mul
+     (local.get $y1)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.mul
+     (local.get $x0)
+     (f64.const 0)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.mul
+     (f32.const 0)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.mul
+     (f64.add
+      (local.get $x0)
+      (local.get $x1)
+     )
+     (f64.add
+      (local.get $x0)
+      (local.get $x0)
+     )
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.abs
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.sub
+     (f64.const 0)
+     (local.get $x0)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.sub
+     (f32.const 0)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.div
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+    (f64.add
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.div
+     (local.get $y1)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $x0)
+    (local.get $x0)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $y0)
+    (local.get $y0)
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (local.get $x0)
+     (f64.const 0)
+    )
+   )
+  )
+  (drop
+   (f32.abs
+    (f32.div
+     (f32.const 0)
+     (local.get $y0)
+    )
+   )
+  )
+  (drop
+   (f64.abs
+    (f64.div
+     (f64.add
+      (local.get $x0)
+      (local.get $x1)
+     )
+     (f64.add
+      (local.get $x0)
+      (local.get $x0)
+     )
+    )
    )
   )
  )
