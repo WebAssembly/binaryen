@@ -187,6 +187,10 @@ class SIMDLoadOp(Field):
     """A SIMD load opcode."""
 
 
+class SIMDLoadStoreLaneOp(Field):
+    """A SIMD Load/Store Lane opcode."""
+
+
 class Expression:
     """Core class from which all expressions inherit."""
 
@@ -444,6 +448,22 @@ class SIMDLoad(Expression):
     ptr = Child()
 
     methods = ['Index getMemBytes();']
+
+
+class SIMDLoadStoreLane(Expression):
+    op = SIMDLoadStoreLaneOp()
+    offset = Address()
+    align = Address()
+    index = uint8_t()
+    ptr = Child()
+    vec = Child()
+
+    methods = [
+        'bool isStore();',
+        'bool isLoad() { return !isStore(); }',
+        'Index getMemBytes();',
+        'void finalize();'
+    ]
 
 
 class MemoryInit(Expression):

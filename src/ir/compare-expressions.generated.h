@@ -377,6 +377,27 @@ case Expression::SIMDLoadId: {
   rightStack.push_back(castRight->ptr);
   break;
 }
+case Expression::SIMDLoadStoreLaneId: {
+  auto* castLeft = left->cast<SIMDLoadStoreLane>();
+  auto* castRight = right->cast<SIMDLoadStoreLane>();
+  if (castLeft->op != castRight->op) {
+    return false;
+  }
+  if (castLeft->offset != castRight->offset) {
+    return false;
+  }
+  if (castLeft->align != castRight->align) {
+    return false;
+  }
+  if (castLeft->index != castRight->index) {
+    return false;
+  }
+  leftStack.push_back(castLeft->ptr);
+  rightStack.push_back(castRight->ptr);
+  leftStack.push_back(castLeft->vec);
+  rightStack.push_back(castRight->vec);
+  break;
+}
 case Expression::MemoryInitId: {
   auto* castLeft = left->cast<MemoryInit>();
   auto* castRight = right->cast<MemoryInit>();
