@@ -43,7 +43,7 @@ static std::string wasm2cMangle(Name name) {
       mangled += ss.str();
     }
   }
-  return std::string("(*Z_") + mangled + "Z_";
+  return std::string("(*Z_") + mangled;
 }
 
 static std::string generateWasm2CWrapper(Module& wasm) {
