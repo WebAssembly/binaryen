@@ -1654,7 +1654,7 @@
       )
     )
   )
-  (func $add-sub-zero (param $0 i32) (param $1 i32)
+  (func $add-sub-zero (param $0 i32) (param $1 i64)
     (drop
       (i32.add
         (local.get $0)
@@ -1665,6 +1665,18 @@
       (i32.sub
         (local.get $0)
         (i32.const 0)
+      )
+    )
+    (drop
+      (i64.add
+        (local.get $1)
+        (i64.const 0)
+      )
+    )
+    (drop
+      (i64.sub
+        (local.get $1)
+        (i64.const 0)
       )
     )
   )
@@ -2629,6 +2641,28 @@
        )
       )
       (i32.const 0)
+     )
+    )
+   )
+  )
+  (func $zero-ops-64 (result i32)
+   (return
+    (i64.eq
+     (i64.const -1337)
+     (i64.shr_u
+      (i64.add
+       (i64.const 0)
+       (i64.shr_s
+        (i64.shl
+         (i64.load16_s align=1
+          (i32.const 790656516)
+         )
+         (i64.const 0)
+        )
+        (i64.const 0)
+       )
+      )
+      (i64.const 0)
      )
     )
    )
