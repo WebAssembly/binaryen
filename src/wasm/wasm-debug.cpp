@@ -787,7 +787,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
-          newValue = locationUpdater.getNewExprStart(oldValue);
+          newValue = locationUpdater.getNewStart(oldValue);
         } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
           // Per the DWARF spec, "The base address of a compile unit is

@@ -2106,4 +2106,26 @@
    )
   )
  )
+ (func $unswitch-reordering (param $x i32) (result i32)
+  (block $label$1 (result i32)
+   (br_table $label$1
+    (block $label$2 (result i32)
+     (i32.store ;; has a possible side effect
+      (i32.const 1)
+      (i32.const 2)
+     )
+     (i32.const 3)
+    )
+    (block (result i32)
+     (if
+      (local.get $x)
+      (return
+       (i32.const 5)
+      )
+     )
+     (i32.const 6)
+    )
+   )
+  )
+ )
 )

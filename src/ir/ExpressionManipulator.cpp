@@ -182,6 +182,14 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeSIMDLoad(
         curr->op, curr->offset, curr->align, copy(curr->ptr));
     }
+    Expression* visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      return builder.makeSIMDLoadStoreLane(curr->op,
+                                           curr->offset,
+                                           curr->align,
+                                           curr->index,
+                                           copy(curr->ptr),
+                                           copy(curr->vec));
+    }
     Expression* visitConst(Const* curr) {
       return builder.makeConst(curr->value);
     }
@@ -218,14 +226,11 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitReturn(Return* curr) {
       return builder.makeReturn(copy(curr->value));
     }
-    Expression* visitHost(Host* curr) {
-      std::vector<Expression*> operands;
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        operands.push_back(copy(curr->operands[i]));
-      }
-      auto* ret =
-        builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
-      return ret;
+    Expression* visitMemorySize(MemorySize* curr) {
+      return builder.makeMemorySize();
+    }
+    Expression* visitMemoryGrow(MemoryGrow* curr) {
+      return builder.makeMemoryGrow(copy(curr->delta));
     }
     Expression* visitRefNull(RefNull* curr) {
       return builder.makeRefNull(curr->type);
@@ -235,6 +240,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);
+    }
+    Expression* visitRefEq(RefEq* curr) {
+      return builder.makeRefEq(copy(curr->left), copy(curr->right));
     }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(
@@ -268,6 +276,48 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitTupleExtract(TupleExtract* curr) {
       return builder.makeTupleExtract(copy(curr->tuple), curr->index);
+    }
+    Expression* visitI31New(I31New* curr) {
+      return builder.makeI31New(copy(curr->value));
+    }
+    Expression* visitI31Get(I31Get* curr) {
+      return builder.makeI31Get(copy(curr->i31), curr->signed_);
+    }
+    Expression* visitRefTest(RefTest* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.test");
+    }
+    Expression* visitRefCast(RefCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): ref.cast");
+    }
+    Expression* visitBrOnCast(BrOnCast* curr) {
+      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    }
+    Expression* visitRttCanon(RttCanon* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    }
+    Expression* visitRttSub(RttSub* curr) {
+      WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    }
+    Expression* visitStructNew(StructNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.new");
+    }
+    Expression* visitStructGet(StructGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.get");
+    }
+    Expression* visitStructSet(StructSet* curr) {
+      WASM_UNREACHABLE("TODO (gc): struct.set");
+    }
+    Expression* visitArrayNew(ArrayNew* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.new");
+    }
+    Expression* visitArrayGet(ArrayGet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.get");
+    }
+    Expression* visitArraySet(ArraySet* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.set");
+    }
+    Expression* visitArrayLen(ArrayLen* curr) {
+      WASM_UNREACHABLE("TODO (gc): array.len");
     }
   };
 

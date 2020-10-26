@@ -20,6 +20,10 @@
   // 9
   // BinaryenTypeAnyref: 10
   // 10
+  // BinaryenTypeEqref: 11
+  // 11
+  // BinaryenTypeI31ref: 12
+  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -35,8 +39,9 @@ Features.ExceptionHandling: 64
 Features.TailCall: 128
 Features.ReferenceTypes: 256
 Features.Multivalue: 512
-Features.Anyref: 1024
-Features.All: 2047
+Features.GC: 1024
+Features.Memory64: 2048
+Features.All: 4095
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -57,28 +62,49 @@ BinaryId: 16
 SelectId: 17
 DropId: 18
 ReturnId: 19
-HostId: 20
-NopId: 21
-UnreachableId: 22
-AtomicCmpxchgId: 24
-AtomicRMWId: 23
-AtomicWaitId: 25
-AtomicNotifyId: 26
-SIMDExtractId: 28
-SIMDReplaceId: 29
-SIMDShuffleId: 30
-SIMDTernaryId: 31
-SIMDShiftId: 32
-SIMDLoadId: 33
-MemoryInitId: 34
-DataDropId: 35
-MemoryCopyId: 36
-MemoryFillId: 37
-TryId: 42
-ThrowId: 43
-RethrowId: 44
-BrOnExnId: 45
-PopId: 38
+MemorySizeId: 20
+MemoryGrowId: 21
+NopId: 22
+UnreachableId: 23
+AtomicCmpxchgId: 25
+AtomicRMWId: 24
+AtomicWaitId: 26
+AtomicNotifyId: 27
+SIMDExtractId: 29
+SIMDReplaceId: 30
+SIMDShuffleId: 31
+SIMDTernaryId: 32
+SIMDShiftId: 33
+SIMDLoadId: 34
+MemoryInitId: 36
+DataDropId: 37
+MemoryCopyId: 38
+MemoryFillId: 39
+PopId: 40
+RefNullId: 41
+RefIsNullId: 42
+RefFuncId: 43
+RefEqId: 44
+TryId: 45
+ThrowId: 46
+RethrowId: 47
+BrOnExnId: 48
+TupleMakeId: 49
+TupleExtractId: 50
+I31NewId: 51
+I31GetId: 52
+RefTestId: 53
+RefCastId: 54
+BrOnCastId: 55
+RttCanonId: 56
+RttSubId: 57
+StructNewId: 58
+StructGetId: 59
+StructSetId: 60
+ArrayNewId: 61
+ArrayGetId: 62
+ArraySetId: 63
+ArrayLenId: 64
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1836,6 +1862,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 1)
        )
       )
+      (drop
+       (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+       )
+      )
       (try
        (do
         (throw $a-event
@@ -1911,13 +1943,49 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
+      )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
       )
       (nop)
       (unreachable)
@@ -3676,6 +3744,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 1)
        )
       )
+      (drop
+       (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+       )
+      )
       (try
        (do
         (throw $a-event
@@ -3751,13 +3825,49 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop v128)
       )
       (drop
-       (pop externref)
-      )
-      (drop
        (pop funcref)
       )
       (drop
+       (pop externref)
+      )
+      (drop
        (pop exnref)
+      )
+      (drop
+       (pop anyref)
+      )
+      (drop
+       (pop eqref)
+      )
+      (drop
+       (pop i31ref)
+      )
+      (drop
+       (memory.size)
+      )
+      (drop
+       (memory.grow
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.new
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i31.get_s
+        (i31.new
+         (i32.const 1)
+        )
+       )
+      )
+      (drop
+       (i31.get_u
+        (i31.new
+         (i32.const 2)
+        )
+       )
       )
       (nop)
       (unreachable)
@@ -4246,7 +4356,7 @@ module loaded from binary form:
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (global $global$0 i32 (i32.const 3))
+ (global $a-global i32 (i32.const 3))
  (event $event$0 (attr 0) (param i32 i32))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
@@ -4336,5 +4446,5 @@ sizeof Literal: 24
  )
 )
 
-getExpressionInfo(memory.grow)={"id":20,"type":2,"op":1,"nameOperand":"","operands":[1]}
+getExpressionInfo(memory.grow)={"id":21,"type":2,"delta":1}
 getExpressionInfo(switch)={"id":5,"type":1,"names":["label"],"defaultName":"label","condition":0,"value":0}

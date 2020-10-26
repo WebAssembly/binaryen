@@ -111,11 +111,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitDataDrop(DataDrop* curr) { usesMemory = true; }
   void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
-  void visitHost(Host* curr) {
-    if (curr->op == MemorySize || curr->op == MemoryGrow) {
-      usesMemory = true;
-    }
-  }
+  void visitMemorySize(MemorySize* curr) { usesMemory = true; }
+  void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
     if (reachable.count(
           ModuleElement(ModuleElementKind::Function, curr->func)) == 0) {

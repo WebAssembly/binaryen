@@ -43,23 +43,6 @@
 
 namespace wasm {
 
-static Global* ensureGlobalImport(Module* module, Name name, Type type) {
-  // See if its already imported.
-  // FIXME: O(N)
-  ImportInfo info(*module);
-  if (auto* g = info.getImportedGlobal(ENV, name)) {
-    return g;
-  }
-  // Failing that create a new import.
-  auto import = new Global;
-  import->name = name;
-  import->module = ENV;
-  import->base = name;
-  import->type = type;
-  module->addGlobal(import);
-  return import;
-}
-
 static Function*
 ensureFunctionImport(Module* module, Name name, Signature sig) {
   // See if its already imported.
@@ -110,34 +93,8 @@ struct EmscriptenPIC : public WalkerPass<PostWalker<EmscriptenPIC>> {
     Block* block = builder.makeBlock();
     assignFunc->body = block;
 
-    bool hasSingleMemorySegment =
-      module->memory.exists && module->memory.segments.size() == 1;
-
     for (Global* g : gotMemEntries) {
-      // If this global is defined in this module, we export its address
-      // relative to the relocatable memory. If we are in a main module, we can
-      // just use that location (since if other modules have this symbol too, we
-      // will "win" as we are loaded first). Otherwise, import a g$ getter. Note
-      // that this depends on memory having a single segment, so we know the
-      // offset, and that the export is a global.
       auto base = g->base;
-      if (hasSingleMemorySegment && !sideModule) {
-        if (auto* ex = module->getExportOrNull(base)) {
-          if (ex->kind == ExternalKind::Global) {
-            // The base relative to which we are computed is the offset of the
-            // singleton segment.
-            auto* relativeBase = ExpressionManipulator::copy(
-              module->memory.segments[0].offset, *module);
-
-            auto* offset = builder.makeGlobalGet(
-              ex->value, module->getGlobal(ex->value)->type);
-            auto* add = builder.makeBinary(AddInt32, relativeBase, offset);
-            GlobalSet* globalSet = builder.makeGlobalSet(g->name, add);
-            block->list.push_back(globalSet);
-            continue;
-          }
-        }
-      }
       Name getter(std::string("g$") + base.c_str());
       ensureFunctionImport(module, getter, Signature(Type::none, Type::i32));
       Expression* call = builder.makeCall(getter, {}, Type::i32);
@@ -147,52 +104,16 @@ struct EmscriptenPIC : public WalkerPass<PostWalker<EmscriptenPIC>> {
 
     ImportInfo importInfo(*module);
 
-    // We may have to add things to the table.
-    Global* tableBase = nullptr;
-
     for (Global* g : gotFuncEntries) {
       // The function has to exist either as export or an import.
       // Note that we don't search for the function by name since its internal
       // name may be different.
       auto* ex = module->getExportOrNull(g->base);
-      // If this is exported then it must be one of the functions implemented
-      // here, and if this is a main module, then we can simply place the
-      // function in the table: the loader will see it there and resolve all
-      // other uses to this one.
-      if (ex && !sideModule) {
-        assert(ex->kind == ExternalKind::Function);
-        auto* f = module->getFunction(ex->value);
-        if (f->imported()) {
-          Fatal() << "GOT.func entry is both imported and exported: "
-                  << g->base;
-        }
-        // The base relative to which we are computed is the offset of the
-        // singleton segment, which we must ensure exists
-        if (!tableBase) {
-          tableBase = ensureGlobalImport(module, TABLE_BASE, Type::i32);
-        }
-        if (!module->table.exists) {
-          module->table.exists = true;
-        }
-        if (module->table.segments.empty()) {
-          module->table.segments.resize(1);
-          module->table.segments[0].offset =
-            builder.makeGlobalGet(tableBase->name, Type::i32);
-        }
-        auto tableIndex =
-          TableUtils::getOrAppend(module->table, f->name, *module);
-        auto* c = LiteralUtils::makeFromInt32(tableIndex, Type::i32, *module);
-        auto* getBase = builder.makeGlobalGet(tableBase->name, Type::i32);
-        auto* add = builder.makeBinary(AddInt32, getBase, c);
-        auto* globalSet = builder.makeGlobalSet(g->name, add);
-        block->list.push_back(globalSet);
-        continue;
-      }
-      // This is imported or in a side module. Create an fp$ import to get the
-      // function table index from the dynamic loader.
+      // This is imported create an fp$ import to get the function table index
+      // from the dynamic loader.
       auto* f = importInfo.getImportedFunction(ENV, g->base);
       if (!f) {
-        if (!ex) {
+        if (!module->getExportOrNull(g->base)) {
           Fatal() << "GOT.func entry with no import/export: " << g->base;
         }
         f = module->getFunction(ex->value);

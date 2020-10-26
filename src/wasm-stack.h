@@ -123,6 +123,7 @@ public:
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -132,10 +133,12 @@ public:
   void visitBinary(Binary* curr);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
-  void visitHost(Host* curr);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -146,6 +149,20 @@ public:
   void visitPop(Pop* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
+  void visitRefTest(RefTest* curr);
+  void visitRefCast(RefCast* curr);
+  void visitBrOnCast(BrOnCast* curr);
+  void visitRttCanon(RttCanon* curr);
+  void visitRttSub(RttSub* curr);
+  void visitStructNew(StructNew* curr);
+  void visitStructGet(StructGet* curr);
+  void visitStructSet(StructSet* curr);
+  void visitArrayNew(ArrayNew* curr);
+  void visitArrayGet(ArrayGet* curr);
+  void visitArraySet(ArraySet* curr);
+  void visitArrayLen(ArrayLen* curr);
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);
@@ -428,8 +445,8 @@ private:
 // Queues the expressions linearly in Stack IR (SIR)
 class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
 public:
-  StackIRGenerator(MixedArena& allocator, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), allocator(allocator) {}
+  StackIRGenerator(Module& module, Function* func)
+    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
 
   void emit(Expression* curr);
   void emitScopeEnd(Expression* curr);
@@ -442,7 +459,7 @@ public:
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {
-    stackIR.push_back(makeStackInst(Builder(allocator).makeUnreachable()));
+    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
   }
   void emitDebugLocation(Expression* curr) {}
 
@@ -454,7 +471,7 @@ private:
     return makeStackInst(StackInst::Basic, origin);
   }
 
-  MixedArena& allocator;
+  Module& module;
   StackIR stackIR; // filled in write()
 };
 

@@ -25,6 +25,58 @@
 
 namespace wasm {
 
+// Mangle a name in (hopefully) exactly the same way wasm2c does.
+static std::string wasm2cMangle(Name name, Signature sig) {
+  const char escapePrefix = 'Z';
+  std::string mangled = "Z_";
+  const char* original = name.str;
+  unsigned char c;
+  while ((c = *original++)) {
+    if ((isalnum(c) && c != escapePrefix) || c == '_') {
+      // This character is ok to emit as it is.
+      mangled += c;
+    } else {
+      // This must be escaped, as prefix + hex character code.
+      mangled += escapePrefix;
+      std::stringstream ss;
+      ss << std::hex << std::uppercase << unsigned(c);
+      mangled += ss.str();
+    }
+  }
+
+  // Emit the result and params.
+  mangled += "Z_";
+
+  auto wasm2cSignature = [](Type type) {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::none:
+        return 'v';
+      case Type::i32:
+        return 'i';
+      case Type::i64:
+        return 'j';
+      case Type::f32:
+        return 'f';
+      case Type::f64:
+        return 'd';
+      default:
+        Fatal() << "unhandled wasm2c wrapper signature type: " << type;
+    }
+  };
+
+  mangled += wasm2cSignature(sig.results);
+  if (sig.params.isTuple()) {
+    for (const auto& param : sig.params) {
+      mangled += wasm2cSignature(param);
+    }
+  } else {
+    mangled += wasm2cSignature(sig.params);
+  }
+
+  return mangled;
+}
+
 static std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
@@ -142,35 +194,12 @@ int main(int argc, char** argv) {
       }
     }
 
+    // Call the export.
+    ret += "(*";
+
     // Emit the callee's name with wasm2c name mangling.
-    ret += std::string("(*Z_") + exp->name.str + "Z_";
+    ret += wasm2cMangle(exp->name, func->sig);
 
-    auto wasm2cSignature = [](Type type) {
-      TODO_SINGLE_COMPOUND(type);
-      switch (type.getBasic()) {
-        case Type::none:
-          return 'v';
-        case Type::i32:
-          return 'i';
-        case Type::i64:
-          return 'j';
-        case Type::f32:
-          return 'f';
-        case Type::f64:
-          return 'd';
-        default:
-          Fatal() << "unhandled wasm2c wrapper signature type: " << type;
-      }
-    };
-
-    ret += wasm2cSignature(result);
-    if (func->sig.params.isTuple()) {
-      for (const auto& param : func->sig.params) {
-        ret += wasm2cSignature(param);
-      }
-    } else {
-      ret += wasm2cSignature(func->sig.params);
-    }
     ret += ")(";
 
     // Emit the parameters (all 0s, like the other wrappers).

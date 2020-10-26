@@ -8,3 +8,13 @@
   (ref.func $0)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (memory $foo 16 16)
+ (global $bar i32 (i32.const 0))
+ (export "memory" (memory $foo))
+ (export "global" (global $bar))
+ (func $bar
+  (nop)
+ )
+)

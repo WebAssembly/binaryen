@@ -324,6 +324,15 @@ private:
           if (wasm.features.hasExceptionHandling()) {
             options.push_back(Type::exnref);
           }
+          if (wasm.features.hasGC()) {
+            options.push_back(Type::eqref);
+            options.push_back(Type::i31ref);
+          }
+        }
+        break;
+      case Type::eqref:
+        if (wasm.features.hasGC()) {
+          options.push_back(Type::i31ref);
         }
         break;
       default:
@@ -375,6 +384,7 @@ private:
     std::vector<Expression*> contents;
     contents.push_back(
       builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+    auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -387,7 +397,7 @@ private:
                                builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
           builder.makeLoad(
-            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
+            1, false, i, 1, builder.makeConst(zero), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -665,7 +675,16 @@ private:
 
       void visitExpression(Expression* curr) {
         if (parent.oneIn(10)) {
-          // Replace it!
+          // For constants, perform only a small tweaking in some cases.
+          if (auto* c = curr->dynCast<Const>()) {
+            if (parent.oneIn(2)) {
+              c->value = parent.tweak(c->value);
+              return;
+            }
+          }
+          // TODO: more minor tweaks to immediates, like making a load atomic or
+          // not, changing an offset, etc.
+          // Perform a general replacement.
           // (This is not always valid due to nesting of labels, but
           // we'll fix that up later.)
           replaceCurrent(parent.make(curr->type));
@@ -720,6 +739,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -738,17 +759,17 @@ private:
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
-          if (Block* block = curr->dynCast<Block>()) {
+          if (auto* block = curr->dynCast<Block>()) {
             if (name == block->name) {
               return true;
             }
-          } else if (Loop* loop = curr->dynCast<Loop>()) {
+          } else if (auto* loop = curr->dynCast<Loop>()) {
             if (name == loop->name) {
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or a try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
@@ -848,8 +869,7 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    bool canMakeControlFlow =
-      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
+    bool canMakeControlFlow = !type.isTuple() || wasm.features.hasMultivalue();
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -884,9 +904,16 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq,
+                  &Self::makeI31Get);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
+    if (type == Type::i31ref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
     return (this->*pick(options))(type);
   }
@@ -1243,12 +1270,21 @@ private:
     }
   }
 
+  // Some globals are for internal use, and should not be modified by random
+  // fuzz code.
+  bool isValidGlobal(Name name) { return name != HANG_LIMIT_GLOBAL; }
+
   Expression* makeGlobalGet(Type type) {
     auto it = globalsByType.find(type);
     if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(it->second), type);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalGet(name, type);
+    } else {
+      return makeTrivial(type);
+    }
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1258,8 +1294,12 @@ private:
     if (it == globalsByType.end() || it->second.empty()) {
       return makeTrivial(Type::none);
     }
-    auto* value = make(type);
-    return builder.makeGlobalSet(pick(it->second), value);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalSet(name, make(type));
+    } else {
+      return makeTrivial(Type::none);
+    }
   }
 
   Expression* makeTupleMake(Type type) {
@@ -1302,13 +1342,18 @@ private:
   }
 
   Expression* makePointer() {
-    auto* ret = make(Type::i32);
+    auto* ret = make(wasm.memory.indexType);
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
-      ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      if (wasm.memory.is64()) {
+        ret = builder.makeBinary(
+          AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
+      } else {
+        ret = builder.makeBinary(
+          AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      }
     }
     return ret;
   }
@@ -1363,6 +1408,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1467,6 +1514,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1494,6 +1543,43 @@ private:
     store->isAtomic = true;
     store->align = store->bytes;
     return store;
+  }
+
+  // Makes a small change to a constant value.
+  Literal tweak(Literal value) {
+    auto type = value.type;
+    if (type.isVector()) {
+      // TODO: tweak each lane?
+      return value;
+    }
+    // +- 1
+    switch (upTo(5)) {
+      case 0:
+        value = value.add(Literal::makeNegOne(type));
+        break;
+      case 1:
+        value = value.add(Literal::makeOne(type));
+        break;
+      default: {
+      }
+    }
+    // For floats, optionally add a non-integer adjustment in +- [-1, 1]
+    if (type.isFloat() && oneIn(2)) {
+      const int RANGE = 1000;
+      auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
+      // adjustment -> [0, 2 * RANGE]
+      auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
+      // adjustment -> [-RANGE, RANGE]
+      adjustment = adjustment.sub(RANGE_LITERAL);
+      // adjustment -> [-1, 1]
+      adjustment = adjustment.div(RANGE_LITERAL);
+      value = value.add(adjustment);
+    }
+    // Flip sign.
+    if (oneIn(2)) {
+      value = value.mul(Literal::makeNegOne(type));
+    }
+    return value;
   }
 
   Literal makeLiteral(Type type) {
@@ -1547,38 +1633,6 @@ private:
       }
     }
 
-    // Optional tweaking of the value by a small adjustment.
-    auto tweak = [this, type](Literal value) {
-      // +- 1
-      switch (upTo(5)) {
-        case 0:
-          value = value.add(Literal::makeFromInt32(-1, type));
-          break;
-        case 1:
-          value = value.add(Literal::makeFromInt32(1, type));
-          break;
-        default: {
-        }
-      }
-      // For floats, optionally add a non-integer adjustment in +- [-1, 1]
-      if (type.isFloat() && oneIn(2)) {
-        const int RANGE = 1000;
-        auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
-        // adjustment -> [0, 2 * RANGE]
-        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
-        // adjustment -> [-RANGE, RANGE]
-        adjustment = adjustment.sub(RANGE_LITERAL);
-        // adjustment -> [-1, 1]
-        adjustment = adjustment.div(RANGE_LITERAL);
-        value = value.add(adjustment);
-      }
-      // Flip sign.
-      if (oneIn(2)) {
-        value = value.mul(Literal::makeFromInt32(-1, type));
-      }
-      return value;
-    };
-
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
@@ -1596,6 +1650,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1641,6 +1697,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1681,7 +1739,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1692,7 +1751,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),
@@ -1709,6 +1769,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1736,6 +1798,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1761,6 +1825,9 @@ private:
           target = pick(wasm.functions).get();
         }
         return builder.makeRefFunc(target->name);
+      }
+      if (type == Type::i31ref) {
+        return builder.makeI31New(makeConst(Type::i32));
       }
       return builder.makeRefNull(type);
     }
@@ -1846,6 +1913,8 @@ private:
           case Type::externref:
           case Type::exnref:
           case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -1991,6 +2060,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2228,6 +2299,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2392,6 +2465,7 @@ private:
     if (type != Type::v128) {
       return makeSIMDExtract(type);
     }
+    // TODO: Add SIMDLoadStoreLane once it is generally available
     switch (upTo(7)) {
       case 0:
         return makeUnary(Type::v128);
@@ -2435,6 +2509,8 @@ private:
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2609,16 +2685,29 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    SmallVector<Type, 2> options;
-    options.push_back(Type::externref);
-    options.push_back(Type::funcref);
-    if (wasm.features.hasExceptionHandling()) {
-      options.push_back(Type::exnref);
-    }
-    if (wasm.features.hasAnyref()) {
-      options.push_back(Type::anyref);
-    }
-    return builder.makeRefIsNull(make(pick(options)));
+    return builder.makeRefIsNull(make(getReferenceType()));
+  }
+
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
+  }
+
+  Expression* makeI31New(Type type) {
+    assert(type == Type::i31ref);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* value = make(Type::i32);
+    return builder.makeI31New(value);
+  }
+
+  Expression* makeI31Get(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* i31 = make(Type::i31ref);
+    return builder.makeI31Get(i31, bool(oneIn(2)));
   }
 
   Expression* makeMemoryInit() {
@@ -2648,7 +2737,7 @@ private:
     }
     Expression* dest = makePointer();
     Expression* source = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
@@ -2657,8 +2746,8 @@ private:
       return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
-    Expression* value = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* value = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryFill(dest, value, size);
   }
 
@@ -2684,10 +2773,34 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::Anyref, Type::anyref));
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  std::vector<Type> getReferenceTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
+  }
+
+  Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(FeatureOptions<Type>().add(
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;
@@ -2726,16 +2839,26 @@ private:
   // removed during optimization
   // - there's no point in logging externref or anyref because these are opaque
   // - don't bother logging tuples
-  std::vector<Type> getLoggableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+  std::vector<Type> loggableTypes;
+
+  const std::vector<Type>& getLoggableTypes() {
+    if (loggableTypes.empty()) {
+      loggableTypes = items(
+        FeatureOptions<Type>()
+          .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+          .add(FeatureSet::SIMD, Type::v128)
+          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+               Type::exnref));
+    }
+    return loggableTypes;
   }
 
   Type getLoggableType() { return pick(getLoggableTypes()); }
+
+  bool isLoggableType(Type type) {
+    const auto& types = getLoggableTypes();
+    return std::find(types.begin(), types.end(), type) != types.end();
+  }
 
   // statistical distributions
 

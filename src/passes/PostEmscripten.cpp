@@ -78,81 +78,11 @@ struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
 
 struct PostEmscripten : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    // Apply the stack pointer, if it was provided.  This is needed here
-    // because the emscripten JS compiler can add static data allocations that
-    // come before the stack.
-    auto stackPtrStr =
-      runner->options.getArgumentOrDefault("stack-pointer", "");
-    if (stackPtrStr != "") {
-      Global* stackPointer = getStackPointerGlobal(*module);
-      BYN_TRACE("stack_pointer: " << stackPtrStr << "\n");
-      if (stackPointer && !stackPointer->imported()) {
-        auto stackPtr = std::stoi(stackPtrStr);
-        auto oldValue = stackPointer->init->cast<Const>()->value;
-        BYN_TRACE("updating __stack_pointer: " << oldValue.geti32() << " -> "
-                                               << stackPtr << "\n");
-        stackPointer->init = Builder(*module).makeConst(int32_t(stackPtr));
-      }
-    }
-
-    // Apply the sbrk ptr, if it was provided.
-    auto sbrkPtrStr =
-      runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");
-    if (sbrkPtrStr != "") {
-      auto sbrkPtr = std::stoi(sbrkPtrStr);
-      ImportInfo imports(*module);
-      auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
-      if (func) {
-        Builder builder(*module);
-        func->body = builder.makeConst(int32_t(sbrkPtr));
-        func->module = func->base = Name();
-      }
-      // Apply the sbrk ptr value, if it was provided. This lets emscripten set
-      // up sbrk entirely in wasm, without depending on the JS side to init
-      // anything; this is necessary for standalone wasm mode, in which we do
-      // not have any JS. Otherwise, the JS would set this value during
-      // startup.
-      auto sbrkValStr =
-        runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
-      if (sbrkValStr != "") {
-        uint32_t sbrkVal = std::stoi(sbrkValStr);
-        auto end = sbrkPtr + sizeof(sbrkVal);
-        // Flatten memory to make it simple to write to. Later passes can
-        // re-optimize it.
-        MemoryUtils::ensureExists(module->memory);
-        if (!MemoryUtils::flatten(module->memory, end, module)) {
-          Fatal() << "cannot apply sbrk-val since memory is not flattenable\n";
-        }
-        auto& segment = module->memory.segments[0];
-        assert(segment.offset->cast<Const>()->value.geti32() == 0);
-        assert(end <= segment.data.size());
-        memcpy(segment.data.data() + sbrkPtr, &sbrkVal, sizeof(sbrkVal));
-      }
-    }
-
-    // Optimize imports
-    optimizeImports(runner, module);
-
     // Optimize calls
     OptimizeCalls().run(runner, module);
 
     // Optimize exceptions
     optimizeExceptions(runner, module);
-  }
-
-  void optimizeImports(PassRunner* runner, Module* module) {
-    // Calling emscripten_longjmp_jmpbuf is the same as emscripten_longjmp.
-    Name EMSCRIPTEN_LONGJMP("emscripten_longjmp");
-    Name EMSCRIPTEN_LONGJMP_JMPBUF("emscripten_longjmp_jmpbuf");
-    ImportInfo info(*module);
-    auto* emscripten_longjmp =
-      info.getImportedFunction(ENV, EMSCRIPTEN_LONGJMP);
-    auto* emscripten_longjmp_jmpbuf =
-      info.getImportedFunction(ENV, EMSCRIPTEN_LONGJMP_JMPBUF);
-    if (emscripten_longjmp && emscripten_longjmp_jmpbuf) {
-      // Both exist, so it is worth renaming so that we have only one.
-      emscripten_longjmp_jmpbuf->base = EMSCRIPTEN_LONGJMP;
-    }
   }
 
   // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.

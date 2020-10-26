@@ -97,7 +97,9 @@ private:
       case Type::funcref:
       case Type::externref:
       case Type::exnref:
-      case Type::anyref: {
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref: {
         return false;
       }
       case Type::none:
