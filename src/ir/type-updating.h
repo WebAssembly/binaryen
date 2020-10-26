@@ -148,7 +148,7 @@ struct TypeUpdater
   }
 
   // Applies a type change to a node, and potentially to its parents.
-  void doTypeChange(Expression* curr, Type type) {
+  void changeType(Expression* curr, Type type) {
     if (curr->type != type) {
       curr->type = type;
       propagateTypesUp(curr);
@@ -321,6 +321,10 @@ struct TypeUpdater
     if (curr->type == Type::unreachable) {
       propagateTypesUp(curr);
     }
+  }
+
+  bool hasBreaks(Block* block) {
+    return block->name.is() && blockInfos[block->name].numBreaks > 0;
   }
 };
 

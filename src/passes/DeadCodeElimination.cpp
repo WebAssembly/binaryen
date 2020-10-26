@@ -131,10 +131,9 @@ struct DeadCodeElimination
       // is one marked, but nothing breaks to it, and also the block does not
       // have a concrete value flowing out) then remove it, which may allow
       // more reduction.
-      if (block->type.isConcrete() && block->name.is() &&
-          typeUpdater.blockInfos[block->name].numBreaks == 0 &&
-          list.back()->type == Type::unreachable) {
-        typeUpdater.doTypeChange(block, Type::unreachable);
+      if (block->type.isConcrete() && list.back()->type == Type::unreachable &&
+          !typeUpdater.hasBreaks(block)) {
+        typeUpdater.changeType(block, Type::unreachable);
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
@@ -150,7 +149,7 @@ struct DeadCodeElimination
       if (iff->type != Type::unreachable && iff->ifFalse &&
           iff->ifTrue->type == Type::unreachable &&
           iff->ifFalse->type == Type::unreachable) {
-        typeUpdater.doTypeChange(iff, Type::unreachable);
+        typeUpdater.changeType(iff, Type::unreachable);
       }
     } else if (auto* loop = curr->dynCast<Loop>()) {
       // The loop body may have unreachable type if it branches back to the
