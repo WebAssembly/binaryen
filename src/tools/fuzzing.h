@@ -463,7 +463,7 @@ private:
   void setupEvents() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      auto name = std::string("event$") + std::to_string(i);
+      auto name = Names::getValidEventName(wasm, "event$");
       if (!wasm.getEventOrNull(name)) {
         auto* event =
           builder.makeEvent(name,
