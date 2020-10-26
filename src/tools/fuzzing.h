@@ -920,6 +920,11 @@ private:
         dropToLog(func);
         // TODO add some locals? and the rest of addFunction's operations?
         // TODO: interposition, replace initial a(b) with a(RANDOM_THING(b))
+        // TODO: if we add OOB checks after creation, then we can do it on
+        //       initial contents too, and it may be nice to *not* run these
+        //       passes, like we don't run them on new functions. But, we may
+        //       still want to run them some of the time, at least, so that we
+        //       check variations on initial testcases even at the risk of OOB.
         recombine(func);
         mutate(func);
         fixLabels(func);
