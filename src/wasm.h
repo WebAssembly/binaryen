@@ -432,7 +432,7 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
+enum AtomicRMWOp { RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg };
 
 enum SIMDExtractOp {
   ExtractLaneSVecI8x16,

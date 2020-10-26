@@ -2165,22 +2165,22 @@ private:
       NOTE_EVAL1(loaded);
       auto computed = value.getSingleValue();
       switch (curr->op) {
-        case Add:
+        case RMWAdd:
           computed = loaded.add(computed);
           break;
-        case Sub:
+        case RMWSub:
           computed = loaded.sub(computed);
           break;
-        case And:
+        case RMWAnd:
           computed = loaded.and_(computed);
           break;
-        case Or:
+        case RMWOr:
           computed = loaded.or_(computed);
           break;
-        case Xor:
+        case RMWXor:
           computed = loaded.xor_(computed);
           break;
-        case Xchg:
+        case RMWXchg:
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);

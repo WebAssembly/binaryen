@@ -2626,17 +2626,13 @@ private:
     auto* ptr = makePointer();
     if (oneIn(2)) {
       auto* value = make(type);
-      return builder.makeAtomicRMW(pick(AtomicRMWOp::Add,
-                                        AtomicRMWOp::Sub,
-                                        AtomicRMWOp::And,
-                                        AtomicRMWOp::Or,
-                                        AtomicRMWOp::Xor,
-                                        AtomicRMWOp::Xchg),
-                                   bytes,
-                                   offset,
-                                   ptr,
-                                   value,
-                                   type);
+      return builder.makeAtomicRMW(
+        pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg),
+        bytes,
+        offset,
+        ptr,
+        value,
+        type);
     } else {
       auto* expected = make(type);
       auto* replacement = make(type);

@@ -358,6 +358,22 @@
     (i32.store8 (i32.const 11) (i32.wrap_i64 (i64.const 1)))
     (i32.store16 (i32.const 11) (i32.wrap_i64 (i64.const 2)))
     (i32.store (i32.const 11) (i32.wrap_i64 (i64.const 3)))
+    ;;
+    (i32.store8 (i32.const 7) (i32.const -1))           ;; 255
+    (i32.store8 (i32.const 8) (i32.const 255))
+    (i32.store8 (i32.const 9) (i32.const 256))          ;; 0
+    (i32.store16 (i32.const 10) (i32.const 65535))
+    (i32.store16 (i32.const 11) (i32.const 65536))      ;; 0
+    (i32.store16 (i32.const 13) (i32.const -1))         ;; 65535
+    (i32.store (i32.const 14) (i32.const 65536))
+    ;;
+    (i64.store8 (i32.const 8) (i64.const 255))
+    (i64.store8 (i32.const 9) (i64.const 256))          ;; 0
+    (i64.store16 (i32.const 10) (i64.const 65535))
+    (i64.store16 (i32.const 11) (i64.const 65536))      ;; 0
+    (i64.store32 (i32.const 12) (i64.const 4294967295))
+    (i64.store32 (i32.const 13) (i64.const 4294967296)) ;; 0
+    (i64.store (i32.const 14) (i64.const 4294967296))
   )
   (func $and-neg1
     (drop (i32.and (i32.const 100) (i32.const -1)))
@@ -1654,7 +1670,7 @@
       )
     )
   )
-  (func $add-sub-zero (param $0 i32) (param $1 i32)
+  (func $add-sub-zero (param $0 i32) (param $1 i64)
     (drop
       (i32.add
         (local.get $0)
@@ -1665,6 +1681,18 @@
       (i32.sub
         (local.get $0)
         (i32.const 0)
+      )
+    )
+    (drop
+      (i64.add
+        (local.get $1)
+        (i64.const 0)
+      )
+    )
+    (drop
+      (i64.sub
+        (local.get $1)
+        (i64.const 0)
       )
     )
   )
@@ -2629,6 +2657,28 @@
        )
       )
       (i32.const 0)
+     )
+    )
+   )
+  )
+  (func $zero-ops-64 (result i32)
+   (return
+    (i64.eq
+     (i64.const -1337)
+     (i64.shr_u
+      (i64.add
+       (i64.const 0)
+       (i64.shr_s
+        (i64.shl
+         (i64.load16_s align=1
+          (i32.const 790656516)
+         )
+         (i64.const 0)
+        )
+        (i64.const 0)
+       )
+      )
+      (i64.const 0)
      )
     )
    )
@@ -4808,6 +4858,152 @@
       )
     ))
   )
+  (func $optimize-relationals (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+    ;; eqz(x + 0x7FFFFFFF)  ->  x == -2147483647
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x7FFFFFFF)
+      )
+    ))
+    ;; eqz(x + 0x80000000)  ->  x == -2147483648
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+    ))
+    ;; eqz(x + 0x80000001)  ->  x == 2147483647
+    (drop (i32.eqz
+      (i32.add
+        (local.get $x)
+        (i32.const 0x80000001)
+      )
+    ))
+    ;; eqz(x - y)
+    (drop (i32.eqz
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    (drop (i64.eqz
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+    ))
+    ;; x - y == 0
+    (drop (i32.eq
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.eq
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+    ;; x - y != 0
+    (drop (i32.ne
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    (drop (i64.ne
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+    ;; i32(x - y) > 0  ->  x > y
+    (drop (i32.gt_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - y) >= 0  ->  x >= y
+    (drop (i32.ge_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) > 0  ->  x != y
+    (drop (i32.gt_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) >= 0  ->  1
+    (drop (i32.ge_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u64(x - y) >= 0  ->  i32(1)
+    (drop (i64.ge_u
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+    ;; i32(x - y) < 0  ->  x < y
+    (drop (i32.lt_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - y) <= 0  ->  x <= y
+    (drop (i32.le_s
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u32(x - y) < 0  ->  0
+    (drop (i32.lt_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+    ;; u64(x - y) < 0  ->  i32(0)
+    (drop (i64.lt_u
+      (i64.sub
+        (local.get $X)
+        (local.get $Y)
+      )
+      (i64.const 0)
+    ))
+    ;; u32(x - y) <= 0  ->  x == y
+    (drop (i32.le_u
+      (i32.sub
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.const 0)
+    ))
+  )
   (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s
       (i32.and
@@ -5262,13 +5458,29 @@
         (i64.const 63)
       )
     ))
-
-    ;; skip
-    (drop (i32.shl
+    ;; i32(x) >> (y & 32)  ->  x
+    (drop (i32.shr_u
       (local.get $x)
       (i32.and
         (local.get $y)
         (i32.const 32)
+      )
+    ))
+    ;; i64(x) >> (y & 64)  ->  x
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 128)
+      )
+    ))
+
+    ;; skip
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 32)
       )
     ))
     ;; skip
