@@ -241,10 +241,9 @@ struct OptimizeInstructions
         // Note that this reorders X and Y, so we need to be careful about that.
         Expression *x, *y;
         Binary* sub;
-        if (matches(curr,
-                    binary(Abstract::Add,
-                           binary(&sub, Abstract::Sub, ival(0), any(&x)),
-                           any(&y))) &&
+        if (matches(
+              curr,
+              binary(Add, binary(&sub, Sub, ival(0), any(&x)), any(&y))) &&
             canReorder(x, y)) {
           sub->left = y;
           sub->right = x;
@@ -268,9 +267,7 @@ struct OptimizeInstructions
         Expression* y;
         Binary* sub;
         if (matches(curr,
-                    binary(Abstract::Add,
-                           any(&y),
-                           binary(&sub, Abstract::Sub, ival(0), any())))) {
+                    binary(Add, any(&y), binary(&sub, Sub, ival(0), any())))) {
           sub->left = y;
           return sub;
         }
@@ -278,10 +275,8 @@ struct OptimizeInstructions
       {
         // eqz(x - y)  =>  x == y
         Binary* inner;
-        if (matches(curr,
-                    unary(Abstract::EqZ,
-                          binary(&inner, Abstract::Sub, any(), any())))) {
-          inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+        if (matches(curr, unary(EqZ, binary(&inner, Sub, any(), any())))) {
+          inner->op = Abstract::getBinary(inner->left->type, Eq);
           inner->type = Type::i32;
           return inner;
         }
@@ -290,11 +285,9 @@ struct OptimizeInstructions
         // eqz(x + C)  =>  x == -C
         Const* c;
         Binary* inner;
-        if (matches(curr,
-                    unary(Abstract::EqZ,
-                          binary(&inner, Abstract::Add, any(), ival(&c))))) {
+        if (matches(curr, unary(EqZ, binary(&inner, Add, any(), ival(&c))))) {
           c->value = c->value.neg();
-          inner->op = Abstract::getBinary(c->type, Abstract::Eq);
+          inner->op = Abstract::getBinary(c->type, Eq);
           inner->type = Type::i32;
           return inner;
         }
@@ -388,14 +381,14 @@ struct OptimizeInstructions
         // unsigned(x) >= 0   =>   i32(1)
         Const* c;
         Expression* x;
-        if (matches(curr, binary(Abstract::GeU, pure(&x), ival(&c))) &&
+        if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
             c->value.isZero()) {
           c->value = Literal::makeOne(Type::i32);
           c->type = Type::i32;
           return c;
         }
         // unsigned(x) < 0   =>   i32(0)
-        if (matches(curr, binary(Abstract::LtU, pure(&x), ival(&c))) &&
+        if (matches(curr, binary(LtU, pure(&x), ival(&c))) &&
             c->value.isZero()) {
           c->value = Literal::makeZero(Type::i32);
           c->type = Type::i32;
