@@ -1273,7 +1273,6 @@
       (try
         (do
           ;; Expressions that can throw should NOT be taken out of 'try' scope.
-          (local.set $exn (pop exnref))
           (call $foo)
           (call $foo)
           (call $foo)
