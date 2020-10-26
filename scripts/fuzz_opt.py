@@ -193,12 +193,7 @@ def pick_initial_contents():
         # corner cases of escaping of names is not interesting
         'names.wast',
         # huge amount of locals that make it extremely slow
-        'too_much_for_liveness.wasm',
-        # these contain illegal pops()
-        # https://github.com/WebAssembly/binaryen/issues/3213
-        'instrument-locals_all-features.wast',
-        'remove-unused-names_code-folding_all-features.wast',
-        'Os_print-stack-ir_all-features.wast'
+        'too_much_for_liveness.wasm'
     ]:
         print('initial contents is disallowed')
         return
@@ -495,11 +490,6 @@ class CompareVMs(TestCaseHandler):
                     return False
                 # relatively slow, so run it less frequently
                 if random.random() < 0.5:
-                    return False
-                # wasm2c name mangling must be fixed for us to support initial
-                # content, which may include testcases with names that need
-                # mangling. https://github.com/WebAssembly/binaryen/pull/3228
-                if INITIAL_CONTENTS:
                     return False
                 # wasm2c doesn't support most features
                 return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
