@@ -207,7 +207,8 @@ def pick_initial_contents():
         # this can contain multiple modules, pick one
         split_parts = support.split_wast(test_name)
         if len(split_parts) > 1:
-            chosen = random.choice(split_parts)
+            index = random.randint(0, len(split_parts) - 1)
+            chosen = split_parts[index]
             module, asserts = chosen
             if not module:
                 # there is no module in this choice (just asserts), ignore it
@@ -216,7 +217,7 @@ def pick_initial_contents():
             test_name = 'initial.wat'
             with open(test_name, 'w') as f:
                 f.write(module)
-            print('  picked submodule of wast, of size', len(module))
+            print('  picked submodule %d from multi-module wast' % index)
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
