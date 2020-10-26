@@ -275,6 +275,30 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz(x - y)  =>  x == y
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::Sub, any(), any())))) {
+          inner->op = Abstract::getBinary(inner->left->type, Abstract::Eq);
+          inner->type = Type::i32;
+          return inner;
+        }
+      }
+      {
+        // eqz(x + C)  =>  x == -C
+        Const* c;
+        Binary* inner;
+        if (matches(curr,
+                    unary(Abstract::EqZ,
+                          binary(&inner, Abstract::Add, any(), ival(&c))))) {
+          c->value = c->value.neg();
+          inner->op = Abstract::getBinary(c->type, Abstract::Eq);
+          inner->type = Type::i32;
+          return inner;
+        }
+      }
+      {
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
         Const* c;
         Binary* inner;
@@ -360,6 +384,24 @@ struct OptimizeInstructions
             curr->cast<Binary>()->right = y;
             return curr;
           }
+        }
+      }
+      {
+        // unsigned(x) >= 0   =>   i32(1)
+        Const* c;
+        Expression* x;
+        if (matches(curr, binary(Abstract::GeU, pure(&x), ival(&c))) &&
+            c->value.isZero()) {
+          c->value = Literal::makeOne(Type::i32);
+          c->type = Type::i32;
+          return c;
+        }
+        // unsigned(x) < 0   =>   i32(0)
+        if (matches(curr, binary(Abstract::LtU, pure(&x), ival(&c))) &&
+            c->value.isZero()) {
+          c->value = Literal::makeZero(Type::i32);
+          c->type = Type::i32;
+          return c;
         }
       }
     }
@@ -1659,36 +1701,81 @@ private:
   }
 
   // TODO: templatize on type?
-  Expression* optimizeRelational(Binary* binary) {
-    // TODO: inequalities can also work, if the constants do not overflow
-    auto type = binary->right->type;
-    // integer math, even on 2s complement, allows stuff like
-    // x + 5 == 7
-    //   =>
-    //     x == 2
-    if (binary->left->type.isInteger()) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
-          binary->op == Abstract::getBinary(type, Abstract::Ne)) {
-        if (auto* left = binary->left->dynCast<Binary>()) {
+  Expression* optimizeRelational(Binary* curr) {
+    auto type = curr->right->type;
+    if (curr->left->type.isInteger()) {
+      if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
+          curr->op == Abstract::getBinary(type, Abstract::Ne)) {
+        if (auto* left = curr->left->dynCast<Binary>()) {
+          // TODO: inequalities can also work, if the constants do not overflow
+          // integer math, even on 2s complement, allows stuff like
+          // x + 5 == 7
+          //   =>
+          //     x == 2
           if (left->op == Abstract::getBinary(type, Abstract::Add) ||
               left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
-              if (auto* rightConst = binary->right->dynCast<Const>()) {
+              if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
-                  binary, left, leftConst, nullptr, rightConst);
-              } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+                  curr, left, leftConst, nullptr, rightConst);
+              } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
                       Abstract::getBinary(type, Abstract::Add) ||
                     rightBinary->op ==
                       Abstract::getBinary(type, Abstract::Sub)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
-                      binary, left, leftConst, rightBinary, rightConst);
+                      curr, left, leftConst, rightBinary, rightConst);
                   }
                 }
               }
             }
           }
+        }
+      }
+      // signed(x - y) <=> 0  =>  x <=> y
+      //
+      // unsigned(x - y) > 0    =>   x != y
+      // unsigned(x - y) <= 0   =>   x == y
+      {
+        using namespace Match;
+
+        BinaryOp op;
+        Binary* inner;
+        // unsigned(x - y) > 0    =>   x != y
+        if (matches(curr,
+                    binary(Abstract::GtU,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0)))) {
+          curr->op = Abstract::getBinary(type, Abstract::Ne);
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
+        }
+        // unsigned(x - y) <= 0   =>   x == y
+        if (matches(curr,
+                    binary(Abstract::LeU,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0)))) {
+          curr->op = Abstract::getBinary(type, Abstract::Eq);
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
+        }
+        // signed(x - y) <=> 0  =>  x <=> y
+        if (matches(curr,
+                    binary(&op,
+                           binary(&inner, Abstract::Sub, any(), any()),
+                           ival(0))) &&
+            (op == Abstract::getBinary(type, Abstract::Eq) ||
+             op == Abstract::getBinary(type, Abstract::Ne) ||
+             op == Abstract::getBinary(type, Abstract::LeS) ||
+             op == Abstract::getBinary(type, Abstract::LtS) ||
+             op == Abstract::getBinary(type, Abstract::GeS) ||
+             op == Abstract::getBinary(type, Abstract::GtS))) {
+          curr->right = inner->right;
+          curr->left = inner->left;
+          return curr;
         }
       }
     }
