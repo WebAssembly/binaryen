@@ -428,9 +428,11 @@ private:
   std::map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
-    // If there were initial wasm contents, there may be imported globals.
-    // Avoid that, so that all the standard fuzzing infrastructure still works
-    // (and does not fail on not providing an import).
+    // If there were initial wasm contents, there may be imported globals. That
+    // would be a problem in the fuzzer harness as we'd error if we do not
+    // provide them (and provide the proper type, etc.).
+    // Avoid that, so that all the standard fuzzing infrastructure can always
+    // run the wasm.
     for (auto& global : wasm.globals) {
       if (!global->imported()) {
         // If the initialization referred to an imported global, it no longer
