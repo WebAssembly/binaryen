@@ -619,6 +619,16 @@
    (unreachable)
   )
  )
+ (func $unnecessary-concrete-try (result i32)
+  (try
+   (do
+    (unreachable)
+   )
+   (catch
+    (unreachable)
+   )
+  )
+ )
  (func $note-loss-of-if-children
   (block $label$1
    (block $label$2

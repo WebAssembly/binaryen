@@ -810,6 +810,7 @@
       )
     )
   )
+
   (func $unnecessary-concrete-block (result i32)
     (block $foo (result i32) ;; unnecessary type
       (nop)
@@ -827,6 +828,16 @@
       (i32.const 0)
       (return (i32.const 1))
       (unreachable)
+    )
+  )
+  (func $unnecessary-concrete-try (result i32)
+    (try (result i32)
+      (do
+        (unreachable)
+      )
+      (catch
+        (unreachable)
+      )
     )
   )
   (func $note-loss-of-if-children
