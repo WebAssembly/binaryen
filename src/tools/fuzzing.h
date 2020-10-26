@@ -485,7 +485,8 @@ private:
         // that used to be imported, but no longer is, which we must fix up.
         if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
           if (!wasm.getGlobal(offset->name)->imported()) {
-            // TODO: the segments must not overlap...
+            // TODO: It would be better to avoid segment overlap so that
+            //       MemoryPacking can run.
             segment.offset =
               builder.makeConst(Literal::makeFromInt32(0, Type::i32));
           }
