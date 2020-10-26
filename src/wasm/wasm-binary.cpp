@@ -3416,7 +3416,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
 
   // Set curr to the given opcode, type and size.
 #define SET(opcode, optype, size)                                              \
-  curr->op = opcode;                                                           \
+  curr->op = RMW##opcode;                                                      \
   curr->type = optype;                                                         \
   curr->bytes = size
 

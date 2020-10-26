@@ -351,7 +351,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
 
 #define CASE_FOR_OP(Op)                                                        \
-  case Op:                                                                     \
+  case RMW##Op:                                                                \
     switch (curr->type.getBasic()) {                                           \
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \

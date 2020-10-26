@@ -274,22 +274,22 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
-      case Add:
+      case RMWAdd:
         o << "add";
         break;
-      case Sub:
+      case RMWSub:
         o << "sub";
         break;
-      case And:
+      case RMWAnd:
         o << "and";
         break;
-      case Or:
+      case RMWOr:
         o << "or";
         break;
-      case Xor:
+      case RMWXor:
         o << "xor";
         break;
-      case Xchg:
+      case RMWXchg:
         o << "xchg";
         break;
     }
