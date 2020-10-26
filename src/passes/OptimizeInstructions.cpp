@@ -27,7 +27,6 @@
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
-#include <ir/localize.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/properties.h>
