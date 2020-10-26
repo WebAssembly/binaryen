@@ -828,11 +828,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       void visitSwitch(Switch* curr) {
         if (BranchUtils::getUniqueTargets(curr).size() == 1) {
-          // This switch has just one target no matter what; replace with a br.
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr->condition), // might have side effects
-            builder.makeBreak(curr->default_, curr->value)));
+          // This switch has just one target no matter what; replace with a br
+          // if we can (to do so, we must put the condition before a possible
+          // value).
+          if (!curr->value || EffectAnalyzer::canReorder(passOptions,
+                                                         getModule()->features,
+                                                         curr->condition,
+                                                         curr->value)) {
+            Builder builder(*getModule());
+            replaceCurrent(builder.makeSequence(
+              builder.makeDrop(curr->condition), // might have side effects
+              builder.makeBreak(curr->default_, curr->value)));
+          }
         }
       }
 

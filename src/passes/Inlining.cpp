@@ -326,7 +326,6 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner(&infos).run(&runner, module);
     // fill in global uses
-    // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         infos[ex->value].usedGlobally = true;
@@ -335,6 +334,13 @@ struct Inlining : public Pass {
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
         infos[name].usedGlobally = true;
+      }
+    }
+    for (auto& global : module->globals) {
+      if (!global->imported()) {
+        for (auto* ref : FindAll<RefFunc>(global->init).list) {
+          infos[ref->func].usedGlobally = true;
+        }
       }
     }
   }

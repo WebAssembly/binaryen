@@ -61,6 +61,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSIMDTernary(SIMDTernary* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
   ReturnType visitSIMDLoad(SIMDLoad* curr) { return ReturnType(); }
+  ReturnType visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    return ReturnType();
+  }
   ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
   ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
   ReturnType visitMemoryCopy(MemoryCopy* curr) { return ReturnType(); }
@@ -76,6 +79,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitRefNull(RefNull* curr) { return ReturnType(); }
   ReturnType visitRefIsNull(RefIsNull* curr) { return ReturnType(); }
   ReturnType visitRefFunc(RefFunc* curr) { return ReturnType(); }
+  ReturnType visitRefEq(RefEq* curr) { return ReturnType(); }
   ReturnType visitTry(Try* curr) { return ReturnType(); }
   ReturnType visitThrow(Throw* curr) { return ReturnType(); }
   ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
@@ -85,6 +89,20 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitPop(Pop* curr) { return ReturnType(); }
   ReturnType visitTupleMake(TupleMake* curr) { return ReturnType(); }
   ReturnType visitTupleExtract(TupleExtract* curr) { return ReturnType(); }
+  ReturnType visitI31New(I31New* curr) { return ReturnType(); }
+  ReturnType visitI31Get(I31Get* curr) { return ReturnType(); }
+  ReturnType visitRefTest(RefTest* curr) { return ReturnType(); }
+  ReturnType visitRefCast(RefCast* curr) { return ReturnType(); }
+  ReturnType visitBrOnCast(BrOnCast* curr) { return ReturnType(); }
+  ReturnType visitRttCanon(RttCanon* curr) { return ReturnType(); }
+  ReturnType visitRttSub(RttSub* curr) { return ReturnType(); }
+  ReturnType visitStructNew(StructNew* curr) { return ReturnType(); }
+  ReturnType visitStructGet(StructGet* curr) { return ReturnType(); }
+  ReturnType visitStructSet(StructSet* curr) { return ReturnType(); }
+  ReturnType visitArrayNew(ArrayNew* curr) { return ReturnType(); }
+  ReturnType visitArrayGet(ArrayGet* curr) { return ReturnType(); }
+  ReturnType visitArraySet(ArraySet* curr) { return ReturnType(); }
+  ReturnType visitArrayLen(ArrayLen* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
@@ -180,6 +198,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -198,6 +218,34 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(TupleMake);
       case Expression::Id::TupleExtractId:
         DELEGATE(TupleExtract);
+      case Expression::Id::I31NewId:
+        DELEGATE(I31New);
+      case Expression::Id::I31GetId:
+        DELEGATE(I31Get);
+      case Expression::Id::RefTestId:
+        DELEGATE(RefTest);
+      case Expression::Id::RefCastId:
+        DELEGATE(RefCast);
+      case Expression::Id::BrOnCastId:
+        DELEGATE(BrOnCast);
+      case Expression::Id::RttCanonId:
+        DELEGATE(RttCanon);
+      case Expression::Id::RttSubId:
+        DELEGATE(RttSub);
+      case Expression::Id::StructNewId:
+        DELEGATE(StructNew);
+      case Expression::Id::StructGetId:
+        DELEGATE(StructGet);
+      case Expression::Id::StructSetId:
+        DELEGATE(StructSet);
+      case Expression::Id::ArrayNewId:
+        DELEGATE(ArrayNew);
+      case Expression::Id::ArrayGetId:
+        DELEGATE(ArrayGet);
+      case Expression::Id::ArraySetId:
+        DELEGATE(ArraySet);
+      case Expression::Id::ArrayLenId:
+        DELEGATE(ArrayLen);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -245,6 +293,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(SIMDTernary);
   UNIMPLEMENTED(SIMDShift);
   UNIMPLEMENTED(SIMDLoad);
+  UNIMPLEMENTED(SIMDLoadStoreLane);
   UNIMPLEMENTED(MemoryInit);
   UNIMPLEMENTED(DataDrop);
   UNIMPLEMENTED(MemoryCopy);
@@ -260,6 +309,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(RefNull);
   UNIMPLEMENTED(RefIsNull);
   UNIMPLEMENTED(RefFunc);
+  UNIMPLEMENTED(RefEq);
   UNIMPLEMENTED(Try);
   UNIMPLEMENTED(Throw);
   UNIMPLEMENTED(Rethrow);
@@ -269,6 +319,20 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Pop);
   UNIMPLEMENTED(TupleMake);
   UNIMPLEMENTED(TupleExtract);
+  UNIMPLEMENTED(I31New);
+  UNIMPLEMENTED(I31Get);
+  UNIMPLEMENTED(RefTest);
+  UNIMPLEMENTED(RefCast);
+  UNIMPLEMENTED(BrOnCast);
+  UNIMPLEMENTED(RttCanon);
+  UNIMPLEMENTED(RttSub);
+  UNIMPLEMENTED(StructNew);
+  UNIMPLEMENTED(StructGet);
+  UNIMPLEMENTED(StructSet);
+  UNIMPLEMENTED(ArrayNew);
+  UNIMPLEMENTED(ArrayGet);
+  UNIMPLEMENTED(ArraySet);
+  UNIMPLEMENTED(ArrayLen);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
@@ -335,6 +399,8 @@ struct OverriddenVisitor {
         DELEGATE(SIMDShift);
       case Expression::Id::SIMDLoadId:
         DELEGATE(SIMDLoad);
+      case Expression::Id::SIMDLoadStoreLaneId:
+        DELEGATE(SIMDLoadStoreLane);
       case Expression::Id::MemoryInitId:
         DELEGATE(MemoryInit);
       case Expression::Id::DataDropId:
@@ -365,6 +431,8 @@ struct OverriddenVisitor {
         DELEGATE(RefIsNull);
       case Expression::Id::RefFuncId:
         DELEGATE(RefFunc);
+      case Expression::Id::RefEqId:
+        DELEGATE(RefEq);
       case Expression::Id::TryId:
         DELEGATE(Try);
       case Expression::Id::ThrowId:
@@ -383,6 +451,34 @@ struct OverriddenVisitor {
         DELEGATE(TupleMake);
       case Expression::Id::TupleExtractId:
         DELEGATE(TupleExtract);
+      case Expression::Id::I31NewId:
+        DELEGATE(I31New);
+      case Expression::Id::I31GetId:
+        DELEGATE(I31Get);
+      case Expression::Id::RefTestId:
+        DELEGATE(RefTest);
+      case Expression::Id::RefCastId:
+        DELEGATE(RefCast);
+      case Expression::Id::BrOnCastId:
+        DELEGATE(BrOnCast);
+      case Expression::Id::RttCanonId:
+        DELEGATE(RttCanon);
+      case Expression::Id::RttSubId:
+        DELEGATE(RttSub);
+      case Expression::Id::StructNewId:
+        DELEGATE(StructNew);
+      case Expression::Id::StructGetId:
+        DELEGATE(StructGet);
+      case Expression::Id::StructSetId:
+        DELEGATE(StructSet);
+      case Expression::Id::ArrayNewId:
+        DELEGATE(ArrayNew);
+      case Expression::Id::ArrayGetId:
+        DELEGATE(ArrayGet);
+      case Expression::Id::ArraySetId:
+        DELEGATE(ArraySet);
+      case Expression::Id::ArrayLenId:
+        DELEGATE(ArrayLen);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -518,6 +614,9 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitRefFunc(RefFunc* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
+  ReturnType visitRefEq(RefEq* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
   ReturnType visitTry(Try* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
@@ -543,6 +642,48 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitTupleExtract(TupleExtract* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitI31New(I31New* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitI31Get(I31Get* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefTest(RefTest* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRefCast(RefCast* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitBrOnCast(BrOnCast* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRttCanon(RttCanon* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRttSub(RttSub* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitStructNew(StructNew* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitStructGet(StructGet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitStructSet(StructSet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitArrayNew(ArrayNew* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitArrayGet(ArrayGet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitArraySet(ArraySet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitArrayLen(ArrayLen* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
 };
@@ -790,6 +931,9 @@ struct Walker : public VisitorType {
   static void doVisitSIMDLoad(SubType* self, Expression** currp) {
     self->visitSIMDLoad((*currp)->cast<SIMDLoad>());
   }
+  static void doVisitSIMDLoadStoreLane(SubType* self, Expression** currp) {
+    self->visitSIMDLoadStoreLane((*currp)->cast<SIMDLoadStoreLane>());
+  }
   static void doVisitMemoryInit(SubType* self, Expression** currp) {
     self->visitMemoryInit((*currp)->cast<MemoryInit>());
   }
@@ -835,6 +979,9 @@ struct Walker : public VisitorType {
   static void doVisitRefFunc(SubType* self, Expression** currp) {
     self->visitRefFunc((*currp)->cast<RefFunc>());
   }
+  static void doVisitRefEq(SubType* self, Expression** currp) {
+    self->visitRefEq((*currp)->cast<RefEq>());
+  }
   static void doVisitTry(SubType* self, Expression** currp) {
     self->visitTry((*currp)->cast<Try>());
   }
@@ -861,6 +1008,48 @@ struct Walker : public VisitorType {
   }
   static void doVisitTupleExtract(SubType* self, Expression** currp) {
     self->visitTupleExtract((*currp)->cast<TupleExtract>());
+  }
+  static void doVisitI31New(SubType* self, Expression** currp) {
+    self->visitI31New((*currp)->cast<I31New>());
+  }
+  static void doVisitI31Get(SubType* self, Expression** currp) {
+    self->visitI31Get((*currp)->cast<I31Get>());
+  }
+  static void doVisitRefTest(SubType* self, Expression** currp) {
+    self->visitRefTest((*currp)->cast<RefTest>());
+  }
+  static void doVisitRefCast(SubType* self, Expression** currp) {
+    self->visitRefCast((*currp)->cast<RefCast>());
+  }
+  static void doVisitBrOnCast(SubType* self, Expression** currp) {
+    self->visitBrOnCast((*currp)->cast<BrOnCast>());
+  }
+  static void doVisitRttCanon(SubType* self, Expression** currp) {
+    self->visitRttCanon((*currp)->cast<RttCanon>());
+  }
+  static void doVisitRttSub(SubType* self, Expression** currp) {
+    self->visitRttSub((*currp)->cast<RttSub>());
+  }
+  static void doVisitStructNew(SubType* self, Expression** currp) {
+    self->visitStructNew((*currp)->cast<StructNew>());
+  }
+  static void doVisitStructGet(SubType* self, Expression** currp) {
+    self->visitStructGet((*currp)->cast<StructGet>());
+  }
+  static void doVisitStructSet(SubType* self, Expression** currp) {
+    self->visitStructSet((*currp)->cast<StructSet>());
+  }
+  static void doVisitArrayNew(SubType* self, Expression** currp) {
+    self->visitArrayNew((*currp)->cast<ArrayNew>());
+  }
+  static void doVisitArrayGet(SubType* self, Expression** currp) {
+    self->visitArrayGet((*currp)->cast<ArrayGet>());
+  }
+  static void doVisitArraySet(SubType* self, Expression** currp) {
+    self->visitArraySet((*currp)->cast<ArraySet>());
+  }
+  static void doVisitArrayLen(SubType* self, Expression** currp) {
+    self->visitArrayLen((*currp)->cast<ArrayLen>());
   }
 
   void setModule(Module* module) { currModule = module; }
@@ -1031,6 +1220,12 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDLoad>()->ptr);
         break;
       }
+      case Expression::Id::SIMDLoadStoreLaneId: {
+        self->pushTask(SubType::doVisitSIMDLoadStoreLane, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->vec);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->ptr);
+        break;
+      }
       case Expression::Id::MemoryInitId: {
         self->pushTask(SubType::doVisitMemoryInit, currp);
         self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
@@ -1108,6 +1303,12 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitRefFunc, currp);
         break;
       }
+      case Expression::Id::RefEqId: {
+        self->pushTask(SubType::doVisitRefEq, currp);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->right);
+        self->pushTask(SubType::scan, &curr->cast<RefEq>()->left);
+        break;
+      }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
@@ -1157,6 +1358,64 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
         break;
       }
+      case Expression::Id::I31NewId: {
+        self->pushTask(SubType::doVisitI31New, currp);
+        self->pushTask(SubType::scan, &curr->cast<I31New>()->value);
+        break;
+      }
+      case Expression::Id::I31GetId: {
+        self->pushTask(SubType::doVisitI31Get, currp);
+        self->pushTask(SubType::scan, &curr->cast<I31Get>()->i31);
+        break;
+      }
+      case Expression::Id::RefTestId:
+        self->pushTask(SubType::doVisitRefTest, currp);
+        WASM_UNREACHABLE("TODO (gc): ref.test");
+        break;
+      case Expression::Id::RefCastId:
+        self->pushTask(SubType::doVisitRefCast, currp);
+        WASM_UNREACHABLE("TODO (gc): ref.cast");
+        break;
+      case Expression::Id::BrOnCastId:
+        self->pushTask(SubType::doVisitBrOnCast, currp);
+        WASM_UNREACHABLE("TODO (gc): br_on_cast");
+        break;
+      case Expression::Id::RttCanonId:
+        self->pushTask(SubType::doVisitRttCanon, currp);
+        WASM_UNREACHABLE("TODO (gc): rtt.canon");
+        break;
+      case Expression::Id::RttSubId:
+        self->pushTask(SubType::doVisitRttSub, currp);
+        WASM_UNREACHABLE("TODO (gc): rtt.sub");
+        break;
+      case Expression::Id::StructNewId:
+        self->pushTask(SubType::doVisitStructNew, currp);
+        WASM_UNREACHABLE("TODO (gc): struct.new");
+        break;
+      case Expression::Id::StructGetId:
+        self->pushTask(SubType::doVisitStructGet, currp);
+        WASM_UNREACHABLE("TODO (gc): struct.get");
+        break;
+      case Expression::Id::StructSetId:
+        self->pushTask(SubType::doVisitStructSet, currp);
+        WASM_UNREACHABLE("TODO (gc): struct.set");
+        break;
+      case Expression::Id::ArrayNewId:
+        self->pushTask(SubType::doVisitArrayNew, currp);
+        WASM_UNREACHABLE("TODO (gc): array.new");
+        break;
+      case Expression::Id::ArrayGetId:
+        self->pushTask(SubType::doVisitArrayGet, currp);
+        WASM_UNREACHABLE("TODO (gc): array.get");
+        break;
+      case Expression::Id::ArraySetId:
+        self->pushTask(SubType::doVisitArraySet, currp);
+        WASM_UNREACHABLE("TODO (gc): array.set");
+        break;
+      case Expression::Id::ArrayLenId:
+        self->pushTask(SubType::doVisitArrayLen, currp);
+        WASM_UNREACHABLE("TODO (gc): array.len");
+        break;
       case Expression::Id::NumExpressionIds:
         WASM_UNREACHABLE("unexpected expression type");
     }

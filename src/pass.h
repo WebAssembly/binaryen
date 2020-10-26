@@ -102,6 +102,20 @@ struct PassOptions {
   // many cases.
   bool lowMemoryUnused = false;
   enum { LowMemoryBound = 1024 };
+  // Whether to allow "loose" math semantics, ignoring corner cases with NaNs
+  // and assuming math follows the algebraic rules for associativity and so
+  // forth (which IEEE floats do not, strictly speaking). This is inspired by
+  // gcc/clang's -ffast-math flag.
+  bool fastMath = false;
+  // Whether to assume that an imported memory has not been modified. Without
+  // this, we can do fewer optimizations on memory segments, because if memory
+  // *was* modified then the wasm's segments may trample those previous
+  // modifications. If memory was not modified, we can assume it starts as zero,
+  // which allows us to remove zeros from wasm's segments.
+  // (This is not a problem if the memory is *not* imported, since then wasm
+  // creates it and we know it is all zeros right before the active segments are
+  // applied.)
+  bool unmodifiedImportedMemory = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to
@@ -221,9 +235,11 @@ struct PassRunner {
   //                     doesn't help anyhow and also is bad for e.g. printing
   //                     which is a pass)
   // this method returns whether we are in passDebug mode, and which value:
-  //  1: run pass by pass, validating in between
-  //  2: also save the last pass, so it breakage happens we can print the last
-  //  one 3: also dump out byn-* files for each pass
+  //  1: log out each pass that we run, and validate in between (can pass
+  //     --no-validation to skip validation).
+  //  2: like 1, and also save the last pass's output, so if breakage happens we
+  //     can print a useful error. also logs out names of nested passes.
+  //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
 protected:

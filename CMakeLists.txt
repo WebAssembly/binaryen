@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 97)
+project(binaryen LANGUAGES C CXX VERSION 98)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -214,6 +214,7 @@ else()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-fno-omit-frame-pointer")
+  add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
   # flags once we resolve the issue.
   add_compile_flag("-Wno-implicit-int-float-conversion")
@@ -250,15 +251,8 @@ if(EMSCRIPTEN)
   add_link_flag("-s DISABLE_EXCEPTION_CATCHING=0")
   # make the tools immediately usable on Node.js
   add_link_flag("-s NODERAWFS")
-  # this can be moved into the fastcomp section once upstream ignores this flag,
-  # https://github.com/emscripten-core/emscripten/pull/9897
-  add_compile_flag("-Wno-almost-asm")
-  # check for fastcomp by the clang version, which is stuck in fastcomp way
-  # back in the past
-  if(NOT ${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
-    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-    add_nondebug_compile_flag("-s WASM_OBJECT_FILES=0")
-  endif()
+  # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+  add_nondebug_compile_flag("-flto")
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -364,7 +358,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
-  target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
+  target_link_libraries(binaryen_wasm optimized "-flto")
   target_link_libraries(binaryen_wasm debug "--profiling")
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -388,7 +382,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
-  target_link_libraries(binaryen_js optimized "--llvm-lto 1")
+  target_link_libraries(binaryen_js optimized "-flto")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-s ASSERTIONS")
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD ${CXX_STANDARD})

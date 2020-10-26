@@ -192,6 +192,8 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -294,6 +296,8 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -347,7 +351,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
 
 #define CASE_FOR_OP(Op)                                                        \
-  case Op:                                                                     \
+  case RMW##Op:                                                                \
     switch (curr->type.getBasic()) {                                           \
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
@@ -643,6 +647,39 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
 }
 
+void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case LoadLaneVec8x16:
+      o << U32LEB(BinaryConsts::V128Load8Lane);
+      break;
+    case LoadLaneVec16x8:
+      o << U32LEB(BinaryConsts::V128Load16Lane);
+      break;
+    case LoadLaneVec32x4:
+      o << U32LEB(BinaryConsts::V128Load32Lane);
+      break;
+    case LoadLaneVec64x2:
+      o << U32LEB(BinaryConsts::V128Load64Lane);
+      break;
+    case StoreLaneVec8x16:
+      o << U32LEB(BinaryConsts::V128Store8Lane);
+      break;
+    case StoreLaneVec16x8:
+      o << U32LEB(BinaryConsts::V128Store16Lane);
+      break;
+    case StoreLaneVec32x4:
+      o << U32LEB(BinaryConsts::V128Store32Lane);
+      break;
+    case StoreLaneVec64x2:
+      o << U32LEB(BinaryConsts::V128Store64Lane);
+      break;
+  }
+  assert(curr->align);
+  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+  o << curr->index;
+}
+
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);
@@ -697,6 +734,8 @@ void BinaryInstWriter::visitConst(Const* curr) {
     case Type::externref:
     case Type::exnref:
     case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1695,6 +1734,10 @@ void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
     << U32LEB(parent.getFunctionIndex(curr->func));
 }
 
+void BinaryInstWriter::visitRefEq(RefEq* curr) {
+  o << int8_t(BinaryConsts::RefEq);
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
@@ -1763,6 +1806,71 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
     o << int8_t(BinaryConsts::Drop);
   }
   o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
+}
+
+void BinaryInstWriter::visitI31New(I31New* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+}
+
+void BinaryInstWriter::visitI31Get(I31Get* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
+}
+
+void BinaryInstWriter::visitRefTest(RefTest* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
+  WASM_UNREACHABLE("TODO (gc): ref.test");
+}
+
+void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
+  WASM_UNREACHABLE("TODO (gc): ref.cast");
+}
+
+void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+}
+
+void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
+  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+}
+
+void BinaryInstWriter::visitRttSub(RttSub* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
+  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+}
+
+void BinaryInstWriter::visitStructNew(StructNew* curr) {
+  WASM_UNREACHABLE("TODO (gc): struct.new");
+}
+
+void BinaryInstWriter::visitStructGet(StructGet* curr) {
+  WASM_UNREACHABLE("TODO (gc): struct.get");
+}
+
+void BinaryInstWriter::visitStructSet(StructSet* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  WASM_UNREACHABLE("TODO (gc): struct.set");
+}
+
+void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
+  WASM_UNREACHABLE("TODO (gc): array.new");
+}
+
+void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
+  WASM_UNREACHABLE("TODO (gc): array.get");
+}
+
+void BinaryInstWriter::visitArraySet(ArraySet* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
+  WASM_UNREACHABLE("TODO (gc): array.set");
+}
+
+void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
+  WASM_UNREACHABLE("TODO (gc): array.len");
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
@@ -1860,7 +1968,7 @@ void BinaryInstWriter::setScratchLocals() {
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
                                         uint32_t offset) {
-  o << U32LEB(Log2(alignment ? alignment : bytes));
+  o << U32LEB(Bits::log2(alignment ? alignment : bytes));
   o << U32LEB(offset);
 }
 
@@ -1907,7 +2015,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
 
 StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
                                            Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = module.allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

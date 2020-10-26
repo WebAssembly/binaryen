@@ -74,7 +74,7 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(getSingleLiteralFromConstExpression(argument));
+      arguments.push_back(getLiteralFromConstExpression(argument));
     }
   }
 

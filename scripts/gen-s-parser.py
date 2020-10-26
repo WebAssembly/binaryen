@@ -350,6 +350,14 @@ instructions = [
     ("v128.xor",             "makeBinary(s, BinaryOp::XorVec128)"),
     ("v128.andnot",          "makeBinary(s, BinaryOp::AndNotVec128)"),
     ("v128.bitselect",       "makeSIMDTernary(s, SIMDTernaryOp::Bitselect)"),
+    ("v128.load8_lane",      "makeSIMDLoadStoreLane(s, LoadLaneVec8x16)"),
+    ("v128.load16_lane",     "makeSIMDLoadStoreLane(s, LoadLaneVec16x8)"),
+    ("v128.load32_lane",     "makeSIMDLoadStoreLane(s, LoadLaneVec32x4)"),
+    ("v128.load64_lane",     "makeSIMDLoadStoreLane(s, LoadLaneVec64x2)"),
+    ("v128.store8_lane",     "makeSIMDLoadStoreLane(s, StoreLaneVec8x16)"),
+    ("v128.store16_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec16x8)"),
+    ("v128.store32_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec32x4)"),
+    ("v128.store64_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec64x2)"),
     ("i8x16.abs",            "makeUnary(s, UnaryOp::AbsVecI8x16)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
     ("i8x16.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI8x16)"),
@@ -495,7 +503,30 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
-    ("pop",                  "makePop(s)")
+    ("pop",                  "makePop(s)"),
+    # GC
+    ("ref.eq",               "makeRefEq(s)"),
+    ("i31.new",              "makeI31New(s)"),
+    ("i31.get_s",            "makeI31Get(s, true)"),
+    ("i31.get_u",            "makeI31Get(s, false)"),
+    ("ref.test",             "makeRefTest(s)"),
+    ("ref.cast",             "makeRefCast(s)"),
+    ("br_on_cast",           "makeBrOnCast(s)"),
+    ("rtt.canon",            "makeRttCanon(s)"),
+    ("rtt.sub",              "makeRttSub(s)"),
+    ("struct.new_with_rtt",  "makeStructNew(s, false)"),
+    ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
+    ("struct.get",           "makeStructGet(s)"),
+    ("struct.get_s",         "makeStructGet(s, true)"),
+    ("struct.get_u",         "makeStructGet(s, false)"),
+    ("struct.set",           "makeStructSet(s)"),
+    ("array.new_with_rtt",   "makeArrayNew(s, false)"),
+    ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
+    ("array.get",           "makeArrayGet(s)"),
+    ("array.get_s",         "makeArrayGet(s, true)"),
+    ("array.get_u",         "makeArrayGet(s, false)"),
+    ("array.set",           "makeArraySet(s)"),
+    ("array.len",           "makeArrayLen(s)")
 ]
 
 

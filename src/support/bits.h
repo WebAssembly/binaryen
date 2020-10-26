@@ -29,61 +29,74 @@
  *
  * We instead use portable and reasonably-fast implementations, while
  * avoiding implementations with large lookup tables.
- *
- * TODO: The convention here should be changed PopCount => popCount,
- *       initial lowercase, to match the rest of the codebase.
  */
 
 namespace wasm {
 
-template<typename T> int PopCount(T);
-template<typename T> uint32_t BitReverse(T);
-template<typename T> int CountTrailingZeroes(T);
-template<typename T> int CountLeadingZeroes(T);
+namespace Bits {
 
-#ifndef wasm_support_bits_definitions
-// The template specializations are provided elsewhere.
-extern template int PopCount(uint8_t);
-extern template int PopCount(uint16_t);
-extern template int PopCount(uint32_t);
-extern template int PopCount(uint64_t);
-extern template uint32_t BitReverse(uint32_t);
-extern template int CountTrailingZeroes(uint32_t);
-extern template int CountTrailingZeroes(uint64_t);
-extern template int CountLeadingZeroes(uint32_t);
-extern template int CountLeadingZeroes(uint64_t);
-#endif
+int popCount(uint8_t);
+int popCount(uint16_t);
+int popCount(uint32_t);
+int popCount(uint64_t);
 
-// Convenience signed -> unsigned. It usually doesn't make much sense to use bit
-// functions on signed types.
-template<typename T> int PopCount(T v) {
-  return PopCount(typename std::make_unsigned<T>::type(v));
+inline int popCount(int8_t v) { return popCount(uint8_t(v)); }
+inline int popCount(int16_t v) { return popCount(uint16_t(v)); }
+inline int popCount(int32_t v) { return popCount(uint32_t(v)); }
+inline int popCount(int64_t v) { return popCount(uint64_t(v)); }
+
+uint32_t bitReverse(uint32_t);
+
+int countTrailingZeroes(uint32_t);
+int countTrailingZeroes(uint64_t);
+
+inline int countTrailingZeroes(int32_t v) {
+  return countTrailingZeroes(uint32_t(v));
 }
-template<typename T> int CountTrailingZeroes(T v) {
-  return CountTrailingZeroes(typename std::make_unsigned<T>::type(v));
+inline int countTrailingZeroes(int64_t v) {
+  return countTrailingZeroes(uint64_t(v));
 }
-template<typename T> int CountLeadingZeroes(T v) {
-  return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
+
+int countLeadingZeroes(uint32_t);
+int countLeadingZeroes(uint64_t);
+
+inline int countLeadingZeroes(int32_t v) {
+  return countLeadingZeroes(uint32_t(v));
 }
-template<typename T> bool IsPowerOf2(T v) {
+inline int countLeadingZeroes(int64_t v) {
+  return countLeadingZeroes(uint64_t(v));
+}
+
+int ceilLog2(uint32_t);
+int ceilLog2(uint64_t);
+
+inline int ceilLog2(int32_t v) { return ceilLog2(uint32_t(v)); }
+inline int ceilLog2(int64_t v) { return ceilLog2(uint64_t(v)); }
+
+template<typename T> bool isPowerOf2(T v) {
   return v != 0 && (v & (v - 1)) == 0;
 }
 
-template<typename T, typename U> inline static T RotateLeft(T val, U count) {
+bool isPowerOf2InvertibleFloat(float);
+bool isPowerOf2InvertibleFloat(double);
+
+template<typename T, typename U> inline static T rotateLeft(T val, U count) {
   auto value = typename std::make_unsigned<T>::type(val);
   U mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
   return (value << count) | (value >> (-count & mask));
 }
-template<typename T, typename U> inline static T RotateRight(T val, U count) {
+template<typename T, typename U> inline static T rotateRight(T val, U count) {
   auto value = typename std::make_unsigned<T>::type(val);
   U mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
   return (value >> count) | (value << (-count & mask));
 }
 
-extern uint32_t Log2(uint32_t v);
-extern uint32_t Pow2(uint32_t v);
+uint32_t log2(uint32_t v);
+uint32_t pow2(uint32_t v);
+
+} // namespace Bits
 
 } // namespace wasm
 

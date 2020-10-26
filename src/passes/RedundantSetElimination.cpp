@@ -191,7 +191,7 @@ struct RedundantSetElimination
             start[i] = getUniqueValue();
           } else {
             start[i] =
-              getLiteralValue(Literal::makeZero(func->getLocalType(i)));
+              getLiteralValue(Literal::makeZeros(func->getLocalType(i)));
           }
         }
       } else {

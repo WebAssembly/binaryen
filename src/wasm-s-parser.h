@@ -120,6 +120,8 @@ class SExpressionWasmBuilder {
   int functionCounter = 0;
   int globalCounter = 0;
   int eventCounter = 0;
+  int tableCounter = 0;
+  int memoryCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, Type> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
@@ -173,7 +175,7 @@ public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);
 
-  MixedArena& getAllocator() { return allocator; }
+  Module& getModule() { return wasm; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -210,6 +212,7 @@ private:
   Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
+  Expression* makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
@@ -235,6 +238,7 @@ private:
   Expression* makeRefNull(Element& s);
   Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
+  Expression* makeRefEq(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -242,10 +246,27 @@ private:
   Expression* makeBrOnExn(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
+  Expression* makeI31New(Element& s);
+  Expression* makeI31Get(Element& s, bool signed_);
+  Expression* makeRefTest(Element& s);
+  Expression* makeRefCast(Element& s);
+  Expression* makeBrOnCast(Element& s);
+  Expression* makeRttCanon(Element& s);
+  Expression* makeRttSub(Element& s);
+  Expression* makeStructNew(Element& s, bool default_);
+  Expression* makeStructGet(Element& s);
+  Expression* makeStructGet(Element& s, bool signed_);
+  Expression* makeStructSet(Element& s);
+  Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayGet(Element& s);
+  Expression* makeArrayGet(Element& s, bool signed_);
+  Expression* makeArraySet(Element& s);
+  Expression* makeArrayLen(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);

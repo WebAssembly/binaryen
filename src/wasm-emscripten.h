@@ -33,13 +33,8 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
   void generatePostInstantiateFunction();
-
-  // Remove the import of a mutable __stack_pointer and instead initialize the
-  // stack pointer from an immutable import.
-  void internalizeStackPointerGlobal();
 
   std::string
   generateEmscriptenMetadata(Address staticBump,
@@ -59,8 +54,6 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
-  void generateDynCallThunk(Signature sig);
-
   bool standalone = false;
   bool sideModule = false;
   bool minimizeWasmChanges = false;
@@ -72,9 +65,6 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
-  // Used by generateDynCallThunk to track all the dynCall functions created
-  // so far.
-  std::unordered_set<Signature> sigs;
 };
 
 } // namespace wasm

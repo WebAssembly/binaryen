@@ -29,6 +29,14 @@ typedef std::vector<Literal> Loggings;
 struct LoggingExternalInterface : public ShellExternalInterface {
   Loggings& loggings;
 
+  struct State {
+    // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
+    // temporary return value of 32 bits; "0" is the only important value for
+    // 64-bit legalization, which needs one such 32-bit chunk in addition to
+    // the normal return value which can handle 32 bits).
+    uint32_t tempRet0 = 0;
+  } state;
+
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literals callImport(Function* import, LiteralList& arguments) override {
@@ -40,7 +48,24 @@ struct LoggingExternalInterface : public ShellExternalInterface {
         loggings.push_back(argument);
       }
       std::cout << "]\n";
+      return {};
+    } else if (import->module == ENV) {
+      if (import->base == "log_execution") {
+        std::cout << "[LoggingExternalInterface log-execution";
+        for (auto argument : arguments) {
+          std::cout << ' ' << argument;
+        }
+        std::cout << "]\n";
+        return {};
+      } else if (import->base == "setTempRet0") {
+        state.tempRet0 = arguments[0].geti32();
+        return {};
+      } else if (import->base == "getTempRet0") {
+        return {Literal(state.tempRet0)};
+      }
     }
+    std::cerr << "[LoggingExternalInterface ignoring an unknown import "
+              << import->module << " . " << import->base << '\n';
     return {};
   }
 };
@@ -147,7 +172,7 @@ struct ExecutionResults {
       // call the method
       for (const auto& param : func->sig.params) {
         // zeros in arguments TODO: more?
-        arguments.push_back(Literal::makeSingleZero(param));
+        arguments.push_back(Literal::makeZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {

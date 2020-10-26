@@ -135,6 +135,7 @@ struct ReFinalize
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -150,6 +151,7 @@ struct ReFinalize
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
   void visitRefFunc(RefFunc* curr);
+  void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -159,6 +161,20 @@ struct ReFinalize
   void visitPop(Pop* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitI31New(I31New* curr);
+  void visitI31Get(I31Get* curr);
+  void visitRefTest(RefTest* curr);
+  void visitRefCast(RefCast* curr);
+  void visitBrOnCast(BrOnCast* curr);
+  void visitRttCanon(RttCanon* curr);
+  void visitRttSub(RttSub* curr);
+  void visitStructNew(StructNew* curr);
+  void visitStructGet(StructGet* curr);
+  void visitStructSet(StructSet* curr);
+  void visitArrayNew(ArrayNew* curr);
+  void visitArrayGet(ArrayGet* curr);
+  void visitArraySet(ArraySet* curr);
+  void visitArrayLen(ArrayLen* curr);
 
   void visitFunction(Function* curr);
 
@@ -204,6 +220,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
   void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
   void visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) { curr->finalize(); }
   void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
   void visitDataDrop(DataDrop* curr) { curr->finalize(); }
   void visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -219,6 +236,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitRefNull(RefNull* curr) { curr->finalize(); }
   void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
   void visitRefFunc(RefFunc* curr) { curr->finalize(); }
+  void visitRefEq(RefEq* curr) { curr->finalize(); }
   void visitTry(Try* curr) { curr->finalize(); }
   void visitThrow(Throw* curr) { curr->finalize(); }
   void visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -228,6 +246,20 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitPop(Pop* curr) { curr->finalize(); }
   void visitTupleMake(TupleMake* curr) { curr->finalize(); }
   void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+  void visitI31New(I31New* curr) { curr->finalize(); }
+  void visitI31Get(I31Get* curr) { curr->finalize(); }
+  void visitRefTest(RefTest* curr) { curr->finalize(); }
+  void visitRefCast(RefCast* curr) { curr->finalize(); }
+  void visitBrOnCast(BrOnCast* curr) { curr->finalize(); }
+  void visitRttCanon(RttCanon* curr) { curr->finalize(); }
+  void visitRttSub(RttSub* curr) { curr->finalize(); }
+  void visitStructNew(StructNew* curr) { curr->finalize(); }
+  void visitStructGet(StructGet* curr) { curr->finalize(); }
+  void visitStructSet(StructSet* curr) { curr->finalize(); }
+  void visitArrayNew(ArrayNew* curr) { curr->finalize(); }
+  void visitArrayGet(ArrayGet* curr) { curr->finalize(); }
+  void visitArraySet(ArraySet* curr) { curr->finalize(); }
+  void visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
