@@ -158,8 +158,14 @@ struct DeadCodeElimination
       if (loop->body->is<Unreachable>()) {
         replaceCurrent(loop->body);
       }
-    } else if (curr->is<Try>()) {
-      // TODO
+    } else if (auto* tryy = curr->dynCast<Try>()) {
+      // If both try body and catch body are unreachable, there is no need for a
+      // concrete type, which may allow more reduction.
+      if (tryy->type != Type::unreachable &&
+          tryy->body->type == Type::unreachable &&
+          tryy->catchBody->type == Type::unreachable) {
+        typeUpdater.changeType(tryy, Type::unreachable);
+      }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
     }
