@@ -490,11 +490,6 @@ class CompareVMs(TestCaseHandler):
                 # relatively slow, so run it less frequently
                 if random.random() < 0.5:
                     return False
-                # wasm2c name mangling must be fixed for us to support initial
-                # content, which may include testcases with names that need
-                # mangling. https://github.com/WebAssembly/binaryen/pull/3228
-                if INITIAL_CONTENTS:
-                    return False
                 # wasm2c doesn't support most features
                 return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
