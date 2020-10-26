@@ -1663,18 +1663,15 @@ private:
           return curr->left;
         }
       }
-      if (type.isFloat()) {
-        // x * 2.0  ==>  x + x
-        if (binary->op == Abstract::getBinary(type, Abstract::Mul) &&
-            right->value == Literal::makeFromInt32(2, type)) {
-          Localizer localizer(binary->left, getFunction(), getModule());
-          binary->left = localizer.expr;
-          binary->right =
-            Builder(*getModule())
-              .makeLocalGet(localizer.index, localizer.expr->type);
-          binary->op = Abstract::getBinary(type, Abstract::Add);
-          return binary;
-        }
+    }
+    {
+      // x * 2.0  ==>  x + x
+      Expression* x;
+      if (matches(curr, binary(Mul, any(&x), fval(2.0))) &&
+          (x->is<LocalGet>() || x->is<GlobalGet>())) {
+        curr->op = Abstract::getBinary(type, Abstract::Add);
+        curr->right = ExpressionManipulator::copy(x, *getModule());
+        return curr;
       }
     }
     {
