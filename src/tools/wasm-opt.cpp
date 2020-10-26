@@ -238,7 +238,7 @@ int main(int argc, const char* argv[]) {
   // file that if it exists we read it, then add more fuzz on top.
   if (!translateToFuzz || initialFuzz.size()) {
     std::string inputFile =
-      !translateToFuzz ? options.extra["infile"] : initialFuzz;
+      translateToFuzz ? initialFuzz : options.extra["infile"];
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
