@@ -5458,13 +5458,29 @@
         (i64.const 63)
       )
     ))
-
-    ;; skip
-    (drop (i32.shl
+    ;; i32(x) >> (y & 32)  ->  x
+    (drop (i32.shr_u
       (local.get $x)
       (i32.and
         (local.get $y)
         (i32.const 32)
+      )
+    ))
+    ;; i64(x) >> (y & 64)  ->  x
+    (drop (i64.shr_u
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 128)
+      )
+    ))
+
+    ;; skip
+    (drop (i64.shl
+      (local.get $z)
+      (i64.and
+        (local.get $w)
+        (i64.const 32)
       )
     ))
     ;; skip
