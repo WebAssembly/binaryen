@@ -358,6 +358,7 @@ instructions = [
     ("v128.store16_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec16x8)"),
     ("v128.store32_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec32x4)"),
     ("v128.store64_lane",    "makeSIMDLoadStoreLane(s, StoreLaneVec64x2)"),
+    ("i8x16.popcnt",         "makeUnary(s, UnaryOp::PopcntVecI8x16)"),
     ("i8x16.abs",            "makeUnary(s, UnaryOp::AbsVecI8x16)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
     ("i8x16.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI8x16)"),

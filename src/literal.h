@@ -488,6 +488,7 @@ public:
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
   Literal avgrUI8x16(const Literal& other) const;
+  Literal popcntI8x16() const;
   Literal absI16x8() const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;

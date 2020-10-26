@@ -2026,6 +2026,7 @@ private:
             return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
+                                    // TODO: i8x16.popcnt once merged
                                     NegVecI8x16,
                                     NegVecI16x8,
                                     NegVecI32x4,

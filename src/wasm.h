@@ -161,6 +161,7 @@ enum UnaryOp {
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
+  PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,

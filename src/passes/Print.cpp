@@ -774,6 +774,9 @@ struct PrintExpressionContents
       case BitmaskVecI8x16:
         o << "i8x16.bitmask";
         break;
+      case PopcntVecI8x16:
+        o << "i8x16.popcnt";
+        break;
       case AbsVecI16x8:
         o << "i16x8.abs";
         break;

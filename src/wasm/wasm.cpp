@@ -826,6 +826,7 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:

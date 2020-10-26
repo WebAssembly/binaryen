@@ -525,6 +525,11 @@
    (local.get $1)
   )
  )
+ (func $i8x16.popcnt (param $0 v128) (result v128)
+  (i8x16.popcnt
+   (local.get $0)
+  )
+ )
  (func $i8x16.abs (param $0 v128) (result v128)
   (i8x16.abs
    (local.get $0)
