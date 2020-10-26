@@ -193,12 +193,7 @@ def pick_initial_contents():
         # corner cases of escaping of names is not interesting
         'names.wast',
         # huge amount of locals that make it extremely slow
-        'too_much_for_liveness.wasm',
-        # these contain illegal pops()
-        # https://github.com/WebAssembly/binaryen/issues/3213
-        'instrument-locals_all-features.wast',
-        'remove-unused-names_code-folding_all-features.wast',
-        'Os_print-stack-ir_all-features.wast'
+        'too_much_for_liveness.wasm'
     ]:
         print('initial contents is disallowed')
         return
