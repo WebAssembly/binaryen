@@ -42,9 +42,24 @@
     (local.set $E (local.get $E))
 
     ;; Pop instructions should not be instrumented
-    (local.set $F (pop funcref))
-    (local.set $X (pop externref))
-    (local.set $E (pop exnref))
+    (try
+      (do)
+      (catch
+        (local.set $F (pop funcref))
+      )
+    )
+    (try
+      (do)
+      (catch
+        (local.set $X (pop externref))
+      )
+    )
+    (try
+      (do)
+      (catch
+        (local.set $E (pop exnref))
+      )
+    )
 
     ;; Add new instructions here so expected output doesn't change too much, it
     ;; depends on order of instructions in this file.

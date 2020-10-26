@@ -61,6 +61,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSIMDTernary(SIMDTernary* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
   ReturnType visitSIMDLoad(SIMDLoad* curr) { return ReturnType(); }
+  ReturnType visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    return ReturnType();
+  }
   ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
   ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
   ReturnType visitMemoryCopy(MemoryCopy* curr) { return ReturnType(); }
@@ -290,6 +293,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(SIMDTernary);
   UNIMPLEMENTED(SIMDShift);
   UNIMPLEMENTED(SIMDLoad);
+  UNIMPLEMENTED(SIMDLoadStoreLane);
   UNIMPLEMENTED(MemoryInit);
   UNIMPLEMENTED(DataDrop);
   UNIMPLEMENTED(MemoryCopy);
@@ -395,6 +399,8 @@ struct OverriddenVisitor {
         DELEGATE(SIMDShift);
       case Expression::Id::SIMDLoadId:
         DELEGATE(SIMDLoad);
+      case Expression::Id::SIMDLoadStoreLaneId:
+        DELEGATE(SIMDLoadStoreLane);
       case Expression::Id::MemoryInitId:
         DELEGATE(MemoryInit);
       case Expression::Id::DataDropId:
@@ -925,6 +931,9 @@ struct Walker : public VisitorType {
   static void doVisitSIMDLoad(SubType* self, Expression** currp) {
     self->visitSIMDLoad((*currp)->cast<SIMDLoad>());
   }
+  static void doVisitSIMDLoadStoreLane(SubType* self, Expression** currp) {
+    self->visitSIMDLoadStoreLane((*currp)->cast<SIMDLoadStoreLane>());
+  }
   static void doVisitMemoryInit(SubType* self, Expression** currp) {
     self->visitMemoryInit((*currp)->cast<MemoryInit>());
   }
@@ -1209,6 +1218,12 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::SIMDLoadId: {
         self->pushTask(SubType::doVisitSIMDLoad, currp);
         self->pushTask(SubType::scan, &curr->cast<SIMDLoad>()->ptr);
+        break;
+      }
+      case Expression::Id::SIMDLoadStoreLaneId: {
+        self->pushTask(SubType::doVisitSIMDLoadStoreLane, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->vec);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->ptr);
         break;
       }
       case Expression::Id::MemoryInitId: {

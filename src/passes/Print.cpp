@@ -274,22 +274,22 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
-      case Add:
+      case RMWAdd:
         o << "add";
         break;
-      case Sub:
+      case RMWSub:
         o << "sub";
         break;
-      case And:
+      case RMWAnd:
         o << "and";
         break;
-      case Or:
+      case RMWOr:
         o << "or";
         break;
-      case Xor:
+      case RMWXor:
         o << "xor";
         break;
-      case Xchg:
+      case RMWXchg:
         o << "xchg";
         break;
     }
@@ -498,6 +498,43 @@ struct PrintExpressionContents
     if (curr->align != curr->getMemBytes()) {
       o << " align=" << curr->align;
     }
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case LoadLaneVec8x16:
+        o << "v128.load8_lane";
+        break;
+      case LoadLaneVec16x8:
+        o << "v128.load16_lane";
+        break;
+      case LoadLaneVec32x4:
+        o << "v128.load32_lane";
+        break;
+      case LoadLaneVec64x2:
+        o << "v128.load64_lane";
+        break;
+      case StoreLaneVec8x16:
+        o << "v128.store8_lane";
+        break;
+      case StoreLaneVec16x8:
+        o << "v128.store16_lane";
+        break;
+      case StoreLaneVec32x4:
+        o << "v128.store32_lane";
+        break;
+      case StoreLaneVec64x2:
+        o << "v128.store64_lane";
+        break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->getMemBytes()) {
+      o << " align=" << curr->align;
+    }
+    o << " " << int(curr->index);
   }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
@@ -1906,6 +1943,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ptr);
+    decIndent();
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->vec);
     decIndent();
   }
   void visitMemoryInit(MemoryInit* curr) {

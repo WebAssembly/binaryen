@@ -385,6 +385,16 @@ struct EffectAnalyzer
       implicitTrap = true;
     }
   }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    if (curr->isLoad()) {
+      readsMemory = true;
+    } else {
+      writesMemory = true;
+    }
+    if (!ignoreImplicitTraps) {
+      implicitTrap = true;
+    }
+  }
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;
     if (!ignoreImplicitTraps) {

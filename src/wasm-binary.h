@@ -791,6 +791,15 @@ enum ASTNodes {
   V128Xor = 0x51,
   V128Bitselect = 0x52,
 
+  V128Load8Lane = 0x58,
+  V128Load16Lane = 0x59,
+  V128Load32Lane = 0x5a,
+  V128Load64Lane = 0x5b,
+  V128Store8Lane = 0x5c,
+  V128Store16Lane = 0x5d,
+  V128Store32Lane = 0x5e,
+  V128Store64Lane = 0x5f,
+
   I8x16Abs = 0x60,
   I8x16Neg = 0x61,
   I8x16AnyTrue = 0x62,
@@ -1486,6 +1495,7 @@ public:
   bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
