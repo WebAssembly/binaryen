@@ -122,16 +122,16 @@ ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
 
 
 def randomize_fuzz_settings():
-    # the optimizations to run on the wasm
+    # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
 
-    # whether NaN values are allowed, or we de-NaN them
+    # a boolean whether NaN values are allowed, or we de-NaN them
     global NANS
 
-    # whether out of bounds operations are allowed, or we bounds-enforce them
+    # a boolean whether out of bounds operations are allowed, or we bounds-enforce them
     global OOB
 
-    # whether we legalize the wasm for JS
+    # a boolean whether we legalize the wasm for JS
     global LEGALIZE
 
     FUZZ_OPTS = []
@@ -170,8 +170,8 @@ def randomize_fuzz_settings():
 
 
 def pick_initial_contents():
-    # whether we use an initial wasm file's contents as the basis for the
-    # fuzzing, or if we start entirely from scratch
+    # if we use an initial wasm file's contents as the basis for the
+    # fuzzing, then that filename, or None if we start entirely from scratch
     global INITIAL_CONTENTS
 
     INITIAL_CONTENTS = None
