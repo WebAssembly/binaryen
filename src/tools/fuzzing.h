@@ -478,8 +478,11 @@ private:
     for (auto& segment : wasm.memory.segments) {
       Address maxOffset = segment.data.size();
       if (!segment.isPassive) {
-        // If the offset is a global that was imported (which is ok) but no
-        // longer is (not ok) we need to change that.
+        // It is legal to use an imported global as a segment initializer, but
+        // *not* to use a non-imported global. We have made all globals be
+        // non-imported earlier (to avoid having to handle arbitrary imports
+        // in the fuzzer harness), which means we may refer to a global here
+        // that used to be imported, but no longer is, which we must fix up.
         if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
           if (!wasm.getGlobal(offset->name)->imported()) {
             // TODO: the segments must not overlap...
