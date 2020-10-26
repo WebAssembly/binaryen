@@ -512,7 +512,7 @@ private:
       wasm.memory.max =
         std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
     }
-    // See above for globals.
+    // Avoid an imported memory (which the fuzz harness would need to handle).
     wasm.memory.module = wasm.memory.base = Name();
   }
 
@@ -535,7 +535,7 @@ private:
     }
     wasm.table.max =
       oneIn(2) ? Address(Table::kUnlimitedSize) : wasm.table.initial;
-    // See above for globals.
+    // Avoid an imported table (which the fuzz harness would need to handle).
     wasm.table.module = wasm.table.base = Name();
   }
 
@@ -722,10 +722,6 @@ private:
       std::map<Type, std::vector<Expression*>> exprsByType;
 
       void visitExpression(Expression* curr) {
-        // Some things cannot be moved around easily, give up on them.
-        if (!FindAll<Pop>(curr).list.empty()) {
-          return;
-        }
         exprsByType[curr->type].push_back(curr);
       }
     };
