@@ -1701,11 +1701,14 @@ private:
     using namespace Match;
     using namespace Abstract;
 
+    auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
-    // 0 <<>> y   ==>   0
-    if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
-        !effects(curr->right).hasSideEffects()) {
-      return curr->left;
+    if (type.isInteger()) {
+      // 0 <<>> y   ==>   0
+      if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
+          !effects(curr->right).hasSideEffects()) {
+        return curr->left;
+      }
     }
     {
       // fval(C) / -x   ==>  -C / x
