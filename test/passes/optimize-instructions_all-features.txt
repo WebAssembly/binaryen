@@ -4968,11 +4968,17 @@
    )
   )
   (drop
-   (i32.shl
-    (local.get $x)
-    (i32.and
-     (local.get $y)
-     (i32.const 32)
+   (local.get $x)
+  )
+  (drop
+   (local.get $z)
+  )
+  (drop
+   (i64.shl
+    (local.get $z)
+    (i64.and
+     (local.get $w)
+     (i64.const 32)
     )
    )
   )
