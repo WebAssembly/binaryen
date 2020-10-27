@@ -823,6 +823,8 @@ enum ASTNodes {
   I8x16MaxU = 0x79,
   I8x16AvgrU = 0x7b,
 
+  I8x16Popcnt = 0x7c,
+
   I16x8Abs = 0x80,
   I16x8Neg = 0x81,
   I16x8AnyTrue = 0x82,

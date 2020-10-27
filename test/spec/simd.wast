@@ -112,6 +112,7 @@
  (func (export "v128.store16_lane") (param $0 i32) (param $1 v128) (v128.store16_lane 0 (local.get $0) (local.get $1)))
  (func (export "v128.store32_lane") (param $0 i32) (param $1 v128) (v128.store32_lane 0 (local.get $0) (local.get $1)))
  (func (export "v128.store64_lane") (param $0 i32) (param $1 v128) (v128.store64_lane 0 (local.get $0) (local.get $1)))
+ (func (export "i8x16.popcnt") (param $0 v128) (result v128) (i8x16.popcnt (local.get $0)))
  (func (export "i8x16.abs") (param $0 v128) (result v128) (i8x16.abs (local.get $0)))
  (func (export "i8x16.neg") (param $0 v128) (result v128) (i8x16.neg (local.get $0)))
  (func (export "i8x16.any_true") (param $0 v128) (result i32) (i8x16.any_true (local.get $0)))
@@ -570,6 +571,9 @@
 (assert_return (invoke "v128.load" (i32.const 1024)) (v128.const i32x4 0x04030201 0x08070605 0x00000000 0x00000000))
 
 ;; i8x16 arithmetic
+(assert_return (invoke "i8x16.popcnt" (v128.const i8x16 0 1 42 -3 -56 127 -128 -126 0 -1 -42 3 56 -127 -128 126))
+  (v128.const i8x16 0 1 3 7 3 7 1 2 0 8 5 2 3 2 1 6)
+)
 (assert_return (invoke "i8x16.abs" (v128.const i8x16 0 1 42 -3 -56 127 -128 -126 0 -1 -42 3 56 -127 -128 126))
   (v128.const i8x16 0 1 42 3 56 127 -128 126 0 1 42 3 56 127 -128 126)
 )

@@ -1875,6 +1875,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
     case NotVec128:
+    case PopcntVecI8x16:
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:

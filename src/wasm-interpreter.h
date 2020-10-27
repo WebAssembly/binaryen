@@ -463,6 +463,8 @@ public:
         return value.allTrueI8x16();
       case BitmaskVecI8x16:
         return value.bitmaskI8x16();
+      case PopcntVecI8x16:
+        return value.popcntI8x16();
       case AbsVecI16x8:
         return value.absI16x8();
       case NegVecI16x8:

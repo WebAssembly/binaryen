@@ -157,6 +157,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case AnyTrueVecI8x16:
       case AllTrueVecI8x16:
       case BitmaskVecI8x16:
+      case PopcntVecI8x16:
       case AbsVecI16x8:
       case NegVecI16x8:
       case AnyTrueVecI16x8:

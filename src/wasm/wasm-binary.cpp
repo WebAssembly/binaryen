@@ -4478,6 +4478,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NotVec128;
       break;
+    case BinaryConsts::I8x16Popcnt:
+      curr = allocator.alloc<Unary>();
+      curr->op = PopcntVecI8x16;
+      break;
     case BinaryConsts::I8x16Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecI8x16;
