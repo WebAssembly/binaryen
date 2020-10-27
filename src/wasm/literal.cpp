@@ -2100,6 +2100,9 @@ Literal Literal::maxUI16x8(const Literal& other) const {
 Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
+Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement Q15 rounding, saturating multiplication");
+}
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
 }
@@ -2275,6 +2278,43 @@ Literal Literal::widenLowUToVecI32x4() const {
 }
 Literal Literal::widenHighUToVecI32x4() const {
   return widen<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
+}
+
+Literal Literal::extMulLowSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowSI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowSI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
 }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {

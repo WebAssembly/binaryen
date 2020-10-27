@@ -878,6 +878,16 @@ public:
         return left.maxUI16x8(right);
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
+      case Q15MulrSatSVecI16x8:
+        return left.q15MulrSatSI16x8(right);
+      case ExtMulLowSVecI16x8:
+        return left.extMulLowSI16x8(right);
+      case ExtMulHighSVecI16x8:
+        return left.extMulHighSI16x8(right);
+      case ExtMulLowUVecI16x8:
+        return left.extMulLowUI16x8(right);
+      case ExtMulHighUVecI16x8:
+        return left.extMulHighUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
@@ -894,12 +904,28 @@ public:
         return left.maxUI32x4(right);
       case DotSVecI16x8ToVecI32x4:
         return left.dotSI16x8toI32x4(right);
+      case ExtMulLowSVecI32x4:
+        return left.extMulLowSI32x4(right);
+      case ExtMulHighSVecI32x4:
+        return left.extMulHighSI32x4(right);
+      case ExtMulLowUVecI32x4:
+        return left.extMulLowUI32x4(right);
+      case ExtMulHighUVecI32x4:
+        return left.extMulHighUI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:
         return left.subI64x2(right);
       case MulVecI64x2:
         return left.mulI64x2(right);
+      case ExtMulLowSVecI64x2:
+        return left.extMulLowSI64x2(right);
+      case ExtMulHighSVecI64x2:
+        return left.extMulHighSI64x2(right);
+      case ExtMulLowUVecI64x2:
+        return left.extMulLowUI64x2(right);
+      case ExtMulHighUVecI64x2:
+        return left.extMulHighUI64x2(right);
 
       case AddVecF32x4:
         return left.addF32x4(right);

@@ -153,6 +153,8 @@
  (func (export "i16x8.max_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_s (local.get $0) (local.get $1)))
  (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
  (func (export "i16x8.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.avgr_u (local.get $0) (local.get $1)))
+ ;; TODO: Q15 rounding, saturating multiplication
+ ;; TODO: extending multiplications
  (func (export "i32x4.abs") (param $0 v128) (result v128) (i32x4.abs (local.get $0)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
  (func (export "i32x4.any_true") (param $0 v128) (result i32) (i32x4.any_true (local.get $0)))
