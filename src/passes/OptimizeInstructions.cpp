@@ -1704,15 +1704,15 @@ private:
     auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
     if (type.isInteger()) {
-      // 0 <<>> y  ==>   0
+      // 0 <<>> y   ==>   0
       if (left->value.isZero() && Abstract::hasAnyShift(curr->op) &&
           !effects(curr->right).hasSideEffects()) {
         return curr->left;
       }
     }
     {
+      // fval(C) / -x   ==>  -C / x
       Expression* right;
-      // fval(C) / -x   ==>   -C / x
       if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
         left->value = left->value.neg();
         curr->right = right;
