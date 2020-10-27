@@ -4688,7 +4688,7 @@
       (i64.const -1)
     ))
   )
-  (func $rhs-is-const (param $x i32) (param $y i64)
+  (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     ;; signed divs
     ;; i32(x) / -2147483648  ->  x == -2147483648
     (drop (i32.div_s
@@ -4736,6 +4736,42 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; -x * 1  =>  x * -1
+    (drop (f32.mul
+      (f32.neg
+        (local.get $fx)
+      )
+      (f32.const 1)
+    ))
+    ;; -x * -2.5  =>  x * 2.5
+    (drop (f64.mul
+      (f64.neg
+        (local.get $fy)
+      )
+      (f64.const -2.5)
+    ))
+    ;; -x / inf  =>  x / -inf
+    (drop (f32.div
+      (f32.neg
+        (local.get $fx)
+      )
+      (f32.const inf)
+    ))
+    ;; -x / -0.0  =>  x / 0.0
+    (drop (f64.div
+      (f64.neg
+        (local.get $fy)
+      )
+      (f64.const -0.0)
+    ))
+    ;; -x / nan  =>  x / -nan
+    (drop (f64.div
+      (f64.neg
+        (local.get $fy)
+      )
+      (f64.const nan)
     ))
   )
   (func $pre-combine-or (param $x i32) (param $y i32)
