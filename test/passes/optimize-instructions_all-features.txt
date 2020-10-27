@@ -4315,7 +4315,7 @@
   (drop
    (f64.mul
     (local.get $fy)
-    (f64.const 2.5)
+    (f64.const 2.1)
    )
   )
   (drop

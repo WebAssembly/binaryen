@@ -4745,12 +4745,12 @@
       )
       (f32.const 1)
     ))
-    ;; -x * -2.5  =>  x * 2.5
+    ;; -x * -2.1  =>  x * 2.1
     (drop (f64.mul
       (f64.neg
         (local.get $fy)
       )
-      (f64.const -2.5)
+      (f64.const -2.1)
     ))
     ;; 2 * -x  =>  x * -2
     (drop (f64.mul
