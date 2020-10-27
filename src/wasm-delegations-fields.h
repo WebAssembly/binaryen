@@ -377,15 +377,17 @@ switch (DELEGATE_ID) {
     DELEGATE_END();
     break;
   }
-  case Expression::Id::MemorySizeId:
+  case Expression::Id::MemorySizeId: {
     DELEGATE_START(MemorySize);
     DELEGATE_END();
     break;
-  case Expression::Id::MemoryGrowId:
+  }
+  case Expression::Id::MemoryGrowId: {
     DELEGATE_START(MemoryGrow);
     DELEGATE_FIELD_CHILD(MemoryGrow, delta);
     DELEGATE_END();
     break;
+  }
   case Expression::Id::RefNullId: {
     DELEGATE_START(RefNull);
     DELEGATE_FIELD_TYPE(RefNull, type);
@@ -480,65 +482,76 @@ switch (DELEGATE_ID) {
     DELEGATE_END();
     break;
   }
-  case Expression::Id::RefTestId:
+  case Expression::Id::RefTestId: {
     DELEGATE_START(RefTest);
     WASM_UNREACHABLE("TODO (gc): ref.test");
     DELEGATE_END();
     break;
-  case Expression::Id::RefCastId:
+  }
+  case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
     WASM_UNREACHABLE("TODO (gc): ref.cast");
     DELEGATE_END();
     break;
-  case Expression::Id::BrOnCastId:
+  }
+  case Expression::Id::BrOnCastId: {
     DELEGATE_START(BrOnCast);
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
     DELEGATE_END();
     break;
-  case Expression::Id::RttCanonId:
+  }
+  case Expression::Id::RttCanonId: {
     DELEGATE_START(RttCanon);
     WASM_UNREACHABLE("TODO (gc): rtt.canon");
     DELEGATE_END();
     break;
-  case Expression::Id::RttSubId:
+  }
+  case Expression::Id::RttSubId: {
     DELEGATE_START(RttSub);
     WASM_UNREACHABLE("TODO (gc): rtt.sub");
     DELEGATE_END();
     break;
-  case Expression::Id::StructNewId:
+  }
+  case Expression::Id::StructNewId: {
     DELEGATE_START(StructNew);
     WASM_UNREACHABLE("TODO (gc): struct.new");
     DELEGATE_END();
     break;
-  case Expression::Id::StructGetId:
+  }
+  case Expression::Id::StructGetId: {
     DELEGATE_START(StructGet);
     WASM_UNREACHABLE("TODO (gc): struct.get");
     DELEGATE_END();
     break;
-  case Expression::Id::StructSetId:
+  }
+  case Expression::Id::StructSetId: {
     DELEGATE_START(StructSet);
     WASM_UNREACHABLE("TODO (gc): struct.set");
     DELEGATE_END();
     break;
-  case Expression::Id::ArrayNewId:
+  }
+  case Expression::Id::ArrayNewId: {
     DELEGATE_START(ArrayNew);
     WASM_UNREACHABLE("TODO (gc): array.new");
     DELEGATE_END();
     break;
-  case Expression::Id::ArrayGetId:
+  }
+  case Expression::Id::ArrayGetId: {
     DELEGATE_START(ArrayGet);
     WASM_UNREACHABLE("TODO (gc): array.get");
     DELEGATE_END();
     break;
-  case Expression::Id::ArraySetId:
+  }
+  case Expression::Id::ArraySetId: {
     DELEGATE_START(ArraySet);
     WASM_UNREACHABLE("TODO (gc): array.set");
     DELEGATE_END();
     break;
-  case Expression::Id::ArrayLenId:
+  }
+  case Expression::Id::ArrayLenId: {
     DELEGATE_START(ArrayLen);
     WASM_UNREACHABLE("TODO (gc): array.len");
     DELEGATE_END();
     break;
+  }
 }
-
