@@ -191,6 +191,9 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicRMW);
     DELEGATE_FIELD_CHILD(AtomicRMW, value);
     DELEGATE_FIELD_CHILD(AtomicRMW, ptr);
+      visitor.visitInt(curr->op);
+      visitor.visitUint8(curr->bytes);
+      visitor.visitAddress(curr->offset);
     DELEGATE_END();
     break;
   }
@@ -200,6 +203,8 @@ switch (DELEGATE_ID) {
                    &curr->cast<AtomicCmpxchg, replacement);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
+      visitor.visitUint8(curr->bytes);
+      visitor.visitAddress(curr->offset);
     DELEGATE_END();
     break;
   }
@@ -208,6 +213,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, timeout);
     DELEGATE_FIELD_CHILD(AtomicWait, expected);
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
+      visitor.visitAddress(curr->offset);
+      visitor.visitType(curr->expectedType);
     DELEGATE_END();
     break;
   }
@@ -215,17 +222,21 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicNotify);
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
+      visitor.visitAddress(curr->offset);
     DELEGATE_END();
     break;
   }
   case Expression::Id::AtomicFenceId: {
     DELEGATE_START(AtomicFence);
+    DELEGATE_FIELD_INT(AtomicFence, order);
     DELEGATE_END();
     break;
   }
   case Expression::Id::SIMDExtractId: {
     DELEGATE_START(SIMDExtract);
     DELEGATE_FIELD_CHILD(SIMDExtract, vec);
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
     DELEGATE_END();
     break;
   }
@@ -233,6 +244,8 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDReplace);
     DELEGATE_FIELD_CHILD(SIMDReplace, value);
     DELEGATE_FIELD_CHILD(SIMDReplace, vec);
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
     DELEGATE_END();
     break;
   }
@@ -240,6 +253,9 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDShuffle);
     DELEGATE_FIELD_CHILD(SIMDShuffle, right);
     DELEGATE_FIELD_CHILD(SIMDShuffle, left);
+      for (auto x : curr->mask) {
+        visitor.visitInt(x);
+      }
     DELEGATE_END();
     break;
   }
@@ -248,6 +264,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDTernary, c);
     DELEGATE_FIELD_CHILD(SIMDTernary, b);
     DELEGATE_FIELD_CHILD(SIMDTernary, a);
+    DELEGATE_FIELD_INT(SIMDTernary, op);
     DELEGATE_END();
     break;
   }
@@ -255,12 +272,16 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDShift);
     DELEGATE_FIELD_CHILD(SIMDShift, shift);
     DELEGATE_FIELD_CHILD(SIMDShift, vec);
+    DELEGATE_FIELD_INT(SIMDShift, op);
     DELEGATE_END();
     break;
   }
   case Expression::Id::SIMDLoadId: {
     DELEGATE_START(SIMDLoad);
     DELEGATE_FIELD_CHILD(SIMDLoad, ptr);
+      visitor.visitInt(curr->op);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
     DELEGATE_END();
     break;
   }
@@ -268,6 +289,10 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDLoadStoreLane);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, vec);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, ptr);
+      visitor.visitInt(curr->op);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitInt(curr->index);
     DELEGATE_END();
     break;
   }
@@ -276,11 +301,13 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, size);
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
+      visitor.visitIndex(curr->segment);
     DELEGATE_END();
     break;
   }
   case Expression::Id::DataDropId: {
     DELEGATE_START(DataDrop);
+    DELEGATE_FIELD_INT(DataDrop, curr->segment);
     DELEGATE_END();
     break;
   }
@@ -302,12 +329,14 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ConstId: {
     DELEGATE_START(Const);
+    DELEGATE_FIELD_LITERAL(Const, value);
     DELEGATE_END();
     break;
   }
   case Expression::Id::UnaryId: {
     DELEGATE_START(Unary);
     DELEGATE_FIELD_CHILD(Unary, value);
+    DELEGATE_FIELD_INT(Unary, op);
     DELEGATE_END();
     break;
   }
@@ -315,6 +344,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Binary);
     DELEGATE_FIELD_CHILD(Binary, right);
     DELEGATE_FIELD_CHILD(Binary, left);
+    DELEGATE_FIELD_INT(Binary, op);
     DELEGATE_END();
     break;
   }
@@ -349,6 +379,7 @@ switch (DELEGATE_ID) {
     break;
   case Expression::Id::RefNullId: {
     DELEGATE_START(RefNull);
+    DELEGATE_FIELD_TYPE(RefNull, curr->type);
     DELEGATE_END();
     break;
   }
@@ -360,6 +391,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefFuncId: {
     DELEGATE_START(RefFunc);
+    DELEGATE_FIELD_NAME(RefFunc, curr->func);
     DELEGATE_END();
     break;
   }
@@ -380,6 +412,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_LIST(Throw, operands);
+    DELEGATE_FIELD_INT(Throw, curr->event);
     DELEGATE_END();
     break;
   }
@@ -392,6 +425,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::BrOnExnId: {
     DELEGATE_START(BrOnExn);
     DELEGATE_FIELD_CHILD(BrOnExn, exnref);
+      visitor.visitScopeName(curr->name);
+      visitor.visitNonScopeName(curr->event);
     DELEGATE_END();
     break;
   }
@@ -419,6 +454,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::TupleExtractId: {
     DELEGATE_START(TupleExtract);
     DELEGATE_FIELD_CHILD(TupleExtract, tuple);
+      visitor.visitIndex(curr->index);
     DELEGATE_END();
     break;
   }
@@ -431,6 +467,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::I31GetId: {
     DELEGATE_START(I31Get);
     DELEGATE_FIELD_CHILD(I31Get, i31);
+    DELEGATE_FIELD_INT(I31Get, signed_);
     DELEGATE_END();
     break;
   }
