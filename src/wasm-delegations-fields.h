@@ -48,9 +48,29 @@
 #define DELEGATE_FIELD_CHILD_LIST(id, name)
 #endif
 
+// Emits code to handle an integer value (bool, enum, Index, int32, or int64).
+#ifndef DELEGATE_FIELD_INT
+#define DELEGATE_FIELD_INT(id, name)
+#endif
+
+// Emits code to handle a name (like a call target).
+#ifndef DELEGATE_FIELD_NAME
+#define DELEGATE_FIELD_NAME(id, name)
+#endif
+
 // Emits code to handle a scope name (like a br target).
 #ifndef DELEGATE_FIELD_SCOPE_NAME
 #define DELEGATE_FIELD_SCOPE_NAME(id, name)
+#endif
+
+// Emits code to handle a list of scope name (like a switch's targets).
+#ifndef DELEGATE_FIELD_SCOPE_NAME_LIST
+#define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name)
+#endif
+
+// Emits code to handle a name (like a call target).
+#ifndef DELEGATE_FIELD_SIGNATURE
+#define DELEGATE_FIELD_SIGNATURE(id, name)
 #endif
 
 switch (DELEGATE_ID) {
@@ -76,6 +96,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::LoopId: {
     DELEGATE_START(Loop);
     DELEGATE_FIELD_CHILD(Loop, body);
+    DELEGATE_FIELD_SCOPE_NAME(Loop, name);
     DELEGATE_END();
     break;
   }
@@ -83,6 +104,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Break);
     DELEGATE_FIELD_OPTIONAL_CHILD(Break, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Break, value);
+    DELEGATE_FIELD_SCOPE_NAME(Break, name);
     DELEGATE_END();
     break;
   }
@@ -90,12 +112,16 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Switch);
     DELEGATE_FIELD_CHILD(Switch, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
+    DELEGATE_FIELD_SCOPE_NAME(Switch, default_);
+    DELEGATE_FIELD_SCOPE_NAME_LIST(Switch, default_);
     DELEGATE_END();
     break;
   }
   case Expression::Id::CallId: {
     DELEGATE_START(Call);
     DELEGATE_FIELD_CHILD_LIST(Call, operands);
+    DELEGATE_FIELD_NAME(Call, target);
+    DELEGATE_FIELD_INT(Call, isReturn);
     DELEGATE_END();
     break;
   }
@@ -103,35 +129,49 @@ switch (DELEGATE_ID) {
     DELEGATE_START(CallIndirect);
     DELEGATE_FIELD_CHILD(CallIndirect, target);
     DELEGATE_FIELD_CHILD_LIST(CallIndirect, operands);
+    DELEGATE_FIELD_SIGNATURE(CallIndirect, sig);
+    DELEGATE_FIELD_INT(CallIndirect, isReturn);
     DELEGATE_END();
     break;
   }
   case Expression::Id::LocalGetId: {
     // TODO: optimize leaves with a direct call?
     DELEGATE_START(LocalGet);
+    DELEGATE_FIELD_INT(LocalGet, index);
     DELEGATE_END();
     break;
   }
   case Expression::Id::LocalSetId: {
     DELEGATE_START(LocalSet);
     DELEGATE_FIELD_CHILD(LocalSet, value);
+    DELEGATE_FIELD_INT(LocalSet, index);
     DELEGATE_END();
     break;
   }
   case Expression::Id::GlobalGetId: {
     DELEGATE_START(GlobalGet);
+    DELEGATE_FIELD_INT(GlobalGet, name);
     DELEGATE_END();
     break;
   }
   case Expression::Id::GlobalSetId: {
     DELEGATE_START(GlobalSet);
     DELEGATE_FIELD_CHILD(GlobalSet, value);
+    DELEGATE_FIELD_INT(GlobalSet, name);
     DELEGATE_END();
     break;
   }
   case Expression::Id::LoadId: {
     DELEGATE_START(Load);
     DELEGATE_FIELD_CHILD(Load, ptr);
+      visitor.visitUint8(curr->bytes);
+      if (curr->type != Type::unreachable &&
+          curr->bytes < curr->type.getByteSize()) {
+        visitor.visitBool(curr->signed_);
+      }
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitBool(curr->isAtomic);
     DELEGATE_END();
     break;
   }
@@ -139,6 +179,11 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Store);
     DELEGATE_FIELD_CHILD(Store, value);
     DELEGATE_FIELD_CHILD(Store, ptr);
+      visitor.visitUint8(curr->bytes);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitBool(curr->isAtomic);
+      visitor.visitType(curr->valueType);
     DELEGATE_END();
     break;
   }
