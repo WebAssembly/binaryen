@@ -222,6 +222,7 @@ else()
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
+    add_compile_flag("-D__STDC_FORMAT_MACROS")
     add_link_flag("-Wl,--stack,8388608")
   elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
