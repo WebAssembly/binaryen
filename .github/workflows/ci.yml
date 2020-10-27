@@ -117,8 +117,7 @@ jobs:
     name: asan
     runs-on: ubuntu-latest
     env:
-      # FIXME we currently must disable LSAN entirely, see #1351
-      ASAN_OPTIONS: "detect_leaks=0 symbolize=1"
+      ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
     steps:
     - uses: actions/setup-python@v1
@@ -206,3 +205,19 @@ jobs:
       run: |
         source $HOME/emsdk/emsdk_env.sh
         ./scripts/emcc-tests.sh
+
+  # Windows + gcc needs work before the tests will run, so just test the compile
+  build-mingw:
+    name: mingw
+    runs-on: windows-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G "MSYS Makefiles"
+    - name: build
+      run: cmake --build out

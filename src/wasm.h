@@ -42,25 +42,25 @@ namespace wasm {
 // An index in a wasm module
 typedef uint32_t Index;
 
-// An address in linear memory. For now only wasm32
+// An address in linear memory.
 struct Address {
-  typedef uint32_t address_t;
-  address_t addr;
+  typedef uint32_t address32_t;
+  typedef uint64_t address64_t;
+  address64_t addr;
   Address() : addr(0) {}
-  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
-    assert(a <= std::numeric_limits<address_t>::max());
-  }
+  Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
-    assert(a <= std::numeric_limits<address_t>::max());
-    addr = static_cast<address_t>(a);
+    addr = a;
     return *this;
   }
-  operator address_t() const { return addr; }
+  operator address64_t() const { return addr; }
   Address& operator++() {
     ++addr;
     return *this;
   }
 };
+
+enum class IRProfile { Normal, Poppy };
 
 // Operators
 
@@ -225,8 +225,8 @@ enum BinaryOp {
   OrInt32,
   XorInt32,
   ShlInt32,
-  ShrUInt32,
   ShrSInt32,
+  ShrUInt32,
   RotLInt32,
   RotRInt32,
 
@@ -258,8 +258,8 @@ enum BinaryOp {
   OrInt64,
   XorInt64,
   ShlInt64,
-  ShrUInt64,
   ShrSInt64,
+  ShrUInt64,
   RotLInt64,
   RotRInt64,
 
@@ -432,9 +432,7 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum HostOp { MemorySize, MemoryGrow };
-
-enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
+enum AtomicRMWOp { RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg };
 
 enum SIMDExtractOp {
   ExtractLaneSVecI8x16,
@@ -483,7 +481,18 @@ enum SIMDLoadOp {
   LoadExtSVec32x2ToVecI64x2,
   LoadExtUVec32x2ToVecI64x2,
   Load32Zero,
-  Load64Zero
+  Load64Zero,
+};
+
+enum SIMDLoadStoreLaneOp {
+  LoadLaneVec8x16,
+  LoadLaneVec16x8,
+  LoadLaneVec32x4,
+  LoadLaneVec64x2,
+  StoreLaneVec8x16,
+  StoreLaneVec16x8,
+  StoreLaneVec32x4,
+  StoreLaneVec64x2,
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -532,7 +541,8 @@ public:
     SelectId,
     DropId,
     ReturnId,
-    HostId,
+    MemorySizeId,
+    MemoryGrowId,
     NopId,
     UnreachableId,
     AtomicRMWId,
@@ -546,6 +556,7 @@ public:
     SIMDTernaryId,
     SIMDShiftId,
     SIMDLoadId,
+    SIMDLoadStoreLaneId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -554,12 +565,27 @@ public:
     RefNullId,
     RefIsNullId,
     RefFuncId,
+    RefEqId,
     TryId,
     ThrowId,
     RethrowId,
     BrOnExnId,
     TupleMakeId,
     TupleExtractId,
+    I31NewId,
+    I31GetId,
+    RefTestId,
+    RefCastId,
+    BrOnCastId,
+    RttCanonId,
+    RttSubId,
+    StructNewId,
+    StructGetId,
+    StructSetId,
+    ArrayNewId,
+    ArrayGetId,
+    ArraySetId,
+    ArrayLenId,
     NumExpressionIds
   };
   Id _id;
@@ -571,22 +597,34 @@ public:
 
   void finalize() {}
 
-  template<class T> bool is() const { return int(_id) == int(T::SpecificId); }
+  template<class T> bool is() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
+    return int(_id) == int(T::SpecificId);
+  }
 
   template<class T> T* dynCast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
   template<class T> const T* dynCast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
   }
 
   template<class T> T* cast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
 
   template<class T> const T* cast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
@@ -597,7 +635,7 @@ public:
 
 const char* getExpressionName(Expression* curr);
 
-Literal getSingleLiteralFromConstExpression(Expression* curr);
+Literal getLiteralFromConstExpression(Expression* curr);
 Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
@@ -944,6 +982,25 @@ public:
   void finalize();
 };
 
+class SIMDLoadStoreLane
+  : public SpecificExpression<Expression::SIMDLoadStoreLaneId> {
+public:
+  SIMDLoadStoreLane() = default;
+  SIMDLoadStoreLane(MixedArena& allocator) {}
+
+  SIMDLoadStoreLaneOp op;
+  Address offset;
+  Address align;
+  uint8_t index;
+  Expression* ptr;
+  Expression* vec;
+
+  bool isStore();
+  bool isLoad() { return !isStore(); }
+  Index getMemBytes();
+  void finalize();
+};
+
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
   MemoryInit() = default;
@@ -1064,14 +1121,26 @@ public:
   Expression* value = nullptr;
 };
 
-class Host : public SpecificExpression<Expression::HostId> {
+class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
 public:
-  Host(MixedArena& allocator) : operands(allocator) {}
+  MemorySize() { type = Type::i32; }
+  MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  HostOp op;
-  Name nameOperand;
-  ExpressionList operands;
+  Type ptrType = Type::i32;
 
+  void make64();
+  void finalize();
+};
+
+class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
+public:
+  MemoryGrow() { type = Type::i32; }
+  MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
+
+  Expression* delta = nullptr;
+  Type ptrType = Type::i32;
+
+  void make64();
   void finalize();
 };
 
@@ -1095,6 +1164,8 @@ public:
   RefNull(MixedArena& allocator) {}
 
   void finalize();
+  void finalize(HeapType heapType);
+  void finalize(Type type);
 };
 
 class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
@@ -1111,6 +1182,16 @@ public:
   RefFunc(MixedArena& allocator) {}
 
   Name func;
+
+  void finalize();
+};
+
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };
@@ -1179,13 +1260,131 @@ public:
   void finalize();
 };
 
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_;
+
+  void finalize();
+};
+
+class RefTest : public SpecificExpression<Expression::RefTestId> {
+public:
+  RefTest(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+};
+
+class RefCast : public SpecificExpression<Expression::RefCastId> {
+public:
+  RefCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+};
+
+class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+public:
+  BrOnCast(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+};
+
+class RttCanon : public SpecificExpression<Expression::RttCanonId> {
+public:
+  RttCanon(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+};
+
+class RttSub : public SpecificExpression<Expression::RttSubId> {
+public:
+  RttSub(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+};
+
+class StructNew : public SpecificExpression<Expression::StructNewId> {
+public:
+  StructNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+};
+
+class StructGet : public SpecificExpression<Expression::StructGetId> {
+public:
+  StructGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+};
+
+class StructSet : public SpecificExpression<Expression::StructSetId> {
+public:
+  StructSet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+};
+
+class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
+public:
+  ArrayNew(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+};
+
+class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
+public:
+  ArrayGet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+};
+
+class ArraySet : public SpecificExpression<Expression::ArraySetId> {
+public:
+  ArraySet(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+};
+
+class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
+public:
+  ArrayLen(MixedArena& allocator) {}
+
+  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+};
+
 // Globals
 
 struct Importable {
+  Name name;
+
+  // Explicit names are ones that we read from the input file and
+  // will be written the name section in the output file.
+  // Implicit names are names that binaryen generated for internal
+  // use only and will not be written the name section.
+  bool hasExplicitName = false;
+
   // If these are set, then this is an import, as module.base
   Name module, base;
 
   bool imported() { return module.is(); }
+
+  void setName(Name name_, bool hasExplicitName_) {
+    name = name_;
+    hasExplicitName = hasExplicitName_;
+  }
+
+  void setExplicitName(Name name_) { setName(name_, true); }
 };
 
 class Function;
@@ -1258,8 +1457,8 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Name name;
-  Signature sig;          // parameters and return value
+  Signature sig; // parameters and return value
+  IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
   // The body of the function
@@ -1323,6 +1522,7 @@ public:
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
+  void setLocalName(Index index, Name name);
 
   void clearNames();
   void clearDebugInfo();
@@ -1349,9 +1549,9 @@ public:
 
 class Table : public Importable {
 public:
-  static const Address::address_t kPageSize = 1;
+  static const Address::address32_t kPageSize = 1;
   static const Index kUnlimitedSize = Index(-1);
-  // In wasm32, the maximum table size is limited by a 32-bit pointer: 4GB
+  // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
@@ -1368,7 +1568,6 @@ public:
   // been defined or imported. The table can exist but be empty and have no
   // defined initial or max size.
   bool exists = false;
-  Name name;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
@@ -1386,12 +1585,11 @@ public:
 
 class Memory : public Importable {
 public:
-  static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kUnlimitedSize = Address::address_t(-1);
+  static const Address::address32_t kPageSize = 64 * 1024;
+  static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address_t kMaxSize =
+  static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
-  static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
     bool isPassive = false;
@@ -1415,29 +1613,30 @@ public:
   };
 
   bool exists = false;
-  Name name;
   Address initial = 0; // sizes are in pages
-  Address max = kMaxSize;
+  Address max = kMaxSize32;
   std::vector<Segment> segments;
 
   // See comment in Table.
   bool shared = false;
+  Type indexType = Type::i32;
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  bool is64() { return indexType == Type::i64; }
   void clear() {
     exists = false;
     name = "";
     initial = 0;
-    max = kMaxSize;
+    max = kMaxSize32;
     segments.clear();
     shared = false;
+    indexType = Type::i32;
   }
 };
 
 class Global : public Importable {
 public:
-  Name name;
   Type type;
   Expression* init = nullptr;
   bool mutable_ = false;
@@ -1448,7 +1647,6 @@ enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
 
 class Event : public Importable {
 public:
-  Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;
@@ -1496,6 +1694,9 @@ public:
   // too.
   FeatureSet features = FeatureSet::MVP;
   bool hasFeaturesSection = false;
+
+  // Module name, if specified. Serves a documentary role only.
+  Name name;
 
   MixedArena allocator;
 
@@ -1553,7 +1754,7 @@ public:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address_t>()(a.addr);
+    return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
 } // namespace std

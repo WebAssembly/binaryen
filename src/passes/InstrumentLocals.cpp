@@ -58,8 +58,10 @@ Name get_f32("get_f32");
 Name get_f64("get_f64");
 Name get_funcref("get_funcref");
 Name get_externref("get_externref");
-Name get_nullref("get_nullref");
 Name get_exnref("get_exnref");
+Name get_anyref("get_anyref");
+Name get_eqref("get_eqref");
+Name get_i31ref("get_i31ref");
 Name get_v128("get_v128");
 
 Name set_i32("set_i32");
@@ -68,8 +70,10 @@ Name set_f32("set_f32");
 Name set_f64("set_f64");
 Name set_funcref("set_funcref");
 Name set_externref("set_externref");
-Name set_nullref("set_nullref");
 Name set_exnref("set_exnref");
+Name set_anyref("set_anyref");
+Name set_eqref("set_eqref");
+Name set_i31ref("set_i31ref");
 Name set_v128("set_v128");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
@@ -98,11 +102,17 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::externref:
         import = get_externref;
         break;
-      case Type::nullref:
-        import = get_nullref;
-        break;
       case Type::exnref:
         import = get_exnref;
+        break;
+      case Type::anyref:
+        import = get_anyref;
+        break;
+      case Type::eqref:
+        import = get_eqref;
+        break;
+      case Type::i31ref:
+        import = get_i31ref;
         break;
       case Type::none:
       case Type::unreachable:
@@ -147,11 +157,17 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::externref:
         import = set_externref;
         break;
-      case Type::nullref:
-        import = set_nullref;
-        break;
       case Type::exnref:
         import = set_exnref;
+        break;
+      case Type::anyref:
+        import = set_anyref;
+        break;
+      case Type::eqref:
+        import = set_eqref;
+        break;
+      case Type::i31ref:
+        import = set_i31ref;
         break;
       case Type::unreachable:
         return; // nothing to do here
@@ -192,20 +208,26 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_externref,
                 {Type::i32, Type::i32, Type::externref},
                 Type::externref);
-      addImport(curr,
-                get_nullref,
-                {Type::i32, Type::i32, Type::nullref},
-                Type::nullref);
-      addImport(curr,
-                set_nullref,
-                {Type::i32, Type::i32, Type::nullref},
-                Type::nullref);
-    }
-    if (curr->features.hasExceptionHandling()) {
-      addImport(
-        curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-      addImport(
-        curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+      if (curr->features.hasExceptionHandling()) {
+        addImport(
+          curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+        addImport(
+          curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+      }
+      if (curr->features.hasGC()) {
+        addImport(
+          curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+        addImport(
+          curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+        addImport(
+          curr, get_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+        addImport(
+          curr, set_eqref, {Type::i32, Type::i32, Type::eqref}, Type::eqref);
+        addImport(
+          curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
+        addImport(
+          curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
+      }
     }
     if (curr->features.hasSIMD()) {
       addImport(curr, get_v128, {Type::i32, Type::i32, Type::v128}, Type::v128);

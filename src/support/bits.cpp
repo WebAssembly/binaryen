@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#define wasm_support_bits_definitions
 #include "support/bits.h"
 #include "../compiler-support.h"
 #include "support/utilities.h"
@@ -25,7 +24,9 @@
 
 namespace wasm {
 
-template<> int PopCount<uint8_t>(uint8_t v) {
+namespace Bits {
+
+int popCount(uint8_t v) {
   // Small table lookup.
   static const uint8_t tbl[32] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2,
                                   3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3,
@@ -33,15 +34,15 @@ template<> int PopCount<uint8_t>(uint8_t v) {
   return tbl[v & 0xf] + tbl[v >> 4];
 }
 
-template<> int PopCount<uint16_t>(uint16_t v) {
+int popCount(uint16_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__)
   return __builtin_popcount(v);
 #else
-  return PopCount((uint8_t)(v & 0xFF)) + PopCount((uint8_t)(v >> 8));
+  return popCount((uint8_t)(v & 0xFF)) + popCount((uint8_t)(v >> 8));
 #endif
 }
 
-template<> int PopCount<uint32_t>(uint32_t v) {
+int popCount(uint32_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__)
   return __builtin_popcount(v);
 #else
@@ -53,15 +54,15 @@ template<> int PopCount<uint32_t>(uint32_t v) {
 #endif
 }
 
-template<> int PopCount<uint64_t>(uint64_t v) {
+int popCount(uint64_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__)
   return __builtin_popcountll(v);
 #else
-  return PopCount((uint32_t)v) + PopCount((uint32_t)(v >> 32));
+  return popCount((uint32_t)v) + popCount((uint32_t)(v >> 32));
 #endif
 }
 
-template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
+uint32_t bitReverse(uint32_t v) {
   // See Hacker's Delight, first edition, figure 7-1.
   v = ((v & 0x55555555) << 1) | ((v >> 1) & 0x55555555);
   v = ((v & 0x33333333) << 2) | ((v >> 2) & 0x33333333);
@@ -70,7 +71,7 @@ template<> uint32_t BitReverse<uint32_t>(uint32_t v) {
   return v;
 }
 
-template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
+int countTrailingZeroes(uint32_t v) {
   if (v == 0) {
     return 32;
   }
@@ -91,7 +92,7 @@ template<> int CountTrailingZeroes<uint32_t>(uint32_t v) {
 #endif
 }
 
-template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
+int countTrailingZeroes(uint64_t v) {
   if (v == 0) {
     return 64;
   }
@@ -102,12 +103,12 @@ template<> int CountTrailingZeroes<uint64_t>(uint64_t v) {
   _BitScanForward64(&count, v);
   return (int)count;
 #else
-  return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
-                     : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
+  return (uint32_t)v ? countTrailingZeroes((uint32_t)v)
+                     : 32 + countTrailingZeroes((uint32_t)(v >> 32));
 #endif
 }
 
-template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
+int countLeadingZeroes(uint32_t v) {
   if (v == 0) {
     return 32;
   }
@@ -136,7 +137,7 @@ template<> int CountLeadingZeroes<uint32_t>(uint32_t v) {
 #endif
 }
 
-template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
+int countLeadingZeroes(uint64_t v) {
   if (v == 0) {
     return 64;
   }
@@ -147,30 +148,56 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
   _BitScanReverse64(&count, v);
   return 63 - int(count);
 #else
-  return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
-                 : 32 + CountLeadingZeroes((uint32_t)v);
+  return v >> 32 ? countLeadingZeroes((uint32_t)(v >> 32))
+                 : 32 + countLeadingZeroes((uint32_t)v);
 #endif
 }
 
-uint32_t Log2(uint32_t v) {
-  switch (v) {
-    default:
-      WASM_UNREACHABLE("invalid value");
-    case 1:
-      return 0;
-    case 2:
-      return 1;
-    case 4:
-      return 2;
-    case 8:
-      return 3;
-    case 16:
-      return 4;
-    case 32:
-      return 5;
-  }
+int ceilLog2(uint32_t v) { return 32 - countLeadingZeroes(v - 1); }
+
+int ceilLog2(uint64_t v) { return 64 - countLeadingZeroes(v - 1); }
+
+bool isPowerOf2InvertibleFloat(float v) {
+  // Power of two floating points should have zero as their significands,
+  // so here we just mask the exponent range of "v" and compare it with the
+  // unmasked input value. If they are equal, our value is a power of
+  // two. Also, we reject all values which are less than the minimal possible
+  // power of two or greater than the maximum possible power of two.
+  // We check values only with exponent in more limited ranges
+  // [-126..+126] for floats and [-1022..+1022] for doubles for avoiding
+  // overflows and reject NaNs, infinity and denormals. We also reject
+  // "asymmetric exponents", like +1023, because the range of
+  // (non-NaN, non-infinity) values is -1022..+1023, and it is convenient in
+  // optimizations to depend on being able to invert a power of two without
+  // losing precision.
+  // This function used in OptimizeInstruction pass.
+  const uint32_t MIN_POT = 0x01U << 23;  // 0x1p-126
+  const uint32_t MAX_POT = 0xFDU << 23;  // 0x1p+126
+  const uint32_t EXP_MASK = 0xFFU << 23; // mask only exponent
+  const uint32_t SIGN_MASK = ~0U >> 1;   // mask everything except sign
+  auto u = bit_cast<uint32_t>(v) & SIGN_MASK;
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
 }
 
-uint32_t Pow2(uint32_t v) { return 1 << v; }
+bool isPowerOf2InvertibleFloat(double v) {
+  // See isPowerOf2InvertibleFloat(float)
+  const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
+  const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
+  const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent
+  const uint64_t SIGN_MASK = ~0ULL >> 1;    // mask everything except sign
+  auto u = bit_cast<uint64_t>(v) & SIGN_MASK;
+  return u >= MIN_POT && u <= MAX_POT && (u & EXP_MASK) == u;
+}
+
+uint32_t log2(uint32_t v) {
+  if (!isPowerOf2(v)) {
+    WASM_UNREACHABLE("value should be a power of two");
+  }
+  return 31 - countLeadingZeroes(v);
+}
+
+uint32_t pow2(uint32_t v) { return 1 << (v & 31); }
+
+} // namespace Bits
 
 } // namespace wasm

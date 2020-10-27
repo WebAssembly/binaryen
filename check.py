@@ -29,11 +29,6 @@ from scripts.test import wasm2js
 from scripts.test import wasm_opt
 
 
-if shared.options.interpreter:
-    print('[ using wasm interpreter at "%s" ]' % shared.options.interpreter)
-    assert os.path.exists(shared.options.interpreter), 'interpreter not found'
-
-
 def get_changelog_version():
     with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
         lines = f.readlines()
@@ -337,10 +332,6 @@ def run_gcc_tests():
 
 def run_unittest():
     print('\n[ checking unit tests...]\n')
-
-    # windows has some failures that need to be investigated
-    if shared.skip_if_on_windows('unit'):
-        return
 
     # equivalent to `python -m unittest discover -s ./test -v`
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))

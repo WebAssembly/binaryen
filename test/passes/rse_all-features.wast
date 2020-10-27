@@ -293,7 +293,7 @@
     (try
       (do)
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (local.set $x (i32.const 1))
       )
     )
@@ -307,7 +307,7 @@
         (local.set $x (i32.const 1))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
     (local.set $x (i32.const 1)) ;; should NOT be dropped
@@ -319,7 +319,7 @@
         (throw $e (i32.const 0))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (local.set $x (i32.const 1))
       )
     )
@@ -334,7 +334,7 @@
         (local.set $x (i32.const 1))
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
     (local.set $x (i32.const 1)) ;; should NOT be dropped
@@ -347,7 +347,7 @@
         (call $foo)
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
       )
     )
     (local.set $x (i32.const 1)) ;; should be dropped
@@ -361,12 +361,12 @@
             (throw $e (i32.const 0))
           )
           (catch
-            (rethrow (exnref.pop))
+            (rethrow (pop exnref))
           )
         )
       )
       (catch
-        (drop (exnref.pop))
+        (drop (pop exnref))
         (local.set $x (i32.const 1))
       )
     )

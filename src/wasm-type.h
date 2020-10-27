@@ -49,9 +49,11 @@ public:
     v128,
     funcref,
     externref,
-    nullref,
     exnref,
-    _last_basic_id = exnref
+    anyref,
+    eqref,
+    i31ref,
+    _last_basic_id = i31ref,
   };
 
   Type() = default;
@@ -89,12 +91,11 @@ public:
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc, n_ullable
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │ ┐
-  // │ eqref       ║ x │   │ x │ x │    n  │ │ │ TODO (GC)
+  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │
+  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
-  // │ nullref     ║ x │   │ x │ x │ f? n  │ │ ◄ TODO (removed)
-  // │ exnref      ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -110,6 +111,8 @@ public:
   bool isTuple() const;
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
+  bool isFunction() const;
+  bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
 
@@ -153,6 +156,9 @@ public:
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
+
+  // Gets the heap type corresponding to this type
+  HeapType getHeapType() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -327,11 +333,11 @@ struct HeapType {
   enum Kind {
     FuncKind,
     ExternKind,
+    ExnKind,
     AnyKind,
     EqKind,
     I31Kind,
-    ExnKind,
-    _last_basic_kind = ExnKind,
+    _last_basic_kind = I31Kind,
     SignatureKind,
     StructKind,
     ArrayKind,
@@ -368,6 +374,7 @@ struct HeapType {
     assert(isArray() && "Not an array");
     return array;
   }
+  bool isException() const { return kind == ExnKind; }
 
   bool operator==(const HeapType& other) const;
   bool operator!=(const HeapType& other) const { return !(*this == other); }

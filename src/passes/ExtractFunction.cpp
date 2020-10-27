@@ -42,8 +42,7 @@ struct ExtractFunction : public Pass {
       }
     }
     if (!found) {
-      std::cerr << "could not find the function to extract\n";
-      abort();
+      Fatal() << "could not find the function to extract\n";
     }
     // clear data
     module->memory.segments.clear();

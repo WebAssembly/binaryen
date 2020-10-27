@@ -147,6 +147,14 @@ struct TypeUpdater
     discoverBreaks(curr, parent ? +1 : -1);
   }
 
+  // Applies a type change to a node, and potentially to its parents.
+  void changeType(Expression* curr, Type type) {
+    if (curr->type != type) {
+      curr->type = type;
+      propagateTypesUp(curr);
+    }
+  }
+
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
     if (auto* br = curr->dynCast<Break>()) {
@@ -313,6 +321,10 @@ struct TypeUpdater
     if (curr->type == Type::unreachable) {
       propagateTypesUp(curr);
     }
+  }
+
+  bool hasBreaks(Block* block) {
+    return block->name.is() && blockInfos[block->name].numBreaks > 0;
   }
 };
 

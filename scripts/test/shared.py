@@ -25,7 +25,7 @@ import sys
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with CMakeLists.txt CXX_STANDARD
-cxx_standard = 17
+cxx_standard = 14
 
 
 def parse_args(args):
@@ -48,9 +48,6 @@ def parse_args(args):
         action='store_false',
         help=('If set, the whole test suite will run to completion independent of'
               ' earlier errors.'))
-    parser.add_argument(
-        '--interpreter', dest='interpreter', default='',
-        help='Specifies the wasm interpreter executable to run tests on.')
     parser.add_argument(
         '--binaryen-bin', dest='binaryen_bin', default='',
         help=('Specifies a path to where the built Binaryen executables reside at.'
@@ -155,7 +152,13 @@ def which(program):
         if is_exe(program):
             return program
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
+        paths = [
+            # Prefer tools installed using third_party/setup.py
+            os.path.join(options.binaryen_root, 'third_party', 'mozjs'),
+            os.path.join(options.binaryen_root, 'third_party', 'v8'),
+            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin')
+        ] + os.environ['PATH'].split(os.pathsep)
+        for path in paths:
             path = path.strip('"')
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
@@ -254,17 +257,6 @@ except (OSError, subprocess.CalledProcessError):
     NODEJS = None
 if NODEJS is None:
     warn('no node found (did not check proper js form)')
-
-try:
-    if MOZJS is not None:
-        subprocess.check_call([MOZJS, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-except (OSError, subprocess.CalledProcessError):
-    MOZJS = None
-if MOZJS is None:
-    warn('no mozjs found (did not check native wasm support nor asm.js'
-         ' validation)')
 
 
 # utilities
@@ -374,10 +366,6 @@ def get_tests(test_dir, extensions=[]):
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
-
-
-if not options.interpreter:
-    warn('no interpreter provided (did not test spec interpreter validation)')
 
 
 if not options.spec_tests:

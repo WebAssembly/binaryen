@@ -7,25 +7,25 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 0))
+ (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$2) "\00\00\00\00\00\00\00\00")
- (import "env" "table" (table $0 0 funcref))
+ (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
  (import "env" "malloc" (func $fimport$4 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$5 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$6 (result i32)))
- (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "emscripten_longjmp" (func $fimport$7 (param i32 i32)))
+ (import "env" "invoke_vii" (func $fimport$8 (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $fimport$9 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$10 (param i32)))
  (import "env" "free" (func $fimport$11 (param i32)))
- (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
  (import "env" "g$__THREW__" (func $g$__THREW__ (result i32)))
  (import "env" "g$__threwValue" (func $g$__threwValue (result i32)))
  (import "env" "fp$emscripten_longjmp$vii" (func $fp$emscripten_longjmp$vii (result i32)))
+ (global $gimport$12 (mut i32) (i32.const 0))
  (global $gimport$13 (mut i32) (i32.const 0))
  (global $gimport$14 (mut i32) (i32.const 0))
- (global $gimport$15 (mut i32) (i32.const 0))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
  (export "_start" (func $2))
@@ -74,12 +74,12 @@
      )
      (i32.store
       (local.tee $0
-       (global.get $gimport$13)
+       (global.get $gimport$12)
       )
       (i32.const 0)
      )
-     (call $invoke_vii
-      (global.get $gimport$14)
+     (call $fimport$8
+      (global.get $gimport$13)
       (local.get $0)
       (i32.const 1)
      )
@@ -93,7 +93,7 @@
       (i32.const 0)
      )
      (local.set $0
-      (global.get $gimport$15)
+      (global.get $gimport$14)
      )
      (block $label$4
       (br_if $label$4
@@ -136,28 +136,28 @@
    )
    (return)
   )
-  (call $emscripten_longjmp
+  (call $fimport$7
    (local.get $3)
    (local.get $0)
   )
   (unreachable)
+ )
+ (func $__assign_got_enties
+  (global.set $gimport$12
+   (call $g$__THREW__)
+  )
+  (global.set $gimport$14
+   (call $g$__threwValue)
+  )
+  (global.set $gimport$13
+   (call $fp$emscripten_longjmp$vii)
+  )
  )
  (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
    (local.get $1)
    (local.get $fptr)
-  )
- )
- (func $__assign_got_enties
-  (global.set $gimport$13
-   (call $g$__THREW__)
-  )
-  (global.set $gimport$15
-   (call $g$__threwValue)
-  )
-  (global.set $gimport$14
-   (call $fp$emscripten_longjmp$vii)
   )
  )
  (func $__post_instantiate
@@ -174,10 +174,10 @@
     "malloc",
     "saveSetjmp",
     "getTempRet0",
+    "emscripten_longjmp",
     "testSetjmp",
     "setTempRet0",
     "free",
-    "emscripten_longjmp",
     "g$__THREW__",
     "g$__threwValue",
     "fp$emscripten_longjmp$vii"

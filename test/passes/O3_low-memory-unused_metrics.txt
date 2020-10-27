@@ -6,14 +6,14 @@ total
  [imports]      : 10      
  [memory-data]  : 0       
  [table-data]   : 0       
- [total]        : 1965    
+ [total]        : 1964    
  [vars]         : 9       
- binary         : 241     
+ binary         : 240     
  block          : 68      
  break          : 90      
  call           : 22      
  call_indirect  : 1       
- const          : 176     
+ const          : 175     
  drop           : 8       
  if             : 27      
  load           : 313     
@@ -23,14 +23,14 @@ total
  return         : 3       
  select         : 11      
  store          : 160     
- unary          : 28      
+ unary          : 29      
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
- (import "env" "memory" (memory $0 4096 4096))
- (import "env" "table" (table $0 10 funcref))
+ (import "env" "memory" (memory $108 4096 4096))
+ (import "env" "table" (table $timport$109 10 funcref))
  (import "env" "crc32" (func $fimport$14 (param i32 i32 i32) (result i32)))
  (import "env" "adler32" (func $fimport$15 (param i32 i32 i32) (result i32)))
  (import "env" "deflate_huff" (func $fimport$20 (param i32 i32) (result i32)))
@@ -2387,7 +2387,7 @@ total
         )
        )
        (br_if $label$57
-        (i32.ne
+        (i32.eqz
          (i32.or
           (i32.eqz
            (local.get $1)
@@ -2397,7 +2397,6 @@ total
            (i32.const 666)
           )
          )
-         (i32.const 1)
         )
        )
        (br_if $label$56

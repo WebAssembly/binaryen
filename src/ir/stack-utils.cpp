@@ -15,6 +15,8 @@
  */
 
 #include "stack-utils.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
 
 namespace wasm {
 
@@ -30,23 +32,38 @@ void removeNops(Block* block) {
   block->list.resize(newIndex);
 }
 
+bool mayBeUnreachable(Expression* expr) {
+  if (Properties::isControlFlowStructure(expr)) {
+    return true;
+  }
+  switch (expr->_id) {
+    case Expression::Id::BreakId:
+      return expr->cast<Break>()->condition == nullptr;
+    case Expression::Id::CallId:
+      return expr->cast<Call>()->isReturn;
+    case Expression::Id::CallIndirectId:
+      return expr->cast<CallIndirect>()->isReturn;
+    case Expression::Id::ReturnId:
+    case Expression::Id::SwitchId:
+    case Expression::Id::UnreachableId:
+    case Expression::Id::ThrowId:
+    case Expression::Id::RethrowId:
+      return true;
+    default:
+      return false;
+  }
+}
+
 } // namespace StackUtils
 
 StackSignature::StackSignature(Expression* expr) {
-  params = Type::none;
-  if (Properties::isControlFlowStructure(expr)) {
-    if (expr->is<If>()) {
-      params = Type::i32;
-    }
-  } else {
-    std::vector<Type> inputs;
-    for (auto* child : ChildIterator(expr)) {
-      assert(child->type.isConcrete());
-      // Children might be tuple pops, so expand their types
-      inputs.insert(inputs.end(), child->type.begin(), child->type.end());
-    }
-    params = Type(inputs);
+  std::vector<Type> inputs;
+  for (auto* child : ValueChildIterator(expr)) {
+    assert(child->type.isConcrete());
+    // Children might be tuple pops, so expand their types
+    inputs.insert(inputs.end(), child->type.begin(), child->type.end());
   }
+  params = Type(inputs);
   if (expr->type == Type::unreachable) {
     unreachable = true;
     results = Type::none;

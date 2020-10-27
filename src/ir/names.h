@@ -46,6 +46,33 @@ inline void ensureNames(Function* func) {
   }
 }
 
+// Given a root of a name, finds a valid name with perhaps a number appended
+// to it, by calling a function to check if a name is valid.
+inline Name
+getValidName(Module& module, Name root, std::function<bool(Name)> check) {
+  if (check(root)) {
+    return root;
+  }
+  auto prefixed = std::string(root.str) + '_';
+  Index num = 0;
+  while (1) {
+    auto name = prefixed + std::to_string(num);
+    if (check(name)) {
+      return name;
+    }
+    num++;
+  }
+}
+
+inline Name getValidGlobalName(Module& module, Name root) {
+  return getValidName(
+    module, root, [&](Name test) { return !module.getGlobalOrNull(test); });
+}
+inline Name getValidFunctionName(Module& module, Name root) {
+  return getValidName(
+    module, root, [&](Name test) { return !module.getFunctionOrNull(test); });
+}
+
 } // namespace Names
 
 } // namespace wasm
