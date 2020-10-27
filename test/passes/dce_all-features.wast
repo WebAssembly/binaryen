@@ -810,4 +810,61 @@
       )
     )
   )
+
+  (func $unnecessary-concrete-block (result i32)
+    (block $foo (result i32) ;; unnecessary type
+      (nop)
+      (unreachable)
+    )
+  )
+  (func $necessary-concrete-block (result i32)
+    (block $foo (result i32)
+      (br $foo (i32.const 1))
+      (unreachable)
+    )
+  )
+  (func $unnecessary-concrete-if (result i32)
+    (if (result i32) ;; unnecessary type
+      (i32.const 0)
+      (return (i32.const 1))
+      (unreachable)
+    )
+  )
+  (func $unnecessary-concrete-try (result i32)
+    (try (result i32)
+      (do
+        (unreachable)
+      )
+      (catch
+        (unreachable)
+      )
+    )
+  )
+  (func $note-loss-of-if-children
+    (block $label$1
+     (if ;; begins unreachable - type never changes - but after the condition
+         ;; becomes unreachable, it will lose the children, which means no more
+         ;; br to the outer block, changing that type.
+       (block $label$2 (result i32)
+         (nop)
+         (unreachable)
+       )
+       (unreachable)
+       (br $label$1)
+      )
+    )
+  )
+  (func $note-loss-of-non-control-flow-children
+    (block $out
+      (drop
+       (i32.add
+         (block (result i32)
+            (nop)
+            (unreachable)
+         )
+         (br $out) ;; when this is removed as dead, the block becomes unreachable
+       )
+     )
+    )
+  )
 )
