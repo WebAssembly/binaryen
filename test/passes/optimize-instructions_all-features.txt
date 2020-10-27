@@ -4661,10 +4661,8 @@
   )
   (drop
    (f64.mul
-    (f64.neg
-     (local.get $0)
-    )
-    (f64.const 2)
+    (local.get $0)
+    (f64.const -2)
    )
   )
  )
