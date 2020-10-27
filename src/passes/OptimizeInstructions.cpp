@@ -1664,6 +1664,17 @@ private:
       }
     }
     {
+      // -x * fval(C)   ==>   x * -C
+      // -x / fval(C)   ==>   x / -C
+      Unary* x;
+      if (matches(curr, binary(Mul, unary(&x, Neg, any()), fval())) ||
+          matches(curr, binary(DivS, unary(&x, Neg, any()), fval()))) {
+        right->value = right->value.neg();
+        curr->left = x->value;
+        return curr;
+      }
+    }
+    {
       // x + (-0.0)   ==>   x
       double value;
       if (fastMath && matches(curr, binary(Add, any(), fval(&value))) &&
