@@ -53,6 +53,11 @@
 #define DELEGATE_FIELD_INT(id, name)
 #endif
 
+// Emits code to handle an array of integer values (like a SIMD mask).
+#ifndef DELEGATE_FIELD_INT_ARRAY
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#endif
+
 // Emits code to handle a name (like a call target).
 #ifndef DELEGATE_FIELD_NAME
 #define DELEGATE_FIELD_NAME(id, name)
@@ -68,9 +73,19 @@
 #define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name)
 #endif
 
-// Emits code to handle a name (like a call target).
+// Emits code to handle a
 #ifndef DELEGATE_FIELD_SIGNATURE
 #define DELEGATE_FIELD_SIGNATURE(id, name)
+#endif
+
+// Emits code to handle a type.
+#ifndef DELEGATE_FIELD_TYPE
+#define DELEGATE_FIELD_TYPE(id, name)
+#endif
+
+// Emits code to handle an address.
+#ifndef DELEGATE_FIELD_ADDRESS
+#define DELEGATE_FIELD_ADDRESS(id, name)
 #endif
 
 switch (DELEGATE_ID) {
@@ -164,14 +179,12 @@ switch (DELEGATE_ID) {
   case Expression::Id::LoadId: {
     DELEGATE_START(Load);
     DELEGATE_FIELD_CHILD(Load, ptr);
-      visitor.visitUint8(curr->bytes);
-      if (curr->type != Type::unreachable &&
-          curr->bytes < curr->type.getByteSize()) {
-        visitor.visitBool(curr->signed_);
+      DELEGATE_FIELD_INT(Load, bytes);
+        DELEGATE_FIELD_INT(, signed_);
       }
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-      visitor.visitBool(curr->isAtomic);
+      DELEGATE_FIELD_ADDRESS(, offset);
+      DELEGATE_FIELD_ADDRESS(, align);
+      DELEGATE_FIELD_INT(, isAtomic);
     DELEGATE_END();
     break;
   }
@@ -179,11 +192,11 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Store);
     DELEGATE_FIELD_CHILD(Store, value);
     DELEGATE_FIELD_CHILD(Store, ptr);
-      visitor.visitUint8(curr->bytes);
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-      visitor.visitBool(curr->isAtomic);
-      visitor.visitType(curr->valueType);
+      DELEGATE_FIELD_INT(Store, bytes);
+      DELEGATE_FIELD_ADDRESS(, offset);
+      DELEGATE_FIELD_ADDRESS(, align);
+      DELEGATE_FIELD_INT(, isAtomic);
+      DELEGATE_FIELD_TYPE(, valueType);
     DELEGATE_END();
     break;
   }
@@ -191,20 +204,19 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicRMW);
     DELEGATE_FIELD_CHILD(AtomicRMW, value);
     DELEGATE_FIELD_CHILD(AtomicRMW, ptr);
-      visitor.visitInt(curr->op);
-      visitor.visitUint8(curr->bytes);
-      visitor.visitAddress(curr->offset);
+      DELEGATE_FIELD_INT(, op);
+      DELEGATE_FIELD_INT(AtomicRMW, bytes);
+      DELEGATE_FIELD_ADDRESS(, offset);
     DELEGATE_END();
     break;
   }
   case Expression::Id::AtomicCmpxchgId: {
     DELEGATE_START(AtomicCmpxchg);
-    self->pushTask(SubType::scan,
-                   &curr->cast<AtomicCmpxchg, replacement);
+    DELEGATE_FIELD_CHILD(AtomicCmpxchg, replacement);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
-      visitor.visitUint8(curr->bytes);
-      visitor.visitAddress(curr->offset);
+      DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
+      DELEGATE_FIELD_ADDRESS(, offset);
     DELEGATE_END();
     break;
   }
@@ -213,8 +225,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, timeout);
     DELEGATE_FIELD_CHILD(AtomicWait, expected);
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
-      visitor.visitAddress(curr->offset);
-      visitor.visitType(curr->expectedType);
+      DELEGATE_FIELD_ADDRESS(, offset);
+      DELEGATE_FIELD_TYPE(, expectedType);
     DELEGATE_END();
     break;
   }
@@ -222,7 +234,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicNotify);
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
-      visitor.visitAddress(curr->offset);
+      DELEGATE_FIELD_ADDRESS(, offset);
     DELEGATE_END();
     break;
   }
@@ -235,8 +247,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::SIMDExtractId: {
     DELEGATE_START(SIMDExtract);
     DELEGATE_FIELD_CHILD(SIMDExtract, vec);
-      visitor.visitInt(curr->op);
-      visitor.visitInt(curr->index);
+      DELEGATE_FIELD_INT(, op);
+      DELEGATE_FIELD_INT(, index);
     DELEGATE_END();
     break;
   }
@@ -244,8 +256,8 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDReplace);
     DELEGATE_FIELD_CHILD(SIMDReplace, value);
     DELEGATE_FIELD_CHILD(SIMDReplace, vec);
-      visitor.visitInt(curr->op);
-      visitor.visitInt(curr->index);
+      DELEGATE_FIELD_INT(, op);
+      DELEGATE_FIELD_INT(, index);
     DELEGATE_END();
     break;
   }
@@ -253,9 +265,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDShuffle);
     DELEGATE_FIELD_CHILD(SIMDShuffle, right);
     DELEGATE_FIELD_CHILD(SIMDShuffle, left);
-      for (auto x : curr->mask) {
-        visitor.visitInt(x);
-      }
+    DELEGATE_FIELD_INT_ARRAY(SIMDShuffle, mask);
     DELEGATE_END();
     break;
   }
@@ -279,9 +289,9 @@ switch (DELEGATE_ID) {
   case Expression::Id::SIMDLoadId: {
     DELEGATE_START(SIMDLoad);
     DELEGATE_FIELD_CHILD(SIMDLoad, ptr);
-      visitor.visitInt(curr->op);
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
+      DELEGATE_FIELD_INT(, op);
+      DELEGATE_FIELD_ADDRESS(, offset);
+      DELEGATE_FIELD_ADDRESS(, align);
     DELEGATE_END();
     break;
   }
@@ -289,10 +299,10 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDLoadStoreLane);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, vec);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, ptr);
-      visitor.visitInt(curr->op);
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-      visitor.visitInt(curr->index);
+      DELEGATE_FIELD_INT(, op);
+      DELEGATE_FIELD_ADDRESS(, offset);
+      DELEGATE_FIELD_ADDRESS(, align);
+      DELEGATE_FIELD_INT(, index);
     DELEGATE_END();
     break;
   }
