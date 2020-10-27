@@ -56,7 +56,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 #define DELEGATE_START(id) \
   copy = wasm.allocator.alloc<id>(); \
   auto* castOriginal = original->cast<id>(); \
+  WASM_UNUSED(castOriginal); \
   auto* castCopy = copy->cast<id>(); \
+  WASM_UNUSED(castCopy);
 
 #define DELEGATE_FIELD_CHILD(id, name) \
   tasks.push_back({ castOriginal->name, &castCopy->name });
