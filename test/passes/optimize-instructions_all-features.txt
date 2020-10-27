@@ -7,10 +7,10 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
+ (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
- (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $none_=>_anyref (func (result anyref)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
@@ -4248,7 +4248,7 @@
    )
   )
  )
- (func $rhs-is-const (param $x i32) (param $y i64)
+ (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
   (drop
    (i32.eq
     (local.get $x)
@@ -4305,6 +4305,48 @@
    (i64.shr_u
     (local.get $y)
     (i64.const 63)
+   )
+  )
+  (drop
+   (f32.mul
+    (local.get $fx)
+    (f32.const -1)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $fy)
+    (f64.const 2.1)
+   )
+  )
+  (drop
+   (f64.mul
+    (local.get $fy)
+    (f64.const -2)
+   )
+  )
+  (drop
+   (f32.div
+    (local.get $fx)
+    (f32.const -inf)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $fy)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (f64.div
+    (local.get $fy)
+    (f64.const -nan:0x8000000000000)
+   )
+  )
+  (drop
+   (f64.div
+    (f64.const -5)
+    (local.get $fy)
    )
   )
  )
@@ -4619,10 +4661,8 @@
   )
   (drop
    (f64.mul
-    (f64.neg
-     (local.get $0)
-    )
-    (f64.const 2)
+    (local.get $0)
+    (f64.const -2)
    )
   )
  )

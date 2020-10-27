@@ -1684,6 +1684,14 @@ private:
         return curr->left;
       }
     }
+    // -x * fval(C)   ==>   x * -C
+    // -x / fval(C)   ==>   x / -C
+    if (matches(curr, binary(Mul, unary(Neg, any(&left)), fval())) ||
+        matches(curr, binary(DivS, unary(Neg, any(&left)), fval()))) {
+      right->value = right->value.neg();
+      curr->left = left;
+      return curr;
+    }
     // x * -1.0   ==>   -x
     if (fastMath && matches(curr, binary(Mul, any(), fval(-1.0)))) {
       return builder.makeUnary(Abstract::getUnary(type, Neg), left);
@@ -1702,18 +1710,23 @@ private:
   // is a constant. since we canonicalize constants to the right for symmetrical
   // operations, we only need to handle asymmetrical ones here
   // TODO: templatize on type?
-  Expression* optimizeWithConstantOnLeft(Binary* binary) {
-    auto type = binary->left->type;
-    auto* left = binary->left->cast<Const>();
-    if (type.isInteger()) {
-      // operations on zero
-      if (left->value == Literal::makeFromInt32(0, type)) {
-        if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
-             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
-             binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
-            !effects(binary->right).hasSideEffects()) {
-          return binary->left;
-        }
+  Expression* optimizeWithConstantOnLeft(Binary* curr) {
+    using namespace Match;
+    using namespace Abstract;
+
+    auto* left = curr->left->cast<Const>();
+    // 0 <<>> y   ==>   0
+    if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
+        !effects(curr->right).hasSideEffects()) {
+      return curr->left;
+    }
+    {
+      // fval(C) / -x   ==>  -C / x
+      Expression* right;
+      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
+        left->value = left->value.neg();
+        curr->right = right;
+        return curr;
       }
     }
     return nullptr;

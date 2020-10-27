@@ -216,28 +216,22 @@
     )
    )
    (f64.div
-    (f64.neg
-     (local.get $4)
-    )
-    (f64.const 39.47841760435743)
+    (local.get $4)
+    (f64.const -39.47841760435743)
    )
   )
   (f64.store offset=32
    (local.get $1)
    (f64.div
-    (f64.neg
-     (local.get $5)
-    )
-    (f64.const 39.47841760435743)
+    (local.get $5)
+    (f64.const -39.47841760435743)
    )
   )
   (f64.store offset=40
    (local.get $1)
    (f64.div
-    (f64.neg
-     (local.get $6)
-    )
-    (f64.const 39.47841760435743)
+    (local.get $6)
+    (f64.const -39.47841760435743)
    )
   )
   (i32.store
