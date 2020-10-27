@@ -49,58 +49,55 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       *task.destPointer = nullptr;
       continue;
     }
-    // Allocate a new copy.
-    switch (original->_id) {
-      case Expression::Id::InvalidId:
-      case Expression::Id::NumExpressionIds:
-        WASM_UNREACHABLE("Invalid id");
+    // Allocate a new copy, and copy the fields.
 
-#define DELEGATE(CLASS_TO_VISIT)                                               \
-  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
-    copy = wasm.allocator.alloc<CLASS_TO_VISIT>(); \
-    break;
+#define DELEGATE_ID original->_id
 
-#include "wasm-delegations.h"
+#define DELEGATE_START(id) \
+  copy = wasm.allocator.alloc<id>(); \
+  auto* castOriginal = original->cast<id>(); \
+  auto* castCopy = copy->cast<id>(); \
 
-#undef DELEGATE
+#define DELEGATE_FIELD_CHILD(id, name) \
+  tasks.push_back({ castOriginal->name, castCopy->name });
 
-    }
+#define DELEGATE_FIELD_CHILD_LIST(id, name) { \
+  castCopy->name.resize(castOriginal->name.size()); \
+  for (Index i = 0; i < castOriginal->name.size(); i++) { \
+    tasks.push_back({ castOriginal->name[i], &castCopy->name[i] }); \
+  }
 
-    // Point to the copy.
-    *task.destPointer = copy;
+#define DELEGATE_FIELD_INT(id, name) \
+  castCopy->name = castOriginal->name;
 
-    // Scan all the existing children (including nullptr ones).
-    std::vector<Expression*> originalChildren;
-    for (auto** child : ChildPointerIterator(original)) {
-      originalChildren.push_back(*child);
-    }
-    std::vector<Expression**> copyPointers;
-    for (auto** child : ChildPointerIterator(copy)) {
-      copyPointers.push_back(child);
-    }
-    assert(originalChildren.size() == copyPointers.size());
-    for (Index i = 0; i < originalChildren.size(); i++) {
-      tasks.push_back({originalChildren[i], copyPointers[i]});
-    }
-    Immediates originalImmediates;
-    visitImmediates(original, originalImmediates);
-    ImmediatePointers copyImmediates;
-    visitImmediates(copy, copyImmediates);
-    #define COPY_IMMEDIATES(what) \
-      assert(originalImmediates.what.size() == copyImmediates.what.size()); \
-      for (Index i = 0; i < originalImmediates.what.size(); i++) { \
-        *copyImmediates.what[i] = originalImmediates.what[i]; \
-      }
-    COPY_IMMEDIATES(scopeNames);
-    COPY_IMMEDIATES(nonScopeNames);
-    COPY_IMMEDIATES(bools);
-    COPY_IMMEDIATES(uint8s);
-    COPY_IMMEDIATES(ints);
-    COPY_IMMEDIATES(uint64s);
-    COPY_IMMEDIATES(literals);
-    COPY_IMMEDIATES(types);
-    COPY_IMMEDIATES(indexes);
-    COPY_IMMEDIATES(addresses);
+#define DELEGATE_FIELD_INT_ARRAY(id, name) \
+  castCopy->name.resize(castOriginal->name.size()); \
+  for (Index i = 0; i < castOriginal->name.size(); i++) { \
+    castCopy->name[i] = castOriginal->name[i];
+  }
+
+#define DELEGATE_FIELD_NAME(id, name) \
+  castCopy->name = castOriginal->name;
+
+#define DELEGATE_FIELD_SCOPE_NAME(id, name) \
+  castCopy->name = castOriginal->name;
+
+#define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name) \
+  castCopy->name = castOriginal->name;
+
+#define DELEGATE_FIELD_SIGNATURE(id, name) \
+  castCopy->name = castOriginal->name;
+
+#define DELEGATE_FIELD_TYPE(id, name) \
+  castCopy->name = castOriginal->name;
+
+#define DELEGATE_FIELD_ADDRESS(id, name) \
+  castCopy->name = castOriginal->name;
+
+#include "wasm-delegations-fields.h"
+
+    // Write the copy to where it should be referred to.
+    *task.destPointer = nullptr;
   }
   return ret;
 }

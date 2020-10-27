@@ -19,6 +19,11 @@
 // are optional, so you can just provide what you want, and no code will be
 // emitted for the others.
 //
+// (The only mandatory thing to define is DELEGATE_ID which is the key for the
+// switch.)
+//
+// All #defines used here are undefed automatically at the end for you.
+//
 // Child pointers are emitted in reverse order (which is convenient for walking
 // by pushing them to a stack first).
 
@@ -555,3 +560,19 @@ switch (DELEGATE_ID) {
     break;
   }
 }
+
+#undef DELEGATE_ID
+#undef DELEGATE_START
+#undef DELEGATE_END
+#undef DELEGATE_FIELD_CHILD
+#undef DELEGATE_FIELD_OPTIONAL_CHILD
+#undef DELEGATE_FIELD_CHILD_LIST
+#undef DELEGATE_FIELD_INT
+#undef DELEGATE_FIELD_INT_ARRAY
+#undef DELEGATE_FIELD_NAME
+#undef DELEGATE_FIELD_SCOPE_NAME
+#undef DELEGATE_FIELD_SCOPE_NAME_LIST
+#undef DELEGATE_FIELD_SIGNATURE
+#undef DELEGATE_FIELD_TYPE
+#undef DELEGATE_FIELD_ADDRESS
+
