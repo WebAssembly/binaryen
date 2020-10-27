@@ -1697,18 +1697,30 @@ private:
   // is a constant. since we canonicalize constants to the right for symmetrical
   // operations, we only need to handle asymmetrical ones here
   // TODO: templatize on type?
-  Expression* optimizeWithConstantOnLeft(Binary* binary) {
-    auto type = binary->left->type;
-    auto* left = binary->left->cast<Const>();
+  Expression* optimizeWithConstantOnLeft(Binary* curr) {
+    using namespace Match;
+    using namespace Abstract;
+
+    auto type = curr->left->type;
+    auto* left = curr->left->cast<Const>();
     if (type.isInteger()) {
       // operations on zero
       if (left->value == Literal::makeFromInt32(0, type)) {
-        if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
-             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
-             binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
-            !effects(binary->right).hasSideEffects()) {
-          return binary->left;
+        if ((curr->op == Abstract::getBinary(type, Abstract::Shl) ||
+             curr->op == Abstract::getBinary(type, Abstract::ShrU) ||
+             curr->op == Abstract::getBinary(type, Abstract::ShrS)) &&
+            !effects(curr->right).hasSideEffects()) {
+          return curr->left;
         }
+      }
+    }
+    {
+      Expression* right;
+      // fval(C) / -x   ==>   -C / x
+      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
+        left->value = left->value.neg();
+        curr->right = right;
+        return curr;
       }
     }
     return nullptr;

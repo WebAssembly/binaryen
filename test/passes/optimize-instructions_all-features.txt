@@ -4319,6 +4319,12 @@
    )
   )
   (drop
+   (f64.mul
+    (local.get $fy)
+    (f64.const -2)
+   )
+  )
+  (drop
    (f32.div
     (local.get $fx)
     (f32.const -inf)
@@ -4334,6 +4340,12 @@
    (f64.div
     (local.get $fy)
     (f64.const -nan:0x8000000000000)
+   )
+  )
+  (drop
+   (f64.div
+    (f64.const -5)
+    (local.get $fy)
    )
   )
  )

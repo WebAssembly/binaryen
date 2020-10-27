@@ -4752,6 +4752,13 @@
       )
       (f64.const -2.5)
     ))
+    ;; 2 * -x  =>  x * -2
+    (drop (f64.mul
+      (f64.const 2)
+      (f64.neg
+        (local.get $fy)
+      )
+    ))
     ;; -x / inf  =>  x / -inf
     (drop (f32.div
       (f32.neg
@@ -4772,6 +4779,13 @@
         (local.get $fy)
       )
       (f64.const nan)
+    ))
+    ;; 5.0 / -x  =>  -5 / x
+    (drop (f64.div
+      (f64.const 5)
+      (f64.neg
+        (local.get $fy)
+      )
     ))
   )
   (func $pre-combine-or (param $x i32) (param $y i32)
