@@ -463,14 +463,11 @@ private:
   void setupEvents() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      auto name = Names::getValidEventName(wasm, "event$");
-      if (!wasm.getEventOrNull(name)) {
-        auto* event =
-          builder.makeEvent(name,
-                            WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                            Signature(getControlFlowType(), Type::none));
-        wasm.addEvent(event);
-      }
+      auto* event =
+        builder.makeEvent(Names::getValidEventName(wasm, "event$"),
+                          WASM_EVENT_ATTRIBUTE_EXCEPTION,
+                          Signature(getControlFlowType(), Type::none));
+      wasm.addEvent(event);
     }
   }
 
@@ -478,12 +475,16 @@ private:
     for (auto& segment : wasm.memory.segments) {
       Address maxOffset = segment.data.size();
       if (!segment.isPassive) {
-        // It is legal to use an imported global as a segment initializer, but
-        // *not* to use a non-imported global. We have made all globals be
-        // non-imported earlier (to avoid having to handle arbitrary imports
-        // in the fuzzer harness), which means we may refer to a global here
-        // that used to be imported, but no longer is, which we must fix up.
         if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
+          // Using a non-imported global in a segment offset is not valid in
+          // wasm. This can occur due to us making what used to be an imported
+          // global, in initial contents, be not imported any more. To fix that,
+          // replace such invalid things with a constant.
+          // Note that it is still possible in theory to have imported globals
+          // here, as we only do the above for initial contents. While the
+          // fuzzer doesn't do so as of the time of this comment, do a check
+          // for full generality, so that this code essentially does "if this
+          // is invalid wasm, fix it up."
           if (!wasm.getGlobal(offset->name)->imported()) {
             // TODO: It would be better to avoid segment overlap so that
             //       MemoryPacking can run.
