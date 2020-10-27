@@ -1235,26 +1235,22 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.lt_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i16x8.lt_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f32x4.ceil
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.gt_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f32x4.floor
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.gt_u
+       (f32x4.trunc
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.nearest
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -1307,26 +1303,22 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.ge_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i32x4.eq
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f64x2.ceil
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.ne
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f64x2.floor
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.lt_s
+       (f64x2.trunc
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.nearest
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )

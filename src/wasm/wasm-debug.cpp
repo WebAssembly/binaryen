@@ -680,6 +680,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           newAddr = locationUpdater.getNewFuncStart(oldAddr);
         } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
           newAddr = locationUpdater.getNewDelimiter(oldAddr);
+        } else if (locationUpdater.hasOldExprEnd(oldAddr)) {
+          newAddr = locationUpdater.getNewExprEnd(oldAddr);
         }
         if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should

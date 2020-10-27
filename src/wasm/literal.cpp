@@ -1653,6 +1653,9 @@ Literal Literal::absI32x4() const {
 Literal Literal::negI8x16() const {
   return unary<16, &Literal::getLanesUI8x16, &Literal::neg>(*this);
 }
+Literal Literal::popcntI8x16() const {
+  return unary<16, &Literal::getLanesUI8x16, &Literal::popCount>(*this);
+}
 Literal Literal::negI16x8() const {
   return unary<8, &Literal::getLanesUI16x8, &Literal::neg>(*this);
 }

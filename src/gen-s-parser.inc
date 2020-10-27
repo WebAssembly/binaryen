@@ -2492,6 +2492,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'p':
+            if (strcmp(op, "i8x16.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntVecI8x16); }
+            goto parse_error;
           case 'r':
             if (strcmp(op, "i8x16.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI8x16, 16); }
             goto parse_error;

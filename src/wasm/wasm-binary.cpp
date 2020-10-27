@@ -865,7 +865,6 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
 void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
-    assert(span.end == 0);
     span.end = o.size();
   }
 }
@@ -2580,7 +2579,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::End:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::End, startPos);
+      // Pop the current control flow structure off the stack. If there is none
+      // then this is the "end" of the function itself, which also emits an
+      // "end" byte.
+      if (!controlFlowStack.empty()) {
+        controlFlowStack.pop_back();
+      }
       break;
     case BinaryConsts::Else:
       curr = nullptr;
@@ -2808,22 +2812,12 @@ void WasmBinaryBuilder::startControlFlow(Expression* curr) {
 void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
                                             BinaryLocation pos) {
   if (DWARF && currFunction) {
-    if (controlFlowStack.empty()) {
-      // We reached the end of the function, which is also marked with an
-      // "end", like a control flow structure.
-      assert(id == BinaryLocations::End);
-      assert(pos + 1 == endOfFunction);
-      return;
-    }
     assert(!controlFlowStack.empty());
     auto currControlFlow = controlFlowStack.back();
     // We are called after parsing the byte, so we need to subtract one to
     // get its position.
     currFunction->delimiterLocations[currControlFlow][id] =
       pos - codeSectionLocation;
-    if (id == BinaryLocations::End) {
-      controlFlowStack.pop_back();
-    }
   }
 }
 
@@ -4477,6 +4471,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::V128Not:
       curr = allocator.alloc<Unary>();
       curr->op = NotVec128;
+      break;
+    case BinaryConsts::I8x16Popcnt:
+      curr = allocator.alloc<Unary>();
+      curr->op = PopcntVecI8x16;
       break;
     case BinaryConsts::I8x16Abs:
       curr = allocator.alloc<Unary>();
