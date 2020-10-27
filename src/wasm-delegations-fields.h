@@ -179,12 +179,11 @@ switch (DELEGATE_ID) {
   case Expression::Id::LoadId: {
     DELEGATE_START(Load);
     DELEGATE_FIELD_CHILD(Load, ptr);
-      DELEGATE_FIELD_INT(Load, bytes);
-        DELEGATE_FIELD_INT(, signed_);
-      }
-      DELEGATE_FIELD_ADDRESS(, offset);
-      DELEGATE_FIELD_ADDRESS(, align);
-      DELEGATE_FIELD_INT(, isAtomic);
+    DELEGATE_FIELD_INT(Load, bytes);
+    DELEGATE_FIELD_INT(Load, signed_);
+    DELEGATE_FIELD_ADDRESS(Load, offset);
+    DELEGATE_FIELD_ADDRESS(Load, align);
+    DELEGATE_FIELD_INT(Load, isAtomic);
     DELEGATE_END();
     break;
   }
@@ -192,11 +191,11 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Store);
     DELEGATE_FIELD_CHILD(Store, value);
     DELEGATE_FIELD_CHILD(Store, ptr);
-      DELEGATE_FIELD_INT(Store, bytes);
-      DELEGATE_FIELD_ADDRESS(, offset);
-      DELEGATE_FIELD_ADDRESS(, align);
-      DELEGATE_FIELD_INT(, isAtomic);
-      DELEGATE_FIELD_TYPE(, valueType);
+    DELEGATE_FIELD_INT(Store, bytes);
+    DELEGATE_FIELD_ADDRESS(Store, offset);
+    DELEGATE_FIELD_ADDRESS(Store, align);
+    DELEGATE_FIELD_INT(Store, isAtomic);
+    DELEGATE_FIELD_TYPE(Store, valueType);
     DELEGATE_END();
     break;
   }
@@ -204,9 +203,9 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicRMW);
     DELEGATE_FIELD_CHILD(AtomicRMW, value);
     DELEGATE_FIELD_CHILD(AtomicRMW, ptr);
-      DELEGATE_FIELD_INT(, op);
-      DELEGATE_FIELD_INT(AtomicRMW, bytes);
-      DELEGATE_FIELD_ADDRESS(, offset);
+    DELEGATE_FIELD_INT(AtomicRMW, op);
+    DELEGATE_FIELD_INT(AtomicRMW, bytes);
+    DELEGATE_FIELD_ADDRESS(AtomicRMW, offset);
     DELEGATE_END();
     break;
   }
@@ -215,8 +214,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, replacement);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected);
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
-      DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
-      DELEGATE_FIELD_ADDRESS(, offset);
+    DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
+    DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
     DELEGATE_END();
     break;
   }
@@ -225,8 +224,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, timeout);
     DELEGATE_FIELD_CHILD(AtomicWait, expected);
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
-      DELEGATE_FIELD_ADDRESS(, offset);
-      DELEGATE_FIELD_TYPE(, expectedType);
+    DELEGATE_FIELD_ADDRESS(AtomicWait, offset);
+    DELEGATE_FIELD_TYPE(AtomicWait, expectedType);
     DELEGATE_END();
     break;
   }
@@ -234,7 +233,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(AtomicNotify);
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
-      DELEGATE_FIELD_ADDRESS(, offset);
+    DELEGATE_FIELD_ADDRESS(AtomicNotify, offset);
     DELEGATE_END();
     break;
   }
@@ -247,8 +246,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::SIMDExtractId: {
     DELEGATE_START(SIMDExtract);
     DELEGATE_FIELD_CHILD(SIMDExtract, vec);
-      DELEGATE_FIELD_INT(, op);
-      DELEGATE_FIELD_INT(, index);
+    DELEGATE_FIELD_INT(SIMDExtract, op);
+    DELEGATE_FIELD_INT(SIMDExtract, index);
     DELEGATE_END();
     break;
   }
@@ -256,8 +255,8 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDReplace);
     DELEGATE_FIELD_CHILD(SIMDReplace, value);
     DELEGATE_FIELD_CHILD(SIMDReplace, vec);
-      DELEGATE_FIELD_INT(, op);
-      DELEGATE_FIELD_INT(, index);
+    DELEGATE_FIELD_INT(SIMDReplace, op);
+    DELEGATE_FIELD_INT(SIMDReplace, index);
     DELEGATE_END();
     break;
   }
@@ -289,9 +288,9 @@ switch (DELEGATE_ID) {
   case Expression::Id::SIMDLoadId: {
     DELEGATE_START(SIMDLoad);
     DELEGATE_FIELD_CHILD(SIMDLoad, ptr);
-      DELEGATE_FIELD_INT(, op);
-      DELEGATE_FIELD_ADDRESS(, offset);
-      DELEGATE_FIELD_ADDRESS(, align);
+    DELEGATE_FIELD_INT(SIMDLoad, op);
+    DELEGATE_FIELD_ADDRESS(SIMDLoad, offset);
+    DELEGATE_FIELD_ADDRESS(SIMDLoad, align);
     DELEGATE_END();
     break;
   }
@@ -299,10 +298,10 @@ switch (DELEGATE_ID) {
     DELEGATE_START(SIMDLoadStoreLane);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, vec);
     DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, ptr);
-      DELEGATE_FIELD_INT(, op);
-      DELEGATE_FIELD_ADDRESS(, offset);
-      DELEGATE_FIELD_ADDRESS(, align);
-      DELEGATE_FIELD_INT(, index);
+    DELEGATE_FIELD_INT(SIMDLoadStoreLane, op);
+    DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset);
+    DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align);
+    DELEGATE_FIELD_INT(SIMDLoadStoreLane, index);
     DELEGATE_END();
     break;
   }
@@ -311,7 +310,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, size);
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
-      DELEGATE_FIELD_INT(, segment);
+    DELEGATE_FIELD_INT(MemoryInit, segment);
     DELEGATE_END();
     break;
   }
@@ -435,8 +434,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::BrOnExnId: {
     DELEGATE_START(BrOnExn);
     DELEGATE_FIELD_CHILD(BrOnExn, exnref);
-      DELEGATE_FIELD_SCOPE_NAME(, name);
-      DELEGATE_FIELD_NAME(, event);
+    DELEGATE_FIELD_SCOPE_NAME(BrOnExn, name);
+    DELEGATE_FIELD_NAME(BrOnExn, event);
     DELEGATE_END();
     break;
   }
@@ -464,7 +463,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::TupleExtractId: {
     DELEGATE_START(TupleExtract);
     DELEGATE_FIELD_CHILD(TupleExtract, tuple);
-      DELEGATE_FIELD_INT(, index);
+    DELEGATE_FIELD_INT(TupleExtract, index);
     DELEGATE_END();
     break;
   }
