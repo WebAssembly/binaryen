@@ -1704,14 +1704,10 @@ private:
     auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
     if (type.isInteger()) {
-      // operations on zero
-      if (left->value == Literal::makeFromInt32(0, type)) {
-        if ((curr->op == Abstract::getBinary(type, Abstract::Shl) ||
-             curr->op == Abstract::getBinary(type, Abstract::ShrU) ||
-             curr->op == Abstract::getBinary(type, Abstract::ShrS)) &&
-            !effects(curr->right).hasSideEffects()) {
-          return curr->left;
-        }
+      // 0 <<>> y  ==>   0
+      if (left->value.isZero() && Abstract::hasAnyShift(curr->op) &&
+          !effects(curr->right).hasSideEffects()) {
+        return curr->left;
       }
     }
     {
