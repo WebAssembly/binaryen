@@ -311,13 +311,13 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, size);
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
-      visitor.visitIndex(curr->segment);
+      DELEGATE_FIELD_INT(, segment);
     DELEGATE_END();
     break;
   }
   case Expression::Id::DataDropId: {
     DELEGATE_START(DataDrop);
-    DELEGATE_FIELD_INT(DataDrop, curr->segment);
+    DELEGATE_FIELD_INT(DataDrop, segment);
     DELEGATE_END();
     break;
   }
@@ -389,7 +389,7 @@ switch (DELEGATE_ID) {
     break;
   case Expression::Id::RefNullId: {
     DELEGATE_START(RefNull);
-    DELEGATE_FIELD_TYPE(RefNull, curr->type);
+    DELEGATE_FIELD_TYPE(RefNull, type);
     DELEGATE_END();
     break;
   }
@@ -401,7 +401,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefFuncId: {
     DELEGATE_START(RefFunc);
-    DELEGATE_FIELD_NAME(RefFunc, curr->func);
+    DELEGATE_FIELD_NAME(RefFunc, func);
     DELEGATE_END();
     break;
   }
@@ -422,7 +422,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_LIST(Throw, operands);
-    DELEGATE_FIELD_INT(Throw, curr->event);
+    DELEGATE_FIELD_INT(Throw, event);
     DELEGATE_END();
     break;
   }
@@ -435,8 +435,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::BrOnExnId: {
     DELEGATE_START(BrOnExn);
     DELEGATE_FIELD_CHILD(BrOnExn, exnref);
-      visitor.visitScopeName(curr->name);
-      visitor.visitNonScopeName(curr->event);
+      DELEGATE_FIELD_SCOPE_NAME(, name);
+      DELEGATE_FIELD_NAME(, event);
     DELEGATE_END();
     break;
   }
@@ -464,7 +464,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::TupleExtractId: {
     DELEGATE_START(TupleExtract);
     DELEGATE_FIELD_CHILD(TupleExtract, tuple);
-      visitor.visitIndex(curr->index);
+      DELEGATE_FIELD_INT(, index);
     DELEGATE_END();
     break;
   }
