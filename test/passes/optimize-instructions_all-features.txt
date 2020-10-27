@@ -19,6 +19,7 @@
  (type $f32_=>_none (func (param f32)))
  (type $f32_f64_=>_none (func (param f32 f64)))
  (type $f64_=>_none (func (param f64)))
+ (type $f64_f32_=>_none (func (param f64 f32)))
  (type $f64_f64_f32_f32_=>_none (func (param f64 f64 f32 f32)))
  (type $none_=>_f64 (func (result f64)))
  (memory $0 0)
@@ -4636,6 +4637,34 @@
      (i32.const 2147483647)
     )
     (i32.const -7)
+   )
+  )
+ )
+ (func $optimize-float-mul-by-two (param $0 f64) (param $1 f32)
+  (drop
+   (f64.add
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (f32.add
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+  (drop
+   (f64.mul
+    (call $tee-with-unreachable-value)
+    (f64.const 2)
+   )
+  )
+  (drop
+   (f64.mul
+    (f64.neg
+     (local.get $0)
+    )
+    (f64.const 2)
    )
   )
  )

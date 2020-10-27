@@ -194,12 +194,12 @@ struct OptimizationOptions : public ToolOptions {
         "Optimize floats without handling corner cases of NaNs and rounding",
         Options::Arguments::Zero,
         [this](Options*, const std::string&) { passOptions.fastMath = true; })
-      .add("--unmodified-imported-mem",
+      .add("--zero-filled-memory",
            "-uim",
-           "Assume that an imported memory will not have been modified",
+           "Assume that an imported memory will be zero-initialized",
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
-             passOptions.unmodifiedImportedMemory = true;
+             passOptions.zeroFilledMemory = true;
            });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
