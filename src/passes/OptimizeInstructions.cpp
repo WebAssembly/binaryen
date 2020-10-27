@@ -1665,6 +1665,8 @@ private:
     }
     {
       // x * 2.0  ==>  x + x
+      // but we apply this only for simple expressions like
+      // local.get and global.get for avoid using extra local.
       Expression* x;
       if (matches(curr, binary(Mul, any(&x), fval(2.0))) &&
           (x->is<LocalGet>() || x->is<GlobalGet>())) {
