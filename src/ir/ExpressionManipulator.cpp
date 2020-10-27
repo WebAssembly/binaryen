@@ -59,9 +59,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   auto* castCopy = copy->cast<id>(); \
 
 #define DELEGATE_FIELD_CHILD(id, name) \
-  tasks.push_back({ castOriginal->name, castCopy->name });
+  tasks.push_back({ castOriginal->name, &castCopy->name });
 
-#define DELEGATE_FIELD_CHILD_LIST(id, name) { \
+#define DELEGATE_FIELD_CHILD_LIST(id, name) \
   castCopy->name.resize(castOriginal->name.size()); \
   for (Index i = 0; i < castOriginal->name.size(); i++) { \
     tasks.push_back({ castOriginal->name[i], &castCopy->name[i] }); \
@@ -71,10 +71,13 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   castCopy->name = castOriginal->name;
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) \
-  castCopy->name.resize(castOriginal->name.size()); \
+  assert(castCopy->name.size() == castOriginal->name.size()); \
   for (Index i = 0; i < castOriginal->name.size(); i++) { \
-    castCopy->name[i] = castOriginal->name[i];
+    castCopy->name[i] = castOriginal->name[i]; \
   }
+
+#define DELEGATE_FIELD_LITERAL(id, name) \
+  castCopy->name = castOriginal->name;
 
 #define DELEGATE_FIELD_NAME(id, name) \
   castCopy->name = castOriginal->name;

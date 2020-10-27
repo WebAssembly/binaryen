@@ -63,6 +63,11 @@
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 #endif
 
+// Emits code to handle a Literal.
+#ifndef DELEGATE_FIELD_LITERAL
+#define DELEGATE_FIELD_LITERAL(id, name)
+#endif
+
 // Emits code to handle a name (like a call target).
 #ifndef DELEGATE_FIELD_NAME
 #define DELEGATE_FIELD_NAME(id, name)
