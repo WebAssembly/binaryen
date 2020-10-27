@@ -58,9 +58,9 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 
     switch (curr->_id) {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-      case Expression::Id::CLASS_TO_VISIT##Id:                                 \
-        return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(             \
-          static_cast<CLASS_TO_VISIT*>(curr))
+  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
+    return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
+      static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
 
@@ -69,7 +69,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
       default:
         WASM_UNREACHABLE("unexpected expression type");
     }
-
   }
 };
 
@@ -78,7 +77,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 template<typename SubType, typename ReturnType = void>
 struct OverriddenVisitor {
 // Expression visitors, which must be overridden
-#define DELEGATE(CLASS_TO_VISIT)                                          \
+#define DELEGATE(CLASS_TO_VISIT)                                               \
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
     static_assert(                                                             \
       &SubType::visit##CLASS_TO_VISIT !=                                       \
@@ -96,9 +95,9 @@ struct OverriddenVisitor {
 
     switch (curr->_id) {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-      case Expression::Id::CLASS_TO_VISIT##Id:                                 \
-        return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(             \
-          static_cast<CLASS_TO_VISIT*>(curr))
+  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
+    return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
+      static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
 
@@ -107,7 +106,6 @@ struct OverriddenVisitor {
       default:
         WASM_UNREACHABLE("unexpected expression type");
     }
-
   }
 };
 
