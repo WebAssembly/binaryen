@@ -2851,7 +2851,7 @@ Abbrev table for offset: 0x00000000
 0x00000278:     DW_TAG_inlined_subroutine [24] *
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01a8 => {0x000001a8} "_ZL8fannkuchi")
                   DW_AT_low_pc [DW_FORM_addr]	(0x00000000000003ec)
-                  DW_AT_high_pc [DW_FORM_data4]	(0x0000026c)
+                  DW_AT_high_pc [DW_FORM_data4]	(0x0000029e)
                   DW_AT_call_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/tests/fannkuch.cpp")
                   DW_AT_call_line [DW_FORM_data1]	(159)
                   DW_AT_call_column [DW_FORM_data1]	(0x29)

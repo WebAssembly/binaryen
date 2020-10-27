@@ -1880,10 +1880,10 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, BinaryLocations::End);
-  }
   o << int8_t(BinaryConsts::End);
+  if (func && !sourceMap) {
+    parent.writeDebugLocationEnd(curr, func);
+  }
 }
 
 void BinaryInstWriter::emitFunctionEnd() { o << int8_t(BinaryConsts::End); }
