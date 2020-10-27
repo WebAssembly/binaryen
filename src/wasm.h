@@ -1425,11 +1425,7 @@ struct BinaryLocations {
     }
   };
 
-  enum DelimiterId {
-    Else = 0,
-    Catch = 0,
-    Invalid = -1
-  };
+  enum DelimiterId { Else = 0, Catch = 0, Invalid = -1 };
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
   // DWARF debug info can refer to multiple interesting positions in a function.
