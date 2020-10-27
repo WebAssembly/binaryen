@@ -1415,6 +1415,7 @@ struct BinaryLocations {
   // this as a simple struct with two elements (as two extra elements is the
   // maximum currently needed; due to 'catch' and 'end' for try-catch). The
   // second value may be 0, indicating it is not used.
+  // TODO: it seems we just need a single value here?
   struct DelimiterLocations : public std::array<BinaryLocation, 2> {
     DelimiterLocations() {
       // Ensure zero-initialization.
@@ -1425,11 +1426,8 @@ struct BinaryLocations {
   };
 
   enum DelimiterId {
-    // All control flow structures have an end, so use index 0 for that.
-    End = 0,
-    // Use index 1 for all other current things.
-    Else = 1,
-    Catch = 1,
+    Else = 0,
+    Catch = 0,
     Invalid = -1
   };
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
