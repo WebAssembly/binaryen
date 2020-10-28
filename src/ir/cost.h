@@ -648,6 +648,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case AvgrUVecI16x8:
         ret = 1;
         break;
+      case Q15MulrSatSVecI16x8:
+        ret = 1;
+        break;
+      case ExtMulLowSVecI16x8:
+        ret = 1;
+        break;
+      case ExtMulHighSVecI16x8:
+        ret = 1;
+        break;
+      case ExtMulLowUVecI16x8:
+        ret = 1;
+        break;
+      case ExtMulHighUVecI16x8:
+        ret = 1;
+        break;
       case AddVecI32x4:
         ret = 1;
         break;
@@ -672,6 +687,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case DotSVecI16x8ToVecI32x4:
         ret = 1;
         break;
+      case ExtMulLowSVecI32x4:
+        ret = 1;
+        break;
+      case ExtMulHighSVecI32x4:
+        ret = 1;
+        break;
+      case ExtMulLowUVecI32x4:
+        ret = 1;
+        break;
+      case ExtMulHighUVecI32x4:
+        ret = 1;
+        break;
       case AddVecI64x2:
         ret = 1;
         break;
@@ -679,6 +706,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 1;
         break;
       case MulVecI64x2:
+        ret = 1;
+        break;
+      case ExtMulLowSVecI64x2:
+        ret = 1;
+        break;
+      case ExtMulHighSVecI64x2:
+        ret = 1;
+        break;
+      case ExtMulLowUVecI64x2:
+        ret = 1;
+        break;
+      case ExtMulHighUVecI64x2:
         ret = 1;
         break;
       case AddVecF32x4:
