@@ -1716,6 +1716,7 @@ private:
     using namespace Match;
     using namespace Abstract;
 
+    auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
     // 0 <<>> y   ==>   0
     if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
@@ -1728,6 +1729,33 @@ private:
       if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
         left->value = left->value.neg();
         curr->right = right;
+        return curr;
+      }
+    }
+    {
+      // C1 - (x + C2)  ==>  (C1 - C2) - x
+      // C1 - (x - C2)  ==>  (C1 + C2) - x
+      BinaryOp op;
+      Const *c1, * c2;
+      Expression* x;
+      if (matches(curr, binary(Sub, ival(&c1), binary(&op, any(&x), ival(&c2))))) {
+        if (op == Abstract::getBinary(type, Add)) {
+          left->value = c1->value.sub(c2->value);
+          curr->right = x;
+          return curr;
+        }
+        if (op == Abstract::getBinary(type, Sub)) {
+          left->value = c1->value.add(c2->value);
+          curr->right = x;
+          return curr;
+        }
+      }
+      // C1 - (C2 - x)  ==>   x + (C1 - C2)
+      if (matches(curr, binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
+        curr->op = Abstract::getBinary(type, Add);
+        left->value = c1->value.sub(c2->value);
+        curr->right = x;
+        std::swap(curr->left, curr->right);
         return curr;
       }
     }
