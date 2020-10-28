@@ -612,21 +612,26 @@ private:
   std::map<Type, std::vector<Index>>
     typeLocals; // type => list of locals with that type
 
-  void prepareToCreateFunctionContents(Function* func_) {
-    func = func_;
-    labelIndex = 0;
-    assert(breakableStack.empty());
-    assert(hangStack.empty());
-  }
+  struct FunctionCreationContext {
+    TranslateToFuzzReader& parent;
+    Function* func;
 
-  void finishCreatingFunctionContents() {
-    if (HANG_LIMIT > 0) {
-      addHangLimitChecks(func);
+    void FunctionCreationContext(TranslateToFuzzReader& parent, Function* func) : parent(parent), func(func) {
+      parent.func = func;
+      parent.labelIndex = 0;
+      assert(parent.breakableStack.empty());
+      assert(parent.hangStack.empty());
     }
-    typeLocals.clear();
-    assert(breakableStack.empty());
-    assert(hangStack.empty());
-  }
+
+    ~FunctionCreationContext() {
+      if (parent.HANG_LIMIT > 0) {
+        parent.addHangLimitChecks(func);
+      }
+      parent.typeLocals.clear();
+      assert(parent.breakableStack.empty());
+      assert(parent.hangStack.empty());
+    }
+  };
 
   Index numAddedFunctions = 0;
 
@@ -650,7 +655,7 @@ private:
       typeLocals[type].push_back(params.size() + func->vars.size());
       func->vars.push_back(type);
     }
-    prepareToCreateFunctionContents(func);
+    FunctionCreationContext(*this, func);
     // with small chance, make the body unreachable
     auto bodyType = func->sig.results;
     if (oneIn(10)) {
@@ -693,8 +698,6 @@ private:
     while (oneIn(3) && !finishedInput) {
       wasm.table.segments[0].data.push_back(func->name);
     }
-    // cleanup
-    finishCreatingFunctionContents();
     numAddedFunctions++;
     return func;
   }
@@ -909,7 +912,7 @@ private:
     auto chance = upTo(RESOLUTION + 1);
     for (auto& ref : wasm.functions) {
       auto* func = ref.get();
-      prepareToCreateFunctionContents(func);
+      FunctionCreationContext(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
         // know what to provide.
@@ -930,9 +933,6 @@ private:
         mutate(func);
         fixLabels(func);
       }
-      // Note that even if we don't fuzz the contents we still need to call
-      // finish so that we add hang limit protection and other general things.
-      finishCreatingFunctionContents();
     }
     // Remove a start function - the fuzzing harness expects code to run only
     // from exports.
