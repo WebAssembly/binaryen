@@ -1113,8 +1113,8 @@ private:
 
     struct SeekState {
       Expression* curr;
-      int64_t mul;
-      SeekState(Expression* curr, int64_t mul) : curr(curr), mul(mul) {}
+      uint64_t mul;
+      SeekState(Expression* curr, uint64_t mul) : curr(curr), mul(mul) {}
     };
     std::vector<SeekState> seekStack;
     seekStack.emplace_back(binary, 1);
@@ -1124,8 +1124,8 @@ private:
       auto curr = state.curr;
       auto mul = state.mul;
       if (auto* c = curr->dynCast<Const>()) {
-        int64_t value = c->value.getInteger();
-        if (value != 0LL) {
+        uint64_t value = c->value.getInteger();
+        if (value != 0ULL) {
           constant += value * mul;
           constants.push_back(c);
         }
@@ -1154,10 +1154,12 @@ private:
         } else if (binary->op ==
                    Abstract::getBinary(binary->type, Abstract::Mul)) {
           if (auto* c = binary->left->dynCast<Const>()) {
-            seekStack.emplace_back(binary->right, mul * c->value.getInteger());
+            seekStack.emplace_back(binary->right,
+                                   mul * (uint64_t)c->value.getInteger());
             continue;
           } else if (auto* c = binary->right->dynCast<Const>()) {
-            seekStack.emplace_back(binary->left, mul * c->value.getInteger());
+            seekStack.emplace_back(binary->left,
+                                   mul * (uint64_t)c->value.getInteger());
             continue;
           }
         }
