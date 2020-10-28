@@ -764,7 +764,7 @@ struct OptimizeInstructions
           }
           // abs(0 - x)   ==>   abs(x),
           // only for fast math
-          if (getPassOptions().fastMath &&
+          if (fastMath &&
               binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
             if (auto* c = binary->left->dynCast<Const>()) {
               if (c->value.isZero()) {
