@@ -616,7 +616,8 @@ private:
     TranslateToFuzzReader& parent;
     Function* func;
 
-    void FunctionCreationContext(TranslateToFuzzReader& parent, Function* func) : parent(parent), func(func) {
+    void FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
+      : parent(parent), func(func) {
       parent.func = func;
       parent.labelIndex = 0;
       assert(parent.breakableStack.empty());
