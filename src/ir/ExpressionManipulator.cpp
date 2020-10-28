@@ -101,8 +101,11 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #include "wasm-delegations-fields.h"
 
+    // The type can be simply copied.
+    copy->type = original->type;
+
     // Write the copy to where it should be referred to.
-    *task.destPointer = nullptr;
+    *task.destPointer = copy;
   }
   return ret;
 }

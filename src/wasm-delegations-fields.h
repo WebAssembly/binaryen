@@ -448,6 +448,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(BrOnExn, exnref);
     DELEGATE_FIELD_SCOPE_NAME(BrOnExn, name);
     DELEGATE_FIELD_NAME(BrOnExn, event);
+    DELEGATE_FIELD_TYPE(BrOnExn, sent);
     DELEGATE_END();
     break;
   }
