@@ -1147,8 +1147,8 @@ private:
         } else if (binary->op ==
                    Abstract::getBinary(binary->type, Abstract::Shl)) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seekStack.emplace_back(
-              binary->left, mul << Bits::getEffectiveShifts(c));
+            seekStack.emplace_back(binary->left,
+                                   mul << Bits::getEffectiveShifts(c));
             continue;
           }
         } else if (binary->op ==
