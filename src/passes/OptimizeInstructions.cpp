@@ -1714,9 +1714,20 @@ private:
     using namespace Match;
     using namespace Abstract;
 
+    auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
-    // 0 <<>> y   ==>   0
+    // 0 <<>> x   ==>   0
     if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
+        !effects(curr->right).hasSideEffects()) {
+      return curr->left;
+    }
+    // (signed)-1 >> x   ==>   -1
+    // rotl(-1, x)       ==>   -1
+    // rotr(-1, x)       ==>   -1
+    if ((curr->op == Abstract::getBinary(type, ShrS) ||
+         curr->op == Abstract::getBinary(type, RotL) ||
+         curr->op == Abstract::getBinary(type, RotR)) &&
+        left->value.getInteger() == -1LL &&
         !effects(curr->right).hasSideEffects()) {
       return curr->left;
     }
