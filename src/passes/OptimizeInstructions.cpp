@@ -1724,15 +1724,6 @@ private:
       return curr->left;
     }
     {
-      // fval(C) / -x   ==>  -C / x
-      Expression* right;
-      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
-        left->value = left->value.neg();
-        curr->right = right;
-        return curr;
-      }
-    }
-    {
       // C1 - (x + C2)  ==>  (C1 - C2) - x
       // C1 - (x - C2)  ==>  (C1 + C2) - x
       BinaryOp op;
@@ -1756,6 +1747,15 @@ private:
         left->value = c1->value.sub(c2->value);
         curr->right = x;
         std::swap(curr->left, curr->right);
+        return curr;
+      }
+    }
+    {
+      // fval(C) / -x   ==>  -C / x
+      Expression* right;
+      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
+        left->value = left->value.neg();
+        curr->right = right;
         return curr;
       }
     }
