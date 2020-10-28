@@ -616,7 +616,7 @@ private:
     TranslateToFuzzReader& parent;
     Function* func;
 
-    void FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
+    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
       : parent(parent), func(func) {
       parent.func = func;
       parent.labelIndex = 0;
