@@ -138,7 +138,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(Switch, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
     DELEGATE_FIELD_SCOPE_NAME(Switch, default_);
-    DELEGATE_FIELD_SCOPE_NAME_LIST(Switch, default_);
+    DELEGATE_FIELD_SCOPE_NAME_LIST(Switch, targets);
     DELEGATE_END();
     break;
   }
