@@ -32,7 +32,7 @@
 #define DELEGATE_START(id)
 #endif
 
-// Emits code at the endof the case for a class.
+// Emits code at the end of the case for a class.
 #ifndef DELEGATE_END
 #define DELEGATE_END(id)
 #endif
@@ -83,7 +83,7 @@
 #define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name)
 #endif
 
-// Emits code to handle a
+// Emits code to handle a Signature.
 #ifndef DELEGATE_FIELD_SIGNATURE
 #define DELEGATE_FIELD_SIGNATURE(id, name)
 #endif
