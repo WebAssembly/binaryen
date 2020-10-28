@@ -656,7 +656,7 @@ private:
       typeLocals[type].push_back(params.size() + func->vars.size());
       func->vars.push_back(type);
     }
-    FunctionCreationContext(*this, func);
+    FunctionCreationContext context(*this, func);
     // with small chance, make the body unreachable
     auto bodyType = func->sig.results;
     if (oneIn(10)) {
@@ -913,7 +913,7 @@ private:
     auto chance = upTo(RESOLUTION + 1);
     for (auto& ref : wasm.functions) {
       auto* func = ref.get();
-      FunctionCreationContext(*this, func);
+      FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
         // know what to provide.
