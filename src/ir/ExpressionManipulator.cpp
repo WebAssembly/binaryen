@@ -52,54 +52,47 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #define DELEGATE_ID original->_id
 
-#define DELEGATE_START(id) \
-  copy = wasm.allocator.alloc<id>(); \
-  auto* castOriginal = original->cast<id>(); \
-  WASM_UNUSED(castOriginal); \
-  auto* castCopy = copy->cast<id>(); \
+#define DELEGATE_START(id)                                                     \
+  copy = wasm.allocator.alloc<id>();                                           \
+  auto* castOriginal = original->cast<id>();                                   \
+  WASM_UNUSED(castOriginal);                                                   \
+  auto* castCopy = copy->cast<id>();                                           \
   WASM_UNUSED(castCopy);
 
-#define DELEGATE_FIELD_CHILD(id, name) \
-  tasks.push_back({ castOriginal->name, &castCopy->name });
+#define DELEGATE_FIELD_CHILD(id, name)                                         \
+  tasks.push_back({castOriginal->name, &castCopy->name});
 
-#define DELEGATE_FIELD_CHILD_LIST(id, name) \
-  castCopy->name.resize(castOriginal->name.size()); \
-  for (Index i = 0; i < castOriginal->name.size(); i++) { \
-    tasks.push_back({ castOriginal->name[i], &castCopy->name[i] }); \
+#define DELEGATE_FIELD_CHILD_LIST(id, name)                                    \
+  castCopy->name.resize(castOriginal->name.size());                            \
+  for (Index i = 0; i < castOriginal->name.size(); i++) {                      \
+    tasks.push_back({castOriginal->name[i], &castCopy->name[i]});              \
   }
 
-#define DELEGATE_FIELD_INT(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_INT(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_INT_ARRAY(id, name) \
-  assert(castCopy->name.size() == castOriginal->name.size()); \
-  for (Index i = 0; i < castOriginal->name.size(); i++) { \
-    castCopy->name[i] = castOriginal->name[i]; \
+#define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
+  assert(castCopy->name.size() == castOriginal->name.size());                  \
+  for (Index i = 0; i < castOriginal->name.size(); i++) {                      \
+    castCopy->name[i] = castOriginal->name[i];                                 \
   }
 
-#define DELEGATE_FIELD_LITERAL(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_LITERAL(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_NAME(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_NAME(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_SCOPE_NAME(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_SCOPE_NAME(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name) \
-  castCopy->name.resize(castOriginal->name.size()); \
-  for (Index i = 0; i < castOriginal->name.size(); i++) { \
-    castCopy->name[i] = castOriginal->name[i]; \
+#define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name)                               \
+  castCopy->name.resize(castOriginal->name.size());                            \
+  for (Index i = 0; i < castOriginal->name.size(); i++) {                      \
+    castCopy->name[i] = castOriginal->name[i];                                 \
   }
 
-#define DELEGATE_FIELD_SIGNATURE(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_SIGNATURE(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_TYPE(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_TYPE(id, name) castCopy->name = castOriginal->name;
 
-#define DELEGATE_FIELD_ADDRESS(id, name) \
-  castCopy->name = castOriginal->name;
+#define DELEGATE_FIELD_ADDRESS(id, name) castCopy->name = castOriginal->name;
 
 #include "wasm-delegations-fields.h"
 
