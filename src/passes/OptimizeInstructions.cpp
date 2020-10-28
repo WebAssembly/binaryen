@@ -1108,7 +1108,7 @@ private:
   Expression* optimizeAddedConstants(Binary* binary) {
     assert(binary->type.isInteger());
 
-    uint64_t constant = 0;
+    int64_t constant = 0;
     std::vector<Const*> constants;
 
     struct SeekState {
@@ -1241,7 +1241,7 @@ private:
     ZeroRemover remover(getPassOptions());
     remover.setModule(getModule());
     remover.walk(walked);
-    if (constant == 0ULL) {
+    if (constant == 0LL) {
       return walked; // nothing more to do
     }
     if (auto* c = walked->dynCast<Const>()) {
