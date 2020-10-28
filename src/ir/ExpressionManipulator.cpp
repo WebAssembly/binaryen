@@ -88,7 +88,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   castCopy->name = castOriginal->name;
 
 #define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name) \
-  assert(castCopy->name.size() == castOriginal->name.size()); \
+  castCopy->name.resize(castOriginal->name.size()); \
   for (Index i = 0; i < castOriginal->name.size(); i++) { \
     castCopy->name[i] = castOriginal->name[i]; \
   }
