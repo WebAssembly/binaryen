@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "ir/immediates.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
 
