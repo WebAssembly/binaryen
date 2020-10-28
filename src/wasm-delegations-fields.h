@@ -160,7 +160,6 @@ switch (DELEGATE_ID) {
     break;
   }
   case Expression::Id::LocalGetId: {
-    // TODO: optimize leaves with a direct call?
     DELEGATE_START(LocalGet);
     DELEGATE_FIELD_INT(LocalGet, index);
     DELEGATE_END();

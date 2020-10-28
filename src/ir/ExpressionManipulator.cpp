@@ -23,6 +23,7 @@ namespace ExpressionManipulator {
 
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
+  // Perform the copy using a stack of tasks (avoiding recusion).
   struct CopyTask {
     // The thing to copy.
     Expression* original;
@@ -52,6 +53,8 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #define DELEGATE_ID original->_id
 
+// Allocate a new expression of the right type, and create cast versions of it
+// for later operations.
 #define DELEGATE_START(id)                                                     \
   copy = wasm.allocator.alloc<id>();                                           \
   auto* castOriginal = original->cast<id>();                                   \
@@ -59,6 +62,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   auto* castCopy = copy->cast<id>();                                           \
   WASM_UNUSED(castCopy);
 
+// Handle each type of field, copying it appropriately.
 #define DELEGATE_FIELD_CHILD(id, name)                                         \
   tasks.push_back({castOriginal->name, &castCopy->name});
 
