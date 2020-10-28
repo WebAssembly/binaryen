@@ -1727,9 +1727,10 @@ private:
       // C1 - (x + C2)  ==>  (C1 - C2) - x
       // C1 - (x - C2)  ==>  (C1 + C2) - x
       BinaryOp op;
-      Const *c1, * c2;
+      Const *c1, *c2;
       Expression* x;
-      if (matches(curr, binary(Sub, ival(&c1), binary(&op, any(&x), ival(&c2))))) {
+      if (matches(curr,
+                  binary(Sub, ival(&c1), binary(&op, any(&x), ival(&c2))))) {
         if (op == Abstract::getBinary(type, Add)) {
           left->value = c1->value.sub(c2->value);
           curr->right = x;
@@ -1742,7 +1743,8 @@ private:
         }
       }
       // C1 - (C2 - x)  ==>   x + (C1 - C2)
-      if (matches(curr, binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
+      if (matches(curr,
+                  binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
         curr->op = Abstract::getBinary(type, Add);
         left->value = c1->value.sub(c2->value);
         curr->right = x;
