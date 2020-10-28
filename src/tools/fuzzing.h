@@ -609,8 +609,8 @@ private:
   // which we try to minimize the risk of
   std::vector<Expression*> hangStack;
 
-  std::map<Type, std::vector<Index>>
-    typeLocals; // type => list of locals with that type
+  // type => list of locals with that type
+  std::map<Type, std::vector<Index>> typeLocals;
 
   struct FunctionCreationContext {
     TranslateToFuzzReader& parent;
