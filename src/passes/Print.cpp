@@ -1357,6 +1357,22 @@ struct PrintExpressionContents
       case AvgrUVecI16x8:
         o << "i16x8.avgr_u";
         break;
+      case Q15MulrSatSVecI16x8:
+        o << "i16x8.q15mulr_sat_s";
+        break;
+      case ExtMulLowSVecI16x8:
+        o << "i16x8.extmul_low_i8x16_s";
+        break;
+      case ExtMulHighSVecI16x8:
+        o << "i16x8.extmul_high_i8x16_s";
+        break;
+      case ExtMulLowUVecI16x8:
+        o << "i16x8.extmul_low_i8x16_u";
+        break;
+      case ExtMulHighUVecI16x8:
+        o << "i16x8.extmul_high_i8x16_u";
+        break;
+
       case AddVecI32x4:
         o << "i32x4.add";
         break;
@@ -1381,6 +1397,19 @@ struct PrintExpressionContents
       case DotSVecI16x8ToVecI32x4:
         o << "i32x4.dot_i16x8_s";
         break;
+      case ExtMulLowSVecI32x4:
+        o << "i32x4.extmul_low_i16x8_s";
+        break;
+      case ExtMulHighSVecI32x4:
+        o << "i32x4.extmul_high_i16x8_s";
+        break;
+      case ExtMulLowUVecI32x4:
+        o << "i32x4.extmul_low_i16x8_u";
+        break;
+      case ExtMulHighUVecI32x4:
+        o << "i32x4.extmul_high_i16x8_u";
+        break;
+
       case AddVecI64x2:
         o << "i64x2.add";
         break;
@@ -1389,6 +1418,18 @@ struct PrintExpressionContents
         break;
       case MulVecI64x2:
         o << "i64x2.mul";
+        break;
+      case ExtMulLowSVecI64x2:
+        o << "i64x2.extmul_low_i32x4_s";
+        break;
+      case ExtMulHighSVecI64x2:
+        o << "i64x2.extmul_high_i32x4_s";
+        break;
+      case ExtMulLowUVecI64x2:
+        o << "i64x2.extmul_low_i32x4_u";
+        break;
+      case ExtMulHighUVecI64x2:
+        o << "i64x2.extmul_high_i32x4_u";
         break;
 
       case AddVecF32x4:

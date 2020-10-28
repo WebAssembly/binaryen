@@ -1,7 +1,7 @@
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_none (func))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -2359,6 +2359,15 @@
      (i32.const 790656516)
     )
     (i64.const -1337)
+   )
+  )
+ )
+ (func $zero-ops-64-special (result i32)
+  (return
+   (i32.wrap_i64
+    (i64.popcnt
+     (i64.const 7377)
+    )
    )
   )
  )

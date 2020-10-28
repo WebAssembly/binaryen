@@ -2683,6 +2683,21 @@
     )
    )
   )
+  (func $zero-ops-64-special (result i32)
+    (return
+      (i32.wrap_i64
+        (i64.popcnt
+          (i64.sub
+            (i64.shl
+              (i64.const 4294783828)
+              (i64.const 17179869183)
+            )
+            (i64.const -7377)
+          )
+        )
+      )
+    )
+  )
   (func $sign-ext-1-and-ne (result i32)
    (select
     (i32.ne

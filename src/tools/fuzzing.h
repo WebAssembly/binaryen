@@ -2448,6 +2448,9 @@ private:
                                  MinUVecI8x16,
                                  MaxSVecI8x16,
                                  MaxUVecI8x16,
+                                 // TODO: avgr_u
+                                 // TODO: q15mulr_sat_s
+                                 // TODO: extmul
                                  AddVecI16x8,
                                  AddSatSVecI16x8,
                                  AddSatUVecI16x8,
