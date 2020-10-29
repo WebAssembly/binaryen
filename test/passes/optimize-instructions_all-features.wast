@@ -4803,6 +4803,45 @@
       )
     ))
   )
+  (func $lhs-is-neg-one (param $x i32) (param $y i64)
+    ;; -1 >> x  ==>   -1
+    (drop (i32.shr_s
+      (i32.const -1)
+      (local.get $x)
+    ))
+    (drop (i64.shr_s
+      (i64.const -1)
+      (local.get $y)
+    ))
+    ;; rotl(-1, x)  ==>   -1
+    (drop (i32.rotl
+      (i32.const -1)
+      (local.get $x)
+    ))
+    (drop (i64.rotl
+      (i64.const -1)
+      (local.get $y)
+    ))
+    ;; rotr(-1, x)  ==>   -1
+    (drop (i32.rotr
+      (i32.const -1)
+      (local.get $x)
+    ))
+    (drop (i64.rotr
+      (i64.const -1)
+      (local.get $y)
+    ))
+    ;; skip
+    (drop (i32.shr_s
+      (i32.const -1)
+      (call $ne0) ;; side effect
+    ))
+    ;; skip
+    (drop (i32.shr_u
+      (i32.const -1)
+      (local.get $x)
+    ))
+  )
   (func $pre-combine-or (param $x i32) (param $y i32)
     (drop (i32.or
       (i32.gt_s
