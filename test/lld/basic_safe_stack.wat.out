@@ -7,7 +7,6 @@
  (memory $0 2)
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66112))
- (global $global$1 i32 (i32.const 568))
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
  (export "memory" (memory $0))
@@ -15,7 +14,6 @@
  (export "stackRestore" (func $stackRestore))
  (export "stackAlloc" (func $stackAlloc))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
   (nop)
@@ -90,7 +88,6 @@
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 0,
   "tableSize": 1,
   "initializers": [
     "__wasm_call_ctors"
@@ -108,7 +105,6 @@
     "__set_stack_limits"
   ],
   "namedGlobals": {
-    "__data_end" : "568"
   },
   "invokeFuncs": [
   ],

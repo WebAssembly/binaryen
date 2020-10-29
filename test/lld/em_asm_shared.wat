@@ -4,14 +4,14 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
- (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
- (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
- (import "env" "__stack_pointer" (global $gimport$2 (mut i32)))
- (import "env" "__memory_base" (global $gimport$3 i32))
- (import "env" "__table_base" (global $gimport$4 i32))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $gimport$6 (mut i32)))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $gimport$7 (mut i32)))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $gimport$8 (mut i32)))
+ (data (global.get $gimport$1) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
+ (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
+ (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
+ (import "env" "__memory_base" (global $gimport$1 i32))
+ (import "env" "__table_base" (global $gimport$2 i32))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $gimport$3 (mut i32)))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $gimport$4 (mut i32)))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $gimport$5 (mut i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
  (global $global$0 i32 (i32.const 33))
  (global $global$1 i32 (i32.const 54))
@@ -30,10 +30,10 @@
  (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
-  (global.set $gimport$2
+  (global.set $gimport$0
    (local.tee $0
     (i32.sub
-     (global.get $gimport$2)
+     (global.get $gimport$0)
      (i32.const 32)
     )
    )
@@ -42,11 +42,11 @@
    (call $emscripten_asm_const_int
     (i32.add
      (local.tee $1
-      (global.get $gimport$3)
+      (global.get $gimport$1)
      )
      (i32.const 0)
     )
-    (global.get $gimport$6)
+    (global.get $gimport$3)
     (i32.const 0)
    )
   )
@@ -61,7 +61,7 @@
      (local.get $1)
      (i32.const 34)
     )
-    (global.get $gimport$7)
+    (global.get $gimport$4)
     (i32.add
      (local.get $0)
      (i32.const 16)
@@ -74,11 +74,11 @@
      (local.get $1)
      (i32.const 57)
     )
-    (global.get $gimport$8)
+    (global.get $gimport$5)
     (local.get $0)
    )
   )
-  (global.set $gimport$2
+  (global.set $gimport$0
    (i32.add
     (local.get $0)
     (i32.const 32)

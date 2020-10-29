@@ -198,7 +198,6 @@
     "601": ["{ return $0 + $1; }", ["iii"], ["sync_on_main_thread_"]],
     "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], ["sync_on_main_thread_"]]
   },
-  "staticBump": 84,
   "tableSize": 1,
   "initializers": [
     "__wasm_call_ctors"

@@ -32,7 +32,6 @@
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 480,
   "tableSize": 159609,
   "declares": [
     "emscripten_log",

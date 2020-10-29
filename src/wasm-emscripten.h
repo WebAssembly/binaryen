@@ -34,8 +34,7 @@ public:
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
   std::string
-  generateEmscriptenMetadata(Address staticBump,
-                             std::vector<Name> const& initializerFunctions);
+  generateEmscriptenMetadata(std::vector<Name> const& initializerFunctions);
 
   void fixInvokeFunctionNames();
 

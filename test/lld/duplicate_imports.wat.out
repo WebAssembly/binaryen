@@ -67,7 +67,6 @@
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 13,
   "tableSize": 1,
   "initializers": [
     "__wasm_call_ctors"

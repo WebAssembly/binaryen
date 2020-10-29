@@ -71,7 +71,6 @@
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 0,
   "tableSize": 0,
   "declares": [
     "_Z16waka_func_theirsi"
