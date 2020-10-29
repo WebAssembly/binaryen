@@ -639,6 +639,7 @@ private:
     LOGGING_PERCENT = upToSquared(100);
     auto* func = new Function;
     func->name = Names::getValidFunctionName(wasm, "func");
+    FunctionCreationContext context(*this, func);
     assert(funcContext->typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
     std::vector<Type> params;
@@ -656,7 +657,6 @@ private:
                                               func->vars.size());
       func->vars.push_back(type);
     }
-    FunctionCreationContext context(*this, func);
     // with small chance, make the body unreachable
     auto bodyType = func->sig.results;
     if (oneIn(10)) {
