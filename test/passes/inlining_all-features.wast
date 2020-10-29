@@ -47,3 +47,14 @@
   (call $0)
  )
 )
+(module
+ ;; a function reference in the start should be noticed, and prevent us
+ ;; from removing an inlined function
+ (start $0)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (call $0)
+ )
+)
