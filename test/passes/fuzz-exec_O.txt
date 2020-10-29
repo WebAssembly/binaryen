@@ -31,23 +31,23 @@
 [fuzz-exec] comparing func_0
 [fuzz-exec] comparing func_1
 [fuzz-exec] calling div
-[fuzz-exec] note result: div => -nan:0x63017a
+[fuzz-exec] note result: div => nan:0x63017a
 [fuzz-exec] calling mul1
-[fuzz-exec] note result: mul1 => -nan:0x74546d
+[fuzz-exec] note result: mul1 => nan:0x74546d
 [fuzz-exec] calling mul2
-[fuzz-exec] note result: mul2 => -nan:0x74546d
+[fuzz-exec] note result: mul2 => nan:0x74546d
 [fuzz-exec] calling add1
-[fuzz-exec] note result: add1 => -nan:0x74546d
+[fuzz-exec] note result: add1 => nan:0x74546d
 [fuzz-exec] calling add2
-[fuzz-exec] note result: add2 => -nan:0x74546d
+[fuzz-exec] note result: add2 => nan:0x74546d
 [fuzz-exec] calling add3
-[fuzz-exec] note result: add3 => -nan:0x74546d
+[fuzz-exec] note result: add3 => nan:0x74546d
 [fuzz-exec] calling add4
-[fuzz-exec] note result: add4 => -nan:0x74546d
+[fuzz-exec] note result: add4 => nan:0x74546d
 [fuzz-exec] calling sub1
-[fuzz-exec] note result: sub1 => -nan:0x74546d
+[fuzz-exec] note result: sub1 => nan:0x74546d
 [fuzz-exec] calling sub2
-[fuzz-exec] note result: sub2 => -nan:0x74546d
+[fuzz-exec] note result: sub2 => nan:0x74546d
 (module
  (type $none_=>_f32 (func (result f32)))
  (export "div" (func $0))
@@ -60,30 +60,30 @@
  (export "sub1" (func $1))
  (export "sub2" (func $1))
  (func $0 (; has Stack IR ;) (result f32)
-  (f32.const -nan:0x63017a)
+  (f32.const nan:0x63017a)
  )
  (func $1 (; has Stack IR ;) (result f32)
-  (f32.const -nan:0x74546d)
+  (f32.const nan:0x74546d)
  )
 )
 [fuzz-exec] calling div
-[fuzz-exec] note result: div => -nan:0x63017a
+[fuzz-exec] note result: div => nan:0x63017a
 [fuzz-exec] calling mul1
-[fuzz-exec] note result: mul1 => -nan:0x74546d
+[fuzz-exec] note result: mul1 => nan:0x74546d
 [fuzz-exec] calling mul2
-[fuzz-exec] note result: mul2 => -nan:0x74546d
+[fuzz-exec] note result: mul2 => nan:0x74546d
 [fuzz-exec] calling add1
-[fuzz-exec] note result: add1 => -nan:0x74546d
+[fuzz-exec] note result: add1 => nan:0x74546d
 [fuzz-exec] calling add2
-[fuzz-exec] note result: add2 => -nan:0x74546d
+[fuzz-exec] note result: add2 => nan:0x74546d
 [fuzz-exec] calling add3
-[fuzz-exec] note result: add3 => -nan:0x74546d
+[fuzz-exec] note result: add3 => nan:0x74546d
 [fuzz-exec] calling add4
-[fuzz-exec] note result: add4 => -nan:0x74546d
+[fuzz-exec] note result: add4 => nan:0x74546d
 [fuzz-exec] calling sub1
-[fuzz-exec] note result: sub1 => -nan:0x74546d
+[fuzz-exec] note result: sub1 => nan:0x74546d
 [fuzz-exec] calling sub2
-[fuzz-exec] note result: sub2 => -nan:0x74546d
+[fuzz-exec] note result: sub2 => nan:0x74546d
 [fuzz-exec] comparing add1
 [fuzz-exec] comparing add2
 [fuzz-exec] comparing add3
