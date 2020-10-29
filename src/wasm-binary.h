@@ -1288,6 +1288,7 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
+  uint64_t getUPtrLEB();
   Type getType();
   HeapType getHeapType();
   Type getConcreteType();
