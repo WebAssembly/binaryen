@@ -860,8 +860,7 @@ Literal Literal::demote() const {
 // Note that this function must receive both inputs to the operation, so that it
 // can tell if a NaN existed beforehand (if a NaN was generated just now, as in
 // 0/0, then we should not do any standardization).
-template<typename T>
-static Literal standardizeNaN(T left, T right, T result) {
+template<typename T> static Literal standardizeNaN(T left, T right, T result) {
   if (!std::isnan(left) && !std::isnan(right)) {
     // No NaN propagation, leave the result.
     return Literal(result);
