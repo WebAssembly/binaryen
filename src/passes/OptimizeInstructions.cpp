@@ -1755,8 +1755,13 @@ private:
       // C1 - (C2 - x)  ==>   x + (C1 - C2)
       if (matches(curr,
                   binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
-        curr->op = Abstract::getBinary(type, Add);
         left->value = c1->value.sub(c2->value);
+        if (left->value.isNegative()) {
+          left->value = left->value.neg();
+          curr->op = Abstract::getBinary(type, Sub);
+        } else {
+          curr->op = Abstract::getBinary(type, Add);
+        }
         curr->right = x;
         std::swap(curr->left, curr->right);
         return curr;

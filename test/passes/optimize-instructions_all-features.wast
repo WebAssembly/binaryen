@@ -4842,6 +4842,61 @@
       (local.get $x)
     ))
   )
+  (func $lhs-is-const (param $x i32) (param $y i64)
+    ;; 0 - (x - 1)
+    (drop (i32.sub
+      (i32.const 0)
+      (i32.sub
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
+    (drop (i64.sub
+      (i64.const 0)
+      (i64.sub
+        (local.get $y)
+        (i64.const 1)
+      )
+    ))
+    ;; -1 - (x + 1)
+    (drop (i32.sub
+      (i32.const -1)
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
+    (drop (i64.sub
+      (i64.const -1)
+      (i64.add
+        (local.get $y)
+        (i64.const 1)
+      )
+    ))
+    ;; 1 - (2 - x)
+    (drop (i32.sub
+      (i32.const 1)
+      (i32.sub
+        (i32.const 2)
+        (local.get $x)
+      )
+    ))
+    (drop (i64.sub
+      (i64.const 1)
+      (i64.sub
+        (i64.const 2)
+        (local.get $y)
+      )
+    ))
+    ;; 0 - (0x80000000 - x)
+    (drop (i32.sub
+      (i32.const 0)
+      (i32.sub
+        (i32.const 0x80000000)
+        (local.get $x)
+      )
+    ))
+  )
   (func $pre-combine-or (param $x i32) (param $y i32)
     (drop (i32.or
       (i32.gt_s
