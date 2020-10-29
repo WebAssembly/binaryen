@@ -866,9 +866,14 @@ template<typename T> static Literal standardizeNaN(T left, T right, T result) {
     // No NaN propagation, leave the result.
     return Literal(result);
   }
-  // In the presence of nondeterminism, the sign is arbitrary. Be positive
-  // consistently.
-  return Literal(std::copysign(result, T(1)));
+  // Pick a simple canonical payload, and positive.
+  if (sizeof(T) == 4) {
+    return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
+  } else if (sizeof(T) == 8) {
+    return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
+  } else {
+    WASM_UNREACHABLE("invalid float");
+  }
 }
 
 Literal Literal::add(const Literal& other) const {

@@ -22,7 +22,7 @@
   (f32.const -nan:0x34546d)
  )
  (func $2 (; has Stack IR ;) (result f32)
-  (f32.const nan:0x74546d)
+  (f32.const nan:0x400000)
  )
  (func $9 (; has Stack IR ;) (param $0 f32) (result f32)
   (f32.neg
