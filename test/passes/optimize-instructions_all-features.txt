@@ -4316,48 +4316,6 @@
     (i64.const 63)
    )
   )
-  (drop
-   (f32.mul
-    (local.get $fx)
-    (f32.const -1)
-   )
-  )
-  (drop
-   (f64.mul
-    (local.get $fy)
-    (f64.const 2.1)
-   )
-  )
-  (drop
-   (f64.mul
-    (local.get $fy)
-    (f64.const -2)
-   )
-  )
-  (drop
-   (f32.div
-    (local.get $fx)
-    (f32.const -inf)
-   )
-  )
-  (drop
-   (f64.div
-    (local.get $fy)
-    (f64.const 0)
-   )
-  )
-  (drop
-   (f64.div
-    (local.get $fy)
-    (f64.const -nan:0x8000000000000)
-   )
-  )
-  (drop
-   (f64.div
-    (f64.const -5)
-    (local.get $fy)
-   )
-  )
  )
  (func $pre-combine-or (param $x i32) (param $y i32)
   (drop
@@ -4670,8 +4628,10 @@
   )
   (drop
    (f64.mul
-    (local.get $0)
-    (f64.const -2)
+    (f64.neg
+     (local.get $0)
+    )
+    (f64.const 2)
    )
   )
  )

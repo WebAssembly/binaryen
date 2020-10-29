@@ -1688,8 +1688,9 @@ private:
     }
     // -x * fval(C)   ==>   x * -C
     // -x / fval(C)   ==>   x / -C
-    if (matches(curr, binary(Mul, unary(Neg, any(&left)), fval())) ||
-        matches(curr, binary(DivS, unary(Neg, any(&left)), fval()))) {
+    if (fastMath &&
+        (matches(curr, binary(Mul, unary(Neg, any(&left)), fval())) ||
+         matches(curr, binary(DivS, unary(Neg, any(&left)), fval())))) {
       right->value = right->value.neg();
       curr->left = left;
       return curr;
@@ -1725,7 +1726,8 @@ private:
     {
       // fval(C) / -x   ==>  -C / x
       Expression* right;
-      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
+      if (getPassOptions().fastMath &&
+          matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
         left->value = left->value.neg();
         curr->right = right;
         return curr;

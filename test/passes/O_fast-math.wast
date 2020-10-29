@@ -84,4 +84,53 @@
    )
   )
  )
+ (func "neg_lhs_32_1" (param $fx f32) (result f32)
+  ;; -x * 1  =>  x * -1
+  (f32.mul
+   (f32.neg (local.get $fx))
+   (f32.const 1)
+  )
+ )
+ (func "neg_lhs_32_2" (param $fx f32) (result f32)
+  ;; -x / inf  =>  x / -inf
+  (f32.div
+   (f32.neg (local.get $fx))
+   (f32.const inf)
+  )
+ )
+ (func "neg_lhs_64_1" (param $fy f64) (result f64)
+  ;; -x * -2.1  =>  x * 2.1
+  (f64.mul
+   (f64.neg (local.get $fy))
+   (f64.const -2.1)
+  )
+ )
+ (func "neg_lhs_64_2" (param $fy f64) (result f64)
+  ;; 2 * -x  =>  x * -2
+  (f64.mul
+   (f64.const 2)
+   (f64.neg (local.get $fy))
+  )
+ )
+ (func "neg_lhs_64_3" (param $fy f64) (result f64)
+  ;; -x / -0.0  =>  x / 0.0
+  (f64.div
+   (f64.neg (local.get $fy))
+   (f64.const -0.0)
+  )
+ )
+ (func "neg_lhs_64_4" (param $fy f64) (result f64)
+  ;; -x / nan  =>  x / -nan
+  (f64.div
+   (f64.neg (local.get $fy))
+   (f64.const nan)
+  )
+ )
+ (func "neg_lhs_64_5" (param $fy f64) (result f64)
+  ;; 5.0 / -x  =>  -5 / x
+  (f64.div
+   (f64.const 5)
+   (f64.neg (local.get $fy))
+  )
+ )
 )
