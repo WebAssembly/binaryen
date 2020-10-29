@@ -126,12 +126,6 @@ void PassRegistry::registerPasses() {
   registerPass("emit-target-features",
                "emit the target features section in the output",
                createEmitTargetFeaturesPass);
-  registerPass("emscripten-pic",
-               "Convert PIC ABI from llvm to emscripten",
-               createEmscriptenPICPass);
-  registerPass("emscripten-pic-main-module",
-               "Convert PIC ABI from llvm to emscripten",
-               createEmscriptenPICMainModulePass);
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);

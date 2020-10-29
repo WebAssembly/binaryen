@@ -1,7 +1,7 @@
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (data (global.get $gimport$1) "*\00\00\00")
@@ -9,24 +9,20 @@
  (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
  (import "env" "__memory_base" (global $gimport$1 i32))
  (import "env" "__table_base" (global $gimport$2 i32))
+ (import "GOT.func" "_Z16waka_func_theirsi" (global $gimport$3 (mut i32)))
+ (import "GOT.func" "_Z14waka_func_minei" (global $gimport$4 (mut i32)))
+ (import "GOT.mem" "waka_mine" (global $gimport$5 (mut i32)))
+ (import "GOT.mem" "waka_others" (global $gimport$6 (mut i32)))
  (import "env" "_Z16waka_func_theirsi" (func $waka_func_theirs\28int\29 (param i32) (result i32)))
- (import "env" "g$waka_mine" (func $g$waka_mine (result i32)))
- (import "env" "g$waka_others" (func $g$waka_others (result i32)))
- (import "env" "fp$_Z16waka_func_theirsi$ii" (func $fp$_Z16waka_func_theirsi$ii (result i32)))
- (import "env" "fp$_Z14waka_func_minei$ii" (func $fp$_Z14waka_func_minei$ii (result i32)))
- (global $gimport$3 (mut i32) (i32.const 0))
- (global $gimport$4 (mut i32) (i32.const 0))
- (global $gimport$5 (mut i32) (i32.const 0))
- (global $gimport$6 (mut i32) (i32.const 0))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 0))
+ (export "__post_instantiate" (func $__wasm_call_ctors))
  (export "__wasm_apply_relocs" (func $__wasm_apply_relocs))
  (export "_Z14waka_func_minei" (func $waka_func_mine\28int\29))
  (export "__original_main" (func $__original_main))
  (export "waka_mine" (global $global$0))
  (export "main" (func $main))
  (export "__dso_handle" (global $global$1))
- (export "__post_instantiate" (func $__post_instantiate))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
@@ -65,24 +61,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__assign_got_enties
-  (global.set $gimport$5
-   (call $g$waka_mine)
-  )
-  (global.set $gimport$6
-   (call $g$waka_others)
-  )
-  (global.set $gimport$3
-   (call $fp$_Z16waka_func_theirsi$ii)
-  )
-  (global.set $gimport$4
-   (call $fp$_Z14waka_func_minei$ii)
-  )
- )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
- )
  ;; dylink section
  ;;   memorysize: 4
  ;;   memoryalignment: 2
@@ -96,23 +74,23 @@
   "staticBump": 0,
   "tableSize": 0,
   "declares": [
-    "_Z16waka_func_theirsi",
-    "g$waka_mine",
-    "g$waka_others",
-    "fp$_Z16waka_func_theirsi$ii",
-    "fp$_Z14waka_func_minei$ii"
+    "_Z16waka_func_theirsi"
   ],
   "externs": [
     "___stack_pointer",
     "___memory_base",
-    "___table_base"
+    "___table_base",
+    "__Z16waka_func_theirsi",
+    "__Z14waka_func_minei",
+    "_waka_mine",
+    "_waka_others"
   ],
   "exports": [
+    "__post_instantiate",
     "__wasm_apply_relocs",
     "_Z14waka_func_minei",
     "__original_main",
-    "main",
-    "__post_instantiate"
+    "main"
   ],
   "namedGlobals": {
     "waka_mine" : "0",

@@ -33,9 +33,6 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  Function* generateAssignGOTEntriesFunction();
-  void generatePostInstantiateFunction();
-
   std::string
   generateEmscriptenMetadata(Address staticBump,
                              std::vector<Name> const& initializerFunctions);
