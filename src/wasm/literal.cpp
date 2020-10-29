@@ -1041,11 +1041,59 @@ Literal Literal::div(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::f32: {
       float lhs = getf32(), rhs = other.getf32();
-      return standardizeNaN(lhs, rhs, lhs / rhs);
+      float sign = std::signbit(lhs) == std::signbit(rhs) ? 0.f : -0.f;
+      switch (std::fpclassify(rhs)) {
+        case FP_ZERO:
+          switch (std::fpclassify(lhs)) {
+            case FP_NAN:
+              return standardizeNaN(lhs, rhs, lhs / rhs);
+            case FP_ZERO:
+              return Literal(
+                std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
+            case FP_NORMAL:    // fallthrough
+            case FP_SUBNORMAL: // fallthrough
+            case FP_INFINITE:
+              return Literal(
+                std::copysign(std::numeric_limits<float>::infinity(), sign));
+            default:
+              WASM_UNREACHABLE("invalid fp classification");
+          }
+        case FP_NAN:      // fallthrough
+        case FP_INFINITE: // fallthrough
+        case FP_NORMAL:   // fallthrough
+        case FP_SUBNORMAL:
+          return standardizeNaN(lhs, rhs, lhs / rhs);
+        default:
+          WASM_UNREACHABLE("invalid fp classification");
+      }
     }
     case Type::f64: {
       double lhs = getf64(), rhs = other.getf64();
-      return standardizeNaN(lhs, rhs, lhs / rhs);
+      double sign = std::signbit(lhs) == std::signbit(rhs) ? 0. : -0.;
+      switch (std::fpclassify(rhs)) {
+        case FP_ZERO:
+          switch (std::fpclassify(lhs)) {
+            case FP_NAN:
+              return standardizeNaN(lhs, rhs, lhs / rhs);
+            case FP_ZERO:
+              return Literal(
+                std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
+            case FP_NORMAL:    // fallthrough
+            case FP_SUBNORMAL: // fallthrough
+            case FP_INFINITE:
+              return Literal(
+                std::copysign(std::numeric_limits<double>::infinity(), sign));
+            default:
+              WASM_UNREACHABLE("invalid fp classification");
+          }
+        case FP_NAN:      // fallthrough
+        case FP_INFINITE: // fallthrough
+        case FP_NORMAL:   // fallthrough
+        case FP_SUBNORMAL:
+          return standardizeNaN(lhs, rhs, lhs / rhs);
+        default:
+          WASM_UNREACHABLE("invalid fp classification");
+      }
     }
     default:
       WASM_UNREACHABLE("unexpected type");
