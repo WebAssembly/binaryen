@@ -844,7 +844,7 @@ Literal Literal::demote() const {
 //  * if all NaNs are canonical NaNs, the output is some arbitrary canonical NaN
 //  * otherwise the output is some arbitrary arithmetic NaN
 //
-// (canonical = NaN payload is 1000.000; arithmetic: 1???..???, that is, the
+// (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
 // high bit is 1 and all others can be 0 or 1)
 //
 // For many things we don't need to care, and can just do a normal C++ add for
@@ -855,7 +855,8 @@ Literal Literal::demote() const {
 // one consistently, so that it doesn't look like the optimization changed
 // something. In other words, if the valid output of an expression is a set of
 // valid NaNs, and after optimization the output is still that same set, then
-// if we pick the same NaN in both cases things are simpler.
+// the optimization is valid. And if the interpreter picks the same NaN in both
+// cases from that identical set then nothing looks wrong to the fuzzer.
 //
 // Note that this function must receive both inputs to the operation, so that it
 // can tell if a NaN existed beforehand (if a NaN was generated just now, as in

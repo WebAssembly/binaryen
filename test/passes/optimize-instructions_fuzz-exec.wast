@@ -34,7 +34,6 @@
     )
    )
   )
-
   (call $logf32
    (f32.copysign
     (f32.const -nan:0xffff82)
@@ -93,7 +92,6 @@
     )
    )
   )
-
   (call $logf64
    (f64.copysign
     (f64.const -nan:0xfffffffffff82)
@@ -115,6 +113,41 @@
     (f64.const -nan:0xfffffffffff82)
     (f64.neg
      (f64.const -nan:0xfffffffffa622)
+    )
+   )
+  )
+ )
+ (func "ignore"
+  ;; none of these are nan inputs, so the interpreter must not change the sign
+  (call $logf32
+   (f32.div
+    (f32.const 0)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.div
+    (f32.const -0)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.div
+    (f32.const 0)
+    (f32.neg
+     (f32.const -0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.div
+    (f32.const -0)
+    (f32.neg
+     (f32.const -0)
     )
    )
   )
