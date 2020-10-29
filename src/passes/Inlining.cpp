@@ -343,6 +343,9 @@ struct Inlining : public Pass {
         }
       }
     }
+    if (module->start.is()) {
+      infos[module->start].usedGlobally = true;
+    }
   }
 
   bool iteration(PassRunner* runner, Module* module) {
