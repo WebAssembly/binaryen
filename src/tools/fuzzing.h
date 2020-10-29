@@ -601,59 +601,58 @@ private:
 
   // function generation state
 
-  Function* func = nullptr;
-  std::vector<Expression*> breakableStack; // things we can break to
-  Index labelIndex;
-
-  // a list of things relevant to computing the odds of an infinite loop,
-  // which we try to minimize the risk of
-  std::vector<Expression*> hangStack;
-
-  // type => list of locals with that type
-  std::map<Type, std::vector<Index>> typeLocals;
-
   struct FunctionCreationContext {
     TranslateToFuzzReader& parent;
+
     Function* func;
+
+    std::vector<Expression*> breakableStack; // things we can break to
+    Index labelIndex = 0;
+
+    // a list of things relevant to computing the odds of an infinite loop,
+    // which we try to minimize the risk of
+    std::vector<Expression*> hangStack;
+
+    // type => list of locals with that type
+    std::map<Type, std::vector<Index>> typeLocals;
 
     FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
       : parent(parent), func(func) {
-      parent.func = func;
-      parent.labelIndex = 0;
-      assert(parent.breakableStack.empty());
-      assert(parent.hangStack.empty());
+      parent.funcContext = this;
     }
 
     ~FunctionCreationContext() {
       if (parent.HANG_LIMIT > 0) {
         parent.addHangLimitChecks(func);
       }
-      parent.typeLocals.clear();
-      assert(parent.breakableStack.empty());
-      assert(parent.hangStack.empty());
+      assert(breakableStack.empty());
+      assert(hangStack.empty());
+      parent.funcContext = nullptr;
     }
   };
+
+  FunctionCreationContext* funcContext = nullptr;
 
   Index numAddedFunctions = 0;
 
   Function* addFunction() {
     LOGGING_PERCENT = upToSquared(100);
-    func = new Function;
+    auto* func = new Function;
     func->name = Names::getValidFunctionName(wasm, "func");
-    assert(typeLocals.empty());
+    assert(funcContext->typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
     std::vector<Type> params;
     params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto type = getSingleConcreteType();
-      typeLocals[type].push_back(params.size());
+      funcContext->typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
     func->sig = Signature(Type(params), getControlFlowType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(params.size() + func->vars.size());
+      funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
       func->vars.push_back(type);
     }
     FunctionCreationContext context(*this, func);
@@ -1014,7 +1013,7 @@ private:
   }
 
   Name makeLabel() {
-    return std::string("label$") + std::to_string(labelIndex++);
+    return std::string("label$") + std::to_string(funcContext->labelIndex++);
   }
 
   // Weighting for the core make* methods. Some nodes are important enough that
@@ -1178,8 +1177,8 @@ private:
     }
     assert(type == Type::unreachable);
     Expression* ret = nullptr;
-    if (func->sig.results.isConcrete()) {
-      ret = makeTrivial(func->sig.results);
+    if (funcContext->func->sig.results.isConcrete()) {
+      ret = makeTrivial(funcContext->func->sig.results);
     }
     return builder.makeReturn(ret);
   }
@@ -1190,7 +1189,7 @@ private:
     auto* ret = builder.makeBlock();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
-    breakableStack.push_back(ret);
+    funcContext->breakableStack.push_back(ret);
     Index num = upToSquared(BLOCK_FACTOR - 1); // we add another later
     if (nesting >= NESTING_LIMIT / 2) {
       // smaller blocks past the limit
@@ -1215,7 +1214,7 @@ private:
     } else {
       ret->list.push_back(make(type));
     }
-    breakableStack.pop_back();
+    funcContext->breakableStack.pop_back();
     if (type.isConcrete()) {
       ret->finalize(type);
     } else {
@@ -1233,8 +1232,8 @@ private:
     auto* ret = wasm.allocator.alloc<Loop>();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
-    breakableStack.push_back(ret);
-    hangStack.push_back(ret);
+    funcContext->breakableStack.push_back(ret);
+    funcContext->hangStack.push_back(ret);
     // either create random content, or do something more targeted
     if (oneIn(2)) {
       ret->body = makeMaybeBlock(type);
@@ -1247,8 +1246,8 @@ private:
       list.push_back(make(type)); // final element, so we have the right type
       ret->body = builder.makeBlock(list, type);
     }
-    breakableStack.pop_back();
-    hangStack.pop_back();
+    funcContext->breakableStack.pop_back();
+    funcContext->hangStack.pop_back();
     ret->finalize(type);
     return ret;
   }
@@ -1280,26 +1279,26 @@ private:
 
   Expression* makeIf(Type type) {
     auto* condition = makeCondition();
-    hangStack.push_back(nullptr);
+    funcContext->hangStack.push_back(nullptr);
     auto* ret =
       buildIf({condition, makeMaybeBlock(type), makeMaybeBlock(type)}, type);
-    hangStack.pop_back();
+    funcContext->hangStack.pop_back();
     return ret;
   }
 
   Expression* makeBreak(Type type) {
-    if (breakableStack.empty()) {
+    if (funcContext->breakableStack.empty()) {
       return makeTrivial(type);
     }
     Expression* condition = nullptr;
     if (type != Type::unreachable) {
-      hangStack.push_back(nullptr);
+      funcContext->hangStack.push_back(nullptr);
       condition = makeCondition();
     }
     // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
-      auto* target = pick(breakableStack);
+      auto* target = pick(funcContext->breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
       if (type.isConcrete()) {
@@ -1309,7 +1308,7 @@ private:
           continue;
         }
         auto* ret = builder.makeBreak(name, make(type), condition);
-        hangStack.pop_back();
+        funcContext->hangStack.pop_back();
         return ret;
       } else if (type == Type::none) {
         if (valueType != Type::none) {
@@ -1317,7 +1316,7 @@ private:
           continue;
         }
         auto* ret = builder.makeBreak(name, nullptr, condition);
-        hangStack.pop_back();
+        funcContext->hangStack.pop_back();
         return ret;
       } else {
         assert(type == Type::unreachable);
@@ -1329,9 +1328,9 @@ private:
         // to a loop, we prefer there to be a condition along the
         // way, to reduce the chance of infinite looping
         size_t conditions = 0;
-        int i = hangStack.size();
+        int i = funcContext->hangStack.size();
         while (--i >= 0) {
-          auto* item = hangStack[i];
+          auto* item = funcContext->hangStack[i];
           if (item == nullptr) {
             conditions++;
           } else if (auto* loop = item->cast<Loop>()) {
@@ -1365,7 +1364,7 @@ private:
     }
     // we failed to find something
     if (type != Type::unreachable) {
-      hangStack.pop_back();
+      funcContext->hangStack.pop_back();
     }
     return makeTrivial(type);
   }
@@ -1375,12 +1374,12 @@ private:
     int tries = TRIES;
     bool isReturn;
     while (tries-- > 0) {
-      Function* target = func;
+      Function* target = funcContext->func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = pick(wasm.functions).get();
       }
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 func->sig.results == target->sig.results;
+                 funcContext->func->sig.results == target->sig.results;
       if (target->sig.results != type && !isReturn) {
         continue;
       }
@@ -1409,7 +1408,7 @@ private:
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 func->sig.results == targetFn->sig.results;
+                 funcContext->func->sig.results == targetFn->sig.results;
       if (targetFn->sig.results == type || isReturn) {
         break;
       }
@@ -1437,7 +1436,7 @@ private:
   }
 
   Expression* makeLocalGet(Type type) {
-    auto& locals = typeLocals[type];
+    auto& locals = funcContext->typeLocals[type];
     if (locals.empty()) {
       return makeConst(type);
     }
@@ -1452,7 +1451,7 @@ private:
     } else {
       valueType = getConcreteType();
     }
-    auto& locals = typeLocals[valueType];
+    auto& locals = funcContext->typeLocals[valueType];
     if (locals.empty()) {
       return makeTrivial(type);
     }
@@ -2011,10 +2010,10 @@ private:
       // 'func' is the pointer to the last created function and can be null when
       // we set up globals (before we create any functions), in which case we
       // can't use ref.func.
-      if (type == Type::funcref && func && oneIn(2)) {
+      if (type == Type::funcref && funcContext && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
-        Function* target = func;
+        Function* target = funcContext->func;
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
@@ -2518,7 +2517,7 @@ private:
 
   Expression* makeSwitch(Type type) {
     assert(type == Type::unreachable);
-    if (breakableStack.empty()) {
+    if (funcContext->breakableStack.empty()) {
       return make(type);
     }
     // we need to find proper targets to break to; try a bunch
@@ -2526,7 +2525,7 @@ private:
     std::vector<Name> names;
     Type valueType = Type::unreachable;
     while (tries-- > 0) {
-      auto* target = pick(breakableStack);
+      auto* target = pick(funcContext->breakableStack);
       auto name = getTargetName(target);
       auto currValueType = getTargetType(target);
       if (names.empty()) {
@@ -2556,7 +2555,7 @@ private:
 
   Expression* makeReturn(Type type) {
     return builder.makeReturn(
-      func->sig.results.isConcrete() ? make(func->sig.results) : nullptr);
+      funcContext->func->sig.results.isConcrete() ? make(funcContext->func->sig.results) : nullptr);
   }
 
   Expression* makeNop(Type type) {
