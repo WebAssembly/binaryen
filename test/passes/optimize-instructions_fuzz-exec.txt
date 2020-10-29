@@ -14,6 +14,13 @@
 [LoggingExternalInterface logging nan:0xfffffffffff82]
 [LoggingExternalInterface logging -nan:0xfffffffffff82]
 [LoggingExternalInterface logging -nan:0xfffffffffff82]
+[fuzz-exec] calling just-one-nan
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
 [fuzz-exec] calling ignore
 [LoggingExternalInterface logging -nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
@@ -27,7 +34,8 @@
  (import "fuzzing-support" "log-f64" (func $logf64 (param f64)))
  (export "test32" (func $0))
  (export "test64" (func $1))
- (export "ignore" (func $2))
+ (export "just-one-nan" (func $2))
+ (export "ignore" (func $3))
  (func $0
   (call $logf32
    (f32.add
@@ -142,6 +150,56 @@
  )
  (func $2
   (call $logf32
+   (f32.add
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
+    (f32.const 0)
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
+    (f32.const -0)
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const -0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.neg
+     (f32.const nan:0x7ff622)
+    )
+    (f32.const 0)
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const nan:0x7ff622)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+ )
+ (func $3
+  (call $logf32
    (f32.div
     (f32.const -0)
     (f32.const 0)
@@ -183,6 +241,13 @@
 [LoggingExternalInterface logging nan:0xfffffffffff82]
 [LoggingExternalInterface logging -nan:0xfffffffffff82]
 [LoggingExternalInterface logging -nan:0xfffffffffff82]
+[fuzz-exec] calling just-one-nan
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
+[LoggingExternalInterface logging nan:0x7ff622]
 [fuzz-exec] calling ignore
 [LoggingExternalInterface logging -nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]

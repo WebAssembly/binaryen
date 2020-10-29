@@ -117,6 +117,56 @@
    )
   )
  )
+ (func "just-one-nan"
+  (call $logf32
+   (f32.add
+    (f32.const 0)
+    (f32.neg
+     (f32.const -nan:0xfff622)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const -nan:0xfff622)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const -0)
+    (f32.neg
+     (f32.const -nan:0xfff622)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const -nan:0xfff622)
+    (f32.neg
+     (f32.const -0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const 0)
+    (f32.neg
+     (f32.const nan:0xfff622)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.const nan:0xfff622)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+ )
  (func "ignore"
   ;; none of these are nan inputs, so the interpreter must not change the sign
   (call $logf32
