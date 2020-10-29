@@ -857,13 +857,8 @@ Literal Literal::demote() const {
 // valid NaNs, and after optimization the output is still that same set, then
 // the optimization is valid. And if the interpreter picks the same NaN in both
 // cases from that identical set then nothing looks wrong to the fuzzer.
-//
-// Note that this function must receive both inputs to the operation, so that it
-// can tell if a NaN existed beforehand (if a NaN was generated just now, as in
-// 0/0, then we should not do any standardization).
-template<typename T> static Literal standardizeNaN(T left, T right, T result) {
-  if (!std::isnan(left) && !std::isnan(right)) {
-    // No NaN propagation, leave the result.
+template<typename T> static Literal standardizeNaN(T result) {
+  if (!std::isnan(result)) {
     return Literal(result);
   }
   // Pick a simple canonical payload, and positive.
@@ -882,16 +877,10 @@ Literal Literal::add(const Literal& other) const {
       return Literal(uint32_t(i32) + uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
-    case Type::f32: {
-      auto left = getf32();
-      auto right = other.getf32();
-      return standardizeNaN(left, right, left + right);
-    }
-    case Type::f64: {
-      auto left = getf64();
-      auto right = other.getf64();
-      return standardizeNaN(left, right, left + right);
-    }
+    case Type::f32:
+      return standardizeNaN(getf32() + other.getf32());
+    case Type::f64:
+      return standardizeNaN(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -912,16 +901,10 @@ Literal Literal::sub(const Literal& other) const {
       return Literal(uint32_t(i32) - uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) - uint64_t(other.i64));
-    case Type::f32: {
-      auto left = getf32();
-      auto right = other.getf32();
-      return standardizeNaN(left, right, left - right);
-    }
-    case Type::f64: {
-      auto left = getf64();
-      auto right = other.getf64();
-      return standardizeNaN(left, right, left - right);
-    }
+    case Type::f32:
+      return standardizeNaN(getf32() - other.getf32());
+    case Type::f64:
+      return standardizeNaN(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -1013,16 +996,10 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(uint32_t(i32) * uint32_t(other.i32));
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
-    case Type::f32: {
-      auto left = getf32();
-      auto right = other.getf32();
-      return standardizeNaN(left, right, left * right);
-    }
-    case Type::f64: {
-      auto left = getf64();
-      auto right = other.getf64();
-      return standardizeNaN(left, right, left * right);
-    }
+    case Type::f32:
+      return standardizeNaN(getf32() * other.getf32());
+    case Type::f64:
+      return standardizeNaN(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
@@ -1046,7 +1023,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return standardizeNaN(lhs, rhs, lhs / rhs);
+              return standardizeNaN(lhs / rhs);
             case FP_ZERO:
               return Literal(
                 std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
@@ -1062,7 +1039,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs, rhs, lhs / rhs);
+          return standardizeNaN(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1074,7 +1051,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return standardizeNaN(lhs, rhs, lhs / rhs);
+              return standardizeNaN(lhs / rhs);
             case FP_ZERO:
               return Literal(
                 std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
@@ -1090,7 +1067,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs, rhs, lhs / rhs);
+          return standardizeNaN(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
