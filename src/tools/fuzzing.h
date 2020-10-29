@@ -652,7 +652,8 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
+      funcContext->typeLocals[type].push_back(params.size() +
+                                              func->vars.size());
       func->vars.push_back(type);
     }
     FunctionCreationContext context(*this, func);
@@ -2554,8 +2555,9 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(
-      funcContext->func->sig.results.isConcrete() ? make(funcContext->func->sig.results) : nullptr);
+    return builder.makeReturn(funcContext->func->sig.results.isConcrete()
+                                ? make(funcContext->func->sig.results)
+                                : nullptr);
   }
 
   Expression* makeNop(Type type) {
