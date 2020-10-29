@@ -7,19 +7,16 @@
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
+ (import "GOT.mem" "external_var" (global $gimport$5 (mut i32)))
+ (import "GOT.func" "puts" (global $gimport$6 (mut i32)))
+ (import "GOT.func" "_Z13print_messagev" (global $gimport$7 (mut i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
- (import "env" "g$external_var" (func $g$external_var (result i32)))
- (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
- (import "env" "fp$_Z13print_messagev$i" (func $fp$_Z13print_messagev$i (result i32)))
- (global $gimport$5 (mut i32) (i32.const 0))
- (global $gimport$6 (mut i32) (i32.const 0))
- (global $gimport$7 (mut i32) (i32.const 0))
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
+ (export "__post_instantiate" (func $__wasm_call_ctors))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
- (export "__post_instantiate" (func $__post_instantiate))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
@@ -52,21 +49,6 @@
    (global.get $gimport$5)
   )
  )
- (func $__assign_got_enties
-  (global.set $gimport$5
-   (call $g$external_var)
-  )
-  (global.set $gimport$6
-   (call $fp$puts$ii)
-  )
-  (global.set $gimport$7
-   (call $fp$_Z13print_messagev$i)
-  )
- )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
- )
 )
 (;
 --BEGIN METADATA --
@@ -74,18 +56,18 @@
   "staticBump": 0,
   "tableSize": 0,
   "declares": [
-    "puts",
-    "g$external_var",
-    "fp$puts$ii",
-    "fp$_Z13print_messagev$i"
+    "puts"
   ],
   "externs": [
     "___memory_base",
-    "___table_base"
+    "___table_base",
+    "_external_var",
+    "_puts",
+    "__Z13print_messagev"
   ],
   "exports": [
-    "_Z13print_messagev",
-    "__post_instantiate"
+    "__post_instantiate",
+    "_Z13print_messagev"
   ],
   "namedGlobals": {
     "ptr_puts" : "16",
