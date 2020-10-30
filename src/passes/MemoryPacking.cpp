@@ -97,7 +97,7 @@ struct MemoryPacking : public Pass {
   uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const std::vector<Memory::Segment>& segments);
+  bool canOptimize(const std::vector<Memory::Segment>& segments, PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
@@ -126,15 +126,15 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     return;
   }
 
-  auto& segments = module->memory.segments;
-
-  if (!canOptimize(segments)) {
+  if (!canOptimize(module->memory, runner->getPassOptions())) {
     return;
   }
 
   maxSegments = module->features.hasBulkMemory()
                   ? 63
                   : uint32_t(WebLimitations::MaxDataSegments);
+
+  auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
   std::vector<Referrers> referrers(segments.size());
@@ -182,7 +182,16 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 }
 
-bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
+bool MemoryPacking::canOptimize(const Memory& memory, PassOptions& passOptions) {
+  auto& segments = memory.segments;
+
+  // We must optimize under the assumption that memory has been initialized to
+  // zero. That is the case for a memory declared in the module, but for a
+  // memory that is imported, we must be told that it is zero-initialized.
+  if (memory->imported() && !passOptions.zeroFilledMemory) {
+    return false;
+  }
+
   // One segment is always ok to optimize, as it does not have the potential
   // problems handled below.
   if (segments.size() <= 1) {
