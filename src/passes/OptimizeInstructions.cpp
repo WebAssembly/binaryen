@@ -180,7 +180,7 @@ struct OptimizeInstructions
       return;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetric(binary)) {
+      if (isSymmetricOrRelational(binary)) {
         canonicalize(binary);
       }
     }
