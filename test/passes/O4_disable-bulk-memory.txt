@@ -196,8 +196,7 @@
   (f64.store offset=24
    (local.tee $1
     (if (result i32)
-     (i32.lt_u
-      (i32.const 0)
+     (i32.gt_u
       (i32.shr_u
        (i32.load
         (local.tee $1
@@ -208,6 +207,7 @@
        )
        (i32.const 2)
       )
+      (i32.const 0)
      )
      (i32.load offset=8
       (local.get $1)
@@ -1212,9 +1212,9 @@
   (block $label$1
    (loop $label$2
     (br_if $label$1
-     (i32.ge_u
-      (local.get $1)
+     (i32.le_u
       (local.get $0)
+      (local.get $1)
      )
     )
     (call $assembly/index/NBodySystem#advance
@@ -1233,8 +1233,7 @@
  (func $assembly/index/getBody (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (if (result i32)
-   (i32.lt_u
-    (local.get $0)
+   (i32.gt_u
     (i32.load offset=4
      (local.tee $1
       (i32.load
@@ -1242,10 +1241,10 @@
       )
      )
     )
+    (local.get $0)
    )
    (if (result i32)
-    (i32.lt_u
-     (local.get $0)
+    (i32.gt_u
      (i32.shr_u
       (i32.load
        (local.tee $1
@@ -1256,6 +1255,7 @@
       )
       (i32.const 2)
      )
+     (local.get $0)
     )
     (i32.load offset=8
      (i32.add

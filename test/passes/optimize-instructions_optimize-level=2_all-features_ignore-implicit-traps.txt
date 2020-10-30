@@ -61,14 +61,14 @@
      )
     )
     (br_if $while-in6
-     (i32.lt_s
+     (i32.gt_s
+      (local.get $4)
       (local.tee $3
        (i32.add
         (local.get $3)
         (i32.const 1)
        )
       )
-      (local.get $4)
      )
     )
    )
@@ -144,14 +144,14 @@
      )
     )
     (br_if $while-in6
-     (i32.lt_s
+     (i32.gt_s
+      (local.get $4)
       (local.tee $3
        (i32.add
         (local.get $3)
         (i32.const 1)
        )
       )
-      (local.get $4)
      )
     )
    )
@@ -226,14 +226,14 @@
      )
     )
     (br_if $while-in6
-     (i32.lt_s
+     (i32.gt_s
+      (local.get $4)
       (local.tee $3
        (i32.add
         (local.get $3)
         (i32.const 1)
        )
       )
-      (local.get $4)
      )
     )
    )
