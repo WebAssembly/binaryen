@@ -1,2 +1,1 @@
-var binaryen = {};
-(function() {
+var __dirname = ".";
