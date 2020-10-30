@@ -69,14 +69,13 @@ struct InliningOptions {
   // More generally, with 2 items we may have a local.get, but no way to
   // require it to be saved instead of directly consumed.
   Index alwaysInlineMaxSize = 2;
-  // Function size which we inline when functions are lightweight (no loops
-  // and calls) and we are doing aggressive optimisation for speed (-O3).
-  // In particular it's nice that with this limit we can inline the clamp
-  // functions (i32s-div, f64-to-int, etc.), that can affect perf.
-  Index flexibleInlineMaxSize = 20;
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
+  // Function size above which we always avoid inlining. We have some
+  // flexibility below this size, depending on other options, and whether we are
+  // optimizing for size or speed, but no flexibility above it.
+  Index flexibleInlineMaxSize = 20;
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;

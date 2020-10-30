@@ -17,8 +17,6 @@
 //
 // Inlining.
 //
-// This uses some simple heuristics to decide when to inline.
-//
 // Two versions are provided: inlining and inlining-optimizing. You
 // probably want the optimizing version, which will optimize locations
 // we inlined into, as inlining by itself creates a block to house the
@@ -62,24 +60,21 @@ struct FunctionInfo {
 
   // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
-    // if it's big, it's just not worth doing (TODO: investigate more)
-    if (size > options.inlining.flexibleInlineMaxSize) {
-      return false;
-    }
-    // if it's so small we have a guarantee that after we optimize the
-    // size will not increase, inline it
+    // If it's so small we have a guarantee that after we optimize the
+    // size will not increase, then inline it.
     if (size <= options.inlining.alwaysInlineMaxSize) {
       return true;
     }
-    // if it has one use, then inlining it would likely reduce code size
-    // since we are just moving code around, + optimizing, so worth it
-    // if small enough that we are pretty sure its ok
-    // FIXME: move this check to be first in this function, since we should
-    // return true if oneCallerInlineMaxSize is bigger than
-    // flexibleInlineMaxSize (which it typically should be).
+    // If it has one use, then inlining it would likely reduce code size, at
+    // least for reasonable function sizes.
     if (refs == 1 && !usedGlobally &&
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
+    }
+    // If it's so big that we have no flexible options that could allow it,
+    // do no inline.
+    if (size > options.inlining.flexibleInlineMaxSize) {
+      return false;
     }
     // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
