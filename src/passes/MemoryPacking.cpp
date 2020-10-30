@@ -97,7 +97,7 @@ struct MemoryPacking : public Pass {
   uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const std::vector<Memory::Segment>& segments, PassOptions& passOptions);
+  bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
@@ -122,11 +122,7 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!module->memory.exists) {
-    return;
-  }
-
-  if (!canOptimize(module->memory, runner->getPassOptions())) {
+  if (!canOptimize(module->memory, runner->options)) {
     return;
   }
 
@@ -182,15 +178,20 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 }
 
-bool MemoryPacking::canOptimize(const Memory& memory, PassOptions& passOptions) {
-  auto& segments = memory.segments;
+bool MemoryPacking::canOptimize(const Memory& memory,
+                                const PassOptions& passOptions) {
+  if (!memory.exists) {
+    return false;
+  }
 
   // We must optimize under the assumption that memory has been initialized to
   // zero. That is the case for a memory declared in the module, but for a
   // memory that is imported, we must be told that it is zero-initialized.
-  if (memory->imported() && !passOptions.zeroFilledMemory) {
+  if (memory.imported() && !passOptions.zeroFilledMemory) {
     return false;
   }
+
+  auto& segments = memory.segments;
 
   // One segment is always ok to optimize, as it does not have the potential
   // problems handled below.
