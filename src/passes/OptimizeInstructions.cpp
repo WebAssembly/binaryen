@@ -174,8 +174,9 @@ struct OptimizeInstructions
     // might change (if might not be unreachable if just one arm is, for
     // example). this optimization pass focuses on actually executing code. the
     // only exceptions are control flow changes
-    if (curr->type == Type::unreachable && !curr->is<Break>() &&
-        !curr->is<Switch>() && !curr->is<If>()) {
+    if (curr->is<Nop>() || curr->is<Const>() ||
+        (curr->type == Type::unreachable && !curr->is<Break>() &&
+         !curr->is<Switch>() && !curr->is<If>())) {
       return;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
