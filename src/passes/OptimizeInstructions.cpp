@@ -896,10 +896,9 @@ private:
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
     assert(isSymmetricOrRelational(binary));
-    bool isRelational = binary->isRelational();
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
-      if (isRelational) {
+      if (binary->isRelational()) {
         binary->op = reverseRelationalOp(binary->op);
       }
       std::swap(binary->left, binary->right);
