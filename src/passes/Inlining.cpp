@@ -72,7 +72,7 @@ struct FunctionInfo {
       return true;
     }
     // If it's so big that we have no flexible options that could allow it,
-    // do no inline.
+    // do not inline.
     if (size > options.inlining.flexibleInlineMaxSize) {
       return false;
     }
