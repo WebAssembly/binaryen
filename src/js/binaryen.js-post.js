@@ -4489,7 +4489,7 @@ export default {
   Features,
   Operations,
   SideEffects,
-  Module,
+  Module: BynModule,
   wrapModule,
   ExpressionRunner,
   getExpressionId,
@@ -4503,7 +4503,7 @@ export default {
   getEventInfo,
   getExportInfo,
   emitText,
-  readBinary,
+  readBinary: bynReadBinary,
   parseText,
   getOptimizeLevel,
   setOptimizeLevel,
@@ -4574,6 +4574,6 @@ export default {
   TupleExtract,
   I31New,
   I31Get,
-  Function,
+  Function: BynFunction,
   ready
 };
