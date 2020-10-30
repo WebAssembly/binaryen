@@ -991,6 +991,20 @@ private:
           //   return binary;
           // }
         }
+      } else if (binary->op == RemSInt32) {
+        // bool((signed)x % C_pot)  ==>  bool(x & (C_pot - 1))
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->value.isSignedMin() ||
+              Bits::isPowerOf2(c->value.abs().geti32())) {
+            binary->op = AndInt32;
+            if (c->value.isSignedMin()) {
+              c->value = Literal::makeSignedMax(Type::i32);
+            } else {
+              c->value = c->value.abs().sub(Literal::makeOne(Type::i32));
+            }
+            return binary;
+          }
+        }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
