@@ -1268,11 +1268,11 @@
  (func $linear-sums (param $0 i32) (param $1 i32)
   (drop
    (i32.add
+    (local.get $1)
     (i32.shl
      (local.get $0)
      (i32.const 4)
     )
-    (local.get $1)
    )
   )
   (drop
@@ -3355,11 +3355,11 @@
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.add
      (local.get $x32)
      (i32.const 10)
     )
-    (local.get $x32)
    )
   )
   (drop
@@ -3370,29 +3370,29 @@
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.sub
      (local.get $x32)
      (i32.const 30)
     )
-    (local.get $x32)
    )
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.sub
      (local.get $x32)
      (i32.const 30)
     )
-    (local.get $x32)
    )
   )
   (drop
    (i32.eq
+    (local.get $x32)
     (i32.sub
      (local.get $x32)
      (i32.const 10)
     )
-    (local.get $x32)
    )
   )
   (drop

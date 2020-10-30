@@ -1084,10 +1084,10 @@ total
                   (loop $label$28
                    (if
                     (i32.eq
+                     (local.get $3)
                      (i32.load offset=12
                       (local.get $2)
                      )
-                     (local.get $3)
                     )
                     (block
                      (block $label$30
@@ -1422,10 +1422,10 @@ total
                 (block $label$36
                  (if
                   (i32.eq
+                   (local.get $3)
                    (i32.load offset=12
                     (local.get $2)
                    )
-                   (local.get $3)
                   )
                   (block
                    (block $label$39
@@ -1735,10 +1735,10 @@ total
             (block $label$44
              (if
               (i32.eq
+               (local.get $3)
                (i32.load offset=12
                 (local.get $2)
                )
-               (local.get $3)
               )
               (block
                (block $label$47

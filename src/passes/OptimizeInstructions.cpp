@@ -170,6 +170,19 @@ struct OptimizeInstructions
   }
 
   void visitExpression(Expression* curr) {
+    // if this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for
+    // example). this optimization pass focuses on actually executing code. the
+    // only exceptions are control flow changes
+    if (curr->type == Type::unreachable && !curr->is<Break>() &&
+        !curr->is<Switch>() && !curr->is<If>()) {
+      return;
+    }
+    if (auto* binary = curr->dynCast<Binary>()) {
+      if (isSymmetric(binary)) {
+        canonicalize(binary);
+      }
+    }
     // we may be able to apply multiple patterns, one may open opportunities
     // that look deeper NB: patterns must not have cycles
     while (1) {
@@ -201,20 +214,6 @@ struct OptimizeInstructions
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
     FeatureSet features = getModule()->features;
-    // if this contains dead code, don't bother trying to optimize it, the type
-    // might change (if might not be unreachable if just one arm is, for
-    // example). this optimization pass focuses on actually executing code. the
-    // only exceptions are control flow changes
-    if (curr->type == Type::unreachable && !curr->is<Break>() &&
-        !curr->is<Switch>() && !curr->is<If>()) {
-      return nullptr;
-    }
-    if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetric(binary)) {
-        canonicalize(binary);
-      }
-    }
-
     {
       // TODO: It is an ongoing project to port more transformations to the
       // match API. Once most of the transformations have been ported, the
