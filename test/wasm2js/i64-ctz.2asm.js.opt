@@ -39,7 +39,7 @@ function asmFunc(global, env) {
    $0 = Math_clz32($1 ^ $3);
    $0 = ($0 | 0) == 32 ? $2 : $0;
    $1 = 63 - $0 | 0;
-   i64toi32_i32$HIGH_BITS = 0 - (63 < $0 >>> 0) | 0;
+   i64toi32_i32$HIGH_BITS = 0 - ($0 >>> 0 > 63) | 0;
    return $1;
   }
   i64toi32_i32$HIGH_BITS = 0;
