@@ -35,7 +35,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     }
   }
 
-  void WrapAddress64(Expression*& ptr) {
+  void wrapAddress64(Expression*& ptr) {
     if (ptr->type == Type::unreachable) {
       return;
     }
@@ -46,34 +46,48 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     ptr = builder.makeUnary(UnaryOp::WrapInt64, ptr);
   }
 
-  void visitLoad(Load* curr) { WrapAddress64(curr->ptr); }
+  void extendAddress64(Expression*& ptr) {
+    if (ptr->type == Type::unreachable) {
+      return;
+    }
+    auto& module = *getModule();
+    assert(module.memory.is64());
+    assert(ptr->type == Type::i64);
+    ptr->type = Type::i32;
+    Builder builder(module);
+    ptr = builder.makeUnary(UnaryOp::ExtendUInt32, ptr);
+  }
 
-  void visitStore(Store* curr) { WrapAddress64(curr->ptr); }
+  void visitLoad(Load* curr) { wrapAddress64(curr->ptr); }
+
+  void visitStore(Store* curr) { wrapAddress64(curr->ptr); }
 
   void visitMemorySize(MemorySize* curr) {
     auto size = static_cast<Expression*>(curr);
-    WrapAddress64(size);
+    extendAddress64(size);
+    curr->ptrType = Type::i32;
     replaceCurrent(size);
   }
 
   void visitMemoryGrow(MemoryGrow* curr) {
-    WrapAddress64(curr->delta);
+    wrapAddress64(curr->delta);
     auto size = static_cast<Expression*>(curr);
-    WrapAddress64(size);
+    extendAddress64(size);
+    curr->ptrType = Type::i32;
     replaceCurrent(size);
   }
 
-  void visitMemoryInit(MemoryInit* curr) { WrapAddress64(curr->dest); }
+  void visitMemoryInit(MemoryInit* curr) { wrapAddress64(curr->dest); }
 
   void visitMemoryFill(MemoryFill* curr) {
-    WrapAddress64(curr->dest);
-    WrapAddress64(curr->size);
+    wrapAddress64(curr->dest);
+    wrapAddress64(curr->size);
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    WrapAddress64(curr->dest);
-    WrapAddress64(curr->source);
-    WrapAddress64(curr->size);
+    wrapAddress64(curr->dest);
+    wrapAddress64(curr->source);
+    wrapAddress64(curr->size);
   }
 
   void visitMemory(Memory* memory) {

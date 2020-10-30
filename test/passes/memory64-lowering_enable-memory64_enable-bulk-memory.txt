@@ -3,6 +3,7 @@
  (memory $0 1 1)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00")
  (func $func_1
+  (local $0 i64)
   (drop
    (i32.load
     (i32.wrap_i64
@@ -122,13 +123,13 @@
    )
    (unreachable)
   )
-  (drop
-   (i32.wrap_i64
+  (local.set $0
+   (i64.extend_i32_u
     (memory.size)
    )
   )
-  (drop
-   (i32.wrap_i64
+  (local.set $0
+   (i64.extend_i32_u
     (memory.grow
      (i32.wrap_i64
       (i64.const 1)
