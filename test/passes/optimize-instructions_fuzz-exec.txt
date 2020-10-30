@@ -22,10 +22,10 @@
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [fuzz-exec] calling ignore
-[LoggingExternalInterface logging -nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
-[LoggingExternalInterface logging -nan:0x400000]
+[LoggingExternalInterface logging nan:0x400000]
+[LoggingExternalInterface logging nan:0x400000]
 (module
  (type $none_=>_none (func))
  (type $f32_=>_none (func (param f32)))
@@ -249,7 +249,7 @@
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [fuzz-exec] calling ignore
-[LoggingExternalInterface logging -nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
-[LoggingExternalInterface logging -nan:0x400000]
+[LoggingExternalInterface logging nan:0x400000]
+[LoggingExternalInterface logging nan:0x400000]

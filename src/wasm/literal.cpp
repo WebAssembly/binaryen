@@ -1023,10 +1023,8 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return standardizeNaN(lhs / rhs);
             case FP_ZERO:
-              return Literal(
-                std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
+              return standardizeNaN(lhs / rhs);
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1051,10 +1049,8 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return standardizeNaN(lhs / rhs);
             case FP_ZERO:
-              return Literal(
-                std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
+              return standardizeNaN(lhs / rhs);
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1468,10 +1464,7 @@ Literal Literal::max(const Literal& other) const {
       if (!lnan && !rnan) {
         return Literal((int32_t)0x7fc00000).castToF32();
       }
-      return Literal(lnan ? l : r)
-        .castToI32()
-        .or_(Literal(0xc00000))
-        .castToF32();
+      return standardizeNaN(lnan ? l : r);
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
@@ -1486,10 +1479,7 @@ Literal Literal::max(const Literal& other) const {
       if (!lnan && !rnan) {
         return Literal((int64_t)0x7ff8000000000000LL).castToF64();
       }
-      return Literal(lnan ? l : r)
-        .castToI64()
-        .or_(Literal(int64_t(0x8000000000000LL)))
-        .castToF64();
+      return standardizeNaN(lnan ? l : r);
     }
     default:
       WASM_UNREACHABLE("unexpected type");
