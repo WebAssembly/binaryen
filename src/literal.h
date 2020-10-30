@@ -114,6 +114,18 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+  bool isNegative() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        return i32 < 0;
+      case Type::i64:
+      case Type::f64:
+        return i64 < 0;
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
   bool isSignedMin() const {
     switch (type.getBasic()) {
       case Type::i32:
