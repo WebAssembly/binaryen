@@ -210,7 +210,7 @@ struct OptimizeInstructions
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetric(binary)) {
+      if (isSymmetricOrRelational(binary)) {
         canonicalize(binary);
       }
     }
@@ -895,7 +895,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(isSymmetric(binary));
+    assert(isSymmetricOrRelational(binary));
     bool isRelational = binary->isRelational();
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
@@ -2299,7 +2299,7 @@ private:
     }
   }
 
-  bool isSymmetric(Binary* binary) {
+  bool isSymmetricOrRelational(Binary* binary) {
     if (Properties::isSymmetric(binary) || binary->isRelational()) {
       return true;
     }
