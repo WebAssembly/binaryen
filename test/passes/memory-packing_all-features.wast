@@ -548,5 +548,11 @@
  ;; we can't optimize on an imported memory without zeroFilledMemory being set.
  (import "env" "memory" (memory $0 1 1))
  (data (i32.const 1024) "x")
- (data (i32.const 1023) "\00")
+ (data (i32.const 2048) "\00")
+)
+(module
+ ;; we can when not imported
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
+ (data (i32.const 2048) "\00")
 )

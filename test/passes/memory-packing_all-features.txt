@@ -1566,5 +1566,9 @@
 (module
  (import "env" "memory" (memory $0 1 1))
  (data (i32.const 1024) "x")
- (data (i32.const 1023) "\00")
+ (data (i32.const 2048) "\00")
+)
+(module
+ (memory $0 1 1)
+ (data (i32.const 1024) "x")
 )
