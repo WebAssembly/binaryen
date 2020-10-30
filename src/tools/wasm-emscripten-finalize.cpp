@@ -225,30 +225,6 @@ int main(int argc, const char* argv[]) {
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
                       WasmPrinter::printModule(&wasm, std::cerr));
 
-  uint32_t dataSize = 0;
-
-  if (!sideModule) {
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
-    Export* dataEndExport = wasm.getExport("__data_end");
-    if (dataEndExport == nullptr) {
-      Fatal() << "__data_end export not found";
-    }
-    Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-    if (dataEnd == nullptr) {
-      Fatal() << "__data_end global not found";
-    }
-    if (dataEnd->type != Type::i32) {
-      Fatal() << "__data_end global has wrong type";
-    }
-    if (dataEnd->imported()) {
-      Fatal() << "__data_end must not be an imported global";
-    }
-    Const* dataEndConst = dataEnd->init->cast<Const>();
-    dataSize = dataEndConst->value.geti32() - globalBase;
-  }
-
   EmscriptenGlueGenerator generator(wasm);
   generator.standalone = standaloneWasm;
   generator.sideModule = sideModule;
@@ -326,7 +302,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
-    generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+    generator.generateEmscriptenMetadata(initializerFunctions);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
