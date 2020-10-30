@@ -1755,7 +1755,7 @@ private:
                   binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
         left->value = c1->value.sub(c2->value);
         if (left->value.isNegative()) {
-          // -C1 - (C2 - x)  ==>  x - (C1 - C2)`
+          // -C1 - (C2 - x)  ==>  x - (C1 - C2)
           left->value = left->value.neg();
           curr->op = Abstract::getBinary(type, Sub);
         } else {
