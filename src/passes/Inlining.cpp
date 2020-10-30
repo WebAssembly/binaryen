@@ -60,8 +60,7 @@ struct FunctionInfo {
 
   // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
-    // If it's so small we have a guarantee that after we optimize the
-    // size will not increase, then inline it.
+    // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
       return true;
     }

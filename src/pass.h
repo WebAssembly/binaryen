@@ -72,9 +72,11 @@ struct InliningOptions {
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
-  // Function size above which we always avoid inlining. We have some
-  // flexibility below this size, depending on other options, and whether we are
-  // optimizing for size or speed, but no flexibility above it.
+  // Function size above which we never inline, ignoring the various flexible
+  // factors (like whether we are optimizing for size or speed) that could
+  // influence us.
+  // This is checked after alwaysInlineMaxSize and oneCallerInlineMaxSize, but
+  // the order normally won't matter.
   Index flexibleInlineMaxSize = 20;
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
