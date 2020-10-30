@@ -1215,6 +1215,10 @@ int64_t WasmBinaryBuilder::getS64LEB() {
   return ret.value;
 }
 
+uint64_t WasmBinaryBuilder::getUPtrLEB() {
+  return wasm.memory.is64() ? getU64LEB() : getU32LEB();
+}
+
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   // Single value types are negative; signature indices are non-negative
@@ -3150,7 +3154,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
     throwError("Alignment must be of a reasonable size");
   }
   alignment = Bits::pow2(rawAlignment);
-  offset = getU32LEB();
+  offset = getUPtrLEB();
 }
 
 bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
