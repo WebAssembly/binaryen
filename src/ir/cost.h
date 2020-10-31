@@ -476,6 +476,34 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitMemoryFill(MemoryFill* curr) {
     return 4 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
   }
+  Index visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
+  Index visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    return 1 + Index(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);
+  }
+  Index visitSIMDReplace(SIMDReplace* curr) {
+    return 2 + visit(curr->vec) + visit(curr->value);
+  }
+  Index visitSIMDTernary(SIMDTernary* curr) {
+    Index ret = 0;
+    switch (curr->op) {
+      case Bitselect:
+        ret = 1;
+        break;
+      case QFMAF32x4:
+      case QFMSF32x4:
+      case QFMAF64x2:
+      case QFMSF64x2:
+        ret = 2;
+        break;
+    }
+    return ret + visit(curr->a) + visit(curr->b) + visit(curr->c);
+  }
+  Index visitSIMDShuffle(SIMDShuffle* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
+  }
+  Index visitSIMDShift(SIMDShift* curr) {
+    return 1 + visit(curr->vec) + visit(curr->shift);
+  }
   Index visitRefNull(RefNull* curr) { return 1; }
   Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
@@ -493,7 +521,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
     return ret;
   }
-  Index visitRethrow(Rethrow* curr) { return 100; }
+  Index visitRethrow(Rethrow* curr) { return 100 + visit(curr->exnref); }
   Index visitBrOnExn(BrOnExn* curr) {
     return 1 + visit(curr->exnref) + curr->sent.size();
   }
