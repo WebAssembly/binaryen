@@ -938,7 +938,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         // Check if side effects allow this: we need to execute the two arms
-        // uncondtionally, and also to move the condition run last.
+        // unconditionally, and also to make the condition run last.
         FeatureSet features = getModule()->features;
         EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
         if (ifTrue.hasSideEffects()) {
