@@ -483,6 +483,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitSIMDReplace(SIMDReplace* curr) {
     return 2 + visit(curr->vec) + visit(curr->value);
   }
+  Index visitSIMDExtract(SIMDExtract* curr) { return 1 + visit(curr->vec); }
   Index visitSIMDTernary(SIMDTernary* curr) {
     Index ret = 0;
     switch (curr->op) {
@@ -498,11 +499,11 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
     return ret + visit(curr->a) + visit(curr->b) + visit(curr->c);
   }
-  Index visitSIMDShuffle(SIMDShuffle* curr) {
-    return 1 + visit(curr->left) + visit(curr->right);
-  }
   Index visitSIMDShift(SIMDShift* curr) {
     return 1 + visit(curr->vec) + visit(curr->shift);
+  }
+  Index visitSIMDShuffle(SIMDShuffle* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
   }
   Index visitRefNull(RefNull* curr) { return 1; }
   Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
