@@ -375,7 +375,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $1() {
-  if (0 > __wasm_memory_size() << 16 >>> 0) {
+  if (__wasm_memory_size() << 16 >>> 0 < 0) {
    abort()
   }
  }

@@ -495,6 +495,39 @@
         (i32.const 23)
       )
     ))
+    (drop (i32.gt_s
+      (i32.const 1)
+      (local.get $x)
+    ))
+    (drop (i32.gt_u
+      (i32.const 0)
+      (local.get $x)
+    ))
+    (drop (i32.ne
+      (i32.const -1)
+      (local.get $x)
+    ))
+    (drop (f64.ne
+      (f64.const -1)
+      (local.get $fx)
+    ))
+    (drop (f64.lt
+      (f64.const -2)
+      (local.get $fx)
+    ))
+    (drop (f64.ge
+      (f64.const inf)
+      (local.get $fx)
+    ))
+    (drop (f64.le
+      (f64.const nan)
+      (local.get $fx)
+    ))
+    ;; skip
+    (drop (f64.ge
+      (f64.const 1)
+      (f64.const 2)
+    ))
     (drop (i32.add (i32.ctz (local.get $x)) (i32.ctz (local.get $y))))
     (drop (i32.add (i32.ctz (local.get $y)) (i32.ctz (local.get $x))))
     (drop (i32.add (i32.ctz (local.get $x)) (i32.eqz (local.get $y))))
