@@ -481,13 +481,13 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitMemorySize(MemorySize* curr) { return 1; }
   Index visitMemoryGrow(MemoryGrow* curr) { return 100 + visit(curr->delta); }
   Index visitMemoryInit(MemoryInit* curr) {
-    return 4 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
+    return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
   Index visitMemoryCopy(MemoryCopy* curr) {
-    return 4 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
+    return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
   }
   Index visitMemoryFill(MemoryFill* curr) {
-    return 4 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
+    return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
   }
   Index visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
   Index visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
