@@ -937,20 +937,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               passOptions, iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
-        // Check if side effects allow this.
+        // Check if side effects allow this: we need to execute the two arms
+        // uncondtionally, and also to move the condition run last.
         FeatureSet features = getModule()->features;
-        EffectAnalyzer condition(passOptions, features, iff->condition);
-        if (!condition.hasSideEffects()) {
-          EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
-          if (!ifTrue.hasSideEffects()) {
-            EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
-            if (!ifFalse.hasSideEffects()) {
-              return Builder(*getModule())
-                .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
-            }
-          }
+        EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
+        if (ifTrue.hasSideEffects()) {
+          return nullptr;
         }
-        return nullptr;
+        EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
+        if (ifFalse.hasSideEffects()) {
+          return nullptr;
+        }
+        EffectAnalyzer condition(passOptions, features, iff->condition);
+        if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
+          return nullptr;
+        }
+        return Builder(*getModule())
+          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
       }
 
       void visitLocalSet(LocalSet* curr) {
