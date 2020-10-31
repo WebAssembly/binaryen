@@ -174,7 +174,7 @@ struct OptimizeInstructions
     // might change (if might not be unreachable if just one arm is, for
     // example). this optimization pass focuses on actually executing code. the
     // only exceptions are control flow changes
-    if (curr->is<Nop>() || curr->is<Const>() ||
+    if (curr->is<Const>() || curr->is<Call>() || curr->is<Nop>() ||
         (curr->type == Type::unreachable && !curr->is<Break>() &&
          !curr->is<Switch>() && !curr->is<If>())) {
       return;
