@@ -530,8 +530,8 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   }
   Index visitThrow(Throw* curr) {
     Index ret = 100;
-    for (auto* operand : curr->operands) {
-      ret += visit(operand);
+    for (auto* child : curr->operands) {
+      ret += visit(child);
     }
     return ret;
   }
@@ -539,6 +539,15 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitBrOnExn(BrOnExn* curr) {
     return 1 + visit(curr->exnref) + curr->sent.size();
   }
+  Index visitTupleMake(TupleMake* curr) {
+    Index ret = 0;
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
+  Index visitTupleExtract(TupleExtract* curr) { return visit(curr->tuple); }
+  Index visitPop(Pop* curr) { return 0; }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
 };
