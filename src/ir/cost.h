@@ -75,8 +75,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
   }
-  Index visitAtomicRMW(AtomicRMW* curr) { return 100; }
-  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) { return 100; }
+  Index visitAtomicRMW(AtomicRMW* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->value);
+  }
+  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->expected) +
+           visit(curr->replacement);
+  }
+  Index visitAtomicWait(AtomicWait* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->expected) +
+           visit(curr->timeout);
+  }
+  Index visitAtomicNotify(AtomicNotify* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->notifyCount);
+  }
+  Index visitAtomicFence(AtomicFence* curr) { return 100; }
   Index visitConst(Const* curr) { return 1; }
   Index visitUnary(Unary* curr) {
     Index ret = 0;
