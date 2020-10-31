@@ -3997,13 +3997,7 @@
                                    )
                                   )
                                  )
-                                 (if (result f64)
-                                  (i32.eq
-                                   (i32.load8_s
-                                    (local.get $9)
-                                   )
-                                   (i32.const 45)
-                                  )
+                                 (select
                                   (f64.neg
                                    (f64.add
                                     (local.get $14)
@@ -4021,6 +4015,12 @@
                                     (local.get $14)
                                    )
                                    (local.get $14)
+                                  )
+                                  (i32.eq
+                                   (i32.load8_s
+                                    (local.get $9)
+                                   )
+                                   (i32.const 45)
                                   )
                                  )
                                 )
