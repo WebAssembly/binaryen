@@ -930,6 +930,17 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             !iff->ifFalse->type.isSingle()) {
           return nullptr;
         }
+        if (iff->condition->type == Type::unreachable) {
+          // An if with an unreachable condition may nonetheless have a type
+          // that is not unreachable,
+          //
+          // (if (result i32) (unreachable) ..)
+          //
+          // Turning such an if into a select would change the type of the
+          // expression, which would require updating types further up. Avoid
+          // that, leaving dead code elimination to that dedicated pass.
+          return nullptr;
+        }
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
