@@ -7414,18 +7414,22 @@
       (i32.const 48)
      )
     )
-    (local.set $0
+    (local.set $1
      (i32.div_u
-      (local.tee $1
-       (local.get $0)
-      )
+      (local.get $0)
       (i32.const 10)
      )
     )
-    (br_if $while-in1
+    (if
      (i32.ge_u
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
+     )
+     (block
+      (local.set $0
+       (local.get $1)
+      )
+      (br $while-in1)
      )
     )
    )

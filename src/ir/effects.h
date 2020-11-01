@@ -454,7 +454,18 @@ struct EffectAnalyzer
         case DivUInt64:
         case RemSInt64:
         case RemUInt64: {
-          implicitTrap = true;
+          // div and rem may contain implicit trap only if RHS is
+          // non-constant or constant which equal zero or -1 for
+          // signed divisions
+          if (auto* c = curr->right->dynCast<Const>()) {
+            implicitTrap = c->value.isZero();
+            if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                c->value.getInteger() == -1LL) {
+              implicitTrap = true;
+            }
+          } else {
+            implicitTrap = true;
+          }
           break;
         }
         default: {
