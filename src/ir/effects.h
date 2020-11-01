@@ -425,7 +425,7 @@ struct EffectAnalyzer
   }
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {
-    if (!ignoreImplicitTraps) {
+    if (!ignoreImplicitTraps && !implicitTrap) {
       switch (curr->op) {
         case TruncSFloat32ToInt32:
         case TruncSFloat32ToInt64:
@@ -444,7 +444,7 @@ struct EffectAnalyzer
     }
   }
   void visitBinary(Binary* curr) {
-    if (!ignoreImplicitTraps) {
+    if (!ignoreImplicitTraps && !implicitTrap) {
       switch (curr->op) {
         case DivSInt32:
         case DivUInt32:
@@ -457,13 +457,12 @@ struct EffectAnalyzer
           // div and rem may contain implicit trap only if RHS is
           // non-constant or constant which equal zero or -1 for
           // signed operations
+          implicitTrap = true;
           if (auto* c = curr->right->dynCast<Const>()) {
-            implicitTrap |= c->value.isZero() ||
-                            ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
-                              curr->op == RemSInt32 || curr->op == RemSInt64) &&
-                             c->value.getInteger() == -1LL);
-          } else {
-            implicitTrap = true;
+            implicitTrap = c->value.isZero() ||
+                           ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
+                             curr->op == RemSInt32 || curr->op == RemSInt64) &&
+                            c->value.getInteger() == -1LL);
           }
           break;
         }
