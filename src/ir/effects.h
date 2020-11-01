@@ -458,10 +458,10 @@ struct EffectAnalyzer
           // non-constant or constant which equal zero or -1 for
           // signed operations
           if (auto* c = curr->right->dynCast<Const>()) {
-            implicitTrap = c->value.isZero() ||
-                           ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
-                             curr->op == RemSInt32 || curr->op == RemSInt64) &&
-                            c->value.getInteger() == -1LL);
+            implicitTrap |= c->value.isZero() ||
+                            ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
+                              curr->op == RemSInt32 || curr->op == RemSInt64) &&
+                             c->value.getInteger() == -1LL);
           } else {
             implicitTrap = true;
           }
