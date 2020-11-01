@@ -456,10 +456,11 @@ struct EffectAnalyzer
         case RemUInt64: {
           // div and rem may contain implicit trap only if RHS is
           // non-constant or constant which equal zero or -1 for
-          // signed divisions
+          // signed operations
           if (auto* c = curr->right->dynCast<Const>()) {
             implicitTrap = c->value.isZero();
-            if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+            if ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
+                 curr->op == RemSInt32 || curr->op == RemSInt64) &&
                 c->value.getInteger() == -1LL) {
               implicitTrap = true;
             }
