@@ -142,12 +142,12 @@ struct EffectAnalyzer
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
-           transfersControlFlow() || implicitTrap || danglingPop;
+    return implicitTrap || localsWritten.size() > 0 || danglingPop ||
+           hasGlobalSideEffects() || transfersControlFlow();
   }
   bool hasAnything() const {
-    return hasSideEffects() || accessesLocal() || readsMemory ||
-           accessesGlobal() || isAtomic;
+    return readsMemory || isAtomic || accessesLocal() || hasSideEffects() ||
+           accessesGlobal();
   }
 
   bool noticesGlobalSideEffects() const {
