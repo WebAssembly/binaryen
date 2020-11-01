@@ -35,6 +35,9 @@ struct EffectAnalyzer
     if (ast) {
       analyze(ast);
     }
+    if (ignoreImplicitTraps) {
+      implicitTrap = false;
+    }
   }
 
   bool ignoreImplicitTraps;
@@ -318,32 +321,24 @@ struct EffectAnalyzer
   void visitLoad(Load* curr) {
     readsMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitStore(Store* curr) {
     writesMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicRMW(AtomicRMW* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicWait(AtomicWait* curr) {
     readsMemory = true;
@@ -352,9 +347,7 @@ struct EffectAnalyzer
     // write.
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicNotify(AtomicNotify* curr) {
     // AtomicNotify doesn't strictly write memory, but it does modify the
@@ -363,9 +356,7 @@ struct EffectAnalyzer
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicFence(AtomicFence* curr) {
     // AtomicFence should not be reordered with any memory operations, so we set
@@ -381,9 +372,7 @@ struct EffectAnalyzer
   void visitSIMDShift(SIMDShift* curr) {}
   void visitSIMDLoad(SIMDLoad* curr) {
     readsMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     if (curr->isLoad()) {
@@ -391,37 +380,27 @@ struct EffectAnalyzer
     } else {
       writesMemory = true;
     }
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitDataDrop(DataDrop* curr) {
     // data.drop does not actually write memory, but it does alter the size of
     // a segment, which can be noticeable later by memory.init, so we need to
     // mark it as having a global side effect of some kind.
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     readsMemory = true;
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitMemoryFill(MemoryFill* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {
@@ -505,15 +484,13 @@ struct EffectAnalyzer
     if (tryDepth == 0) {
       throws = true;
     }
-    if (!ignoreImplicitTraps) { // rethrow traps when the arg is null
-      implicitTrap = true;
-    }
+    // rethrow traps when the arg is null
+    implicitTrap = true;
   }
   void visitBrOnExn(BrOnExn* curr) {
     breakTargets.insert(curr->name);
-    if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
-      implicitTrap = true;
-    }
+    // br_on_exn traps when the arg is null
+    implicitTrap = true;
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branchesOut = true; }
