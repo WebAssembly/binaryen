@@ -146,8 +146,8 @@ struct EffectAnalyzer
            hasGlobalSideEffects() || transfersControlFlow();
   }
   bool hasAnything() const {
-    return readsMemory || isAtomic || accessesLocal() || hasSideEffects() ||
-           accessesGlobal();
+    return hasSideEffects() || accessesLocal() || readsMemory ||
+           accessesGlobal() || isAtomic;
   }
 
   bool noticesGlobalSideEffects() const {
