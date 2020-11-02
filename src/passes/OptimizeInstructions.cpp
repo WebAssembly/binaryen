@@ -1605,6 +1605,49 @@ private:
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
+    // (unsigned)x <= -1   ==>   1
+    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+      right->value = Literal::makeOne(Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    {
+      // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
+      Const* c;
+      if (matches(curr, binary(LtS, any(), ival(&c))) &&
+          c->value.isSignedMax()) {
+        curr->op = Abstract::getBinary(type, Ne);
+        return curr;
+      }
+      // (signed)x <= (i32|i64).max_s   ==>   i32(1)
+      if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMax()) {
+        right->value = Literal::makeOne(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x >= (i32|i64).min_s   ==>   i32(1)
+      if (matches(curr, binary(GeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMin()) {
+        right->value = Literal::makeOne(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x < (i32|i64).min_s   ==>   i32(0)
+      if (matches(curr, binary(LtS, pure(&left), ival(&c))) &&
+          c->value.isSignedMin()) {
+        right->value = Literal::makeZero(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x > (i32|i64).max_s   ==>   i32(0)
+      if (matches(curr, binary(GtS, pure(&left), ival(&c))) &&
+          c->value.isSignedMax()) {
+        right->value = Literal::makeZero(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+    }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
@@ -1612,12 +1655,6 @@ private:
       curr->left = right;
       curr->right = left;
       return curr;
-    }
-    // (unsigned)x <= -1   ==>   1
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeOne(Type::i32);
-      right->type = Type::i32;
-      return right;
     }
     {
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
