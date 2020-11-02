@@ -163,7 +163,7 @@ struct EffectAnalyzer
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls)) ||
+        ((other.writesMemory || other.calls) && accessesMemory()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -174,7 +174,7 @@ struct EffectAnalyzer
       return true;
     }
     for (auto local : localsWritten) {
-      if (other.localsWritten.count(local) || other.localsRead.count(local)) {
+      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
         return true;
       }
     }
@@ -183,13 +183,13 @@ struct EffectAnalyzer
         return true;
       }
     }
-    if ((accessesGlobal() && other.calls) ||
-        (other.accessesGlobal() && calls)) {
+    if ((other.calls && accessesGlobal()) ||
+        (calls && other.accessesGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.globalsWritten.count(global) ||
-          other.globalsRead.count(global)) {
+      if (other.globalsRead.count(global) ||
+          other.globalsWritten.count(global)) {
         return true;
       }
     }
