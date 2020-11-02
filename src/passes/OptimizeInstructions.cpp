@@ -376,8 +376,8 @@ struct OptimizeInstructions
             curr->cast<Binary>()->right = y;
             return curr;
           }
-          // i32(x) <<>> (y & 32)   ==>   x
-          // i64(x) <<>> (y & 64)   ==>   x
+          // i32(x) <<>> (y & C)   ==>   x,  where (C & 31) == 0
+          // i64(x) <<>> (y & C)   ==>   x,  where (C & 63) == 0
           if (((c->type == Type::i32 && (c->value.geti32() & 31) == 0) ||
                (c->type == Type::i64 && (c->value.geti64() & 63LL) == 0LL)) &&
               !effects(y).hasSideEffects()) {
