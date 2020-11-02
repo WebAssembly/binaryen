@@ -435,12 +435,12 @@ struct EffectAnalyzer
         case RemUInt64: {
           // div and rem may contain implicit trap only if RHS is
           // non-constant or constant which equal zero or -1 for
-          // signed operations
+          // signed divisions. Reminder traps only with zero
+          // divider.
           implicitTrap = true;
           if (auto* c = curr->right->dynCast<Const>()) {
             implicitTrap = c->value.isZero() ||
-                           ((curr->op == DivSInt32 || curr->op == DivSInt64 ||
-                             curr->op == RemSInt32 || curr->op == RemSInt64) &&
+                           ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
                             c->value.getInteger() == -1LL);
           }
           break;
