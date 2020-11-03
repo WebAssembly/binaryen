@@ -179,11 +179,6 @@ struct OptimizeInstructions
          !curr->is<Switch>() && !curr->is<If>())) {
       return;
     }
-    if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetricOrRelational(binary)) {
-        canonicalize(binary);
-      }
-    }
     // we may be able to apply multiple patterns, one may open opportunities
     // that look deeper NB: patterns must not have cycles
     while ((curr = handOptimize(curr))) {
@@ -209,6 +204,13 @@ struct OptimizeInstructions
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
     FeatureSet features = getModule()->features;
+
+    if (auto* binary = curr->dynCast<Binary>()) {
+      if (isSymmetricOrRelational(binary)) {
+        canonicalize(binary);
+      }
+    }
+
     {
       // TODO: It is an ongoing project to port more transformations to the
       // match API. Once most of the transformations have been ported, the

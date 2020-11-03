@@ -1084,10 +1084,10 @@ total
                   (loop $label$28
                    (if
                     (i32.eq
-                     (local.get $3)
                      (i32.load offset=12
                       (local.get $2)
                      )
+                     (local.get $3)
                     )
                     (block
                      (block $label$30
@@ -1287,8 +1287,7 @@ total
                     )
                    )
                    (if
-                    (i32.ge_u
-                     (local.get $6)
+                    (i32.le_u
                      (i32.load16_u offset=20
                       (local.tee $5
                        (i32.load offset=28
@@ -1296,6 +1295,7 @@ total
                        )
                       )
                      )
+                     (local.get $6)
                     )
                     (block
                      (local.set $3
@@ -1422,10 +1422,10 @@ total
                 (block $label$36
                  (if
                   (i32.eq
-                   (local.get $3)
                    (i32.load offset=12
                     (local.get $2)
                    )
+                   (local.get $3)
                   )
                   (block
                    (block $label$39
@@ -1735,10 +1735,10 @@ total
             (block $label$44
              (if
               (i32.eq
-               (local.get $3)
                (i32.load offset=12
                 (local.get $2)
                )
+               (local.get $3)
               )
               (block
                (block $label$47
