@@ -434,17 +434,15 @@ struct EffectAnalyzer
         // non-constant or constant which equal zero or -1 for
         // signed divisions. Reminder traps only with zero
         // divider.
-        if (!implicitTrap) {
-          if (auto* c = curr->right->dynCast<Const>()) {
-            if (c->value.isZero()) {
-              implicitTrap = true;
-            } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
-                       c->value.getInteger() == -1LL) {
-              implicitTrap = true;
-            }
-          } else {
+        if (auto* c = curr->right->dynCast<Const>()) {
+          if (c->value.isZero()) {
+            implicitTrap = true;
+          } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                      c->value.getInteger() == -1LL) {
             implicitTrap = true;
           }
+        } else {
+          implicitTrap = true;
         }
         break;
       }
