@@ -4786,17 +4786,6 @@
       (i64.const -9223372036854775808)
     ))
 
-    ;; i32(x) < 0x7fffffff  =>  x != 0x7fffffff
-    (drop (i32.lt_s
-      (local.get $x)
-      (i32.const 0x7fffffff)
-    ))
-    ;; i64(x) < 0x7fffffffffffffff  =>  x != 0x7fffffffffffffff
-    (drop (i64.lt_s
-      (local.get $y)
-      (i64.const 0x7fffffffffffffff)
-    ))
-
     ;; i32(x) <= 0x7fffffff  =>  i32(1)
     (drop (i32.le_s
       (local.get $x)
@@ -4837,6 +4826,50 @@
     ))
     ;; i64(x) > 0x7fffffffffffffff  =>  0
     (drop (i64.gt_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
+    ))
+
+    ;; i32(x) < 0x7fffffff  =>  x != 0x7fffffff
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) < 0x7fffffffffffffff  =>  x != 0x7fffffffffffffff
+    (drop (i64.lt_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
+    ))
+
+    ;; i32(x) > 0x80000000  =>  x != 0x80000000
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) > 0x8000000000000000  =>  x != 0x8000000000000000
+    (drop (i64.gt_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) <= 0x80000000  =>  x == 0x80000000
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) <= 0x8000000000000000  =>  x == 0x8000000000000000
+    (drop (i64.le_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) >= 0x7fffffff  =>  x == 0x7fffffff
+    (drop (i32.ge_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) >= 0x7fffffffffffffff  =>  x == 0x7fffffffffffffff
+    (drop (i64.ge_s
       (local.get $y)
       (i64.const 0x7fffffffffffffff)
     ))
