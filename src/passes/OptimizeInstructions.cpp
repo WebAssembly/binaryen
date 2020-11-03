@@ -1612,13 +1612,7 @@ private:
       return right;
     }
     {
-      // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
       Const* c;
-      if (matches(curr, binary(LtS, any(), ival(&c))) &&
-          c->value.isSignedMax()) {
-        curr->op = Abstract::getBinary(type, Ne);
-        return curr;
-      }
       // (signed)x <= (i32|i64).max_s   ==>   i32(1)
       if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
           c->value.isSignedMax()) {
@@ -1646,6 +1640,30 @@ private:
         right->value = Literal::makeZero(Type::i32);
         right->type = Type::i32;
         return right;
+      }
+      // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
+      if (matches(curr, binary(LtS, any(), ival(&c))) &&
+          c->value.isSignedMax()) {
+        curr->op = Abstract::getBinary(type, Ne);
+        return curr;
+      }
+      // (signed)x > (i32|i64).min_s   ==>   x != (i32|i64).min_s
+      if (matches(curr, binary(GtS, any(), ival(&c))) &&
+          c->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Ne);
+        return curr;
+      }
+      // (signed)x <= (i32|i64).min_s   ==>   x == (i32|i64).min_s
+      if (matches(curr, binary(LeS, any(), ival(&c))) &&
+          c->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Eq);
+        return curr;
+      }
+      // (signed)x >= (i32|i64).max_s   ==>   x == (i32|i64).max_s
+      if (matches(curr, binary(GeS, any(), ival(&c))) &&
+          c->value.isSignedMax()) {
+        curr->op = Abstract::getBinary(type, Eq);
+        return curr;
       }
     }
     // x * -1   ==>   0 - x
