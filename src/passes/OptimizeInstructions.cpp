@@ -281,7 +281,7 @@ struct OptimizeInstructions
               curr,
               binary(
                 &outher, Add, binary(&inner, Sub, ival(), any(&y)), any(&x))) &&
-            !(x->is<Const>() || y->is<Const>())) {
+            !(x->is<Const>() || y->is<Const>()) && canReorder(x, y)) {
           // swap C and x   ==>   (x - y) + C
           std::swap(inner->left, outher->right);
           return curr;
