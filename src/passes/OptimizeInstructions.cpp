@@ -275,15 +275,27 @@ struct OptimizeInstructions
       {
         Expression *x, *y;
         Binary *outher, *inner;
-        // (C - y) + x  ==>  (x - y) + C
+        // (C - x) + y  ==>  (y - x) + C,  if can reorder
+        // (C - x) + y  ==>  C - (x - y),  if can't
         // where x and y are not consts
         if (matches(
               curr,
               binary(
-                &outher, Add, binary(&inner, Sub, ival(), any(&y)), any(&x))) &&
-            !(x->is<Const>() || y->is<Const>()) && canReorder(x, y)) {
-          // swap C and x   ==>   (x - y) + C
-          std::swap(inner->left, outher->right);
+                &outher, Add, binary(&inner, Sub, ival(), any(&x)), any(&y))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          if (canReorder(x, y)) {
+            // swap C and y   ==>   (y - x) + C
+            std::swap(inner->left, outher->right);
+          } else {
+            // swap lhs and rhs   ==>   y + (C - x)
+            std::swap(outher->left, outher->right);
+            // swap C and x   ==>   y + (x - C)
+            std::swap(inner->left, inner->right);
+            // swap y and C   ==>   C + (x - y)
+            std::swap(outher->left, inner->right);
+            // C + (x - y)   ==>   C - (x - y)
+            outher->op = Abstract::getBinary(outher->left->type, Sub);
+          }
           return curr;
         }
         // x + (C - y)  ==>  (x - y) + C
