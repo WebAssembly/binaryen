@@ -438,7 +438,7 @@ struct EffectAnalyzer
           if (c->value.isZero()) {
             implicitTrap = true;
           } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
-                      c->value.getInteger() == -1LL) {
+                     c->value.getInteger() == -1LL) {
             implicitTrap = true;
           }
         } else {
