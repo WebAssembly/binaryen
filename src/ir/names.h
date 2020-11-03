@@ -64,6 +64,10 @@ getValidName(Module& module, Name root, std::function<bool(Name)> check) {
   }
 }
 
+inline Name getValidExportName(Module& module, Name root) {
+  return getValidName(
+    module, root, [&](Name test) { return !module.getExportOrNull(test); });
+}
 inline Name getValidGlobalName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getGlobalOrNull(test); });

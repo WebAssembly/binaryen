@@ -221,8 +221,9 @@ public:
     call->finalize();
     return call;
   }
+  template<typename T>
   CallIndirect* makeCallIndirect(Expression* target,
-                                 const std::vector<Expression*>& args,
+                                 const T& args,
                                  Signature sig,
                                  bool isReturn = false) {
     auto* call = wasm.allocator.alloc<CallIndirect>();

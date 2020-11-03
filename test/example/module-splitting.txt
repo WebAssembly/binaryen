@@ -1,0 +1,66 @@
+;; Test module splitting
+Before:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $mem 0 0)
+ (table $table 2 2 funcref)
+ (elem (i32.const 0) $foo $bar)
+ (export "bar" (func $bar))
+ (func $foo (param $0 i32) (result i32)
+  (drop
+   (call $bar
+    (i32.const 0)
+   )
+  )
+ )
+ (func $bar (param $0 i32) (result i32)
+  (drop
+   (call $foo
+    (i32.const 1)
+   )
+  )
+ )
+)
+After:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (memory $mem 0 0)
+ (table $table 2 2 funcref)
+ (elem (i32.const 0) $foo $placeholder_1)
+ (export "bar" (func $bar))
+ (export "memory" (memory $mem))
+ (export "table" (table $table))
+ (export "foo" (func $foo))
+ (func $foo (param $0 i32) (result i32)
+  (drop
+   (call_indirect (type $i32_=>_i32)
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+ )
+ (func $bar (param $0 i32) (result i32)
+  (call_indirect (type $i32_=>_i32)
+   (local.get $0)
+   (i32.const 1)
+  )
+ )
+)
+Secondary:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "primary" "memory" (memory $mem 0 0))
+ (import "primary" "table" (table $table 2 2 funcref))
+ (elem (i32.const 1) $bar)
+ (import "primary" "foo" (func $foo (param i32) (result i32)))
+ (func $bar (param $0 i32) (result i32)
+  (drop
+   (call $foo
+    (i32.const 1)
+   )
+  )
+ )
+)
+
+

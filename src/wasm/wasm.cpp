@@ -1241,20 +1241,20 @@ Event* Module::addEvent(Event* curr) {
   return addModuleElement(events, eventsMap, curr, "addEvent");
 }
 
-Export* Module::addExport(std::unique_ptr<Export> curr) {
+Export* Module::addExport(std::unique_ptr<Export>&& curr) {
   return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
 }
 
-Function* Module::addFunction(std::unique_ptr<Function> curr) {
+Function* Module::addFunction(std::unique_ptr<Function>&& curr) {
   return addModuleElement(
     functions, functionsMap, std::move(curr), "addFunction");
 }
 
-Global* Module::addGlobal(std::unique_ptr<Global> curr) {
+Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
 
-Event* Module::addEvent(std::unique_ptr<Event> curr) {
+Event* Module::addEvent(std::unique_ptr<Event>&& curr) {
   return addModuleElement(events, eventsMap, std::move(curr), "addEvent");
 }
 
