@@ -203,6 +203,8 @@ struct OptimizeInstructions
   // Optimizations that don't yet fit in the pattern DSL, but could be
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
+    if (curr->is<Const>()) return nullptr;
+
     FeatureSet features = getModule()->features;
 
     if (auto* binary = curr->dynCast<Binary>()) {
