@@ -1697,9 +1697,18 @@ private:
       curr->left = left;
       return curr;
     }
-    // x * -1.0   ==>   -x
-    if (fastMath && matches(curr, binary(Mul, any(), fval(-1.0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, Neg), left);
+    // x * -1.0   ==>
+    //       -x,  if fastMath == true
+    // -0.0 - x,  if fastMath == false
+    if (matches(curr, binary(Mul, any(), fval(-1.0)))) {
+      if (fastMath) {
+        return builder.makeUnary(Abstract::getUnary(type, Neg), left);
+      }
+      // x * -1.0   ==>  -0.0 - x
+      curr->op = Abstract::getBinary(type, Sub);
+      right->value = Literal::makeZero(type).neg();
+      std::swap(curr->left, curr->right);
+      return curr;
     }
     if (matches(curr, binary(Mul, any(&left), constant(1))) ||
         matches(curr, binary(DivS, any(&left), constant(1))) ||
