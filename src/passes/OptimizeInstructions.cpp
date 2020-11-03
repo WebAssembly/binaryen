@@ -273,6 +273,49 @@ struct OptimizeInstructions
         }
       }
       {
+        Expression *x, *y;
+        Binary *outher, *inner;
+        // (C - y) + x  ==>  (x - y) + C
+        // where x and y are not consts
+        if (matches(
+              curr,
+              binary(
+                &outher, Add, binary(&inner, Sub, ival(), any(&y)), any(&x))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap C and x   ==>   (x - y) + C
+          std::swap(inner->left, outher->right);
+          return curr;
+        }
+        // x + (C - y)  ==>  (x - y) + C
+        // where x and y are not consts
+        if (matches(
+              curr,
+              binary(
+                &outher, Add, any(&x), binary(&inner, Sub, ival(), any(&y)))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap lhs and rhs   ==>   (C - y) + x
+          std::swap(outher->left, outher->right);
+          // swap C and x   ==>   (x - y) + C
+          std::swap(inner->left, outher->right);
+          return curr;
+        }
+        // x - (C - y)  ==>  (x + y) - C
+        // where x and y are not consts
+        if (matches(
+              curr,
+              binary(
+                &outher, Sub, any(&x), binary(&inner, Sub, ival(), any(&y)))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap lhs and rhs   ==>   (C - y) - x
+          std::swap(outher->left, outher->right);
+          // swap C and x   ==>   (x - y) - C
+          std::swap(inner->left, outher->right);
+          // (x - y) - C   ==>   (x + y) - C
+          inner->op = Abstract::getBinary(inner->left->type, Add);
+          return curr;
+        }
+      }
+      {
         // eqz(x - y)  =>  x == y
         Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, Sub, any(), any())))) {
