@@ -3354,15 +3354,15 @@
    )
   )
   (drop
-   (f32.mul
+   (f32.sub
+    (f32.const -0)
     (local.get $y32)
-    (f32.const -1)
    )
   )
   (drop
-   (f64.mul
+   (f64.sub
+    (f64.const -0)
     (local.get $y64)
-    (f64.const -1)
    )
   )
   (drop
@@ -4276,15 +4276,15 @@
    )
   )
   (drop
-   (f32.mul
+   (f32.sub
+    (f32.const -0)
     (local.get $fx)
-    (f32.const -1)
    )
   )
   (drop
-   (f64.mul
+   (f64.sub
+    (f64.const -0)
     (local.get $fy)
-    (f64.const -1)
    )
   )
   (drop
@@ -4362,9 +4362,9 @@
    )
   )
   (drop
-   (f32.mul
+   (f32.sub
+    (f32.const -0)
     (local.get $fx)
-    (f32.const -1)
    )
   )
   (drop

@@ -1391,7 +1391,7 @@ struct Importable {
   // If these are set, then this is an import, as module.base
   Name module, base;
 
-  bool imported() { return module.is(); }
+  bool imported() const { return module.is(); }
 
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;

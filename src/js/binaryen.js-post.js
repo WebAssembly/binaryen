@@ -9,7 +9,7 @@ function preserveStack(func) {
 }
 
 function strToStack(str) {
-  return str ? allocate(intArrayFromString(str), 'i8', ALLOC_STACK) : 0;
+  return str ? allocate(intArrayFromString(str), ALLOC_STACK) : 0;
 }
 
 function i32sToStack(i32s) {
@@ -2289,7 +2289,7 @@ function wrapModule(module, self = {}) {
       const segmentOffset = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
         const { data, offset, passive } = segments[i];
-        segmentData[i] = allocate(data, 'i8', ALLOC_STACK);
+        segmentData[i] = allocate(data, ALLOC_STACK);
         segmentDataLen[i] = data.length;
         segmentPassive[i] = passive;
         segmentOffset[i] = offset;
@@ -2990,7 +2990,7 @@ Module['emitText'] = function(expr) {
 Object.defineProperty(Module, 'readBinary', { writable: true });
 
 Module['readBinary'] = function(data) {
-  const buffer = allocate(data, 'i8', ALLOC_NORMAL);
+  const buffer = allocate(data, ALLOC_NORMAL);
   const ptr = Module['_BinaryenModuleRead'](buffer, data.length);
   _free(buffer);
   return wrapModule(ptr);
