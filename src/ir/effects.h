@@ -404,49 +404,51 @@ struct EffectAnalyzer
   }
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {
-    if (!ignoreImplicitTraps && !implicitTrap) {
-      switch (curr->op) {
-        case TruncSFloat32ToInt32:
-        case TruncSFloat32ToInt64:
-        case TruncUFloat32ToInt32:
-        case TruncUFloat32ToInt64:
-        case TruncSFloat64ToInt32:
-        case TruncSFloat64ToInt64:
-        case TruncUFloat64ToInt32:
-        case TruncUFloat64ToInt64: {
-          implicitTrap = true;
-          break;
-        }
-        default: {
-        }
+    switch (curr->op) {
+      case TruncSFloat32ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt32:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt32:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt32:
+      case TruncUFloat64ToInt64: {
+        implicitTrap = true;
+        break;
+      }
+      default: {
       }
     }
   }
   void visitBinary(Binary* curr) {
-    if (!ignoreImplicitTraps && !implicitTrap) {
-      switch (curr->op) {
-        case DivSInt32:
-        case DivUInt32:
-        case RemSInt32:
-        case RemUInt32:
-        case DivSInt64:
-        case DivUInt64:
-        case RemSInt64:
-        case RemUInt64: {
-          // div and rem may contain implicit trap only if RHS is
-          // non-constant or constant which equal zero or -1 for
-          // signed divisions. Reminder traps only with zero
-          // divider.
-          implicitTrap = true;
+    switch (curr->op) {
+      case DivSInt32:
+      case DivUInt32:
+      case RemSInt32:
+      case RemUInt32:
+      case DivSInt64:
+      case DivUInt64:
+      case RemSInt64:
+      case RemUInt64: {
+        // div and rem may contain implicit trap only if RHS is
+        // non-constant or constant which equal zero or -1 for
+        // signed divisions. Reminder traps only with zero
+        // divider.
+        if (!implicitTrap) {
           if (auto* c = curr->right->dynCast<Const>()) {
-            implicitTrap = c->value.isZero() ||
-                           ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
-                            c->value.getInteger() == -1LL);
+            if (c->value.isZero()) {
+              implicitTrap = true;
+            } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                       c->value.getInteger() == -1LL) {
+              implicitTrap = true;
+            }
+          } else {
+            implicitTrap = true;
           }
-          break;
         }
-        default: {
-        }
+        break;
+      }
+      default: {
       }
     }
   }
