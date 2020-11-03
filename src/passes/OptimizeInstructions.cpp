@@ -276,7 +276,7 @@ struct OptimizeInstructions
         Expression *x, *y;
         Binary *outher, *inner;
         // (C - x) + y  ==>  (y - x) + C,  if can reorder
-        // (C - x) + y  ==>  C - (x - y),  if can't
+        // (C - x) + y  ==>  C - (x - y),  otherwise
         // where x and y are not consts
         if (matches(
               curr,
