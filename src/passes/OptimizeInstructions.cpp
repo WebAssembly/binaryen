@@ -224,55 +224,6 @@ struct OptimizeInstructions
       using namespace Abstract;
       Builder builder(*getModule());
       {
-        // try to get rid of (0 - ..), that is, a zero only used to negate an
-        // int. an add of a subtract can be flipped in order to remove it:
-        //   (ival.add
-        //     (ival.sub
-        //       (ival.const 0)
-        //       X
-        //     )
-        //     Y
-        //   )
-        // =>
-        //   (ival.sub
-        //     Y
-        //     X
-        //   )
-        // Note that this reorders X and Y, so we need to be careful about that.
-        Expression *x, *y;
-        Binary* sub;
-        if (matches(
-              curr,
-              binary(Add, binary(&sub, Sub, ival(0), any(&x)), any(&y))) &&
-            canReorder(x, y)) {
-          sub->left = y;
-          sub->right = x;
-          return sub;
-        }
-      }
-      {
-        // The flip case is even easier, as no reordering occurs:
-        //   (ival.add
-        //     Y
-        //     (ival.sub
-        //       (ival.const 0)
-        //       X
-        //     )
-        //   )
-        // =>
-        //   (ival.sub
-        //     Y
-        //     X
-        //   )
-        Expression* y;
-        Binary* sub;
-        if (matches(curr,
-                    binary(Add, any(&y), binary(&sub, Sub, ival(0), any())))) {
-          sub->left = y;
-          return sub;
-        }
-      }
-      {
         Expression *x, *y;
         Binary *outher, *inner;
         // (C - x) + y  ==>  (y - x) + C,  if can reorder
@@ -325,6 +276,55 @@ struct OptimizeInstructions
           // (x - y) - C   ==>   (x + y) - C
           inner->op = Abstract::getBinary(inner->left->type, Add);
           return curr;
+        }
+      }
+      {
+        // try to get rid of (0 - ..), that is, a zero only used to negate an
+        // int. an add of a subtract can be flipped in order to remove it:
+        //   (ival.add
+        //     (ival.sub
+        //       (ival.const 0)
+        //       X
+        //     )
+        //     Y
+        //   )
+        // =>
+        //   (ival.sub
+        //     Y
+        //     X
+        //   )
+        // Note that this reorders X and Y, so we need to be careful about that.
+        Expression *x, *y;
+        Binary* sub;
+        if (matches(
+              curr,
+              binary(Add, binary(&sub, Sub, ival(0), any(&x)), any(&y))) &&
+            canReorder(x, y)) {
+          sub->left = y;
+          sub->right = x;
+          return sub;
+        }
+      }
+      {
+        // The flip case is even easier, as no reordering occurs:
+        //   (ival.add
+        //     Y
+        //     (ival.sub
+        //       (ival.const 0)
+        //       X
+        //     )
+        //   )
+        // =>
+        //   (ival.sub
+        //     Y
+        //     X
+        //   )
+        Expression* y;
+        Binary* sub;
+        if (matches(curr,
+                    binary(Add, any(&y), binary(&sub, Sub, ival(0), any())))) {
+          sub->left = y;
+          return sub;
         }
       }
       {
