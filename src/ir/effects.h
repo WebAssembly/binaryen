@@ -35,9 +35,6 @@ struct EffectAnalyzer
     if (ast) {
       analyze(ast);
     }
-    if (ignoreImplicitTraps) {
-      implicitTrap = false;
-    }
   }
 
   bool ignoreImplicitTraps;
@@ -48,6 +45,10 @@ struct EffectAnalyzer
     breakTargets.clear();
     walk(ast);
     assert(tryDepth == 0);
+
+    if (ignoreImplicitTraps) {
+      implicitTrap = false;
+    }
   }
 
   // Core effect tracking
