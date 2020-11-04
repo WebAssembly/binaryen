@@ -4670,6 +4670,7 @@
       (local.get $y)
       (i64.const -1)
     ))
+    ;; (unsigned)x > -1   ==>   0
     (drop (i32.gt_u
       (local.get $x)
       (i32.const -1)
@@ -4706,6 +4707,24 @@
       (i32.const -1)
     ))
     (drop (i64.le_s
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; (unsigned)x >= -1   ==>   x == -1
+    (drop (i32.ge_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.ge_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; (unsigned)x < -1   ==>   x != -1
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.lt_u
       (local.get $y)
       (i64.const -1)
     ))
@@ -4784,6 +4803,46 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; (unsigned)x >= 0  =>  i32(1)
+    (drop (i32.ge_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.ge_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x < 0  =>  i32(0)
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.lt_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x > 0  =>  x != 0
+    (drop (i32.gt_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.gt_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x <= 0  =>  x == 0
+    (drop (i32.le_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.le_u
+      (local.get $y)
+      (i64.const 0)
     ))
 
     ;; i32(x) <= 0x7fffffff  =>  i32(1)
