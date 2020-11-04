@@ -57,10 +57,10 @@ struct EffectAnalyzer
   // of control flow proceeding normally).
   bool branchesOut = false;
   bool calls = false;
-  std::set<Index> localsRead;
-  std::set<Index> localsWritten;
-  std::set<Name> globalsRead;
-  std::set<Name> globalsWritten;
+  std::unordered_set<Index> localsRead;
+  std::unordered_set<Index> localsWritten;
+  std::unordered_set<Name> globalsRead;
+  std::unordered_set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
   // a load or div/rem, which may trap. we ignore trap differences, so it is ok
