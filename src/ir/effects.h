@@ -32,7 +32,7 @@ struct EffectAnalyzer
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       debugInfo(passOptions.debugInfo), features(features) {
-    if (ast) {
+    if (ast && !(ast->is<Const>() || ast->is<Nop>())) {
       analyze(ast);
     }
   }
