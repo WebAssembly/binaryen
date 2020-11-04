@@ -3997,13 +3997,7 @@
                                    )
                                   )
                                  )
-                                 (if (result f64)
-                                  (i32.eq
-                                   (i32.load8_s
-                                    (local.get $9)
-                                   )
-                                   (i32.const 45)
-                                  )
+                                 (select
                                   (f64.neg
                                    (f64.add
                                     (local.get $14)
@@ -4021,6 +4015,12 @@
                                     (local.get $14)
                                    )
                                    (local.get $14)
+                                  )
+                                  (i32.eq
+                                   (i32.load8_s
+                                    (local.get $9)
+                                   )
+                                   (i32.const 45)
                                   )
                                  )
                                 )
@@ -7414,18 +7414,22 @@
       (i32.const 48)
      )
     )
-    (local.set $0
+    (local.set $1
      (i32.div_u
-      (local.tee $1
-       (local.get $0)
-      )
+      (local.get $0)
       (i32.const 10)
      )
     )
-    (br_if $while-in1
+    (if
      (i32.ge_u
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
+     )
+     (block
+      (local.set $0
+       (local.get $1)
+      )
+      (br $while-in1)
      )
     )
    )
