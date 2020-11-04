@@ -930,6 +930,17 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             !iff->ifFalse->type.isSingle()) {
           return nullptr;
         }
+        if (iff->condition->type == Type::unreachable) {
+          // An if with an unreachable condition may nonetheless have a type
+          // that is not unreachable,
+          //
+          // (if (result i32) (unreachable) ..)
+          //
+          // Turning such an if into a select would change the type of the
+          // expression, which would require updating types further up. Avoid
+          // that, leaving dead code elimination to that dedicated pass.
+          return nullptr;
+        }
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
@@ -937,20 +948,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               passOptions, iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
-        // Check if side effects allow this.
+        // Check if side effects allow this: we need to execute the two arms
+        // unconditionally, and also to make the condition run last.
         FeatureSet features = getModule()->features;
-        EffectAnalyzer condition(passOptions, features, iff->condition);
-        if (!condition.hasSideEffects()) {
-          EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
-          if (!ifTrue.hasSideEffects()) {
-            EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
-            if (!ifFalse.hasSideEffects()) {
-              return Builder(*getModule())
-                .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
-            }
-          }
+        EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
+        if (ifTrue.hasSideEffects()) {
+          return nullptr;
         }
-        return nullptr;
+        EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
+        if (ifFalse.hasSideEffects()) {
+          return nullptr;
+        }
+        EffectAnalyzer condition(passOptions, features, iff->condition);
+        if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
+          return nullptr;
+        }
+        return Builder(*getModule())
+          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
       }
 
       void visitLocalSet(LocalSet* curr) {

@@ -1,6 +1,6 @@
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
@@ -2285,6 +2285,83 @@
    )
   )
  )
+ (func $selectify-even-with-condition-side-effects (param $0 i32)
+  (drop
+   (select
+    (i32.const 1)
+    (i32.const 0)
+    (i32.rem_s
+     (local.get $0)
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $no-selectify-when-arm-side-effects (param $0 i32)
+  (drop
+   (if (result i32)
+    (i32.rem_s
+     (local.get $0)
+     (i32.const 2)
+    )
+    (local.tee $0
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.rem_s
+     (local.get $0)
+     (i32.const 2)
+    )
+    (i32.const 0)
+    (local.tee $0
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $no-selectify-when-effects-invalidate (param $0 i32)
+  (local $1 i32)
+  (drop
+   (if (result i32)
+    (i32.rem_s
+     (local.tee $0
+      (i32.const 3)
+     )
+     (i32.const 2)
+    )
+    (local.get $0)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.rem_s
+     (local.tee $0
+      (i32.const 3)
+     )
+     (i32.const 2)
+    )
+    (i32.const 0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (select
+    (i32.const 0)
+    (local.get $1)
+    (i32.rem_s
+     (local.tee $0
+      (i32.const 3)
+     )
+     (i32.const 2)
+    )
+   )
+  )
+ )
  (func $if-one-side (result i32)
   (local $x i32)
   (local.set $x
@@ -2523,6 +2600,17 @@
      (i32.const 6)
     )
    )
+  )
+ )
+ (func $no-selectify-if-condition-unreachable (result i32)
+  (select
+   (if (result i32)
+    (unreachable)
+    (i32.const 3)
+    (i32.const 4)
+   )
+   (i32.const 1)
+   (i32.const 2)
   )
  )
 )

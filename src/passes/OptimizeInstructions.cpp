@@ -170,16 +170,19 @@ struct OptimizeInstructions
   }
 
   void visitExpression(Expression* curr) {
+    // if this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for
+    // example). this optimization pass focuses on actually executing code. the
+    // only exceptions are control flow changes
+    if (curr->is<Const>() || curr->is<Call>() || curr->is<Nop>() ||
+        (curr->type == Type::unreachable && !curr->is<Break>() &&
+         !curr->is<Switch>() && !curr->is<If>())) {
+      return;
+    }
     // we may be able to apply multiple patterns, one may open opportunities
     // that look deeper NB: patterns must not have cycles
-    while (1) {
-      auto* handOptimized = handOptimize(curr);
-      if (handOptimized) {
-        curr = handOptimized;
-        replaceCurrent(curr);
-        continue;
-      }
-      break;
+    while ((curr = handOptimize(curr))) {
+      replaceCurrent(curr);
     }
   }
 
@@ -200,15 +203,12 @@ struct OptimizeInstructions
   // Optimizations that don't yet fit in the pattern DSL, but could be
   // eventually maybe
   Expression* handOptimize(Expression* curr) {
-    FeatureSet features = getModule()->features;
-    // if this contains dead code, don't bother trying to optimize it, the type
-    // might change (if might not be unreachable if just one arm is, for
-    // example). this optimization pass focuses on actually executing code. the
-    // only exceptions are control flow changes
-    if (curr->type == Type::unreachable && !curr->is<Break>() &&
-        !curr->is<Switch>() && !curr->is<If>()) {
+    if (curr->is<Const>()) {
       return nullptr;
     }
+
+    FeatureSet features = getModule()->features;
+
     if (auto* binary = curr->dynCast<Binary>()) {
       if (isSymmetricOrRelational(binary)) {
         canonicalize(binary);
@@ -1697,9 +1697,18 @@ private:
       curr->left = left;
       return curr;
     }
-    // x * -1.0   ==>   -x
-    if (fastMath && matches(curr, binary(Mul, any(), fval(-1.0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, Neg), left);
+    // x * -1.0   ==>
+    //       -x,  if fastMath == true
+    // -0.0 - x,  if fastMath == false
+    if (matches(curr, binary(Mul, any(), fval(-1.0)))) {
+      if (fastMath) {
+        return builder.makeUnary(Abstract::getUnary(type, Neg), left);
+      }
+      // x * -1.0   ==>  -0.0 - x
+      curr->op = Abstract::getBinary(type, Sub);
+      right->value = Literal::makeZero(type).neg();
+      std::swap(curr->left, curr->right);
+      return curr;
     }
     if (matches(curr, binary(Mul, any(&left), constant(1))) ||
         matches(curr, binary(DivS, any(&left), constant(1))) ||
