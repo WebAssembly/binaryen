@@ -234,6 +234,8 @@ struct OptimizeInstructions
               binary(
                 &outher, Add, binary(&inner, Sub, ival(), any(&x)), any(&y))) &&
             !(x->is<Const>() || y->is<Const>())) {
+          // constant on the right more preferable if C == 0,
+          // so let's check first if it's possible.
           if (canReorder(x, y)) {
             // swap C and y   ==>   (y - x) + C
             std::swap(inner->left, outher->right);
