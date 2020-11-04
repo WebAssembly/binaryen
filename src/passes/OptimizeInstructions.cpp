@@ -1598,8 +1598,8 @@ private:
       right->type = Type::i32;
       return right;
     }
-    // (unsigned)x >= 0   ==>   i32(1)
-    if (matches(curr, binary(GeU, pure(&left), ival(0)))) {
+    // (unsigned)x <= -1  ==>   i32(1)
+    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
@@ -1610,8 +1610,8 @@ private:
       right->type = Type::i32;
       return right;
     }
-    // (unsigned)x <= -1  ==>   i32(1)
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+    // (unsigned)x >= 0   ==>   i32(1)
+    if (matches(curr, binary(GeU, pure(&left), ival(0)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
@@ -1623,8 +1623,8 @@ private:
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
-    // (unsigned)x >= -1  ==>   x == -1
-    if (matches(curr, binary(GeU, any(), ival(-1)))) {
+    // (unsigned)x <= 0   ==>   x == 0
+    if (matches(curr, binary(LeU, any(), ival(0)))) {
       curr->op = Abstract::getBinary(type, Eq);
       return curr;
     }
@@ -1633,31 +1633,24 @@ private:
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
-    // (unsigned)x <= 0   ==>   x == 0
-    if (matches(curr, binary(LeU, any(), ival(0)))) {
+    // (unsigned)x >= -1  ==>   x == -1
+    if (matches(curr, binary(GeU, any(), ival(-1)))) {
       curr->op = Abstract::getBinary(type, Eq);
       return curr;
     }
     {
       Const* c;
-      // (signed)x <= (i32|i64).max_s   ==>   i32(1)
-      if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
-          c->value.isSignedMax()) {
-        right->value = Literal::makeOne(Type::i32);
-        right->type = Type::i32;
-        return right;
-      }
-      // (signed)x >= (i32|i64).min_s   ==>   i32(1)
-      if (matches(curr, binary(GeS, pure(&left), ival(&c))) &&
-          c->value.isSignedMin()) {
-        right->value = Literal::makeOne(Type::i32);
-        right->type = Type::i32;
-        return right;
-      }
       // (signed)x < (i32|i64).min_s   ==>   i32(0)
       if (matches(curr, binary(LtS, pure(&left), ival(&c))) &&
           c->value.isSignedMin()) {
         right->value = Literal::makeZero(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x <= (i32|i64).max_s   ==>   i32(1)
+      if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMax()) {
+        right->value = Literal::makeOne(Type::i32);
         right->type = Type::i32;
         return right;
       }
@@ -1668,15 +1661,16 @@ private:
         right->type = Type::i32;
         return right;
       }
+      // (signed)x >= (i32|i64).min_s   ==>   i32(1)
+      if (matches(curr, binary(GeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMin()) {
+        right->value = Literal::makeOne(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
       // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
       if (matches(curr, binary(LtS, any(), ival(&c))) &&
           c->value.isSignedMax()) {
-        curr->op = Abstract::getBinary(type, Ne);
-        return curr;
-      }
-      // (signed)x > (i32|i64).min_s   ==>   x != (i32|i64).min_s
-      if (matches(curr, binary(GtS, any(), ival(&c))) &&
-          c->value.isSignedMin()) {
         curr->op = Abstract::getBinary(type, Ne);
         return curr;
       }
@@ -1684,6 +1678,12 @@ private:
       if (matches(curr, binary(LeS, any(), ival(&c))) &&
           c->value.isSignedMin()) {
         curr->op = Abstract::getBinary(type, Eq);
+        return curr;
+      }
+      // (signed)x > (i32|i64).min_s   ==>   x != (i32|i64).min_s
+      if (matches(curr, binary(GtS, any(), ival(&c))) &&
+          c->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Ne);
         return curr;
       }
       // (signed)x >= (i32|i64).max_s   ==>   x == (i32|i64).max_s
